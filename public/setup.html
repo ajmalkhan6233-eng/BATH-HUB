@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First-Run Setup</title>
+<style>
+  :root { --em9:#062e21; --em8:#0a4531; --em7:#0f5132; --gold:#d4af37; --gold3:#e8cf7a; --txt:#eef5f1; --dim:#9db8ac; }
+  * { box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',system-ui,sans-serif; }
+  body { min-height:100vh; background:linear-gradient(160deg,var(--em9),var(--em8)); color:var(--txt); display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card { width:100%; max-width:520px; background:rgba(255,255,255,.05); border:1px solid rgba(212,175,55,.25); border-radius:16px; padding:32px; backdrop-filter:blur(8px); }
+  h1 { font-size:22px; color:var(--gold3); margin-bottom:4px; }
+  .sub { color:var(--dim); font-size:13px; margin-bottom:22px; }
+  .steps { display:flex; gap:6px; margin-bottom:22px; }
+  .steps div { flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.12); }
+  .steps div.on { background:var(--gold); }
+  label { display:block; font-size:12px; color:var(--dim); margin:14px 0 4px; text-transform:uppercase; letter-spacing:.5px; }
+  input, select { width:100%; padding:11px 12px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.25); color:var(--txt); font-size:15px; }
+  input:focus, select:focus { outline:none; border-color:var(--gold); }
+  .row { display:flex; gap:10px; } .row > div { flex:1; }
+  .btns { display:flex; gap:10px; margin-top:26px; }
+  button { flex:1; padding:12px; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+  .primary { background:linear-gradient(135deg,var(--gold),#b8952f); color:#1a1405; }
+  .ghost { background:rgba(255,255,255,.08); color:var(--txt); }
+  .err { color:#ff8a8a; font-size:13px; margin-top:12px; min-height:18px; }
+  .staff-row { display:flex; gap:8px; margin-top:8px; }
+  .staff-row input { font-size:13px; padding:9px 10px; }
+  .hint { font-size:12px; color:var(--dim); margin-top:6px; }
+  #logo-preview { max-height:64px; margin-top:10px; border-radius:8px; display:none; }
+  .done-icon { font-size:44px; text-align:center; margin:18px 0; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="title">Welcome — let's set up your system</h1>
+  <div class="sub" id="sub">This one-time wizard prepares this ERP for your business.</div>
+  <div class="steps" id="steps"><div class="on"></div><div></div><div></div><div></div></div>
+
+  <div id="step1">
+    <label>Business name *</label><input id="company_name" placeholder="e.g. Sunrise Hardware">
+    <label>Legal name (for reports & invoices)</label><input id="legal_name" placeholder="e.g. Sunrise Hardware (Pvt) Ltd">
+    <label>Tagline</label><input id="tagline" placeholder="e.g. Building supplies — Main Street, Colombo">
+    <div class="btns"><button class="primary" onclick="go(2)">Next</button></div>
+  </div>
+
+  <div id="step2" style="display:none">
+    <label>Logo (optional, under 2MB)</label>
+    <input type="file" id="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+    <img id="logo-preview" alt="logo preview">
+    <div class="row">
+      <div><label>Currency code</label><input id="currency" value="LKR"></div>
+      <div><label>Symbol</label><input id="currency_symbol" value="Rs"></div>
+    </div>
+    <div class="btns"><button class="ghost" onclick="go(1)">Back</button><button class="primary" onclick="go(3)">Next</button></div>
+  </div>
+
+  <div id="step3-real" style="display:none">
+    <label>Admin — your name</label><input id="admin_name" placeholder="Owner name">
+    <label>Admin username *</label><input id="admin_username" placeholder="e.g. owner">
+    <label>Admin password * (min 8 characters)</label><input id="admin_password" type="password">
+    <div class="hint">This is the account that controls everything. Store the password safely.</div>
+    <div class="btns"><button class="ghost" onclick="go(2)">Back</button><button class="primary" onclick="go(4)">Next</button></div>
+  </div>
+
+  <div id="step4" style="display:none">
+    <label>Staff accounts (optional — add up to 8, or skip)</label>
+    <div id="staff-list"></div>
+    <button class="ghost" style="margin-top:10px" onclick="addStaffRow()">+ Add staff member</button>
+    <div class="btns"><button class="ghost" onclick="go(3)">Back</button><button class="primary" id="finish-btn" onclick="finish()">Finish setup</button></div>
+  </div>
+
+  <div id="step5" style="display:none">
+    <div class="done-icon">✅</div>
+    <div style="text-align:center;font-size:16px;line-height:1.6">Setup complete.<br>You are logged in as <b id="done-admin"></b>.</div>
+    <div class="btns"><button class="primary" onclick="location.href='/nature'">Open your dashboard</button></div>
+  </div>
+
+  <div class="err" id="err"></div>
+</div>
+
+<script>
+let logoData = null;
+document.getElementById('logo').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) { logoData = null; return; }
+  if (f.size > 2*1024*1024) { showErr('Logo must be under 2MB'); e.target.value=''; return; }
+  const r = new FileReader();
+  r.onload = () => { logoData = r.result; const p = document.getElementById('logo-preview'); p.src = logoData; p.style.display='block'; };
+  r.readAsDataURL(f);
+});
+
+function showErr(m) { document.getElementById('err').textContent = m || ''; }
+
+function go(n) {
+  showErr('');
+  if (n === 2 && !document.getElementById('company_name').value.trim()) return showErr('Business name is required');
+  if (n === 4) {
+    const u = document.getElementById('admin_username').value.trim();
+    const p = document.getElementById('admin_password').value;
+    if (!u) return showErr('Admin username is required');
+    if (p.length < 8) return showErr('Admin password must be at least 8 characters');
+  }
+  ['step1','step2','step3-real','step4','step5'].forEach((id,i) => {
+    document.getElementById(id).style.display = (i+1===n) ? 'block' : 'none';
+  });
+  document.querySelectorAll('#steps div').forEach((d,i) => d.classList.toggle('on', i < n));
+  if (n === 4 && !document.querySelector('.staff-row')) addStaffRow();
+}
+
+function addStaffRow() {
+  if (document.querySelectorAll('.staff-row').length >= 8) return;
+  const d = document.createElement('div');
+  d.className = 'staff-row';
+  d.innerHTML = '<input placeholder="Name" class="s-name"><input placeholder="Username" class="s-user"><input placeholder="Password" type="password" class="s-pass">';
+  document.getElementById('staff-list').appendChild(d);
+}
+
+async function finish() {
+  showErr('');
+  const btn = document.getElementById('finish-btn');
+  btn.disabled = true; btn.textContent = 'Setting up…';
+  const staff = [...document.querySelectorAll('.staff-row')].map(r => ({
+    name: r.querySelector('.s-name').value.trim(),
+    username: r.querySelector('.s-user').value.trim(),
+    password: r.querySelector('.s-pass').value,
+  })).filter(s => s.name && s.username && s.password);
+  const body = {
+    company_name: document.getElementById('company_name').value.trim(),
+    legal_name: document.getElementById('legal_name').value.trim(),
+    tagline: document.getElementById('tagline').value.trim(),
+    currency: document.getElementById('currency').value.trim() || 'LKR',
+    currency_symbol: document.getElementById('currency_symbol').value.trim() || 'Rs',
+    logo_data: logoData,
+    admin: {
+      name: document.getElementById('admin_name').value.trim(),
+      username: document.getElementById('admin_username').value.trim(),
+      password: document.getElementById('admin_password').value,
+    },
+    staff,
+  };
+  try {
+    const res = await fetch('/api/setup/complete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || 'Setup failed');
+    document.getElementById('done-admin').textContent = j.admin;
+    go(5);
+    document.getElementById('title').textContent = 'All set!';
+    document.getElementById('sub').textContent = '';
+  } catch (e) {
+    showErr(e.message);
+    btn.disabled = false; btn.textContent = 'Finish setup';
+  }
+}
+
+// If setup is already done, bounce to the app.
+fetch('/api/setup/status').then(r => r.json()).then(j => { if (!j.setup_needed) location.href = '/nature'; }).catch(()=>{});
+</script>
+</body>
+</html>

@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Your Business Name — Nature</title>
+<link rel="manifest" href="/nature-manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bathco Nature">
+<meta name="theme-color" content="#062e21">
+<style>
+/* ═══════════════════════ DIVINE NATURE DESIGN SYSTEM ═══════════════════════ */
+:root{
+  /* Command Center palette (FINAL_BUILD_2.md Task 1, 2026-07-05) — same variable
+     names as before so every existing page inherits the retint with zero markup
+     changes. Values ported from Desktop\BATHCO_VERSION_1\kimcord.md. Status
+     colors (--amber/--red/--green) intentionally left untouched — they carry
+     meaning (pending/alarm/ok), not decoration, see [[feedback_bathco_kpi_colours]]. */
+  --emerald-900:#0a0f0a; --emerald-800:#0f1a12; --emerald-700:#163524; --emerald-600:#1d4a30;
+  --earth-800:#14100a; --earth-700:#241a10; --earth-500:#8a7550; --earth-300:#c9b28a;
+  --gold-500:#c8a45c; --gold-400:#d4b76a; --gold-300:#e8cf7a; --gold-glow:rgba(200,164,92,0.25);
+  --glass-bg:rgba(10,20,14,0.72); --glass-border:rgba(255,255,255,0.08);
+  --text:#e8e4dc; --muted:#8a9480; --amber:#e0a828; --red:#e05a4e; --green:#4caf7d;
+  --radius:16px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:
+    radial-gradient(ellipse at 20% 0%, var(--emerald-800) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 100%, var(--earth-800) 0%, transparent 55%),
+    linear-gradient(160deg, var(--emerald-900) 0%, #0a1f18 45%, var(--earth-800) 100%);
+  color:var(--text); min-height:100vh; overflow-x:hidden;
+}
+/* Allah watermark — 1.5% opacity, decorative, excluded on POS/billing via body.no-watermark */
+.watermark{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:38vw; color:var(--gold-300); opacity:0.015; pointer-events:none; z-index:0;
+  font-family:'Traditional Arabic','Times New Roman',serif; user-select:none;
+}
+body.no-watermark .watermark{display:none;}
+/* Floating leaves/butterflies — decorative, never intercept clicks */
+.nature-fx{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0;}
+.leaf,.butterfly{position:absolute; opacity:0.10; animation:drift 22s linear infinite;}
+@keyframes drift{
+  0%{transform:translate(0,110vh) rotate(0deg);}
+  100%{transform:translate(40px,-10vh) rotate(340deg);}
+}
+@keyframes flutter{0%,100%{transform:translateX(0) rotate(0);}50%{transform:translateX(14px) rotate(8deg);}}
+.butterfly{animation:drift 26s linear infinite, flutter 2.4s ease-in-out infinite;}
+
+.app{position:relative; z-index:1; min-height:100vh;}
+.mobile-menu-btn{display:none;}
+
+/* Command Center top nav — replaces the old left sidebar (FINAL_BUILD_2.md
+   Task 1). goPage()/applyFlags() are unchanged: they select by .nav-btn /
+   [data-flag] / #badge-*, which every dropdown-item below still carries. */
+.brand{font-size:15px; font-weight:700; color:var(--gold-400); letter-spacing:0.4px; display:flex; flex-direction:column; flex-shrink:0;}
+.brand span{font-size:10px; color:var(--muted); font-weight:400; margin-top:2px;}
+
+/* nowrap, not wrap - a wrapped nav-cluster silently drops its last item
+   (Settings) onto a second line that has no allocated space of its own,
+   landing right where an open dropdown renders and visually colliding
+   with it (found 2026-07-05). At widths too narrow to fit everything on
+   one line, the media query below moves nav-cluster to its own full-width
+   row instead, so this never has to wrap internally in the first place. */
+.nav-cluster{display:flex; align-items:center; gap:4px; flex-wrap:nowrap;}
+.nav-item{position:relative;}
+.nav-trigger{
+  padding:9px 14px; border-radius:10px; font-size:13px; font-weight:500; color:var(--muted);
+  cursor:pointer; transition:all .2s ease; background:transparent; border:1px solid transparent; font-family:inherit;
+}
+.nav-trigger:hover, .nav-item.open .nav-trigger{color:var(--gold-300); background:rgba(255,255,255,0.05);}
+.dropdown{
+  /* Was relying on a ".glass" class that was never actually defined
+     anywhere - the dropdown had no background at all, so page content
+     showed straight through it (found 2026-07-05, looked like a messy
+     overlap rather than a clean menu). Same glass recipe as .card. */
+  position:absolute; top:calc(100% + 8px); left:0; min-width:210px; padding:6px; z-index:60;
+  background:var(--glass-bg); backdrop-filter:blur(14px); border:1px solid var(--glass-border);
+  border-radius:var(--radius); box-shadow:0 12px 32px rgba(0,0,0,0.45);
+  opacity:0; visibility:hidden; transform:translateY(-8px); transition:opacity .2s ease, transform .2s ease, visibility 0s .2s;
+}
+.nav-item.open .dropdown{opacity:1; visibility:visible; transform:translateY(0); transition:opacity .2s ease, transform .2s ease;}
+.dropdown-item{
+  display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; cursor:pointer;
+  color:var(--muted); font-size:13px; transition:all .15s; white-space:nowrap;
+}
+.dropdown-item:hover{background:rgba(255,255,255,0.06); color:var(--text);}
+.dropdown-item.active{background:linear-gradient(90deg, var(--gold-glow), rgba(200,164,92,0.03)); color:var(--gold-300);}
+.flag-off-badge{margin-left:auto; font-size:9px; padding:1px 6px; border-radius:8px; background:rgba(224,168,40,0.18); color:var(--amber);}
+/* Settings sits outside the dropdown groups, styled like a nav-trigger */
+.nav-trigger.settings-link{margin-left:4px;}
+
+/* Widened from 860px (2026-07-05): the full topbar (brand + title + nav +
+   search + refresh + user-chip) doesn't actually fit on one line well
+   before phone-sized widths - this threshold covers that gap so
+   nav-cluster gets a clean dedicated row instead of squeezing/wrapping. */
+@media(max-width:1500px){
+  .topbar{flex-wrap:wrap; gap:10px; row-gap:12px;}
+  .nav-cluster{order:3; width:100%; justify-content:flex-start;}
+  #global-search{width:100% !important;}
+}
+@media(max-width:860px){
+  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr !important;}
+  table{font-size:11px;}
+  th,td{padding:6px !important;}
+}
+
+.main{padding:16px 30px; min-width:0;}
+.topbar{
+  display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:14px;
+  padding-bottom:12px; border-bottom:1px solid var(--glass-border);
+}
+.page-title{font-size:22px; font-weight:700; background:linear-gradient(180deg, var(--text) 0%, var(--muted) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
+.page-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+.user-chip{font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px;}
+.user-chip b{color:var(--text);}
+.btn-logout{background:none; border:1px solid var(--glass-border); color:var(--muted); padding:5px 12px; border-radius:8px; cursor:pointer; font-size:11px;}
+
+/* Cards — frosted glass, 3D float on hover */
+.card{
+  background:var(--glass-bg); backdrop-filter:blur(14px); border:1px solid var(--glass-border);
+  border-radius:var(--radius); padding:18px; transition:transform .25s ease, box-shadow .25s ease;
+  perspective:800px;
+}
+.card.tilt:hover{transform:translateY(-4px) rotateX(2deg) rotateY(-2deg); box-shadow:0 18px 40px rgba(0,0,0,0.35);}
+
+/* Command Center KPI cards — shimmer top border (Task 1). Only the hero KPI
+   grid uses this class, not every .card, so modals/settings/tables keep the
+   plain glass look. */
+.kpi-card{position:relative; overflow:hidden; padding:14px;}
+.kpi-card::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--gold-500), transparent);
+  opacity:0.4; transform:translateX(-100%); animation:kpiShimmer 3s infinite;
+}
+@keyframes kpiShimmer{0%{transform:translateX(-100%);} 100%{transform:translateX(200%);}}
+
+/* Date navigator control cluster (Home page hero, Task 1) — same pattern as
+   kimcord.md's control-cluster, ported onto this app's actual per-day API
+   instead of the mockup's fake countUp. */
+.control-cluster{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 12px;}
+.icon-btn{
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.04);
+  color:var(--muted); display:grid; place-items:center; cursor:pointer; transition:all .2s ease; flex-shrink:0;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.08); color:var(--text); border-color:rgba(255,255,255,0.15);}
+.date-pill{
+  padding:8px 14px; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.04);
+  color:var(--text); font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; cursor:pointer;
+  display:flex; align-items:center; gap:8px; position:relative;
+}
+.date-pill input[type="date"]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;}
+.hero-download-bar{display:flex; gap:8px; flex-wrap:wrap;}
+
+/* ===== M8: Dashboard Helper — reuses existing glass/emerald/gold tokens, no new theme ===== */
+#m8-bubble-btn{position:fixed; bottom:24px; right:24px; width:52px; height:52px; border-radius:50%;
+  background:var(--gold-500); color:var(--emerald-900); display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.35); z-index:998; border:1px solid var(--glass-border); transition:transform .2s ease;}
+#m8-bubble-btn:hover{transform:scale(1.06)}
+#m8-chat-panel{position:fixed; bottom:88px; right:24px; width:340px; max-width:calc(100vw - 32px);
+  height:440px; max-height:calc(100vh - 120px); background:var(--glass-bg); backdrop-filter:blur(18px) saturate(140%);
+  border:1px solid var(--glass-border); border-radius:var(--radius); box-shadow:0 18px 40px rgba(0,0,0,0.4);
+  z-index:998; display:flex; flex-direction:column; overflow:hidden; opacity:1; transform:translateY(0);
+  transition:opacity .2s ease, transform .2s ease;}
+#m8-chat-panel.m8-hidden{opacity:0; pointer-events:none; transform:translateY(12px)}
+#m8-chat-header{display:flex; align-items:center; justify-content:space-between; padding:14px 16px;
+  border-bottom:1px solid var(--glass-border); font-weight:700; font-size:14px; color:var(--gold-300);}
+#m8-chat-header button{color:var(--muted); display:flex}
+#m8-chat-messages{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; font-size:13px;}
+.m8-msg{max-width:85%; padding:9px 12px; border-radius:12px; line-height:1.4; white-space:pre-wrap;}
+.m8-msg-user{align-self:flex-end; background:var(--gold-500); color:var(--emerald-900); border-bottom-right-radius:3px;}
+.m8-msg-assistant{align-self:flex-start; background:rgba(255,255,255,0.08); color:var(--text); border-bottom-left-radius:3px;}
+#m8-chat-inputrow{display:flex; gap:8px; padding:12px; border-top:1px solid var(--glass-border);}
+#m8-chat-input{flex:1; border:1px solid var(--glass-border); border-radius:99px; padding:9px 14px; font-size:13px;
+  background:rgba(0,0,0,0.2); color:var(--text);}
+#m8-chat-input:focus{outline:none; box-shadow:0 0 0 3px rgba(201,162,39,0.25)}
+#m8-chat-inputrow button{width:36px; height:36px; border-radius:50%; background:var(--gold-500); color:var(--emerald-900);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0}
+@media (max-width:480px){#m8-chat-panel{right:16px; left:16px; width:auto}#m8-bubble-btn{right:16px}}
+.grid{display:grid; gap:14px;}
+.grid-4{grid-template-columns:repeat(4,1fr);} .grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-3{grid-template-columns:repeat(2,1fr);}}
+
+.kpi-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px;}
+.kpi-value{font-size:20px; font-weight:700; margin-top:4px; color:var(--text);}
+.kpi-value.gold{color:var(--gold-300);} .kpi-value.green{color:var(--green);} .kpi-value.red{color:var(--red);} .kpi-value.amber{color:var(--amber);}
+
+table{width:100%; border-collapse:collapse; font-size:12.5px;}
+th{text-align:left; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--glass-border); text-transform:uppercase; font-size:10.5px; letter-spacing:0.5px;}
+td{padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.05);}
+tr:hover td{background:rgba(255,255,255,0.03);}
+
+.pending{color:var(--amber);} .err-flag{color:var(--red);} .conflict-flag{color:var(--red); font-weight:600;}
+.badge{display:inline-block; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:600;}
+.badge-green{background:rgba(76,175,125,0.18); color:var(--green);}
+.badge-amber{background:rgba(224,168,40,0.18); color:var(--amber);}
+.badge-red{background:rgba(224,90,78,0.18); color:var(--red);}
+
+input,select,textarea{
+  background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text);
+  padding:8px 10px; border-radius:8px; font-size:12.5px;
+}
+button.primary{
+  background:linear-gradient(135deg, var(--gold-500), var(--earth-500)); color:#1c1206; border:none;
+  padding:9px 16px; border-radius:9px; font-weight:600; cursor:pointer; font-size:12.5px;
+}
+button.ghost{background:transparent; border:1px solid var(--glass-border); color:var(--text); padding:8px 14px; border-radius:9px; cursor:pointer; font-size:12px;}
+
+.page{display:none;}
+.page.active{display:block; animation:rebuild .5s ease;}
+@keyframes rebuild{
+  0%{opacity:0; filter:blur(6px); transform:scale(0.97) translateY(6px); clip-path:inset(0 40% 0 0);}
+  55%{opacity:0.7; filter:blur(2px); clip-path:inset(0 0 0 0);}
+  100%{opacity:1; filter:blur(0); transform:scale(1) translateY(0);}
+}
+
+.section-title{font-size:14px; font-weight:700; color:var(--gold-300); margin:22px 0 10px;}
+.flag-locked-note{background:rgba(224,90,78,0.08); border:1px solid rgba(224,90,78,0.25); border-radius:10px; padding:10px 14px; font-size:12px; color:var(--red); margin-bottom:14px;}
+.gap-note{background:rgba(224,168,40,0.08); border:1px solid rgba(224,168,40,0.25); border-radius:10px; padding:8px 14px; font-size:12px; color:var(--amber); margin-bottom:10px;}
+
+#login-screen{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; background:rgba(6,20,15,0.85); backdrop-filter:blur(10px);}
+.login-card{background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:20px; padding:36px; width:320px; text-align:center;}
+.login-card h1{color:var(--gold-300); font-size:19px; margin-bottom:4px;}
+.login-card p{color:var(--muted); font-size:11px; margin-bottom:20px;}
+.login-card input{width:100%; margin-bottom:10px;}
+.login-card button{width:100%; margin-top:6px;}
+.login-err{color:var(--red); font-size:11px; margin-top:8px; min-height:14px;}
+
+.toggle{position:relative; width:38px; height:20px; background:rgba(255,255,255,0.15); border-radius:20px; cursor:pointer; display:inline-block;}
+.toggle.on{background:var(--gold-500);}
+.toggle .knob{position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:left .2s;}
+.toggle.on .knob{left:20px;}
+
+.pos-cart-row{display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12.5px;}
+.barcode-label{border:1px dashed var(--glass-border); border-radius:8px; padding:8px; text-align:center; width:150px;}
+.chat-bubble{background:rgba(255,255,255,0.05); border-radius:12px; padding:10px 14px; margin-bottom:8px; font-size:13px; max-width:80%;}
+.chat-bubble.user{background:rgba(201,162,39,0.15); margin-left:auto;}
+</style>
+</head>
+<body>
+
+<div class="watermark">الله</div>
+<div class="nature-fx" id="nature-fx"></div>
+<canvas id="three-canvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; display:none;"></canvas>
+
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Your Business Name</h1>
+    <p>Nature — sign in</p>
+    <input id="li-user" placeholder="Username" autocomplete="username">
+    <input id="li-pass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="primary" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="li-err"></div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <div class="main">
+    <div class="topbar">
+      <div class="brand">Your Business Name<span>Command Center — real-data ERP</span></div>
+      <div style="min-width:0">
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-sub" id="page-sub">Live data — nothing here is hardcoded</div>
+      </div>
+
+      <nav class="nav-cluster" id="nav-cluster">
+        <div class="nav-item" data-dropdown="dashboard">
+          <button class="nav-trigger" type="button">📊 Dashboard</button>
+          <div class="dropdown glass">
+            <div class="dropdown-item nav-btn active" data-page="home" onclick="goPage('home')">🏠 Dashboard Home</div>
+            <div class="dropdown-item nav-btn" data-page="daily" onclick="goPage('daily')">📅 Daily / Weekly / Monthly</div>
+            <div class="dropdown-item nav-btn" data-page="reports2" onclick="goPage('reports2')">📈 Reports & Analytics</div>
+          </div>
+        </div>
+        <div class="nav-item" data-dropdown="operations">
+          <button class="nav-trigger" type="button">⚙️ Operations</button>
+          <div class="dropdown glass">
+            <div class="dropdown-item nav-btn" data-page="customers" onclick="goPage('customers')">👥 Customers</div>
+            <div class="dropdown-item nav-btn" data-page="credit" onclick="goPage('credit')">💳 Credit & Aging</div>
+            <div class="dropdown-item nav-btn" data-page="suppliers" onclick="goPage('suppliers')">🏭 Suppliers</div>
+            <div class="dropdown-item nav-btn" data-page="staff" onclick="goPage('staff')">👤 Staff</div>
+            <div class="dropdown-item nav-btn" data-page="cheques" onclick="goPage('cheques')">🧾 Cheques</div>
+            <div class="dropdown-item nav-btn" data-page="grn" onclick="goPage('grn')">📦 Inventory & GRN</div>
+            <div class="dropdown-item nav-btn" data-page="quotations" onclick="goPage('quotations')">📄 Quotations</div>
+            <div class="dropdown-item nav-btn" data-page="purchasing" onclick="goPage('purchasing')">🚚 Purchasing</div>
+            <div class="dropdown-item nav-btn" data-page="staffext" onclick="goPage('staffext')">🕒 Staff Extended</div>
+            <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="goPage('pos')">🛒 POS Billing <span class="flag-off-badge" id="badge-pos_billing">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="labels" data-flag="inv_barcode_labels" onclick="goPage('labels')">🏷️ Barcode Labels <span class="flag-off-badge" id="badge-inv_barcode_labels">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="commission" data-flag="staff_commission_display" onclick="goPage('commission')">💰 Commission <span class="flag-off-badge" id="badge-staff_commission_display">OFF</span></div>
+          </div>
+        </div>
+        <div class="nav-item" data-dropdown="intelligence">
+          <button class="nav-trigger" type="button">🧮 Intelligence</button>
+          <div class="dropdown glass">
+            <div class="dropdown-item nav-btn" data-page="audit" onclick="goPage('audit')">🧮 Audit & Accounting</div>
+            <div class="dropdown-item nav-btn" data-page="accounting" onclick="goPage('accounting')">📊 Accounting</div>
+            <div class="dropdown-item nav-btn" data-page="assistant" data-flag="ai_assistant_chat" onclick="goPage('assistant')">✨ AI Assistant <span class="flag-off-badge" id="badge-ai_assistant_chat">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="systools" onclick="goPage('systools')">🛠️ System Tools</div>
+          </div>
+        </div>
+        <button class="nav-trigger settings-link nav-btn" data-page="settings" onclick="goPage('settings')" type="button">⚙️ Settings</button>
+      </nav>
+
+      <div style="position:relative">
+        <input id="global-search" placeholder="🔍 Search customers, suppliers, staff, quotations..." style="width:260px" oninput="globalSearch(this.value)" onblur="setTimeout(()=>document.getElementById('global-search-results').style.display='none',150)">
+        <div id="global-search-results" style="display:none; position:absolute; top:36px; left:0; width:320px; max-height:300px; overflow-y:auto; background:var(--emerald-900); border:1px solid var(--glass-border); border-radius:10px; z-index:20;"></div>
+      </div>
+      <button class="ghost" id="refresh-btn" onclick="manualRefresh()" title="Refresh this page's data now">⟳</button>
+      <div class="user-chip"><span>Signed in as</span> <b id="user-name">—</b> <button class="btn-logout" onclick="doLogout()">Sign out</button></div>
+    </div>
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="gap-note" id="pending-data-notice" style="display:none"></div>
+
+      <div class="control-cluster">
+        <button class="icon-btn" id="home-date-prev" title="Previous day">◀</button>
+        <div class="date-pill">
+          <span id="home-date-display">—</span>
+          <input type="date" id="home-date-picker">
+        </div>
+        <button class="icon-btn" id="home-date-next" title="Next day">▶</button>
+        <button class="icon-btn" id="home-date-refresh" title="Refresh">⟳</button>
+        <button class="icon-btn" id="home-date-today" title="Jump to latest closed day">⦿</button>
+        <div class="hero-download-bar" style="margin-left:auto">
+          <button class="primary" id="home-day-report-btn" onclick="downloadDayReport()">📄 DAY REPORT</button>
+        </div>
+      </div>
+
+      <div class="grid grid-4" id="home-kpis"></div>
+      <div class="section-title">Last 7 Days</div>
+      <div class="card"><table id="home-recent"><thead><tr><th>Date</th><th>Sale</th><th>Expenses</th><th>Net Profit</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- DAILY / WEEKLY / MONTHLY -->
+    <div class="page" id="page-daily">
+      <div class="card" style="margin-bottom:16px; display:flex; gap:10px; align-items:center;">
+        <div style="display:flex; gap:4px;">
+          <button class="ghost" id="gran-daily" onclick="setGran('daily')">Daily</button>
+          <button class="ghost" id="gran-weekly" onclick="setGran('weekly')">Weekly</button>
+          <button class="ghost" id="gran-monthly" onclick="setGran('monthly')">Monthly</button>
+        </div>
+        <input type="date" id="daily-date" onchange="loadDaily()">
+        <button class="ghost" onclick="exportReport('excel')">⬇ Excel</button>
+        <button class="ghost" onclick="exportReport('pdf')">⬇ PDF</button>
+        <button class="ghost" onclick="shareToWhatsApp()">📤 Send to WhatsApp</button>
+        <label class="ghost" style="cursor:pointer; display:inline-block;">📷 Upload Day/Expense Sheet<input type="file" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="uploadToInbox(this, 'daily-upload-result')"></label>
+      </div>
+      <div id="daily-upload-result"></div>
+      <div class="grid grid-4" id="daily-kpis"></div>
+      <div class="card" style="margin-top:14px;" id="daily-detail"></div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="card"><table id="tbl-customers"><thead><tr><th>Name</th><th>Phone</th><th>WhatsApp</th><th>Location</th><th>Source</th><th>Last Contact</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- CREDIT & AGING -->
+    <div class="page" id="page-credit">
+      <div class="grid grid-3" id="credit-buckets"></div>
+      <div class="card" style="margin-top:14px;"><table id="tbl-credit"><thead><tr><th>Customer</th><th>Phone</th><th>Invoice Date</th><th>Due Date</th><th>Amount</th><th>Age</th><th>Bucket</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div class="page" id="page-suppliers">
+      <div class="card"><table id="tbl-suppliers"><thead><tr><th>Name</th><th>Phone</th><th>Total Paid</th><th>Last Payment</th><th>Pending Cheques</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="page" id="page-staff">
+      <div class="card"><table id="tbl-staff"><thead><tr><th>Name</th><th>Role</th><th>Total Salary</th><th>Total Commission</th><th>Loans Outstanding</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- CHEQUES -->
+    <div class="page" id="page-cheques">
+      <div class="card"><table id="tbl-cheques"><thead><tr><th>Customer / Payee</th><th>Cheque No</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- GRN / INVENTORY -->
+    <div class="page" id="page-grn">
+      <div class="card" style="margin-bottom:14px; display:flex; gap:8px; flex-wrap:wrap;">
+        <input id="grn-number" placeholder="GRN #">
+        <input id="grn-supplier" placeholder="Supplier name">
+        <input id="grn-date" type="date">
+        <input id="grn-item" placeholder="Item description">
+        <input id="grn-qty" type="number" placeholder="Qty" style="width:80px">
+        <input id="grn-cost" type="number" placeholder="Unit cost" style="width:100px">
+        <label style="font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="grn-caveat" style="width:auto;"> Caveat flag
+        </label>
+        <button class="primary" onclick="addGrn()">+ Add GRN</button>
+      </div>
+      <div class="card"><table id="tbl-grn"><thead><tr><th>GRN #</th><th>Supplier</th><th>Date</th><th>Item</th><th>Qty</th><th>Cost</th><th>Total</th><th>Status</th><th>Caveat</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- QUOTATIONS -->
+    <div class="page" id="page-quotations">
+      <div class="card"><table id="tbl-quotations"><thead><tr><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Created</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- POS BILLING (flagged) -->
+    <div class="page" id="page-pos">
+      <div class="gap-note">HSL/SL invoice series are always summed as one system. Manual bills written after 6pm must be entered as <b>tomorrow's</b> fresh sale, never backdated — this screen does not auto-enforce that; it's a manual process rule.</div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="section-title" style="margin-top:0">Scan / Enter Item</div>
+          <input id="pos-barcode" placeholder="Scan barcode or type item code, then Enter" style="width:100%" onkeydown="if(event.key==='Enter')posAddByCode()">
+          <div class="gap-note" style="margin-top:10px">No master price list exists in the product table — enter price manually per line (matches how sales are actually recorded here).</div>
+          <div id="pos-cart" style="margin-top:10px"></div>
+          <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:16px; font-weight:700;">
+            <span>Total</span><span id="pos-total">LKR 0</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-top:0">Payment Split</div>
+          <div class="grid grid-2" style="gap:8px;">
+            <label>Cash<input id="pos-cash" type="number" value="0" oninput="posRecalcSplit()"></label>
+            <label>Card<input id="pos-card" type="number" value="0" oninput="posRecalcSplit()"></label>
+            <label>Online<input id="pos-online" type="number" value="0" oninput="posRecalcSplit()"></label>
+            <label>Cheque<input id="pos-cheque" type="number" value="0" oninput="posRecalcSplit()"></label>
+            <label>Credit<input id="pos-credit" type="number" value="0" oninput="posRecalcSplit()"></label>
+          </div>
+          <div id="pos-split-check" style="margin-top:10px; font-size:12px;"></div>
+          <button class="primary" style="width:100%; margin-top:14px;" onclick="posPrintReceipt()">Print Receipt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BARCODE LABELS (flagged) -->
+    <div class="page" id="page-labels">
+      <div class="gap-note">Barcode value = product item_code (no separate barcode field exists in the schema). Rendered with a minimal offline Code-128 generator, not a CDN library — verify against a real scanner before relying on it for production printing.</div>
+      <div class="card" style="margin-bottom:14px;">
+        <select id="labels-product" style="width:300px"></select>
+        <input id="labels-qty" type="number" value="1" style="width:70px" placeholder="Qty">
+        <button class="primary" onclick="addLabel()">+ Add to sheet</button>
+        <button class="ghost" onclick="window.print()">Print Sheet</button>
+      </div>
+      <div id="labels-sheet" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+    </div>
+
+    <!-- COMMISSION (flagged) -->
+    <div class="page" id="page-commission">
+      <div class="flag-locked-note">
+        Locked rule: commission = 1% of <b>each staff member's individually-attributed</b> Gross Profit, sourced from Lasersoft's profit-by-invoice report filtered per staff member (CLAUDE.md §3.6). That per-staff GP attribution does not exist anywhere in the current Postgres schema — <code>daily_summary</code> is shop-wide only. This page shows the real, already-stored commission figures from <code>staff_salary.commission</code> and the real pay-period boundary; it does <b>not</b> auto-calculate 1%-of-GP, because there is no real per-staff GP number to calculate it from. Wiring that requires importing Lasersoft's staff-filtered report first.
+      </div>
+      <div class="card" id="pay-period-card" style="margin-bottom:14px;"></div>
+      <div class="card">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="ghost" onclick="downloadRowsCSV(window.__commissionRows||[], 'commission')" title="Download this table as CSV">⬇</button>
+          <button class="ghost" onclick="shareRowsWhatsApp(window.__commissionRows||[], 'commission')" title="Share this table on WhatsApp">📤</button>
+        </div>
+        <table id="tbl-commission"><thead><tr><th>Staff</th><th>Total Salary (real)</th><th>Total Commission (real, as stored)</th><th>Loans Outstanding</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <!-- AI ASSISTANT (flagged) -->
+    <div class="page" id="page-assistant">
+      <div class="card">
+        <div class="section-title" style="margin-top:0">Ask about the business</div>
+        <div class="page-sub" style="margin-bottom:10px;">e.g. "net profit yesterday", "total sales last month" — calls the real /api/nl-query route.</div>
+        <div id="chat-log" style="max-height:340px; overflow-y:auto; margin-bottom:12px;"></div>
+        <div style="display:flex; gap:8px;">
+          <input id="chat-input" style="flex:1" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="primary" onclick="sendChat()">Ask</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <!-- PURCHASING / ACCOUNTING / STAFF-EXTENDED / REPORTS2 — generic tab pages, see genericTabPage() -->
+    <div class="page" id="page-purchasing"><div id="tabs-purchasing"></div><div id="content-purchasing"></div></div>
+    <div class="page" id="page-accounting"><div id="tabs-accounting"></div><div id="content-accounting"></div></div>
+    <div class="page" id="page-staffext"><div id="tabs-staffext"></div><div id="content-staffext"></div></div>
+    <div class="page" id="page-reports2"><div id="tabs-reports2"></div><div id="content-reports2"></div></div>
+    <div class="page" id="page-systools"><div id="tabs-systools"></div><div id="content-systools"></div></div>
+
+    <!-- AUDIT & ACCOUNTING (CORE ON) -->
+    <div class="page" id="page-audit">
+      <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <label style="font-size:11px; color:var(--muted)">From <input type="date" id="audit-from"></label>
+        <label style="font-size:11px; color:var(--muted)">To <input type="date" id="audit-to"></label>
+        <select id="audit-granularity">
+          <option value="daily">Daily</option><option value="weekly">Weekly</option>
+          <option value="monthly" selected>Monthly</option><option value="quarterly">Quarterly</option>
+        </select>
+        <button class="primary" onclick="loadAudit()">Generate</button>
+        <button class="ghost" onclick="downloadAuditWorkbook()">⬇ Excel (Full Report)</button>
+        <button class="ghost" onclick="downloadFullAuditPDF()">⬇ PDF (Full Report)</button>
+        <button class="ghost" onclick="shareAuditWhatsApp()">📤 Send to WhatsApp</button>
+        <label class="ghost" style="cursor:pointer; display:inline-block;">📷 Upload Source Document<input type="file" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="uploadToInbox(this, 'audit-upload-result')"></label>
+      </div>
+      <div id="audit-upload-result"></div>
+      <div class="gap-note">DAILY DETAIL is real Lasersoft sales data (date/invoice/item/qty/price — exact). Unit Cost/COGS/GP use today's average cost as an estimate of historical cost — flagged "EST-AVG-COST", not a real historical figure. Rows with no cost data anywhere are flagged "MISSING", never guessed.</div>
+      <div class="section-title">Summary</div>
+      <div class="card" style="overflow-x:auto"><table id="audit-summary-table"><thead><tr><th>Period</th><th>Sales</th><th>Gross Profit</th><th>Expenses</th><th>Net Profit</th><th>Cash</th><th>Card</th><th>Online</th><th>Cheque</th><th>Credit</th><th>Days</th></tr></thead><tbody></tbody></table></div>
+
+      <div class="section-title">Reconciliation — flagged days (Excel vs Lasersoft vs expense-sheet)</div>
+      <div class="card" style="overflow-x:auto"><table id="audit-recon-table"><thead><tr><th>Date</th><th>Excel Total</th><th>Source</th><th>Expense Source</th><th>Conflict Variance</th></tr></thead><tbody></tbody></table></div>
+
+      <div class="section-title">Cash Proof <span class="page-sub" style="display:inline">— opening float LKR 25,000 + cash sales − expenses − payments = closing cash</span></div>
+      <div class="card" style="overflow-x:auto"><table id="audit-cashproof-table"><thead><tr><th>Date</th><th>Cash Sale</th><th>Expenses</th><th>Payments</th><th>Expected Closing</th><th>Actual Closing</th><th>Variance</th></tr></thead><tbody></tbody></table></div>
+
+      <div class="section-title">Exceptions</div>
+      <div class="grid grid-2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="kpi-label">Defaulted expense days</div>
+          <div id="audit-exc-defaulted" style="font-size:12.5px; margin-top:8px; line-height:1.6"></div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Cheque alerts — next 7 days</div>
+          <div id="audit-exc-cheques" style="font-size:12.5px; margin-top:8px; line-height:1.6"></div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Pending reconciliation</div>
+          <div id="audit-exc-pending" style="font-size:12.5px; margin-top:8px; line-height:1.6"></div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">GRN / stock caveats</div>
+          <div id="audit-exc-grn" style="font-size:12.5px; margin-top:8px; line-height:1.6"></div>
+        </div>
+      </div>
+      <div class="gap-note">Card/online settlements can post 1-2 days after the sale date — this is a normal processor delay, not a reconciliation error.</div>
+      <div class="section-title">Audit Flags <span id="audit-flag-count" class="badge badge-amber"></span></div>
+      <div class="card"><table id="audit-flags-table"><thead><tr><th>Date</th><th>Invoice</th><th>Code</th><th>Detail</th></tr></thead><tbody></tbody></table></div>
+
+      <div class="section-title">Staff</div>
+      <div class="card" style="overflow-x:auto; margin-bottom:14px">
+        <table id="audit-staff-table"><thead><tr><th>Name</th><th>Role</th><th>Total Paid</th><th>Commission (stored)</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="flag-locked-note" id="audit-staff-blocked-note"></div>
+
+      <div class="section-title">Commentary</div>
+      <div class="card" id="audit-narrative" style="font-size:13px; line-height:1.6; color:var(--muted)">Not generated — click "Generate" to include AI commentary on the numbers above (optional, local Ollama).</div>
+
+      <div class="section-title">Sign-off</div>
+      <div class="card" id="audit-signoff" style="font-size:13px; line-height:2"></div>
+
+      <div class="section-title">Daily Detail (item-level)</div>
+      <div class="card" style="overflow-x:auto"><table id="audit-detail-table"><thead><tr><th>Date</th><th>Invoice</th><th>Item</th><th>Qty</th><th>Price</th><th>Line Total</th><th>Unit Cost</th><th>COGS</th><th>GP</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-settings">
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-top:0">Change Password</div>
+        <input id="pw-current" type="password" placeholder="Current password" style="width:220px">
+        <input id="pw-new" type="password" placeholder="New password (min 12 chars)" style="width:220px">
+        <button class="primary" onclick="changePassword()">Update Password</button>
+        <div id="pw-msg" style="margin-top:8px; font-size:12px;"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;" id="user-mgmt-card">
+        <div class="section-title" style="margin-top:0">User Management</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <input id="nu-username" placeholder="Username">
+          <input id="nu-name" placeholder="Full name">
+          <input id="nu-password" type="password" placeholder="Password (min 12 chars)">
+          <select id="nu-role"><option value="staff">staff</option><option value="owner">owner</option><option value="admin">admin</option><option value="customer">customer</option></select>
+          <button class="primary" onclick="createUser()">+ Add User</button>
+        </div>
+        <table id="tbl-users"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Created</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-top:0">Appearance</div>
+        <div class="page-sub" style="margin-bottom:10px;">Background theme for the Dashboard and Login screen only — no data, pages, or reports change.</div>
+        <select id="theme-select" onchange="window.NATURE_3D && window.NATURE_3D.setTheme(this.value)"></select>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-top:0">Feature Flags</div>
+        <div class="page-sub" style="margin-bottom:14px;">New modules ship OFF by default. Registry is DB-backed (feature_flags table) — visible and effective for every user, not just this browser.</div>
+        <div id="flag-list"></div>
+      </div>
+
+      <div class="card" id="report-problem-card">
+        <div class="section-title" style="margin-top:0">🛟 Report a Problem</div>
+        <div class="page-sub" style="margin-bottom:10px;">Something broken or behaving strangely? Here's who to contact and how fast to expect a response.</div>
+        <table style="margin-bottom:12px;">
+          <thead><tr><th>Severity</th><th>Examples</th><th>Response &amp; fix target</th></tr></thead>
+          <tbody>
+            <tr><td><b>Critical / Security</b></td><td>System down, login broken, data at risk</td><td><b>2–3 hours</b> (remote-first; on-site where locally available)</td></tr>
+            <tr><td><b>Major bug</b></td><td>Sales, expenses or reports giving wrong results</td><td><b>2–3 hours</b> (remote-first)</td></tr>
+            <tr><td><b>Minor issue / small request</b></td><td>Cosmetic problems, wording, small tweaks</td><td>4–5 business days</td></tr>
+            <tr><td><b>New feature</b></td><td>Anything the system doesn't do today</td><td>Separate quotation — not under support</td></tr>
+          </tbody>
+        </table>
+        <div class="page-sub" style="margin-bottom:6px;">
+          <b>Support contact:</b> <span id="support-contact-name">____________</span>
+          &nbsp;·&nbsp; Phone / WhatsApp: <span id="support-contact-phone">____________</span>
+          &nbsp;·&nbsp; Email: <span id="support-contact-email">____________</span>
+        </div>
+        <div class="page-sub">When reporting: say what you were doing, what you expected, and what happened instead — a photo of the screen helps. For <b>critical</b> issues, call or WhatsApp directly. Full terms: <code>SUPPORT_POLICY.md</code> in the installation folder.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== M8: Dashboard Helper (separate from the existing, currently-off
+     "AI Assistant" nav page which queries /api/nl-query for real data - this
+     is a floating formula/navigation helper with no live data access, named
+     differently on purpose to avoid two "AI Assistant" labels in one app) ===== -->
+<button id="m8-bubble-btn" onclick="m8ToggleChat()" title="Dashboard Helper" aria-label="Open dashboard helper">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</button>
+<div id="m8-chat-panel" class="m8-hidden">
+  <div id="m8-chat-header">
+    <span>Dashboard Helper</span>
+    <button onclick="m8ToggleChat()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div id="m8-chat-messages"></div>
+  <div id="m8-chat-inputrow">
+    <input id="m8-chat-input" type="text" placeholder="Ask about a formula or how to use the app…" onkeydown="if(event.key==='Enter')m8SendMessage()"/>
+    <button onclick="m8SendMessage()" aria-label="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════ STATE (feature flags are DB-backed, not localStorage) ═══
+let ME = null;
+let REP_GRAN = 'daily';
+let FLAGS = []; // array of {module_key, category, label, description, is_core, enabled, built}
+
+async function loadFlags(){
+  FLAGS = await api('/api/feature-flags').catch(()=>[]);
+  applyFlags();
+}
+async function toggleFlag(key, enabled){
+  try{
+    await api(`/api/feature-flags/${key}`, { method:'PATCH', body: JSON.stringify({ enabled }) });
+    await loadFlags();
+    loadSettings();
+  }catch(e){ alert('Could not toggle: ' + e.message); }
+}
+function isEnabled(key){ const f = FLAGS.find(x=>x.module_key===key); return !!f?.enabled; }
+function applyFlags(){
+  document.querySelectorAll('[data-flag]').forEach(el=>{
+    const key = el.dataset.flag;
+    const on = isEnabled(key);
+    el.style.display = on ? '' : 'none'; // hidden from nav entirely when off, not just dimmed
+    const b = document.getElementById('badge-'+key);
+    if (b){ b.textContent = on ? 'ON' : 'OFF'; b.style.background = on ? 'rgba(76,175,125,0.18)' : 'rgba(224,168,40,0.18)'; b.style.color = on ? 'var(--green)' : 'var(--amber)'; }
+  });
+}
+
+// ═══════════════════════ AUTH ═══════════════════════
+async function api(path, opts={}){
+  const r = await fetch(path, { credentials:'same-origin', headers:{'Content-Type':'application/json'}, ...opts });
+  if (r.status === 401){ showLogin(); throw new Error('not authenticated'); }
+  if (!r.ok) throw new Error((await r.json().catch(()=>({error:r.statusText}))).error || r.statusText);
+  return r.json();
+}
+function showLogin(){ document.getElementById('login-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
+function hideLogin(){ document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='flex'; }
+
+async function doLogin(){
+  const username = document.getElementById('li-user').value.trim();
+  const password = document.getElementById('li-pass').value;
+  const err = document.getElementById('li-err');
+  err.textContent = '';
+  try{
+    const r = await fetch('/api/login', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
+    const d = await r.json();
+    if (!r.ok || !d.ok) { err.textContent = d.error || 'Login failed'; return; }
+    ME = d.user; hideLogin(); boot();
+  }catch(e){ err.textContent = e.message; }
+}
+async function doLogout(){ await fetch('/api/logout', { method:'POST', credentials:'same-origin' }); showLogin(); }
+
+async function checkAuth(){
+  try{ const r = await fetch('/api/me', { credentials:'same-origin' }); if (!r.ok) throw 0; ME = await r.json(); hideLogin(); boot(); }
+  catch(e){ showLogin(); }
+}
+
+// ═══════════════════════ NAV ═══════════════════════
+// Command Center dropdown menu (Task 1) — click a nav-trigger to open its
+// dropdown, click elsewhere to close. goPage()'s own selectors (.nav-btn,
+// [data-flag]) are untouched by this - only the open/close UI is new.
+document.querySelectorAll('.nav-item').forEach(item=>{
+  const trigger = item.querySelector('.nav-trigger');
+  trigger?.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+document.addEventListener('click', ()=>document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open')));
+
+function goPage(name){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('open')); // close any open dropdown on nav
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const target = document.getElementById('page-'+name);
+  target.classList.add('active');
+  const titles = {home:'Dashboard', daily:'Daily / Weekly / Monthly', customers:'Customers', credit:'Credit & Aging',
+    suppliers:'Suppliers', staff:'Staff', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
+    pos:'POS Billing', labels:'Barcode Labels', commission:'Staff Commission', assistant:'AI Assistant', settings:'Settings',
+    purchasing:'Purchasing', accounting:'Accounting', staffext:'Staff Extended', reports2:'Reports & Analytics', systools:'System Tools', audit:'Audit & Accounting'};
+  document.getElementById('page-title').textContent = titles[name] || name;
+  document.body.classList.toggle('no-watermark', name === 'pos');
+  const loaders = { home:loadHome, daily:loadDaily, customers:loadCustomers, credit:loadCredit, suppliers:loadSuppliers,
+    staff:loadStaff, cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
+    commission:loadCommission, settings:loadSettings,
+    purchasing:()=>genericTabPage('purchasing'), accounting:()=>genericTabPage('accounting'),
+    staffext:()=>genericTabPage('staffext'), reports2:()=>genericTabPage('reports2'), systools:()=>genericTabPage('systools'), audit:loadAudit };
+  CURRENT_PAGE = name;
+  CURRENT_LOADER = loaders[name] || null;
+  if (loaders[name]) loaders[name]();
+  window.NATURE_3D?.startForPage(name); // 3D only on 'home' — every other data page stays fast, no WebGL cost
+}
+
+// ═══════════════════════ AUTO-REFRESH (every 60s, no more F5) ═══════════════════
+let CURRENT_PAGE = null, CURRENT_LOADER = null;
+const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos']); // don't wipe in-progress form input
+async function manualRefresh(){
+  if (!CURRENT_LOADER) return;
+  const btn = document.getElementById('refresh-btn');
+  btn.style.transition = 'transform 0.6s'; btn.style.transform = 'rotate(360deg)';
+  await CURRENT_LOADER();
+  setTimeout(()=>{ btn.style.transition=''; btn.style.transform=''; }, 650);
+}
+setInterval(()=>{
+  if (CURRENT_LOADER && !AUTO_REFRESH_EXCLUDED.has(CURRENT_PAGE)) CURRENT_LOADER();
+}, 60000);
+
+// ═══════════════════════ ANIMATED COUNTER ═══════════════════════
+function animateCounter(el, target, prefix=''){
+  const start = 0, dur = 700, t0 = performance.now();
+  function tick(t){
+    const p = Math.min(1, (t-t0)/dur);
+    const val = start + (target-start) * (1 - Math.pow(1-p,3));
+    el.textContent = prefix + Math.round(val).toLocaleString('en-US');
+    if (p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function fmt(n){ return (n===null||n===undefined||isNaN(n)) ? null : Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+
+// ═══ GENERIC DOWNLOAD/WHATSAPP ICONS (works on any table's row-object array) ═══
+// One implementation, wired into paginate() below, so every data table site-wide
+// (customers/credit/suppliers/staff/cheques/grn/quotations/all dormant tab modules/
+// audit tables) gets these for free instead of 15+ bespoke handlers.
+function downloadRowsCSV(rows, tableId){
+  if (!rows.length) return alert('Nothing to export yet — load the data first.');
+  const header = Object.keys(rows[0]);
+  const esc = v => { const s = v===null||v===undefined?'':String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const csv = [header, ...rows.map(r=>header.map(h=>r[h]))].map(r=>r.map(esc).join(',')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `${tableId}.csv`; a.click();
+  URL.revokeObjectURL(a.href);
+}
+async function shareRowsWhatsApp(rows, tableId){
+  if (!rows.length) return alert('Nothing to share yet — load the data first.');
+  const to_number = prompt('Send to which WhatsApp number?', '');
+  if (!to_number) return;
+  const header = Object.keys(rows[0]);
+  const lines = rows.slice(0,15).map(r=>header.map(h=>r[h]).join(' | '));
+  let message = `*${BRAND?.company_name || 'Your Business Name'} — ${tableId}*\n${header.join(' | ')}\n${lines.join('\n')}`;
+  if (rows.length > 15) message += `\n…+${rows.length-15} more rows (see Download for full data)`;
+  try{ const res = await api('/send', { method:'POST', body: JSON.stringify({ to: to_number, message }) }); alert(res.success?'Sent.':'Failed: '+(res.error||'unknown')); }
+  catch(e){ alert('Send failed: '+e.message); }
+}
+
+// ═══════════════════════ PAGINATION (client-side, all data tables) ═══════════════
+window.__pagers = window.__pagers || {};
+function paginate(tableId, allRows, colCount, renderRowFn, pageSize=25){
+  const state = { page: 0, query: '' };
+  function filtered(){
+    if (!state.query) return allRows;
+    const q = state.query.toLowerCase();
+    return allRows.filter(row => JSON.stringify(row).toLowerCase().includes(q));
+  }
+  function render(){
+    const rows = filtered();
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    if (state.page >= totalPages) state.page = totalPages - 1;
+    const start = state.page * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
+    document.querySelector(`#${tableId} tbody`).innerHTML =
+      pageRows.map(renderRowFn).join('') || `<tr><td colspan="${colCount}" class="pending">No matching rows</td></tr>`;
+    let bar = document.getElementById(tableId+'-searchbar');
+    if (!bar){
+      bar = document.createElement('div');
+      bar.id = tableId+'-searchbar';
+      bar.style.cssText = 'margin-bottom:8px; display:flex; gap:8px; align-items:center;';
+      bar.innerHTML = `<input placeholder="Search this table..." style="width:220px" oninput="__pagers['${tableId}'].search(this.value)">
+        <button class="ghost" onclick="downloadRowsCSV(window.__pagers['${tableId}'].allRows(), '${tableId}')" title="Download all rows as CSV">⬇</button>
+        <button class="ghost" onclick="shareRowsWhatsApp(window.__pagers['${tableId}'].allRows(), '${tableId}')" title="Share this table on WhatsApp">📤</button>`;
+      document.getElementById(tableId).insertAdjacentElement('beforebegin', bar);
+    }
+    let pager = document.getElementById(tableId+'-pager');
+    if (!pager){
+      pager = document.createElement('div');
+      pager.id = tableId+'-pager';
+      pager.style.cssText = 'display:flex;gap:12px;align-items:center;justify-content:flex-end;padding:10px 2px 0;font-size:12px;color:var(--muted)';
+      document.getElementById(tableId).insertAdjacentElement('afterend', pager);
+    }
+    pager.innerHTML = `<button class="ghost" ${state.page===0?'disabled':''} onclick="__pagers['${tableId}'].prev()">‹ Prev</button>`+
+      `<span>Page ${state.page+1} of ${totalPages} (${rows.length}${rows.length!==allRows.length?` of ${allRows.length}`:''} rows)</span>`+
+      `<button class="ghost" ${state.page>=totalPages-1?'disabled':''} onclick="__pagers['${tableId}'].next()">Next ›</button>`;
+  }
+  window.__pagers[tableId] = {
+    prev(){ if (state.page>0){ state.page--; render(); } },
+    next(){ const totalPages = Math.max(1, Math.ceil(filtered().length / pageSize)); if (state.page<totalPages-1){ state.page++; render(); } },
+    search(q){ state.query = q; state.page = 0; render(); },
+    allRows(){ return filtered(); },
+  };
+  render();
+}
+function kpiCard(label, value, cls, note, onclick){
+  const known = value !== null && value !== undefined;
+  const clickAttrs = onclick ? ` style="cursor:pointer" onclick="${onclick}" title="Click for the breakdown"` : '';
+  return `<div class="card tilt"${clickAttrs}><div class="kpi-label">${label}${onclick?' 🔍':''}</div><div class="kpi-value ${known?cls:'amber'} counter" data-target="${known?value:0}">${known?'':'PENDING'}</div>${note?`<div class="page-sub" style="margin-top:6px">${note}</div>`:''}</div>`;
+}
+
+// ═══ GENERIC CLICKABLE BREAKDOWN (Net Profit / Gross Profit / Total Sale) ═══
+// audit.md item 4: click a summary box, see what built the number, from real data.
+function openModal(title, bodyHtml){
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'generic-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = (e)=>{ if (e.target===overlay) closeModal(); };
+  overlay.innerHTML = `<div class="card" style="max-width:720px;width:100%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button class="ghost" style="position:absolute;top:12px;right:12px;" onclick="closeModal()">✕</button>
+    <div class="section-title" style="margin-top:0">${title}</div>
+    ${bodyHtml}
+  </div>`;
+  document.body.appendChild(overlay);
+}
+function closeModal(){ document.getElementById('generic-modal-overlay')?.remove(); }
+
+async function showBreakdown(type, date){
+  if (!date) return alert('No date on this card yet — try again once data has loaded.');
+  if (type === 'net_profit'){
+    const rows = await api(`/api/daily-summary?date=${date}`).catch(()=>[]);
+    const r = rows[0];
+    if (!r) return openModal(`Net Profit — ${date}`, `<div class="gap-note">No daily_summary row for this date.</div>`);
+    const gp = r.gp_status==='NOT_AVAILABLE' ? null : r.gross_profit;
+    return openModal(`Net Profit — ${date}`, `<div style="font-size:14px;line-height:1.9">
+      Gross Profit: <b>${gp==null?'<span class="pending">PENDING</span>':'LKR '+fmt(gp)}</b><br>
+      − Expenses: <b>${r.total_expenses==null?'<span class="pending">PENDING</span>':'LKR '+fmt(r.total_expenses)}</b><br>
+      = Net Profit: <b style="color:${r.net_profit>=0?'var(--green)':'var(--red)'}">${r.net_profit==null?'PENDING':'LKR '+fmt(r.net_profit)}</b>
+    </div>`);
+  }
+  // gross_profit / total_sale: real item-level invoice data (audit_invoice_items).
+  const items = await api(`/api/audit/daily-detail?from=${date}&to=${date}`).catch(()=>[]);
+  const title = `${type==='gross_profit'?'Gross Profit':'Total Sale'} — ${date}`;
+  if (!items.length) {
+    return openModal(title, `<div class="gap-note">No item-level invoice data imported for this date — item-level import currently covers the range in DSBD.txt, not every historical date. The day total is still real (from daily_summary), just not broken down to invoice level here yet.</div>`);
+  }
+  const byInvoice = {};
+  items.forEach(it => {
+    byInvoice[it.invoice_no] = byInvoice[it.invoice_no] || { total: 0, gp: 0, items: 0, missingCost: false };
+    byInvoice[it.invoice_no].total += Number(it.line_total);
+    byInvoice[it.invoice_no].gp += it.line_gp != null ? Number(it.line_gp) : 0;
+    byInvoice[it.invoice_no].items += 1;
+    if (it.cost_source === 'MISSING') byInvoice[it.invoice_no].missingCost = true;
+  });
+  const invoiceRows = Object.entries(byInvoice).map(([inv, v]) =>
+    `<tr><td>${inv}</td><td>${v.items}</td><td>${fmt(v.total)}</td><td>${v.missingCost?'<span class="pending">~'+fmt(v.gp)+'</span>':fmt(v.gp)}</td></tr>`).join('');
+  let paymentNote = '';
+  if (type === 'total_sale') {
+    const dsRows = await api(`/api/daily-summary?date=${date}`).catch(()=>[]);
+    const r = dsRows[0];
+    if (r) paymentNote = `<div class="gap-note" style="margin-bottom:10px">Payment split is tracked per day, not per invoice: Cash ${fmt(r.cash_sale)??'0'} | Card ${fmt(r.card_sale)??'0'} | Online ${fmt(r.online_sale)??'0'} | Cheque ${fmt(r.cheq_payment)??'0'} | Credit ${fmt(r.credit_sale)??'0'}.</div>`;
+  }
+  openModal(`${title} (${Object.keys(byInvoice).length} invoices)`,
+    `${paymentNote}<table><thead><tr><th>Invoice</th><th>Items</th><th>Line Total</th><th>Line GP</th></tr></thead><tbody>${invoiceRows}</tbody></table>`);
+}
+function goToDailyDate(dateStr){
+  goPage('daily');
+  const di = document.getElementById('daily-date');
+  if (di) { di.value = dateStr; setGran('daily'); }
+}
+// ═══════════════════════ GLOBAL SEARCH ═══════════════════════
+let _globalSearchTimer = null;
+let _globalSearchCache = null;
+async function globalSearch(q){
+  clearTimeout(_globalSearchTimer);
+  const resultsEl = document.getElementById('global-search-results');
+  if (!q || q.length < 2){ resultsEl.style.display = 'none'; return; }
+  _globalSearchTimer = setTimeout(async () => {
+    if (!_globalSearchCache){
+      const [customers, suppliers, staff, quotations] = await Promise.all([
+        api('/api/customers').catch(()=>[]), api('/api/suppliers').catch(()=>[]),
+        api('/api/staff').catch(()=>[]), api('/api/quotations').catch(()=>[]),
+      ]);
+      _globalSearchCache = [
+        ...customers.map(c=>({type:'Customer', label:c.name, page:'customers'})),
+        ...suppliers.map(s=>({type:'Supplier', label:s.name, page:'suppliers'})),
+        ...staff.map(s=>({type:'Staff', label:s.name, page:'staff'})),
+        ...quotations.map(qq=>({type:'Quotation', label:qq.customer_name, page:'quotations'})),
+      ];
+    }
+    const ql = q.toLowerCase();
+    const matches = _globalSearchCache.filter(x => (x.label||'').toLowerCase().includes(ql)).slice(0, 15);
+    resultsEl.innerHTML = matches.map(m =>
+      `<div style="padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--glass-border)" onmousedown="goPage('${m.page}')">
+        <span class="badge badge-amber">${m.type}</span> ${m.label}
+      </div>`).join('') || `<div style="padding:10px 14px; color:var(--muted)">No matches</div>`;
+    resultsEl.style.display = 'block';
+  }, 200);
+}
+
+function toggleNpBreakdown(){
+  const el = document.getElementById('np-breakdown');
+  if (el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+function mountCounters(container){
+  container.querySelectorAll('.counter[data-target]').forEach(el=>{
+    if (el.textContent === 'PENDING') return;
+    animateCounter(el, Number(el.dataset.target), 'LKR ');
+  });
+}
+
+// ═══════════════════════ HOME ═══════════════════════
+// Date navigator (Task 1, Command Center) — null means "show the latest
+// closed day" (the original behavior, unchanged). Once the user clicks
+// prev/next/the date pill, this pins to that exact date until they hit
+// the "jump to latest" button. HOME_DISPLAYED_DATE is always the date
+// actually on screen right now — DAY REPORT downloads that exact date.
+let HOME_SELECTED_DATE = null;
+let HOME_DISPLAYED_DATE = null;
+
+async function loadHome(){
+  // CORE FIX: "today" must show the LATEST CLOSED day labeled with its own date,
+  // never zeros from an unclosed/missing today row. /api/daily-summary?latest=1
+  // already implements "most recent day with data, on or before today".
+  const [dayRows, recent] = await Promise.all([
+    HOME_SELECTED_DATE
+      ? api(`/api/daily-summary?date=${HOME_SELECTED_DATE}`).catch(()=>[])
+      : api('/api/daily-summary?latest=1').catch(()=>[]),
+    api('/api/daily-summary?limit=7').catch(()=>[]),
+  ]);
+  const latest = dayRows[0];
+  const el = document.getElementById('home-kpis');
+  const sub = document.getElementById('page-sub');
+  const dateDisplayEl = document.getElementById('home-date-display');
+  const datePickerEl = document.getElementById('home-date-picker');
+  HOME_DISPLAYED_DATE = latest ? (latest.date_str || latest.report_date) : HOME_SELECTED_DATE;
+  if (dateDisplayEl) dateDisplayEl.textContent = HOME_DISPLAYED_DATE || 'No data';
+  if (datePickerEl && HOME_DISPLAYED_DATE) datePickerEl.value = HOME_DISPLAYED_DATE;
+
+  // pending-data-entry notice (2026-07-04) — a data gap (e.g. no rows yet for
+  // today/recent days) should never look like a system failure. Reuses the
+  // existing .gap-note styling already on this page, no new visual design.
+  // Only shown in "latest" mode — a manually-navigated-to old date isn't a gap.
+  const noticeEl = document.getElementById('pending-data-notice');
+  if (!HOME_SELECTED_DATE && latest && noticeEl) {
+    const latestDate = new Date((latest.date_str || latest.report_date) + 'T00:00:00');
+    const nowDate = new Date(); nowDate.setHours(0,0,0,0);
+    const gapDays = Math.round((nowDate - latestDate) / 86400000);
+    if (gapDays > 1) {
+      const missing = gapDays - 1;
+      noticeEl.textContent = `${missing} day${missing>1?'s':''} awaiting data entry (${latest.date_str||latest.report_date} is the most recent day with data) — not a system error, just not entered yet.`;
+      noticeEl.style.display = '';
+    } else {
+      noticeEl.style.display = 'none';
+    }
+  } else if (noticeEl) {
+    noticeEl.style.display = 'none';
+  }
+
+  if (!latest){
+    el.innerHTML = `<div class="kpi-card card" style="grid-column:1/-1"><div class="gap-note" style="margin:0">${HOME_SELECTED_DATE ? `No daily_summary row for ${HOME_SELECTED_DATE}.` : 'No closed day found in daily_summary at all.'}</div></div>`;
+    if (sub) sub.textContent = HOME_SELECTED_DATE ? 'No data for this date' : 'No data';
+  } else {
+    if (sub) sub.textContent = HOME_SELECTED_DATE
+      ? `Showing ${latest.date_str || latest.report_date}`
+      : `Latest closed day: ${latest.date_str || latest.report_date} — never showing today's unclosed zeros`;
+    const np = latest.net_profit!=null ? Number(latest.net_profit) : null;
+    el.innerHTML =
+      kpiCard(`Total Sale (${latest.date_str})`, latest.total_sale!=null?Number(latest.total_sale):null, 'gold', null, `showBreakdown('total_sale','${latest.date_str}')`) +
+      kpiCard(`Net Profit (${latest.date_str})`, np, np>=0?'green':'red', null, `showBreakdown('net_profit','${latest.date_str}')`) +
+      kpiCard(`Cash In Hand (${latest.date_str})`, latest.cash_in_hand!=null?Number(latest.cash_in_hand):null, 'green') +
+      kpiCard(`Expenses (${latest.date_str})`, latest.total_expenses!=null?Number(latest.total_expenses):null, 'amber');
+    el.querySelectorAll(':scope > div').forEach(c=>c.classList.add('kpi-card'));
+    mountCounters(el);
+  }
+  const tb = document.querySelector('#home-recent tbody');
+  tb.innerHTML = recent.map(r=>`<tr style="cursor:pointer" onclick="goToDailyDate('${r.date_str||r.report_date}')" title="Click for this day's full breakdown">
+    <td>${r.date_str||r.report_date}</td>
+    <td>${fmt(r.total_sale)??'<span class="pending">PENDING</span>'}</td>
+    <td>${fmt(r.total_expenses)??'<span class="pending">PENDING</span>'}</td>
+    <td>${r.net_profit==null?'<span class="pending">PENDING</span>':fmt(r.net_profit)}</td>
+    <td><span class="badge badge-${r.day_status==='VERIFIED'?'green':r.day_status==='CONFIRMED'?'green':'amber'}">${r.day_status||'—'}</span></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="pending">No data</td></tr>';
+}
+
+function shiftHomeDate(deltaDays){
+  const base = HOME_DISPLAYED_DATE || todayStr();
+  const d = new Date(base + 'T00:00:00');
+  d.setDate(d.getDate() + deltaDays);
+  HOME_SELECTED_DATE = fmtISODate(d);
+  loadHome();
+}
+function fmtISODate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function resetHomeToLatest(){ HOME_SELECTED_DATE = null; loadHome(); }
+function downloadDayReport(){
+  if (!HOME_DISPLAYED_DATE) return alert('No date loaded yet — try again once data has loaded.');
+  window.open(`/api/report-download?date=${HOME_DISPLAYED_DATE}&detail=full`, '_blank');
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('home-date-prev')?.addEventListener('click', ()=>shiftHomeDate(-1));
+  document.getElementById('home-date-next')?.addEventListener('click', ()=>shiftHomeDate(1));
+  document.getElementById('home-date-refresh')?.addEventListener('click', ()=>loadHome());
+  document.getElementById('home-date-today')?.addEventListener('click', resetHomeToLatest);
+  document.getElementById('home-date-picker')?.addEventListener('change', (e)=>{
+    if (e.target.value) { HOME_SELECTED_DATE = e.target.value; loadHome(); }
+  });
+});
+
+// ═══════════════════════ DAILY / WEEKLY / MONTHLY ═══════════════════════
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function setGran(g){ REP_GRAN = g; ['daily','weekly','monthly'].forEach(x=>document.getElementById('gran-'+x).style.background = x===g?'rgba(201,162,39,0.2)':''); loadDaily(); }
+document.addEventListener('DOMContentLoaded', ()=>{ const di=document.getElementById('daily-date'); if(di) di.value = todayStr(); });
+
+async function loadDaily(){
+  const date = document.getElementById('daily-date').value || todayStr();
+  const kpiEl = document.getElementById('daily-kpis');
+  const detailEl = document.getElementById('daily-detail');
+  if (REP_GRAN === 'daily'){
+    const rows = await api(`/api/daily-summary?date=${date}`).catch(()=>[]);
+    const r = rows[0];
+    LAST_DAILY_ROW = r || null;
+    if (!r){ kpiEl.innerHTML=''; detailEl.innerHTML = `<div class="gap-note">No daily_summary row for ${date} — day not uploaded yet.</div>`; return; }
+    kpiEl.innerHTML =
+      kpiCard('Total Sale', r.total_sale, 'gold', null, `showBreakdown('total_sale','${date}')`) +
+      kpiCard('Gross Profit', r.gp_status==='NOT_AVAILABLE'?null:r.gross_profit, 'green', null, `showBreakdown('gross_profit','${date}')`) +
+      kpiCard('Expenses', r.total_expenses, 'amber') +
+      kpiCard('Net Profit', r.net_profit, r.net_profit>=0?'green':'red') +
+      `<div class="card tilt" style="cursor:pointer; grid-column:1/-1" onclick="toggleNpBreakdown()">
+        <div class="kpi-label">Click to expand: Net Profit breakdown</div>
+        <div id="np-breakdown" style="display:none; margin-top:10px; font-size:13px;">
+          Net Profit = Gross Profit − Expenses<br>
+          ${r.gp_status==='NOT_AVAILABLE'?'PENDING':fmt(r.gross_profit)} − ${fmt(r.total_expenses)??'PENDING'} =
+          <b style="color:${r.net_profit>=0?'var(--green)':'var(--red)'}">${r.net_profit==null?'PENDING':fmt(r.net_profit)}</b>
+        </div>
+      </div>`;
+    mountCounters(kpiEl);
+    detailEl.innerHTML = `<table>
+      <tr><th>Cash</th><td>${fmt(r.cash_sale)??'<span class="pending">PENDING</span>'}</td>
+          <th>Card</th><td>${fmt(r.card_sale)??'0'}</td></tr>
+      <tr><th>Online</th><td>${fmt(r.online_sale)??'0'}</td>
+          <th>Cheque</th><td>${fmt(r.cheq_payment)??'0'}</td></tr>
+      <tr><th>Credit</th><td>${fmt(r.credit_sale)??'0'}</td>
+          <th>Status</th><td><span class="badge badge-${r.day_status==='VERIFIED'?'green':'amber'}">${r.day_status}</span> / GP: ${r.gp_status}</td></tr>
+    </table>`;
+  } else if (REP_GRAN === 'weekly'){
+    const [y,m,d] = date.split('-').map(Number);
+    const dt = new Date(Date.UTC(y,m-1,d));
+    const day = dt.getUTCDay();
+    dt.setUTCDate(dt.getUTCDate() + (day===0?-6:1-day));
+    const weekStart = dt.toISOString().slice(0,10);
+    const data = await api(`/api/weekly-detail?start=${weekStart}`).catch(()=>({days:[],totals:{}}));
+    const t = data.totals||{};
+    kpiEl.innerHTML =
+      kpiCard('Week Total Sale', t.total_sale, 'gold') +
+      kpiCard('Week Net Profit', t.net_profit, 'green') +
+      kpiCard('Days w/ GP', t.gp_days, 'amber') +
+      kpiCard('Total Days', t.total_days, 'gold');
+    mountCounters(kpiEl);
+    detailEl.innerHTML = `<table><thead><tr><th>Date</th><th>Sale</th><th>Net Profit</th></tr></thead><tbody>` +
+      (data.days||[]).map(r=>`<tr style="cursor:pointer" onclick="goToDailyDate('${r.date_str||r.report_date}')" title="Click for this day's full breakdown"><td>${r.date_str||r.report_date}</td><td>${fmt(r.total_sale)}</td><td>${r.net_profit==null?'<span class="pending">PENDING</span>':fmt(r.net_profit)}</td></tr>`).join('') +
+      `</tbody></table>`;
+  } else {
+    const month = date.slice(0,7);
+    const data = await api(`/api/monthly-detail?month=${month}`).catch(()=>({days:[],totals:{}}));
+    const t = data.totals||{};
+    kpiEl.innerHTML =
+      kpiCard('Month Total Sale', t.total_sale, 'gold') +
+      kpiCard('Month Net Profit', t.net_profit, 'green') +
+      kpiCard('Days w/ GP', t.gp_days, 'amber') +
+      kpiCard('Total Days', t.total_days, 'gold');
+    mountCounters(kpiEl);
+    detailEl.innerHTML = `<table><thead><tr><th>Date</th><th>Sale</th><th>Net Profit</th></tr></thead><tbody>` +
+      (data.days||[]).map(r=>`<tr style="cursor:pointer" onclick="goToDailyDate('${r.date_str||r.report_date}')" title="Click for this day's full breakdown"><td>${r.date_str||r.report_date}</td><td>${fmt(r.total_sale)}</td><td>${r.net_profit==null?'<span class="pending">PENDING</span>':fmt(r.net_profit)}</td></tr>`).join('') +
+      `</tbody></table>`;
+  }
+}
+
+// ═══════════════════════ CUSTOMERS ═══════════════════════
+async function loadCustomers(){
+  const rows = await api('/api/customers').catch(()=>[]);
+  paginate('tbl-customers', rows, 6, c=>`<tr>
+    <td>${c.name||'—'}</td><td>${c.phone||'—'}</td><td>${c.whatsapp||'—'}</td><td>${c.location||'—'}</td><td>${c.source||'—'}</td>
+    <td>${c.last_contact?new Date(c.last_contact).toLocaleDateString('en-GB'):'—'}</td></tr>`);
+}
+
+// ═══════════════════════ CREDIT & AGING ═══════════════════════
+async function loadCredit(){
+  const rows = await api('/api/credit-customers').catch(()=>[]);
+  const today = new Date();
+  let cur=0, b61=0, b90=0;
+  const withAge = rows.map(r=>{
+    const due = r.due_date_str ? new Date(r.due_date_str+'T00:00:00') : null;
+    const age = due ? Math.floor((today-due)/86400000) : null;
+    let bucket = 'current';
+    if (age!==null && age>90) bucket='90+'; else if (age!==null && age>60) bucket='61-90';
+    const amt = Number(r.amount||r.balance||r.invoice_total||0);
+    if (bucket==='current') cur+=amt; else if (bucket==='61-90') b61+=amt; else if (bucket==='90+') b90+=amt;
+    return {...r, age, bucket, amt};
+  });
+  const bEl = document.getElementById('credit-buckets');
+  bEl.innerHTML = kpiCard('Current (0-60d)', cur, 'green') + kpiCard('61-90 days', b61, 'amber') + kpiCard('90+ days', b90, 'red');
+  mountCounters(bEl);
+  paginate('tbl-credit', withAge, 7, r=>`<tr>
+    <td>${r.customer_name||'—'}</td><td>${r.phone||'—'}</td><td>${r.invoice_date_str||'—'}</td><td>${r.due_date_str||'—'}</td>
+    <td>${fmt(r.amt)}</td><td>${r.age===null?'—':r.age+'d'}</td>
+    <td><span class="badge badge-${r.bucket==='current'?'green':r.bucket==='61-90'?'amber':'red'}">${r.bucket}</span></td></tr>`);
+}
+
+// ═══════════════════════ SUPPLIERS ═══════════════════════
+async function loadSuppliers(){
+  const rows = await api('/api/suppliers').catch(()=>[]);
+  paginate('tbl-suppliers', rows, 5, s=>`<tr>
+    <td>${s.name||'—'}</td><td>${s.phone||'—'}</td><td>${fmt(s.total_paid)??'0'}</td>
+    <td>${s.last_payment?new Date(s.last_payment).toLocaleDateString('en-GB')+` (${s.days_since_payment}d ago)`:'<span class="pending">No payment on record</span>'}</td>
+    <td>${s.pending_cheques??'0'}</td></tr>`);
+}
+
+// ═══════════════════════ STAFF ═══════════════════════
+async function loadStaff(){
+  const rows = await api('/api/staff').catch(()=>[]);
+  paginate('tbl-staff', rows, 5, s=>`<tr>
+    <td>${s.name||'—'}</td><td>${s.role||'—'}</td><td>${fmt(s.total_salary)??'0'}</td><td>${fmt(s.total_commission)??'0'}</td><td>${fmt(s.outstanding)??'0'}</td></tr>`);
+}
+
+// ═══════════════════════ CHEQUES ═══════════════════════
+async function loadCheques(){
+  const rows = await api('/api/cheques').catch(()=>[]);
+  paginate('tbl-cheques', rows, 5, c=>`<tr>
+    <td>${c.name||c.payee||'—'}</td><td>${c.cheque_number||c.cheque_no||'—'}</td><td>${fmt(c.amount)}</td>
+    <td>${c.due_date?new Date(c.due_date).toLocaleDateString('en-GB'):'—'}</td>
+    <td><span class="badge badge-${c.status==='CLEARED'?'green':c.status==='BOUNCED'?'red':'amber'}">${c.status||'PENDING'}</span></td></tr>`);
+}
+
+// ═══════════════════════ GRN / INVENTORY ═══════════════════════
+async function loadGrn(){
+  const rows = await api('/api/grn').catch(()=>[]);
+  paginate('tbl-grn', rows, 9, g=>`<tr>
+    <td>${g.grn_number||'—'}</td><td>${g.supplier_name||'—'}</td><td>${g.grn_date||'—'}</td><td>${g.item_description||'—'}</td>
+    <td>${g.quantity??'—'}</td><td>${fmt(g.unit_cost)??'—'}</td><td>${fmt(g.total_amount)??'—'}</td>
+    <td><span class="badge badge-${g.status==='APPROVED'?'green':'amber'}">${g.status||'—'}</span></td>
+    <td>${g.caveat_flag?`<span class="badge badge-red" title="${g.caveat_note||''}">⚠ CAVEAT</span>`:'—'}</td></tr>`);
+}
+async function addGrn(){
+  const body = {
+    grn_number: document.getElementById('grn-number').value || null,
+    supplier_name: document.getElementById('grn-supplier').value || null,
+    grn_date: document.getElementById('grn-date').value || null,
+    item_description: document.getElementById('grn-item').value || null,
+    quantity: Number(document.getElementById('grn-qty').value) || null,
+    unit_cost: Number(document.getElementById('grn-cost').value) || null,
+  };
+  body.total_amount = (body.quantity && body.unit_cost) ? body.quantity*body.unit_cost : null;
+  try{
+    const created = await api('/api/grn', { method:'POST', body: JSON.stringify(body) });
+    const caveat = document.getElementById('grn-caveat').checked;
+    if (caveat) await api(`/api/grn/${created.id}`, { method:'PATCH', body: JSON.stringify({ caveat_flag:true, caveat_note:'Flagged at entry' }) });
+    ['grn-number','grn-supplier','grn-date','grn-item','grn-qty','grn-cost'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('grn-caveat').checked=false;
+    loadGrn();
+  }catch(e){ alert('GRN add failed: '+e.message); }
+}
+
+// ═══════════════════════ QUOTATIONS ═══════════════════════
+async function loadQuotations(){
+  const rows = await api('/api/quotations').catch(()=>[]);
+  paginate('tbl-quotations', rows, 5, q=>`<tr>
+    <td>${q.customer_name||'—'}</td><td>${q.item_count??'0'}</td><td>${fmt(q.total_amount||q.total)??'—'}</td>
+    <td><span class="badge badge-amber">${q.status||'DRAFT'}</span></td><td>${q.created_at?new Date(q.created_at).toLocaleDateString('en-GB'):'—'}</td></tr>`);
+}
+
+// ═══════════════════════ POS BILLING (flagged, real data) ═══════════════════════
+let POS_CART = [];
+let PRODUCTS_CACHE = null;
+async function ensureProducts(){ if (!PRODUCTS_CACHE) PRODUCTS_CACHE = await api('/api/products').catch(()=>[]); return PRODUCTS_CACHE; }
+async function posAddByCode(){
+  const code = document.getElementById('pos-barcode').value.trim();
+  if (!code) return;
+  const products = await ensureProducts();
+  const p = products.find(x=>x.item_code === code) || { item_code: code, name: '(not in product list — manual entry)' };
+  POS_CART.push({ code:p.item_code, name:p.name, qty:1, price:0 });
+  document.getElementById('pos-barcode').value = '';
+  renderPosCart();
+}
+function renderPosCart(){
+  const el = document.getElementById('pos-cart');
+  el.innerHTML = POS_CART.map((it,i)=>`<div class="pos-cart-row">
+    <span style="flex:1">${it.name} <span style="color:var(--muted)">(${it.code})</span></span>
+    <input type="number" value="${it.qty}" style="width:50px" onchange="POS_CART[${i}].qty=Number(this.value);posRecalc()">
+    <input type="number" value="${it.price}" placeholder="price" style="width:80px" onchange="POS_CART[${i}].price=Number(this.value);posRecalc()">
+    <button class="ghost" onclick="POS_CART.splice(${i},1);renderPosCart()">✕</button>
+  </div>`).join('') || '<div class="page-sub">Cart empty — scan or type an item code above.</div>';
+  posRecalc();
+}
+function posCartTotal(){ return POS_CART.reduce((s,it)=>s+it.qty*it.price,0); }
+function posRecalc(){ document.getElementById('pos-total').textContent = 'LKR ' + posCartTotal().toLocaleString('en-US'); posRecalcSplit(); }
+function posRecalcSplit(){
+  const total = posCartTotal();
+  const split = ['cash','card','online','cheque','credit'].reduce((s,k)=>s+Number(document.getElementById('pos-'+k).value||0),0);
+  const diff = total - split;
+  const el = document.getElementById('pos-split-check');
+  el.innerHTML = diff===0
+    ? `<span class="badge badge-green">MATCH — split covers total</span>`
+    : `<span class="badge badge-red">MISMATCH — diff LKR ${diff.toLocaleString('en-US')}</span>`;
+}
+// ═══════════════════════ EXPORT + WHATSAPP SHARE (Daily report) ══════════════
+let LAST_DAILY_ROW = null; // set by loadDaily(), used for export/share
+function exportReport(kind){
+  const date = document.getElementById('daily-date').value || todayStr();
+  if (kind === 'excel'){
+    window.location.href = `/api/report-download?date=${date}`;
+    return;
+  }
+  // PDF via print-to-PDF (no extra library — "Save as PDF" in the print dialog).
+  const r = LAST_DAILY_ROW;
+  if (!r){ alert('No data loaded for this date yet.'); return; }
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>${date} Report</title></head><body style="font-family:sans-serif;padding:20px">
+    <h2>${BRAND?.company_name || 'Your Business Name'} — Daily Report</h2>
+    <h3>${date}</h3>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;font-size:14px">
+      <tr><th align="left">Total Sale</th><td>${fmt(r.total_sale)??'PENDING'}</td></tr>
+      <tr><th align="left">Gross Profit</th><td>${r.gp_status==='NOT_AVAILABLE'?'PENDING':fmt(r.gross_profit)}</td></tr>
+      <tr><th align="left">Expenses</th><td>${fmt(r.total_expenses)??'PENDING'}</td></tr>
+      <tr><th align="left">Net Profit</th><td>${r.net_profit==null?'PENDING':fmt(r.net_profit)}</td></tr>
+      <tr><th align="left">Cash</th><td>${fmt(r.cash_sale)??'0'}</td></tr>
+      <tr><th align="left">Card</th><td>${fmt(r.card_sale)??'0'}</td></tr>
+      <tr><th align="left">Online</th><td>${fmt(r.online_sale)??'0'}</td></tr>
+      <tr><th align="left">Cheque</th><td>${fmt(r.cheq_payment)??'0'}</td></tr>
+      <tr><th align="left">Credit</th><td>${fmt(r.credit_sale)??'0'}</td></tr>
+      <tr><th align="left">Status</th><td>${r.day_status} / GP: ${r.gp_status}</td></tr>
+    </table>
+    <p style="color:#888;font-size:11px">Generated ${new Date().toLocaleString()}</p>
+  </body></html>`);
+  w.document.close(); w.print();
+}
+async function shareToWhatsApp(){
+  const date = document.getElementById('daily-date').value || todayStr();
+  const r = LAST_DAILY_ROW;
+  if (!r){ alert('No data loaded for this date yet.'); return; }
+  const to = prompt('Send this report to which WhatsApp number? (digits only, country code first)', '');
+  if (!to) return;
+  const npText = r.net_profit==null ? 'PENDING' : `LKR ${fmt(r.net_profit)}`;
+  const message = `*${BRAND?.company_name || 'Your Business Name'} — ${date}*\nTotal Sale: LKR ${fmt(r.total_sale)??'PENDING'}\nExpenses: LKR ${fmt(r.total_expenses)??'PENDING'}\nNet Profit: ${npText}\nStatus: ${r.day_status}`;
+  try{
+    const res = await api('/send', { method:'POST', body: JSON.stringify({ to, message }) });
+    alert(res.success ? 'Sent.' : ('Failed: ' + (res.error||'unknown')));
+  }catch(e){ alert('Send failed: ' + e.message); }
+}
+
+function posPrintReceipt(){
+  const w = window.open('', '_blank');
+  const rows = POS_CART.map(it=>`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.price}</td><td>${it.qty*it.price}</td></tr>`).join('');
+  w.document.write(`<html><head><title>Receipt</title></head><body style="font-family:monospace">
+    <h3>${BRAND?.company_name || 'Your Business Name'}</h3><p>${new Date().toLocaleString()}</p>
+    <table border="1" cellpadding="4" style="border-collapse:collapse;width:100%">
+    <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows}</table>
+    <h3>Total: LKR ${posCartTotal().toLocaleString('en-US')}</h3></body></html>`);
+  w.document.close(); w.print();
+}
+
+// ═══════════════════════ BARCODE LABELS (flagged, minimal offline Code-128) ═══════════════════════
+// Compact Code-128B encoder — pattern table trimmed to printable ASCII 32-95 subset used by item codes.
+const C128_PATTERNS = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
+function encodeCode128B(text){
+  let bars = ['211214']; // START-B
+  let sum = 104;
+  for (let i=0;i<text.length;i++){
+    const v = text.charCodeAt(i) - 32;
+    if (v<0||v>94) continue;
+    bars.push(C128_PATTERNS[v]);
+    sum += v * (i+1);
+  }
+  bars.push(C128_PATTERNS[sum % 103]);
+  bars.push(C128_PATTERNS[106]); // STOP
+  return bars.join('');
+}
+function renderBarcodeSVG(text, width=140, height=44){
+  const pattern = encodeCode128B(text);
+  let x = 0; const bars = [];
+  const scale = width / pattern.length;
+  for (let i=0;i<pattern.length;i++){
+    const w = Number(pattern[i]) * scale;
+    if (i % 2 === 0) bars.push(`<rect x="${x}" y="0" width="${w}" height="${height-14}" fill="#000"/>`);
+    x += w;
+  }
+  return `<svg width="${width}" height="${height}" style="background:#fff">${bars.join('')}<text x="${width/2}" y="${height-2}" font-size="9" text-anchor="middle" fill="#000">${text}</text></svg>`;
+}
+async function loadLabelsProducts(){
+  const products = await ensureProducts();
+  document.getElementById('labels-product').innerHTML = products.map(p=>`<option value="${p.item_code}">${p.item_code} — ${p.name}</option>`).join('');
+}
+function addLabel(){
+  const code = document.getElementById('labels-product').value;
+  const qty = Number(document.getElementById('labels-qty').value)||1;
+  const sheet = document.getElementById('labels-sheet');
+  for (let i=0;i<qty;i++){
+    const div = document.createElement('div');
+    div.className = 'barcode-label';
+    div.innerHTML = renderBarcodeSVG(code);
+    sheet.appendChild(div);
+  }
+}
+
+// ═══════════════════════ COMMISSION (flagged, honest gap) ═══════════════════════
+async function loadCommission(){
+  const [staff, pp] = await Promise.all([ api('/api/staff').catch(()=>[]), api('/api/pay-period-summary').catch(()=>null) ]);
+  document.getElementById('pay-period-card').innerHTML = pp
+    ? `<div class="kpi-label">Current Pay Period (25th → 24th)</div><div class="kpi-value gold">${pp.total_days||'—'} days tracked</div>`
+    : `<div class="gap-note">Pay period summary unavailable.</div>`;
+  document.querySelector('#tbl-commission tbody').innerHTML = staff.map(s=>`<tr>
+    <td>${s.name||'—'}</td><td>${fmt(s.total_salary)??'0'}</td><td>${fmt(s.total_commission)??'0'}</td><td>${fmt(s.outstanding)??'0'}</td></tr>`).join('') || '<tr><td colspan="4" class="pending">No staff</td></tr>';
+  window.__commissionRows = staff.map(s=>({ Staff: s.name||'—', 'Total Salary': fmt(s.total_salary)??'0', 'Total Commission': fmt(s.total_commission)??'0', 'Loans Outstanding': fmt(s.outstanding)??'0' }));
+}
+
+// ═══════════════════════ AI ASSISTANT (flagged, real /api/nl-query) ═══════════════════════
+async function sendChat(){
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim(); if (!q) return;
+  const log = document.getElementById('chat-log');
+  log.innerHTML += `<div class="chat-bubble user">${q}</div>`;
+  input.value = '';
+  log.scrollTop = log.scrollHeight;
+  try{
+    const r = await api('/api/nl-query', { method:'POST', body: JSON.stringify({ question:q }) });
+    log.innerHTML += `<div class="chat-bubble">${r.answer || r.message || JSON.stringify(r)}</div>`;
+  }catch(e){ log.innerHTML += `<div class="chat-bubble err-flag">Error: ${e.message}</div>`; }
+  log.scrollTop = log.scrollHeight;
+}
+
+// ═══════════════════════ SETTINGS ═══════════════════════
+async function changePassword(){
+  const current = document.getElementById('pw-current').value;
+  const newPassword = document.getElementById('pw-new').value;
+  const msg = document.getElementById('pw-msg');
+  try{
+    await api('/api/auth/change-password', { method:'POST', body: JSON.stringify({ current, newPassword }) });
+    msg.innerHTML = '<span style="color:var(--green)">Password updated.</span>';
+    document.getElementById('pw-current').value = ''; document.getElementById('pw-new').value = '';
+  }catch(e){ msg.innerHTML = `<span class="err-flag">${e.message}</span>`; }
+}
+async function loadUsers(){
+  try{
+    const rows = await api('/api/users');
+    document.querySelector('#tbl-users tbody').innerHTML = rows.map(u=>`<tr>
+      <td>${u.username}</td><td>${u.name}</td>
+      <td><select onchange="updateUserRole(${u.id}, this.value)">
+        ${['staff','owner','admin','customer'].map(r=>`<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
+      </select></td>
+      <td>${u.created_at?new Date(u.created_at).toLocaleDateString('en-GB'):'—'}</td></tr>`).join('') || '<tr><td colspan="4" class="pending">No users</td></tr>';
+    document.getElementById('user-mgmt-card').style.display = '';
+  }catch(e){
+    // Not owner/admin - the generic RBAC gate already blocked us. Hide the panel rather than show an error.
+    document.getElementById('user-mgmt-card').style.display = 'none';
+  }
+}
+async function createUser(){
+  const body = {
+    username: document.getElementById('nu-username').value,
+    name: document.getElementById('nu-name').value,
+    password: document.getElementById('nu-password').value,
+    role: document.getElementById('nu-role').value,
+  };
+  try{
+    await api('/api/users', { method:'POST', body: JSON.stringify(body) });
+    ['nu-username','nu-name','nu-password'].forEach(id=>document.getElementById(id).value='');
+    loadUsers();
+  }catch(e){ alert('Could not create user: ' + e.message); }
+}
+async function updateUserRole(id, role){
+  try{ await api(`/api/users/${id}`, { method:'PATCH', body: JSON.stringify({ role }) }); loadUsers(); }
+  catch(e){ alert('Could not update role: ' + e.message); }
+}
+
+function loadSettings(){
+  loadUsers();
+  loadThemeSelect();
+  const dormant = FLAGS.filter(f => !f.is_core);
+  const byCategory = {};
+  dormant.forEach(f => { (byCategory[f.category] = byCategory[f.category] || []).push(f); });
+  const catOrder = Object.keys(byCategory).sort();
+  document.getElementById('flag-list').innerHTML = catOrder.map(cat => `
+    <div style="margin-bottom:18px;">
+      <div style="font-size:11px; color:var(--gold-400); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">${cat.replace(/_/g,' ')}</div>
+      ${byCategory[cat].map(f => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--glass-border);">
+          <div>
+            <span>${f.label}</span>
+            ${!f.built ? '<span class="badge badge-amber" style="margin-left:8px">NOT YET BUILT</span>' : ''}
+            ${f.description ? `<div class="page-sub" style="margin-top:2px">${f.description}</div>` : ''}
+          </div>
+          ${f.built
+            ? `<div class="toggle ${f.enabled?'on':''}" onclick="toggleFlag('${f.module_key}', ${!f.enabled})"><div class="knob"></div></div>`
+            : `<div class="toggle" style="opacity:0.25; cursor:not-allowed" title="Registered but not implemented yet"><div class="knob"></div></div>`}
+        </div>`).join('')}
+    </div>`).join('');
+  const builtCount = dormant.filter(f=>f.built).length;
+  document.getElementById('flag-list').insertAdjacentHTML('afterbegin',
+    `<div class="page-sub" style="margin-bottom:14px">${builtCount} of ${dormant.length} dormant modules are built and toggleable; the rest are registered in the flag system but not yet implemented.</div>`);
+}
+
+// ═══════════════════════ APPEARANCE (background theme picker) ═══════════════
+function loadThemeSelect(){
+  const sel = document.getElementById('theme-select');
+  if (!sel || !window.NATURE_3D) return;
+  const current = window.NATURE_3D.getTheme();
+  sel.innerHTML = window.NATURE_3D.listThemes().map(t =>
+    `<option value="${t.id}" ${t.id === current ? 'selected' : ''}>${t.label}</option>`).join('');
+}
+
+// ═══════════════════════ NATURE FX (leaves/butterflies) ═══════════════════════
+function spawnNatureFx(){
+  const container = document.getElementById('nature-fx');
+  for (let i=0;i<7;i++){
+    const isButterfly = i % 3 === 0;
+    const el = document.createElement('div');
+    el.className = isButterfly ? 'butterfly' : 'leaf';
+    el.style.left = (Math.random()*95)+'vw';
+    el.style.animationDelay = (Math.random()*20)+'s';
+    el.style.fontSize = (14+Math.random()*14)+'px';
+    el.textContent = isButterfly ? '🦋' : '🍃';
+    container.appendChild(el);
+  }
+}
+
+// ═══════════════════════ BOOT ═══════════════════════
+// ═══════════════════════ GENERIC TAB PAGES (Purchasing/Accounting/Staff-Ext/Reports2) ═══
+// Data-driven: each entry is {key, flagKey, label, endpoint, cols[], render(row)}.
+// flagKey ties visibility to the feature_flags registry - a tab only renders real data
+// if its module is both built AND enabled; otherwise shows "enable in Settings".
+const TAB_CONFIG = {
+  purchasing: [
+    { key:'po', flagKey:'pur_purchase_orders', label:'Purchase Orders', endpoint:'/api/purchase-orders',
+      cols:['PO #','Supplier','Date','Expected','Total','Status'],
+      render:r=>`<tr><td>${r.po_number}</td><td>${r.supplier_name}</td><td>${r.po_date_str||'—'}</td><td>${r.expected_date_str||'—'}</td><td>${fmt(r.total_amount)}</td><td><span class="badge badge-amber">${r.status||'PENDING'}</span></td></tr>` },
+    { key:'matches', flagKey:'pur_po_grn_matching', label:'PO ↔ GRN Matches', endpoint:'/api/po-grn-matches',
+      cols:['PO #','GRN #','PO Total','GRN Total','Variance'],
+      render:r=>`<tr><td>${r.po_number||'—'}</td><td>${r.grn_number||'—'}</td><td>${fmt(r.po_total)??'—'}</td><td>${fmt(r.grn_total)??'—'}</td><td>${fmt(r.variance)??'—'}</td></tr>` },
+    { key:'prices', flagKey:'pur_price_comparison', label:'Supplier Price Comparison', endpoint:'/api/supplier-prices',
+      cols:['Item','Supplier','Price','Date'],
+      render:r=>`<tr><td>${r.item_description||'—'}</td><td>${r.supplier_name||'—'}</td><td>${fmt(r.price)}</td><td>${r.price_date_str||'—'}</td></tr>` },
+    { key:'aging', flagKey:'pur_aging_payables', label:'Supplier Aging / Payables', endpoint:'/api/supplier-aging',
+      cols:['Supplier','Outstanding','Last Payment'],
+      render:r=>`<tr><td>${r.name||'—'}</td><td>${fmt(r.total_paid)??'0'}</td><td>${r.last_payment?new Date(r.last_payment).toLocaleDateString('en-GB'):'—'}</td></tr>` },
+    { key:'landed', flagKey:'pur_landed_cost', label:'Landed Cost', endpoint:'/api/landed-costs',
+      cols:['PO #','Freight','Duty','Total Landed'],
+      render:r=>`<tr><td>${r.po_number||'—'}</td><td>${fmt(r.freight)??'0'}</td><td>${fmt(r.duty)??'0'}</td><td>${fmt(r.total_landed_cost)??'—'}</td></tr>` },
+    { key:'shipments', flagKey:'pur_shipment_tracker', label:'Shipment Tracker', endpoint:'/api/shipments',
+      cols:['Reference','Status','ETA','Notes'],
+      render:r=>`<tr><td>${r.reference||'—'}</td><td><span class="badge badge-amber">${r.status||'—'}</span></td><td>${r.eta_str||'—'}</td><td>${r.notes||'—'}</td></tr>` },
+  ],
+  accounting: [
+    { key:'coa', flagKey:'acc_chart_of_accounts', label:'Chart of Accounts', endpoint:'/api/chart-of-accounts',
+      cols:['Code','Name','Type'], render:r=>`<tr><td>${r.code}</td><td>${r.name}</td><td>${r.account_type||'—'}</td></tr>` },
+    { key:'journal', flagKey:'acc_journal_entries', label:'Journal Entries', endpoint:'/api/journal-entries',
+      cols:['Date','Account','Debit','Credit','Memo'],
+      render:r=>`<tr><td>${r.entry_date_str||'—'}</td><td>${r.account_code||'—'}</td><td>${fmt(r.debit)??'0'}</td><td>${fmt(r.credit)??'0'}</td><td>${r.memo||'—'}</td></tr>` },
+    { key:'trial', flagKey:'acc_trial_balance', label:'Trial Balance', endpoint:'/api/trial-balance',
+      cols:['Account','Debit','Credit'], render:r=>`<tr><td>${r.account_code||r.name||'—'}</td><td>${fmt(r.debit)??'0'}</td><td>${fmt(r.credit)??'0'}</td></tr>` },
+    { key:'pnl', flagKey:'acc_pnl', label:'P&L Statement', endpoint:'/api/pnl?from=2026-06-01&to=2026-06-30',
+      cols:['Metric','Amount'], isSingle:true,
+      renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<table><tr><th>Total Sale</th><td>${fmt(r.total_sale)}</td></tr><tr><th>Gross Profit</th><td>${fmt(r.gross_profit)}</td></tr><tr><th>Expenses</th><td>${fmt(r.total_expenses)}</td></tr><tr><th>Net Profit</th><td><b>${fmt(r.net_profit)}</b></td></tr></table>` },
+    { key:'balance', flagKey:'acc_balance_sheet', label:'Balance Sheet', endpoint:'/api/balance-sheet',
+      cols:[], isSingle:true, renderSingle:r=>`<pre style="white-space:pre-wrap;font-size:12px">${JSON.stringify(r,null,2)}</pre>` },
+    { key:'vat', flagKey:'acc_vat_report', label:'VAT Report', endpoint:'/api/vat-report?from=2026-06-01&to=2026-06-30',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<table><tr><th>VAT Rate</th><td>${(r.vat_rate*100).toFixed(0)}%</td></tr><tr><th>Output VAT</th><td>${fmt(r.output_vat)}</td></tr><tr><th>Net VAT Payable</th><td>${fmt(r.net_vat_payable)}</td></tr></table>` },
+    { key:'bank', flagKey:'acc_bank_reconciliation', label:'Bank Transactions', endpoint:'/api/bank-transactions',
+      cols:['Date','Description','Amount','Matched'],
+      render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td>${r.description||'—'}</td><td>${fmt(r.amount)}</td><td>${r.matched?'✓':'—'}</td></tr>` },
+    { key:'cheqcal', flagKey:'acc_cheque_calendar', label:'Cheque Calendar', endpoint:'/api/cheque-calendar',
+      cols:['Cheque #','Amount','Due Date','Status'],
+      render:r=>`<tr><td>${r.cheque_number||'—'}</td><td>${fmt(r.amount)}</td><td>${r.due_date?new Date(r.due_date).toLocaleDateString('en-GB'):'—'}</td><td>${r.status||'—'}</td></tr>` },
+    { key:'petty', flagKey:'acc_petty_cash', label:'Petty Cash (Rs 25,000 float)', endpoint:'/api/petty-cash',
+      cols:['Date','Type','Amount','Note'],
+      render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td><span class="badge badge-${r.type==='TOPUP'?'green':'amber'}">${r.type||'—'}</span></td><td>${fmt(r.amount)}</td><td>${r.note||'—'}</td></tr>` },
+    { key:'budgets', flagKey:'acc_expense_budgets', label:'Expense Budgets', endpoint:'/api/expense-budgets',
+      cols:['Category','Budget','Period'], render:r=>`<tr><td>${r.category||'—'}</td><td>${fmt(r.budget_amount)}</td><td>${r.period||'—'}</td></tr>` },
+    { key:'yearend', flagKey:'acc_year_end_closing', label:'Year-End Closings', endpoint:'/api/year-end-closings',
+      cols:['Year','Closed On','Net Profit'], render:r=>`<tr><td>${r.fiscal_year||'—'}</td><td>${r.closed_at?new Date(r.closed_at).toLocaleDateString('en-GB'):'—'}</td><td>${fmt(r.net_profit)??'—'}</td></tr>` },
+  ],
+  staffext: [
+    { key:'attendance', flagKey:'staff_attendance', label:'Attendance', endpoint:'/api/attendance',
+      cols:['Staff','Date','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.att_date_str||'—'}</td><td><span class="badge badge-${r.status==='PRESENT'?'green':'amber'}">${r.status||'—'}</span></td></tr>` },
+    { key:'leave', flagKey:'staff_leave_tracker', label:'Leave Tracker', endpoint:'/api/leave',
+      cols:['Staff','From','To','Type','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.from_date_str||'—'}</td><td>${r.to_date_str||'—'}</td><td>${r.leave_type||'—'}</td><td>${r.status||'—'}</td></tr>` },
+    { key:'advances', flagKey:'staff_salary_advances', label:'Salary Advances', endpoint:'/api/advances',
+      cols:['Staff','Amount','Date','Repaid'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${fmt(r.amount)}</td><td>${r.advance_date_str||'—'}</td><td>${fmt(r.repaid)??'0'}</td></tr>` },
+    { key:'commission', flagKey:'staff_commission_autocalc', label:'Commission Auto-Calc', endpoint:'/api/commission-autocalc',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':(r.blocked?`<div class="flag-locked-note">${r.reason}</div>`:`<pre>${JSON.stringify(r,null,2)}</pre>`) },
+  ],
+  reports2: [
+    { key:'trends', flagKey:'rep_monthly_trends', label:'Monthly Trends', endpoint:'/api/monthly-trends',
+      cols:['Month','Sale','GP','Expenses','Net Profit'], render:r=>`<tr><td>${r.month}</td><td>${fmt(r.total_sale)}</td><td>${fmt(r.gross_profit)}</td><td>${fmt(r.total_expenses)}</td><td>${fmt(r.net_profit)}</td></tr>` },
+    { key:'digest', flagKey:'rep_daily_digest', label:"Owner's Daily Digest", endpoint:'/api/daily-digest',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<div class="card"><p>${r.summary_text||'—'}</p>${r.fallback_note?`<div class="gap-note">${r.fallback_note}</div>`:''}</div>` },
+    { key:'forecast', flagKey:'rep_cashflow_forecast', label:'Cash-Flow Forecast', endpoint:'/api/cashflow-forecast',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<div class="gap-note">${r.disclaimer||''}</div><pre>${JSON.stringify(r,null,2)}</pre>` },
+    { key:'ltv', flagKey:'rep_customer_ltv', label:'Customer Lifetime Value', endpoint:'/api/customer-ltv',
+      cols:['Customer','Total','Invoices'], render:r=>`<tr><td>${r.customer_name||'—'}</td><td>${fmt(r.total_value)??'0'}</td><td>${r.invoice_count??'0'}</td></tr>`,
+      preNote:r=>r?.caveat },
+    { key:'heatmap', flagKey:'rep_heatmap', label:'Sales Heatmap', endpoint:'/api/heatmap',
+      cols:[], isSingle:true, renderSingle:r=>`<pre style="white-space:pre-wrap;font-size:11px">${JSON.stringify(r,null,2)}</pre>` },
+    { key:'topslow', flagKey:'rep_top_slow_items', label:'Top/Slow Items', endpoint:'/api/top-slow-items',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':(r.available===false?`<div class="gap-note">${r.reason}</div>`:`<pre>${JSON.stringify(r,null,2)}</pre>`) },
+    { key:'margin', flagKey:'rep_margin_by_product', label:'Margin by Product', endpoint:'/api/margin-by-product',
+      cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<div class="gap-note">${r.caveat||''}</div>` },
+  ],
+  systools: [
+    { key:'reorder', flagKey:'inv_reorder_alerts', label:'Reorder Alerts', endpoint:'/api/reorder-alerts',
+      cols:['Item Code','Name','Category','Stock','Threshold'],
+      render:r=>`<tr><td>${r.item_code}</td><td>${r.name}</td><td>${r.category||'—'}</td><td class="${r.stock_level===0?'err-flag':'pending'}">${r.stock_level}</td><td>${r.reorder_threshold}</td></tr>` },
+    { key:'audit', flagKey:'sys_audit_log', label:'Audit Log', endpoint:'/api/audit-log',
+      cols:['User','Success','IP','Reason','When'],
+      render:r=>`<tr><td>${r.username}</td><td>${r.success?'<span class="badge badge-green">OK</span>':'<span class="badge badge-red">FAIL</span>'}</td><td>${r.ip||'—'}</td><td>${r.reason||'—'}</td><td>${r.attempted_at_str}</td></tr>` },
+    { key:'errlog', flagKey:'sys_error_log', label:'Error Log', endpoint:'/api/error-log',
+      cols:[], isSingle:true, renderSingle:r=>!r?.lines?.length?'<div class="gap-note">No recent errors logged.</div>':`<pre style="white-space:pre-wrap;font-size:11px;max-height:400px;overflow-y:auto">${r.lines.join('\n')}</pre>` },
+  ],
+};
+let _activeTab = {};
+async function genericTabPage(category){
+  const tabs = TAB_CONFIG[category] || [];
+  const tabsEl = document.getElementById('tabs-'+category);
+  const active = _activeTab[category] || tabs[0]?.key;
+  _activeTab[category] = active;
+  tabsEl.innerHTML = `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">` +
+    tabs.map(t => `<button class="ghost" style="${t.key===active?'background:rgba(201,162,39,0.2)':''}" onclick="_activeTab['${category}']='${t.key}'; genericTabPage('${category}')">${t.label}</button>`).join('') +
+    `</div>`;
+  const contentEl = document.getElementById('content-'+category);
+  const tab = tabs.find(t=>t.key===active);
+  if (!tab){ contentEl.innerHTML = ''; return; }
+  const flag = FLAGS.find(f=>f.module_key===tab.flagKey);
+  if (!flag?.built){ contentEl.innerHTML = `<div class="gap-note">Not built yet.</div>`; return; }
+  if (!flag.enabled){ contentEl.innerHTML = `<div class="gap-note">This module is OFF. Enable "${flag.label}" in Settings to use it.</div>`; return; }
+  try{
+    const data = await api(tab.endpoint);
+    if (tab.isSingle){
+      contentEl.innerHTML = `<div class="card">${tab.renderSingle(data)}</div>`;
+    } else {
+      const wrapId = 'gtab-'+category+'-'+tab.key;
+      contentEl.innerHTML = `${tab.preNote?.(data)?`<div class="gap-note">${tab.preNote(data)}</div>`:''}<div class="card"><table id="${wrapId}"><thead><tr>${tab.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody></tbody></table></div>`;
+      paginate(wrapId, Array.isArray(data)?data:[], tab.cols.length, tab.render);
+    }
+  }catch(e){ contentEl.innerHTML = `<div class="err-flag">Error: ${e.message}</div>`; }
+}
+
+// ═══════════════════════ INBOX UPLOAD (Daily Entry / Audit / Expenses) ═══════
+async function uploadToInbox(inputEl, resultElId){
+  const file = inputEl.files[0];
+  if (!file) return;
+  const resultEl = document.getElementById(resultElId);
+  resultEl.innerHTML = `<div class="gap-note">Uploading and running OCR (photos only — PDFs are saved but not auto-OCR'd)...</div>`;
+  const formData = new FormData();
+  formData.append('file', file);
+  try{
+    const res = await fetch('/api/inbox-upload', { method:'POST', credentials:'same-origin', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    if (data.ocr_error){
+      resultEl.innerHTML = `<div class="card"><span class="badge badge-green">Saved</span> ${data.filename}<div class="err-flag" style="margin-top:6px">OCR failed: ${data.ocr_error}</div></div>`;
+    } else if (data.ocr){
+      const o = data.ocr;
+      resultEl.innerHTML = `<div class="card"><span class="badge badge-green">Saved</span> ${data.filename}
+        <div style="margin-top:8px; font-size:13px;">
+          <b>OCR read</b> (confidence: <span class="badge badge-${o.confidence==='high'?'green':o.confidence==='medium'?'amber':'red'}">${o.confidence||'unknown'}</span>):<br>
+          Date: ${o.date||'—'} | Total Sale: ${o.total_sale!=null?fmt(o.total_sale):'—'} | Expenses: ${o.total_expenses!=null?fmt(o.total_expenses):'—'}<br>
+          ${o.notes?`<span class="page-sub">${o.notes}</span><br>`:''}
+          <span class="page-sub">This is a read-only preview — nothing was written to daily_summary. Enter the confirmed figures manually.</span>
+        </div></div>`;
+    } else {
+      resultEl.innerHTML = `<div class="card"><span class="badge badge-green">Saved</span> ${data.filename}<div class="gap-note" style="margin-top:6px">${data.note||''}</div></div>`;
+    }
+  }catch(e){ resultEl.innerHTML = `<div class="err-flag">Upload failed: ${e.message}</div>`; }
+  inputEl.value = '';
+}
+
+// ═══════════════════════ AUDIT & ACCOUNTING ═══════════════════════
+function auditRange(){
+  const from = document.getElementById('audit-from').value;
+  const to = document.getElementById('audit-to').value;
+  const granularity = document.getElementById('audit-granularity').value;
+  return { from, to, granularity };
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const f = document.getElementById('audit-from'), t = document.getElementById('audit-to');
+  if (f && !f.value){ const d=new Date(); t.value = todayStr(); d.setMonth(d.getMonth()-1); f.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+});
+async function loadAudit(){
+  const { from, to, granularity } = auditRange();
+  if (!from || !to) return;
+  const [summary, flagsRes, detail] = await Promise.all([
+    api(`/api/audit/summary?from=${from}&to=${to}&granularity=${granularity}`).catch(()=>[]),
+    api(`/api/audit/flags?from=${from}&to=${to}`).catch(()=>({total_flags:0,flags:[]})),
+    api(`/api/audit/daily-detail?from=${from}&to=${to}`).catch(()=>[]),
+  ]);
+  // Sales/GP/Net Profit cells are only clickable at daily granularity - at
+  // weekly/monthly/quarterly, `period` is the range's start date, not a single
+  // day, so a per-invoice breakdown modal wouldn't mean what it looks like it means.
+  const clickable = granularity === 'daily';
+  const cellClick = (type, date) => clickable ? ` style="cursor:pointer" onclick="showBreakdown('${type}','${date}')" title="Click for the breakdown"` : '';
+  document.querySelector('#audit-summary-table tbody').innerHTML = summary.map(r=>`<tr>
+    <td>${r.period}</td><td${cellClick('total_sale', r.period)}>${fmt(r.sales)}</td><td${cellClick('gross_profit', r.period)}>${fmt(r.gross_profit)}</td><td>${fmt(r.expenses)}</td>
+    <td${cellClick('net_profit', r.period)}>${r.net_profit==null?'<span class="pending">PENDING</span>':fmt(r.net_profit)}</td>
+    <td>${fmt(r.cash)}</td><td>${fmt(r.card)}</td><td>${fmt(r.online)}</td><td>${fmt(r.cheque)}</td><td>${fmt(r.credit)}</td><td>${r.days}</td></tr>`).join('') || '<tr><td colspan="11" class="pending">No data</td></tr>';
+
+  document.getElementById('audit-flag-count').textContent = `${flagsRes.total_flags} flags`;
+  const flagRows = [];
+  flagsRes.flags.forEach(f => f.issues.forEach(i => flagRows.push({date:f.date, invoice:f.invoice||'—', code:i.code, detail:i.detail})));
+  paginate('audit-flags-table', flagRows, 4, r=>`<tr><td>${r.date}</td><td>${r.invoice}</td><td><span class="badge badge-red">${r.code}</span></td><td>${r.detail}</td></tr>`);
+
+  paginate('audit-detail-table', detail, 10, r=>`<tr>
+    <td>${r.date}</td><td>${r.invoice_no}</td><td>${r.item_code}</td><td>${r.qty}</td><td>${fmt(r.unit_price)}</td>
+    <td>${fmt(r.line_total)}</td><td>${r.unit_cost!=null?fmt(r.unit_cost):'<span class="pending">MISSING</span>'}</td>
+    <td>${r.line_cogs!=null?fmt(r.line_cogs):'—'}</td><td>${r.line_gp!=null?fmt(r.line_gp):'—'}</td>
+    <td><span class="badge badge-${r.cost_source==='EST-AVG-COST'?'amber':'red'}">${r.cost_source}</span></td></tr>`);
+
+  // Full audit report sections (Task 2): reconciliation, cash proof,
+  // exceptions, staff, sign-off — all deterministic SQL, see routes/audit.js
+  // buildFullReport(). Narrative is optional/best-effort (local Ollama).
+  document.getElementById('audit-narrative').textContent = 'Generating…';
+  const report = await api(`/api/audit/full-report?from=${from}&to=${to}&narrative=1`).catch(()=>null);
+  if (!report) { document.getElementById('audit-narrative').textContent = 'Could not load full report.'; return; }
+
+  document.querySelector('#audit-recon-table tbody').innerHTML = report.reconciliation.map(r=>`<tr>
+    <td>${r.date}</td><td>${fmt(r.excel_total)}</td><td>${r.source}</td><td>${r.expense_source}</td>
+    <td>${r.conflict?`<span class="badge badge-red">${fmt(r.conflict_variance)}</span>`:'—'}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="pending">No reconciliation conflicts or defaulted-expense days in this period.</td></tr>';
+
+  document.querySelector('#audit-cashproof-table tbody').innerHTML = report.cashProof.rows.map(r=>`<tr>
+    <td>${r.date}</td><td>${fmt(r.cash_sale)}</td><td>${fmt(r.expenses)}</td><td>${fmt(r.payments)}</td>
+    <td>${fmt(r.expected_closing)}</td><td>${fmt(r.actual_closing)}</td>
+    <td><span class="${Math.abs(r.variance)>1?'err-flag':''}">${fmt(r.variance)}</span></td></tr>`).join('')
+    || '<tr><td colspan="7" class="pending">No data</td></tr>';
+
+  document.getElementById('audit-exc-defaulted').innerHTML = report.exceptions.defaulted_expense_days.length
+    ? report.exceptions.defaulted_expense_days.map(d=>`<div>${d}</div>`).join('') : '<span class="pending">None</span>';
+  document.getElementById('audit-exc-cheques').innerHTML = report.exceptions.cheque_alerts_7day.length
+    ? report.exceptions.cheque_alerts_7day.map(c=>`<div>${c.due_date} — ${c.bank} #${c.cheque_number} (${fmt(c.amount)})</div>`).join('') : '<span class="pending">None</span>';
+  document.getElementById('audit-exc-pending').innerHTML = report.exceptions.pending_reconciliation.length
+    ? report.exceptions.pending_reconciliation.map(p=>`<div>${p.date} — #${p.number} (${fmt(p.amount)})</div>`).join('') : '<span class="pending">None</span>';
+  document.getElementById('audit-exc-grn').innerHTML = report.exceptions.grn_stock_caveats.length
+    ? report.exceptions.grn_stock_caveats.map(g=>`<div>${g.grn_date} — ${g.supplier_name}: ${g.caveat_note}</div>`).join('') : '<span class="pending">None</span>';
+
+  document.querySelector('#audit-staff-table tbody').innerHTML = report.staff.payments.map(s=>`<tr>
+    <td>${s.name}</td><td>${s.role}</td><td>${fmt(s.total_amount)}</td><td>${fmt(s.total_commission_stored)}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="pending">No staff payments recorded in this period</td></tr>';
+  document.getElementById('audit-staff-blocked-note').textContent =
+    'GP-by-staff 1% commission auto-calc: BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason;
+
+  document.getElementById('audit-narrative').textContent = report.narrative || 'Ollama unavailable or timed out — report is complete and correct without it, just no prose commentary this time.';
+
+  document.getElementById('audit-signoff').innerHTML =
+    `Prepared by: <b>${report.signOff.prepared_by}</b> — ${new Date(report.signOff.prepared_at).toLocaleString()}<br>` +
+    `Reviewed by: <b>Owner</b> — signature: _______________________  Date: _______________`;
+}
+function downloadFullAuditPDF(){
+  const { from, to } = auditRange();
+  if (!from || !to) return alert('Pick a date range first.');
+  window.open(`/api/audit/full-report/pdf?from=${from}&to=${to}`, '_blank');
+}
+function downloadAuditWorkbook(){
+  const { from, to, granularity } = auditRange();
+  if (!from || !to) return alert('Pick a date range first.');
+  window.location.href = `/api/audit/workbook?from=${from}&to=${to}&granularity=${granularity}`;
+}
+async function shareAuditWhatsApp(){
+  const { from, to, granularity } = auditRange();
+  if (!from || !to) return alert('Pick a date range first.');
+  const to_number = prompt('Send audit summary to which WhatsApp number?', '');
+  if (!to_number) return;
+  const summary = await api(`/api/audit/summary?from=${from}&to=${to}&granularity=${granularity}`).catch(()=>[]);
+  const totals = summary.reduce((a,r)=>({sales:a.sales+Number(r.sales),gp:a.gp+Number(r.gross_profit),exp:a.exp+Number(r.expenses)}), {sales:0,gp:0,exp:0});
+  const message = `*${BRAND?.company_name || 'Your Business Name'} — Audit Summary*\n${from} to ${to}\nSales: LKR ${fmt(totals.sales)}\nGross Profit: LKR ${fmt(totals.gp)}\nExpenses: LKR ${fmt(totals.exp)}\nNet Profit: LKR ${fmt(totals.gp-totals.exp)}`;
+  try{ const res = await api('/send', { method:'POST', body: JSON.stringify({ to: to_number, message }) }); alert(res.success?'Sent.':'Failed: '+(res.error||'unknown')); }
+  catch(e){ alert('Send failed: '+e.message); }
+}
+
+let BRAND = null;
+async function loadBranding(){
+  BRAND = await fetch('/api/branding').then(r=>r.json()).catch(()=>null);
+  if (!BRAND) return;
+  document.title = `${BRAND.company_name} — Nature`;
+  document.querySelector('.brand').innerHTML = `${BRAND.company_name}<span>Nature — real-data ERP</span>`;
+  const login = document.querySelector('.login-card h1');
+  if (login) login.textContent = BRAND.company_name;
+  const sc = BRAND.support_contact || {};
+  if (sc.name)  document.getElementById('support-contact-name').textContent  = sc.name;
+  if (sc.phone) document.getElementById('support-contact-phone').textContent = sc.phone;
+  if (sc.email) document.getElementById('support-contact-email').textContent = sc.email;
+}
+
+async function boot(){
+  document.getElementById('user-name').textContent = ME?.name || ME?.username || '—';
+  await loadBranding();
+  await loadFlags();
+  spawnNatureFx();
+  goPage('home');
+}
+checkAuth();
+
+// ===== M8: Dashboard Helper JS — calls the existing /api/dashboard-assistant/chat
+// route (Ollama primary, OpenRouter free-tier fallback, no paid API calls) =====
+let M8_HISTORY = [];
+function m8ToggleChat() {
+  const panel = document.getElementById('m8-chat-panel');
+  panel.classList.toggle('m8-hidden');
+  if (!panel.classList.contains('m8-hidden')) {
+    document.getElementById('m8-chat-input').focus();
+    if (!M8_HISTORY.length) m8RenderMessage('assistant', "Hi — I can explain formulas or how to find something in the app. For actual figures, use the AI Assistant page (real data) or the report views directly.");
+  }
+}
+function m8RenderMessage(role, text) {
+  const box = document.getElementById('m8-chat-messages');
+  const div = document.createElement('div');
+  div.className = 'm8-msg ' + (role === 'user' ? 'm8-msg-user' : 'm8-msg-assistant');
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+async function m8SendMessage() {
+  const input = document.getElementById('m8-chat-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+  m8RenderMessage('user', message);
+  M8_HISTORY.push({ role: 'user', content: message });
+  const box = document.getElementById('m8-chat-messages');
+  const thinking = document.createElement('div');
+  thinking.className = 'm8-msg m8-msg-assistant';
+  thinking.textContent = '…';
+  thinking.id = 'm8-thinking';
+  box.appendChild(thinking);
+  box.scrollTop = box.scrollHeight;
+  try {
+    const res = await fetch('/api/dashboard-assistant/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history: M8_HISTORY.slice(0, -1) }),
+    });
+    const data = await res.json();
+    document.getElementById('m8-thinking')?.remove();
+    if (!res.ok) { m8RenderMessage('assistant', data.error || 'Something went wrong.'); return; }
+    m8RenderMessage('assistant', data.reply);
+    M8_HISTORY.push({ role: 'assistant', content: data.reply });
+  } catch (e) {
+    document.getElementById('m8-thinking')?.remove();
+    m8RenderMessage('assistant', 'Could not reach the helper — check your connection and try again.');
+  }
+}
+</script>
+
+<!-- 3D THEME ENGINE — dashboard/login/transitions only. Graceful degradation:
+     falls back to the existing CSS leaf/butterfly effect if WebGL is
+     unavailable or fails to load. Never initialized on data-heavy pages (see
+     NATURE_3D.stop() in goPage). Themes live in themes/*.js (see
+     themes/_TEMPLATE.js) and only ever touch this canvas — never data, pages,
+     or API calls (M2/theme rule, see MODULE_REGISTRY.md and FINAL_BUILD.md). -->
+<script type="module">
+  const canvas = document.getElementById('three-canvas');
+  const ALLOWED_PAGES = new Set(['home']); // + login screen, handled separately below
+  const THEME_REGISTRY = [
+    { id: 'nature', label: 'Nature (Default)' },
+    { id: 'kim_forest', label: 'Kim Forest' },
+  ];
+  let THREE = null;
+  let active = null; // { renderer, scene, camera, update, resize?, dispose }
+  let animId = null;
+
+  function webglSupported(){
+    try {
+      const c = document.createElement('canvas');
+      return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+    } catch (e) { return false; }
+  }
+
+  function currentThemeId(){
+    const saved = localStorage.getItem('bathco_theme');
+    return THEME_REGISTRY.some(t => t.id === saved) ? saved : 'nature';
+  }
+
+  async function init3D(){
+    if (active) return; // already initialized
+    if (!webglSupported()) { console.warn('[3D] WebGL unavailable — staying on CSS nature effect.'); return; }
+    try {
+      if (!THREE) THREE = await import('/vendor/three.module.min.js');
+      const themeId = currentThemeId();
+      const mod = await import(`/themes/${themeId}.js`);
+      active = mod.default.build(canvas, THREE);
+      window.addEventListener('resize', onResize);
+      themeClock = new THREE.Clock();
+      startAnimateLoop();
+      canvas.style.display = 'block';
+    } catch (e) {
+      console.warn('[3D] Failed to initialize theme — falling back to CSS nature effect:', e.message);
+      stop3D();
+    }
+  }
+  let themeClock = null;
+  // Performance (FINAL_BUILD_2.md Task 1 item 5): fully stop the rAF loop
+  // when the tab is hidden rather than relying on browser throttling alone -
+  // kim_forest's per-frame particle/instance-matrix work still costs
+  // something even throttled to ~1fps in a background tab.
+  function startAnimateLoop(){
+    if (!themeClock) return;
+    (function animate(){
+      if (!active) return;
+      active.update(themeClock.getElapsedTime());
+      active.renderer.render(active.scene, active.camera);
+      animId = requestAnimationFrame(animate);
+    })();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!active) return;
+    if (document.hidden) { if (animId) cancelAnimationFrame(animId); animId = null; }
+    else if (!animId) startAnimateLoop();
+  });
+  function onResize(){
+    if (!active) return;
+    if (active.resize) active.resize(window.innerWidth, window.innerHeight);
+    else { active.camera.aspect = window.innerWidth/window.innerHeight; active.camera.updateProjectionMatrix(); }
+    active.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  function stop3D(){
+    if (animId) cancelAnimationFrame(animId);
+    animId = null;
+    themeClock = null;
+    canvas.style.display = 'none';
+    window.removeEventListener('resize', onResize);
+    if (active) { try { active.dispose(); } catch (e) {} active = null; }
+  }
+
+  // Public hooks used by the main script (goPage, doLogin success, etc) —
+  // same names/signatures as before this theme system existed.
+  window.NATURE_3D = {
+    startForPage(pageName){ if (ALLOWED_PAGES.has(pageName)) init3D(); else stop3D(); },
+    startForLogin(){ init3D(); },
+    stop: stop3D,
+    // Additive: theme selection, used by the Settings > Appearance picker.
+    setTheme(themeId){
+      if (!THEME_REGISTRY.some(t => t.id === themeId)) return;
+      localStorage.setItem('bathco_theme', themeId);
+      const wasActive = !!active;
+      stop3D();
+      if (wasActive) init3D();
+    },
+    getTheme: currentThemeId,
+    listThemes: () => THEME_REGISTRY.slice(),
+  };
+  // Login screen is visible before any goPage() call — start it there too.
+  if (document.getElementById('login-screen')?.style.display !== 'none') window.NATURE_3D.startForLogin();
+</script>
+</body>
+</html>

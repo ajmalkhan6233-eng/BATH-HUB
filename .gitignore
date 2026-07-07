@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+bathco-mobile/node_modules/
+
+# Environment & secrets
+.env
+.env.*
+*.env.local
+TEMP_PASSWORDS.txt
+cookies.txt
+
+# WhatsApp session (auth credentials, not source)
+.wwebjs_auth/
+.wwebjs_cache/
+whatsapp-qr.png
+
+# Excel temp/lock files
+~$*
+
+# Runtime state (not source code)
+agent_run_log.json
+test-cookie*.txt
+
+# Logs
+*.log
+server*.log
+
+# Database dumps (large binary files)
+backups/*.dump
+backups/*.sql
+*.dump
+*.db
+*.sqlite3
+# Root-level SQL backups (data, not schema)
+bathco_backup*.sql
+bathco_master_fix.sql
+
+# Large binary data files (stay on local PC, not needed on server)
+DAY SALE/
+DALI/
+data/
+cheques/
+uploads/
+scripts/BATHCO_MASTER_DATA_REBUILD.xlsx
+bathco-complete-app.zip
+*.pdf
+
+# Encrypted backups
+*.enc
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Reports (generated — don't need versioning)
+reports/*.html
+reports/*.pdf

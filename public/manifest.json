@@ -1,0 +1,31 @@
+{
+  "name": "Your Business Name (Pvt) Ltd",
+  "short_name": "MyBusiness",
+  "description": "Your Business Name showroom command dashboard — daily, weekly, monthly performance, staff, suppliers, credit, agents, customers and quotations.",
+  "start_url": "/dashboard.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06120d",
+  "theme_color": "#06120d",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

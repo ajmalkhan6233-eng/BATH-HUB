@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Business Name — Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── VARIABLES ── */
+:root{
+  --gold:#F5A623;--gold-dark:#d4891a;--gold-light:#ffc15e;
+  --bg:#0D0D0D;--bg2:#141414;--bg3:#1a1a1a;
+  --card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.08);--card-hover:rgba(255,255,255,0.07);
+  --text:#f0f0f0;--text2:#999;--text3:#666;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;
+  --sidebar-w:240px;--radius:16px;--radius-sm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,0.4);--t:0.25s cubic-bezier(0.4,0,0.2,1)
+}
+[data-theme="light"]{
+  --bg:#f4f5f7;--bg2:#fff;--bg3:#eaedf1;
+  --card:rgba(255,255,255,0.9);--card-border:rgba(0,0,0,0.08);--card-hover:rgba(255,255,255,1);
+  --text:#1a1a1a;--text2:#555;--text3:#888;--shadow:0 4px 20px rgba(0,0,0,0.1)
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
+input,select,textarea,button{font-family:inherit}
+ul{list-style:none}
+button{cursor:pointer;border:none;background:none}
+table{border-collapse:collapse;width:100%}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:rgba(245,166,35,0.3);border-radius:99px}
+
+/* ── LOGIN OVERLAY ── */
+#login-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px)
+}
+.login-box{
+  background:var(--bg2);border:1px solid var(--card-border);border-radius:var(--radius);
+  padding:40px;width:360px;text-align:center;box-shadow:var(--shadow)
+}
+.login-logo{font-size:48px;margin-bottom:12px}
+.login-title{font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
+
+/* ── LAYOUT ── */
+.app-wrapper{display:flex;min-height:100vh}
+.sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:var(--bg2);
+  border-right:1px solid var(--card-border);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;overflow:hidden;
+  transition:width var(--t),transform var(--t)
+}
+.sidebar.collapsed{width:60px}
+.sidebar-logo{padding:18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--card-border)}
+.logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-text{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;transition:opacity var(--t)}
+.sidebar.collapsed .logo-text,.sidebar.collapsed .nav-label,.sidebar.collapsed .toggle-lbl{opacity:0;pointer-events:none}
+.sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--t);margin-bottom:2px;white-space:nowrap}
+.nav-item:hover{background:var(--card-hover)}
+.nav-item.active{background:rgba(245,166,35,0.15);color:var(--gold)}
+.nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
+.nav-label{font-size:13px;font-weight:500}
+.sidebar-footer{padding:10px 8px;border-top:1px solid var(--card-border)}
+.sidebar-toggle{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--t)}
+.sidebar-toggle:hover{background:var(--card)}
+.main-content{margin-left:var(--sidebar-w);flex:1;min-height:100vh;transition:margin-left var(--t)}
+.sidebar.collapsed ~ .main-content{margin-left:60px}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.live-clock{font-size:13px;font-weight:600;color:var(--gold);background:rgba(245,166,35,0.1);padding:5px 12px;border-radius:99px}
+.theme-toggle{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all var(--t)}
+.theme-toggle:hover{transform:scale(1.1)}
+.logout-btn{font-size:12px;padding:6px 12px;border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--card-border);color:var(--text2);transition:all var(--t)}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ── PAGES ── */
+.page{display:none;padding:20px;animation:fadeIn 0.25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(12px);transition:all var(--t);box-shadow:var(--shadow)}
+.card:hover{border-color:rgba(245,166,35,0.2);transform:translateY(-1px)}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:all var(--t);backdrop-filter:blur(12px)}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.4);border-color:rgba(245,166,35,0.3)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--gold))}
+.kpi-card[data-type=profit]{--accent:#22c55e}
+.kpi-card[data-type=expense]{--accent:#ef4444}
+.kpi-card[data-type=cash]{--accent:#3b82f6}
+.kpi-card[data-type=card]{--accent:#8b5cf6}
+.kpi-card[data-type=online]{--accent:#f59e0b}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+.kpi-value{font-size:24px;font-weight:800;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.kpi-change{font-size:11px;font-weight:600;color:var(--text2)}
+.kpi-change.up{color:var(--green)}
+.kpi-change.down{color:var(--red)}
+.kpi-sparkline{margin-top:10px;height:36px}
+
+/* ── SKELETON ── */
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 50%,var(--bg3) 75%);background-size:200% 100%;animation:skel 1.5s infinite;border-radius:var(--radius-sm)}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-txt{height:12px;margin-bottom:8px;border-radius:4px}
+.skel-val{height:28px;width:55%;margin-bottom:10px;border-radius:4px}
+
+/* ── PROGRESS ── */
+.prog-wrap{background:var(--bg3);border-radius:99px;height:7px;overflow:hidden}
+.prog-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width 1.4s cubic-bezier(0.4,0,0.2,1)}
+
+/* ── GRIDS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.chart-wrap{position:relative;height:200px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius)}
+table th{text-align:left;padding:9px 13px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--card-border);background:var(--bg3)}
+table td{padding:9px 13px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04)}
+table tr:hover td{background:var(--card)}
+table tr:last-child td{border-bottom:none}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.bg{background:rgba(34,197,94,0.15);color:var(--green)}
+.br{background:rgba(239,68,68,0.15);color:var(--red)}
+.ba{background:rgba(245,158,11,0.15);color:var(--amber)}
+.bb{background:rgba(59,130,246,0.15);color:var(--blue)}
+.bp{background:rgba(139,92,246,0.15);color:var(--purple)}
+.bgold{background:rgba(245,166,35,0.15);color:var(--gold)}
+
+/* ── FORM ── */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-size:13px;transition:all var(--t)}
+.fi:focus,.fs:focus,.fta:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,0.15)}
+.fs option{background:var(--bg2)}
+.fta{resize:vertical;min-height:70px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;transition:all var(--t)}
+.btn-p{background:var(--gold);color:#000}
+.btn-p:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,166,35,0.4)}
+.btn-s{background:var(--card);border:1px solid var(--card-border);color:var(--text)}
+.btn-s:hover{background:var(--card-hover);border-color:var(--gold)}
+.btn-d{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.btn-g{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative}
+.search-wrap input{padding-left:34px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);pointer-events:none}
+
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9998}
+.toast{background:var(--bg2);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:11px 16px;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;box-shadow:var(--shadow);animation:slideUp 0.3s ease;min-width:260px}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.warning{border-left:3px solid var(--amber)}
+.toast.info{border-left:3px solid var(--blue)}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CONFETTI ── */
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997;display:none}
+
+/* ── BARCODE SCAN LINE ── */
+.barcode-panel{position:relative;overflow:hidden}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan 2s ease-in-out infinite;pointer-events:none}
+@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}
+
+/* ── MISC ── */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:16px;font-weight:700}
+.section-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.welcome-banner{background:linear-gradient(135deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04));border:1px solid rgba(245,166,35,0.2);border-radius:var(--radius);padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.pay-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+.pay-item{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.pay-label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:5px}
+.pay-val{font-size:16px;font-weight:800}
+.report-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--card-border);font-size:13px}
+.report-row:last-child{border-bottom:none}
+.report-row.total{font-weight:800;font-size:15px;color:var(--gold)}
+.upload-box{border:2px dashed var(--card-border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all var(--t)}
+.upload-box:hover{border-color:var(--gold);background:rgba(245,166,35,0.04)}
+.stock-bar{height:5px;border-radius:99px;background:var(--bg3);overflow:hidden;margin-top:3px}
+.stock-fill{height:100%;border-radius:99px}
+.top-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--card-border)}
+.top-item:last-child{border-bottom:none}
+.rank{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rank.r2{background:var(--text3)}.rank.r3{background:#cd7f32}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:12px}
+.cal-hdr{text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px 0}
+.cal-day{min-height:46px;background:var(--bg3);border-radius:6px;padding:4px;font-size:11px;border:1px solid transparent;transition:all var(--t)}
+.cal-day.c-cheque{border-color:var(--amber);background:rgba(245,158,11,0.1)}
+.cal-day.c-due{border-color:var(--red);background:rgba(239,68,68,0.12)}
+.cal-day.c-clear{border-color:var(--green);background:rgba(34,197,94,0.08)}
+.cal-day-n{font-weight:700;color:var(--text2);margin-bottom:1px}
+.no-data{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+.data-tier{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
+.tier-full{background:rgba(34,197,94,0.15);color:var(--green)}
+.tier-cash{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tier-found{background:rgba(100,100,100,0.15);color:var(--text2)}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0!important}
+  .kpi-grid,.grid-2,.grid-3{grid-template-columns:1fr}
+  .pay-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div id="toasts"></div>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🛁</div>
+    <div class="login-title">Your Business Name</div>
+    <div class="login-sub">Management System — Sign In</div>
+    <div class="fg">
+      <label class="fl">Username</label>
+      <input class="fi" id="l-user" type="text" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <input class="fi" id="l-pass" type="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err">Invalid username or password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-wrapper">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛁</div>
+      <div class="logo-text">Your Business Name</div>
+    </div>
+    <ul class="sidebar-nav">
+      <li class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></li>
+      <li class="nav-item" data-page="daily-sales"><span class="nav-icon">🧾</span><span class="nav-label">Daily Sales</span></li>
+      <li class="nav-item" data-page="stock"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></li>
+      <li class="nav-item" data-page="expenses"><span class="nav-icon">💸</span><span class="nav-label">Expenses</span></li>
+      <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
+      <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
+      <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <span style="font-size:18px">◀</span>
+        <span class="nav-label toggle-lbl">Collapse</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content" id="main-content">
+    <header class="topbar">
+      <div>
+        <div style="font-size:16px;font-weight:700" id="page-title">Dashboard</div>
+        <div style="font-size:11px;color:var(--text2)" id="page-sub">Loading…</div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-clock" id="clock">00:00:00</div>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- ── DASHBOARD ── -->
+    <section class="page active" id="page-dashboard">
+      <div class="welcome-banner">
+        <div>
+          <div style="font-size:19px;font-weight:800">Welcome back 👋</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Live data from Bathco database · <span id="dash-date"></span></div>
+        </div>
+        <div style="font-size:38px">🕌</div>
+      </div>
+      <!-- Target bar -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div><div style="font-size:13px;font-weight:700">Daily Sales Target</div><div style="font-size:11px;color:var(--text2)" id="target-label">LKR 250,000 target</div></div>
+          <div style="font-size:13px;font-weight:800;color:var(--gold)" id="target-pct">—</div>
+        </div>
+        <div class="prog-wrap"><div class="prog-bar" id="target-bar" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--text3)">
+          <span>LKR 0</span><span id="target-achieved"></span><span id="target-max">LKR 2,50,000</span>
+        </div>
+      </div>
+      <!-- KPI grid -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <!-- MTD row -->
+      <div class="grid-2" style="margin-bottom:18px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:4px">Month to Date</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:14px" id="mtd-days-label">—</div>
+          <div id="mtd-rows"></div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:4px">Weekly Sales</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">This week's daily totals</div>
+          <div class="chart-wrap"><canvas id="weeklyChart"></canvas></div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:10px;color:var(--text3)">Last updated: <span id="last-upd">—</span></div>
+    </section>
+
+    <!-- ── DAILY SALES ── -->
+    <section class="page" id="page-daily-sales">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(-1)">◀</button>
+          <input type="date" class="fi" style="width:160px" id="sales-date" onchange="loadSalesDate()">
+          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(1)">▶</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s" onclick="copyWhatsApp()">📱 WhatsApp</button>
+          <button class="btn btn-s" onclick="window.open('/api/report-download?date='+document.getElementById('sales-date').value)">📄 Excel</button>
+        </div>
+      </div>
+      <!-- Payment breakdown -->
+      <div class="pay-grid" id="pay-grid">
+        <div class="pay-item"><div class="pay-label">Cash</div><div class="pay-val" style="color:var(--blue)" id="p-cash">—</div></div>
+        <div class="pay-item"><div class="pay-label">Card</div><div class="pay-val" style="color:var(--purple)" id="p-card">—</div></div>
+        <div class="pay-item"><div class="pay-label">Online</div><div class="pay-val" style="color:var(--amber)" id="p-online">—</div></div>
+        <div class="pay-item"><div class="pay-label">Credit</div><div class="pay-val" style="color:var(--red)" id="p-credit">—</div></div>
+        <div class="pay-item"><div class="pay-label">Cheque</div><div class="pay-val" style="color:var(--green)" id="p-cheque">—</div></div>
+      </div>
+      <!-- Mismatch flag -->
+      <div id="mismatch-flag" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red)">
+        ⚠ Cash+Card+Online+Credit+Cheque does not match Total Sale — check records
+      </div>
+      <!-- Charts -->
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:12px">Payment Split</div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <div style="width:150px;height:150px;flex-shrink:0"><canvas id="donutChart"></canvas></div>
+            <div id="donut-legend" style="display:flex;flex-direction:column;gap:7px;flex:1"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">Daily Info</div>
+          <div id="daily-info-rows"></div>
+        </div>
+      </div>
+      <!-- Invoice table -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-hdr">
+          <div class="section-title">Invoices</div>
+          <div class="search-wrap" style="max-width:200px">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="fi" placeholder="Search..." id="inv-search" oninput="filterInv()">
+          </div>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Method</th><th>Amount</th><th>Refund</th><th>Notes</th></tr></thead><tbody id="inv-tbody"></tbody></table></div>
+      </div>
+      <!-- Add invoice form -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:14px">+ Add Invoice Record</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Invoice No.</label><input class="fi" id="n-inv" placeholder="INV-0001"></div>
+          <div class="fg"><label class="fl">Total Sale (LKR)</label><input class="fi" id="n-total" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Cash</label><input class="fi" id="n-cash" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Card</label><input class="fi" id="n-card" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Online</label><input class="fi" id="n-online" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Credit</label><input class="fi" id="n-credit" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Cheque</label><input class="fi" id="n-cheque" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">Notes</label><input class="fi" id="n-notes" placeholder="Optional"></div>
+        </div>
+        <button class="btn btn-p" onclick="saveInvoice()">Save Invoice</button>
+      </div>
+    </section>
+
+    <!-- ── STOCK ── -->
+    <section class="page" id="page-stock">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+        <div class="search-wrap" style="max-width:220px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="fi" placeholder="Search code or name..." id="stk-search" oninput="filterStock()">
+        </div>
+        <select class="fs" style="width:160px" id="stk-cat" onchange="filterStock()"><option value="">All Categories</option></select>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-p" onclick="toggleGRNForm()">+ GRN Entry</button>
+          <button class="btn btn-s" onclick="loadStock()">↺ Refresh</button>
+        </div>
+      </div>
+      <div id="stk-alerts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div class="card" style="margin-bottom:16px"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Stock</th><th>Level</th><th>Supplier</th></tr></thead><tbody id="stk-tbody"></tbody></table></div></div>
+      <!-- GRN form -->
+      <div class="card" id="grn-form" style="display:none">
+        <div class="section-hdr"><div class="section-title">GRN Entry</div><button class="btn btn-s" onclick="toggleGRNForm()">✕ Close</button></div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">GRN Number</label><input class="fi" id="g-num" placeholder="GRN-001"></div>
+          <div class="fg"><label class="fl">Supplier</label><select class="fs" id="g-supplier"><option value="">Select supplier...</option></select></div>
+          <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="g-date"></div>
+          <div class="fg"><label class="fl">Item Description</label><input class="fi" id="g-item" placeholder="Item name/description"></div>
+          <div class="fg"><label class="fl">Quantity</label><input type="number" class="fi" id="g-qty" placeholder="0"></div>
+          <div class="fg"><label class="fl">Unit Cost (LKR)</label><input type="number" class="fi" id="g-cost" placeholder="0"></div>
+        </div>
+        <div class="fg"><label class="fl">Notes</label><input class="fi" id="g-notes" placeholder="Optional"></div>
+        <button class="btn btn-p" onclick="saveGRN()">Save GRN</button>
+      </div>
+      <!-- GRN history -->
+      <div class="card">
+        <div class="section-hdr"><div class="section-title">Recent GRN Records</div><button class="btn btn-s" onclick="loadGRN()">↺ Refresh</button></div>
+        <div class="tbl-wrap"><table><thead><tr><th>GRN#</th><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Status</th></tr></thead><tbody id="grn-tbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── EXPENSES ── -->
+    <section class="page" id="page-expenses">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div><label class="fl" style="display:inline;margin-right:8px">Date</label><input type="date" class="fi" style="width:160px" id="exp-date" onchange="loadExpenses()"></div>
+        <button class="btn btn-s" onclick="loadExpenses()">↺ Load</button>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px">
+        <!-- Expense summary from daily_summary -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:14px">Day Summary</div>
+          <div id="exp-summary-rows"><div class="no-data">Select a date to load</div></div>
+        </div>
+        <!-- Petty cash panel -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:14px">Petty Cash</div>
+          <div class="kpi-label">Current Balance</div>
+          <div class="kpi-value" style="color:var(--green);font-size:28px" id="petty-bal">LKR 25,000</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Float: LKR 25,000 (fixed)</div>
+          <div class="prog-wrap"><div class="prog-bar" id="petty-bar" style="width:100%;background:linear-gradient(90deg,var(--green),#4ade80)"></div></div>
+          <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm)">
+            <div style="font-size:11px;font-weight:700;color:var(--amber)">⚠ RENOVATION — ALWAYS SEPARATE</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px">Renovation costs are never mixed with operating expenses</div>
+          </div>
+        </div>
+      </div>
+      <!-- Expense line items -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:14px">Expense Line Items</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Category</th><th>Description</th><th>Amount</th></tr></thead><tbody id="exp-tbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── CHEQUES ── -->
+    <section class="page" id="page-cheques">
+      <div class="kpi-grid" style="margin-bottom:16px" id="cheq-kpi-grid"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div class="search-wrap" style="max-width:220px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="fi" placeholder="Search cheque# or vendor..." id="cheq-search" oninput="filterCheques()">
+        </div>
+        <button class="btn btn-p" onclick="showAddChequeForm()">+ Add Cheque</button>
+        <button class="btn btn-s" onclick="loadCheques()">↺ Refresh</button>
+        <button class="btn btn-s" onclick="window.print()">🖨 Print</button>
+      </div>
+      <!-- Add cheque form -->
+      <div class="card" id="add-cheq-form" style="display:none;margin-bottom:16px">
+        <div class="section-hdr"><div class="section-title">Add Cheque</div><button class="btn btn-s" onclick="hideAddChequeForm()">✕</button></div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Cheque No.</label><input class="fi" id="cq-num" placeholder="CHQ-0001"></div>
+          <div class="fg"><label class="fl">Bank</label><input class="fi" id="cq-bank" placeholder="HNB / Commercial..."></div>
+          <div class="fg"><label class="fl">Amount (LKR)</label><input type="number" class="fi" id="cq-amount" placeholder="0"></div>
+          <div class="fg"><label class="fl">Due Date</label><input type="date" class="fi" id="cq-due"></div>
+          <div class="fg"><label class="fl">Customer (optional)</label><select class="fs" id="cq-customer"><option value="">Walk-in / N/A</option></select></div>
+          <div class="fg"><label class="fl">Notes</label><input class="fi" id="cq-notes" placeholder="Vendor or reference"></div>
+        </div>
+        <button class="btn btn-p" onclick="saveCheque()">Save Cheque</button>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="tbl-wrap"><table><thead><tr><th>Cheque #</th><th>Bank</th><th>Amount</th><th>Due Date</th><th>Customer</th><th>Status</th><th>Action</th></tr></thead><tbody id="cheq-tbody"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Cheque Calendar — Current Month</div>
+        <div class="cal-grid" id="cheq-cal"></div>
+      </div>
+    </section>
+
+    <!-- ── VENDORS ── -->
+    <section class="page" id="page-vendors">
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:14px">Add Payment to Supplier</div>
+          <div class="fg"><label class="fl">Supplier</label><select class="fs" id="vend-sel"></select></div>
+          <div class="fg"><label class="fl">Amount (LKR)</label><input type="number" class="fi" id="vend-amt" placeholder="0"></div>
+          <div class="fg"><label class="fl">Payment Method</label><select class="fs" id="vend-method"><option>Cheque</option><option>Cash</option><option>Online Transfer</option></select></div>
+          <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="vend-date"></div>
+          <div class="fg"><label class="fl">Reference / Cheque No.</label><input class="fi" id="vend-ref" placeholder="CHQ-00123"></div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="saveVendorPayment()">Record Payment</button>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:12px">
+            <div class="kpi-label">Total Supplier Payables</div>
+            <div class="kpi-value" style="color:var(--red)" id="vend-total-out">Loading…</div>
+          </div>
+          <div class="card">
+            <div class="kpi-label">Pending Cheques</div>
+            <div class="kpi-value" style="color:var(--amber)" id="vend-pending-cheq">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-hdr"><div class="section-title">Supplier Directory</div><button class="btn btn-s" onclick="loadVendors()">↺ Refresh</button></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Total Paid</th><th>Last Payment</th><th>Pending Cheques</th><th>Days Since Pay</th><th>History</th></tr></thead><tbody id="vend-tbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── BARCODE ── -->
+    <section class="page" id="page-barcode">
+      <div class="grid-2">
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="section-title" style="margin-bottom:12px">Select Items</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <div class="search-wrap" style="flex:1"><span class="search-icon">🔍</span><input type="text" class="fi" placeholder="Search..." oninput="filterBarcodeItems(this.value)"></div>
+              <button class="btn btn-s" onclick="selectAllBC()">All</button>
+              <button class="btn btn-s" onclick="deselectAllBC()">None</button>
+            </div>
+            <div class="tbl-wrap" style="max-height:280px;overflow-y:auto">
+              <table><thead><tr><th><input type="checkbox" id="bc-all" onchange="toggleAllBC(this)"></th><th>Code</th><th>Name</th><th>Copies</th></tr></thead><tbody id="bc-tbody"></tbody></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title" style="margin-bottom:12px">Label Settings</div>
+            <div class="fg"><label class="fl">Label Size</label><select class="fs" id="lbl-size" onchange="updatePreview()"><option value="50x25">50×25 mm</option><option value="40x20">40×20 mm</option><option value="60x30">60×30 mm</option></select></div>
+            <div class="fg"><label class="fl">Copies per Item</label><input type="number" class="fi" id="lbl-copies" value="1" min="1" max="100"></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button class="btn btn-p" onclick="printLabels()">🖨 Print Selected</button>
+              <span style="font-size:12px;color:var(--text2)">Printed today: <strong id="print-cnt">0</strong></span>
+            </div>
+          </div>
+        </div>
+        <!-- Preview -->
+        <div class="card barcode-panel" id="bc-preview">
+          <div class="scan-line"></div>
+          <div class="section-title" style="margin-bottom:14px">Label Preview</div>
+          <div style="background:#fff;border-radius:var(--radius-sm);padding:16px 20px;display:inline-block;margin:10px 0;min-width:200px">
+            <div style="font-size:11px;font-weight:700;color:#000;margin-bottom:4px" id="pv-name">Select an item</div>
+            <div style="font-size:10px;color:#555;margin-bottom:8px" id="pv-code">—</div>
+            <div id="pv-bars" style="display:flex;align-items:flex-end;gap:1px;height:50px"></div>
+            <div style="font-size:12px;font-weight:800;color:#000;margin-top:6px" id="pv-price">—</div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:6px">Size: <span id="pv-size">50×25 mm</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REPORTS ── -->
+    <section class="page" id="page-reports">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0;flex:1;min-width:130px"><label class="fl">From</label><input type="date" class="fi" id="rpt-from"></div>
+          <div class="fg" style="margin-bottom:0;flex:1;min-width:130px"><label class="fl">To</label><input type="date" class="fi" id="rpt-to"></div>
+          <button class="btn btn-p" onclick="loadReport()">Generate</button>
+          <button class="btn btn-s" onclick="window.open('/api/report-download-range?from='+document.getElementById('rpt-from').value+'&to='+document.getElementById('rpt-to').value)">📊 Excel</button>
+        </div>
+      </div>
+      <!-- P&L -->
+      <div class="card" style="margin-bottom:16px" id="pl-card">
+        <div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em">Profit &amp; Loss Summary</div>
+        <div id="pl-rows"><div class="no-data">Generate a report to see P&amp;L</div></div>
+        <div style="margin-top:10px;font-size:10px;color:var(--amber);padding:8px;background:rgba(245,158,11,0.06);border-radius:6px">
+          ⚠ Rule enforced: Net Profit = Gross Profit − Expenses. Never Total Sale − Expenses.
+        </div>
+      </div>
+      <!-- WhatsApp / Investor -->
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">📱 WhatsApp Daily Report</div>
+          <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;font-size:12px;font-family:monospace;line-height:1.9;margin-bottom:10px" id="wa-text">Select a date in Daily Sales tab first</div>
+          <button class="btn btn-g" onclick="copyWA()">📋 Copy &amp; Share</button>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">Investor Report</div>
+          <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:18px;font-size:20px;font-weight:700;line-height:2.2;text-align:center;margin-bottom:10px" id="investor-text">—</div>
+          <button class="btn btn-s" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+      <!-- Daily list -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">Daily Breakdown</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Total Sale</th><th>Cash</th><th>Card</th><th>Online</th><th>Credit</th><th>GP</th><th>Expenses</th><th>Net Profit</th><th>Tier</th></tr></thead><tbody id="rpt-tbody"></tbody></table></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+const TARGET = 250000;
+let charts = {};
+let _invoices = [];   // cached for filter
+let _stock = [];
+let _cheques = [];
+let _bcItems = [];
+let _currentSalesDay = null;
+let printCnt = 0;
+
+const today = () => new Date().toISOString().slice(0,10);
+const fmt = v => Number(v||0).toLocaleString('en-IN');
+const fmtLKR = v => 'LKR ' + fmt(v);
+const fmtDate = iso => {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+};
+
+/* ─────────────────────────────────────────────
+   API WRAPPER
+───────────────────────────────────────────── */
+async function api(path, opts = {}) {
+  try {
+    const r = await fetch(path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      ...opts
+    });
+    if (r.status === 401) { showLogin(); return null; }
+    // 404 = no data for that date/record — return null silently, no toast
+    if (r.status === 404) { console.info('No data:', path); return null; }
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || r.statusText);
+    return data;
+  } catch (e) {
+    console.error(path, e);
+    toast(e.message || 'API error', 'error');
+    return null;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   AUTH
+───────────────────────────────────────────── */
+function showLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+}
+function hideLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  if (!user || !pass) { err.textContent = 'Enter username and password'; err.style.display = 'block'; return; }
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+  const r = await fetch('/api/login', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user, password: pass })
+  });
+  const data = await r.json();
+  btn.textContent = 'Sign In';
+  btn.disabled = false;
+  if (!r.ok || data.error) {
+    err.textContent = data.error || 'Login failed';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  hideLogin();
+  initApp();
+}
+
+document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('l-user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('l-pass').focus(); });
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  showLogin();
+}
+
+/* Check session on load */
+(async () => {
+  const me = await fetch('/api/me', { credentials: 'include' });
+  if (me.ok) { hideLogin(); initApp(); }
+  else showLogin();
+})();
+
+/* ─────────────────────────────────────────────
+   NAV
+───────────────────────────────────────────── */
+const PAGE_META = {
+  dashboard:   ['Dashboard',    'Live sales & KPI overview'],
+  'daily-sales':['Daily Sales', 'Invoices & payment breakdown'],
+  stock:       ['Stock',        'Inventory & GRN records'],
+  expenses:    ['Expenses',     'Daily expense detail'],
+  cheques:     ['Cheques',      'Cheque register & calendar'],
+  vendors:     ['Vendors',      'Supplier directory & payments'],
+  barcode:     ['Barcode',      'Label print & preview'],
+  reports:     ['Reports',      'P&L, range export, Investor report'],
+};
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => navigate(el.dataset.page));
+});
+
+function navigate(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+  document.getElementById(`page-${page}`).classList.add('active');
+  const [title, sub] = PAGE_META[page] || [page, ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent = sub;
+}
+
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  s.classList.toggle('collapsed');
+  document.querySelector('.toggle-lbl').textContent = s.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+}
+
+/* ─────────────────────────────────────────────
+   CLOCK
+───────────────────────────────────────────── */
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
+}
+setInterval(tick, 1000); tick();
+
+/* ─────────────────────────────────────────────
+   THEME
+───────────────────────────────────────────── */
+let _theme = 'dark';
+function toggleTheme() {
+  _theme = _theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', _theme);
+  document.querySelector('.theme-toggle').textContent = _theme === 'dark' ? '🌙' : '☀️';
+}
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(16px)'; t.style.transition='all 0.3s'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+/* ─────────────────────────────────────────────
+   COUNTER ANIMATION
+───────────────────────────────────────────── */
+function animCount(el, target, prefix='') {
+  const dur = 1100; const t0 = performance.now();
+  const step = now => {
+    const p = Math.min((now - t0) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = prefix + fmt(Math.round(ease * target));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ─────────────────────────────────────────────
+   CONFETTI
+───────────────────────────────────────────── */
+function confetti() {
+  const cv = document.getElementById('confetti-canvas');
+  cv.style.display = 'block';
+  const ctx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const COLORS = ['#F5A623','#22c55e','#3b82f6','#ef4444','#8b5cf6'];
+  const particles = Array.from({length:100}, () => ({
+    x: Math.random()*cv.width, y:-10,
+    w: Math.random()*10+4, h: Math.random()*6+3,
+    color: COLORS[~~(Math.random()*COLORS.length)],
+    vy: Math.random()*3+2, vx: (Math.random()-.5)*3,
+    rot: Math.random()*360, rv: (Math.random()-.5)*7
+  }));
+  let f=0;
+  const draw = () => {
+    ctx.clearRect(0,0,cv.width,cv.height);
+    particles.forEach(p => {
+      p.y+=p.vy; p.x+=p.vx; p.rot+=p.rv;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if (++f<200) requestAnimationFrame(draw);
+    else { cv.style.display='none'; ctx.clearRect(0,0,cv.width,cv.height); }
+  };
+  draw();
+  toast('🎉 Daily target reached!', 'success');
+}
+
+/* ─────────────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────────────── */
+async function loadDashboard() {
+  // Show skeletons
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = Array(6).fill(0).map(() => `
+    <div class="kpi-card">
+      <div class="skeleton skel-txt" style="width:60%"></div>
+      <div class="skeleton skel-val"></div>
+      <div class="skeleton skel-txt" style="width:80%"></div>
+    </div>`).join('');
+
+  const [stats, weekly] = await Promise.all([
+    api('/api/home-stats'),
+    api('/api/weekly-chart')
+  ]);
+  if (!stats) return;
+
+  const t = stats.today || {};
+  const m = stats.mtd   || {};
+
+  // Date display
+  document.getElementById('dash-date').textContent = fmtDate(today());
+  document.getElementById('page-sub').textContent = fmtDate(today()) + ' — Live data';
+
+  // Target bar
+  const sale = parseFloat(t.sale||0);
+  const pct = Math.min((sale/TARGET)*100,100);
+  document.getElementById('target-bar').style.width = pct+'%';
+  document.getElementById('target-pct').textContent = pct.toFixed(0)+'%';
+  document.getElementById('target-achieved').textContent = fmtLKR(sale)+' achieved';
+  if (pct>=100) setTimeout(confetti, 800);
+
+  // KPI definitions
+  const kpis = [
+    { key:'sale',  label:'Total Sale',  type:'total',   icon:'💰', val:t.sale  },
+    { key:'gp',    label:'Gross Profit',type:'profit',  icon:'📈', val:t.gp   },
+    { key:'np',    label:'Net Profit',  type:'profit',  icon:'💚', val:t.np   },
+    { key:'exp',   label:'Expenses',    type:'expense', icon:'💸', val:t.exp  },
+    { key:'msale', label:'MTD Sales',   type:'total',   icon:'📅', val:m.sale  },
+    { key:'mnp',   label:'MTD Profit',  type:'profit',  icon:'💹', val:m.np   },
+  ];
+
+  grid.innerHTML = kpis.map(k => `
+    <div class="kpi-card" data-type="${k.type}">
+      <div class="kpi-label">${k.icon} ${k.label}</div>
+      <div class="kpi-value" id="kv-${k.key}">LKR 0</div>
+    </div>`).join('');
+
+  kpis.forEach(k => {
+    const el = document.getElementById('kv-'+k.key);
+    if (el) animCount(el, parseFloat(k.val||0), 'LKR ');
+  });
+
+  // MTD rows
+  const mtdEl = document.getElementById('mtd-rows');
+  mtdEl.innerHTML = [
+    ['Days recorded', m.days||'0'],
+    ['Total Sales', fmtLKR(m.sale)],
+    ['Gross Profit', fmtLKR(m.gp)],
+    ['Total Expenses', fmtLKR(m.exp)],
+    ['Net Profit', fmtLKR(m.np)],
+  ].map(([l,v]) => `
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+      <span style="color:var(--text2)">${l}</span><strong>${v}</strong>
+    </div>`).join('');
+  document.getElementById('mtd-days-label').textContent = `${m.days||0} trading days this month`;
+
+  // Weekly chart
+  if (weekly && weekly.length) {
+    const cEl = document.getElementById('weeklyChart');
+    if (charts.weekly) charts.weekly.destroy();
+    charts.weekly = new Chart(cEl, {
+      type:'line',
+      data:{
+        labels: weekly.map(r=>r.label||fmtDate(r.report_date)),
+        datasets:[{
+          label:'Sales (LKR)',
+          data: weekly.map(r=>parseFloat(r.total||0)),
+          borderColor:'#F5A623', backgroundColor:'rgba(245,166,35,0.1)',
+          tension:0.4, fill:true, borderWidth:2, pointRadius:4, pointBackgroundColor:'#F5A623'
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:'#999'},grid:{color:'rgba(255,255,255,0.06)'}},
+          y:{ticks:{color:'#999'},grid:{color:'rgba(255,255,255,0.06)'}}
+        }
+      }
+    });
+  }
+
+  document.getElementById('last-upd').textContent = new Date().toLocaleTimeString();
+}
+
+/* ─────────────────────────────────────────────
+   DAILY SALES
+───────────────────────────────────────────── */
+async function loadSalesDate() {
+  const date = document.getElementById('sales-date').value;
+  if (!date) return;
+
+  // Load summary and invoices in parallel
+  const [summary, invoices] = await Promise.all([
+    api(`/api/daily-summary/${date}`),
+    api(`/api/reports?date=${date}`)
+  ]);
+
+  _currentSalesDay = summary;
+  _invoices = invoices || [];
+
+  if (summary) {
+    const s = summary;
+    const cash   = parseFloat(s.cash_sale||0);
+    const card   = parseFloat(s.card_sale||0);
+    const online = parseFloat(s.online_sale||0);
+    const credit = parseFloat(s.credit_sale||0);
+    const cheque = parseFloat(s.cheq_payment||0);
+    const total  = parseFloat(s.total_sale||0);
+
+    document.getElementById('p-cash').textContent   = fmt(cash);
+    document.getElementById('p-card').textContent   = fmt(card);
+    document.getElementById('p-online').textContent = fmt(online);
+    document.getElementById('p-credit').textContent = fmt(credit);
+    document.getElementById('p-cheque').textContent = fmt(cheque);
+
+    // Mismatch check (if split is recorded)
+    const splitSum = cash+card+online+credit+cheque;
+    const mismatch = splitSum > 0 && Math.abs(splitSum - total) > 1;
+    document.getElementById('mismatch-flag').style.display = mismatch ? 'block' : 'none';
+
+    // Donut chart
+    const dCtx = document.getElementById('donutChart');
+    if (charts.donut) charts.donut.destroy();
+    const donutVals = [cash, card, online, credit, cheque];
+    const donutColors = ['#3b82f6','#8b5cf6','#f59e0b','#ef4444','#22c55e'];
+    const donutLabels = ['Cash','Card','Online','Credit','Cheque'];
+    charts.donut = new Chart(dCtx, {
+      type:'doughnut',
+      data:{
+        labels: donutLabels,
+        datasets:[{ data:donutVals, backgroundColor:donutColors, borderWidth:0, hoverOffset:6 }]
+      },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+    });
+    const dLegend = document.getElementById('donut-legend');
+    const dTotal = donutVals.reduce((a,b)=>a+b,0);
+    dLegend.innerHTML = donutLabels.map((l,i) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${donutColors[i]};margin-right:8px;flex-shrink:0"></div>
+        <span style="flex:1">${l}</span>
+        <strong>${dTotal>0?((donutVals[i]/dTotal)*100).toFixed(1):'0.0'}%</strong>
+      </div>`).join('');
+
+    // Daily info rows
+    document.getElementById('daily-info-rows').innerHTML = [
+      ['Total Sale', fmtLKR(total)],
+      ['Gross Profit', s.gp_status === 'NOT_AVAILABLE' ? '<span style="color:var(--text3)">Not available</span>' : fmtLKR(s.gross_profit)],
+      ['Total Expenses', fmtLKR(s.total_expenses)],
+      ['Net Profit', s.net_profit != null ? fmtLKR(s.net_profit) : '<span style="color:var(--text3)">—</span>'],
+      ['Cash In Hand', fmtLKR(s.cash_in_hand)],
+      ['GP Status', `<span class="badge ${s.gp_status==='ACTUAL'?'bg':s.gp_status==='NOT_AVAILABLE'?'br':'ba'}">${s.gp_status||'—'}</span>`],
+    ].map(([l,v]) => `
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+        <span style="color:var(--text2)">${l}</span><span>${v}</span>
+      </div>`).join('');
+
+    // Build WhatsApp text for Reports page
+    buildWhatsApp(s);
+  } else {
+    ['p-cash','p-card','p-online','p-credit','p-cheque'].forEach(id => document.getElementById(id).textContent='—');
+    document.getElementById('daily-info-rows').innerHTML='<div class="no-data">No data for this date</div>';
+  }
+
+  renderInvoices();
+}
+
+function renderInvoices(filter='') {
+  const tbody = document.getElementById('inv-tbody');
+  const rows = filter
+    ? _invoices.filter(r => r.invoice_no?.toLowerCase().includes(filter) || r.notes?.toLowerCase().includes(filter))
+    : _invoices;
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No invoices found</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><strong>${r.invoice_no||'—'}</strong></td>
+      <td>${r.cash_amount>0?'Cash':r.card_amount>0?'Card':r.online_amount>0?'Online':r.credit_amount>0?'Credit':'Mixed'}</td>
+      <td><strong>${fmtLKR(r.total_sale)}</strong></td>
+      <td>${r.is_refund?'<span class="badge br">Refund</span>':'—'}</td>
+      <td style="color:var(--text2)">${r.notes||'—'}</td>
+    </tr>`).join('');
+}
+
+function filterInv() { renderInvoices(document.getElementById('inv-search').value.toLowerCase()); }
+
+function changeDate(dir) {
+  const dp = document.getElementById('sales-date');
+  const d = new Date(dp.value || today());
+  d.setDate(d.getDate() + dir);
+  dp.value = d.toISOString().slice(0,10);
+  loadSalesDate();
+}
+
+async function saveInvoice() {
+  const date = document.getElementById('sales-date').value;
+  if (!date) { toast('Select a date first', 'warning'); return; }
+  const body = {
+    report_date:   date,
+    invoice_no:    document.getElementById('n-inv').value || null,
+    total_sale:    parseFloat(document.getElementById('n-total').value)||0,
+    cash_amount:   parseFloat(document.getElementById('n-cash').value)||0,
+    card_amount:   parseFloat(document.getElementById('n-card').value)||0,
+    online_amount: parseFloat(document.getElementById('n-online').value)||0,
+    credit_amount: parseFloat(document.getElementById('n-credit').value)||0,
+    cheque_amount: parseFloat(document.getElementById('n-cheque').value)||0,
+    notes:         document.getElementById('n-notes').value || null,
+  };
+  if (!body.total_sale) { toast('Enter a total sale amount', 'warning'); return; }
+  const r = await api('/api/reports', { method:'POST', body:JSON.stringify(body) });
+  if (r) { toast('Invoice saved', 'success'); loadSalesDate(); ['n-inv','n-total','n-cash','n-card','n-online','n-credit','n-cheque','n-notes'].forEach(id=>document.getElementById(id).value=''); }
+}
+
+function buildWhatsApp(s) {
+  if (!s) return;
+  const text = `*Your Business Name — ${fmtDate(s.report_date||s.date_str)}*\n`+
+    `─────────────────────\n`+
+    `💰 Total Sales: *${fmtLKR(s.total_sale)}*\n`+
+    `💵 Cash: ${fmtLKR(s.cash_sale)}\n`+
+    `💳 Card: ${fmtLKR(s.card_sale)}\n`+
+    `📲 Online: ${fmtLKR(s.online_sale)}\n`+
+    `📝 Credit: ${fmtLKR(s.credit_sale)}\n`+
+    `🧾 Cheque: ${fmtLKR(s.cheq_payment)}\n`+
+    `─────────────────────\n`+
+    (s.net_profit != null ? `✅ Net Profit: ${fmtLKR(s.net_profit)}\n` : '')+
+    `_Generated by Bathco System_`;
+  document.getElementById('wa-text').innerHTML = text.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>');
+
+  document.getElementById('investor-text').innerHTML =
+    `Your Business Name<br>`+
+    `<span style="font-size:13px;color:var(--text2);font-weight:400">${fmtDate(s.report_date||s.date_str)}</span><br>`+
+    `Total: <span style="color:var(--gold)">${fmt(s.total_sale)}</span><br>`+
+    `<span style="font-size:15px">Cash: ${fmt(s.cash_sale)}</span><br>`+
+    `<span style="font-size:15px">Card: ${fmt(s.card_sale)}</span><br>`+
+    `<span style="font-size:15px">Online: ${fmt(s.online_sale)}</span>`;
+}
+
+function copyWhatsApp() {
+  const txt = document.getElementById('wa-text')?.innerText || '';
+  navigator.clipboard.writeText(txt).then(() => toast('Copied!','success'));
+}
+function copyWA() { copyWhatsApp(); }
+
+/* ─────────────────────────────────────────────
+   STOCK
+───────────────────────────────────────────── */
+async function loadStock() {
+  const rows = await api('/api/products');
+  if (!rows) return;
+  _stock = rows;
+
+  // Populate category filter
+  const cats = [...new Set(rows.map(r=>r.category).filter(Boolean))].sort();
+  const catSel = document.getElementById('stk-cat');
+  catSel.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+
+  renderStock();
+}
+
+function renderStock() {
+  const search = document.getElementById('stk-search').value.toLowerCase();
+  const cat    = document.getElementById('stk-cat').value;
+  const rows = _stock.filter(r =>
+    (!search || r.item_code?.toLowerCase().includes(search) || r.name?.toLowerCase().includes(search)) &&
+    (!cat || r.category === cat)
+  );
+  const tbody = document.getElementById('stk-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No items found</td></tr>'; return; }
+
+  // Alerts
+  const zero = rows.filter(r=>r.stock_level<=0).length;
+  const low  = rows.filter(r=>r.stock_level>0 && r.stock_level<=5).length;
+  const alertEl = document.getElementById('stk-alerts');
+  alertEl.innerHTML = [
+    low>0  && `<span class="badge br">🔴 Low Stock: ${low}</span>`,
+    zero>0 && `<span class="badge br">⬛ Zero Stock: ${zero}</span>`,
+  ].filter(Boolean).join('');
+
+  tbody.innerHTML = rows.map(r => {
+    const lvl = r.stock_level||0;
+    const pct = Math.min((lvl/30)*100,100);
+    const cls = lvl<=0?'#ef4444':lvl<=5?'#f59e0b':'#22c55e';
+    return `<tr style="${lvl<=0?'background:rgba(239,68,68,0.04)':''}">
+      <td><code style="color:var(--gold)">${r.item_code||'—'}</code></td>
+      <td><strong>${r.name}</strong></td>
+      <td><span class="badge bb">${r.category||'—'}</span></td>
+      <td style="font-weight:700;color:${lvl<=0?'var(--red)':lvl<=5?'var(--amber)':'var(--text)'}">${lvl}</td>
+      <td style="min-width:70px"><div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${cls}"></div></div></td>
+      <td style="color:var(--text2)">${r.supplier||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterStock() { renderStock(); }
+function toggleGRNForm() {
+  const f = document.getElementById('grn-form');
+  f.style.display = f.style.display==='none'?'block':'none';
+  if (f.style.display==='block') f.scrollIntoView({behavior:'smooth'});
+}
+
+async function loadGRN() {
+  const rows = await api('/api/grn');
+  if (!rows) return;
+  const tbody = document.getElementById('grn-tbody');
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="8" class="no-data">No GRN records</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${r.grn_number||'—'}</td>
+    <td>${r.grn_date||'—'}</td>
+    <td>${r.supplier_name||'—'}</td>
+    <td>${r.item_description||'—'}</td>
+    <td>${r.quantity||0}</td>
+    <td>${fmtLKR(r.unit_cost)}</td>
+    <td>${fmtLKR(r.total_amount)}</td>
+    <td><span class="badge ${r.status==='PENDING_REVIEW'?'ba':'bg'}">${r.status||'—'}</span></td>
+  </tr>`).join('');
+}
+
+async function saveGRN() {
+  const supplier_name = document.getElementById('g-supplier').value;
+  const grn_date = document.getElementById('g-date').value;
+  const qty = parseFloat(document.getElementById('g-qty').value)||0;
+  const cost = parseFloat(document.getElementById('g-cost').value)||0;
+  const item = document.getElementById('g-item').value;
+  if (!item || !grn_date) { toast('Fill item and date', 'warning'); return; }
+  const body = {
+    grn_number: document.getElementById('g-num').value||null,
+    supplier_name, grn_date,
+    item_description: item,
+    quantity: qty, unit_cost: cost,
+    total_amount: qty*cost,
+    notes: document.getElementById('g-notes').value||null
+  };
+  const r = await api('/api/grn', { method:'POST', body:JSON.stringify(body) });
+  if (r) { toast('GRN saved','success'); toggleGRNForm(); loadGRN(); }
+}
+
+/* ─────────────────────────────────────────────
+   EXPENSES
+───────────────────────────────────────────── */
+async function loadExpenses() {
+  const date = document.getElementById('exp-date').value;
+  if (!date) return;
+
+  const [summary, detail] = await Promise.all([
+    api(`/api/daily-summary/${date}`),
+    api(`/api/expenses-detail?date=${date}`)
+  ]);
+
+  // Summary rows
+  const sumEl = document.getElementById('exp-summary-rows');
+  if (summary) {
+    const reno = parseFloat(summary.renovation_cost||0);
+    const ops  = parseFloat(summary.total_expenses||0);
+    sumEl.innerHTML = [
+      ['Total Sale', fmtLKR(summary.total_sale)],
+      ['Operating Expenses', `<span style="color:var(--red)">${fmtLKR(ops)}</span>`],
+      ['Renovation (separate)', `<span style="color:var(--amber)">${fmtLKR(reno)}</span>`],
+      ['Payments Out', fmtLKR(summary.payments)],
+      ['Cash In Hand', fmtLKR(summary.cash_in_hand)],
+    ].map(([l,v])=>`
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+        <span style="color:var(--text2)">${l}</span><span>${v}</span>
+      </div>`).join('');
+
+    // Petty cash estimate
+    const spent = parseFloat(summary.total_expenses||0);
+    const bal   = Math.max(25000 - spent, 0);
+    document.getElementById('petty-bal').textContent = fmtLKR(bal);
+    document.getElementById('petty-bar').style.width = Math.min((bal/25000)*100,100)+'%';
+  } else {
+    sumEl.innerHTML = '<div class="no-data">No summary data for this date</div>';
+  }
+
+  // Expense detail lines
+  const tbody = document.getElementById('exp-tbody');
+  if (!detail || !detail.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="no-data">No expense detail for this date</td></tr>';
+    return;
+  }
+  tbody.innerHTML = detail.map(r => {
+    const isReno = r.category?.toLowerCase().includes('reno');
+    return `<tr style="${isReno?'background:rgba(245,158,11,0.06)':''}">
+      <td>${isReno?`<span class="badge ba">⚠ ${r.category} (separate)</span>`:`<span class="badge bb">${r.category||'Other'}</span>`}</td>
+      <td>${r.description||'—'}</td>
+      <td style="font-weight:700;color:${isReno?'var(--amber)':'var(--red)'}">${fmtLKR(r.amount)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   CHEQUES
+───────────────────────────────────────────── */
+async function loadCheques() {
+  const rows = await api('/api/cheques');
+  if (!rows) return;
+  _cheques = rows;
+  renderCheques();
+  renderChequeKPIs(rows);
+  renderChequeCalendar(rows);
+}
+
+function renderCheques(filter='') {
+  const tbody = document.getElementById('cheq-tbody');
+  const rows = filter
+    ? _cheques.filter(r => r.cheque_no?.toLowerCase().includes(filter) || r.name?.toLowerCase().includes(filter) || r.notes?.toLowerCase().includes(filter))
+    : _cheques;
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="7" class="no-data">No cheques found</td></tr>'; return; }
+  const now = today();
+  const in3 = new Date(); in3.setDate(in3.getDate()+3);
+  tbody.innerHTML = rows.map(r => {
+    const due = r.due_date?.slice?.(0,10) || '';
+    const isToday = due===now;
+    const isNear  = !isToday && due && due <= in3.toISOString().slice(0,10);
+    const isClear = r.status==='cleared';
+    const statCls = isClear?'bg':isToday?'br':isNear?'ba':'bb';
+    const statLbl = isClear?'✅ Cleared':isToday?'🔴 Due Today':isNear?'🟡 Due Soon':'⏳ Pending';
+    return `<tr style="${isToday?'background:rgba(239,68,68,0.05)':''}">
+      <td><strong>${r.cheque_no||r.cheque_number||'—'}</strong></td>
+      <td>${r.bank||'—'}</td>
+      <td><strong>${fmtLKR(r.amount)}</strong></td>
+      <td style="${isToday?'color:var(--red);font-weight:700':''}">${fmtDate(due)}</td>
+      <td>${r.name||'—'}</td>
+      <td><span class="badge ${statCls}">${statLbl}</span></td>
+      <td>${!isClear?`<button class="btn btn-g" style="padding:3px 9px;font-size:11px" onclick="clearCheque(${r.id})">Mark Cleared</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterCheques() { renderCheques(document.getElementById('cheq-search').value.toLowerCase()); }
+
+async function clearCheque(id) {
+  const r = await api(`/api/cheques/${id}/status`, { method:'PATCH', body:JSON.stringify({ status:'cleared' }) });
+  if (r) { toast('Cheque marked cleared','success'); loadCheques(); }
+}
+
+function renderChequeKPIs(rows) {
+  const pending   = rows.filter(r=>r.status==='pending');
+  const total     = pending.reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const now       = today();
+  const in3       = new Date(); in3.setDate(in3.getDate()+3);
+  const dueToday  = pending.filter(r=>r.due_date?.slice(0,10)===now).reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const thisWeek  = pending.filter(r=>r.due_date && r.due_date.slice(0,10)<=in3.toISOString().slice(0,10)).reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const cleared   = rows.filter(r=>r.status==='cleared').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const grid = document.getElementById('cheq-kpi-grid');
+  grid.innerHTML = [
+    {label:'Total Outstanding',val:fmtLKR(total),type:'total'},
+    {label:'Due This Week',val:fmtLKR(thisWeek),type:'card'},
+    {label:'Due Today',val:fmtLKR(dueToday),style:'color:var(--red)',type:'expense'},
+    {label:'Cleared Total',val:fmtLKR(cleared),type:'profit'},
+  ].map(k=>`
+    <div class="kpi-card" data-type="${k.type}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" ${k.style?`style="${k.style}"`:''}>${k.val}</div>
+    </div>`).join('');
+}
+
+function renderChequeCalendar(rows) {
+  const cal = document.getElementById('cheq-cal');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d=>`<div class="cal-hdr">${d}</div>`).join('');
+  const d = new Date(); d.setDate(1);
+  const yr=d.getFullYear(), mo=d.getMonth();
+  for (let i=0;i<d.getDay();i++) html+='<div></div>';
+  const daysInMonth = new Date(yr,mo+1,0).getDate();
+  const nowStr = today();
+  for (let day=1;day<=daysInMonth;day++) {
+    const ds = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const match = rows.find(r=>r.due_date?.slice(0,10)===ds);
+    const cls = match ? (match.status==='cleared'?'c-clear':ds===nowStr?'c-due':'c-cheque') : '';
+    html+=`<div class="cal-day ${cls}">
+      <div class="cal-day-n">${day}</div>
+      ${match?`<div style="font-size:9px;color:var(--amber)">${fmt(match.amount/1000)}k</div>`:''}
+    </div>`;
+  }
+  cal.innerHTML = html;
+}
+
+function showAddChequeForm() { document.getElementById('add-cheq-form').style.display='block'; }
+function hideAddChequeForm() { document.getElementById('add-cheq-form').style.display='none'; }
+
+async function saveCheque() {
+  const amount = parseFloat(document.getElementById('cq-amount').value)||0;
+  const due_date = document.getElementById('cq-due').value;
+  if (!amount || !due_date) { toast('Amount and due date required','warning'); return; }
+  const body = {
+    cheque_no:   document.getElementById('cq-num').value||null,
+    bank:        document.getElementById('cq-bank').value||null,
+    amount, due_date,
+    customer_id: document.getElementById('cq-customer').value||null,
+    notes:       document.getElementById('cq-notes').value||null,
+  };
+  const r = await api('/api/cheques', { method:'POST', body:JSON.stringify(body) });
+  if (r) { toast('Cheque saved','success'); hideAddChequeForm(); loadCheques(); }
+}
+
+/* ─────────────────────────────────────────────
+   VENDORS
+───────────────────────────────────────────── */
+async function loadVendors() {
+  const rows = await api('/api/suppliers');
+  if (!rows) return;
+  const tbody = document.getElementById('vend-tbody');
+  const sel   = document.getElementById('vend-sel');
+
+  // Populate dropdown
+  sel.innerHTML = rows.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+
+  // Totals
+  const totalPaid = rows.reduce((a,r)=>a+parseFloat(r.total_paid||0),0);
+  const pendChq   = rows.reduce((a,r)=>a+parseFloat(r.pending_cheques||0),0);
+  document.getElementById('vend-total-out').textContent = fmtLKR(totalPaid) + ' total paid';
+  document.getElementById('vend-pending-cheq').textContent = fmtLKR(pendChq);
+
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="6" class="no-data">No suppliers found</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const paid    = parseFloat(r.total_paid||0);
+    const pending = parseFloat(r.pending_cheques||0);
+    return `<tr>
+      <td><strong>${r.name}</strong><br><span style="font-size:10px;color:var(--text3)">${r.category||''}</span></td>
+      <td style="font-weight:700;color:var(--blue)">${fmtLKR(paid)}</td>
+      <td>${r.last_payment?fmtDate(r.last_payment):'—'}</td>
+      <td>${pending>0?`<span style="color:var(--amber);font-weight:700">${fmtLKR(pending)}</span>`:'—'}</td>
+      <td><span style="font-size:10px;color:var(--text3)">${r.days_since_payment>=0?r.days_since_payment+' days ago':'—'}</span></td>
+      <td><button class="btn btn-s" style="padding:3px 9px;font-size:11px" onclick="viewVendorPayments(${r.id},'${r.name}')">History</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function viewVendorPayments(id, name) {
+  const rows = await api(`/api/suppliers/${id}/payments`);
+  if (!rows) return;
+  toast(`${name}: ${rows.length} payment(s) — total ${fmtLKR(rows.reduce((a,r)=>a+parseFloat(r.amount||0),0))}`, 'info');
+}
+
+async function saveVendorPayment() {
+  toast('Vendor payments — connect /api/supplier_payments endpoint', 'info');
+}
+
+/* ─────────────────────────────────────────────
+   BARCODE
+───────────────────────────────────────────── */
+function loadBarcodeItems() {
+  _bcItems = _stock.map(r => ({ ...r, selected: false, copies: 1 }));
+  renderBarcodeItems();
+}
+
+function renderBarcodeItems(filter='') {
+  const tbody = document.getElementById('bc-tbody');
+  const items = filter ? _bcItems.filter(r => r.item_code?.toLowerCase().includes(filter) || r.name?.toLowerCase().includes(filter)) : _bcItems;
+  if (!items.length) { tbody.innerHTML='<tr><td colspan="4" class="no-data">No items</td></tr>'; return; }
+  tbody.innerHTML = items.map((r,i) => `
+    <tr>
+      <td><input type="checkbox" ${r.selected?'checked':''} onchange="_bcItems[${i}].selected=this.checked;previewItem(${i})"></td>
+      <td><code style="color:var(--gold);font-size:11px">${r.item_code||'—'}</code></td>
+      <td style="font-size:12px">${r.name}</td>
+      <td><input type="number" style="width:46px;background:var(--bg3);border:1px solid var(--card-border);border-radius:4px;padding:3px 5px;color:var(--text);font-size:11px" value="${r.copies||1}" min="1" onchange="_bcItems[${i}].copies=parseInt(this.value)||1"></td>
+    </tr>`).join('');
+}
+
+function filterBarcodeItems(v) { renderBarcodeItems(v.toLowerCase()); }
+function selectAllBC()  { _bcItems.forEach(r=>r.selected=true);  renderBarcodeItems(); }
+function deselectAllBC(){ _bcItems.forEach(r=>r.selected=false); renderBarcodeItems(); }
+function toggleAllBC(cb){ if(cb.checked) selectAllBC(); else deselectAllBC(); }
+
+function previewItem(i) {
+  const r = _bcItems[i];
+  document.getElementById('pv-name').textContent  = r.name;
+  document.getElementById('pv-code').textContent  = r.item_code||'—';
+  document.getElementById('pv-price').textContent = r.price_tier||'—';
+  buildBarSVG(r.item_code||'ITEM');
+}
+
+function buildBarSVG(code) {
+  const el = document.getElementById('pv-bars');
+  el.innerHTML = Array.from(code).flatMap(c => {
+    const n = c.charCodeAt(0);
+    return [
+      `<div style="height:${n%2===0?50:40}px;width:${n%3===0?5:2}px;background:#000;flex-shrink:0"></div>`,
+      `<div style="width:${n%4===0?4:2}px;flex-shrink:0"></div>`
+    ];
+  }).join('');
+}
+
+function updatePreview() {
+  document.getElementById('pv-size').textContent = document.getElementById('lbl-size').value.replace('x','×')+' mm';
+}
+
+function printLabels() {
+  const sel = _bcItems.filter(r=>r.selected);
+  if (!sel.length) { toast('No items selected','warning'); return; }
+  printCnt += sel.length;
+  document.getElementById('print-cnt').textContent = printCnt;
+  toast(`Printing ${sel.length} label(s)`,'success');
+  window.print();
+}
+
+/* ─────────────────────────────────────────────
+   REPORTS
+───────────────────────────────────────────── */
+async function loadReport() {
+  const from = document.getElementById('rpt-from').value;
+  const to   = document.getElementById('rpt-to').value;
+  if (!from || !to) { toast('Select date range','warning'); return; }
+  const rows = await api(`/api/daily-summary?from=${from}&to=${to}`);
+  if (!rows) return;
+
+  // Totals
+  const totSale = rows.reduce((a,r)=>a+parseFloat(r.total_sale||0),0);
+  const totGP   = rows.reduce((a,r)=>a+parseFloat(r.gross_profit||0),0);
+  const totExp  = rows.reduce((a,r)=>a+parseFloat(r.total_expenses||0),0);
+  const totNP   = rows.reduce((a,r)=>r.net_profit!=null?a+parseFloat(r.net_profit):a,0);
+  const totReno = rows.reduce((a,r)=>a+parseFloat(r.renovation_cost||0),0);
+
+  // P&L
+  document.getElementById('pl-rows').innerHTML = [
+    ['Total Sales',        fmtLKR(totSale),  ''],
+    ['Gross Profit',       fmtLKR(totGP),    'positive'],
+    ['Operating Expenses', `− ${fmtLKR(totExp)}`, 'negative'],
+    ...(totReno>0?[['Renovation (separate)', `− ${fmtLKR(totReno)}`, 'reno']]: []),
+    ['NET PROFIT',         fmtLKR(totNP),    'total'],
+  ].map(([l,v,cls]) => {
+    const c = cls==='positive'?'color:var(--green)':cls==='negative'||cls==='reno'?'color:var(--red)':cls==='total'?'color:var(--gold);font-weight:800;font-size:15px':'';
+    return `<div class="report-row" style="${cls==='reno'?'background:rgba(245,158,11,0.06);':''}">`+
+      `<span${cls==='total'?' style="font-weight:800"':''}>${l}</span>`+
+      `<span style="${c}">${v}</span>`+
+      `</div>`;
+  }).join('');
+
+  // Daily table
+  const tbody = document.getElementById('rpt-tbody');
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="10" class="no-data">No data</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const tier = r.data_tier||'FOUNDATION';
+    const tierCls = tier==='FULL'?'tier-full':tier==='CASHFLOW'?'tier-cash':'tier-found';
+    return `<tr>
+      <td>${fmtDate(r.date_str||r.report_date)}</td>
+      <td>${fmtLKR(r.total_sale)}</td>
+      <td>${fmtLKR(r.cash_sale)}</td>
+      <td>${fmtLKR(r.card_sale)}</td>
+      <td>${fmtLKR(r.online_sale)}</td>
+      <td>${fmtLKR(r.credit_sale)}</td>
+      <td>${r.gp_status!=='NOT_AVAILABLE'?fmtLKR(r.gross_profit):'<span style="color:var(--text3)">—</span>'}</td>
+      <td>${fmtLKR(r.total_expenses)}</td>
+      <td style="${r.net_profit<0?'color:var(--red)':r.net_profit>0?'color:var(--green)':''}">
+        ${r.net_profit!=null?fmtLKR(r.net_profit):'—'}
+      </td>
+      <td><span class="data-tier ${tierCls}">${tier}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   INIT APP (called after login)
+───────────────────────────────────────────── */
+async function initApp() {
+  // Load the most recent date that has actual data
+  const latestDay = await api('/api/daily-summary?latest=1');
+  const latestDate = Array.isArray(latestDay) ? (latestDay[0]?.date_str || today()) : (latestDay?.date_str || today());
+
+  const dp = document.getElementById('sales-date');
+  if (!dp.value) dp.value = latestDate;
+
+  const expDp = document.getElementById('exp-date');
+  if (!expDp.value) expDp.value = latestDate;
+
+  const vendDp = document.getElementById('vend-date');
+  if (!vendDp.value) vendDp.value = today();
+
+  const grnDp = document.getElementById('g-date');
+  if (!grnDp.value) grnDp.value = today();
+
+  const now = new Date();
+  const m1 = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  document.getElementById('rpt-from').value = m1;
+  document.getElementById('rpt-to').value   = today();
+
+  // Load all data in parallel
+  await Promise.all([
+    loadDashboard(),
+    loadSalesDate(),
+    loadStock().then(()=>{ loadBarcodeItems(); }),
+    loadCheques(),
+    loadVendors(),
+    loadExpenses(),
+    loadGRN(),
+  ]);
+
+  // Populate customer dropdown for cheques
+  const customers = await api('/api/customers');
+  if (customers) {
+    const sel = document.getElementById('cq-customer');
+    sel.innerHTML = '<option value="">Walk-in / N/A</option>' +
+      customers.map(c=>`<option value="${c.id}">${c.name||c.phone}</option>`).join('');
+  }
+
+  // Populate supplier dropdown for GRN form
+  const suppliers = await api('/api/suppliers');
+  if (suppliers) {
+    const sel = document.getElementById('g-supplier');
+    sel.innerHTML = '<option value="">Select supplier…</option>' +
+      suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }
+
+  document.getElementById('page-sub').textContent = fmtDate(today()) + ' — Connected to database';
+}
+</script>
+</body>
+</html>

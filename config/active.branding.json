@@ -1,0 +1,24 @@
+{
+  "instance_id": "template",
+  "company_name": "Your Business Name",
+  "legal_name": "Your Business Name (Pvt) Ltd",
+  "tagline": "Your tagline here",
+  "logo_url": "/vendor/default-logo.png",
+  "currency": "LKR",
+  "currency_symbol": "Rs",
+  "locale": "en-LK",
+  "language": "en",
+  "theme": {
+    "emerald_900": "#062e21", "emerald_800": "#0a4531", "emerald_700": "#0f5132",
+    "earth_800": "#3d2b1f", "earth_700": "#5c4033", "earth_500": "#8b6f47",
+    "gold_500": "#c9a227", "gold_400": "#d4af37", "gold_300": "#e8cf7a"
+  },
+  "watermark_text": "",
+  "watermark_opacity": 0.015,
+  "db_name": "bathco_template",
+  "support_contact": {
+    "name": "",
+    "phone": "",
+    "email": ""
+  }
+}
