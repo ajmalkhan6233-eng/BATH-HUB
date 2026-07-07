@@ -120,7 +120,10 @@ client.on('disconnected', (reason) => {
     // brings the session back within seconds instead of minutes. 10s grace
     // lets any in-flight webhook replies finish first.
     console.error('[WA-BRIDGE] Exiting in 10s for pm2 to restart the session.');
-    setTimeout(() => process.exit(1), 10000);
+    setTimeout(async () => {
+        try { await client.destroy(); } catch {}
+        process.exit(1);
+    }, 10000);
 });
 
 // Inbound: forward every incoming message to the main server's webhook, then
@@ -246,6 +249,25 @@ app.post('/liveness-check', async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`[WA-BRIDGE] HTTP API on http://localhost:${PORT} (health: /health, send: POST /send)`));
+
+// Windows pm2 kills don't always deliver SIGTERM, so a previous bridge's Chrome
+// can survive holding .wwebjs_auth/session — then initialize() fails with
+// "browser already running" and the bridge sits as a zombie (online in pm2,
+// ready:false, one grey tick on incoming messages). Kill any such orphan first.
+// Matches ONLY chrome processes whose command line points at OUR session dir.
+function killOrphanedSessionBrowsers() {
+    try {
+        const { execSync } = require('child_process');
+        execSync(
+            `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name like '%chrome%'\\" | Where-Object { $_.CommandLine -like '*wwebjs_auth*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`,
+            { stdio: 'ignore', timeout: 30000 }
+        );
+        console.log('[WA-BRIDGE] Cleared any orphaned session browsers before initialize.');
+    } catch (e) {
+        console.warn('[WA-BRIDGE] Orphan-browser cleanup skipped:', e.message);
+    }
+}
+killOrphanedSessionBrowsers();
 client.initialize();
 
 // Without this, pm2 restart/stop leaves the Chrome child orphaned holding
