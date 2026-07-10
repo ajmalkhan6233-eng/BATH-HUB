@@ -13,11 +13,10 @@
 <style>
 /* ═══════════════════════ DIVINE NATURE DESIGN SYSTEM ═══════════════════════ */
 :root{
-  /* Command Center palette (FINAL_BUILD_2.md Task 1, 2026-07-05) — same variable
-     names as before so every existing page inherits the retint with zero markup
-     changes. Values ported from Desktop\BATHCO_VERSION_1\kimcord.md. Status
-     colors (--amber/--red/--green) intentionally left untouched — they carry
-     meaning (pending/alarm/ok), not decoration, see [[feedback_bathco_kpi_colours]]. */
+  /* Command Center palette — same variable names as before so every existing
+     page inherits the retint with zero markup changes. Status colors
+     (--amber/--red/--green) intentionally left untouched — they carry
+     meaning (pending/alarm/ok), not decoration. */
   --emerald-900:#0a0f0a; --emerald-800:#0f1a12; --emerald-700:#163524; --emerald-600:#1d4a30;
   --earth-800:#14100a; --earth-700:#241a10; --earth-500:#8a7550; --earth-300:#c9b28a;
   --gold-500:#c8a45c; --gold-400:#d4b76a; --gold-300:#e8cf7a; --gold-glow:rgba(200,164,92,0.25);
@@ -55,8 +54,8 @@ body.no-watermark .watermark{display:none;}
 .app{position:relative; z-index:1; min-height:100vh;}
 .mobile-menu-btn{display:none;}
 
-/* Command Center top nav — replaces the old left sidebar (FINAL_BUILD_2.md
-   Task 1). goPage()/applyFlags() are unchanged: they select by .nav-btn /
+/* Command Center top nav — replaces the old left sidebar.
+   goPage()/applyFlags() are unchanged: they select by .nav-btn /
    [data-flag] / #badge-*, which every dropdown-item below still carries. */
 .brand{font-size:15px; font-weight:700; color:var(--gold-400); letter-spacing:0.4px; display:flex; flex-direction:column; flex-shrink:0;}
 .brand span{font-size:10px; color:var(--muted); font-weight:400; margin-top:2px;}
@@ -140,9 +139,8 @@ body.no-watermark .watermark{display:none;}
 }
 @keyframes kpiShimmer{0%{transform:translateX(-100%);} 100%{transform:translateX(200%);}}
 
-/* Date navigator control cluster (Home page hero, Task 1) — same pattern as
-   kimcord.md's control-cluster, ported onto this app's actual per-day API
-   instead of the mockup's fake countUp. */
+/* Date navigator control cluster (Home page hero) — wired to this app's
+   actual per-day API. */
 .control-cluster{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0 12px;}
 .icon-btn{
   width:36px; height:36px; border-radius:10px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.04);
@@ -407,7 +405,7 @@ button.ghost{background:transparent; border:1px solid var(--glass-border); color
 
     <!-- POS BILLING (flagged) -->
     <div class="page" id="page-pos">
-      <div class="gap-note">HSL/SL invoice series are always summed as one system. Manual bills written after 6pm must be entered as <b>tomorrow's</b> fresh sale, never backdated — this screen does not auto-enforce that; it's a manual process rule.</div>
+      <div class="gap-note">All invoice series are always summed as one system. Manual bills written after closing time must be entered as <b>the next day's</b> fresh sale, never backdated — this screen does not auto-enforce that; it's a manual process rule.</div>
       <div class="grid grid-2">
         <div class="card">
           <div class="section-title" style="margin-top:0">Scan / Enter Item</div>
@@ -448,7 +446,7 @@ button.ghost{background:transparent; border:1px solid var(--glass-border); color
     <!-- COMMISSION (flagged) -->
     <div class="page" id="page-commission">
       <div class="flag-locked-note">
-        Locked rule: commission = 1% of <b>each staff member's individually-attributed</b> Gross Profit, sourced from Lasersoft's profit-by-invoice report filtered per staff member (CLAUDE.md §3.6). That per-staff GP attribution does not exist anywhere in the current Postgres schema — <code>daily_summary</code> is shop-wide only. This page shows the real, already-stored commission figures from <code>staff_salary.commission</code> and the real pay-period boundary; it does <b>not</b> auto-calculate 1%-of-GP, because there is no real per-staff GP number to calculate it from. Wiring that requires importing Lasersoft's staff-filtered report first.
+        Locked rule: commission = a fixed percentage of <b>each staff member's individually-attributed</b> Gross Profit, sourced from the POS profit-by-invoice report filtered per staff member. That per-staff GP attribution does not exist anywhere in the current Postgres schema — <code>daily_summary</code> is shop-wide only. This page shows the real, already-stored commission figures from <code>staff_salary.commission</code> and the real pay-period boundary; it does <b>not</b> auto-calculate commission, because there is no real per-staff GP number to calculate it from. Wiring that requires importing the POS's staff-filtered report first.
       </div>
       <div class="card" id="pay-period-card" style="margin-bottom:14px;"></div>
       <div class="card">
@@ -497,14 +495,14 @@ button.ghost{background:transparent; border:1px solid var(--glass-border); color
         <label class="ghost" style="cursor:pointer; display:inline-block;">📷 Upload Source Document<input type="file" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="uploadToInbox(this, 'audit-upload-result')"></label>
       </div>
       <div id="audit-upload-result"></div>
-      <div class="gap-note">DAILY DETAIL is real Lasersoft sales data (date/invoice/item/qty/price — exact). Unit Cost/COGS/GP use today's average cost as an estimate of historical cost — flagged "EST-AVG-COST", not a real historical figure. Rows with no cost data anywhere are flagged "MISSING", never guessed.</div>
+      <div class="gap-note">DAILY DETAIL is real POS sales data (date/invoice/item/qty/price — exact). Unit Cost/COGS/GP use today's average cost as an estimate of historical cost — flagged "EST-AVG-COST", not a real historical figure. Rows with no cost data anywhere are flagged "MISSING", never guessed.</div>
       <div class="section-title">Summary</div>
       <div class="card" style="overflow-x:auto"><table id="audit-summary-table"><thead><tr><th>Period</th><th>Sales</th><th>Gross Profit</th><th>Expenses</th><th>Net Profit</th><th>Cash</th><th>Card</th><th>Online</th><th>Cheque</th><th>Credit</th><th>Days</th></tr></thead><tbody></tbody></table></div>
 
-      <div class="section-title">Reconciliation — flagged days (Excel vs Lasersoft vs expense-sheet)</div>
+      <div class="section-title">Reconciliation — flagged days (Excel vs POS vs expense-sheet)</div>
       <div class="card" style="overflow-x:auto"><table id="audit-recon-table"><thead><tr><th>Date</th><th>Excel Total</th><th>Source</th><th>Expense Source</th><th>Conflict Variance</th></tr></thead><tbody></tbody></table></div>
 
-      <div class="section-title">Cash Proof <span class="page-sub" style="display:inline">— opening float LKR 25,000 + cash sales − expenses − payments = closing cash</span></div>
+      <div class="section-title">Cash Proof <span class="page-sub" style="display:inline">— opening float + cash sales − expenses − payments = closing cash</span></div>
       <div class="card" style="overflow-x:auto"><table id="audit-cashproof-table"><thead><tr><th>Date</th><th>Cash Sale</th><th>Expenses</th><th>Payments</th><th>Expected Closing</th><th>Actual Closing</th><th>Variance</th></tr></thead><tbody></tbody></table></div>
 
       <div class="section-title">Exceptions</div>
@@ -1487,7 +1485,7 @@ const TAB_CONFIG = {
     { key:'cheqcal', flagKey:'acc_cheque_calendar', label:'Cheque Calendar', endpoint:'/api/cheque-calendar',
       cols:['Cheque #','Amount','Due Date','Status'],
       render:r=>`<tr><td>${r.cheque_number||'—'}</td><td>${fmt(r.amount)}</td><td>${r.due_date?new Date(r.due_date).toLocaleDateString('en-GB'):'—'}</td><td>${r.status||'—'}</td></tr>` },
-    { key:'petty', flagKey:'acc_petty_cash', label:'Petty Cash (Rs 25,000 float)', endpoint:'/api/petty-cash',
+    { key:'petty', flagKey:'acc_petty_cash', label:'Petty Cash (fixed float)', endpoint:'/api/petty-cash',
       cols:['Date','Type','Amount','Note'],
       render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td><span class="badge badge-${r.type==='TOPUP'?'green':'amber'}">${r.type||'—'}</span></td><td>${fmt(r.amount)}</td><td>${r.note||'—'}</td></tr>` },
     { key:'budgets', flagKey:'acc_expense_budgets', label:'Expense Budgets', endpoint:'/api/expense-budgets',
@@ -1770,7 +1768,7 @@ async function m8SendMessage() {
      unavailable or fails to load. Never initialized on data-heavy pages (see
      NATURE_3D.stop() in goPage). Themes live in themes/*.js (see
      themes/_TEMPLATE.js) and only ever touch this canvas — never data, pages,
-     or API calls (M2/theme rule, see MODULE_REGISTRY.md and FINAL_BUILD.md). -->
+     or API calls (theme rule). -->
 <script type="module">
   const canvas = document.getElementById('three-canvas');
   const ALLOWED_PAGES = new Set(['home']); // + login screen, handled separately below
@@ -1812,7 +1810,7 @@ async function m8SendMessage() {
     }
   }
   let themeClock = null;
-  // Performance (FINAL_BUILD_2.md Task 1 item 5): fully stop the rAF loop
+  // Performance: fully stop the rAF loop
   // when the tab is hidden rather than relying on browser throttling alone -
   // kim_forest's per-frame particle/instance-matrix work still costs
   // something even throttled to ~1fps in a background tab.

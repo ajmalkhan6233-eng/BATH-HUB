@@ -12,8 +12,8 @@ const qrcodeTerminal = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 
 const PORT = process.env.WHATSAPP_BRIDGE_PORT || 3001;
-const MAIN_SERVER_URL = process.env.MAIN_SERVER_URL || 'http://localhost:3000';
-const INBOX_ROOT = 'C:\\BATHCO_DROP\\inbox'; // same drop folder the Nature upload button uses
+const MAIN_SERVER_URL = process.env.MAIN_SERVER_URL || `http://localhost:${process.env.PORT || 3010}`;
+const INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox'); // same drop folder the Nature upload button uses
 
 // ── LOCAL TEST MODE WHITELIST ──────────────────────────────────────────────
 // Only this number gets forwarded to LAYLA / gets a reply. Everyone else is

@@ -6,7 +6,7 @@
  * Checks per day:
  *  1. Sales arithmetic     — cash+card+online+credit+cheq vs total_sale (>1% gap)
  *  2. Net profit arithmetic — gross_profit - total_expenses vs net_profit (>1 LKR gap)
- *  3. GP status gaps       — NOT_AVAILABLE or ESTIMATE after T+2 (no Lasersoft report uploaded)
+ *  3. GP status gaps       — NOT_AVAILABLE or ESTIMATE after T+2 (no POS report uploaded)
  *  4. High expense ratio   — total_expenses > 60% of total_sale
  *  5. Negative net profit  — net_profit < 0 (loss day)
  *  6. Cash shortfall       — cash_in_hand < -10,000 (implausible)
@@ -26,8 +26,8 @@ const pool = process.env.DATABASE_URL
     ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: _dbSsl })
     : new Pool({
         host:     process.env.DB_HOST     || 'localhost',
-        port:     5432,
-        database: 'bathco',
+        port:     process.env.DB_PORT     || 5432,
+        database: process.env.DB_NAME     || 'bathco_template',
         user:     process.env.DB_USER     || 'postgres',
         password: process.env.DB_PASSWORD,
     });
@@ -109,7 +109,7 @@ async function runCheck({ since, until, quiet = false } = {}) {
         if ((r.gp_status === 'NOT_AVAILABLE' || r.gp_status === 'ESTIMATE') && dateStr <= staleCutoff) {
             issues.push({
                 code: 'GP_STALE',
-                detail: `gp_status=${r.gp_status} — Lasersoft report not uploaded (day is >${GP_STALE_DAYS}d old)`,
+                detail: `gp_status=${r.gp_status} — POS report not uploaded (day is >${GP_STALE_DAYS}d old)`,
             });
         }
 

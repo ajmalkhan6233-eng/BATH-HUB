@@ -16,7 +16,7 @@ const pool = new Pool({
     user: process.env.DB_USER, password: process.env.DB_PASSWORD,
 });
 
-const OPENING_FLOAT = 25000; // FINAL_BUILD_2.md Task 2 item 8d - fixed petty-cash float
+const OPENING_FLOAT = parseFloat(process.env.PETTY_CASH_FLOAT || 0); // fixed petty-cash opening float — set PETTY_CASH_FLOAT in .env
 
 function granularityBounds(from, to, granularity) {
     // Returns a SQL date_trunc-compatible unit.
@@ -181,7 +181,7 @@ router.get('/api/audit/workbook', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FULL AUDIT REPORT (FINAL_BUILD_2.md Task 2) — audit-firm-standard: cover,
+// FULL AUDIT REPORT — audit-firm-standard: cover,
 // summary, three-way reconciliation, cash proof, exceptions, staff, sign-off.
 // Every figure below comes straight from SQL - nothing is estimated or
 // inferred here. The one optional exception (narrateReport) only ever writes
@@ -219,9 +219,9 @@ async function buildFullReport(from, to) {
         data_sources: sourcesUsed.length ? sourcesUsed : ['no data in range'],
     };
 
-    // ── RECONCILIATION — three-way tie-out per day (Excel is truth for
-    // revenue per RECONCILIATION_RULES.md §1; sales_conflict/_excel already
-    // tracks a manual-entry-vs-Excel mismatch when one was recorded). ──
+    // ── RECONCILIATION — three-way tie-out per day (locked rule: Excel is
+    // truth for revenue; sales_conflict/_excel already tracks a
+    // manual-entry-vs-Excel mismatch when one was recorded). ──
     const reconciliation = days.rows.map(d => ({
         date: d.date,
         excel_total: +d.total_sale || 0,
@@ -282,12 +282,12 @@ async function buildFullReport(from, to) {
         payments: staffPayments.rows,
         gp_by_staff_commission_autocalc: {
             blocked: true,
-            reason: "Real commission = 1% of each staff member's individually-attributed Gross Profit from Lasersoft (CLAUDE.md 3.6). lasersoft_invoices has no salesperson column, so per-staff GP does not exist in this database. Cannot compute without importing a staff-filtered Lasersoft profit report first - see routes/staff_reports.js.",
+            reason: "Real commission = a fixed percentage of each staff member's individually-attributed Gross Profit from the POS (locked business rule). lasersoft_invoices has no salesperson column, so per-staff GP does not exist in this database. Cannot compute without importing a staff-filtered POS profit report first - see routes/staff_reports.js.",
         },
     };
 
     // ── SIGN-OFF ──
-    const signOff = { prepared_by: 'BATHCO COMMAND (automated)', prepared_at: new Date().toISOString(),
+    const signOff = { prepared_by: 'System (automated)', prepared_at: new Date().toISOString(),
         reviewed_by: 'Owner', reviewed_signature_line: true };
 
     return { cover, summary, reconciliation, cashProof: { rows: cashProof, flagged: cashProofFlagged }, exceptions, staff, signOff };

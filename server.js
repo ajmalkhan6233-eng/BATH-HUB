@@ -17,13 +17,10 @@ const { processMessage, alertOwner, getOrCreateCustomer, pool } = require('./lay
 const { runCheck: runReconCheck } = require('./scripts/daily_reconciliation_check');
 
 // Idempotent schema migrations
-// NOTE (2026-07-05): these silently no-op via .catch(()=>{}) if the pool's
-// connected role isn't the table owner - after last session's DB
-// credential rotation to the least-privilege bathco_app role, ALL 49
-// tables were still owned by postgres, so every line below had been
-// silently failing (invisible because the columns already existed from
-// before the rotation). Fixed by transferring table ownership to
-// bathco_app; see SECURITY_LOG.md.
+// NOTE: these silently no-op via .catch(()=>{}) if the pool's connected role
+// isn't the table owner - if you rotate to a least-privilege DB role, move
+// table ownership (or ALTER privileges) with it, otherwise every line below
+// fails invisibly.
 pool.query(`ALTER TABLE cheques ADD COLUMN IF NOT EXISTS payee VARCHAR(150)`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS details JSONB DEFAULT '{}'::jsonb`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS cheq_payment NUMERIC(14,2) DEFAULT 0`).catch(()=>{});
@@ -132,17 +129,16 @@ if (!process.env.SESSION_SECRET) {
 // allowing plain http://localhost access for local dev.
 app.set('trust proxy', 1);
 
-// ─── SECURITY HARDENING (FINAL_BUILD.md Phase 2, 2026-07-05) ─────────────────
+// ─── SECURITY HARDENING ───────────────────────────────────────────────────────
 // CSP intentionally left off: BATHCO_NATURE.html and dashboard.html rely on
 // large inline <script>/<style> blocks throughout (no build step) — a default
 // or strict CSP would break the live app. The rest of helmet's headers
 // (X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy, etc.) are
 // same-origin/heuristic and safe to enable as-is. Tightening CSP to nonces
-// would require rewriting every inline script/style — out of scope here, see
-// SECURITY_LOG.md.
+// would require rewriting every inline script/style — out of scope here.
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
-// 100 requests / 15 min / IP across the whole app, per FINAL_BUILD.md Phase 2.
+// 100 requests / 15 min / IP across the whole app.
 // /health is registered above this and returns before middleware runs, so
 // Railway's health probe is unaffected.
 app.use(rateLimit({
@@ -154,8 +150,8 @@ app.use(rateLimit({
     // Loopback traffic (local testing, health/monitoring tools running on this
     // box) is exempt - an external attacker cannot spoof a 127.0.0.1/::1
     // source, so this doesn't weaken what the limit is actually for (the
-    // public ngrok/Railway-facing surface). Added 2026-07-05 after the
-    // FINAL_BUILD_2.md Task 3 bug-hunt loop's own test traffic tripped it.
+    // public ngrok/Railway-facing surface). Added after local automated test
+    // traffic tripped the limit.
     skip: (req) => req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1',
 }));
 
@@ -210,8 +206,8 @@ app.use((req, res, next) => {
 
 // ─── DATA TIER CLASSIFICATION (Phase 1 Final — period segregation) ────────────
 // Per-day tier, computed from what's actually in daily_summary (not assumed
-// from calendar date ranges). See RECONCILIATION_RULES.md for evidence.
-//   FULL       — real Lasersoft GP (gp_status='ACTUAL') + real expense breakdown
+// from calendar date ranges).
+//   FULL       — real POS GP (gp_status='ACTUAL') + real expense breakdown
 //                 -> sales, GP, expenses, NET PROFIT all trustworthy
 //   CASHFLOW   — Excel payment-method split present (cash/card/online/credit>0)
 //                 but GP missing/estimate -> revenue + cash movement only, no NP
@@ -487,11 +483,11 @@ app.use('/api', require('./routes/staff_reports'));       // routes are relative
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
-// Saves to C:\BATHCO_DROP\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
+// Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
 // for images (jpg/png). PDFs are saved but not OCR'd here (no PDF-to-image step
 // wired up) - queued for the existing pipeline. Does NOT auto-commit to
 // daily_summary - shows the extracted numbers on screen for the user to act on.
-const INBOX_ROOT = 'C:\\BATHCO_DROP\\inbox';
+const INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox');
 app.post('/api/inbox-upload', (req, res) => {
     const todayDir = new Date().toISOString().slice(0, 10); // upload date, not necessarily the sheet's date
     const destDir = path.join(INBOX_ROOT, todayDir);
@@ -610,7 +606,6 @@ app.patch('/api/users/:id', async (req, res) => {
 // Strips control/null chars (keeps normal whitespace) and caps length -
 // applied to untrusted free-text (WhatsApp messages) before it reaches the
 // DB, the AI prompt, or any dashboard view that might render it.
-// (FINAL_BUILD.md Phase 2 item 5, see SECURITY_LOG.md)
 function sanitizeText(input, maxLen = 4000) {
     return String(input || '')
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
@@ -818,7 +813,7 @@ async function handlePendingDraftReply(phone, text) {
 
     let msg = `Saved for ${draft.report_date}.`;
     if (conflicts.length) msg += ` Note: ${conflicts.join('; ')}.`;
-    msg += ` Net profit will auto-calculate once Gross Profit for that day is available from Lasersoft.`;
+    msg += ` Net profit will auto-calculate once Gross Profit for that day is available from the POS system.`;
     return { message: msg };
 }
 
@@ -1053,7 +1048,7 @@ app.patch('/api/cheques/:id/status', async (req, res) => {
 });
 
 // ─── ALERTS ───────────────────────────────────────────────────────────────────
-// invoice_gap alerts (HSL/SL invoice sequence gaps) are quiet — admin (owner) only
+// invoice_gap alerts (invoice sequence gaps) are quiet — admin (owner) only
 app.get('/api/alerts', async (req, res) => {
     try {
         const result = await pool.query(
@@ -1083,7 +1078,11 @@ app.post('/api/process-inbox', (req, res) => {
     if (process.env.ENABLE_LOCAL_INGEST !== 'true') {
         return res.status(503).json({ error: 'Local ingest not available on this instance.' });
     }
-    execFile('python', ['C:\\Bathco\\AI-Data\\process_inbox.py'], { timeout: 120000 }, (err, stdout, stderr) => {
+    const ingestScript = process.env.LOCAL_INGEST_SCRIPT;
+    if (!ingestScript) {
+        return res.status(503).json({ error: 'LOCAL_INGEST_SCRIPT is not configured on this instance.' });
+    }
+    execFile('python', [ingestScript], { timeout: 120000 }, (err, stdout, stderr) => {
         if (err) return res.status(500).json({ error: err.message, stderr });
         try {
             const lastLine = stdout.trim().split('\n').pop();
@@ -1500,10 +1499,10 @@ async function processPhotoFile(dateStr, filename, filePath) {
 
     let extracted;
     if (cls === 'A') {
-        // Type C — Lasersoft software screenshot
+        // Type C — POS software screenshot
         try {
             const raw = await visionCall(
-                'This is a Lasersoft accounting software screenshot (Profit by Sales or invoice list). ' +
+                'This is a POS/accounting software screenshot (Profit by Sales or invoice list). ' +
                 'Extract every visible row. Return ONLY valid JSON, no markdown:\n' +
                 '{"invoices":[{"invoice_no":"","customer":"","amount":0,"cost":0,"gp":0}],' +
                 '"totals":{"amount":0,"cost":0,"gp":0}}\n' +
@@ -1570,7 +1569,7 @@ async function recalculateDate(dateStr) {
     let saleA = 0, cardA = 0, onlineA = 0, cheqA = 0, creditA = 0;
     let hasTypeA = false, hasTypeB = false, gpTotal = 0, lasersoftSaleTotal = 0;
     const typeALineItems = []; // {no, sale, card, online, cheq, credit} per Excel row
-    const lsInvoiceRows  = []; // per-invoice rows from Lasersoft Profit-by-Sales format
+    const lsInvoiceRows  = []; // per-invoice rows from the POS Profit-by-Sales format
 
     for (const fname of xlFiles) {
         try {
@@ -1632,7 +1631,7 @@ async function recalculateDate(dateStr) {
                     lasersoftSaleTotal += amt;
                 });
             } else {
-                // Lasersoft "Profit by Sales" report — header is not at row 0, scan for it.
+                // POS "Profit by Sales" report — header is not at row 0, scan for it.
                 // Detected by finding a row containing NUMBER + AMOUNT + COST + GPA headers.
                 const rawPBS = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', header: 1 });
                 let pbsHdrIdx = -1, pbsHdrMap = {};
@@ -1756,8 +1755,8 @@ async function recalculateDate(dateStr) {
     let grossProfit   = hasTypeB ? gpTotal : (ex ? +ex.gross_profit : 0);
 
     // ── GP BLEND: add estimated GP for manual/unsynced bills ──────────────────
-    // Applies when: Lasersoft GP is known AND total Excel sale > Lasersoft sale total
-    // Rule: estimate manual bill GP using that same day's Lasersoft avg GP%
+    // Applies when: POS GP is known AND total Excel sale > POS sale total
+    // Rule: estimate manual bill GP using that same day's POS avg GP%
     let manualSaleTotal  = null, manualGpEstimate = null, gpBlendNote = null;
     const lsTotalForBlend = hasTypeB && lasersoftSaleTotal > 0 ? lasersoftSaleTotal : 0;
     if (hasTypeB && lsTotalForBlend > 0 && saleA > lsTotalForBlend + 1) {
@@ -1798,7 +1797,7 @@ async function recalculateDate(dateStr) {
         if (payItems.length && (!existingDetails['payments'] || !existingDetails['payments'].length))
             fileDetails['payments'] = payItems.map(r => ({ desc: r.description || 'Payment', amount: +r.amount }));
     }
-    // Persist Lasersoft per-invoice rows from Profit-by-Sales format → details.lasersoft_invoices
+    // Persist POS per-invoice rows from Profit-by-Sales format → details.lasersoft_invoices
     if (lsInvoiceRows.length && !existingDetails.lasersoft_invoices?.length)
         fileDetails['lasersoft_invoices'] = lsInvoiceRows;
     const mergedDetails = Object.keys(fileDetails).length
@@ -1850,7 +1849,7 @@ async function recalculateDate(dateStr) {
              manualSaleTotal, manualGpEstimate, gpBlendNote]);
     }
 
-    // Type C invoice cross-check: identify specific Excel invoices not confirmed in Lasersoft
+    // Type C invoice cross-check: identify specific Excel invoices not confirmed in the POS
     let typeCRecon = null;
     if (typeCEntry && typeCEntry.data?.invoices?.length) {
         const photoInvoices = typeCEntry.data.invoices
@@ -1872,7 +1871,7 @@ async function recalculateDate(dateStr) {
             in_excel_only: inExcelOnly.length,
             photo_total:   photoNos.length,
             excel_total:   typeAInvoices.length,
-            // Specific pending invoices (in Excel but not confirmed in Lasersoft)
+            // Specific pending invoices (in Excel but not confirmed in the POS)
             pending_items: inExcelOnly.map(i => ({ no: i.no, amount: i.amount })),
             gap_amount:    Math.round((saleA - photoTotal) * 100) / 100,
             zero_gp_items: zeroGpItems,
@@ -2253,7 +2252,7 @@ app.get('/api/report-download', async (req, res) => {
             [''],
             ['SALES SUMMARY', '', '', ''],
             ['Total Sale (incl. pending)',       +s.total_sale || 0],
-            ['Lasersoft Confirmed Total',         +s.lasersoft_total || 0],
+            ['POS Confirmed Total',               +s.lasersoft_total || 0],
             ['Cash Collected',                    +s.cash_sale || 0],
             ['Card',                              +s.card_sale || 0],
             ['Online',                            +s.online_sale || 0],
@@ -2261,7 +2260,7 @@ app.get('/api/report-download', async (req, res) => {
             ['Credit',                            +s.credit_sale || 0],
             [''],
             ['PROFITABILITY', '', '', ''],
-            ['Gross Profit (Lasersoft GPA)',      +s.gross_profit || 0],
+            ['Gross Profit (POS)',                +s.gross_profit || 0],
             ['Total Expenses (non-salary)',        +s.total_expenses || 0],
             ['Salary',                             +s.salary || 0],
             ['Other Payments',                     +s.payments || 0],
@@ -2289,7 +2288,7 @@ app.get('/api/report-download', async (req, res) => {
             const invHeaders = ['Invoice #', 'Total Sale', 'Cash', 'Card', 'Online', 'Cheque', 'Credit', 'Notes'];
             const invRows = inv.rows.map(r => [r.invoice_no||'', +r.total_sale||0, +r.cash_amount||0,
                 +r.card_amount||0, +r.online_amount||0, +r.cheque_amount||0, +r.credit_amount||0, r.notes||'']);
-            // Also add Lasersoft invoices from details if available
+            // Also add POS invoices from details if available
             const lsInv = det.lasersoft_invoices || [];
             const lsRows = lsInv.map(i => {
                 const pay = (i.payment || '').toUpperCase();
@@ -2647,7 +2646,7 @@ app.get('/api/all-time-stats', async (req, res) => {
                  WHERE report_date BETWEEN $1 AND $2`, [RANGE_FROM, RANGE_TO]),
             // GP% and net profit computed only over days where GP is actually known
             // (ACTUAL or ESTIMATE); most days have gp_status='NOT_AVAILABLE'
-            // (gross_profit=0, not yet from Lasersoft) and are excluded here so
+            // (gross_profit=0, not yet from the POS) and are excluded here so
             // their unmatched expenses don't drag net profit into a false loss.
             pool.query(`SELECT
                     COUNT(*) as gp_days,
@@ -2686,10 +2685,9 @@ app.get('/api/all-time-stats', async (req, res) => {
             days: parseInt(t.days),
             total_sale: totalSale,
             total_gross_profit: totalGp,
-            // Net profit summed ONLY over TIER 1 FULL days (real Lasersoft GP +
+            // Net profit summed ONLY over TIER 1 FULL days (real POS GP +
             // real expense breakdown both present). Every other day either has no
             // expense data (would overstate profit = full GP) or no GP at all.
-            // See RECONCILIATION_RULES.md.
             total_net_profit: npFull,
             total_expenses: parseFloat(t.total_exp),
             avg_daily_sale: parseFloat(t.avg_sale),
@@ -2700,7 +2698,7 @@ app.get('/api/all-time-stats', async (req, res) => {
             net_profit_days: parseInt(tr.tier_full_days),
             best_day: bestDay.rows[0] || null,
             credit_outstanding: parseFloat(credit.rows[0].outstanding),
-            // Period segregation (Phase 1 Final) — see RECONCILIATION_RULES.md
+            // Period segregation — per-day data-quality tiers (see TIER_EXPR)
             tier_full_days:       parseInt(tr.tier_full_days),
             tier_cashflow_days:   parseInt(tr.tier_cashflow_days),
             tier_foundation_days: parseInt(tr.tier_foundation_days),
@@ -3150,12 +3148,12 @@ STRICT RULES:
    Home page (natural-language query feature) which does have real database access.
 2. You may explain formulas and definitions freely, using only these confirmed rules:
    - Net Profit = Gross Profit − Expenses (never Total Sale − Expenses)
-   - Petty cash float is fixed at LKR 25,000
+   - Petty cash float is a fixed amount configured for this business (PETTY_CASH_FLOAT in .env)
    - Owner construction/renovation draws are a separate line, never an operating expense
    - Supplier payments are never deducted from daily net profit
    - Cash In Hand = Cash Sale − Total Expenses − Payments (when there was cash sale that day;
      otherwise the figure is not meaningful for that day)
-3. Never suggest editing financial data, the database schema, PM2 processes, or Laser Soft.
+3. Never suggest editing financial data, the database schema, PM2 processes, or the POS software.
    If asked to do any of those, say that requires the owner directly, not this chat.
 4. If you don't know something, say so plainly. Never fabricate a number, date, or status to
    sound more helpful.

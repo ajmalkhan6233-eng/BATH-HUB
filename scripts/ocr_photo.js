@@ -1,6 +1,6 @@
 // Shared OCR helper: extracts sale/expense figures from a photo of a handwritten
-// day sheet or petty cash sheet, via OpenRouter's vision model (per CLAUDE.md
-// SECTION 5.1: nvidia/nemotron-nano-12b-vl:free). Used by both the Nature upload
+// day sheet or petty cash sheet, via OpenRouter's vision model
+// (nvidia/nemotron-nano-12b-vl:free). Used by both the Nature upload
 // endpoint (server.js) and the WhatsApp photo pipeline (whatsapp-bridge.js).
 const fs = require('fs');
 const path = require('path');
@@ -32,7 +32,7 @@ For document_type "unknown", output:
 
 Rules: never guess a number, date, or name you cannot actually read - use null instead. If a field is genuinely illegible, set confidence to "low" and say why in notes. Do not invent a document_type just to fill in fields - if genuinely unsure between two types, pick the closer one and lower confidence rather than fabricate.`;
 
-// Per CLAUDE.md SECTION 5.1: never guess - flag uncertain fields, don't fabricate.
+// Standing rule: never guess - flag uncertain fields, don't fabricate.
 async function ocrPhoto(filePath) {
     const imageBuffer = fs.readFileSync(filePath);
     const base64 = imageBuffer.toString('base64');

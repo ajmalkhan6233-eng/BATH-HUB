@@ -8,15 +8,16 @@ const Anthropic = require('@anthropic-ai/sdk');
 const pool = new Pool({
     host:     process.env.DB_HOST     || 'localhost',
     port:     process.env.DB_PORT     || 5432,
-    database: process.env.DB_NAME     || 'bathco',
+    database: process.env.DB_NAME     || 'bathco_template',
     user:     process.env.DB_USER     || 'postgres',
     password: process.env.DB_PASSWORD,
 });
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const GRN_INBOX         = 'C:\\BATHCO_DROP\\inbox\\GRN';
-const GRN_PROCESSED     = 'C:\\BATHCO_DROP\\processed\\GRN';
+const DROP_ROOT         = process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop');
+const GRN_INBOX         = path.join(DROP_ROOT, 'inbox', 'GRN');
+const GRN_PROCESSED     = path.join(DROP_ROOT, 'processed', 'GRN');
 const SCAN_INTERVAL_MS  = 30000;
 
 // In-process set so we don't double-process a file during one run session.

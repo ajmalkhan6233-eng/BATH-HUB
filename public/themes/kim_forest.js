@@ -1,21 +1,18 @@
 // themes/kim_forest.js
-// "Kim Forest" background theme — extracted from the visual/3D layer of
-// Desktop\BATHCO_VERSION_1\kimcord.md. Visuals only: the noise-displaced
-// terrain, stones, shader water plane, drifting particles and gold ring are
-// kept; kimcord.md's fake KPI numbers, transaction table, and stub download
-// buttons (alert()-based) were NOT ported — those belong to app pages, not a
-// background theme (see FINAL_BUILD.md Phase 1 rule 3).
+// "Kim Forest" background theme — a decorative 3D layer only: noise-displaced
+// terrain, stones, shader water plane, drifting particles and a gold ring.
+// Background themes never touch app data, pages, or API calls.
 //
-// Ported from three.js r128 (kimcord.md's CDN build) to this project's
-// installed three 0.185 (served at /vendor/three.module.min.js): the only
-// API changes needed were `renderer.outputEncoding = THREE.sRGBEncoding`
+// Ported from a three.js r128 original to this project's installed
+// three 0.185 (served at /vendor/three.module.min.js): the only API changes
+// needed were `renderer.outputEncoding = THREE.sRGBEncoding`
 // -> `renderer.outputColorSpace = THREE.SRGBColorSpace`, and light
 // intensities re-tuned for three's physically-based lighting (default since
-// r155; kimcord.md's original values were authored for the older,
-// non-physical default and rendered near-black under 0.185).
+// r155; the original values were authored for the older, non-physical
+// default and rendered near-black under 0.185).
 //
-// Particle/terrain/stone counts reduced from kimcord.md's originals
-// (FINAL_BUILD_2.md Task 1 item 5, 8GB RAM target) - see the constants below.
+// Particle/terrain/stone counts kept modest for low-RAM machines
+// (8GB target) - see the constants below.
 function makeNoise() {
   const perm = new Uint8Array(512);
   const p = new Uint8Array(256);
@@ -152,7 +149,7 @@ export default {
     camera.lookAt(0, 0, 0);
 
     // Light intensities re-tuned (see file header) for three 0.185's
-    // physically-based defaults; kimcord.md's original values are in comments.
+    // physically-based defaults; the pre-0.185 values are in comments.
     const hemiLight = new THREE.HemisphereLight(0x8a9a8a, 0x1a2015, 1.4); // was 0.6
     scene.add(hemiLight);
     const dirLight = new THREE.DirectionalLight(0xfff8e7, 3.2); // was 1.2

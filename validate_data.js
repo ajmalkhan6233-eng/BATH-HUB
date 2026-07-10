@@ -1,14 +1,21 @@
 // PART 1 — Full date-range validation (token-efficient, filename/JSON-based only)
-// Scans C:\Bathco\AI-Data for every date 21 Dec 2025 - 14 Jun 2026 and checks for:
+// Scans AI_DATA_ROOT for every date in the given range and checks for:
 //   A) Transactions Excel (sales record)      - .xlsx files named Document/Sales/Invoice/Transaction*
 //   B) Handwritten expense photo              - daily-reports/*.JPG mapped via ocr_results.json
-//   C) Cost/selling price report (Lasersoft)  - files named Profit_Report*/Lasersoft*
+//   C) Cost/selling price report (POS)        - files matching LASER_RE below (adjust to your POS export names)
 // Output: DATA_INDEX.json (per-date file paths + status), plus a console summary table.
+// Usage: set AI_DATA_ROOT, then: node validate_data.js <from YYYY-MM-DD> <to YYYY-MM-DD>
 
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = 'C:\\Bathco\\AI-Data';
+const ROOT = process.env.AI_DATA_ROOT;
+const FROM = process.argv[2];
+const TO   = process.argv[3];
+if (!ROOT || !FROM || !TO || !/^\d{4}-\d{2}-\d{2}$/.test(FROM) || !/^\d{4}-\d{2}-\d{2}$/.test(TO)) {
+  console.error('Usage: set AI_DATA_ROOT to the raw-data folder, then: node validate_data.js <from YYYY-MM-DD> <to YYYY-MM-DD>');
+  process.exit(1);
+}
 const SKIP_DIRS = new Set(['__pycache__', '.git', 'node_modules']);
 
 function walk(dir, out) {
@@ -52,9 +59,9 @@ for (const f of allFiles) {
   }
 }
 
-// ── Category C: Lasersoft cost/selling price report ─────────────────────────
+// ── Category C: POS cost/selling price report ───────────────────────────────
 const laserFiles = {};
-const LASER_RE = /(profit_report|lasersoft)/i;
+const LASER_RE = /(profit_report|pos_report)/i; // adjust to your POS's export filenames
 for (const f of allFiles) {
   const name = path.basename(f);
   if (!LASER_RE.test(name)) continue;
@@ -79,13 +86,15 @@ for (const r of ocrResults) {
   (photoFiles[iso] = photoFiles[iso] || []).push(filePath);
 }
 
-// ── Build date range 2025-12-21 .. 2026-06-14 ───────────────────────────────
+// ── Build date range from CLI args ──────────────────────────────────────────
 function toISO(d) {
   const y = d.getFullYear(), mo = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
   return `${y}-${mo}-${da}`;
 }
-const start = new Date(2025, 11, 21); // 21 Dec 2025
-const end   = new Date(2026, 5, 14);  // 14 Jun 2026
+const [fy, fm, fd] = FROM.split('-').map(Number);
+const [ty, tm, td] = TO.split('-').map(Number);
+const start = new Date(fy, fm - 1, fd);
+const end   = new Date(ty, tm - 1, td);
 const dates = [];
 for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) dates.push(toISO(d));
 
@@ -106,12 +115,12 @@ for (const d of dates) {
   index[d] = {
     transactions_excel: txn,
     expense_photo: photo,
-    lasersoft_report: laser,
+    pos_report: laser,
     status
   };
 }
 
-fs.writeFileSync(path.join('C:\\BATHCO_PHASE1', 'DATA_INDEX.json'), JSON.stringify({
+fs.writeFileSync(path.join(__dirname, 'DATA_INDEX.json'), JSON.stringify({
   generated: new Date().toISOString(),
   range: { from: dates[0], to: dates[dates.length-1], total_days: dates.length },
   note: 'mismatch detection (filename date vs cross-file consistency) not computed in this pass — see summary notes',

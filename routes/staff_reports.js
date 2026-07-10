@@ -9,7 +9,7 @@
 //   staff_leave_tracker       -> real table staff_leave
 //   staff_salary_advances     -> reuses EXISTING staff_loans table (already has type='advance'/'repayment')
 //   staff_payroll_export      -> CSV export from staff_salary
-//   staff_commission_autocalc -> SCAFFOLD ONLY, genuinely blocked (see CLAUDE.md 3.6) — built=false
+//   staff_commission_autocalc -> SCAFFOLD ONLY, genuinely blocked (no per-staff GP source) — built=false
 //   rep_monthly_trends        -> real, aggregates daily_summary by month
 //   rep_daily_digest          -> real, composes yesterday's daily_summary row
 //   rep_cashflow_forecast     -> real trailing-average projection (labeled ESTIMATE)
@@ -219,9 +219,9 @@ router.get('/payroll-export', async (req, res) => {
 });
 
 // ═══════════════════════ STAFF: COMMISSION AUTOCALC — SCAFFOLD ONLY, BLOCKED ═══════════════════════
-// Per CLAUDE.md 3.6, real commission = 1% of each staff member's INDIVIDUALLY-attributed
-// Gross Profit from Lasersoft, filtered per staff member. lasersoft_invoices (2111 rows) has no
-// staff/salesperson column, and only 13 of 2111 rows even have gross_profit populated —
+// Locked business rule: real commission = a fixed % of each staff member's INDIVIDUALLY-
+// attributed Gross Profit from the POS, filtered per staff member. lasersoft_invoices has no
+// staff/salesperson column, and gross_profit is largely unpopulated there —
 // per-staff GP attribution does not exist anywhere in this database. This endpoint returns the
 // real, already-stored commission figures for reference and an explicit "blocked" flag; it does
 // NOT compute anything. feature_flags.built stays false for staff_commission_autocalc.
@@ -237,8 +237,8 @@ router.get('/commission-autocalc', async (req, res) => {
         `);
         res.json({
             blocked: true,
-            reason: 'Real commission = 1% of each staff member\'s individually-attributed Gross Profit from Lasersoft (CLAUDE.md 3.6). That per-staff GP figure does not exist in this database — lasersoft_invoices is invoice-level with no staff/salesperson column, and gross_profit is populated on only 13 of 2111 rows. daily_summary.gross_profit is shop-wide, not per-staff. Cannot compute without importing a staff-filtered Lasersoft profit report first.',
-            data_source_needed: 'A Lasersoft (or equivalent POS) export with invoice-level gross profit joined to the salesperson who made the sale.',
+            reason: 'Real commission = a fixed percentage of each staff member\'s individually-attributed Gross Profit from the POS (locked business rule). That per-staff GP figure does not exist in this database — lasersoft_invoices is invoice-level with no staff/salesperson column, and gross_profit is largely unpopulated. daily_summary.gross_profit is shop-wide, not per-staff. Cannot compute without importing a staff-filtered POS profit report first.',
+            data_source_needed: 'A POS export with invoice-level gross profit joined to the salesperson who made the sale.',
             staff_stored_commission: r.rows,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -399,7 +399,7 @@ router.get('/top-slow-items', async (req, res) => {
         res.json({
             available: false,
             reason: 'No line-item sales/invoice-items table exists in this database. lasersoft_invoices is invoice-level only (no product or quantity columns). quotation_items exists but has ' + check.rows[0].n + ' rows and represents draft quotations, not confirmed sales — using it would fabricate sales data that was never actually sold.',
-            data_source_needed: 'A sales or invoice line-items table with product_id/item_code + quantity_sold + date, e.g. from a Lasersoft item-level export.',
+            data_source_needed: 'A sales or invoice line-items table with product_id/item_code + quantity_sold + date, e.g. from a POS item-level export.',
             rows: [],
         });
     } catch (e) { res.status(500).json({ error: e.message }); }

@@ -19,7 +19,7 @@ if (!companyName) {
 const slug = (process.argv[3] || companyName).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 if (!slug) { console.error('Could not derive a valid db slug from the company name — pass one explicitly.'); process.exit(1); }
 
-const SOURCE_DB = process.env.DB_NAME || 'bathco';
+const SOURCE_DB = process.env.DB_NAME || 'bathco_template';
 const PGPASSWORD = process.env.DB_PASSWORD;
 const PGHOST = process.env.DB_HOST || 'localhost';
 const PGUSER = process.env.DB_USER || 'postgres';

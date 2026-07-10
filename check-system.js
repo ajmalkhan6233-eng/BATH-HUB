@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// BATHCO system health check — run with: node check-system.js
+// System health check — run with: node check-system.js (uses PORT/DB_NAME from .env)
 'use strict';
 
 const http = require('http');
@@ -55,16 +55,14 @@ function checkCmd(label, cmd) {
 }
 
 async function main() {
-    console.log('\n=== BATHCO SYSTEM CHECK ===');
+    console.log('\n=== SYSTEM CHECK ===');
     console.log(`Time: ${new Date().toLocaleString('en-GB')}\n`);
 
+    const appPort = parseInt(process.env.PORT || '3010', 10);
+    const dbName  = process.env.DB_NAME || 'bathco_template';
     await Promise.all([
-        checkPort('localhost', 3000, 'BATHCO backend (3000)'),
-        checkPort('localhost', 3002, 'Dubai Imports (3002)'),
-        checkPort('localhost', 11434, 'Ollama LLM (11434)'),
-        checkPort('localhost', 5173, 'BATHCO PWA (5173)'),
-        checkPg('PostgreSQL: bathco', 'bathco'),
-        checkPg('PostgreSQL: dubai_imports', 'dubai_imports'),
+        checkPort('localhost', appPort, `Backend (${appPort})`),
+        checkPg(`PostgreSQL: ${dbName}`, dbName),
         checkCmd('PM2 processes', 'npx pm2 jlist 2>nul'),
         checkCmd('Node.js version', 'node --version'),
     ]);

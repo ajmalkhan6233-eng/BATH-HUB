@@ -15,13 +15,13 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD,
 });
 
-// Locked formula (CLAUDE.md SECTION 3): net_profit = gross_profit - total_expenses
+// Locked formula: net_profit = gross_profit - total_expenses
 // cash_out_total = expenses + payments (+ salary + cash_out, matches server.js CASH_OUT_EXPR)
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
-// Petty cash float rule (CLAUDE.md SECTION 3.5): Rs 25,000 float. TOPUP transactions
+// Petty cash float rule: a fixed float (PETTY_CASH_FLOAT in .env). TOPUP transactions
 // replenish the float and are NEVER treated as an expense. Only EXPENSE rows reduce it.
-const PETTY_CASH_FLOAT = 25000;
+const PETTY_CASH_FLOAT = parseFloat(process.env.PETTY_CASH_FLOAT || 0);
 
 // ═══════════════════════ PURCHASING: PURCHASE ORDERS ═══════════════════════
 router.get('/api/purchase-orders', async (req, res) => {
@@ -338,7 +338,7 @@ router.get('/api/trial-balance', async (req, res) => {
 });
 
 // ═══════════════════════ ACCOUNTING: P&L STATEMENT ═══════════════════════
-// GET-only computed, built directly from daily_summary — same locked formula as CLAUDE.md §3:
+// GET-only computed, built directly from daily_summary — same locked formula:
 // net_profit = gross_profit - total_expenses; cash_out_total = expenses+payments(+salary+cash_out).
 router.get('/api/pnl', async (req, res) => {
     const { from, to } = req.query;
@@ -389,7 +389,7 @@ router.get('/api/balance-sheet', async (req, res) => {
 // ═══════════════════════ ACCOUNTING: VAT/TAX REPORT (Sri Lanka) ═══════════════════════
 // Flat placeholder rate (Sri Lanka standard VAT), computed — not fabricated numbers.
 // Output VAT from real total_sale (daily_summary); input VAT from real GRN purchase totals.
-const VAT_RATE = 0.18; // 18% placeholder — adjust to the rate BATHCO is actually registered for
+const VAT_RATE = 0.18; // 18% placeholder — adjust to the rate the business is actually registered for
 router.get('/api/vat-report', async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from and to (YYYY-MM-DD) are required' });
@@ -457,7 +457,7 @@ router.get('/api/cheque-calendar', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ═══════════════════════ ACCOUNTING: PETTY CASH (Rs 25,000 float rule) ═══════════════════════
+// ═══════════════════════ ACCOUNTING: PETTY CASH (fixed float rule) ═══════════════════════
 // The float itself is never an expense. TOPUP replenishes it; only EXPENSE rows reduce balance.
 router.get('/api/petty-cash', async (req, res) => {
     try {
