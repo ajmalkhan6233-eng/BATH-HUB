@@ -36,9 +36,13 @@ cd C:\BATHCO_TEMPLATE
 node server.js        # PORT 3010 from .env  → http://localhost:3010
 ```
 First open shows the setup wizard (because the DB has no admin). Live shop on :3000
-is unaffected. To demo repeatedly: after a demo run, reset with
-`TRUNCATE users, staff, login_audit RESTART IDENTITY CASCADE` on bathco_template and
-copy `config\default.branding.json` over `config\active.branding.json`.
+is unaffected. To demo repeatedly: after a demo run, reset on bathco_template with
+`TRUNCATE users, staff, login_audit CASCADE` then
+`SELECT setval('users_id_seq',1,false), setval('staff_id_seq',1,false);`
+(NOT `RESTART IDENTITY` — the bathco_template_app role doesn't own the sequences and the
+whole TRUNCATE aborts), copy `config\default.branding.json` over
+`config\active.branding.json`, and delete `public\vendor\logo.*` if a demo logo was uploaded.
+Restart the server too — SETUP_DONE is a sticky in-process cache (server.js:374).
 
 ## New client = 3 steps
 1. `node scripts/create_instance.js "Client Name" client_slug` (creates empty DB + branding file)
