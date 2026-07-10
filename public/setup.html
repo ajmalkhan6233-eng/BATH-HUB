@@ -5,124 +5,301 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>First-Run Setup</title>
 <style>
-  :root { --em9:#062e21; --em8:#0a4531; --em7:#0f5132; --gold:#d4af37; --gold3:#e8cf7a; --txt:#eef5f1; --dim:#9db8ac; }
+  /* Ported from AISTUDIO_HANDOFF EXPORTS SetupWizard.tsx (Tailwind → CSS). */
+  /* All real wiring (API calls, payload shape, self-lock) stays server-driven — see /api/setup/* in server.js. */
+  :root { --em9:#062e21; --em8:#0a4531; --gold:#d4af37; --gold-hover:#ebd070; --txt:#ffffff; }
   * { box-sizing:border-box; margin:0; padding:0; font-family:'Segoe UI',system-ui,sans-serif; }
-  body { min-height:100vh; background:linear-gradient(160deg,var(--em9),var(--em8)); color:var(--txt); display:flex; align-items:center; justify-content:center; padding:24px; }
-  .card { width:100%; max-width:520px; background:rgba(255,255,255,.05); border:1px solid rgba(212,175,55,.25); border-radius:16px; padding:32px; backdrop-filter:blur(8px); }
-  h1 { font-size:22px; color:var(--gold3); margin-bottom:4px; }
-  .sub { color:var(--dim); font-size:13px; margin-bottom:22px; }
-  .steps { display:flex; gap:6px; margin-bottom:22px; }
-  .steps div { flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.12); }
+  ::selection { background:rgba(212,175,55,.3); }
+  body { min-height:100vh; background:linear-gradient(135deg,var(--em9),var(--em8)); color:var(--txt);
+         display:flex; align-items:center; justify-content:center; padding:16px; }
+  .card { width:100%; max-width:520px; background:rgba(255,255,255,.05); border:1px solid rgba(212,175,55,.25);
+          border-radius:16px; padding:32px; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+          box-shadow:0 25px 50px -12px rgba(0,0,0,.5); }
+
+  /* Progress bars */
+  .steps { display:flex; gap:8px; margin-bottom:32px; }
+  .steps div { flex:1; height:4px; border-radius:9999px; background:rgba(255,255,255,.12); transition:background .3s; }
   .steps div.on { background:var(--gold); }
-  label { display:block; font-size:12px; color:var(--dim); margin:14px 0 4px; text-transform:uppercase; letter-spacing:.5px; }
-  input, select { width:100%; padding:11px 12px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.25); color:var(--txt); font-size:15px; }
-  input:focus, select:focus { outline:none; border-color:var(--gold); }
-  .row { display:flex; gap:10px; } .row > div { flex:1; }
-  .btns { display:flex; gap:10px; margin-top:26px; }
-  button { flex:1; padding:12px; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
-  .primary { background:linear-gradient(135deg,var(--gold),#b8952f); color:#1a1405; }
-  .ghost { background:rgba(255,255,255,.08); color:var(--txt); }
-  .err { color:#ff8a8a; font-size:13px; margin-top:12px; min-height:18px; }
-  .staff-row { display:flex; gap:8px; margin-top:8px; }
-  .staff-row input { font-size:13px; padding:9px 10px; }
-  .hint { font-size:12px; color:var(--dim); margin-top:6px; }
-  #logo-preview { max-height:64px; margin-top:10px; border-radius:8px; display:none; }
-  .done-icon { font-size:44px; text-align:center; margin:18px 0; }
+
+  /* Step panels */
+  .panel { display:none; min-height:360px; }
+  .panel.active { display:block; animation:stepIn .2s ease-out; }
+  @keyframes stepIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:none; } }
+  h1, h2 { font-size:24px; font-weight:600; margin-bottom:8px; }
+  .sub { color:rgba(255,255,255,.6); margin-bottom:24px; font-size:14.5px; }
+
+  /* Inputs */
+  .field { margin-bottom:16px; }
+  label { display:block; font-size:13px; font-weight:500; color:rgba(255,255,255,.6); margin-bottom:6px; }
+  label .req { color:var(--gold); }
+  input { width:100%; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.15); border-radius:8px;
+          padding:12px 16px; color:var(--txt); font-size:15px; transition:border-color .15s, box-shadow .15s; }
+  input::placeholder { color:rgba(255,255,255,.3); }
+  input:focus { outline:none; border-color:rgba(212,175,55,.5); box-shadow:0 0 0 1px rgba(212,175,55,.5); }
+  .row { display:flex; gap:16px; } .row > div { flex:1; }
+
+  /* Logo upload */
+  .upload-btn { display:flex; align-items:center; gap:16px; width:100%; background:rgba(0,0,0,.25);
+                border:1px dashed rgba(255,255,255,.15); border-radius:8px; padding:24px 16px; cursor:pointer;
+                color:var(--txt); text-align:left; transition:background .15s, border-color .15s; font-size:15px; }
+  .upload-btn:hover { background:rgba(0,0,0,.4); }
+  .upload-btn:focus { outline:none; border-color:rgba(212,175,55,.5); }
+  .upload-thumb { width:48px; height:48px; border-radius:6px; background:rgba(255,255,255,.05);
+                  border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;
+                  overflow:hidden; flex-shrink:0; color:rgba(255,255,255,.4); }
+  .upload-thumb img { max-width:100%; max-height:100%; object-fit:contain; }
+  .upload-text p:first-child { font-size:14px; font-weight:500; }
+  .upload-text p:last-child { font-size:12px; color:rgba(255,255,255,.5); margin-top:2px; }
+  .upload-btn .up-icon { margin-left:auto; color:rgba(255,255,255,.4); flex-shrink:0; }
+
+  /* Staff cards */
+  .staff-scroll { max-height:320px; overflow-y:auto; padding-right:8px; }
+  .staff-scroll::-webkit-scrollbar { width:6px; }
+  .staff-scroll::-webkit-scrollbar-track { background:rgba(255,255,255,.02); border-radius:4px; }
+  .staff-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
+  .staff-scroll::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.2); }
+  .staff-card { position:relative; padding:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+                border-radius:12px; margin-bottom:16px; }
+  .staff-card .s-title { font-size:13px; font-weight:500; color:var(--gold); margin-bottom:12px; }
+  .staff-card .remove { position:absolute; top:12px; right:12px; background:none; border:none; padding:6px;
+                        border-radius:6px; color:rgba(255,255,255,.4); cursor:pointer; line-height:0;
+                        transition:color .15s, background .15s; }
+  .staff-card .remove:hover { color:#f87171; background:rgba(248,113,113,.1); }
+  .add-staff { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:12px 16px;
+               background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.1); border-radius:12px;
+               color:rgba(255,255,255,.8); font-size:14px; font-weight:500; cursor:pointer; transition:background .15s; }
+  .add-staff:hover { background:rgba(255,255,255,.1); }
+
+  /* Footer */
+  .footer { margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
+  .err { display:none; color:#fbbf24; font-size:14px; font-weight:500; margin-bottom:16px; padding:12px;
+         border-radius:8px; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.2);
+         animation:stepIn .2s ease-out; }
+  .err.show { display:block; }
+  .controls { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  button { font-family:inherit; }
+  .btn-back { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:500; padding:12px 20px;
+              border:none; border-radius:8px; cursor:pointer; background:rgba(255,255,255,.05);
+              color:rgba(255,255,255,.7); transition:background .15s, color .15s; }
+  .btn-back:hover:not(:disabled) { background:rgba(255,255,255,.1); color:var(--txt); }
+  .btn-back:disabled { background:transparent; color:rgba(255,255,255,.2); cursor:not-allowed; }
+  .btn-next { display:flex; align-items:center; gap:8px; background:var(--gold); color:var(--em9); font-size:15px;
+              font-weight:600; padding:12px 24px; border:none; border-radius:8px; cursor:pointer;
+              box-shadow:0 0 20px rgba(212,175,55,.3); transition:background .15s, box-shadow .15s; }
+  .btn-next:hover:not(:disabled) { background:var(--gold-hover); box-shadow:0 0 25px rgba(212,175,55,.5); }
+  .btn-next:disabled { opacity:.6; cursor:wait; }
+
+  /* Done screen */
+  .done-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+               padding:48px 0; min-height:360px; }
+  .done-circle { width:80px; height:80px; border-radius:9999px; background:rgba(212,175,55,.2); color:var(--gold);
+                 display:flex; align-items:center; justify-content:center; margin-bottom:24px;
+                 animation:pop .35s cubic-bezier(.34,1.56,.64,1) .1s backwards; }
+  @keyframes pop { from { transform:scale(.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .done-wrap h2 { font-size:30px; margin-bottom:12px; }
+  .done-wrap p { color:rgba(255,255,255,.7); font-size:17px; }
+  .done-wrap p b { color:var(--txt); font-weight:600; }
+  .btn-done { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:32px;
+              background:var(--gold); color:var(--em9); font-size:17px; font-weight:600; padding:16px 24px;
+              border:none; border-radius:12px; cursor:pointer; box-shadow:0 0 20px rgba(212,175,55,.3);
+              transition:background .15s; }
+  .btn-done:hover { background:var(--gold-hover); }
+  svg { flex-shrink:0; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1 id="title">Welcome — let's set up your system</h1>
-  <div class="sub" id="sub">This one-time wizard prepares this ERP for your business.</div>
   <div class="steps" id="steps"><div class="on"></div><div></div><div></div><div></div></div>
 
-  <div id="step1">
-    <label>Business name *</label><input id="company_name" placeholder="e.g. Sunrise Hardware">
-    <label>Legal name (for reports & invoices)</label><input id="legal_name" placeholder="e.g. Sunrise Hardware (Pvt) Ltd">
-    <label>Tagline</label><input id="tagline" placeholder="e.g. Building supplies — Main Street, Colombo">
-    <div class="btns"><button class="primary" onclick="go(2)">Next</button></div>
+  <div class="panel active" id="step1">
+    <h1>Welcome — let's set up your system</h1>
+    <div class="sub">This one-time wizard prepares this ERP for your business.</div>
+    <div class="field"><label>Business name <span class="req">*</span></label>
+      <input id="company_name" placeholder="e.g. Sunrise Hardware" autofocus></div>
+    <div class="field"><label>Legal name (for reports &amp; invoices)</label>
+      <input id="legal_name" placeholder="e.g. Sunrise Hardware (Pvt) Ltd"></div>
+    <div class="field"><label>Tagline</label>
+      <input id="tagline" placeholder="e.g. Building supplies — Main Street"></div>
   </div>
 
-  <div id="step2" style="display:none">
-    <label>Logo (optional, under 2MB)</label>
-    <input type="file" id="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml">
-    <img id="logo-preview" alt="logo preview">
-    <div class="row">
-      <div><label>Currency code</label><input id="currency" value="LKR"></div>
-      <div><label>Symbol</label><input id="currency_symbol" value="Rs"></div>
+  <div class="panel" id="step2">
+    <h2>Logo &amp; Currency</h2>
+    <div class="sub">Set your brand identity and financial baseline.</div>
+    <div class="field">
+      <label>Business Logo</label>
+      <input type="file" id="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none">
+      <button type="button" class="upload-btn" onclick="document.getElementById('logo').click()">
+        <span class="upload-thumb" id="logo-thumb">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        </span>
+        <span class="upload-text">
+          <p>Upload logo image</p>
+          <p>PNG, JPG, WebP or SVG (max 2MB) — optional</p>
+        </span>
+        <span class="up-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+      </button>
     </div>
-    <div class="btns"><button class="ghost" onclick="go(1)">Back</button><button class="primary" onclick="go(3)">Next</button></div>
+    <div class="row">
+      <div class="field"><label>Currency code</label><input id="currency" value="LKR" placeholder="e.g. LKR"></div>
+      <div class="field"><label>Symbol</label><input id="currency_symbol" value="Rs" placeholder="e.g. Rs"></div>
+    </div>
   </div>
 
-  <div id="step3-real" style="display:none">
-    <label>Admin — your name</label><input id="admin_name" placeholder="Owner name">
-    <label>Admin username *</label><input id="admin_username" placeholder="e.g. owner">
-    <label>Admin password * (min 8 characters)</label><input id="admin_password" type="password">
-    <div class="hint">This is the account that controls everything. Store the password safely.</div>
-    <div class="btns"><button class="ghost" onclick="go(2)">Back</button><button class="primary" onclick="go(4)">Next</button></div>
+  <div class="panel" id="step3">
+    <h2>Admin Account</h2>
+    <div class="sub">This is the account that controls everything. Store the password safely.</div>
+    <div class="field"><label>Admin name</label><input id="admin_name" placeholder="Owner name"></div>
+    <div class="field"><label>Admin username <span class="req">*</span></label><input id="admin_username" placeholder="e.g. owner"></div>
+    <div class="field"><label>Admin password <span class="req">*</span></label><input id="admin_password" type="password" placeholder="Min 8 characters"></div>
   </div>
 
-  <div id="step4" style="display:none">
-    <label>Staff accounts (optional — add up to 8, or skip)</label>
-    <div id="staff-list"></div>
-    <button class="ghost" style="margin-top:10px" onclick="addStaffRow()">+ Add staff member</button>
-    <div class="btns"><button class="ghost" onclick="go(3)">Back</button><button class="primary" id="finish-btn" onclick="finish()">Finish setup</button></div>
+  <div class="panel" id="step4">
+    <h2>Staff Accounts</h2>
+    <div class="sub">Optional: pre-configure accounts for your team (up to 8, or skip).</div>
+    <div class="staff-scroll">
+      <div id="staff-list"></div>
+      <button type="button" class="add-staff" id="add-staff-btn" onclick="addStaffRow()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add staff member
+      </button>
+    </div>
   </div>
 
-  <div id="step5" style="display:none">
-    <div class="done-icon">✅</div>
-    <div style="text-align:center;font-size:16px;line-height:1.6">Setup complete.<br>You are logged in as <b id="done-admin"></b>.</div>
-    <div class="btns"><button class="primary" onclick="location.href='/nature'">Open your dashboard</button></div>
+  <div class="panel" id="step5">
+    <div class="done-wrap">
+      <div class="done-circle">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <h2>Setup complete.</h2>
+      <p>You are logged in as <b id="done-admin"></b>.</p>
+      <button type="button" class="btn-done" onclick="location.href='/nature'">
+        Open your dashboard
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
   </div>
 
-  <div class="err" id="err"></div>
+  <div class="footer" id="footer">
+    <div class="err" id="err"></div>
+    <div class="controls">
+      <button type="button" class="btn-back" id="back-btn" onclick="goBack()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <button type="button" class="btn-next" id="next-btn" onclick="goNext()">
+        <span id="next-label">Continue</span>
+        <svg id="next-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
+let step = 1;
 let logoData = null;
+
 document.getElementById('logo').addEventListener('change', e => {
-  const f = e.target.files[0]; if (!f) { logoData = null; return; }
-  if (f.size > 2*1024*1024) { showErr('Logo must be under 2MB'); e.target.value=''; return; }
+  const f = e.target.files[0]; if (!f) { return; }
+  if (f.size > 2*1024*1024) { showErr('Logo file size must be less than 2MB.'); e.target.value=''; return; }
+  showErr('');
   const r = new FileReader();
-  r.onload = () => { logoData = r.result; const p = document.getElementById('logo-preview'); p.src = logoData; p.style.display='block'; };
+  r.onload = () => {
+    logoData = r.result;
+    document.getElementById('logo-thumb').innerHTML = '<img src="' + logoData + '" alt="Logo preview">';
+  };
   r.readAsDataURL(f);
 });
 
-function showErr(m) { document.getElementById('err').textContent = m || ''; }
-
-function go(n) {
-  showErr('');
-  if (n === 2 && !document.getElementById('company_name').value.trim()) return showErr('Business name is required');
-  if (n === 4) {
-    const u = document.getElementById('admin_username').value.trim();
-    const p = document.getElementById('admin_password').value;
-    if (!u) return showErr('Admin username is required');
-    if (p.length < 8) return showErr('Admin password must be at least 8 characters');
-  }
-  ['step1','step2','step3-real','step4','step5'].forEach((id,i) => {
-    document.getElementById(id).style.display = (i+1===n) ? 'block' : 'none';
-  });
-  document.querySelectorAll('#steps div').forEach((d,i) => d.classList.toggle('on', i < n));
-  if (n === 4 && !document.querySelector('.staff-row')) addStaffRow();
+function showErr(m) {
+  const el = document.getElementById('err');
+  el.textContent = m || '';
+  el.classList.toggle('show', !!m);
 }
 
+function render() {
+  for (let i = 1; i <= 5; i++)
+    document.getElementById('step' + i).classList.toggle('active', i === step);
+  document.querySelectorAll('#steps div').forEach((d, i) => d.classList.toggle('on', i < step));
+  document.getElementById('steps').style.display = step === 5 ? 'none' : 'flex';
+  document.getElementById('footer').style.display = step === 5 ? 'none' : 'block';
+  document.getElementById('back-btn').disabled = step === 1;
+  document.getElementById('next-label').textContent = step === 4 ? 'Finish setup' : 'Continue';
+  document.getElementById('next-chevron').style.display = step === 4 ? 'none' : '';
+  const focusable = document.querySelector('#step' + step + ' input:not([type=file])');
+  if (focusable) focusable.focus();
+}
+
+function goBack() {
+  showErr('');
+  if (step > 1 && step < 5) { step--; render(); }
+}
+
+function goNext() {
+  showErr('');
+  if (step === 1) {
+    if (!document.getElementById('company_name').value.trim()) return showErr('Business name is required.');
+  } else if (step === 3) {
+    if (!document.getElementById('admin_username').value.trim()) return showErr('Admin username is required.');
+    if (document.getElementById('admin_password').value.length < 8) return showErr('Admin password must be at least 8 characters.');
+  } else if (step === 4) {
+    return finish();
+  }
+  step++; render();
+}
+
+// Enter advances when the current step is valid (file inputs excluded).
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && step < 5 && e.target.tagName === 'INPUT' && e.target.type !== 'file') goNext();
+});
+
 function addStaffRow() {
-  if (document.querySelectorAll('.staff-row').length >= 8) return;
+  const list = document.getElementById('staff-list');
+  if (list.children.length >= 8) return;
   const d = document.createElement('div');
-  d.className = 'staff-row';
-  d.innerHTML = '<input placeholder="Name" class="s-name"><input placeholder="Username" class="s-user"><input placeholder="Password" type="password" class="s-pass">';
-  document.getElementById('staff-list').appendChild(d);
+  d.className = 'staff-card';
+  d.innerHTML =
+    '<button type="button" class="remove" title="Remove staff member" onclick="removeStaffRow(this)">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+    '</button>' +
+    '<div class="s-title"></div>' +
+    '<div class="field"><label>Full name</label><input class="s-name" placeholder="e.g. Sam"></div>' +
+    '<div class="row">' +
+      '<div class="field"><label>Username <span class="req">*</span></label><input class="s-user" placeholder="Username"></div>' +
+      '<div class="field"><label>Password <span class="req">*</span></label><input class="s-pass" type="password" placeholder="Min 8 chars"></div>' +
+    '</div>';
+  list.appendChild(d);
+  renumberStaff();
+  d.querySelector('.s-name').focus();
+}
+
+function removeStaffRow(btn) {
+  btn.closest('.staff-card').remove();
+  renumberStaff();
+}
+
+function renumberStaff() {
+  const cards = document.querySelectorAll('#staff-list .staff-card');
+  cards.forEach((c, i) => { c.querySelector('.s-title').textContent = 'Staff Member ' + (i + 1); });
+  document.getElementById('add-staff-btn').style.display = cards.length >= 8 ? 'none' : 'flex';
 }
 
 async function finish() {
   showErr('');
-  const btn = document.getElementById('finish-btn');
-  btn.disabled = true; btn.textContent = 'Setting up…';
-  const staff = [...document.querySelectorAll('.staff-row')].map(r => ({
-    name: r.querySelector('.s-name').value.trim(),
-    username: r.querySelector('.s-user').value.trim(),
-    password: r.querySelector('.s-pass').value,
-  })).filter(s => s.name && s.username && s.password);
+  const cards = [...document.querySelectorAll('#staff-list .staff-card')];
+  const staff = [];
+  for (const c of cards) {
+    const name = c.querySelector('.s-name').value.trim();
+    const username = c.querySelector('.s-user').value.trim();
+    const password = c.querySelector('.s-pass').value;
+    if (!name && !username && !password) continue; // fully empty row = skipped
+    if (!username || password.length < 8)
+      return showErr('All staff accounts must have a username and a password (min 8 chars).');
+    staff.push({ name: name || username, username, password });
+  }
+  const btn = document.getElementById('next-btn');
+  btn.disabled = true; document.getElementById('next-label').textContent = 'Setting up…';
   const body = {
     company_name: document.getElementById('company_name').value.trim(),
     legal_name: document.getElementById('legal_name').value.trim(),
@@ -144,14 +321,14 @@ async function finish() {
     const j = await res.json();
     if (!res.ok) throw new Error(j.error || 'Setup failed');
     document.getElementById('done-admin').textContent = j.admin;
-    go(5);
-    document.getElementById('title').textContent = 'All set!';
-    document.getElementById('sub').textContent = '';
+    step = 5; render();
   } catch (e) {
     showErr(e.message);
-    btn.disabled = false; btn.textContent = 'Finish setup';
+    btn.disabled = false; document.getElementById('next-label').textContent = 'Finish setup';
   }
 }
+
+render();
 
 // If setup is already done, bounce to the app.
 fetch('/api/setup/status').then(r => r.json()).then(j => { if (!j.setup_needed) location.href = '/nature'; }).catch(()=>{});

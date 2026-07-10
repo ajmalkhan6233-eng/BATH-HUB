@@ -17,6 +17,13 @@
 > Verified: node --check clean on all edited files, server boots with HTTP 200 /health,
 > test results identical before/after (17 pre-existing failures, unrelated).
 > Line numbers below refer to the PRE-scrub files.
+>
+> **SCRUB COMPLETED 2026-07-10 (final pass):** the earlier scrub session was interrupted before
+> the 1%-commission items landed. Now done: "GP-by-staff 1% (commission) auto-calc" strings
+> genericized (routes/audit.js Excel + PDF labels, comment; BATHCO_NATURE.html audit note) and the
+> hardcoded `commission_pct||1.00` default in POST /api/staff replaced by new env var
+> `COMMISSION_RATE_PCT` (default 0 = unconfigured), documented in .env and AGENT_GUIDE\14_env_vars.md.
+> With this, everything below is scrubbed except the two deliberate deferrals (a) and (b) above.
 
 Date: 2026-07-10 · Read-only scan. Line numbers are as of the original audit.
 Scan coverage: full tree; node_modules scanned separately for the distinctive terms

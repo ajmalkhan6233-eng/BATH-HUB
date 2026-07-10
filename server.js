@@ -2151,7 +2151,7 @@ app.post('/api/staff', async (req, res) => {
         const r = await pool.query(
             `INSERT INTO staff (name,phone,role,base_salary,commission_pct,join_date)
              VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [name, phone, role||'sales', base_salary||0, commission_pct||1.00, join_date||null]);
+            [name, phone, role||'sales', base_salary||0, commission_pct || parseFloat(process.env.COMMISSION_RATE_PCT || 0), join_date||null]);
         res.status(201).json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

@@ -82,3 +82,35 @@ Verified: node --check clean ×14 files, server boots (HTTP 200 /health, generic
 npm test identical before/after the scrub (17 pre-existing failures — seeded-DB assumption,
 already logged as an open item). BEHAVIOR NOTE: petty-cash float and cash-proof opening float
 now read PETTY_CASH_FLOAT and default to 0 until configured per client.
+
+## 2026-07-10 (later still) — Scrub completed + setup wizard rewired
+The trace-scrub session above was interrupted before its 1%-commission items landed.
+Finished now:
+- "GP-by-staff 1% (commission) auto-calc" strings genericized in routes/audit.js
+  (Excel label :161, comment :272, PDF label :399) and BATHCO_NATURE.html audit note (:1662).
+- NEW ENV VAR: COMMISSION_RATE_PCT — default commission % for newly created staff
+  (POST /api/staff previously hardcoded `commission_pct||1.00`, the live shop's real rate).
+  Default 0 = unconfigured. Documented in .env and AGENT_GUIDE\14_env_vars.md.
+- Re-verified by grep: zero Lasersoft/HSL/25,000/1%/live-path/'bathco' traces left in code.
+  Only remaining deferrals (unchanged): lasersoft_invoices/lasersoft_total DB schema rename
+  (needs ALTER TABLE migration) and the deliberate BATHCO product-name usage (§7 rebrand decision).
+- BEHAVIOR NOTE: new staff created without an explicit commission_pct now get
+  COMMISSION_RATE_PCT (0 unless configured) instead of the old hardcoded 1.00.
+
+**AI Studio export wired (INTEGRATION_MAP §1 — Setup Wizard).** Desktop\AISTUDIO_HANDOFF\zip.zip
+extracted to Desktop\AISTUDIO_HANDOFF\EXPORTS\ (React 18 + Vite project, one component:
+src/components/SetupWizard.tsx). Decision per the map: ported into the vanilla file (option a) —
+public/setup.html fully rewritten with the export's design (progress bars, glass card, styled
+logo-upload box with preview thumbnail, staff-member cards with remove buttons, Back/Continue
+footer, amber error banner, animated done screen w/ inline SVG icons; Tailwind→plain CSS, no
+React/motion/lucide/CDN). Behavioral upgrades adopted from the export: Enter advances steps,
+Back disabled on step 1, staff rows removable + renumbered, staff validation (username + min-8
+password on any non-empty row; fully empty rows skipped). All logic-critical wiring KEPT as-is:
+/api/setup/status bounce, real POST /api/setup/complete payload (logo_data field, LKR/Rs
+defaults), server-side self-lock and hashing untouched. Only the setup-wizard export existed;
+dashboard/settings/themes exports not yet delivered — wire per INTEGRATION_MAP §2-4 when they are.
+Verified: node --check clean (server.js, routes/audit.js), setup.html inline script parses clean.
+
+Related (live repo, logged here for cross-reference only): the RANGE (AZMI) ~Rs 8M variance in
+C:\BATHCO_PHASE1's consolidated report is owner-confirmed resolved — details live in
+C:\BATHCO_PHASE1\SESSION_LOG.md and the annotated report. No template impact, no DB change.

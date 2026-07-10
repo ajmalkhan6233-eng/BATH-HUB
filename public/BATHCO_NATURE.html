@@ -1659,7 +1659,7 @@ async function loadAudit(){
     <td>${s.name}</td><td>${s.role}</td><td>${fmt(s.total_amount)}</td><td>${fmt(s.total_commission_stored)}</td></tr>`).join('')
     || '<tr><td colspan="4" class="pending">No staff payments recorded in this period</td></tr>';
   document.getElementById('audit-staff-blocked-note').textContent =
-    'GP-by-staff 1% commission auto-calc: BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason;
+    'GP-by-staff commission auto-calc: BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason;
 
   document.getElementById('audit-narrative').textContent = report.narrative || 'Ollama unavailable or timed out — report is complete and correct without it, just no prose commentary this time.';
 

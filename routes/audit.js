@@ -158,7 +158,7 @@ router.get('/api/audit/workbook', async (req, res) => {
 
         const staffHeader = ['Name','Role','Total Paid','Commission (stored)'];
         const staffRows = report.staff.payments.map(s => [s.name, s.role, Number(s.total_amount), Number(s.total_commission_stored)]);
-        staffRows.push([]); staffRows.push(['GP-by-staff 1% auto-calc', 'BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason]);
+        staffRows.push([]); staffRows.push(['GP-by-staff commission auto-calc', 'BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason]);
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([staffHeader, ...staffRows]), 'STAFF');
 
         const coverRows = [
@@ -269,7 +269,7 @@ async function buildFullReport(from, to) {
     };
 
     // ── STAFF — real stored commission/salary payments only. Per-staff GP
-    // attribution (needed for a real 1% commission calc) does not exist
+    // attribution (needed for a real commission calc) does not exist
     // anywhere in this DB - see routes/staff_reports.js's own /commission-autocalc
     // for the full reason. Surfacing that honestly here rather than estimating
     // a number that would fail Task 2's own "deterministic, never generate
@@ -396,7 +396,7 @@ router.get('/api/audit/full-report/pdf', async (req, res) => {
         // Staff
         h1('Staff');
         report.staff.payments.forEach(s => body(`${s.name} (${s.role}) — paid ${fmt(s.total_amount)}, commission (stored) ${fmt(s.total_commission_stored)}`));
-        doc.fontSize(9).fillColor('#900').text('GP-by-staff 1% commission auto-calc: BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason, { width: 500 }).fillColor('#000');
+        doc.fontSize(9).fillColor('#900').text('GP-by-staff commission auto-calc: BLOCKED — ' + report.staff.gp_by_staff_commission_autocalc.reason, { width: 500 }).fillColor('#000');
 
         // Narrative
         if (report.narrative) { h1('Commentary'); body(report.narrative); }
