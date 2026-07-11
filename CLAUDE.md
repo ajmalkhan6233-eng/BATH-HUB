@@ -33,9 +33,10 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
    BATHCO product-name rebrand decision.
 5. **Jest baseline** — 17 pre-existing integration-test failures (tests/integration);
    fix when touching those modules. Baseline must never grow.
-7. **Client-copy distribution exclusions** — before shipping any client a copy of this
+6. **Client-copy distribution exclusions** — before shipping any client a copy of this
    folder/repo, EXCLUDE the vendor-internal docs: SESSION_LOG.md, AISTUDIO_HANDOFF\,
    CLAUDE.md, backups\, frontend\ — they reference the live system's paths/URLs and the
    vendor's Railway account. Code/config are clean; these docs are the only leak channel.
-6. **AI Studio watcher** — scheduled task AISTUDIO_Export_Watch wires new exports every 2h;
-   dashboard/settings/themes exports still pending delivery.
+7. **AI Studio watcher** — scheduled task AISTUDIO_Export_Watch checks every 2h. The full
+   Master UI Template delivery HAS arrived (frontend\ — see item 2); watcher stays for any
+   future re-exports.
