@@ -173,3 +173,29 @@ Owner approved deploying apex as a brand-new isolated Railway project, name conf
   Resume only on explicit owner go-live: create apex-platform → add Postgres → schema-only
   dump load (--no-owner --no-privileges) → migrate_apex + seed_demo_tenant +
   seed_feature_flags → railway up → verify /health → railway down (parked, not billing).
+
+## 2026-07-11 (later still) — PlatformAdmin.tsx ported into BATHCO_NATURE.html
+
+The untracked frontend/ folder turned out to be the FULL AI Studio "Master UI Template"
+export (delivered 2026-07-10, contradicting the earlier "only setup wizard delivered" note):
+DashboardApp, SettingsPage, ThemePreview + 4 themes, and PlatformAdmin — the apex vendor UI.
+Owner said start with PlatformAdmin.tsx. Ported per INTEGRATION_MAP option (a) — into the
+ONE vanilla frontend, house styles only (.card/.primary/.ghost, api()/goPage patterns):
+- New page `page-apex` ("Platform Admin", nav under System group): Packages & Tiers cards
+  (editable price → package_config, the only place prices live), Client Activations table
+  (tier select, activation toggle ACTIVE↔SUSPENDED, status chip, TERMINATED locked), and
+  New Client Entry form using the REAL trial-client contract (owner/industry/WhatsApp/tier/
+  trial days — the export's mock email/currency fields were dropped, not faked).
+- Admin-PIN lock card on the page (POST /api/admin/verify) mirrors the server gate.
+- 'apex' added to AUTO_REFRESH_EXCLUDED so the 60s refresh can't wipe form input.
+- Backend: routes/apex_admin.js gained PATCH /api/apex/packages/:id (price, validated) and
+  PATCH /api/apex/tenants/:id (status/package_tier, enum+tier validated) — both audit-logged.
+- Verified end-to-end with a real session: setup wizard API → login → PIN gate blocks →
+  unlock → packages listed → price 5000→5500→5000 → negative price 400 → tenant
+  SUSPENDED→TRIAL round-trip → bad tier 400 → trial client created (port-test-traders) →
+  /nature serves the new page. audit_log captured all 5 mutations with from/to detail.
+  Then FULL RESET to pristine template: test tenant deleted, TRUNCATE users/staff/
+  login_audit + setvals, branding restored byte-identical (audit_log test rows remain —
+  append-only by design). npm test = baseline 17/5, golden core diff-clean.
+- Remaining exports to port later: DashboardApp.tsx (§2), SettingsPage.tsx (§3),
+  themes (§4). frontend/ folder itself stays untracked pending owner adopt/remove decision.

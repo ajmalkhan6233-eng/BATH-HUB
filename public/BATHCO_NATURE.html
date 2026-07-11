@@ -300,6 +300,7 @@ button.ghost{background:transparent; border:1px solid var(--glass-border); color
             <div class="dropdown-item nav-btn" data-page="accounting" onclick="goPage('accounting')">📊 Accounting</div>
             <div class="dropdown-item nav-btn" data-page="assistant" data-flag="ai_assistant_chat" onclick="goPage('assistant')">✨ AI Assistant <span class="flag-off-badge" id="badge-ai_assistant_chat">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="systools" onclick="goPage('systools')">🛠️ System Tools</div>
+            <div class="dropdown-item nav-btn" data-page="apex" onclick="goPage('apex')">🏢 Platform Admin</div>
           </div>
         </div>
         <button class="nav-trigger settings-link nav-btn" data-page="settings" onclick="goPage('settings')" type="button">⚙️ Settings</button>
@@ -478,6 +479,41 @@ button.ghost{background:transparent; border:1px solid var(--glass-border); color
     <div class="page" id="page-staffext"><div id="tabs-staffext"></div><div id="content-staffext"></div></div>
     <div class="page" id="page-reports2"><div id="tabs-reports2"></div><div id="content-reports2"></div></div>
     <div class="page" id="page-systools"><div id="tabs-systools"></div><div id="content-systools"></div></div>
+
+    <!-- APEX PLATFORM ADMIN (vendor control plane — ported from AI Studio PlatformAdmin.tsx;
+         data lives in package_config/tenants, server gate = admin role + Admin PIN) -->
+    <div class="page" id="page-apex">
+      <div class="card" id="apex-lock-card" style="display:none; margin-bottom:16px;">
+        <div class="section-title" style="margin-top:0">Admin PIN required</div>
+        <input id="apex-pin" type="password" placeholder="Admin PIN" style="width:180px" onkeydown="if(event.key==='Enter')apexUnlock()">
+        <button class="primary" onclick="apexUnlock()">Unlock</button>
+        <span id="apex-pin-msg" class="pending"></span>
+      </div>
+      <div id="apex-content" style="display:none">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-title" style="margin-top:0">Packages &amp; Tiers</div>
+          <div id="apex-packages" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px;"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="section-title" style="margin-top:0">Client Activations</div>
+          <table id="tbl-apex-tenants"><thead><tr><th>Client</th><th>Package</th><th>Active</th><th>Status</th><th>Trial ends</th><th>Created</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-top:0">New Client Entry</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <input id="apex-nc-shop" placeholder="Shop name" style="width:200px">
+            <input id="apex-nc-owner" placeholder="Owner name" style="width:180px">
+            <input id="apex-nc-industry" placeholder="Industry (e.g. hardware)" style="width:180px">
+            <input id="apex-nc-wa" placeholder="WhatsApp number" style="width:160px">
+            <select id="apex-nc-tier"></select>
+            <input id="apex-nc-days" type="number" min="0" value="30" title="Trial days (0 = active immediately)" style="width:110px">
+            <label style="display:flex; align-items:center; gap:6px;"><input id="apex-nc-consent" type="checkbox"> WhatsApp consent</label>
+            <button class="primary" onclick="apexCreateClient()">Create Client</button>
+          </div>
+          <div id="apex-nc-result" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
 
     <!-- AUDIT & ACCOUNTING (CORE ON) -->
     <div class="page" id="page-audit">
@@ -705,14 +741,14 @@ function goPage(name){
   const titles = {home:'Dashboard', daily:'Daily / Weekly / Monthly', customers:'Customers', credit:'Credit & Aging',
     suppliers:'Suppliers', staff:'Staff', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
     pos:'POS Billing', labels:'Barcode Labels', commission:'Staff Commission', assistant:'AI Assistant', settings:'Settings',
-    purchasing:'Purchasing', accounting:'Accounting', staffext:'Staff Extended', reports2:'Reports & Analytics', systools:'System Tools', audit:'Audit & Accounting'};
+    purchasing:'Purchasing', accounting:'Accounting', staffext:'Staff Extended', reports2:'Reports & Analytics', systools:'System Tools', audit:'Audit & Accounting', apex:'Platform Admin'};
   document.getElementById('page-title').textContent = titles[name] || name;
   document.body.classList.toggle('no-watermark', name === 'pos');
   const loaders = { home:loadHome, daily:loadDaily, customers:loadCustomers, credit:loadCredit, suppliers:loadSuppliers,
     staff:loadStaff, cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
     commission:loadCommission, settings:loadSettings,
     purchasing:()=>genericTabPage('purchasing'), accounting:()=>genericTabPage('accounting'),
-    staffext:()=>genericTabPage('staffext'), reports2:()=>genericTabPage('reports2'), systools:()=>genericTabPage('systools'), audit:loadAudit };
+    staffext:()=>genericTabPage('staffext'), reports2:()=>genericTabPage('reports2'), systools:()=>genericTabPage('systools'), audit:loadAudit, apex:loadApex };
   CURRENT_PAGE = name;
   CURRENT_LOADER = loaders[name] || null;
   if (loaders[name]) loaders[name]();
@@ -721,7 +757,7 @@ function goPage(name){
 
 // ═══════════════════════ AUTO-REFRESH (every 60s, no more F5) ═══════════════════
 let CURRENT_PAGE = null, CURRENT_LOADER = null;
-const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos']); // don't wipe in-progress form input
+const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos','apex']); // don't wipe in-progress form input
 async function manualRefresh(){
   if (!CURRENT_LOADER) return;
   const btn = document.getElementById('refresh-btn');
@@ -1136,6 +1172,111 @@ async function loadStaff(){
   const rows = await api('/api/staff').catch(()=>[]);
   paginate('tbl-staff', rows, 5, s=>`<tr>
     <td>${s.name||'—'}</td><td>${s.role||'—'}</td><td>${fmt(s.total_salary)??'0'}</td><td>${fmt(s.total_commission)??'0'}</td><td>${fmt(s.outstanding)??'0'}</td></tr>`);
+}
+
+// ═══════════ APEX PLATFORM ADMIN (vendor control plane) ═══════════
+// Ported from AI Studio PlatformAdmin.tsx. All data comes from /api/apex/*
+// (package_config + tenants tables) — prices are never hardcoded here.
+// Server gate = admin role + Admin PIN; the lock card handles the PIN step.
+let APEX_TIERS = [];
+async function loadApex(){
+  try{
+    const [pkgs, tenants] = await Promise.all([api('/api/apex/packages'), api('/api/apex/tenants')]);
+    document.getElementById('apex-lock-card').style.display = 'none';
+    document.getElementById('apex-content').style.display = '';
+    APEX_TIERS = pkgs.filter(p=>!p.is_addon).map(p=>p.tier_name);
+    renderApexPackages(pkgs);
+    renderApexTenants(tenants);
+    document.getElementById('apex-nc-tier').innerHTML = APEX_TIERS.map(t=>`<option>${t}</option>`).join('');
+  }catch(e){
+    if (/PIN required/i.test(e.message)){
+      document.getElementById('apex-content').style.display = 'none';
+      document.getElementById('apex-lock-card').style.display = '';
+      document.getElementById('apex-pin-msg').textContent = '';
+    } else if (/Admin only/i.test(e.message)){
+      document.getElementById('apex-content').style.display = 'none';
+      document.getElementById('apex-lock-card').style.display = '';
+      document.getElementById('apex-pin-msg').textContent = 'Admin account required.';
+    } else if (e.message !== 'not authenticated'){
+      alert('Platform Admin failed to load: ' + e.message);
+    }
+  }
+}
+async function apexUnlock(){
+  const pin = document.getElementById('apex-pin').value;
+  if (!pin) return;
+  try{
+    await api('/api/admin/verify', { method:'POST', body: JSON.stringify({ pin }) });
+    document.getElementById('apex-pin').value = '';
+    loadApex();
+  }catch(e){ document.getElementById('apex-pin-msg').textContent = 'Wrong PIN.'; }
+}
+function renderApexPackages(pkgs){
+  document.getElementById('apex-packages').innerHTML = pkgs.map(p=>`
+    <div style="border:1px solid var(--line,rgba(255,255,255,.12)); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>${p.tier_name}</strong>
+        ${p.is_popular ? '<span style="font-size:10px; letter-spacing:1px; color:var(--gold,#c9a227); border:1px solid var(--gold,#c9a227); border-radius:8px; padding:1px 6px;">POPULAR</span>' : ''}
+        ${p.is_addon ? '<span style="font-size:10px; letter-spacing:1px; opacity:.6;">ADD-ON</span>' : ''}
+      </div>
+      <div style="font-size:12px; opacity:.7; min-height:32px;">${(Array.isArray(p.features)?p.features:[]).join(' · ')}</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:auto;">
+        <span style="font-size:12px; opacity:.7;">LKR</span>
+        <input id="apex-price-${p.id}" type="number" min="0" value="${Number(p.price_lkr)}" style="width:110px">
+        <button class="ghost" onclick="apexSavePrice(${p.id})">Save</button>
+      </div>
+    </div>`).join('');
+}
+async function apexSavePrice(id){
+  const price_lkr = Number(document.getElementById('apex-price-'+id).value);
+  try{
+    const p = await api('/api/apex/packages/'+id, { method:'PATCH', body: JSON.stringify({ price_lkr }) });
+    document.getElementById('apex-price-'+id).value = Number(p.price_lkr);
+  }catch(e){ alert('Price update failed: ' + e.message); }
+}
+function apexStatusChip(status){
+  const colors = { ACTIVE:'#2ecc71', TRIAL:'#4aa3ff', SUSPENDED:'#e0a02a', TERMINATED:'#e05a4e' };
+  return `<span style="color:${colors[status]||'inherit'}; font-size:11px; letter-spacing:1px;">${status}</span>`;
+}
+function renderApexTenants(rows){
+  const tbody = document.querySelector('#tbl-apex-tenants tbody');
+  tbody.innerHTML = rows.map(t=>`<tr>
+    <td>${t.shop_name} <span style="opacity:.5; font-size:11px;">(${t.subdomain})</span></td>
+    <td><select onchange="apexSetTenant(${t.id}, {package_tier:this.value})">
+      ${APEX_TIERS.map(x=>`<option ${x===t.package_tier?'selected':''}>${x}</option>`).join('')}
+    </select></td>
+    <td><input type="checkbox" ${(t.status==='ACTIVE'||t.status==='TRIAL')?'checked':''} ${t.status==='TERMINATED'?'disabled title="Terminated accounts cannot be reactivated here"':''}
+      onchange="apexSetTenant(${t.id}, {status: this.checked ? 'ACTIVE' : 'SUSPENDED'})"></td>
+    <td>${apexStatusChip(t.status)}</td>
+    <td>${t.trial_expires_at ? new Date(t.trial_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+    <td>${t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB') : '—'}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="pending">No clients yet — create one below</td></tr>';
+}
+async function apexSetTenant(id, patch){
+  try{ await api('/api/apex/tenants/'+id, { method:'PATCH', body: JSON.stringify(patch) }); }
+  catch(e){ alert('Update failed: ' + e.message); }
+  loadApex();
+}
+async function apexCreateClient(){
+  const val = id => document.getElementById(id).value.trim();
+  const body = {
+    shopName: val('apex-nc-shop'), ownerName: val('apex-nc-owner'), industryType: val('apex-nc-industry'),
+    whatsappNumber: val('apex-nc-wa') || null,
+    whatsappConsent: document.getElementById('apex-nc-consent').checked,
+    packageTier: document.getElementById('apex-nc-tier').value,
+    trialDays: Number(val('apex-nc-days')) || 0,
+  };
+  const out = document.getElementById('apex-nc-result');
+  if (!body.shopName || !body.ownerName || !body.industryType){
+    out.innerHTML = '<span class="pending">Shop name, owner name and industry are required.</span>'; return;
+  }
+  try{
+    const r = await api('/api/apex/trial-clients', { method:'POST', body: JSON.stringify(body) });
+    out.innerHTML = `Created (tenant #${r.tenantId}). Instance link: <a href="${r.link}" target="_blank" rel="noopener">${r.link}</a>`
+      + (r.waLink ? ` · <a href="${r.waLink}" target="_blank" rel="noopener">Send via WhatsApp</a>` : '');
+    ['apex-nc-shop','apex-nc-owner','apex-nc-industry','apex-nc-wa'].forEach(i=>document.getElementById(i).value='');
+    loadApex();
+  }catch(e){ out.innerHTML = `<span class="pending">${e.message}</span>`; }
 }
 
 // ═══════════════════════ CHEQUES ═══════════════════════

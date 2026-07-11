@@ -67,11 +67,56 @@ router.get('/api/apex/tenants', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Activation toggle / package change from the Platform Admin page.
+// Accepts { status } and/or { package_tier }; both validated, both audit-logged.
+router.patch('/api/apex/tenants/:id', async (req, res) => {
+    const { status, package_tier } = req.body || {};
+    const ALLOWED_STATUS = ['ACTIVE', 'TRIAL', 'SUSPENDED', 'TERMINATED'];
+    if (!status && !package_tier) return res.status(400).json({ error: 'Nothing to update — send status and/or package_tier' });
+    if (status && !ALLOWED_STATUS.includes(status)) return res.status(400).json({ error: `status must be one of ${ALLOWED_STATUS.join(', ')}` });
+    try {
+        const cur = await pool.query('SELECT * FROM tenants WHERE id = $1', [req.params.id]);
+        if (!cur.rows.length) return res.status(404).json({ error: 'Tenant not found' });
+        if (package_tier) {
+            const t = await pool.query('SELECT 1 FROM package_config WHERE tier_name = $1 AND is_addon = false', [package_tier]);
+            if (!t.rows.length) return res.status(400).json({ error: 'Unknown package tier' });
+        }
+        const { rows } = await pool.query(
+            `UPDATE tenants SET status = COALESCE($1::tenant_status, status), package_tier = COALESCE($2, package_tier)
+             WHERE id = $3 RETURNING *`,
+            [status || null, package_tier || null, req.params.id]
+        );
+        await logAdminAction(req.session.user.id, 'TENANT_UPDATED', rows[0].id, {
+            from_status: cur.rows[0].status, to_status: rows[0].status,
+            from_tier: cur.rows[0].package_tier, to_tier: rows[0].package_tier,
+        });
+        res.json(rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Package tiers/prices — always read from package_config, never hardcoded.
 router.get('/api/apex/packages', async (req, res) => {
     try {
         const { rows } = await pool.query(`SELECT * FROM package_config ORDER BY is_addon, price_lkr`);
         res.json(rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Price edit from the Platform Admin page — package_config stays the ONLY
+// place prices live.
+router.patch('/api/apex/packages/:id', async (req, res) => {
+    const price = Number(req.body?.price_lkr);
+    if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'price_lkr must be a non-negative number' });
+    try {
+        const { rows } = await pool.query(
+            `UPDATE package_config SET price_lkr = $1 WHERE id = $2 RETURNING *`,
+            [price, req.params.id]
+        );
+        if (!rows.length) return res.status(404).json({ error: 'Unknown package id' });
+        await logAdminAction(req.session.user.id, 'PACKAGE_PRICE_CHANGED', null, {
+            package: rows[0].tier_name, price_lkr: price,
+        });
+        res.json(rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
