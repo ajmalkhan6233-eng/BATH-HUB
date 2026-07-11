@@ -118,3 +118,42 @@ Verified: node --check clean (server.js, routes/audit.js), setup.html inline scr
 Related (live repo, logged here for cross-reference only): the RANGE (AZMI) ~Rs 8M variance in
 C:\BATHCO_PHASE1's consolidated report is owner-confirmed resolved — details live in
 C:\BATHCO_PHASE1\SESSION_LOG.md and the annotated report. No template impact, no DB change.
+
+## 2026-07-11 — APEX platform integration (apex_backend drop)
+
+Owner dropped apex_backend/ (control plane: tenant state machine, client payments, audit log,
+LAYLA per-client config, package pricing). All 13 files read and audited against the REAL DB
+before any SQL ran. Integrated:
+- scripts/migrate_apex.js — idempotent DDL for tenants, client_payments, audit_log,
+  layla_configs, package_config (+tier seed rows). audit_log UPDATE/DELETE revoked from the
+  app role (verified: tamper UPDATE rejected). The apex RLS script was NOT applied — owner
+  decision: it targeted nonexistent tables (inventory/sales/customer_ledgers/invoices), would
+  ALTER golden-core financial tables, and isolation here is one-DB-per-client. Kept as
+  reference in apex_backend/.
+- utils/ (new): db.js, subdomainValidator.js (was missing but required), laylaOutput.js,
+  laylaKnowledgePersistence.js, trialClientCreator.js.
+- middleware/ (new): auditLogMiddleware.js; tenantStatusMiddleware.js rewritten — apex
+  original had invalid `SET x = $1` (SET takes no bind params) + pool-unsafe session var;
+  now APEX_TENANT_ID-based, fail-open, no-op unless APEX_ENFORCE_TENANT_STATUS=true.
+- routes/apex_admin.js — /api/apex/* (payments, trial-clients, tenants, packages), session
+  admin + Admin-PIN gated (apex original had NO auth); verified_by comes from session, not body.
+- LAYLA wiring (no pipeline duplication): sanitizeAssistantOutput() at ALL 3 bridge send
+  points (photo reply, text reply, /send); buildDateAnchor() replaced the inline CURRENT DATE
+  line in getSystemPrompt(); TEACH now best-effort mirrors facts to layla_configs.corrections
+  (file stays the single prompt source).
+- WhatsApp: bridge TEST_MODE hardcode → WHATSAPP_MODE env, DEFAULT 'internal' (whitelist-only);
+  'public' is an explicit .env decision. WHATSAPP_BRIDGE_PORT=3011 (live bridge owns 3001 on
+  this machine — and NEVER start this bridge here: its orphan-Chrome cleanup would kill the
+  live WhatsApp session).
+- Seeded one fictional demo client (scripts/seed_demo_tenant.js): "Demo Hardware Stores",
+  subdomain demo, TRIAL 30d, Growth tier + layla_configs row (inactive). APEX_TENANT_ID=1.
+- Task-1 recheck: the 2026-07-10 live-path/live-DB scrub re-verified file-by-file — all clean,
+  zero edits needed.
+- Verified: node -c clean on all touched files; migration + seed ran; server boots, /health 200;
+  /api/apex/* return 401 unauthenticated; trial-client + payment insert + duplicate-bank-ref
+  rejection exercised against the real schema (test rows cleaned up); /simulate returns safe
+  fallback (AI keys are placeholders); npm test identical to baseline (17 pre-existing failures,
+  5 passes); git diff confirms zero golden-core files touched, no financial-table ALTERs.
+- AZMI personal-payable and HSL/SL series logic: untouched (apex code references none of the
+  supplier/invoice/reconciliation tables or routes; golden core diff-clean).
+- Railway deployment deliberately NOT done — local sign-off first.

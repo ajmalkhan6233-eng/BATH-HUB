@@ -10,16 +10,24 @@ const path = require('path');
 const qrcode = require('qrcode');
 const qrcodeTerminal = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
+// Final output guard (apex): strips any reasoning/chain-of-thought leakage at
+// the LAST point before a message leaves for WhatsApp. layla.js has its own
+// pipeline (stripReasoning etc.) — this is the belt-and-braces layer on the
+// dispatch side, covering every send path including /send and photo replies.
+const { sanitizeAssistantOutput } = require('./utils/laylaOutput');
 
 const PORT = process.env.WHATSAPP_BRIDGE_PORT || 3001;
 const MAIN_SERVER_URL = process.env.MAIN_SERVER_URL || `http://localhost:${process.env.PORT || 3010}`;
 const INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox'); // same drop folder the Nature upload button uses
 
-// ── LOCAL TEST MODE WHITELIST ──────────────────────────────────────────────
-// Only this number gets forwarded to LAYLA / gets a reply. Everyone else is
-// silently logged and dropped — no reply, no forward, nothing sent to them.
-// Fail CLOSED: if the sender's number can't be confidently resolved, block it.
-const TEST_MODE = true;
+// ── INTERNAL-ONLY MODE WHITELIST ───────────────────────────────────────────
+// WHATSAPP_MODE=internal (the DEFAULT): only whitelisted numbers get forwarded
+// to LAYLA / get a reply. Everyone else is silently logged and dropped — no
+// reply, no forward, nothing sent to them. Fail CLOSED: if the sender's number
+// can't be confidently resolved, block it.
+// WHATSAPP_MODE=public: replies to everyone (a deliberate go-live decision —
+// set it explicitly in .env, never flip this default in code).
+const TEST_MODE = (process.env.WHATSAPP_MODE || 'internal') !== 'public';
 const WHITELIST_RAW = process.env.WHATSAPP_TEST_WHITELIST || '';
 const WHITELIST_NUMBER = WHITELIST_RAW.replace(/\D/g, ''); // digits only, e.g. "9477XXXXXXX"
 // 2026-07-03: WhatsApp's "@lid" privacy layer means this contact's real number is
@@ -106,7 +114,7 @@ client.on('ready', () => {
     lastLivenessOkAt = Date.now(); // we just connected, count that as a pass
     lastLivenessError = null;
     console.log('[WA-BRIDGE] WhatsApp connected and ready.');
-    console.log(`[WA-BRIDGE] LOCAL TEST MODE ${TEST_MODE ? 'ACTIVE' : 'DISABLED'} — whitelist: +${WHITELIST_NUMBER} only. All other senders are logged and dropped, no reply sent.`);
+    console.log(`[WA-BRIDGE] MODE: ${TEST_MODE ? 'INTERNAL-ONLY (default) — whitelist: +' + WHITELIST_NUMBER + ' only, all other senders logged and dropped, no reply sent.' : 'PUBLIC — replies to everyone (WHATSAPP_MODE=public).'}`);
     console.log(`[WA-BRIDGE] Liveness check active — verifying the real connection every ${LIVENESS_INTERVAL_MS/60000} min, auto-restarts via pm2 if it goes stale.`);
 });
 
@@ -178,7 +186,8 @@ client.on('message', async (msg) => {
             const res = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, {
                 from: resolved, filePath: destPath,
             }, { timeout: 60000 });
-            if (res.data?.reply) await msg.reply(res.data.reply);
+            const photoReply = sanitizeAssistantOutput(res.data?.reply);
+            if (photoReply) await msg.reply(photoReply);
         } catch (err) {
             console.error('[WA-BRIDGE] Photo pipeline failed:', err.message);
             await msg.reply(`Something went wrong reading that photo. Please try resending it.`).catch(()=>{});
@@ -191,8 +200,9 @@ client.on('message', async (msg) => {
             from: resolved,
             message: msg.body,
         }, { timeout: 60000 });
-        if (res.data?.reply) {
-            await msg.reply(res.data.reply);
+        const reply = sanitizeAssistantOutput(res.data?.reply);
+        if (reply) {
+            await msg.reply(reply);
         }
     } catch (err) {
         console.error('[WA-BRIDGE] Failed to forward inbound message or send reply:', err.message);
@@ -206,8 +216,10 @@ app.post('/send', async (req, res) => {
     if (!ready) return res.status(503).json({ error: 'WhatsApp not linked yet — scan the QR code first' });
     try {
         const chatId = to.includes('@') ? to : `${to.replace(/\D/g, '')}@c.us`;
-        await client.sendMessage(chatId, message);
-        res.json({ success: true, to, message });
+        const clean = sanitizeAssistantOutput(message);
+        if (!clean) return res.status(400).json({ error: 'message was empty after output sanitization' });
+        await client.sendMessage(chatId, clean);
+        res.json({ success: true, to, message: clean });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

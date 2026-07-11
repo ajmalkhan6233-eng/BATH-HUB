@@ -166,6 +166,10 @@ app.use(session({
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 
+// APEX tenant-status gate (control plane). No-op unless
+// APEX_ENFORCE_TENANT_STATUS=true in .env — see middleware/tenantStatusMiddleware.js.
+app.use(require('./middleware/tenantStatusMiddleware'));
+
 // ─── AUTH + ROLE-BASED AUTHORIZATION ──────────────────────────────────────────
 // DB enum (user_role) uses admin/owner/staff. These map 1:1 onto the
 // PHASE 2 role spec admin / uncle_readonly / staff — 'owner' IS
@@ -481,6 +485,7 @@ app.patch('/api/feature-flags/:key', async (req, res) => {
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
 app.use('/api', require('./routes/staff_reports'));       // routes are relative (/attendance etc)
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...
+app.use('/', require('./routes/apex_admin'));             // APEX control plane, /api/apex/* (admin + PIN gated)
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR

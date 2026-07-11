@@ -7,6 +7,8 @@ const { Pool } = require('pg');
 const { client: openRouterClient, DEFAULT_MODEL } = require('./openrouter.config');
 const SHOP = require('./shop_config.json');
 const { classifyAndAnswer } = require('./scripts/layla_answer_engine');
+const { buildDateAnchor } = require('./utils/laylaOutput');
+const { saveLaylaCorrection } = require('./utils/laylaKnowledgePersistence');
 
 // Same whitelist number used by whatsapp-bridge.js's local test mode — the
 // one person allowed to teach LAYLA permanent facts via "TEACH: <fact>".
@@ -132,12 +134,12 @@ const SAFE_FALLBACK_MESSAGE = "Thank you for your message! A team member will ge
 const LAYLA_SYSTEM_PROMPT = buildSystemPrompt();
 
 // Re-reads taught facts fresh each call (cheap, small file) so "TEACH:" facts
-// take effect immediately without a server restart. Also stamps the current
-// date (Asia/Colombo) — without it the model assumes its training-era year and
-// treats real current-year dates as "in the future".
+// take effect immediately without a server restart. The date/time anchor comes
+// from utils/laylaOutput.buildDateAnchor() — the ONE date mechanism (apex
+// integration replaced the old inline CURRENT DATE sentence; don't add a
+// second date line here).
 function getSystemPrompt() {
-    const now = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Colombo', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const base = `${LAYLA_SYSTEM_PROMPT}\n\nCURRENT DATE: Today is ${now} (Sri Lanka time). This is the real current date — dates in ${new Date().getFullYear()} are NOT in the future.`;
+    const base = `${LAYLA_SYSTEM_PROMPT}\n\n${buildDateAnchor()}`;
     const taught = loadTaughtFacts();
     return taught ? `${base}\n\n--- ADDITIONAL FACTS TAUGHT BY THE OWNER ---\n${taught}` : base;
 }
@@ -388,6 +390,13 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
     if (teachMatch && digits === OWNER_NUMBER) {
         const fact = teachMatch[1].trim();
         fs.appendFileSync(TAUGHT_FACTS_PATH, `- (${new Date().toISOString().slice(0, 10)}) ${fact}\n`);
+        // Best-effort mirror to the apex per-tenant store (layla_configs.corrections)
+        // so the platform can show per-client corrections. The file above stays the
+        // single source injected into the prompt — never inject both.
+        try {
+            const tenantId = parseInt(process.env.APEX_TENANT_ID || '', 10);
+            if (tenantId) await saveLaylaCorrection(tenantId, fact);
+        } catch (e) { console.warn('[LAYLA] apex correction mirror failed (fact still saved to file):', e.message); }
         console.log(`[LAYLA] Taught fact stored: ${fact}`);
         return { message: `Got it, I'll remember: "${fact}" ✅`, escalate: false };
     }

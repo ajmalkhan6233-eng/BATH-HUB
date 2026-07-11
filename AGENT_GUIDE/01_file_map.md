@@ -18,7 +18,17 @@ FOLDERS
 - routes/purchasing_accounting.js  purchasing + supplier/accounting APIs (golden core).
 - routes/staff_reports.js ....... staff attendance/commission APIs (golden core).
 - routes/audit.js ............... audit report generation (golden core).
-- scripts/ ...................... maintenance tools: create_instance.js (new client DB), seed_feature_flags.js, migrations.
+- routes/apex_admin.js .......... APEX control plane (vendor side): client payments, trial-client
+                                  creation, tenants/packages listing. Admin role + PIN gated.
+- middleware/ ................... apex middleware: auditLogMiddleware (append-only admin trail),
+                                  tenantStatusMiddleware (status gate; no-op unless APEX_ENFORCE_TENANT_STATUS=true).
+- utils/ ........................ shared modules: db.js (pg pool), subdomainValidator, laylaOutput
+                                  (output guard + date anchor), laylaKnowledgePersistence, trialClientCreator.
+- apex_backend/ ................. original apex source drop (REFERENCE ONLY — integrated copies live
+                                  in utils/middleware/routes; its RLS SQL is deliberately not applied,
+                                  see scripts/migrate_apex.js header).
+- scripts/ ...................... maintenance tools: create_instance.js (new client DB), seed_feature_flags.js,
+                                  migrate_apex.js + seed_demo_tenant.js (apex tables), migrations.
 - tests/ ........................ jest tests. Run with: npm test
 
 WHICH FILE OWNS WHICH SCREEN: every visible page is a `<div class="page" id="page-XXX">`
