@@ -33,4 +33,4 @@ module.exports = { saveLaylaCorrection, buildCorrectionsPrompt };
 
 // CLAUDE_CODE_WIRES_THIS: call buildCorrectionsPrompt(tenantId) and prepend its
 // output to the system prompt on every LAYLA request for that tenant. Call
-// saveLaylaCorrection() whenever Ajmal corrects LAYLA in conversation.
+// saveLaylaCorrection() whenever the owner corrects LAYLA in conversation.

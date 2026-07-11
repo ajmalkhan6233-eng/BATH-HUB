@@ -123,6 +123,12 @@ if (!process.env.SESSION_SECRET) {
     console.error('[FATAL] SESSION_SECRET env var is not set — server cannot start');
     process.exit(1);
 }
+// Production deployments must never ship the 0000 placeholder PIN — the Admin
+// tab (and the apex Platform Admin page) sit behind it. Local dev keeps 0000.
+if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PIN || process.env.ADMIN_PIN === '0000')) {
+    console.error('[FATAL] ADMIN_PIN is unset or still the 0000 placeholder — set a real PIN before deploying to production.');
+    process.exit(1);
+}
 
 // Trusts ngrok's X-Forwarded-Proto so cookie.secure:'auto' below marks the
 // session cookie HTTPS-only when reached via the ngrok tunnel, while still

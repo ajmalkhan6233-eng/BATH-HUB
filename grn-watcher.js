@@ -5,6 +5,8 @@ const { Pool } = require('pg');
 const XLSX = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 
+require('./utils/dbGuard').assertTemplateSafeDb('grn-watcher');
+
 const pool = new Pool({
     host:     process.env.DB_HOST     || 'localhost',
     port:     process.env.DB_PORT     || 5432,

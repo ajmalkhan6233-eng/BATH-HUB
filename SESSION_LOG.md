@@ -221,3 +221,34 @@ alert-happiness (owner ran the delete command themselves; deletion is scheduled 
   ○ Offline, public URL returns 404, nothing running or billing. Data persists on the
   volume. Unpause recipe + hardening list live in CLAUDE.md task queue item 1.
   DO NOT unpause until the owner explicitly calls go-live.
+  (Briefly unpaused + re-parked same day at owner's request for a browser viewing.)
+
+## 2026-07-11 — Security finalization pass (session close)
+
+Full-tree sweep (code + config + frontend/src, node_modules excluded):
+- Live paths (C:\BATHCO_DROP / C:\BATHCO_PHASE1 / AI-Data) in code/config: **0** — all
+  remaining mentions are vendor-internal audit docs (this file, AISTUDIO_HANDOFF, CLAUDE.md
+  safety rules). `'bathco'` live-DB fallbacks in code: **0**. Real phones/emails: **0**.
+- One real-name leak FIXED: apex_backend/utils/laylaKnowledgePersistence.js comment named
+  the owner ("Ajmal") → "the owner". (Reference copy of the original drop, was committed.)
+- Known deliberate deferrals unchanged: lasersoft_invoices/lasersoft_total schema
+  identifiers (+ audit.js:285 API string naming that table — golden core, needs the
+  ALTER-migration decision) and the BATHCO product-name branding (§7).
+- NEW GUARD utils/dbGuard.js wired into utils/db.js, layla.js (covers server.js
+  transitively), grn-watcher.js: boot aborts if DB_NAME or DATABASE_URL resolves to the
+  live shop DB — a live .env copied into a template instance now dies loudly instead of
+  silently touching real data. No override by design. Tested: DB_NAME=bathco → exit 1,
+  DATABASE_URL→/bathco → exit 1, bathco_template → boots clean.
+- NEW server.js production check: NODE_ENV=production + ADMIN_PIN unset/0000 → fatal at
+  boot (tested → exit 1). Local dev may keep 0000.
+- Railway apex-platform: ADMIN_PIN=0000 replaced with a strong random PIN via
+  `railway variables --skip-deploys` (owner has the PIN; both services stayed ○ Offline
+  throughout — verified before and after).
+- Non-superuser DB role: scripts/railway_harden_db.js written (creates apex_app role,
+  full grants, audit_log UPDATE/DELETE revoked, prints the vars to set). MUST run at next
+  unpause — the parked DB can't accept SQL, and owner ordered no unpausing this task.
+- Distribution note added to CLAUDE.md queue: client-shipped copies must exclude
+  SESSION_LOG.md / AISTUDIO_HANDOFF / CLAUDE.md / backups / frontend — the only remaining
+  live-system references live in those vendor docs, not in code/config.
+- Verified: all guards fire, local boot clean, npm test at baseline (17 pre-existing / 5
+  pass), apex-platform still parked.

@@ -18,8 +18,10 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
    `railway redeploy -s Postgres` (volume reattaches; if redeploy refuses, deploy from
    dashboard — NEVER `railway add -d postgres` again, that creates a second empty DB),
    then `railway up -s apex-app -d`, verify /health + /api/setup/status, run the setup
-   wizard. Go-live hardening: create a non-superuser DB role so the audit_log REVOKE
-   binds (app currently connects as postgres on Railway), set a real ADMIN_PIN + DASH creds.
+   wizard. Go-live hardening status (2026-07-11 security pass): ADMIN_PIN on apex-app is
+   already a real random PIN (owner has it; 0000 refused at boot in production);
+   non-superuser role = run `scripts/railway_harden_db.js` at unpause (DB must be online)
+   and set the printed DB_USER/DB_PASSWORD on apex-app. Still open: real DASH_* creds.
 2. **Port remaining AI Studio exports** from frontend/src (the full Master UI Template
    delivery): DashboardApp.tsx (INTEGRATION_MAP §2), SettingsPage.tsx (§3), themes (§4).
    PlatformAdmin.tsx is DONE (2026-07-11) — page-apex in BATHCO_NATURE.html.
@@ -31,5 +33,9 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
    BATHCO product-name rebrand decision.
 5. **Jest baseline** — 17 pre-existing integration-test failures (tests/integration);
    fix when touching those modules. Baseline must never grow.
+7. **Client-copy distribution exclusions** — before shipping any client a copy of this
+   folder/repo, EXCLUDE the vendor-internal docs: SESSION_LOG.md, AISTUDIO_HANDOFF\,
+   CLAUDE.md, backups\, frontend\ — they reference the live system's paths/URLs and the
+   vendor's Railway account. Code/config are clean; these docs are the only leak channel.
 6. **AI Studio watcher** — scheduled task AISTUDIO_Export_Watch wires new exports every 2h;
    dashboard/settings/themes exports still pending delivery.

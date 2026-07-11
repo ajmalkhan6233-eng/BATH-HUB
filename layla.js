@@ -19,6 +19,10 @@ function loadTaughtFacts() {
     try { return fs.readFileSync(TAUGHT_FACTS_PATH, 'utf8'); } catch { return ''; }
 }
 
+// Boot-time guard: refuse to start against the live shop database (see utils/dbGuard).
+// server.js requires this module at startup, so the whole app inherits the check.
+require('./utils/dbGuard').assertTemplateSafeDb('layla/main pool');
+
 const _dbSsl = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('.railway.internal')
     ? { rejectUnauthorized: false } : false;
 const pool = process.env.DATABASE_URL

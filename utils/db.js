@@ -3,6 +3,8 @@
 // (hosted deploys), otherwise the discrete DB_* vars from .env.
 require('dotenv').config();
 const { Pool } = require('pg');
+const { assertTemplateSafeDb } = require('./dbGuard');
+assertTemplateSafeDb('utils/db');
 
 const _ssl = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('.railway.internal')
     ? { rejectUnauthorized: false } : false;

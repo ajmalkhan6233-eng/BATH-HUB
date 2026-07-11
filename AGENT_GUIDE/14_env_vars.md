@@ -21,3 +21,9 @@ ENABLE_LOCAL_INGEST + LOCAL_INGEST_SCRIPT — optional external OCR/ingest pipel
 
 Rules: never commit .env; never print secret values; generate fresh secrets per client;
 after changing .env restart with pm2 restart <app> --update-env.
+
+Safety guards (do not remove):
+- utils/dbGuard.js aborts boot if DB_NAME/DATABASE_URL resolves to the live shop database —
+  protects against a live .env being copied into a template instance. No override by design.
+- NODE_ENV=production refuses to start while ADMIN_PIN is unset or the 0000 placeholder
+  (server.js, next to the SESSION_SECRET check). Local dev may keep 0000.
