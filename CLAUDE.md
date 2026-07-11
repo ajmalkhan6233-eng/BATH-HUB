@@ -10,12 +10,16 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 
 ## TASK QUEUE (updated 2026-07-11 EOD)
 
-1. **Railway go-live (ON HOLD — owner trigger only).** Project name confirmed:
-   `apex-platform`. Blocked by free-plan provision limit → owner upgrades plan OR approves
-   deleting dead project `alert-happiness`, then: create project → add Postgres →
-   schema-only dump load (--no-owner --no-privileges) → migrate_apex + seed_demo_tenant +
-   seed_feature_flags → railway up → verify /health → `railway down` (park it, no billing).
-   At deploy: create a non-superuser app role so the audit_log REVOKE actually binds.
+1. **Railway go-live (PARKED — owner trigger only).** DEPLOYED + VERIFIED + PARKED
+   2026-07-11: project `apex-platform` (ID 8f1fbc70-fc2a-4198-a6a2-47055eba309b), services
+   apex-app + Postgres (54 tables, demo tenant, 4 packages, 87 flags on persistent volume).
+   URL (dead while parked): https://apex-app-production-4f8a.up.railway.app
+   UNPAUSE recipe (only on explicit owner go-live): from C:\BATHCO_TEMPLATE —
+   `railway redeploy -s Postgres` (volume reattaches; if redeploy refuses, deploy from
+   dashboard — NEVER `railway add -d postgres` again, that creates a second empty DB),
+   then `railway up -s apex-app -d`, verify /health + /api/setup/status, run the setup
+   wizard. Go-live hardening: create a non-superuser DB role so the audit_log REVOKE
+   binds (app currently connects as postgres on Railway), set a real ADMIN_PIN + DASH creds.
 2. **Port remaining AI Studio exports** from frontend/src (the full Master UI Template
    delivery): DashboardApp.tsx (INTEGRATION_MAP §2), SettingsPage.tsx (§3), themes (§4).
    PlatformAdmin.tsx is DONE (2026-07-11) — page-apex in BATHCO_NATURE.html.

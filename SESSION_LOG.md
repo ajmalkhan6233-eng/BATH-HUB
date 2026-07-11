@@ -199,3 +199,25 @@ ONE vanilla frontend, house styles only (.card/.primary/.ghost, api()/goPage pat
   append-only by design). npm test = baseline 17/5, golden core diff-clean.
 - Remaining exports to port later: DashboardApp.tsx (§2), SettingsPage.tsx (§3),
   themes (§4). frontend/ folder itself stays untracked pending owner adopt/remove decision.
+
+## 2026-07-11 — Railway: apex-platform DEPLOYED, VERIFIED, PARKED
+
+Owner re-ordered the deploy; unblocked by owner-approved deletion of dead project
+alert-happiness (owner ran the delete command themselves; deletion is scheduled by Railway).
+- New project **apex-platform** (8f1fbc70-fc2a-4198-a6a2-47055eba309b) — completely separate
+  from the live system (alert-cooperation), own Postgres 18 with own volume. The live
+  project was never linked or touched at any step.
+- apex-app service env: discrete DB_* reference vars → this project's Postgres private
+  domain (route pools don't read DATABASE_URL), fresh SESSION_SECRET (a PS 5.1
+  RandomNumberGenerator::Fill quirk zeroed the first one — caught and replaced),
+  APEX_TENANT_ID=1, enforcement off, WHATSAPP_MODE=internal, puppeteer download skipped.
+- DB: schema-only pg_dump (--no-owner --no-privileges) loaded via public proxy (54 tables),
+  then migrate_apex + seed_demo_tenant + seed_feature_flags (4 packages, 87 flags, demo
+  tenant TRIAL). Note: audit_log REVOKE doesn't bind on Railway's postgres superuser —
+  go-live hardening item.
+- Verified live at https://apex-app-production-4f8a.up.railway.app : /health 200,
+  /api/setup/status real DB query, root 302 → /setup.html (wizard armed), /api/apex/* gated.
+- Then PARKED per owner instruction: `railway down` on apex-app AND Postgres — both
+  ○ Offline, public URL returns 404, nothing running or billing. Data persists on the
+  volume. Unpause recipe + hardening list live in CLAUDE.md task queue item 1.
+  DO NOT unpause until the owner explicitly calls go-live.
