@@ -157,3 +157,19 @@ before any SQL ran. Integrated:
 - AZMI personal-payable and HSL/SL series logic: untouched (apex code references none of the
   supplier/invoice/reconciliation tables or routes; golden core diff-clean).
 - Railway deployment deliberately NOT done — local sign-off first.
+
+## 2026-07-11 (later) — Railway deployment attempt: ON HOLD (owner decision)
+
+Owner approved deploying apex as a brand-new isolated Railway project, name confirmed:
+**apex-platform**. Attempt findings (account ajmalkhan6233@gmail.com):
+- The LIVE production system runs in Railway project **alert-cooperation** (auto-generated
+  name!): service "BATHCO" Online at bathco-production.up.railway.app + 2 Postgres DBs.
+  NEVER touch it. If `railway status` in this folder ever shows alert-cooperation linked,
+  run `railway unlink --yes` immediately (this folder is currently UNLINKED — verified).
+- Project **alert-happiness** is a dead Failed BATHCO deploy, no DBs — deletion candidate,
+  NOT approved.
+- `railway init --name apex-platform` was REJECTED: "Free plan resource provision limit
+  exceeded". Owner chose HOLD — no deploy, no plan change, all development stays LOCAL.
+  Resume only on explicit owner go-live: create apex-platform → add Postgres → schema-only
+  dump load (--no-owner --no-privileges) → migrate_apex + seed_demo_tenant +
+  seed_feature_flags → railway up → verify /health → railway down (parked, not billing).
