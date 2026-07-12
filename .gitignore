@@ -63,3 +63,4 @@ desktop.ini
 # Reports (generated — don't need versioning)
 reports/*.html
 reports/*.pdf
+local_ops/

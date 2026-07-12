@@ -8,6 +8,7 @@ const router = express.Router();
 const pool = require('../utils/db');
 const { logAdminAction } = require('../middleware/auditLogMiddleware');
 const { createTrialClient } = require('../utils/trialClientCreator');
+const { performAction, pingHealth, controlEnabled } = require('../utils/railwayControl');
 
 router.use('/api/apex', (req, res, next) => {
     if (!req.session || !req.session.user) return res.status(401).json({ error: 'Login required' });
@@ -118,6 +119,110 @@ router.patch('/api/apex/packages/:id', async (req, res) => {
         });
         res.json(rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── DEDICATED FLEET (clients running as their own Railway project) ──────────
+// Control-plane ONLY: names/contacts/Railway ids/subscription/health state.
+// Power actions go through Railway's control API (utils/railwayControl.js);
+// health pings read HTTP status codes only. Apex NEVER connects to, reads, or
+// displays any client's actual database or business data — hard policy.
+
+const FLEET_STATUS = ['TRIAL', 'ACTIVE', 'SUSPENDED', 'TERMINATED'];
+const FLEET_FIELDS = ['client_name', 'contact', 'railway_project_id', 'railway_environment_id', 'railway_service_id', 'subscription_status', 'health_url'];
+
+router.get('/api/apex/fleet', async (req, res) => {
+    try {
+        const { rows } = await pool.query(`SELECT * FROM dedicated_clients ORDER BY client_name`);
+        res.json({ control_enabled: controlEnabled(), clients: rows });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/api/apex/fleet', async (req, res) => {
+    const b = req.body || {};
+    if (!b.client_name) return res.status(400).json({ error: 'client_name is required' });
+    if (b.subscription_status && !FLEET_STATUS.includes(b.subscription_status))
+        return res.status(400).json({ error: `subscription_status must be one of ${FLEET_STATUS.join(', ')}` });
+    try {
+        const { rows } = await pool.query(
+            `INSERT INTO dedicated_clients (client_name, contact, railway_project_id, railway_environment_id, railway_service_id, subscription_status, health_url)
+             VALUES ($1,$2,$3,$4,$5,COALESCE($6,'TRIAL'),$7) RETURNING *`,
+            [b.client_name, b.contact || null, b.railway_project_id || null, b.railway_environment_id || null,
+             b.railway_service_id || null, b.subscription_status || null, b.health_url || null]
+        );
+        await logAdminAction(req.session.user.id, 'FLEET_CLIENT_ADDED', null, {
+            fleet_id: rows[0].id, client_name: rows[0].client_name, railway_project_id: rows[0].railway_project_id,
+        });
+        res.json(rows[0]);
+    } catch (err) {
+        if (err.code === '23505') return res.status(400).json({ error: 'That railway_project_id is already registered' });
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.patch('/api/apex/fleet/:id', async (req, res) => {
+    const b = req.body || {};
+    const updates = FLEET_FIELDS.filter(f => f in b);
+    if (!updates.length) return res.status(400).json({ error: `Nothing to update — send any of ${FLEET_FIELDS.join(', ')}` });
+    if ('subscription_status' in b && !FLEET_STATUS.includes(b.subscription_status))
+        return res.status(400).json({ error: `subscription_status must be one of ${FLEET_STATUS.join(', ')}` });
+    if ('client_name' in b && !b.client_name) return res.status(400).json({ error: 'client_name cannot be empty' });
+    try {
+        const cur = await pool.query(`SELECT * FROM dedicated_clients WHERE id = $1`, [req.params.id]);
+        if (!cur.rows.length) return res.status(404).json({ error: 'Fleet client not found' });
+        const sets = updates.map((f, i) => `${f} = $${i + 1}`).join(', ');
+        const { rows } = await pool.query(
+            `UPDATE dedicated_clients SET ${sets}, updated_at = now() WHERE id = $${updates.length + 1} RETURNING *`,
+            [...updates.map(f => b[f] === '' ? null : b[f]), req.params.id]
+        );
+        await logAdminAction(req.session.user.id, 'FLEET_CLIENT_UPDATED', null, {
+            fleet_id: rows[0].id, client_name: rows[0].client_name,
+            changed: Object.fromEntries(updates.map(f => [f, { from: cur.rows[0][f], to: rows[0][f] }])),
+        });
+        res.json(rows[0]);
+    } catch (err) {
+        if (err.code === '23505') return res.status(400).json({ error: 'That railway_project_id is already registered' });
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Health ping — one client (:id) or the whole fleet (id = "all").
+// Status-code-only check; updates last_known_state / last_checked_at.
+router.post('/api/apex/fleet/:id/ping', async (req, res) => {
+    try {
+        const where = req.params.id === 'all' ? '' : 'WHERE id = $1';
+        const args = req.params.id === 'all' ? [] : [req.params.id];
+        const { rows } = await pool.query(`SELECT * FROM dedicated_clients ${where}`, args);
+        if (!rows.length) return res.status(404).json({ error: 'Fleet client not found' });
+        const results = await Promise.all(rows.map(async c => {
+            const r = await pingHealth(c.health_url);
+            await pool.query(
+                `UPDATE dedicated_clients SET last_known_state = $1, last_checked_at = now() WHERE id = $2`,
+                [r.state, c.id]
+            );
+            return { id: c.id, client_name: c.client_name, ...r };
+        }));
+        res.json(results);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Power actions via Railway's control API only. Never touches a client DB.
+router.post('/api/apex/fleet/:id/control', async (req, res) => {
+    const action = String(req.body?.action || '').toLowerCase();
+    if (!['stop', 'start', 'restart', 'deploy'].includes(action))
+        return res.status(400).json({ error: 'action must be stop, start, restart or deploy' });
+    try {
+        const { rows } = await pool.query(`SELECT * FROM dedicated_clients WHERE id = $1`, [req.params.id]);
+        if (!rows.length) return res.status(404).json({ error: 'Fleet client not found' });
+        const client = rows[0];
+        const result = await performAction(client, action);
+        await logAdminAction(req.session.user.id, 'FLEET_CONTROL_' + action.toUpperCase(), null, {
+            fleet_id: client.id, client_name: client.client_name,
+            railway_project_id: client.railway_project_id, result,
+        });
+        res.json({ ok: true, ...result });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

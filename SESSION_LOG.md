@@ -1,5 +1,7 @@
 # SESSION_LOG — 2026-07-07 (Fable 5 white-label session)
 
+<!-- ACTIVE SESSION 2026-07-12: see "2026-07-12 — AI Studio ports + fleet mgmt + local pm2/tunnel" section at the bottom for live progress + resume point. -->
+
 ## What this folder is
 C:\BATHCO_TEMPLATE — the sellable white-label copy of BATHCO COMMAND.
 It is a separate git repo, a separate database, a separate port. It never touches
@@ -199,6 +201,138 @@ ONE vanilla frontend, house styles only (.card/.primary/.ghost, api()/goPage pat
   append-only by design). npm test = baseline 17/5, golden core diff-clean.
 - Remaining exports to port later: DashboardApp.tsx (§2), SettingsPage.tsx (§3),
   themes (§4). frontend/ folder itself stays untracked pending owner adopt/remove decision.
+
+## 2026-07-12 — AI Studio ports + fleet mgmt + local pm2/tunnel (ACTIVE SESSION)
+
+Plan: A) wire remaining AI Studio exports (§2 dashboard, §3 settings, §4 themes);
+B) fleet management (dedicated_clients + Railway control API + health pings) in
+Platform Admin — control-plane only, NO Railway deploys, apex-platform stays parked;
+C) run locally under pm2 + free Cloudflare quick tunnel, phone-reachable;
+D) this log updated after every numbered step.
+
+### Step A1 DONE — exports wired (all three, option (a): into the vanilla frontend)
+- **§4 themes**: public/themes/{emerald_drift,gold_grid,ember_dusk,paper_light}.js
+  created (TS→plain-JS from frontend/src/themes, logic identical, mount(container)
+  contract). Theme engine in BATHCO_NATURE.html now supports BOTH contracts:
+  existing WebGL build(canvas,THREE) untouched; new DOM mount() themes get their
+  own fixed #theme-dom-layer, self-animate, need no WebGL. All 4 registered in
+  THEME_REGISTRY; localStorage key stays `bathco_theme`. paper_light light-mode:
+  engine mirrors container.dataset.mode='light' → body.theme-light CSS var flip
+  (glass/text/muted/gold tokens) — the host-side switch the map called for.
+- **§2 dashboard**: mobile hamburger + full-screen nav sheet (≤860px) added —
+  items carry .nav-btn/data-page/data-flag so goPage()/applyFlags() drive them
+  (no duplicate badge ids); kpiCard() gained the export's accent dot + gradient
+  wash (colour classes unchanged → KPI colour semantics preserved); home date
+  pill now renders "Mon 09 Jun 2026" style (fmtFriendlyDate; data/API untouched).
+- **§3 settings**: Report-a-Problem severity rows colour-coded (red/amber/green/
+  blue per export); Change Password + Add User now pre-validate client-side
+  (min-12 etc, same rules the server enforces) with inline messages instead of
+  alert(); feature-flag rows show ON/OFF badge next to the toggle.
+- All logic-critical boundaries untouched: no endpoint, formula, auth, flag-
+  enforcement or theme-engine-gating change; goPage/applyFlags selectors intact.
+- Verified: 4 theme modules import clean in Node (.mjs copies) + expose mount().
+
+### Step A2 DONE — all three screens tested in a real browser: 25/25 PASS
+Headless Chrome (puppeteer from node_modules, installed Chrome binary — the
+whatsapp bridge was NOT run) against live server on :3010, temp admin
+`wiretest_admin` created via the real setup wizard API. Covered: login → home
+renders (honest empty-DB state); all 4 new themes mount/dispose + paper_light
+light-mode flip + back-to-nature cleanup; settings (6 themes in picker, 72 flag
+rows, ON/OFF badges, severity colours, min-12 client validation); flag gating
+(unbuilt→409, core-off→400 — the designed rejections; NOTE: pristine seed has
+no legally-togglable flag: 15 built are all core, 72 dormant all unbuilt; the
+nav keys pos_billing/inv_barcode_labels/staff_commission_display/
+ai_assistant_chat are NOT in the 87-row registry — pre-existing seed gap, those
+modules stay hidden until registered; logged, not changed); mobile hamburger +
+sheet navigation at 390px; Platform Admin PIN gate + packages/tenants render.
+Zero non-benign console errors (benign = default-logo 404 / favicon / pre-login
+401 / pre-unlock apex 403).
+- BUG FOUND+FIXED by the test: NATURE_3D.setTheme used `wasActive = !!active`
+  (WebGL handle only) so DOM→DOM theme switches never re-mounted; now checks
+  either contract.
+- Test admin still present (will be wiped in the Part C pristine reset).
+- Test script: scratchpad test_screens.js (session temp dir).
+
+### Steps B3–B7 DONE — Dedicated Fleet in Platform Admin (control-plane only)
+- **Schema** (B3): scripts/migrate_fleet.js (idempotent) → new `dedicated_clients`
+  table: client_name, contact, railway_project_id (UNIQUE) + environment/service
+  ids, subscription_status (TRIAL/ACTIVE/SUSPENDED/TERMINATED), health_url,
+  last_known_state (ONLINE/OFFLINE/UNKNOWN), last_checked_at. Migration ran on
+  bathco_template. No existing table touched.
+- **Railway control** (B4): utils/railwayControl.js — Stop (deploymentRemove =
+  `railway down`), Start/Deploy Update (serviceInstanceDeploy), Restart
+  (deploymentRestart) via Railway public GraphQL API ONLY; never connects to any
+  client DB. Disabled-by-default: RAILWAY_API_TOKEN unset (as on this laptop) →
+  every action 501s with a clear message, zero Railway calls, $0. Blocklist:
+  apex-platform project id hardcoded-blocked + APEX_FLEET_BLOCKED_PROJECT_IDS
+  env for more (add the live project's id at go-live). CAVEAT in code: mutation
+  names written offline from the public-API docs — re-verify against
+  docs.railway.com/reference/public-api before FIRST live use with a token.
+- **Routes** (in routes/apex_admin.js, same session+admin+PIN double gate, all
+  mutations audit-logged): GET/POST /api/apex/fleet, PATCH /api/apex/fleet/:id,
+  POST /api/apex/fleet/:id/ping (or /all/ping — HTTP status-code-only health
+  check, 5s timeout, body never stored), POST /api/apex/fleet/:id/control
+  {action: stop|start|restart|deploy}.
+- **UI** (B5): "Dedicated Fleet" card on page-apex — live status dot
+  (green/red/amber), Ping all, per-row 📡▶⏸⟳🚀 actions with confirm(), inline
+  add-client form, visible warning banner when control is disabled (no token).
+- **No-client-data rule** (B6): no endpoint exists that reads client business
+  data — fleet stores ids/contact/status only; pings read HTTP status codes.
+- **Tested** (B7): browser suite 10/10 PASS — card renders + disabled-note; add
+  via real form; duplicate project id 400; ping-all → ONLINE (against own
+  /health); dead URL → OFFLINE; subscription round-trip + bad value 400;
+  control without token → 501; apex-platform id → 403 blocklist; bad action
+  400; zero console errors. audit_log captured FLEET_CLIENT_ADDED + 4 UPDATEs.
+  Test fleet row deleted after (audit rows remain, append-only by design).
+- .env: RAILWAY_API_TOKEN / APEX_FLEET_BLOCKED_PROJECT_IDS documented, unset.
+
+### Steps C8–C11 DONE — running locally under pm2 + free Cloudflare quick tunnel
+
+⚠ **INCIDENT (fixed, logged honestly):** this laptop's pm2 daemon ALSO runs the
+LIVE shop system (C:\BATHCO_PHASE1: bathco-server :3000, grn-watcher,
+whatsapp-bridge :3001 — auto-resurrected at logon via pm2-windows-startup HKCU
+Run key). My first local ecosystem used the app name "bathco-server", and pm2
+start name-matched it → RESTARTED THE LIVE SERVER with PORT=3010 env. Live shop
+was on the wrong port ~2 minutes; the quick tunnel pointed at the live server
+for <2 min but its random URL had not been retrieved/shared by anyone (risk ≈
+nil). Fixed: tunnel stopped first, live bathco-server restarted from
+C:\BATHCO_PHASE1\ecosystem.config.js --update-env (PORT 3000, /health 200
+verified), template app renamed **apex-server**. WhatsApp bridge was NEVER
+restarted (uptime preserved) — live WhatsApp session untouched.
+**STANDING RULE for this laptop: pm2 names bathco-server/grn-watcher/
+whatsapp-bridge belong to the LIVE system. Template apps are apex-server /
+apex-tunnel. Always `pm2 start <file> --only <app>`.**
+
+- Pristine reset first: TRUNCATE users/staff/login_audit + setvals (proven
+  recipe), branding restored byte-identical (MD5 899D0C19… matches pristine),
+  no demo logo existed. DB state for the demo: wizard ARMED, demo tenant #1,
+  4 packages, 87 flags — same as the Railway deploy had.
+- ADMIN_PIN: 0000 replaced with a real random PIN in .env (required — pm2 runs
+  NODE_ENV=production and the server refuses 0000; also the app is now
+  internet-reachable). Owner has the PIN (in .env + final report).
+- **local_ops\** (gitignored, never ship): ecosystem.local.config.js
+  (apex-server = server.js :3010 production; apex-tunnel = bin\cloudflared.exe
+  quick tunnel → localhost:3010, both autorestart), bin\cloudflared.exe
+  (2026.7.1, downloaded from official GitHub releases), get-tunnel-url.ps1
+  (prints current public URL from tunnel.log), tunnel logs.
+- Verified: apex-server online (boot log clean, generic banner), live :3000
+  AND template :3010 /health 200 side by side; THROUGH the tunnel: /health 200,
+  /api/setup/status real query, / → 302 /setup.html, setup.html 200.
+- Reboot auto-start (C10): pm2-windows-startup was ALREADY registered (HKCU Run
+  → pm2_resurrect.cmd); `pm2 save` dump verified to contain all 5 apps
+  (3 live + apex-server + apex-tunnel). Caveat: resurrect fires at Windows
+  LOGON, so after a reboot someone must log in — same condition the live
+  system already runs under.
+- **Tunnel URL is EPHEMERAL**: a free quick tunnel mints a NEW random
+  *.trycloudflare.com URL every time apex-tunnel restarts (reboot/crash/
+  pm2 restart). Get the current one any time:
+  `powershell -File C:\BATHCO_TEMPLATE\local_ops\get-tunnel-url.ps1`
+- Exposure note: the wizard is armed and PUBLIC on that URL until the owner
+  completes it (same posture as the Railway viewing). URL is unguessable but
+  unlisted-only security — owner should complete the wizard promptly; after
+  that, login + (for Platform Admin) admin PIN gate everything.
+- Zero Railway involvement end-to-end: apex-platform stayed parked, no linking,
+  no deploys, RAILWAY_API_TOKEN unset.
 
 ## 2026-07-11 — Railway: apex-platform DEPLOYED, VERIFIED, PARKED
 

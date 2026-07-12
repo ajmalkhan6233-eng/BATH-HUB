@@ -14,6 +14,11 @@ APEX_TENANT_ID — this instance's row in the apex tenants table (demo seed = 1)
 APEX_ENFORCE_TENANT_STATUS — 'true' gates the app by tenant status (SUSPENDED = read-only,
   TERMINATED = blocked; login/setup/branding/webhook paths always pass). Keep false on the
   template; set true on sold client copies.
+RAILWAY_API_TOKEN — Railway public-API token for the Platform Admin fleet Stop/Start/
+  Restart/Deploy actions (utils/railwayControl.js). UNSET = actions refuse safely with 501
+  and Railway is never called. Health pings work without it.
+APEX_FLEET_BLOCKED_PROJECT_IDS — comma-separated Railway project ids the fleet actions must
+  refuse (the vendor's apex-platform id is blocked by default in code).
 PETTY_CASH_FLOAT — the business's fixed petty-cash/opening float (audit Cash Proof + Petty Cash). 0 = not configured.
 COMMISSION_RATE_PCT — default commission % for newly created staff (POST /api/staff). 0 = not configured.
 DROP_ROOT — file-drop ingestion root (GRN watcher, inbox uploads); defaults to <install>\data\drop.
