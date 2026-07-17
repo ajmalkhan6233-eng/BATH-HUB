@@ -386,3 +386,17 @@ Full-tree sweep (code + config + frontend/src, node_modules excluded):
   live-system references live in those vendor docs, not in code/config.
 - Verified: all guards fire, local boot clean, npm test at baseline (17 pre-existing / 5
   pass), apex-platform still parked.
+
+
+## 2026-07-17 (evening) — APEX to GitHub + LAYLA Pro spec + white-label audit
+- APEX located: frontend = frontend/src/components/PlatformAdmin.tsx (+ wizard/dashboard/themes),
+  backend = routes/apex_admin.js + apex_backend/ (schema/middleware/utils) + scripts/migrate_apex.js.
+  All INSIDE BATHCO_TEMPLATE; no C:\APEX* folder exists.
+- frontend/ was untracked — committed 2ec3c32 (26 source files; node_modules/.env excluded,
+  secrets scan clean) and pushed; remote verified.
+- docs/LAYLA_PRO_SPEC.md created (engine/costume, mission switch, honesty clause, chaser,
+  night report, anti-poisoning, implementation order 1-8); CLAUDE.md pointer added; commit 4196d68.
+- AUDIT_LAYLA_WHITELABEL.md written (report only): LAYLA engine near-clean — 3 engine items
+  (layla.js:82 tile example, :165 Rs parsing, :33 db default), 9 product-branding items
+  (BATHCO COMMAND name in server.js/index.js/bridge/service-worker/ecosystem), guards left intact.
+- Production untouched: no BATHCO_PHASE1 access, no live DB connections, Railway not touched.
