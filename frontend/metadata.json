@@ -1,0 +1,8 @@
+{
+  "name": "Master UI Template",
+  "description": "Implementation of the master UI specs, including a setup wizard, dashboard, settings, and themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
