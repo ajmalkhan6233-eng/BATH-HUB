@@ -52,3 +52,6 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 7. **AI Studio watcher** — scheduled task AISTUDIO_Export_Watch checks every 2h. The full
    Master UI Template delivery HAS arrived (frontend\ — see item 2); watcher stays for any
    future re-exports.
+
+
+LAYLA Pro master design = docs/LAYLA_PRO_SPEC.md — read before any LAYLA work.
