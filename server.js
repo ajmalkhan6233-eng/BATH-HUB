@@ -493,6 +493,7 @@ app.use('/api', require('./routes/staff_reports'));       // routes are relative
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...
 app.use('/', require('./routes/apex_admin'));             // APEX control plane, /api/apex/* (admin + PIN gated)
 app.use('/', require('./routes/investor_loans'));         // Investor/friend loans, /api/investor-loans*
+app.use('/', require('./routes/sale_commissions'));      // Salesperson commission + returns, /api/sale-commissions*
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
