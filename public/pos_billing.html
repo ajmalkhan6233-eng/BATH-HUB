@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generate Bill — Bath Hub Thihariya</title>
+<style>
+  :root {
+    --emerald-900:#062e21; --emerald-800:#0a4531; --emerald-700:#0f5132;
+    --earth-800:#3d2b1f; --earth-700:#5c4033; --earth-500:#8b6f47;
+    --gold-500:#c9a227; --gold-400:#d4af37; --gold-300:#e8cf7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Arial, sans-serif;
+    margin: 0; padding: 24px; background: #f4f1ea; color: var(--earth-800);
+  }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
+
+  .panel { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  h1 { font-size: 20px; color: var(--emerald-900); margin: 0 0 4px; }
+  .sub { color: var(--earth-500); font-size: 13px; margin-bottom: 18px; }
+
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--earth-700); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+
+  .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
+  .item-row input { margin: 0; }
+  .remove-btn { background: none; border: none; color: #b23b3b; font-size: 18px; cursor: pointer; padding: 4px; }
+  .add-btn {
+    background: var(--emerald-800); color: #fff; border: none; border-radius: 6px;
+    padding: 8px 14px; font-size: 13px; cursor: pointer; margin-top: 4px;
+  }
+  .add-btn:hover { background: var(--emerald-700); }
+
+  .generate-btn {
+    width: 100%; margin-top: 18px; background: var(--gold-500); color: var(--emerald-900);
+    border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .generate-btn:hover { background: var(--gold-400); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .err { color: #b23b3b; font-size: 13px; margin-top: 8px; display: none; }
+
+  /* Bill preview (receipt style) */
+  #billPanel { display: none; }
+  .receipt {
+    background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 18px;
+    font-family: 'Courier New', monospace; font-size: 12.5px; color: #111;
+  }
+  .receipt .logo-row { text-align: center; margin-bottom: 6px; }
+  .receipt .logo-row svg { width: 64px; height: 64px; }
+  .receipt .shop-name { text-align: center; font-weight: 700; font-size: 15px; color: var(--emerald-900); }
+  .receipt .shop-tagline { text-align: center; font-size: 10.5px; color: var(--earth-500); margin-bottom: 8px; }
+  .receipt hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
+  .receipt .row { display: flex; justify-content: space-between; }
+  .receipt .items .row { margin-bottom: 2px; }
+  .receipt .totals .row { margin-top: 2px; }
+  .receipt .discount-line { color: var(--earth-500); }
+  .receipt .grand-total { font-weight: 700; font-size: 14px; color: var(--emerald-900); }
+  .receipt .footer { text-align: center; margin-top: 10px; font-size: 10.5px; color: var(--earth-500); }
+
+  .share-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+    text-decoration: none; color: #fff;
+  }
+  .share-btn.whatsapp { background: #25D366; }
+  .share-btn.email { background: #4a5a6a; }
+  .share-btn.download { background: var(--emerald-800); }
+  .share-btn.print { background: var(--earth-700); }
+  .share-btn:hover { filter: brightness(0.95); }
+
+  .new-bill-btn {
+    width: 100%; margin-top: 10px; background: none; border: 1px solid #ccc; color: var(--earth-700);
+    border-radius: 6px; padding: 8px; font-size: 13px; cursor: pointer;
+  }
+
+  @media print {
+    body * { visibility: hidden; }
+    .receipt, .receipt * { visibility: visible; }
+    .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="panel" id="formPanel">
+    <h1>Generate Bill</h1>
+    <div class="sub">Bath Hub Thihariya — POS Bill Generator</div>
+
+    <label>Customer name (optional)</label>
+    <input type="text" id="customerName" placeholder="Walk-in customer">
+
+    <label>Customer phone (optional, for WhatsApp share)</label>
+    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567">
+
+    <label>Items</label>
+    <div id="itemRows"></div>
+    <button type="button" class="add-btn" onclick="addItemRow()">+ Add item</button>
+
+    <label>Discount %</label>
+    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5">
+
+    <label>Payment method</label>
+    <select id="paymentMethod">
+      <option value="cash">Cash</option>
+      <option value="card">Card</option>
+      <option value="online">Online transfer</option>
+    </select>
+
+    <div class="err" id="errMsg"></div>
+    <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
+  </div>
+
+  <div class="panel" id="billPanel">
+    <div class="receipt" id="receipt">
+      <div class="logo-row">
+        <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="80" cy="80" r="66" fill="#0a4531" stroke="#d4af37" stroke-width="3"/>
+          <path d="M46 54 h34 a8 8 0 0 1 8 8 v14 a8 8 0 0 1 -8 8 h-6" fill="none" stroke="#e8cf7a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="46" cy="54" r="7" fill="#e8cf7a"/>
+          <path d="M74 86 C74 76 88 66 88 66 C88 66 102 76 102 86 C102 94.28 95.28 101 87 101 C78.72 101 74 94.28 74 86 Z" fill="#c9a227"/>
+        </svg>
+      </div>
+      <div class="shop-name" id="rShopName">Bath Hub Thihariya</div>
+      <div class="shop-tagline" id="rTagline">Everything for your bathroom, on Kandy Road</div>
+      <hr>
+      <div id="rMeta"></div>
+      <hr>
+      <div class="items" id="rItems"></div>
+      <hr>
+      <div class="totals" id="rTotals"></div>
+      <div class="footer">Thank you for shopping with us!</div>
+    </div>
+
+    <div class="share-buttons">
+      <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="share-btn email" id="emailBtn" href="#">Email</a>
+      <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
+      <button class="share-btn print" onclick="window.print()">Print</button>
+    </div>
+    <button class="new-bill-btn" onclick="resetForm()">+ New bill</button>
+  </div>
+</div>
+
+<script>
+let branding = { company_name: 'Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
+
+fetch('/api/discount-rules').catch(() => {}); // warm connection, ignore result
+
+function loadBranding() {
+  return fetch('/api/branding').then(r => r.ok ? r.json() : null).then(cfg => {
+    if (cfg) {
+      branding = cfg;
+      document.getElementById('rShopName').textContent = cfg.company_name || branding.company_name;
+      document.getElementById('rTagline').textContent = cfg.tagline || '';
+    }
+  }).catch(() => {});
+}
+loadBranding();
+
+function addItemRow(name, qty, price) {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Item name" class="i-name" value="${name || ''}">
+    <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01">
+    <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01">
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  document.getElementById('itemRows').appendChild(row);
+}
+addItemRow();
+
+function showError(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function generateBill() {
+  showError('');
+  const rows = [...document.querySelectorAll('.item-row')];
+  const items = rows.map(r => ({
+    item_name: r.querySelector('.i-name').value.trim(),
+    qty: parseFloat(r.querySelector('.i-qty').value),
+    unit_price: parseFloat(r.querySelector('.i-price').value),
+  }));
+  if (!items.length || items.some(it => !it.item_name || !(it.qty > 0) || !(it.unit_price >= 0))) {
+    showError('Add at least one item with a name, quantity, and unit price.');
+    return;
+  }
+  const discount_pct = parseFloat(document.getElementById('discountPct').value) || 0;
+  if (discount_pct < 0 || discount_pct > 100) {
+    showError('Discount % must be between 0 and 100.');
+    return;
+  }
+
+  const genBtn = document.getElementById('genBtn');
+  genBtn.disabled = true;
+  genBtn.textContent = 'Generating…';
+
+  try {
+    const res = await fetch('/api/pos-bills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: document.getElementById('customerName').value.trim() || null,
+        customer_phone: document.getElementById('customerPhone').value.trim() || null,
+        items,
+        discount_pct,
+        payment_method: document.getElementById('paymentMethod').value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
+    renderBill(data);
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    genBtn.disabled = false;
+    genBtn.textContent = 'Generate Bill';
+  }
+}
+
+function renderBill(bill) {
+  const sym = branding.currency_symbol || 'Rs';
+  document.getElementById('rMeta').innerHTML = `
+    <div class="row"><span>Bill No:</span><span>${bill.bill_number}</span></div>
+    <div class="row"><span>Date:</span><span>${new Date(bill.created_at).toLocaleString()}</span></div>
+    ${bill.customer_name ? `<div class="row"><span>Customer:</span><span>${escapeHtml(bill.customer_name)}</span></div>` : ''}
+  `;
+  document.getElementById('rItems').innerHTML = bill.items.map(it => `
+    <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
+  `).join('');
+  let totalsHtml = `<div class="row"><span>Subtotal</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
+  if (Number(bill.discount_amount) > 0) {
+    totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
+  }
+  totalsHtml += `<div class="row grand-total"><span>Total</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
+  totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
+  document.getElementById('rTotals').innerHTML = totalsHtml;
+
+  const summaryText = `${branding.company_name || 'Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
+  document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
+  document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
+  document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
+
+  document.getElementById('formPanel').style.display = 'none';
+  document.getElementById('billPanel').style.display = 'block';
+}
+
+// wa.me needs the full international number, no leading 0 and no '+'.
+// Sri Lankan local numbers are entered as 0XXXXXXXXX; assume LK (94) unless
+// the number already carries a country code (11+ digits or already starts with 94).
+function toWhatsAppNumber(raw) {
+  let digits = (raw || '').replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('94')) return digits;
+  if (digits.startsWith('0')) return '94' + digits.slice(1);
+  return digits;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function resetForm() {
+  document.getElementById('itemRows').innerHTML = '';
+  addItemRow();
+  document.getElementById('customerName').value = '';
+  document.getElementById('customerPhone').value = '';
+  document.getElementById('discountPct').value = 0;
+  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('billPanel').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

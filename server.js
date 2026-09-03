@@ -495,6 +495,7 @@ app.use('/', require('./routes/apex_admin'));             // APEX control plane,
 app.use('/api', require('./routes/investor_loans'));      // routes are relative (/investor-loans etc) -> /api/investor-loans*
 app.use('/api', require('./routes/sale_commissions'));    // routes are relative (/sale-commissions etc) -> /api/sale-commissions*
 app.use('/api', require('./routes/shop_operations'));     // routes are relative (/discount-* /stock-* /receipt-queue*) -> /api/discount-*, /api/stock-*, /api/receipt-queue*
+app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
