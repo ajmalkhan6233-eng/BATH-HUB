@@ -67,6 +67,7 @@ const DORMANT = [
   ['acc_vat_report', 'ACCOUNTING', 'VAT/Tax Report (Sri Lanka)', ''],
   ['acc_bank_reconciliation', 'ACCOUNTING', 'Bank Reconciliation', ''],
   ['acc_cheque_calendar', 'ACCOUNTING', 'Post-Dated Cheque Calendar', ''],
+  ['fin_investor_loans', 'ACCOUNTING', 'Investor/Friend Loans', 'Loan tracker with repayments and due-date alerts'],
   ['acc_petty_cash', 'ACCOUNTING', 'Petty Cash Module', ''],
   ['acc_expense_budgets', 'ACCOUNTING', 'Expense Categories with Budgets', ''],
   ['acc_year_end_closing', 'ACCOUNTING', 'Year-End Closing', ''],
