@@ -1,0 +1,204 @@
+// routes/shop_operations.js
+// SHOP OPERATIONS module for Bath Hub Thihariya: discount caps, manual stock/low-stock
+// tracking, and a WhatsApp receipt queue. Own Pool, same conventions as staff_reports.js.
+//
+// Notes on scope:
+// - Discount rules: a simple max-% cap staff can be checked against before applying a
+//   discount. Corresponds to the existing 'crm_discount_rules' feature flag.
+// - Stock items: manual quantity tracking (no live POS link exists yet — same gap
+//   documented in sale_commissions.js), so quantities are adjusted by hand (sale/restock).
+//   Corresponds to the existing 'inv_reorder_alerts' feature flag.
+// - Receipt queue: only queues a receipt record. Does NOT send WhatsApp messages —
+//   CLAUDE.md has a hard rule against starting this repo's whatsapp-bridge locally
+//   (it can kill the live WhatsApp session). Wiring actual sending to the existing
+//   bridge needs to be done carefully by Claude Code, on the machine, with that rule in mind.
+
+require('dotenv').config();
+const express = require('express');
+const { Pool } = require('pg');
+
+const router = express.Router();
+
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+});
+
+// ─── Idempotent schema migrations ────────────────────────────────────────────
+pool.query(`
+    CREATE TABLE IF NOT EXISTS discount_rules (
+        id             SERIAL PRIMARY KEY,
+        role           VARCHAR(30) NOT NULL DEFAULT 'all',   -- 'all' or a specific staff role
+        max_discount_pct NUMERIC(5,2) NOT NULL,
+        notes          TEXT,
+        active         BOOLEAN NOT NULL DEFAULT true,
+        created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] discount_rules migration failed:', e.message));
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS stock_items (
+        id             SERIAL PRIMARY KEY,
+        item_name      VARCHAR(150) NOT NULL UNIQUE,
+        unit           VARCHAR(30) DEFAULT 'pcs',
+        current_qty    NUMERIC(12,2) NOT NULL DEFAULT 0,
+        reorder_level  NUMERIC(12,2) NOT NULL DEFAULT 0,
+        notes          TEXT,
+        updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] stock_items migration failed:', e.message));
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS stock_adjustments (
+        id            SERIAL PRIMARY KEY,
+        stock_item_id INT REFERENCES stock_items(id) ON DELETE CASCADE,
+        delta         NUMERIC(12,2) NOT NULL,   -- positive = restock, negative = sale/loss
+        reason        VARCHAR(30) NOT NULL,      -- restock / sale / correction
+        notes         TEXT,
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] stock_adjustments migration failed:', e.message));
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS receipt_queue (
+        id              SERIAL PRIMARY KEY,
+        customer_phone  VARCHAR(30) NOT NULL,
+        sale_reference  TEXT,
+        amount          NUMERIC(12,2),
+        status          VARCHAR(20) NOT NULL DEFAULT 'queued', -- queued / sent / failed
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        sent_at         TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] receipt_queue migration failed:', e.message));
+
+// ═══════════════════════ DISCOUNT RULES ═══════════════════════
+router.get('/discount-rules', async (req, res) => {
+    try {
+        const r = await pool.query(`SELECT * FROM discount_rules WHERE active = true ORDER BY role`);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/discount-rules', async (req, res) => {
+    try {
+        const { role, max_discount_pct, notes } = req.body;
+        if (max_discount_pct === undefined) return res.status(400).json({ error: 'max_discount_pct is required' });
+        const r = await pool.query(`
+            INSERT INTO discount_rules (role, max_discount_pct, notes)
+            VALUES ($1,$2,$3) RETURNING id
+        `, [role || 'all', max_discount_pct, notes || null]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Check a proposed discount against the applicable rule (role-specific first, else 'all')
+router.post('/discount-check', async (req, res) => {
+    try {
+        const { discount_pct, role } = req.body;
+        if (discount_pct === undefined) return res.status(400).json({ error: 'discount_pct is required' });
+        const r = await pool.query(`
+            SELECT max_discount_pct FROM discount_rules
+            WHERE active = true AND role = $1
+            UNION ALL
+            SELECT max_discount_pct FROM discount_rules
+            WHERE active = true AND role = 'all'
+            LIMIT 1
+        `, [role || 'all']);
+        if (!r.rows.length) return res.json({ allowed: true, max_allowed: null, note: 'No rule set — no cap enforced' });
+        const max_allowed = Number(r.rows[0].max_discount_pct);
+        res.json({ allowed: Number(discount_pct) <= max_allowed, max_allowed });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ STOCK ITEMS + LOW STOCK ═══════════════════════
+router.get('/stock-items', async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT *, (current_qty <= reorder_level) AS low_stock
+            FROM stock_items ORDER BY item_name
+        `);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/stock-items/low-stock', async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT *, (current_qty <= reorder_level) AS low_stock
+            FROM stock_items WHERE current_qty <= reorder_level ORDER BY item_name
+        `);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Create or update an item by name (upsert)
+router.post('/stock-items', async (req, res) => {
+    try {
+        const { item_name, unit, current_qty, reorder_level, notes } = req.body;
+        if (!item_name) return res.status(400).json({ error: 'item_name is required' });
+        const r = await pool.query(`
+            INSERT INTO stock_items (item_name, unit, current_qty, reorder_level, notes)
+            VALUES ($1,$2,$3,$4,$5)
+            ON CONFLICT (item_name) DO UPDATE SET
+                unit = COALESCE(EXCLUDED.unit, stock_items.unit),
+                reorder_level = COALESCE(EXCLUDED.reorder_level, stock_items.reorder_level),
+                notes = COALESCE(EXCLUDED.notes, stock_items.notes),
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        `, [item_name, unit || 'pcs', current_qty || 0, reorder_level || 0, notes || null]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Adjust quantity (sale = negative delta, restock = positive delta)
+router.post('/stock-items/:id/adjust', async (req, res) => {
+    try {
+        const { delta, reason, notes } = req.body;
+        if (delta === undefined || !['restock', 'sale', 'correction'].includes(reason)) {
+            return res.status(400).json({ error: 'delta and a valid reason (restock/sale/correction) are required' });
+        }
+        const item = await pool.query(`SELECT id FROM stock_items WHERE id = $1`, [req.params.id]);
+        if (!item.rows.length) return res.status(404).json({ error: 'stock item not found' });
+
+        await pool.query(`
+            INSERT INTO stock_adjustments (stock_item_id, delta, reason, notes)
+            VALUES ($1,$2,$3,$4)
+        `, [req.params.id, delta, reason, notes || null]);
+
+        const r = await pool.query(`
+            UPDATE stock_items SET current_qty = current_qty + $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING *, (current_qty <= reorder_level) AS low_stock
+        `, [delta, req.params.id]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ WHATSAPP RECEIPT QUEUE (queue only — no sending) ═══════════════════════
+router.post('/receipt-queue', async (req, res) => {
+    try {
+        const { customer_phone, sale_reference, amount } = req.body;
+        if (!customer_phone) return res.status(400).json({ error: 'customer_phone is required' });
+        const r = await pool.query(`
+            INSERT INTO receipt_queue (customer_phone, sale_reference, amount)
+            VALUES ($1,$2,$3) RETURNING id
+        `, [customer_phone, sale_reference || null, amount || null]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/receipt-queue', async (req, res) => {
+    try {
+        const { status } = req.query;
+        const vals = [];
+        let where = '';
+        if (status) { vals.push(status); where = `WHERE status = $1`; }
+        const r = await pool.query(`SELECT * FROM receipt_queue ${where} ORDER BY created_at DESC`, vals);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+module.exports = router;
