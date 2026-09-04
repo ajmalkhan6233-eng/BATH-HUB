@@ -363,16 +363,16 @@ app.get('/api/me', (req, res) => {
 
 // Serve GSAP from node_modules (no CDN dependency)
 app.get('/vendor/gsap.min.js', (req, res) =>
-    res.sendFile(path.join(__dirname, 'node_modules/gsap/dist/gsap.min.js')));
+    res.sendFile('node_modules/gsap/dist/gsap.min.js', { root: __dirname }));
 app.get('/vendor/three.module.min.js', (req, res) =>
-    res.sendFile(path.join(__dirname, 'node_modules/three/build/three.module.min.js')));
+    res.sendFile('node_modules/three/build/three.module.min.js', { root: __dirname }));
 // three.module.min.js internally imports ./three.core.min.js as a peer chunk
 // (split since three's newer builds) - without this route the browser's
 // dynamic import() of three.module.min.js 404s on the chunk and the whole
 // module graph fails, silently killing core_3d (caught by its try/catch,
 // falls back to the CSS nature effect with no visible error).
 app.get('/vendor/three.core.min.js', (req, res) =>
-    res.sendFile(path.join(__dirname, 'node_modules/three/build/three.core.min.js')));
+    res.sendFile('node_modules/three/build/three.core.min.js', { root: __dirname }));
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 // 2026-07-04: owner decision - BATHCO_NATURE.html at /nature is the ONE
@@ -465,7 +465,7 @@ app.get('/', setupGate((req, res) => res.redirect(302, '/nature')));
 app.get('/app', setupGate((req, res) => res.redirect(302, '/nature')));
 
 // ─── NATURE (new frontend, parallel to the existing dashboard) ───────────────
-app.get('/nature', setupGate((req, res) => res.sendFile(path.join(__dirname, 'public', 'BATHCO_NATURE.html'))));
+app.get('/nature', setupGate((req, res) => res.sendFile('public/BATHCO_NATURE.html', { root: __dirname })));
 
 // ─── FEATURE FLAGS (DB-backed registry, not localStorage) ─────────────────────
 app.get('/api/feature-flags', async (req, res) => {

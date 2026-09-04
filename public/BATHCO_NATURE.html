@@ -326,7 +326,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
             <div class="dropdown-item nav-btn" data-page="quotations" onclick="goPage('quotations')">📄 Quotations</div>
             <div class="dropdown-item nav-btn" data-page="purchasing" onclick="goPage('purchasing')">🚚 Purchasing</div>
             <div class="dropdown-item nav-btn" data-page="staffext" onclick="goPage('staffext')">🕒 Staff Extended</div>
-            <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="goPage('pos')">🛒 POS Billing <span class="flag-off-badge" id="badge-pos_billing">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="window.open('/pos_billing.html','_blank')">🛒 POS Billing <span class="flag-off-badge" id="badge-pos_billing">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="labels" data-flag="inv_barcode_labels" onclick="goPage('labels')">🏷️ Barcode Labels <span class="flag-off-badge" id="badge-inv_barcode_labels">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="commission" data-flag="staff_commission_display" onclick="goPage('commission')">💰 Commission <span class="flag-off-badge" id="badge-staff_commission_display">OFF</span></div>
           </div>
@@ -372,7 +372,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
       <div class="dropdown-item nav-btn" data-page="quotations" onclick="mobileGo('quotations')">📄 Quotations</div>
       <div class="dropdown-item nav-btn" data-page="purchasing" onclick="mobileGo('purchasing')">🚚 Purchasing</div>
       <div class="dropdown-item nav-btn" data-page="staffext" onclick="mobileGo('staffext')">🕒 Staff Extended</div>
-      <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="mobileGo('pos')">🛒 POS Billing</div>
+      <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="toggleMobileNav(false); window.open('/pos_billing.html','_blank')">🛒 POS Billing</div>
       <div class="dropdown-item nav-btn" data-page="labels" data-flag="inv_barcode_labels" onclick="mobileGo('labels')">🏷️ Barcode Labels</div>
       <div class="dropdown-item nav-btn" data-page="commission" data-flag="staff_commission_display" onclick="mobileGo('commission')">💰 Commission</div>
       <div class="mobile-group-title">Intelligence</div>
