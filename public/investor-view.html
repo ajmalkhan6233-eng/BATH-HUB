@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bath Hub Thihariya — Investor view</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--gold-500:#c9a227;--gold-300:#e8cf7a;
+    --stone-50:#f7f4ec;--ink:#201c16;--earth-700:#5c4033;--radius:6px;
+  }
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);}
+  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:18px;}
+  main{max-width:480px;margin:0 auto;padding:24px 16px;}
+  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  input{width:100%;padding:10px;border:1px solid #d8d0bd;border-radius:4px;font-size:15px;margin-top:6px;box-sizing:border-box;}
+  label{font-size:13px;color:var(--earth-700);}
+  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;margin-top:14px;width:100%;}
+  .big{font-size:30px;font-weight:700;color:var(--emerald-900);}
+  .sub{font-size:13px;color:var(--earth-700);}
+  .msg{font-size:14px;color:var(--earth-700);}
+</style>
+</head>
+<body>
+<header><h1>Bath Hub Thihariya</h1></header>
+<main id="app"><div class="msg">Loading…</div></main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const token = params.get('token');
+const app = document.getElementById('app');
+
+async function showRequestForm(message) {
+  app.innerHTML = `
+    <div class="card">
+      ${message ? `<p class="msg">${message}</p>` : ''}
+      <p class="msg">Access to shop numbers is by approval only. Ask the owner for a link, or request one below.</p>
+      <label>Your name<input id="rname"></label>
+      <label>Phone or WhatsApp<input id="rcontact"></label>
+      <button class="btn" onclick="submitRequest()">Request access</button>
+      <p class="msg" id="request-status"></p>
+    </div>`;
+}
+
+async function submitRequest() {
+  const requester_name = document.getElementById('rname').value.trim();
+  const requester_contact = document.getElementById('rcontact').value.trim();
+  const statusEl = document.getElementById('request-status');
+  if (!requester_name) { statusEl.textContent = 'Enter your name first.'; return; }
+  const res = await fetch('/api/money-control/viewer-requests', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({requester_name, requester_contact})
+  });
+  if (res.ok) {
+    statusEl.textContent = 'Request sent. You will be given a link once approved.';
+  } else {
+    statusEl.textContent = 'Something went wrong — try again.';
+  }
+}
+
+async function showDashboard() {
+  const res = await fetch('/api/money-control/viewer-dashboard?token=' + encodeURIComponent(token));
+  if (!res.ok) { showRequestForm('That link is not valid or not approved yet.'); return; }
+  const d = await res.json();
+  app.innerHTML = `
+    <div class="card">
+      <div class="sub">Viewing as ${d.viewing_as}</div>
+      <div class="sub" style="margin-top:14px;">Today's sales (${d.date})</div>
+      <div class="big">LKR ${Number(d.sales_total_today).toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="sub">Average daily sales, last 30 days</div>
+      <div class="big">LKR ${Number(d.avg_daily_sales_30d).toLocaleString()}</div>
+    </div>`;
+}
+
+if (token) { showDashboard(); } else { showRequestForm(); }
+</script>
+</body>
+</html>

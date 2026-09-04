@@ -192,6 +192,8 @@ app.use((req, res, next) => {
     if (req.path === '/api/auth/verify-totp') return next();
     if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
+    if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
+    if (req.path === '/api/money-control/viewer-dashboard') return next();                          // investor/friend's token-gated limited view — no login either
 
     const user = req.session.user;
     const isApi = req.path.startsWith('/api/');
@@ -498,6 +500,7 @@ app.use('/api', require('./routes/shop_operations'));     // routes are relative
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
+app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR

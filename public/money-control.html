@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Control — Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;
+    --emerald-800:#0a4531;
+    --earth-800:#3d2b1f;
+    --earth-700:#5c4033;
+    --earth-500:#8b6f47;
+    --gold-500:#c9a227;
+    --gold-300:#e8cf7a;
+    --stone-100:#efe9dc;
+    --stone-50:#f7f4ec;
+    --ink:#201c16;
+    --red-600:#a02020;
+    --red-100:#f6dede;
+    --green-700:#1e5c3f;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:var(--stone-50);
+    color:var(--ink);
+    line-height:1.5;
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--emerald-900);
+    color:var(--stone-50);
+    padding:20px 20px;
+  }
+  header h1{
+    margin:0;
+    font-size:20px;
+    font-weight:600;
+  }
+  header .date{
+    color:var(--gold-300);
+    font-size:13px;
+    margin-top:4px;
+  }
+  main{max-width:720px;margin:0 auto;padding:20px 16px;}
+
+  .card{
+    background:#fff;
+    border:1px solid #e2dccb;
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:15px;
+    text-transform:none;
+    margin:0 0 14px;
+    color:var(--earth-800);
+  }
+  .big-number{
+    font-size:34px;
+    font-weight:700;
+    color:var(--emerald-900);
+  }
+  .sub{
+    font-size:13px;
+    color:var(--earth-500);
+  }
+
+  .mode-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 0;border-bottom:1px solid #f0ece0;
+  }
+  .mode-row:last-child{border-bottom:none;}
+  .mode-row label{font-size:14px;color:var(--earth-700);}
+  .mode-row input{
+    width:120px;text-align:right;
+    padding:6px 8px;border:1px solid #d8d0bd;border-radius:4px;
+    font-size:14px;font-family:inherit;
+  }
+  .total-row{
+    display:flex;justify-content:space-between;
+    margin-top:12px;padding-top:12px;border-top:2px solid var(--earth-800);
+    font-weight:700;font-size:16px;
+  }
+
+  .alert{
+    background:var(--red-100);
+    border:1px solid var(--red-600);
+    border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .alert .title{color:var(--red-600);font-weight:700;font-size:14px;}
+  .alert .detail{font-size:13px;color:var(--earth-800);margin-top:4px;}
+
+  .list-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:10px 0;border-bottom:1px solid #f0ece0;font-size:14px;
+  }
+  .list-row:last-child{border-bottom:none;}
+  .list-row .name{color:var(--ink);}
+  .list-row .amt{color:var(--earth-800);font-weight:600;}
+  .list-row .meta{font-size:12px;color:var(--earth-500);display:block;}
+  .held-strike{text-decoration:line-through;color:#b0a894;}
+
+  .empty{color:var(--earth-500);font-size:13px;font-style:italic;}
+
+  .btn{
+    background:var(--gold-500);color:var(--emerald-900);
+    border:none;border-radius:4px;padding:8px 16px;
+    font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;
+  }
+  .btn:hover{background:var(--gold-300);}
+
+  .refresh{
+    position:fixed;bottom:16px;right:16px;
+    background:var(--emerald-900);color:#fff;
+    border:none;border-radius:24px;padding:12px 20px;
+    font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Money Control</h1>
+  <div class="date" id="today-label">Loading…</div>
+</header>
+
+<main>
+
+  <div class="card" id="cheque-alerts-card" style="display:none;">
+    <h2>High alert — cheques due soon</h2>
+    <div id="cheque-alerts"></div>
+  </div>
+
+  <div class="card">
+    <h2>Today's sales, by payment mode</h2>
+    <div id="mode-rows"></div>
+    <div class="total-row">
+      <span>Total today</span>
+      <span id="today-total">LKR 0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Daily reserve for rent, bills, salary</h2>
+    <div class="big-number" id="daily-reserve">LKR 0</div>
+    <div class="sub" id="reserve-sub">per day, auto-calculated from monthly fixed costs</div>
+  </div>
+
+  <div class="card">
+    <h2>Bank accounts</h2>
+    <div id="accounts-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cheques due — next 14 days</h2>
+    <div id="cheques-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Investor / friend loans due — next 14 days</h2>
+    <div id="loans-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Low stock</h2>
+    <div id="stock-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Planned money — investment in / spend out</h2>
+    <div id="allocations-list"></div>
+  </div>
+
+</main>
+
+<button class="refresh" onclick="load()">Refresh</button>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+const MODES = [
+  {key: 'cash', label: 'Cash'},
+  {key: 'card', label: 'Card'},
+  {key: 'cheque', label: 'Cheque'},
+  {key: 'online_transfer', label: 'Online transfer'},
+  {key: 'credit', label: 'Credit / on account'},
+];
+
+async function load() {
+  const res = await fetch('/api/money-control/dashboard');
+  const d = await res.json();
+
+  document.getElementById('today-label').textContent = d.date;
+
+  // payment mode rows, editable, reactive total
+  const modeRowsEl = document.getElementById('mode-rows');
+  modeRowsEl.innerHTML = '';
+  const values = {};
+  MODES.forEach(m => {
+    const existing = d.sales_by_mode.find(x => x.mode === m.key);
+    values[m.key] = existing ? Number(existing.amount) : 0;
+    const row = document.createElement('div');
+    row.className = 'mode-row';
+    row.innerHTML = `<label>${m.label}</label><input type="number" step="0.01" value="${values[m.key]}" data-mode="${m.key}">`;
+    modeRowsEl.appendChild(row);
+  });
+  const totalEl = document.getElementById('today-total');
+  const recalcTotal = () => {
+    let total = 0;
+    modeRowsEl.querySelectorAll('input').forEach(inp => total += Number(inp.value || 0));
+    totalEl.textContent = money(total);
+  };
+  recalcTotal();
+  modeRowsEl.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', recalcTotal);
+    inp.addEventListener('change', async () => {
+      await fetch('/api/money-control/payment-breakdown', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({report_date: d.date, mode: inp.dataset.mode, amount: Number(inp.value || 0)})
+      });
+    });
+  });
+
+  // daily reserve
+  document.getElementById('daily-reserve').textContent = money(d.daily_overhead_reserve);
+
+  // bank accounts
+  const accEl = document.getElementById('accounts-list');
+  accEl.innerHTML = d.bank_accounts.length ? '' : '<div class="empty">No bank accounts added yet.</div>';
+  d.bank_accounts.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${a.account_label}${a.bank ? ' — ' + a.bank : ''}</span><span class="amt">${money(a.current_balance)}</span>`;
+    accEl.appendChild(row);
+  });
+
+  // cheques + high alerts (due within 3 days and account balance looks short)
+  const chEl = document.getElementById('cheques-list');
+  const alertsEl = document.getElementById('cheque-alerts');
+  const alertsCard = document.getElementById('cheque-alerts-card');
+  chEl.innerHTML = d.cheques_next_14_days.length ? '' : '<div class="empty">Nothing due in the next 14 days.</div>';
+  alertsEl.innerHTML = '';
+  let anyAlert = false;
+  d.cheques_next_14_days.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const dateDisplay = c.status === 'held'
+      ? `<span class="held-strike">${c.held_from_date}</span> → ${c.due_date} (held)`
+      : c.due_date;
+    row.innerHTML = `<span class="name">${c.payee}<span class="meta">${dateDisplay}${c.account_label ? ' · ' + c.account_label : ''}</span></span><span class="amt">${money(c.amount)}</span>`;
+    chEl.appendChild(row);
+
+    const daysOut = (new Date(c.due_date) - new Date(d.date)) / 86400000;
+    if (c.status === 'pending' && daysOut <= 3) {
+      anyAlert = true;
+      const acc = d.bank_accounts.find(a => a.account_label === c.account_label);
+      const short = acc ? Number(acc.current_balance) < Number(c.amount) : null;
+      const div = document.createElement('div');
+      div.className = 'alert';
+      div.innerHTML = `<div class="title">${c.payee} — ${money(c.amount)} due ${c.due_date}</div>` +
+        `<div class="detail">${c.account_label || 'No account set'}${short === true ? ' — balance looks short, move money before this clears.' : short === false ? ' — balance covers it.' : ''}</div>`;
+      alertsEl.appendChild(div);
+    }
+  });
+  alertsCard.style.display = anyAlert ? 'block' : 'none';
+
+  // investor loans
+  const loanEl = document.getElementById('loans-list');
+  loanEl.innerHTML = d.investor_loans_next_14_days.length ? '' : '<div class="empty">No loan repayments due in the next 14 days.</div>';
+  d.investor_loans_next_14_days.forEach(l => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${l.lender_name}<span class="meta">${l.due_date}</span></span><span class="amt">${money(l.outstanding)}</span>`;
+    loanEl.appendChild(row);
+  });
+
+  // low stock
+  const stockEl = document.getElementById('stock-list');
+  stockEl.innerHTML = d.low_stock.length ? '' : '<div class="empty">Nothing below reorder level.</div>';
+  d.low_stock.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${s.item_name}</span><span class="amt">${s.current_qty} left (reorder at ${s.reorder_level})</span>`;
+    stockEl.appendChild(row);
+  });
+
+  // planned allocations
+  const allocEl = document.getElementById('allocations-list');
+  allocEl.innerHTML = d.planned_allocations.length ? '' : '<div class="empty">Nothing planned right now.</div>';
+  d.planned_allocations.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const tag = a.category === 'investment_in' ? 'Coming in' : 'Going out';
+    row.innerHTML = `<span class="name">${a.label}<span class="meta">${tag}${a.planned_date ? ' · ' + a.planned_date : ''}</span></span><span class="amt">${money(a.amount)}</span>`;
+    allocEl.appendChild(row);
+  });
+}
+
+load();
+</script>
+
+</body>
+</html>
