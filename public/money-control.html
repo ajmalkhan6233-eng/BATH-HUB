@@ -132,6 +132,11 @@
 
 <main>
 
+  <div class="card" style="border:2px solid var(--emerald-900);">
+    <h2 style="color:var(--emerald-900);margin:0;">Rule #1 — a cheque must never bounce or return</h2>
+    <div class="sub" style="margin-top:4px;">Pay early. Money has to be settled before the promised date, not on it.</div>
+  </div>
+
   <div class="card" id="cheque-alerts-card" style="display:none;">
     <h2>High alert — cheques due soon</h2>
     <div id="cheque-alerts"></div>
@@ -256,7 +261,9 @@ async function load() {
     chEl.appendChild(row);
 
     const daysOut = (new Date(c.due_date) - new Date(d.date)) / 86400000;
-    if (c.status === 'pending' && daysOut <= 3) {
+    // Rule #1: pay early, never right up against the promised date — so this
+    // fires with a 5-day buffer, not 3, giving time to actually act.
+    if (c.status === 'pending' && daysOut <= 5) {
       anyAlert = true;
       const acc = d.bank_accounts.find(a => a.account_label === c.account_label);
       const short = acc ? Number(acc.current_balance) < Number(c.amount) : null;

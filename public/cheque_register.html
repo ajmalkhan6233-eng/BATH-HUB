@@ -55,8 +55,14 @@
 
 <main>
 
+  <div class="card" style="border:2px solid var(--emerald-900);background:var(--stone-100);">
+    <h2 style="color:var(--emerald-900);">Rule #1</h2>
+    <div style="font-size:14px;font-weight:600;">A cheque must never bounce and never return.</div>
+    <div style="font-size:13px;color:var(--earth-700);margin-top:4px;">Pay early — settle before the promised date, not on it. Anything below counts down to that promise.</div>
+  </div>
+
   <div class="card" id="alert-card" style="display:none;">
-    <h2>Due soon</h2>
+    <h2>Due soon — act now</h2>
     <div id="alert-list"></div>
   </div>
 
@@ -119,7 +125,9 @@ function badgeClass(status) {
 }
 
 async function loadAlerts() {
-  const res = await fetch('/api/cheque-register/due-soon?days=3');
+  // Wider than the promised due date on purpose — Rule #1 is pay EARLY, so the
+  // owner sees a cheque well before the last safe day to act, not right up against it.
+  const res = await fetch('/api/cheque-register/due-soon?days=5');
   const rows = await res.json();
   const card = document.getElementById('alert-card');
   const list = document.getElementById('alert-list');

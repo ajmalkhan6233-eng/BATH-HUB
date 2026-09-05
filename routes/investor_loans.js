@@ -15,6 +15,10 @@
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const { fromBuffer: fileTypeFromBuffer } = require('file-type');
 
 const router = express.Router();
 
@@ -34,7 +38,7 @@ pool.query(`
         amount         NUMERIC(12,2) NOT NULL,
         profit_rate    NUMERIC(5,2) DEFAULT 0,      -- flat % profit share agreed for the loan period (not annualized, not interest)
         date_given     DATE NOT NULL,
-        due_date       DATE NOT NULL,
+        due_date       DATE,                        -- nullable: owner may not have agreed a repayment date with this lender yet
         status         VARCHAR(20) DEFAULT 'active', -- active / repaid / overdue
         notes          TEXT,
         created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -55,6 +59,11 @@ pool.query(`
     END $$;
 `).catch(e => console.error('[investor_loans] profit_rate rename migration failed:', e.message));
 
+// due_date was briefly required — relaxed back to optional (some lenders/friends
+// haven't had a repayment date agreed yet). Idempotent, safe to re-run.
+pool.query(`ALTER TABLE investor_loans ALTER COLUMN due_date DROP NOT NULL`)
+    .catch(e => console.error('[investor_loans] due_date nullable migration failed:', e.message));
+
 pool.query(`
     CREATE TABLE IF NOT EXISTS investor_loan_payments (
         id            SERIAL PRIMARY KEY,
@@ -65,6 +74,38 @@ pool.query(`
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
 `).catch(e => console.error('[investor_loans] investor_loan_payments migration failed:', e.message));
+
+// Loan documents — scanned agreements / WhatsApp screenshots / notes the owner
+// uploads per loan so the terms are on record (not just remembered).
+pool.query(`
+    CREATE TABLE IF NOT EXISTS investor_loan_documents (
+        id             SERIAL PRIMARY KEY,
+        loan_id        INT REFERENCES investor_loans(id) ON DELETE CASCADE,
+        original_name  VARCHAR(255) NOT NULL,
+        stored_name    VARCHAR(255) NOT NULL,
+        uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[investor_loans] investor_loan_documents migration failed:', e.message));
+
+// ─── File upload (own directory, same validated-extension + magic-byte pattern as server.js) ───
+const DOC_DIR = path.join(__dirname, '..', 'uploads', 'investor_loans');
+if (!fs.existsSync(DOC_DIR)) fs.mkdirSync(DOC_DIR, { recursive: true });
+
+const ALLOWED_DOC_EXTS = new Set(['jpg', 'jpeg', 'png', 'pdf']);
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => cb(null, DOC_DIR),
+        filename: (req, file, cb) => {
+            const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+            cb(null, `${Date.now()}-${safe}`);
+        }
+    }),
+    limits: { fileSize: 20 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (/\.(jpg|jpeg|png|pdf)$/i.test(file.originalname)) cb(null, true);
+        else cb(new Error('Only .jpg .jpeg .png .pdf files are allowed'));
+    }
+});
 
 // Shared SELECT: loan + computed totals (total due w/ agreed profit share, repaid, outstanding).
 const LOAN_SELECT = `
@@ -122,7 +163,11 @@ router.get('/investor-loans/:id', async (req, res) => {
              FROM investor_loan_payments WHERE loan_id = $1 ORDER BY payment_date DESC`,
             [req.params.id]
         );
-        res.json({ ...r.rows[0], payments: payments.rows });
+        const documents = await pool.query(
+            `SELECT id, original_name, uploaded_at FROM investor_loan_documents WHERE loan_id = $1 ORDER BY uploaded_at DESC`,
+            [req.params.id]
+        );
+        res.json({ ...r.rows[0], payments: payments.rows, documents: documents.rows });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -130,14 +175,14 @@ router.get('/investor-loans/:id', async (req, res) => {
 router.post('/investor-loans', async (req, res) => {
     try {
         const { lender_name, amount, profit_rate, date_given, due_date, notes } = req.body;
-        if (!lender_name || !amount || !date_given || !due_date) {
-            return res.status(400).json({ error: 'lender_name, amount, date_given, due_date are required' });
+        if (!lender_name || !amount || !date_given) {
+            return res.status(400).json({ error: 'lender_name, amount, date_given are required' });
         }
         const r = await pool.query(`
             INSERT INTO investor_loans (lender_name, amount, profit_rate, date_given, due_date, notes)
             VALUES ($1,$2,$3,$4,$5,$6)
             RETURNING id
-        `, [lender_name, amount, profit_rate || 0, date_given, due_date, notes || null]);
+        `, [lender_name, amount, profit_rate || 0, date_given, due_date || null, notes || null]);
         res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -184,6 +229,67 @@ router.post('/investor-loans/:id/payments', async (req, res) => {
             await pool.query(`UPDATE investor_loans SET status = 'repaid', updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [req.params.id]);
         }
         res.json(check.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ UPLOAD a document (agreement, screenshot, note) ═══════════════════════
+router.post('/investor-loans/:id/documents', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'file is required' });
+        const loan = await pool.query(`SELECT id FROM investor_loans WHERE id = $1`, [req.params.id]);
+        if (!loan.rows.length) {
+            fs.unlink(req.file.path, () => {});
+            return res.status(404).json({ error: 'loan not found' });
+        }
+        // Magic-byte check (same defense as server.js's general upload path) —
+        // a renamed .exe with a .pdf extension would pass the fileFilter above.
+        const buf = fs.readFileSync(req.file.path);
+        const type = await fileTypeFromBuffer(buf);
+        if (!type || !ALLOWED_DOC_EXTS.has(type.ext)) {
+            fs.unlink(req.file.path, () => {});
+            return res.status(400).json({ error: `File content does not match an allowed type (got: ${type?.mime || 'unknown'})` });
+        }
+        const r = await pool.query(`
+            INSERT INTO investor_loan_documents (loan_id, original_name, stored_name)
+            VALUES ($1,$2,$3) RETURNING id, original_name, uploaded_at
+        `, [req.params.id, req.file.originalname, req.file.filename]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ LIST documents for a loan ═══════════════════════
+router.get('/investor-loans/:id/documents', async (req, res) => {
+    try {
+        const r = await pool.query(
+            `SELECT id, original_name, uploaded_at FROM investor_loan_documents WHERE loan_id = $1 ORDER BY uploaded_at DESC`,
+            [req.params.id]
+        );
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ DOWNLOAD one document ═══════════════════════
+router.get('/investor-loans/documents/:docId/download', async (req, res) => {
+    try {
+        const r = await pool.query(`SELECT original_name, stored_name FROM investor_loan_documents WHERE id = $1`, [req.params.docId]);
+        if (!r.rows.length) return res.status(404).json({ error: 'not found' });
+        const filePath = path.join(DOC_DIR, r.rows[0].stored_name);
+        if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'file missing on disk' });
+        // res.download()/res.sendFile() without a `root` option check the WHOLE
+        // absolute path for a dot-prefixed segment (send@1.2.1) — this worktree
+        // lives under .claude/worktrees/..., which false-positives as a hidden
+        // dotfile and 404s. Passing `root` + the relative filename avoids it.
+        res.download(r.rows[0].stored_name, r.rows[0].original_name, { root: DOC_DIR });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ DELETE a document ═══════════════════════
+router.delete('/investor-loans/documents/:docId', async (req, res) => {
+    try {
+        const r = await pool.query(`DELETE FROM investor_loan_documents WHERE id = $1 RETURNING stored_name`, [req.params.docId]);
+        if (!r.rows.length) return res.status(404).json({ error: 'not found' });
+        fs.unlink(path.join(DOC_DIR, r.rows[0].stored_name), () => {});
+        res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
