@@ -18,6 +18,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const PDFDocument = require('pdfkit');
 const { fromBuffer: fileTypeFromBuffer } = require('file-type');
 
 const router = express.Router();
@@ -187,22 +188,23 @@ router.post('/investor-loans', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ═══════════════════════ EDIT a loan's basic details ═══════════════════════
+// ═══════════════════════ EDIT a loan's basic details (and end/re-open it) ═══════════════════════
 router.put('/investor-loans/:id', async (req, res) => {
     try {
-        const { lender_name, amount, profit_rate, date_given, due_date, notes } = req.body;
+        const { lender_name, amount, profit_rate, date_given, due_date, notes, status, clear_due_date } = req.body;
         const r = await pool.query(`
             UPDATE investor_loans
             SET lender_name = COALESCE($1, lender_name),
                 amount = COALESCE($2, amount),
                 profit_rate = COALESCE($3, profit_rate),
                 date_given = COALESCE($4, date_given),
-                due_date = COALESCE($5, due_date),
+                due_date = CASE WHEN $8::boolean THEN NULL ELSE COALESCE($5, due_date) END,
                 notes = COALESCE($6, notes),
+                status = COALESCE($9, status),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $7
             RETURNING id
-        `, [lender_name, amount, profit_rate, date_given, due_date, notes, req.params.id]);
+        `, [lender_name, amount, profit_rate, date_given, due_date, notes, req.params.id, !!clear_due_date, status || null]);
         if (!r.rows.length) return res.status(404).json({ error: 'not found' });
         res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -290,6 +292,123 @@ router.delete('/investor-loans/documents/:docId', async (req, res) => {
         if (!r.rows.length) return res.status(404).json({ error: 'not found' });
         fs.unlink(path.join(DOC_DIR, r.rows[0].stored_name), () => {});
         res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ ONE-TIME REPORT — full status + payment history as PDF ═══════════════════════
+router.get('/investor-loans/:id/report/pdf', async (req, res) => {
+    try {
+        const r = await pool.query(`${LOAN_SELECT} WHERE l.id = $1`, [req.params.id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'not found' });
+        const loan = r.rows[0];
+        const payments = await pool.query(
+            `SELECT amount, TO_CHAR(payment_date,'YYYY-MM-DD') AS payment_date, notes
+             FROM investor_loan_payments WHERE loan_id = $1 ORDER BY payment_date ASC`,
+            [req.params.id]
+        );
+
+        let branding = { company_name: 'Bath Hub Thihariya', currency_symbol: 'Rs' };
+        try {
+            branding = { ...branding, ...JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'active.branding.json'), 'utf8')) };
+        } catch { /* fall back to defaults above */ }
+        const sym = branding.currency_symbol || 'Rs';
+        const money = n => `${sym} ${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="loan-report-${loan.lender_name.replace(/[^a-zA-Z0-9]/g, '_')}-${loan.id}.pdf"`);
+
+        const PAGE_W = 595.28, PAGE_H = 841.89; // A4
+        const MARGIN = 50;
+        const CONTENT_W = PAGE_W - MARGIN * 2;
+        const doc = new PDFDocument({ size: [PAGE_W, PAGE_H], margin: MARGIN });
+        doc.pipe(res);
+
+        // Same convention as pos_bills.js: vector draws don't move doc.y, so y is tracked manually throughout.
+        let y = MARGIN;
+        const cx = MARGIN + 20;
+        doc.circle(cx, y + 20, 20).fillAndStroke('#0a4531', '#d4af37');
+        doc.save();
+        doc.lineWidth(2).strokeColor('#e8cf7a')
+            .moveTo(cx - 11, y + 13).lineTo(cx - 2, y + 13)
+            .quadraticCurveTo(cx + 4, y + 13, cx + 4, y + 18)
+            .lineTo(cx + 4, y + 22).stroke();
+        doc.circle(cx - 11, y + 13, 2).fill('#e8cf7a');
+        doc.circle(cx, y + 27, 5).fill('#c9a227');
+        doc.restore();
+
+        doc.font('Helvetica-Bold').fontSize(16).fillColor('#0a4531')
+            .text(branding.company_name || 'Bath Hub Thihariya', MARGIN + 48, y + 4, { width: CONTENT_W - 48 });
+        doc.font('Helvetica').fontSize(9).fillColor('#5c4033')
+            .text('Investor / Friend Loan Report', MARGIN + 48, doc.y + 1, { width: CONTENT_W - 48 });
+        y = Math.max(y + 44, doc.y) + 12;
+        doc.strokeColor('#c9a227').lineWidth(1).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
+        y += 16;
+
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#000').text(loan.lender_name, MARGIN, y);
+        y = doc.y + 4;
+        doc.font('Helvetica').fontSize(9).fillColor('#5c4033')
+            .text(`Generated ${new Date().toLocaleString('en-LK')}`, MARGIN, y);
+        y = doc.y + 14;
+
+        // ── Loan summary block ──
+        const LABEL_X = MARGIN, VALUE_X = MARGIN + 160;
+        function summaryRow(label, value, opts = {}) {
+            doc.font('Helvetica').fontSize(10).fillColor('#5c4033').text(label, LABEL_X, y, { width: 150 });
+            doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(10).fillColor(opts.color || '#000')
+                .text(value, VALUE_X, y, { width: CONTENT_W - 160 });
+            y = doc.y + 6;
+        }
+        summaryRow('Amount borrowed', money(loan.amount));
+        summaryRow('Profit share', `${Number(loan.profit_rate)}% (flat, agreed for the loan period)`);
+        summaryRow('Date given', loan.date_given);
+        summaryRow('Due date', loan.due_date || 'Not yet agreed — open');
+        summaryRow('Status', loan.status === 'repaid' ? 'Repaid / Ended' : 'Active');
+        if (loan.notes) summaryRow('Notes', loan.notes);
+        y += 6;
+        doc.strokeColor('#ccc').lineWidth(0.5).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
+        y += 14;
+
+        summaryRow('Total payable (incl. profit share)', money(loan.total_due), { bold: true });
+        summaryRow('Total repaid to date', money(loan.total_repaid), { color: '#1e5c3f' });
+        summaryRow('Outstanding balance', money(loan.outstanding), { bold: true, color: loan.outstanding > 0 ? '#a02020' : '#1e5c3f' });
+        y += 10;
+        doc.strokeColor('#c9a227').lineWidth(1).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
+        y += 16;
+
+        // ── Payment history table ──
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#0a4531').text('Payment history', MARGIN, y);
+        y = doc.y + 8;
+
+        const COL_DATE_X = MARGIN, COL_DATE_W = 90;
+        const COL_AMT_X = MARGIN + 100, COL_AMT_W = 110;
+        const COL_NOTES_X = MARGIN + 220, COL_NOTES_W = CONTENT_W - 220;
+        function drawPaymentRow(date, amount, notes, bold) {
+            const font = bold ? 'Helvetica-Bold' : 'Helvetica';
+            doc.font(font).fontSize(9).fillColor('#000');
+            const notesHeight = doc.heightOfString(notes, { width: COL_NOTES_W });
+            doc.text(date, COL_DATE_X, y, { width: COL_DATE_W });
+            doc.text(amount, COL_AMT_X, y, { width: COL_AMT_W });
+            doc.text(notes, COL_NOTES_X, y, { width: COL_NOTES_W });
+            y += Math.max(notesHeight, 12) + 4;
+        }
+        drawPaymentRow('Date', 'Amount', 'Notes', true);
+        doc.strokeColor('#ccc').lineWidth(0.5).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
+        y += 6;
+        if (!payments.rows.length) {
+            doc.font('Helvetica').fontSize(9).fillColor('#8b6f47').text('No repayments recorded yet.', MARGIN, y);
+            y = doc.y + 6;
+        } else {
+            for (const p of payments.rows) {
+                if (y > PAGE_H - MARGIN - 40) { doc.addPage(); y = MARGIN; }
+                drawPaymentRow(p.payment_date, money(p.amount), p.notes || '—');
+            }
+        }
+
+        y += 10;
+        doc.font('Helvetica').fontSize(8).fillColor('#8b6f47')
+            .text('Bath Hub Thihariya — internal record, generated by the app.', MARGIN, PAGE_H - MARGIN - 10, { width: CONTENT_W, align: 'center' });
+
+        doc.end();
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
