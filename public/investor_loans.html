@@ -33,7 +33,7 @@
   .summary-item .big{font-size:24px;font-weight:700;color:var(--emerald-900);}
   .summary-item .lbl{font-size:12px;color:var(--earth-500);}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);position:sticky;top:0;background:#fff;}
   td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
   tr:hover{background:var(--stone-100);}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
@@ -85,12 +85,15 @@
 
   <div class="card">
     <h2>All loans</h2>
-    <div class="filters">
-      <button class="active" data-status="" onclick="setFilter('', this)">All</button>
-      <button data-status="active" onclick="setFilter('active', this)">Active</button>
-      <button data-status="repaid" onclick="setFilter('repaid', this)">Repaid</button>
+    <div class="filters" style="justify-content:space-between;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="active" data-status="" onclick="setFilter('', this)">All</button>
+        <button data-status="active" onclick="setFilter('active', this)">Active</button>
+        <button data-status="repaid" onclick="setFilter('repaid', this)">Repaid</button>
+      </div>
+      <button class="btn btn-sm" onclick="openPickerModal()">✏️ Edit a loan</button>
     </div>
-    <div style="overflow-x:auto;">
+    <div style="overflow:auto;max-height:440px;border:1px solid #f0ece0;border-radius:4px;">
     <table>
       <thead><tr>
         <th>Lender</th><th>Given</th><th>Due</th><th>Amount</th><th>Total due</th><th>Outstanding</th><th>Status</th><th>Documents</th><th>Actions</th>
@@ -112,6 +115,16 @@
     <div style="display:flex;gap:8px;margin-top:6px;">
       <button class="btn" onclick="submitPayment()">Save</button>
       <button class="btn" style="background:#e2dccb;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="picker-modal">
+  <div class="modal" style="max-width:420px;">
+    <h3>Pick a loan to edit</h3>
+    <div id="picker-list" style="max-height:320px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn" style="background:#e2dccb;" onclick="closePickerModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -216,7 +229,6 @@ async function loadLoans() {
       <td><span class="badge ${badgeClass(l.status, l.days_to_due)}">${badgeLabel(l.status, l.days_to_due)}</span></td>
       <td><button class="btn btn-sm" onclick="openDocsModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')">📎 Files</button></td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-sm" onclick="openEditModal(${l.id})" title="Edit loan details">✏️ Edit</button>
         <a class="btn btn-sm" style="text-decoration:none;display:inline-block;" href="/api/investor-loans/${l.id}/report/pdf" title="Download full status + payment history as PDF">📄 Report</a>
         ${l.status !== 'repaid' ? `<button class="btn btn-sm" onclick="openPayModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')">Record payment</button>` : ''}
       </td>
@@ -281,6 +293,24 @@ async function submitPayment() {
     showToast('Something went wrong.');
   }
 }
+
+function openPickerModal() {
+  const listEl = document.getElementById('picker-list');
+  const ids = Object.keys(loansCache);
+  if (!ids.length) { listEl.innerHTML = '<div class="empty">No loans yet.</div>'; }
+  else {
+    listEl.innerHTML = ids.map(id => {
+      const l = loansCache[id];
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #f0ece0;cursor:pointer;" onclick="closePickerModal(); openEditModal(${l.id})">
+          <span>${l.lender_name} <span class="badge ${badgeClass(l.status, l.days_to_due)}" style="margin-left:6px;">${badgeLabel(l.status, l.days_to_due)}</span></span>
+          <span style="color:var(--earth-500);font-size:12px;">${money(l.outstanding)} outstanding</span>
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('picker-modal').classList.add('show');
+}
+function closePickerModal() { document.getElementById('picker-modal').classList.remove('show'); }
 
 let editingLoanId = null;
 

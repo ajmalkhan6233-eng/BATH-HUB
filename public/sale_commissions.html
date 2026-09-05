@@ -30,7 +30,7 @@
   .btn:hover{background:var(--gold-300);}
   .btn-sm{padding:5px 10px;font-size:12px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);position:sticky;top:0;background:#fff;}
   td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
   tr:hover{background:var(--stone-100);}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
@@ -62,7 +62,7 @@
     <h2>This week's net commission by staff</h2>
     <label>Week containing</label>
     <input id="week-anchor" type="date" style="max-width:200px;" onchange="loadWeekly()">
-    <div style="overflow-x:auto;margin-top:10px;">
+    <div style="overflow:auto;max-height:300px;margin-top:10px;border:1px solid #f0ece0;border-radius:4px;">
     <table>
       <thead><tr><th>Staff</th><th>Gross commission</th><th>Return adjustments</th><th>Net commission</th></tr></thead>
       <tbody id="weekly-body"></tbody>
@@ -86,7 +86,7 @@
 
   <div class="card">
     <h2>All entries</h2>
-    <div style="overflow-x:auto;">
+    <div style="overflow:auto;max-height:440px;border:1px solid #f0ece0;border-radius:4px;">
     <table>
       <thead><tr>
         <th>Date</th><th>Staff</th><th>Type</th><th>Amount</th><th>Comm %</th><th>Commission</th><th>Reference</th><th></th>

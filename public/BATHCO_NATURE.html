@@ -356,6 +356,12 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
         <div id="global-search-results" style="display:none; position:absolute; top:36px; left:0; width:320px; max-height:300px; overflow-y:auto; background:var(--emerald-900); border:1px solid var(--glass-border); border-radius:10px; z-index:20;"></div>
       </div>
       <button class="ghost" id="refresh-btn" onclick="manualRefresh()" title="Refresh this page's data now">⟳</button>
+      <div style="position:relative;">
+        <button class="icon-btn" id="notif-bell" onclick="toggleNotifPanel()" title="Due-soon alerts — Rule #1" aria-label="Notifications">
+          🔔<span id="notif-count" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:1px 5px;">0</span>
+        </button>
+        <div id="notif-panel" style="display:none;position:absolute;top:36px;left:0;width:320px;max-height:360px;overflow-y:auto;background:var(--emerald-900);border:1px solid var(--glass-border);border-radius:10px;z-index:20;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);"></div>
+      </div>
       <div id="login-disabled-badge" style="display:none; background:rgba(224,90,78,0.18); color:var(--red); font-size:10px; font-weight:700; padding:3px 9px; border-radius:10px; margin-right:8px;" title="Login screen is switched off (owner request) — every visitor gets in as admin, no password. Set LOGIN_DISABLED=false in .env to restore it.">LOGIN OFF</div>
       <div class="user-chip"><span>Signed in as</span> <b id="user-name">—</b> <button class="btn-logout" onclick="doLogout()">Sign out</button></div>
       <button class="icon-btn mobile-menu-btn" onclick="toggleMobileNav()" title="Menu" aria-label="Open navigation menu">☰</button>
@@ -2064,8 +2070,56 @@ async function boot(){
   await loadFlags();
   spawnNatureFx();
   goPage('home');
+  loadNotifications();
+  setInterval(loadNotifications, 60000); // Rule #1 alerts — cheques/loans due soon
 }
 checkAuth();
+
+// ===== Rule #1 notifications bell (due-soon cheques + investor/friend loans) =====
+async function loadNotifications() {
+  try {
+    const res = await fetch('/api/notifications', { credentials: 'same-origin' });
+    if (!res.ok) return;
+    const items = await res.json();
+    const countEl = document.getElementById('notif-count');
+    countEl.textContent = items.length;
+    countEl.style.display = items.length ? '' : 'none';
+    window.__notifItems = items;
+    if (document.getElementById('notif-panel').style.display !== 'none') renderNotifPanel();
+  } catch (e) { /* silent — non-critical background poll */ }
+}
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  if (show) renderNotifPanel();
+}
+function renderNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const items = window.__notifItems || [];
+  if (!items.length) { panel.innerHTML = '<div style="padding:10px 14px; color:var(--muted); font-size:13px;">Nothing due soon — you\'re clear.</div>'; return; }
+  panel.innerHTML = `<div style="padding:4px 8px 8px; font-size:11px; color:var(--gold-300); font-weight:700; text-transform:uppercase;">Rule #1 — pay early, never bounce</div>` +
+    items.map(it => `
+      <div style="padding:8px; border-radius:8px; margin-bottom:4px; background:rgba(255,255,255,0.04);">
+        <div style="font-size:13px; color:var(--text);">${it.title}</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:2px;">${it.detail} ${it.days_to_due < 0 ? '<span style="color:var(--red);font-weight:700;">OVERDUE</span>' : ''}</div>
+        <button class="ghost" style="font-size:11px; margin-top:6px; padding:2px 8px;" onclick="dismissNotif('${it.category}', ${it.ref_id}, '${it.due_date}')">Dismiss</button>
+      </div>`).join('');
+}
+async function dismissNotif(category, ref_id, due_date) {
+  await fetch('/api/notifications/dismiss', {
+    method: 'POST', credentials: 'same-origin', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ category, ref_id, due_date })
+  });
+  loadNotifications();
+}
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell');
+  if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && e.target !== bell && !bell.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
 
 // ===== M8: Dashboard Helper JS — calls the existing /api/dashboard-assistant/chat
 // route (Ollama primary, OpenRouter free-tier fallback, no paid API calls) =====

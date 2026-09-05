@@ -29,7 +29,7 @@
   .btn:hover{background:var(--gold-300);}
   .btn-sm{padding:5px 10px;font-size:12px;margin-right:4px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);position:sticky;top:0;background:#fff;}
   td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
   tr:hover{background:var(--stone-100);}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
@@ -88,7 +88,7 @@
       <button data-status="cleared" onclick="setFilter('cleared', this)">Cleared</button>
       <button data-status="bounced" onclick="setFilter('bounced', this)">Bounced</button>
     </div>
-    <div style="overflow-x:auto;">
+    <div style="overflow:auto;max-height:440px;border:1px solid #f0ece0;border-radius:4px;">
     <table>
       <thead><tr>
         <th>Due date</th><th>Payee</th><th>Bank / No.</th><th>Amount</th><th>Status</th><th></th>
