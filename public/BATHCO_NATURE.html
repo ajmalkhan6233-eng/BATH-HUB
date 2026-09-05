@@ -356,6 +356,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
         <div id="global-search-results" style="display:none; position:absolute; top:36px; left:0; width:320px; max-height:300px; overflow-y:auto; background:var(--emerald-900); border:1px solid var(--glass-border); border-radius:10px; z-index:20;"></div>
       </div>
       <button class="ghost" id="refresh-btn" onclick="manualRefresh()" title="Refresh this page's data now">⟳</button>
+      <div id="login-disabled-badge" style="display:none; background:rgba(224,90,78,0.18); color:var(--red); font-size:10px; font-weight:700; padding:3px 9px; border-radius:10px; margin-right:8px;" title="Login screen is switched off (owner request) — every visitor gets in as admin, no password. Set LOGIN_DISABLED=false in .env to restore it.">LOGIN OFF</div>
       <div class="user-chip"><span>Signed in as</span> <b id="user-name">—</b> <button class="btn-logout" onclick="doLogout()">Sign out</button></div>
       <button class="icon-btn mobile-menu-btn" onclick="toggleMobileNav()" title="Menu" aria-label="Open navigation menu">☰</button>
     </div>
@@ -821,7 +822,12 @@ async function doLogin(){
 async function doLogout(){ await fetch('/api/logout', { method:'POST', credentials:'same-origin' }); showLogin(); }
 
 async function checkAuth(){
-  try{ const r = await fetch('/api/me', { credentials:'same-origin' }); if (!r.ok) throw 0; ME = await r.json(); hideLogin(); boot(); }
+  try{
+    const r = await fetch('/api/me', { credentials:'same-origin' }); if (!r.ok) throw 0;
+    ME = await r.json();
+    document.getElementById('login-disabled-badge').style.display = ME.login_disabled ? '' : 'none';
+    hideLogin(); boot();
+  }
   catch(e){ showLogin(); }
 }
 

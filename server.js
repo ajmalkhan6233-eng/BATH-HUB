@@ -186,7 +186,26 @@ app.use(require('./middleware/tenantStatusMiddleware'));
 // owner  : read-only (GET only) access to everything  [= uncle_readonly]
 // staff  : only their own /api/staff/:id/salary and /api/staff/:id/loans
 const STAFF_OWN_DATA = /^\/api\/staff\/(\d+)\/(salary|loans)$/;
-app.use((req, res, next) => {
+
+// ─── LOGIN BYPASS (owner-requested, reversible, env-gated) ────────────────────
+// Set LOGIN_DISABLED=true in .env (local only — .env is gitignored, never
+// committed/deployed by this flag) to skip the login screen entirely: every
+// request is auto-authenticated as the first admin user, "until further
+// notice." To restore normal login, remove the var or set it to false — no
+// code needs to change back. This does NOT touch the auth code itself
+// (login/logout/RBAC all still work if someone hits them directly).
+const LOGIN_DISABLED = process.env.LOGIN_DISABLED === 'true';
+let _bypassUserCache = null;
+async function getBypassUser() {
+    if (_bypassUserCache) return _bypassUserCache;
+    try {
+        const r = await pool.query(`SELECT id, username, name, role, staff_id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1`);
+        _bypassUserCache = r.rows[0] || null;
+    } catch (e) { _bypassUserCache = null; }
+    return _bypassUserCache;
+}
+
+app.use(async (req, res, next) => {
     if (req.path.startsWith('/webhook/')) return next();
     if (req.path === '/api/login') return next();
     if (req.path === '/api/auth/verify-totp') return next();
@@ -194,6 +213,11 @@ app.use((req, res, next) => {
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.path === '/api/money-control/viewer-dashboard') return next();                          // investor/friend's token-gated limited view — no login either
+
+    if (LOGIN_DISABLED && !req.session.user) {
+        const bypassUser = await getBypassUser();
+        if (bypassUser) req.session.user = bypassUser;
+    }
 
     const user = req.session.user;
     const isApi = req.path.startsWith('/api/');
@@ -365,7 +389,7 @@ app.post('/api/logout', (req, res) => {
 
 app.get('/api/me', (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json(req.session.user);
+    res.json({ ...req.session.user, login_disabled: LOGIN_DISABLED });
 });
 
 // Serve GSAP from node_modules (no CDN dependency)
