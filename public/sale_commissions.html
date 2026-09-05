@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sale Commissions — Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--emerald-800:#0a4531;
+    --earth-800:#3d2b1f;--earth-700:#5c4033;--earth-500:#8b6f47;
+    --gold-500:#c9a227;--gold-300:#e8cf7a;
+    --stone-100:#efe9dc;--stone-50:#f7f4ec;--ink:#201c16;
+    --red-600:#a02020;--red-100:#f6dede;--green-700:#1e5c3f;--green-100:#e1f0e6;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Work Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);line-height:1.5;padding-bottom:60px;}
+  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:20px;font-weight:600;}
+  header .sub{color:var(--gold-300);font-size:13px;margin-top:4px;}
+  main{max-width:900px;margin:0 auto;padding:20px 16px;}
+  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--earth-800);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:560px){.grid2,.grid3{grid-template-columns:1fr;}}
+  label{font-size:12px;color:var(--earth-700);display:block;margin-bottom:4px;}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;font-family:inherit;margin-bottom:10px;}
+  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--gold-300);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
+  tr:hover{background:var(--stone-100);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+  .badge-sale{background:var(--green-100);color:var(--green-700);}
+  .badge-refund{background:var(--red-100);color:var(--red-600);}
+  .badge-exchange{background:var(--gold-300);color:var(--earth-800);}
+  .empty{color:var(--earth-500);font-size:13px;font-style:italic;padding:10px 0;}
+  .neg{color:var(--red-600);}
+  .pos{color:var(--green-700);}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;border-radius:var(--radius);padding:20px;width:90%;max-width:400px;}
+  .modal h3{margin:0 0 12px;font-size:15px;}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--emerald-900);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;display:none;}
+  .radio-row{display:flex;gap:16px;margin-bottom:10px;font-size:13px;}
+  .flag{background:var(--red-100);color:var(--red-600);font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sale Commissions</h1>
+  <div class="sub">Staff sales, commission, refunds &amp; exchanges — weekly payout ledger</div>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>This week's net commission by staff</h2>
+    <label>Week containing</label>
+    <input id="week-anchor" type="date" style="max-width:200px;" onchange="loadWeekly()">
+    <div style="overflow-x:auto;margin-top:10px;">
+    <table>
+      <thead><tr><th>Staff</th><th>Gross commission</th><th>Return adjustments</th><th>Net commission</th></tr></thead>
+      <tbody id="weekly-body"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Log a sale</h2>
+    <div class="grid3">
+      <div><label>Staff ID</label><input id="n-staff" type="number" placeholder="staff id"></div>
+      <div><label>Sale date</label><input id="n-date" type="date"></div>
+      <div><label>Sale amount (LKR)</label><input id="n-amount" type="number" step="0.01"></div>
+      <div><label>Commission %</label><input id="n-pct" type="number" step="0.01"></div>
+      <div><label>Reference (bill/invoice no.)</label><input id="n-ref" placeholder="optional"></div>
+      <div><label>Notes</label><input id="n-notes" placeholder="optional"></div>
+    </div>
+    <button class="btn" onclick="logSale()">Log sale</button>
+    <span id="add-status" style="font-size:12px;color:var(--earth-500);margin-left:10px;"></span>
+  </div>
+
+  <div class="card">
+    <h2>All entries</h2>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Staff</th><th>Type</th><th>Amount</th><th>Comm %</th><th>Commission</th><th>Reference</th><th></th>
+      </tr></thead>
+      <tbody id="entries-body"></tbody>
+    </table>
+    </div>
+    <div class="empty" id="entries-empty" style="display:none;">No commission entries yet.</div>
+  </div>
+
+</main>
+
+<div class="modal-bg" id="return-modal">
+  <div class="modal">
+    <h3 id="return-title">Log a return</h3>
+    <div id="policy-flag" class="flag" style="display:none;"></div>
+    <div class="radio-row">
+      <label><input type="radio" name="rtype" value="refund" checked onchange="toggleExchangeFields()"> Refund</label>
+      <label><input type="radio" name="rtype" value="exchange" onchange="toggleExchangeFields()"> Exchange</label>
+    </div>
+    <div id="exchange-fields" style="display:none;">
+      <label>New item amount (LKR)</label><input id="r-new-amount" type="number" step="0.01">
+      <label>New commission %</label><input id="r-new-pct" type="number" step="0.01">
+    </div>
+    <label>Notes</label><input id="r-notes" placeholder="optional">
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="btn" onclick="submitReturn()">Save</button>
+      <button class="btn" style="background:#e2dccb;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+let returningId = null;
+let returningDate = null;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+function weekLabel(anchor) {
+  const d = new Date(anchor);
+  return d.toISOString().slice(0,10);
+}
+
+async function loadWeekly() {
+  const anchor = document.getElementById('week-anchor').value || new Date().toISOString().slice(0,10);
+  const res = await fetch('/api/sale-commissions/weekly-summary?week_start=' + anchor);
+  const rows = await res.json();
+  const body = document.getElementById('weekly-body');
+  body.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    const netClass = Number(r.net_commission) < 0 ? 'neg' : 'pos';
+    tr.innerHTML = `
+      <td>${r.staff_name}</td>
+      <td>${money(r.gross_commission)}</td>
+      <td class="${Number(r.return_adjustments) < 0 ? 'neg' : ''}">${money(r.return_adjustments)}</td>
+      <td class="${netClass}" style="font-weight:600;">${money(r.net_commission)}</td>
+    `;
+    body.appendChild(tr);
+  });
+  if (!rows.length) body.innerHTML = '<tr><td colspan="4" class="empty">No staff found.</td></tr>';
+}
+
+function typeBadge(t) {
+  if (t === 'sale') return '<span class="badge badge-sale">Sale</span>';
+  if (t === 'return_refund') return '<span class="badge badge-refund">Refund</span>';
+  return '<span class="badge badge-exchange">Exchange</span>';
+}
+
+async function loadEntries() {
+  const res = await fetch('/api/sale-commissions');
+  const rows = await res.json();
+  const body = document.getElementById('entries-body');
+  const empty = document.getElementById('entries-empty');
+  body.innerHTML = '';
+  empty.style.display = rows.length ? 'none' : 'block';
+  rows.forEach(c => {
+    const tr = document.createElement('tr');
+    const amtClass = Number(c.commission_amount) < 0 ? 'neg' : 'pos';
+    tr.innerHTML = `
+      <td>${c.sale_date}</td>
+      <td>${c.staff_name}</td>
+      <td>${typeBadge(c.entry_type)}</td>
+      <td>${money(c.amount)}</td>
+      <td>${c.commission_pct}%</td>
+      <td class="${amtClass}">${money(c.commission_amount)}</td>
+      <td>${c.reference_note || '—'}</td>
+      <td>${c.entry_type === 'sale' ? `<button class="btn btn-sm" onclick="openReturnModal(${c.id}, '${c.sale_date}')">Return</button>` : ''}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+async function logSale() {
+  const staff_id = document.getElementById('n-staff').value;
+  const sale_date = document.getElementById('n-date').value;
+  const amount = document.getElementById('n-amount').value;
+  const commission_pct = document.getElementById('n-pct').value;
+  const reference_note = document.getElementById('n-ref').value.trim();
+  const notes = document.getElementById('n-notes').value.trim();
+  const statusEl = document.getElementById('add-status');
+  if (!staff_id || !sale_date || !amount || commission_pct === '') {
+    statusEl.textContent = 'Staff ID, date, amount and commission % are required.'; return;
+  }
+  const res = await fetch('/api/sale-commissions', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({staff_id, sale_date, amount, commission_pct, reference_note: reference_note || null, notes: notes || null})
+  });
+  if (res.ok) {
+    statusEl.textContent = '';
+    ['n-staff','n-amount','n-pct','n-ref','n-notes'].forEach(id => document.getElementById(id).value = '');
+    showToast('Sale logged.');
+    loadWeekly(); loadEntries();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    statusEl.textContent = err.error || 'Something went wrong.';
+  }
+}
+
+function toggleExchangeFields() {
+  const type = document.querySelector('input[name="rtype"]:checked').value;
+  document.getElementById('exchange-fields').style.display = type === 'exchange' ? 'block' : 'none';
+}
+
+function openReturnModal(id, saleDate) {
+  returningId = id; returningDate = saleDate;
+  document.getElementById('return-title').textContent = 'Log a return — sale on ' + saleDate;
+  document.getElementById('r-notes').value = '';
+  document.getElementById('r-new-amount').value = '';
+  document.getElementById('r-new-pct').value = '';
+  document.querySelector('input[name="rtype"][value="refund"]').checked = true;
+  toggleExchangeFields();
+  const flag = document.getElementById('policy-flag');
+  const daysSince = Math.floor((Date.now() - new Date(saleDate).getTime()) / 86400000);
+  if (daysSince > 15) {
+    flag.style.display = 'block';
+    flag.textContent = `Note: this sale was ${daysSince} days ago — past the 15-day return window. Still allowed, owner's call.`;
+  } else {
+    flag.style.display = 'none';
+  }
+  document.getElementById('return-modal').classList.add('show');
+}
+function closeModal() { document.getElementById('return-modal').classList.remove('show'); }
+
+async function submitReturn() {
+  const type = document.querySelector('input[name="rtype"]:checked').value;
+  const notes = document.getElementById('r-notes').value.trim();
+  const body = { type, notes: notes || null };
+  if (type === 'exchange') {
+    body.new_amount = document.getElementById('r-new-amount').value;
+    body.new_commission_pct = document.getElementById('r-new-pct').value;
+    if (!body.new_amount || body.new_commission_pct === '') { showToast('New amount and commission % are required for an exchange.'); return; }
+  }
+  const res = await fetch(`/api/sale-commissions/${returningId}/return`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if (res.ok) {
+    closeModal();
+    showToast('Return logged.');
+    loadWeekly(); loadEntries();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.error || 'Something went wrong.');
+  }
+}
+
+document.getElementById('week-anchor').value = new Date().toISOString().slice(0,10);
+loadWeekly();
+loadEntries();
+</script>
+</body>
+</html>

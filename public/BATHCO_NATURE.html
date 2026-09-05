@@ -291,6 +291,9 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
     <p>Nature — sign in</p>
     <input id="li-user" placeholder="Username" autocomplete="username">
     <input id="li-pass" type="password" placeholder="Password" autocomplete="current-password">
+    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:4px 0 12px; justify-content:center;">
+      <input type="checkbox" id="li-remember" style="width:auto;"> Remember this device
+    </label>
     <button class="primary" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="li-err"></div>
   </div>
@@ -329,6 +332,9 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
             <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="window.open('/pos_billing.html','_blank')">🛒 POS Billing <span class="flag-off-badge" id="badge-pos_billing">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="labels" data-flag="inv_barcode_labels" onclick="goPage('labels')">🏷️ Barcode Labels <span class="flag-off-badge" id="badge-inv_barcode_labels">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="commission" data-flag="staff_commission_display" onclick="goPage('commission')">💰 Commission <span class="flag-off-badge" id="badge-staff_commission_display">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="investorloans" data-flag="fin_investor_loans" onclick="window.open('/investor_loans.html','_blank')">🤝 Investor/Friend Loans <span class="flag-off-badge" id="badge-fin_investor_loans">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="salecommissions" data-flag="fin_sale_commissions" onclick="window.open('/sale_commissions.html','_blank')">📈 Sale Commissions <span class="flag-off-badge" id="badge-fin_sale_commissions">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="chequeregister" data-flag="cheque_register" onclick="window.open('/cheque_register.html','_blank')">🖋️ Cheque Register <span class="flag-off-badge" id="badge-cheque_register">OFF</span></div>
           </div>
         </div>
         <div class="nav-item" data-dropdown="intelligence">
@@ -337,6 +343,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
             <div class="dropdown-item nav-btn" data-page="audit" onclick="goPage('audit')">🧮 Audit & Accounting</div>
             <div class="dropdown-item nav-btn" data-page="accounting" onclick="goPage('accounting')">📊 Accounting</div>
             <div class="dropdown-item nav-btn" data-page="assistant" data-flag="ai_assistant_chat" onclick="goPage('assistant')">✨ AI Assistant <span class="flag-off-badge" id="badge-ai_assistant_chat">OFF</span></div>
+            <div class="dropdown-item nav-btn" data-page="moneycontrol" data-flag="money_control" onclick="window.open('/money-control.html','_blank')">💵 Money Control <span class="flag-off-badge" id="badge-money_control">OFF</span></div>
             <div class="dropdown-item nav-btn" data-page="systools" onclick="goPage('systools')">🛠️ System Tools</div>
             <div class="dropdown-item nav-btn" data-page="apex" onclick="goPage('apex')">🏢 Platform Admin</div>
           </div>
@@ -375,10 +382,14 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
       <div class="dropdown-item nav-btn" data-page="pos" data-flag="pos_billing" onclick="toggleMobileNav(false); window.open('/pos_billing.html','_blank')">🛒 POS Billing</div>
       <div class="dropdown-item nav-btn" data-page="labels" data-flag="inv_barcode_labels" onclick="mobileGo('labels')">🏷️ Barcode Labels</div>
       <div class="dropdown-item nav-btn" data-page="commission" data-flag="staff_commission_display" onclick="mobileGo('commission')">💰 Commission</div>
+      <div class="dropdown-item nav-btn" data-page="investorloans" data-flag="fin_investor_loans" onclick="toggleMobileNav(false); window.open('/investor_loans.html','_blank')">🤝 Investor/Friend Loans</div>
+      <div class="dropdown-item nav-btn" data-page="salecommissions" data-flag="fin_sale_commissions" onclick="toggleMobileNav(false); window.open('/sale_commissions.html','_blank')">📈 Sale Commissions</div>
+      <div class="dropdown-item nav-btn" data-page="chequeregister" data-flag="cheque_register" onclick="toggleMobileNav(false); window.open('/cheque_register.html','_blank')">🖋️ Cheque Register</div>
       <div class="mobile-group-title">Intelligence</div>
       <div class="dropdown-item nav-btn" data-page="audit" onclick="mobileGo('audit')">🧮 Audit &amp; Accounting</div>
       <div class="dropdown-item nav-btn" data-page="accounting" onclick="mobileGo('accounting')">📊 Accounting</div>
       <div class="dropdown-item nav-btn" data-page="assistant" data-flag="ai_assistant_chat" onclick="mobileGo('assistant')">✨ AI Assistant</div>
+      <div class="dropdown-item nav-btn" data-page="moneycontrol" data-flag="money_control" onclick="toggleMobileNav(false); window.open('/money-control.html','_blank')">💵 Money Control</div>
       <div class="dropdown-item nav-btn" data-page="systools" onclick="mobileGo('systools')">🛠️ System Tools</div>
       <div class="dropdown-item nav-btn" data-page="apex" onclick="mobileGo('apex')">🏢 Platform Admin</div>
       <div class="mobile-group-title">System</div>
@@ -797,10 +808,11 @@ function hideLogin(){ document.getElementById('login-screen').style.display='non
 async function doLogin(){
   const username = document.getElementById('li-user').value.trim();
   const password = document.getElementById('li-pass').value;
+  const remember = document.getElementById('li-remember').checked;
   const err = document.getElementById('li-err');
   err.textContent = '';
   try{
-    const r = await fetch('/api/login', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
+    const r = await fetch('/api/login', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password, remember}) });
     const d = await r.json();
     if (!r.ok || !d.ok) { err.textContent = d.error || 'Login failed'; return; }
     ME = d.user; hideLogin(); boot();

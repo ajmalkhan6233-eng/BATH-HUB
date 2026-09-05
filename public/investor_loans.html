@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor / Friend Loans — Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--emerald-800:#0a4531;
+    --earth-800:#3d2b1f;--earth-700:#5c4033;--earth-500:#8b6f47;
+    --gold-500:#c9a227;--gold-300:#e8cf7a;
+    --stone-100:#efe9dc;--stone-50:#f7f4ec;--ink:#201c16;
+    --red-600:#a02020;--red-100:#f6dede;--green-700:#1e5c3f;--green-100:#e1f0e6;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Work Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);line-height:1.5;padding-bottom:60px;}
+  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:20px;font-weight:600;}
+  header .sub{color:var(--gold-300);font-size:13px;margin-top:4px;}
+  main{max-width:900px;margin:0 auto;padding:20px 16px;}
+  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--earth-800);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:520px){.grid2{grid-template-columns:1fr;}}
+  label{font-size:12px;color:var(--earth-700);display:block;margin-bottom:4px;}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;font-family:inherit;margin-bottom:10px;}
+  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--gold-300);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .summary-row{display:flex;gap:16px;flex-wrap:wrap;}
+  .summary-item{flex:1;min-width:140px;}
+  .summary-item .big{font-size:24px;font-weight:700;color:var(--emerald-900);}
+  .summary-item .lbl{font-size:12px;color:var(--earth-500);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
+  tr:hover{background:var(--stone-100);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+  .badge-active{background:var(--gold-300);color:var(--earth-800);}
+  .badge-repaid{background:var(--green-100);color:var(--green-700);}
+  .badge-overdue{background:var(--red-100);color:var(--red-600);}
+  .empty{color:var(--earth-500);font-size:13px;font-style:italic;padding:10px 0;}
+  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .filters button{background:#fff;border:1px solid #d8d0bd;border-radius:16px;padding:6px 14px;font-size:12px;cursor:pointer;}
+  .filters button.active{background:var(--emerald-900);color:#fff;border-color:var(--emerald-900);}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;border-radius:var(--radius);padding:20px;width:90%;max-width:380px;}
+  .modal h3{margin:0 0 12px;font-size:15px;}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--emerald-900);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Investor / Friend Loans</h1>
+  <div class="sub">Money borrowed into the business — track repayment and agreed profit share</div>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Outstanding overview</h2>
+    <div class="summary-row">
+      <div class="summary-item"><div class="big" id="sum-outstanding">LKR 0</div><div class="lbl">Total outstanding</div></div>
+      <div class="summary-item"><div class="big" id="sum-borrowed">LKR 0</div><div class="lbl">Total borrowed (incl. profit share)</div></div>
+      <div class="summary-item"><div class="big" id="sum-repaid">LKR 0</div><div class="lbl">Total repaid</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Add a new loan</h2>
+    <div class="grid2">
+      <div><label>Lender name</label><input id="n-lender" placeholder="e.g. Ajmal Khan"></div>
+      <div><label>Amount (LKR)</label><input id="n-amount" type="number" step="0.01"></div>
+      <div><label>Profit share (% flat, for the loan period)</label><input id="n-rate" type="number" step="0.01" value="0"></div>
+      <div><label>Date given</label><input id="n-given" type="date"></div>
+      <div><label>Due date</label><input id="n-due" type="date" required></div>
+      <div><label>Notes</label><input id="n-notes" placeholder="optional"></div>
+    </div>
+    <button class="btn" onclick="createLoan()">Add loan</button>
+    <span id="add-status" style="font-size:12px;color:var(--earth-500);margin-left:10px;"></span>
+  </div>
+
+  <div class="card">
+    <h2>All loans</h2>
+    <div class="filters">
+      <button class="active" data-status="" onclick="setFilter('', this)">All</button>
+      <button data-status="active" onclick="setFilter('active', this)">Active</button>
+      <button data-status="repaid" onclick="setFilter('repaid', this)">Repaid</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Lender</th><th>Given</th><th>Due</th><th>Amount</th><th>Total due</th><th>Outstanding</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="loans-body"></tbody>
+    </table>
+    </div>
+    <div class="empty" id="loans-empty" style="display:none;">No loans recorded.</div>
+  </div>
+
+</main>
+
+<div class="modal-bg" id="pay-modal">
+  <div class="modal">
+    <h3 id="pay-title">Record repayment</h3>
+    <label>Amount (LKR)</label><input id="p-amount" type="number" step="0.01">
+    <label>Payment date</label><input id="p-date" type="date">
+    <label>Notes</label><input id="p-notes" placeholder="optional">
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="btn" onclick="submitPayment()">Save</button>
+      <button class="btn" style="background:#e2dccb;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+let currentFilter = '';
+let payingLoanId = null;
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+function setFilter(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLoans();
+}
+
+async function loadSummary() {
+  const res = await fetch('/api/investor-loans/summary');
+  if (!res.ok) return;
+  const d = await res.json();
+  document.getElementById('sum-outstanding').textContent = money(d.total_outstanding);
+  document.getElementById('sum-borrowed').textContent = money(d.total_borrowed);
+  document.getElementById('sum-repaid').textContent = money(d.total_repaid);
+}
+
+function badgeClass(status, daysToDue) {
+  if (status === 'repaid') return 'badge-repaid';
+  if (status === 'active' && daysToDue !== null && daysToDue < 0) return 'badge-overdue';
+  return 'badge-active';
+}
+function badgeLabel(status, daysToDue) {
+  if (status === 'repaid') return 'Repaid';
+  if (status === 'active' && daysToDue !== null && daysToDue < 0) return 'Overdue';
+  return 'Active';
+}
+
+async function loadLoans() {
+  const qs = currentFilter ? ('?status=' + currentFilter) : '';
+  const res = await fetch('/api/investor-loans' + qs);
+  const rows = await res.json();
+  const body = document.getElementById('loans-body');
+  const empty = document.getElementById('loans-empty');
+  body.innerHTML = '';
+  empty.style.display = rows.length ? 'none' : 'block';
+  rows.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${l.lender_name}${l.notes ? `<br><span style="color:var(--earth-500);font-size:11px;">${l.notes}</span>` : ''}</td>
+      <td>${l.date_given}</td>
+      <td>${l.due_date || '—'}</td>
+      <td>${money(l.amount)}${l.profit_rate > 0 ? `<br><span style="color:var(--earth-500);font-size:11px;">+${l.profit_rate}% profit share</span>` : ''}</td>
+      <td>${money(l.total_due)}</td>
+      <td>${money(l.outstanding)}</td>
+      <td><span class="badge ${badgeClass(l.status, l.days_to_due)}">${badgeLabel(l.status, l.days_to_due)}</span></td>
+      <td>${l.status !== 'repaid' ? `<button class="btn btn-sm" onclick="openPayModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')">Record payment</button>` : ''}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+async function createLoan() {
+  const lender_name = document.getElementById('n-lender').value.trim();
+  const amount = document.getElementById('n-amount').value;
+  const profit_rate = document.getElementById('n-rate').value;
+  const date_given = document.getElementById('n-given').value;
+  const due_date = document.getElementById('n-due').value;
+  const notes = document.getElementById('n-notes').value.trim();
+  const statusEl = document.getElementById('add-status');
+  if (!lender_name || !amount || !date_given || !due_date) { statusEl.textContent = 'Lender name, amount, date given and due date are required.'; return; }
+  const res = await fetch('/api/investor-loans', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({lender_name, amount, profit_rate, date_given, due_date, notes: notes || null})
+  });
+  if (res.ok) {
+    statusEl.textContent = '';
+    document.getElementById('n-lender').value = '';
+    document.getElementById('n-amount').value = '';
+    document.getElementById('n-rate').value = '0';
+    document.getElementById('n-given').value = '';
+    document.getElementById('n-due').value = '';
+    document.getElementById('n-notes').value = '';
+    showToast('Loan added.');
+    loadSummary(); loadLoans();
+  } else {
+    statusEl.textContent = 'Something went wrong.';
+  }
+}
+
+function openPayModal(id, name) {
+  payingLoanId = id;
+  document.getElementById('pay-title').textContent = 'Record repayment — ' + name;
+  document.getElementById('p-amount').value = '';
+  document.getElementById('p-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('p-notes').value = '';
+  document.getElementById('pay-modal').classList.add('show');
+}
+function closeModal() { document.getElementById('pay-modal').classList.remove('show'); }
+
+async function submitPayment() {
+  const amount = document.getElementById('p-amount').value;
+  const payment_date = document.getElementById('p-date').value;
+  const notes = document.getElementById('p-notes').value.trim();
+  if (!amount || !payment_date) { showToast('Amount and date are required.'); return; }
+  const res = await fetch(`/api/investor-loans/${payingLoanId}/payments`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({amount, payment_date, notes: notes || null})
+  });
+  if (res.ok) {
+    closeModal();
+    showToast('Payment recorded.');
+    loadSummary(); loadLoans();
+  } else {
+    showToast('Something went wrong.');
+  }
+}
+
+loadSummary();
+loadLoans();
+</script>
+</body>
+</html>

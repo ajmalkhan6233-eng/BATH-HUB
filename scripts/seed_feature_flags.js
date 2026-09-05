@@ -70,6 +70,8 @@ const DORMANT = [
   ['fin_investor_loans', 'ACCOUNTING', 'Investor/Friend Loans', 'Loan tracker with repayments and due-date alerts'],
   ['fin_sale_commissions', 'ACCOUNTING', 'Salesperson Commission + Returns', 'Weekly net commission ledger with refund/exchange clawback'],
   ['pos_billing', 'SALES_CRM', 'POS Billing', 'Generate an itemized bill with logo and discount, share via WhatsApp/email, print or download'],
+  ['cheque_register', 'ACCOUNTING', 'Cheque Register', 'Cheques the shop writes out to suppliers/investors, tracked by due date and status'],
+  ['money_control', 'ACCOUNTING', 'Money Control', "Owner's daily cash cockpit: bank balances, cheque/loan lookahead, low stock, planned allocations"],
   ['acc_petty_cash', 'ACCOUNTING', 'Petty Cash Module', ''],
   ['acc_expense_budgets', 'ACCOUNTING', 'Expense Categories with Budgets', ''],
   ['acc_year_end_closing', 'ACCOUNTING', 'Year-End Closing', ''],
@@ -130,6 +132,15 @@ async function main() {
          ON CONFLICT (module_key) DO NOTHING`,
         [key, cat, label, desc]);
     }
+    // These modules now have real DB+API+UI (dedicated pages, browser-tested) — flip
+    // built=true so the owner CAN turn them on from Settings whenever ready. This does
+    // NOT enable them (enabled stays false/whatever it already is); PATCH /api/feature-flags
+    // still refuses enabling anything with built=false, so this is the one-time unlock.
+    const BUILT_NOW = ['fin_investor_loans', 'fin_sale_commissions', 'cheque_register', 'money_control'];
+    await client.query(
+      `UPDATE feature_flags SET built = true WHERE module_key = ANY($1::text[])`,
+      [BUILT_NOW]);
+
     const { rows } = await client.query(`SELECT category, COUNT(*), COUNT(*) FILTER (WHERE built) as built_count FROM feature_flags GROUP BY 1 ORDER BY 1`);
     console.table(rows);
   } finally {

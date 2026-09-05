@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheque Register — Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--emerald-800:#0a4531;
+    --earth-800:#3d2b1f;--earth-700:#5c4033;--earth-500:#8b6f47;
+    --gold-500:#c9a227;--gold-300:#e8cf7a;
+    --stone-100:#efe9dc;--stone-50:#f7f4ec;--ink:#201c16;
+    --red-600:#a02020;--red-100:#f6dede;--green-700:#1e5c3f;--green-100:#e1f0e6;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Work Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);line-height:1.5;padding-bottom:60px;}
+  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:20px;font-weight:600;}
+  header .sub{color:var(--gold-300);font-size:13px;margin-top:4px;}
+  main{max-width:900px;margin:0 auto;padding:20px 16px;}
+  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--earth-800);}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:560px){.grid3{grid-template-columns:1fr;}}
+  label{font-size:12px;color:var(--earth-700);display:block;margin-bottom:4px;}
+  input,select{width:100%;padding:8px 10px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;font-family:inherit;margin-bottom:10px;}
+  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--gold-300);}
+  .btn-sm{padding:5px 10px;font-size:12px;margin-right:4px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);}
+  td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
+  tr:hover{background:var(--stone-100);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+  .badge-pending{background:var(--gold-300);color:var(--earth-800);}
+  .badge-cleared{background:var(--green-100);color:var(--green-700);}
+  .badge-bounced{background:var(--red-100);color:var(--red-600);}
+  .empty{color:var(--earth-500);font-size:13px;font-style:italic;padding:10px 0;}
+  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .filters button{background:#fff;border:1px solid #d8d0bd;border-radius:16px;padding:6px 14px;font-size:12px;cursor:pointer;}
+  .filters button.active{background:var(--emerald-900);color:#fff;border-color:var(--emerald-900);}
+  .alert{background:var(--red-100);border:1px solid var(--red-600);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+  .alert .title{color:var(--red-600);font-weight:700;font-size:14px;}
+  .alert .detail{font-size:13px;color:var(--earth-800);margin-top:4px;}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--emerald-900);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cheque Register</h1>
+  <div class="sub">Cheques the shop writes out — suppliers, investors, anyone owed</div>
+</header>
+
+<main>
+
+  <div class="card" id="alert-card" style="display:none;">
+    <h2>Due soon</h2>
+    <div id="alert-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Write a new cheque</h2>
+    <div class="grid3">
+      <div><label>Cheque no.</label><input id="n-no" placeholder="optional"></div>
+      <div><label>Bank</label><input id="n-bank" placeholder="optional"></div>
+      <div><label>Payee</label><input id="n-payee" placeholder="who is this for"></div>
+      <div><label>Amount (LKR)</label><input id="n-amount" type="number" step="0.01"></div>
+      <div><label>Due date</label><input id="n-due" type="date"></div>
+      <div><label>Notes</label><input id="n-notes" placeholder="optional"></div>
+    </div>
+    <button class="btn" onclick="createCheque()">Add cheque</button>
+    <span id="add-status" style="font-size:12px;color:var(--earth-500);margin-left:10px;"></span>
+  </div>
+
+  <div class="card">
+    <h2>All cheques</h2>
+    <div class="filters">
+      <button class="active" data-status="" onclick="setFilter('', this)">All</button>
+      <button data-status="pending" onclick="setFilter('pending', this)">Pending</button>
+      <button data-status="cleared" onclick="setFilter('cleared', this)">Cleared</button>
+      <button data-status="bounced" onclick="setFilter('bounced', this)">Bounced</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Due date</th><th>Payee</th><th>Bank / No.</th><th>Amount</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="cheques-body"></tbody>
+    </table>
+    </div>
+    <div class="empty" id="cheques-empty" style="display:none;">No cheques recorded.</div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+let currentFilter = '';
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+function setFilter(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadCheques();
+}
+
+function badgeClass(status) {
+  return { pending: 'badge-pending', cleared: 'badge-cleared', bounced: 'badge-bounced' }[status] || 'badge-pending';
+}
+
+async function loadAlerts() {
+  const res = await fetch('/api/cheque-register/due-soon?days=3');
+  const rows = await res.json();
+  const card = document.getElementById('alert-card');
+  const list = document.getElementById('alert-list');
+  list.innerHTML = '';
+  card.style.display = rows.length ? 'block' : 'none';
+  rows.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'alert';
+    div.innerHTML = `<div class="title">${c.payee} — ${money(c.amount)} due ${c.due_date}</div>` +
+      `<div class="detail">${c.bank || 'No bank set'}${c.cheque_no ? ' · #' + c.cheque_no : ''}</div>`;
+    list.appendChild(div);
+  });
+}
+
+async function loadCheques() {
+  const qs = currentFilter ? ('?status=' + currentFilter) : '';
+  const res = await fetch('/api/cheque-register' + qs);
+  const rows = await res.json();
+  const body = document.getElementById('cheques-body');
+  const empty = document.getElementById('cheques-empty');
+  body.innerHTML = '';
+  empty.style.display = rows.length ? 'none' : 'block';
+  rows.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.due_date}</td>
+      <td>${c.payee}${c.notes ? `<br><span style="color:var(--earth-500);font-size:11px;">${c.notes}</span>` : ''}</td>
+      <td>${c.bank || '—'}${c.cheque_no ? ' · #' + c.cheque_no : ''}</td>
+      <td>${money(c.amount)}</td>
+      <td><span class="badge ${badgeClass(c.status)}">${c.status.charAt(0).toUpperCase() + c.status.slice(1)}</span></td>
+      <td>${c.status === 'pending' ? `
+        <button class="btn btn-sm" onclick="updateStatus(${c.id}, 'cleared')">Clear</button>
+        <button class="btn btn-sm" style="background:var(--red-100);color:var(--red-600);" onclick="updateStatus(${c.id}, 'bounced')">Bounced</button>
+      ` : ''}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+async function createCheque() {
+  const cheque_no = document.getElementById('n-no').value.trim();
+  const bank = document.getElementById('n-bank').value.trim();
+  const payee = document.getElementById('n-payee').value.trim();
+  const amount = document.getElementById('n-amount').value;
+  const due_date = document.getElementById('n-due').value;
+  const notes = document.getElementById('n-notes').value.trim();
+  const statusEl = document.getElementById('add-status');
+  if (!payee || !amount || !due_date) { statusEl.textContent = 'Payee, amount and due date are required.'; return; }
+  const res = await fetch('/api/cheque-register', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({cheque_no: cheque_no || null, bank: bank || null, payee, amount, due_date, notes: notes || null})
+  });
+  if (res.ok) {
+    statusEl.textContent = '';
+    ['n-no','n-bank','n-payee','n-amount','n-due','n-notes'].forEach(id => document.getElementById(id).value = '');
+    showToast('Cheque added.');
+    loadAlerts(); loadCheques();
+  } else {
+    statusEl.textContent = 'Something went wrong.';
+  }
+}
+
+async function updateStatus(id, status) {
+  const res = await fetch(`/api/cheque-register/${id}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({status})
+  });
+  if (res.ok) {
+    showToast('Status updated.');
+    loadAlerts(); loadCheques();
+  } else {
+    showToast('Something went wrong.');
+  }
+}
+
+loadAlerts();
+loadCheques();
+</script>
+</body>
+</html>

@@ -315,7 +315,7 @@ router.get('/dashboard', async (req, res) => {
             `),
             pool.query(`
                 SELECT l.lender_name,
-                       ROUND(l.amount + (l.amount * l.interest_rate / 100) -
+                       ROUND(l.amount + (l.amount * l.profit_rate / 100) -
                            COALESCE((SELECT SUM(p.amount) FROM investor_loan_payments p WHERE p.loan_id = l.id), 0), 2) AS outstanding,
                        TO_CHAR(l.due_date,'YYYY-MM-DD') AS due_date
                 FROM investor_loans l WHERE l.status != 'repaid' AND l.due_date <= CURRENT_DATE + 14

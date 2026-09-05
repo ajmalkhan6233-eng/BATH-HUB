@@ -243,7 +243,7 @@ const logLoginAttempt = (username, success, ip, reason) =>
                [username, success, ip || null, reason || null]).catch(() => {});
 
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, remember } = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     try {
         const r = await pool.query('SELECT * FROM users WHERE username=$1', [username || '']);
@@ -252,6 +252,11 @@ app.post('/api/login', async (req, res) => {
             logLoginAttempt(username || '?', false, ip, 'bad_credentials');
             return res.status(401).json({ error: 'Invalid username or password' });
         }
+        // "Remember this device" — extends the session cookie from 12h to 1 year on
+        // THIS browser only (still an httpOnly signed cookie). A different browser/
+        // device with no cookie still needs the real password; this is not a
+        // password-less/no-auth mode for the app.
+        if (remember) req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000;
         if (user.totp_enabled) {
             req.session.partial_auth = { id: user.id, username: user.username, name: user.name, role: user.role, staff_id: user.staff_id };
             logLoginAttempt(username, false, ip, 'totp_pending');
