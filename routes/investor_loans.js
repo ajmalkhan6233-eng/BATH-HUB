@@ -111,7 +111,7 @@ const upload = multer({
 // Shared SELECT: loan + computed totals (total due w/ agreed profit share, repaid, outstanding).
 const LOAN_SELECT = `
     SELECT
-        l.id, l.lender_name, l.amount, l.profit_rate,
+        l.id, l.lender_name, l.amount, l.profit_rate, l.qr_outstanding,
         TO_CHAR(l.date_given,'YYYY-MM-DD') AS date_given,
         TO_CHAR(l.due_date,'YYYY-MM-DD') AS due_date,
         l.status, l.notes, l.created_at,
@@ -126,6 +126,26 @@ const LOAN_SELECT = `
         GROUP BY loan_id
     ) p ON p.loan_id = l.id
 `;
+
+pool.query(`ALTER TABLE investor_loans ADD COLUMN IF NOT EXISTS qr_outstanding NUMERIC(12,2) DEFAULT 0`)
+    .catch(e => console.error('[investor_loans] qr_outstanding migration failed:', e.message));
+
+// Manually update the QR (Qatari Riyal) side of a loan — kept separate from the
+// LKR amount/interest/payments math above since it's a different currency with
+// no exchange-rate conversion built in. Owner updates this by hand when the QR
+// balance changes.
+router.put('/investor-loans/:id/qr-balance', async (req, res) => {
+    try {
+        const { qr_outstanding } = req.body;
+        if (qr_outstanding === undefined) return res.status(400).json({ error: 'qr_outstanding is required' });
+        const r = await pool.query(`
+            UPDATE investor_loans SET qr_outstanding = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 RETURNING id, qr_outstanding
+        `, [qr_outstanding, req.params.id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'not found' });
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ═══════════════════════ LIST all loans ═══════════════════════
 router.get('/investor-loans', async (req, res) => {
