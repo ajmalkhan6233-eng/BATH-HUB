@@ -329,6 +329,14 @@ router.get('/dashboard', async (req, res) => {
         const dailyReserve = Math.round((Number(reserve.rows[0].monthly_total) / daysInMonth) * 100) / 100;
         const todayTotal = breakdown.rows.reduce((a, x) => a + Number(x.amount), 0);
 
+        // Single yes/no verdict: can today's cash + bank balances cover what's due today or tomorrow?
+        const totalBankBalance = accounts.rows.reduce((a, x) => a + Number(x.current_balance), 0);
+        const dueImmediately = [...cheques.rows, ...loans.rows.map(l => ({ due_date: l.due_date, amount: l.outstanding }))]
+            .filter(x => x.due_date && (new Date(x.due_date) - new Date(today)) / 86400000 <= 1)
+            .reduce((a, x) => a + Number(x.amount), 0);
+        const availableToday = todayTotal + totalBankBalance;
+        const can_cover_today = availableToday >= dueImmediately;
+
         res.json({
             date: today,
             sales_by_mode: breakdown.rows,
@@ -339,8 +347,12 @@ router.get('/dashboard', async (req, res) => {
             investor_loans_next_14_days: loans.rows,
             low_stock: lowStock.rows,
             planned_allocations: allocations.rows,
+            can_cover_today,
+            can_cover_today_detail: `${money_control_fmt(availableToday)} available vs ${money_control_fmt(dueImmediately)} due today/tomorrow`,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+function money_control_fmt(n) { return 'LKR ' + Math.round(n).toLocaleString(); }
 
 module.exports = router;

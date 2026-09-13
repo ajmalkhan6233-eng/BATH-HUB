@@ -74,6 +74,52 @@ pool.query(`
     )
 `).catch(e => console.error('[shop_operations] receipt_queue migration failed:', e.message));
 
+pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_credit_limits (
+        id            SERIAL PRIMARY KEY,
+        customer_name VARCHAR(150) NOT NULL UNIQUE,
+        credit_limit  NUMERIC(12,2) NOT NULL,
+        notes         TEXT,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] customer_credit_limits migration failed:', e.message));
+
+// ═══════════════════════ CUSTOMER CREDIT LIMITS ═══════════════════════
+router.get('/credit-limits', async (req, res) => {
+    try {
+        const r = await pool.query(`SELECT * FROM customer_credit_limits ORDER BY customer_name`);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/credit-limits', async (req, res) => {
+    try {
+        const { customer_name, credit_limit, notes } = req.body;
+        if (!customer_name || !credit_limit) return res.status(400).json({ error: 'customer_name and credit_limit are required' });
+        const r = await pool.query(`
+            INSERT INTO customer_credit_limits (customer_name, credit_limit, notes)
+            VALUES ($1,$2,$3)
+            ON CONFLICT (customer_name) DO UPDATE SET credit_limit = EXCLUDED.credit_limit, notes = EXCLUDED.notes, updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        `, [customer_name, credit_limit, notes || null]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// NOT FINISHED ON PURPOSE: this only returns the limit itself. Comparing it
+// against a customer's actual outstanding balance needs the real column names
+// on whatever table tracks credit sales (referenced elsewhere as either
+// `credit_customers` or `lasersoft_invoices` — never independently verified
+// in this session). Claude Code: confirm the real table/columns before wiring
+// the comparison, don't guess at golden-core schema.
+router.get('/credit-limits/:customer_name', async (req, res) => {
+    try {
+        const r = await pool.query(`SELECT * FROM customer_credit_limits WHERE customer_name = $1`, [req.params.customer_name]);
+        if (!r.rows.length) return res.status(404).json({ error: 'no limit set for this customer' });
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ═══════════════════════ DISCOUNT RULES ═══════════════════════
 router.get('/discount-rules', async (req, res) => {
     try {
