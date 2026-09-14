@@ -136,7 +136,7 @@ async function main() {
     // built=true so the owner CAN turn them on from Settings whenever ready. This does
     // NOT enable them (enabled stays false/whatever it already is); PATCH /api/feature-flags
     // still refuses enabling anything with built=false, so this is the one-time unlock.
-    const BUILT_NOW = ['fin_investor_loans', 'fin_sale_commissions', 'cheque_register', 'money_control'];
+    const BUILT_NOW = ['pos_billing', 'fin_investor_loans', 'fin_sale_commissions', 'cheque_register', 'money_control'];
     await client.query(
       `UPDATE feature_flags SET built = true WHERE module_key = ANY($1::text[])`,
       [BUILT_NOW]);

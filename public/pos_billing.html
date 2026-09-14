@@ -168,8 +168,8 @@ function addItemRow(name, qty, price) {
   row.className = 'item-row';
   row.innerHTML = `
     <input type="text" placeholder="Item name" class="i-name" value="${name || ''}">
-    <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01">
-    <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01">
+    <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
+    <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01" onfocus="this.select()">
     <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
   `;
   document.getElementById('itemRows').appendChild(row);

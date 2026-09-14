@@ -421,6 +421,17 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
         </div>
       </div>
 
+      <div class="card" id="home-quick-links" style="margin-bottom:16px;">
+        <div class="section-title" style="margin-top:0;">Quick links</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="ghost nav-btn" data-flag="pos_billing" onclick="window.open('/pos_billing.html','_blank')">🛒 POS Billing</button>
+          <button class="ghost nav-btn" data-flag="money_control" onclick="window.open('/money-control.html','_blank')">💵 Money Control</button>
+          <button class="ghost nav-btn" data-flag="fin_investor_loans" onclick="window.open('/investor_loans.html','_blank')">🤝 Investor/Friend Loans</button>
+          <button class="ghost nav-btn" data-flag="fin_sale_commissions" onclick="window.open('/sale_commissions.html','_blank')">📈 Sale Commissions</button>
+          <button class="ghost nav-btn" data-flag="cheque_register" onclick="window.open('/cheque_register.html','_blank')">🖋️ Cheque Register</button>
+        </div>
+      </div>
+
       <div class="grid grid-4" id="home-kpis"></div>
       <div class="section-title">Last 7 Days</div>
       <div class="card"><table id="home-recent"><thead><tr><th>Date</th><th>Sale</th><th>Expenses</th><th>Net Profit</th><th>Status</th></tr></thead><tbody></tbody></table></div>
