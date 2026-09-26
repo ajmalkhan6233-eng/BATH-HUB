@@ -180,6 +180,17 @@
   <div class="card">
     <h2>Planned money — investment in / spend out</h2>
     <div id="allocations-list"></div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0ece0;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input id="alloc-label" placeholder="What is it (e.g. New tile order)">
+      <select id="alloc-category">
+        <option value="planned_spend">Going out</option>
+        <option value="investment_in">Coming in</option>
+      </select>
+      <input id="alloc-amount" type="number" step="0.01" placeholder="Amount (LKR)">
+      <input id="alloc-date" type="date">
+      <input id="alloc-notes" placeholder="Notes (optional)" style="grid-column:1 / -1;">
+      <button class="btn" style="grid-column:1 / -1;" onclick="addAllocation()">Add planned item</button>
+    </div>
   </div>
 
 </main>
@@ -303,9 +314,36 @@ async function load() {
     const row = document.createElement('div');
     row.className = 'list-row';
     const tag = a.category === 'investment_in' ? 'Coming in' : 'Going out';
-    row.innerHTML = `<span class="name">${a.label}<span class="meta">${tag}${a.planned_date ? ' · ' + a.planned_date : ''}</span></span><span class="amt">${money(a.amount)}</span>`;
+    row.innerHTML = `<span class="name">${a.label}<span class="meta">${tag}${a.planned_date ? ' · ' + a.planned_date : ''}</span></span>` +
+      `<span class="amt">${money(a.amount)} <button class="btn" style="padding:3px 8px;font-size:11px;margin:0 0 0 8px;" onclick="markAllocationDone(${a.id})">Done</button></span>`;
     allocEl.appendChild(row);
   });
+}
+
+async function addAllocation() {
+  const label = document.getElementById('alloc-label').value.trim();
+  const category = document.getElementById('alloc-category').value;
+  const amount = document.getElementById('alloc-amount').value;
+  const planned_date = document.getElementById('alloc-date').value;
+  const notes = document.getElementById('alloc-notes').value.trim();
+  if (!label || !amount) { alert('What it is and the amount are required.'); return; }
+  await fetch('/api/money-control/money-allocations', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ label, category, amount, planned_date: planned_date || null, notes: notes || null })
+  });
+  document.getElementById('alloc-label').value = '';
+  document.getElementById('alloc-amount').value = '';
+  document.getElementById('alloc-date').value = '';
+  document.getElementById('alloc-notes').value = '';
+  load();
+}
+
+async function markAllocationDone(id) {
+  await fetch(`/api/money-control/money-allocations/${id}`, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ status: 'done' })
+  });
+  load();
 }
 
 load();
