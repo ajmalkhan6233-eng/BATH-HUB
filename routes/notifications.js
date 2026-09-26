@@ -46,13 +46,14 @@ async function getDueSoonNotifications() {
             ORDER BY due_date ASC
         `, [DUE_SOON_DAYS]),
         pool.query(`
-            SELECT id, lender_name,
-                   ROUND(amount + (amount * profit_rate / 100), 2) AS total_due,
-                   TO_CHAR(due_date,'YYYY-MM-DD') AS due_date,
-                   (due_date - CURRENT_DATE) AS days_to_due
-            FROM investor_loans
-            WHERE status != 'repaid' AND due_date IS NOT NULL AND due_date <= CURRENT_DATE + $1::int
-            ORDER BY due_date ASC
+            SELECT l.id, l.lender_name,
+                   ROUND(l.amount + (l.amount * l.profit_rate / 100) -
+                       COALESCE((SELECT SUM(p.amount) FROM investor_loan_payments p WHERE p.loan_id = l.id), 0), 2) AS outstanding,
+                   TO_CHAR(l.due_date,'YYYY-MM-DD') AS due_date,
+                   (l.due_date - CURRENT_DATE) AS days_to_due
+            FROM investor_loans l
+            WHERE l.status != 'repaid' AND l.due_date IS NOT NULL AND l.due_date <= CURRENT_DATE + $1::int
+            ORDER BY l.due_date ASC
         `, [DUE_SOON_DAYS]),
         pool.query(`SELECT category, ref_id, TO_CHAR(due_date,'YYYY-MM-DD') AS due_date FROM notification_dismissals`)
     ]);
@@ -72,8 +73,8 @@ async function getDueSoonNotifications() {
         if (dismissed.has(`loan:${l.id}:${l.due_date}`)) continue;
         items.push({
             category: 'loan', ref_id: l.id, due_date: l.due_date, days_to_due: l.days_to_due,
-            title: `Loan repayment — ${l.lender_name}`, amount: l.total_due,
-            detail: `LKR ${Number(l.total_due).toLocaleString()} due ${l.due_date}`
+            title: `Loan repayment — ${l.lender_name}`, amount: l.outstanding,
+            detail: `LKR ${Number(l.outstanding).toLocaleString()} due ${l.due_date}`
         });
     }
     items.sort((a, b) => a.days_to_due - b.days_to_due);
