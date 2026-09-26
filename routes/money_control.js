@@ -295,6 +295,106 @@ router.get('/viewer-dashboard', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+pool.query(`
+    CREATE TABLE IF NOT EXISTS daily_cash_plan (
+        id                 SERIAL PRIMARY KEY,
+        report_date        DATE NOT NULL UNIQUE,
+        sales_total        NUMERIC(12,2) NOT NULL,
+        expenses_total     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        purchasing_reserve NUMERIC(12,2) NOT NULL DEFAULT 0,
+        notes              TEXT,
+        created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[money_control] daily_cash_plan migration failed:', e.message));
+
+// ═══════════════════════ DAILY CASH BREAKDOWN — "set aside X, safe to take Y" ═══════════════════════
+router.post('/daily-cash-plan', async (req, res) => {
+    try {
+        const { report_date, sales_total, expenses_total, purchasing_reserve, notes } = req.body;
+        if (!report_date || sales_total === undefined) {
+            return res.status(400).json({ error: 'report_date and sales_total are required' });
+        }
+        const r = await pool.query(`
+            INSERT INTO daily_cash_plan (report_date, sales_total, expenses_total, purchasing_reserve, notes)
+            VALUES ($1,$2,$3,$4,$5)
+            ON CONFLICT (report_date) DO UPDATE SET
+                sales_total = EXCLUDED.sales_total,
+                expenses_total = EXCLUDED.expenses_total,
+                purchasing_reserve = EXCLUDED.purchasing_reserve,
+                notes = EXCLUDED.notes
+            RETURNING id
+        `, [report_date, sales_total, expenses_total || 0, purchasing_reserve || 0, notes || null]);
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/daily-cash-plan', async (req, res) => {
+    try {
+        const date = req.query.date || new Date().toISOString().slice(0, 10);
+
+        const plan = await pool.query(`SELECT * FROM daily_cash_plan WHERE report_date = $1`, [date]);
+        if (!plan.rows.length) {
+            return res.status(404).json({ error: 'no plan entered for this date yet — POST sales_total and expenses_total first' });
+        }
+        const p = plan.rows[0];
+        const salesTotal = Number(p.sales_total);
+        const expensesTotal = Number(p.expenses_total);
+        const grossProfit = salesTotal - expensesTotal;
+
+        const overheadRes = await pool.query(`SELECT COALESCE(SUM(monthly_amount),0) AS monthly_total FROM fixed_overheads WHERE active = true`);
+        const daysInMonth = new Date(new Date(date).getFullYear(), new Date(date).getMonth() + 1, 0).getDate();
+        const overheadDaily = Math.round((Number(overheadRes.rows[0].monthly_total) / daysInMonth) * 100) / 100;
+
+        const cheques = await pool.query(`
+            SELECT payee, amount, due_date, (due_date - $1::date) AS days_left
+            FROM cheque_register WHERE status = 'pending' ORDER BY due_date ASC
+        `, [date]);
+        const chequeBreakdown = cheques.rows.map(c => {
+            const daysLeft = Number(c.days_left);
+            const overdue = daysLeft <= 0;
+            const dailyAmount = Math.round((Number(c.amount) / Math.max(daysLeft, 1)) * 100) / 100;
+            return { payee: c.payee, amount: Number(c.amount), due_date: c.due_date, days_left: daysLeft, daily_amount: dailyAmount, overdue };
+        });
+        const chequeDailyTotal = chequeBreakdown.reduce((a, x) => a + x.daily_amount, 0);
+
+        const loans = await pool.query(`
+            SELECT l.lender_name, l.due_date, (l.due_date - $1::date) AS days_left,
+                   ROUND(l.amount + (l.amount * l.profit_rate / 100) -
+                       COALESCE((SELECT SUM(pm.amount) FROM investor_loan_payments pm WHERE pm.loan_id = l.id), 0), 2) AS outstanding
+            FROM investor_loans l WHERE l.status != 'repaid' AND l.due_date IS NOT NULL ORDER BY l.due_date ASC
+        `, [date]);
+        const loanBreakdown = loans.rows.map(l => {
+            const daysLeft = Number(l.days_left);
+            const overdue = daysLeft <= 0;
+            const dailyAmount = Math.round((Number(l.outstanding) / Math.max(daysLeft, 1)) * 100) / 100;
+            return { lender_name: l.lender_name, outstanding: Number(l.outstanding), due_date: l.due_date, days_left: daysLeft, daily_amount: dailyAmount, overdue };
+        });
+        const loanDailyTotal = loanBreakdown.reduce((a, x) => a + x.daily_amount, 0);
+
+        const purchasingReserve = Number(p.purchasing_reserve);
+        const totalToSetAside = Math.round((overheadDaily + chequeDailyTotal + loanDailyTotal + purchasingReserve) * 100) / 100;
+        const safeToWithdraw = Math.round((grossProfit - totalToSetAside) * 100) / 100;
+
+        res.json({
+            date,
+            sales_total: salesTotal,
+            expenses_total: expensesTotal,
+            gross_profit: grossProfit,
+            set_aside: {
+                overhead_reserve: overheadDaily,
+                cheques: { total: Math.round(chequeDailyTotal * 100) / 100, breakdown: chequeBreakdown },
+                loans: { total: Math.round(loanDailyTotal * 100) / 100, breakdown: loanBreakdown },
+                purchasing_reserve: purchasingReserve,
+                total_to_set_aside: totalToSetAside,
+            },
+            safe_to_withdraw: safeToWithdraw,
+            verdict: safeToWithdraw >= 0
+                ? `Set aside ${totalToSetAside.toLocaleString()} today. Safe to take out ${safeToWithdraw.toLocaleString()} as profit.`
+                : `Set aside ${totalToSetAside.toLocaleString()} today — that's ${Math.abs(safeToWithdraw).toLocaleString()} more than today's gross profit. Don't take anything out; cover the gap from reserves.`,
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ═══════════════════════ THE DASHBOARD — one call, everything the page needs ═══════════════════════
 router.get('/dashboard', async (req, res) => {
     try {
