@@ -108,6 +108,18 @@ const upload = multer({
     }
 });
 
+// multer's own fileFilter/size errors bypass a normal try/catch (they surface
+// via the callback below, not a thrown exception) — without this wrapper an
+// invalid upload falls through to Express's default handler, which returns a
+// raw HTML page with a full server stack trace (file paths included) instead
+// of a clean JSON error.
+function uploadDocument(req, res, next) {
+    upload.single('file')(req, res, (err) => {
+        if (err) return res.status(400).json({ error: err.message });
+        next();
+    });
+}
+
 // Shared SELECT: loan + computed totals (total due w/ agreed profit share, repaid, outstanding).
 const LOAN_SELECT = `
     SELECT
@@ -255,7 +267,7 @@ router.post('/investor-loans/:id/payments', async (req, res) => {
 });
 
 // ═══════════════════════ UPLOAD a document (agreement, screenshot, note) ═══════════════════════
-router.post('/investor-loans/:id/documents', upload.single('file'), async (req, res) => {
+router.post('/investor-loans/:id/documents', uploadDocument, async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'file is required' });
         const loan = await pool.query(`SELECT id FROM investor_loans WHERE id = $1`, [req.params.id]);
