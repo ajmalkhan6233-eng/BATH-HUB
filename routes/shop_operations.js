@@ -132,6 +132,13 @@ router.post('/discount-rules', async (req, res) => {
     try {
         const { role, max_discount_pct, notes } = req.body;
         if (max_discount_pct === undefined) return res.status(400).json({ error: 'max_discount_pct is required' });
+        // One active rule per role: setting a limit again replaces the old one, so the
+        // discount check never has two conflicting caps for the same role.
+        const upd = await pool.query(`
+            UPDATE discount_rules SET max_discount_pct = $2, notes = COALESCE($3, notes)
+            WHERE active = true AND role = $1 RETURNING id
+        `, [role || 'all', max_discount_pct, notes || null]);
+        if (upd.rows.length) return res.json({ ...upd.rows[0], updated: true });
         const r = await pool.query(`
             INSERT INTO discount_rules (role, max_discount_pct, notes)
             VALUES ($1,$2,$3) RETURNING id
@@ -147,10 +154,8 @@ router.post('/discount-check', async (req, res) => {
         if (discount_pct === undefined) return res.status(400).json({ error: 'discount_pct is required' });
         const r = await pool.query(`
             SELECT max_discount_pct FROM discount_rules
-            WHERE active = true AND role = $1
-            UNION ALL
-            SELECT max_discount_pct FROM discount_rules
-            WHERE active = true AND role = 'all'
+            WHERE active = true AND role IN ($1, 'all')
+            ORDER BY (role = 'all'), id DESC
             LIMIT 1
         `, [role || 'all']);
         if (!r.rows.length) return res.json({ allowed: true, max_allowed: null, note: 'No rule set — no cap enforced' });

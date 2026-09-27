@@ -79,45 +79,70 @@
 
 <script>
 const money = n => 'LKR ' + Number(n || 0).toLocaleString();
+const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// Turns a response into a message that says what went wrong (server's own error text when it sends one).
+async function outcome(r, okText) {
+  if (r.ok) return okText;
+  let detail = '';
+  try { detail = (await r.json()).error || ''; } catch (_) {}
+  return `Not saved: ${detail || 'the server answered ' + r.status}`;
+}
+async function post(url, body) {
+  try {
+    return await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+  } catch (e) {
+    return { ok: false, status: 0, json: async () => ({ error: 'could not reach the server (' + e.message + ')' }) };
+  }
+}
+async function getList(url, what) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'server answered ' + r.status);
+    return await r.json();
+  } catch (e) {
+    return { failed: `Could not load ${what}: ${e.message}` };
+  }
+}
 
 async function loadAll() {
-  const accounts = await (await fetch('/api/money-control/bank-accounts')).json();
+  const accounts = await getList('/api/money-control/bank-accounts', 'bank accounts');
   const accEl = document.getElementById('accounts-list');
-  accEl.innerHTML = accounts.length ? '' : '<div class="empty">No accounts added yet.</div>';
-  accounts.forEach(a => {
+  accEl.innerHTML = accounts.failed ? `<div class="empty">${esc(accounts.failed)}</div>` : accounts.length ? '' : '<div class="empty">No accounts added yet.</div>';
+  (accounts.failed ? [] : accounts).forEach(a => {
     const row = document.createElement('div');
     row.className = 'list-row';
-    row.innerHTML = `<span>${a.account_label}${a.bank ? ' — ' + a.bank : ''}</span><span>${money(a.current_balance)}</span>`;
+    row.innerHTML = `<span>${esc(a.account_label)}${a.bank ? ' — ' + esc(a.bank) : ''}</span><span>${money(a.current_balance)}</span>`;
     accEl.appendChild(row);
   });
 
-  const overheads = await (await fetch('/api/money-control/fixed-overheads')).json();
+  const overheads = await getList('/api/money-control/fixed-overheads', 'fixed costs');
   const ohEl = document.getElementById('overheads-list');
-  ohEl.innerHTML = overheads.length ? '' : '<div class="empty">No fixed costs added yet.</div>';
-  overheads.forEach(o => {
+  ohEl.innerHTML = overheads.failed ? `<div class="empty">${esc(overheads.failed)}</div>` : overheads.length ? '' : '<div class="empty">No fixed costs added yet.</div>';
+  (overheads.failed ? [] : overheads).forEach(o => {
     const row = document.createElement('div');
     row.className = 'list-row';
-    row.innerHTML = `<span>${o.name}</span><span>${money(o.monthly_amount)}/month</span>`;
+    row.innerHTML = `<span>${esc(o.name)}</span><span>${money(o.monthly_amount)}/month</span>`;
     ohEl.appendChild(row);
   });
 
-  const discounts = await (await fetch('/api/discount-rules')).json();
+  const discounts = await getList('/api/discount-rules', 'discount limits');
   const discEl = document.getElementById('discount-list');
-  discEl.innerHTML = discounts.length ? '' : '<div class="empty">No limit set — staff can give any discount.</div>';
-  discounts.forEach(d => {
+  discEl.innerHTML = discounts.failed ? `<div class="empty">${esc(discounts.failed)}</div>` : discounts.length ? '' : '<div class="empty">No limit set — staff can give any discount.</div>';
+  (discounts.failed ? [] : discounts).forEach(d => {
     const row = document.createElement('div');
     row.className = 'list-row';
-    row.innerHTML = `<span>${d.role === 'all' ? 'Everyone' : d.role}</span><span>Max ${d.max_discount_pct}%</span>`;
+    row.innerHTML = `<span>${d.role === 'all' ? 'Everyone' : esc(d.role)}</span><span>Max ${d.max_discount_pct}%</span>`;
     discEl.appendChild(row);
   });
 
-  const credits = await (await fetch('/api/credit-limits')).json();
+  const credits = await getList('/api/credit-limits', 'credit limits');
   const crEl = document.getElementById('credit-list');
-  crEl.innerHTML = credits.length ? '' : '<div class="empty">No customer credit limits set.</div>';
-  credits.forEach(c => {
+  crEl.innerHTML = credits.failed ? `<div class="empty">${esc(credits.failed)}</div>` : credits.length ? '' : '<div class="empty">No customer credit limits set.</div>';
+  (credits.failed ? [] : credits).forEach(c => {
     const row = document.createElement('div');
     row.className = 'list-row';
-    row.innerHTML = `<span>${c.customer_name}</span><span>${money(c.credit_limit)}</span>`;
+    row.innerHTML = `<span>${esc(c.customer_name)}</span><span>${money(c.credit_limit)}</span>`;
     crEl.appendChild(row);
   });
 }
@@ -128,11 +153,8 @@ async function addAccount() {
   const current_balance = document.getElementById('acc-balance').value;
   const msg = document.getElementById('acc-msg');
   if (!account_label) { msg.textContent = 'Enter an account label first.'; return; }
-  const r = await fetch('/api/money-control/bank-accounts', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ account_label, bank, current_balance: Number(current_balance || 0) })
-  });
-  msg.textContent = r.ok ? 'Added.' : 'Something went wrong.';
+  const r = await post('/api/money-control/bank-accounts', { account_label, bank, current_balance: Number(current_balance || 0) });
+  msg.textContent = await outcome(r, 'Added.');
   if (r.ok) { document.getElementById('acc-label').value=''; document.getElementById('acc-bank').value=''; document.getElementById('acc-balance').value=''; loadAll(); }
 }
 
@@ -141,11 +163,8 @@ async function addOverhead() {
   const monthly_amount = document.getElementById('oh-amount').value;
   const msg = document.getElementById('oh-msg');
   if (!name || !monthly_amount) { msg.textContent = 'Enter both a name and an amount.'; return; }
-  const r = await fetch('/api/money-control/fixed-overheads', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, monthly_amount: Number(monthly_amount) })
-  });
-  msg.textContent = r.ok ? 'Added.' : 'Something went wrong.';
+  const r = await post('/api/money-control/fixed-overheads', { name, monthly_amount: Number(monthly_amount) });
+  msg.textContent = await outcome(r, 'Added.');
   if (r.ok) { document.getElementById('oh-name').value=''; document.getElementById('oh-amount').value=''; loadAll(); }
 }
 
@@ -154,11 +173,8 @@ async function addDiscountRule() {
   const max_discount_pct = document.getElementById('disc-pct').value;
   const msg = document.getElementById('disc-msg');
   if (!max_discount_pct) { msg.textContent = 'Enter a percentage first.'; return; }
-  const r = await fetch('/api/discount-rules', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ role, max_discount_pct: Number(max_discount_pct) })
-  });
-  msg.textContent = r.ok ? 'Set.' : 'Something went wrong.';
+  const r = await post('/api/discount-rules', { role, max_discount_pct: Number(max_discount_pct) });
+  msg.textContent = await outcome(r, 'Set.');
   if (r.ok) { document.getElementById('disc-role').value=''; document.getElementById('disc-pct').value=''; loadAll(); }
 }
 
@@ -167,11 +183,8 @@ async function addCreditLimit() {
   const credit_limit = document.getElementById('cr-limit').value;
   const msg = document.getElementById('cr-msg');
   if (!customer_name || !credit_limit) { msg.textContent = 'Enter both a name and a limit.'; return; }
-  const r = await fetch('/api/credit-limits', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ customer_name, credit_limit: Number(credit_limit) })
-  });
-  msg.textContent = r.ok ? 'Set.' : 'Something went wrong.';
+  const r = await post('/api/credit-limits', { customer_name, credit_limit: Number(credit_limit) });
+  msg.textContent = await outcome(r, 'Set.');
   if (r.ok) { document.getElementById('cr-name').value=''; document.getElementById('cr-limit').value=''; loadAll(); }
 }
 

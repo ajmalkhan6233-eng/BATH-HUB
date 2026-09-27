@@ -159,6 +159,13 @@ router.post('/fixed-overheads', async (req, res) => {
     try {
         const { name, monthly_amount } = req.body;
         if (!name || !monthly_amount) return res.status(400).json({ error: 'name and monthly_amount are required' });
+        // Re-entering an existing cost updates it (otherwise the same rent would be counted twice
+        // in the daily reserve and the set-aside).
+        const upd = await pool.query(`
+            UPDATE fixed_overheads SET monthly_amount = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE active = true AND LOWER(name) = LOWER($1) RETURNING id
+        `, [name, monthly_amount]);
+        if (upd.rows.length) return res.json({ ...upd.rows[0], updated: true });
         const r = await pool.query(`
             INSERT INTO fixed_overheads (name, monthly_amount) VALUES ($1,$2) RETURNING id
         `, [name, monthly_amount]);

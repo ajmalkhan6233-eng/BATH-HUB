@@ -67,13 +67,20 @@ pool.query(`
     )
 `).catch(e => console.error('[pos_bills] pos_bill_items migration failed:', e.message));
 
-function nextBillNumber() {
+// Sequential per day (BHT-YYYYMMDD-0001, -0002 ...). Must run inside the bill's transaction:
+// the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
+// suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
+async function nextBillNumber(client) {
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const d = String(now.getDate()).padStart(2, '0');
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    return `BHT-${y}${m}${d}-${rand}`;
+    const prefix = `BHT-${y}${m}${d}-`;
+    await client.query('SELECT pg_advisory_xact_lock(774413)');
+    const r = await client.query(
+        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '-([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number LIKE $1`,
+        [prefix + '%']);
+    return prefix + String(r.rows[0].n).padStart(4, '0');
 }
 
 async function loadBill(id) {
@@ -95,19 +102,23 @@ router.post('/pos-bills', async (req, res) => {
         if (!Array.isArray(items) || !items.length) {
             return res.status(400).json({ error: 'items (non-empty array) is required' });
         }
-        for (const it of items) {
+        for (const [i, it] of items.entries()) {
             if (!it.item_name || it.qty === undefined || it.unit_price === undefined) {
-                return res.status(400).json({ error: 'each item requires item_name, qty, unit_price' });
+                return res.status(400).json({ error: `item ${i + 1}: item_name, qty and unit_price are required` });
             }
+            const q = Number(it.qty), pr = Number(it.unit_price);
+            if (!Number.isFinite(q) || q <= 0) return res.status(400).json({ error: `item ${i + 1} (${it.item_name}): qty must be a number greater than 0` });
+            if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: `item ${i + 1} (${it.item_name}): unit_price must be a number, 0 or more` });
         }
         const subtotal = items.reduce((sum, it) => sum + Number(it.qty) * Number(it.unit_price), 0);
         const pct = Number(discount_pct) || 0;
         if (pct < 0 || pct > 100) return res.status(400).json({ error: 'discount_pct must be between 0 and 100' });
+        if (subtotal <= 0) return res.status(400).json({ error: 'the bill total must be more than 0' });
         const discount_amount = Math.round(subtotal * pct / 100 * 100) / 100;
         const total = Math.round((subtotal - discount_amount) * 100) / 100;
 
         await client.query('BEGIN');
-        const billNumber = nextBillNumber();
+        const billNumber = await nextBillNumber(client);
         const billRes = await client.query(`
             INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -127,8 +138,8 @@ router.post('/pos-bills', async (req, res) => {
         const full = await loadBill(billId);
         res.json(full);
     } catch (e) {
-        await client.query('ROLLBACK');
-        res.status(500).json({ error: e.message });
+        await client.query('ROLLBACK').catch(() => {});
+        res.status(500).json({ error: `Could not save the bill: ${e.message}` });
     } finally {
         client.release();
     }
