@@ -74,6 +74,11 @@ pool.query(`
 `).catch(e => console.error('[money_control] money_allocations migration failed:', e.message));
 
 // ═══════════════════════ BANK ACCOUNTS ═══════════════════════
+// ─── Input checks (reject bad values with a clear 400 instead of storing them) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
+const isNonNegative = v => v !== '' && v !== null && Number.isFinite(Number(v)) && Number(v) >= 0;
+
 router.get('/bank-accounts', async (req, res) => {
     try {
         const r = await pool.query(`SELECT * FROM bank_accounts WHERE active = true ORDER BY account_label`);
@@ -111,6 +116,7 @@ router.post('/cheque-register/:id/hold', async (req, res) => {
     try {
         const { new_due_date } = req.body;
         if (!new_due_date) return res.status(400).json({ error: 'new_due_date is required' });
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(new_due_date)) || isNaN(Date.parse(new_due_date))) return res.status(400).json({ error: 'new_due_date must be a date (YYYY-MM-DD)' });
         const existing = await pool.query(`SELECT due_date FROM cheque_register WHERE id = $1`, [req.params.id]);
         if (!existing.rows.length) return res.status(404).json({ error: 'not found' });
         const r = await pool.query(`
@@ -129,6 +135,8 @@ router.post('/payment-breakdown', async (req, res) => {
         if (!report_date || !mode || amount === undefined) {
             return res.status(400).json({ error: 'report_date, mode, amount are required' });
         }
+        if (!isDate(report_date)) return res.status(400).json({ error: 'report_date must be a date (YYYY-MM-DD)' });
+        if (!isNonNegative(amount)) return res.status(400).json({ error: 'amount must be a number, 0 or more' });
         const r = await pool.query(`
             INSERT INTO daily_payment_breakdown (report_date, mode, amount)
             VALUES ($1,$2,$3)
@@ -159,6 +167,7 @@ router.post('/fixed-overheads', async (req, res) => {
     try {
         const { name, monthly_amount } = req.body;
         if (!name || !monthly_amount) return res.status(400).json({ error: 'name and monthly_amount are required' });
+        if (!isPositive(monthly_amount)) return res.status(400).json({ error: 'monthly_amount must be a number greater than 0' });
         // Re-entering an existing cost updates it (otherwise the same rent would be counted twice
         // in the daily reserve and the set-aside).
         const upd = await pool.query(`
@@ -199,6 +208,8 @@ router.post('/money-allocations', async (req, res) => {
     try {
         const { label, category, amount, planned_date, notes } = req.body;
         if (!label || !category || !amount) return res.status(400).json({ error: 'label, category, amount are required' });
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (planned_date && !isDate(planned_date)) return res.status(400).json({ error: 'planned_date must be a date (YYYY-MM-DD)' });
         const r = await pool.query(`
             INSERT INTO money_allocations (label, category, amount, planned_date, notes)
             VALUES ($1,$2,$3,$4,$5) RETURNING id
@@ -320,6 +331,11 @@ router.post('/daily-cash-plan', async (req, res) => {
         const { report_date, sales_total, expenses_total, purchasing_reserve, notes } = req.body;
         if (!report_date || sales_total === undefined) {
             return res.status(400).json({ error: 'report_date and sales_total are required' });
+        }
+        if (!isDate(report_date)) return res.status(400).json({ error: 'report_date must be a date (YYYY-MM-DD)' });
+        if (!isNonNegative(sales_total)) return res.status(400).json({ error: 'sales_total must be a number, 0 or more' });
+        for (const [k, v] of [['expenses_total', expenses_total], ['purchasing_reserve', purchasing_reserve]]) {
+            if (v !== undefined && v !== null && v !== '' && !isNonNegative(v)) return res.status(400).json({ error: `${k} must be a number, 0 or more` });
         }
         const r = await pool.query(`
             INSERT INTO daily_cash_plan (report_date, sales_total, expenses_total, purchasing_reserve, notes)

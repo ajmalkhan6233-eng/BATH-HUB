@@ -189,6 +189,13 @@ function setFilter(status, btn) {
   loadLoans();
 }
 
+// Says WHAT went wrong: the server's own message when it sends one, else the HTTP status.
+async function errText(res, prefix) {
+  let d = '';
+  try { d = (await res.json()).error || ''; } catch (_) {}
+  return `${prefix}: ${d || 'the server answered ' + res.status}`;
+}
+
 async function loadSummary() {
   const res = await fetch('/api/investor-loans/summary');
   if (!res.ok) return;
@@ -262,7 +269,7 @@ async function createLoan() {
     showToast('Loan added.');
     loadSummary(); loadLoans();
   } else {
-    statusEl.textContent = 'Something went wrong.';
+    statusEl.textContent = await errText(res, 'Not saved');
   }
 }
 
@@ -290,7 +297,7 @@ async function submitPayment() {
     showToast('Payment recorded.');
     loadSummary(); loadLoans();
   } else {
-    showToast('Something went wrong.');
+    showToast(await errText(res, 'Payment not recorded'));
   }
 }
 
@@ -352,7 +359,7 @@ async function submitEdit() {
     showToast('Loan updated.');
     loadSummary(); loadLoans();
   } else {
-    statusEl.textContent = 'Something went wrong.';
+    statusEl.textContent = await errText(res, 'Not saved');
   }
 }
 
@@ -402,9 +409,10 @@ async function submitDocUpload() {
 }
 
 async function deleteDoc(docId) {
+  if (!confirm('Remove this document permanently? This cannot be undone.')) return;
   const res = await fetch(`/api/investor-loans/documents/${docId}`, { method: 'DELETE' });
   if (res.ok) { await loadDocsList(); showToast('Document removed.'); }
-  else showToast('Something went wrong.');
+  else showToast(await errText(res, 'Document not removed'));
 }
 
 loadSummary();

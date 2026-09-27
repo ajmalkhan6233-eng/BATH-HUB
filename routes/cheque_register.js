@@ -71,12 +71,19 @@ router.get('/cheque-register/due-soon', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
+const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
+
 router.post('/cheque-register', async (req, res) => {
     try {
         const { cheque_no, bank, payee, amount, due_date, notes } = req.body;
         if (!payee || !amount || !due_date) {
             return res.status(400).json({ error: 'payee, amount, due_date are required' });
         }
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (!isDate(due_date)) return res.status(400).json({ error: 'due_date must be a date (YYYY-MM-DD)' });
         const r = await pool.query(`
             INSERT INTO cheque_register (cheque_no, bank, payee, amount, due_date, notes)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING id
@@ -88,6 +95,7 @@ router.post('/cheque-register', async (req, res) => {
 router.put('/cheque-register/:id', async (req, res) => {
     try {
         const { status, notes } = req.body;
+        if (status && !['pending', 'cleared', 'bounced', 'held'].includes(status)) return res.status(400).json({ error: "status must be 'pending', 'cleared', 'bounced' or 'held'" });
         const r = await pool.query(`
             UPDATE cheque_register
             SET status = COALESCE($1, status), notes = COALESCE($2, notes), updated_at = CURRENT_TIMESTAMP

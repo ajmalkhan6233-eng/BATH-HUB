@@ -252,6 +252,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></li>
       <li class="nav-item" data-page="daily-sales"><span class="nav-icon">🧾</span><span class="nav-label">Daily Sales</span></li>
       <li class="nav-item" data-page="stock"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></li>
+      <li class="nav-item" data-page="pos"><span class="nav-icon">🛒</span><span class="nav-label">POS Billing</span></li>
       <li class="nav-item" data-page="grn"><span class="nav-icon">📥</span><span class="nav-label">GRN</span></li>
       <li class="nav-item" data-page="expenses"><span class="nav-icon">💸</span><span class="nav-label">Expenses</span></li>
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
@@ -439,6 +440,11 @@ table tr:last-child td{border-bottom:none}
         <div class="section-hdr"><div class="section-title">Recent GRN Records</div><button class="btn btn-s" onclick="loadGRN()">↺ Refresh</button></div>
         <div class="tbl-wrap"><table><thead><tr><th>GRN#</th><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Status</th></tr></thead><tbody id="grn-tbody"></tbody></table></div>
       </div>
+    </section>
+
+    <!-- ── POS BILLING (embeds public/pos_billing.html) ── -->
+    <section class="page" id="page-pos">
+      <iframe id="pos-frame" title="POS Billing" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
     </section>
 
     <!-- ── GRN (manual entry) ── -->
@@ -746,6 +752,7 @@ const PAGE_META = {
   dashboard:   ['Dashboard',    'Live sales & KPI overview'],
   'daily-sales':['Daily Sales', 'Invoices & payment breakdown'],
   stock:       ['Stock',        'Inventory & GRN records'],
+  pos:         ['POS Billing',  'Itemized bill with discount — share, print or PDF'],
   grn:         ['GRN',          'Receive a supplier delivery'],
   expenses:    ['Expenses',     'Daily expense detail'],
   cheques:     ['Cheques',      'Cheque register & calendar'],
@@ -766,6 +773,8 @@ function navigate(page) {
   const [title, sub] = PAGE_META[page] || [page, ''];
   document.getElementById('page-title').textContent = title;
   if (page === 'grn') openGRNPage();
+  // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
+  if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
 }
 

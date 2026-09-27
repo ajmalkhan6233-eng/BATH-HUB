@@ -124,6 +124,13 @@ function badgeClass(status) {
   return { pending: 'badge-pending', cleared: 'badge-cleared', bounced: 'badge-bounced' }[status] || 'badge-pending';
 }
 
+// Says WHAT went wrong: the server's own message when it sends one, else the HTTP status.
+async function errText(res, prefix) {
+  let d = '';
+  try { d = (await res.json()).error || ''; } catch (_) {}
+  return `${prefix}: ${d || 'the server answered ' + res.status}`;
+}
+
 async function loadAlerts() {
   // Wider than the promised due date on purpose — Rule #1 is pay EARLY, so the
   // owner sees a cheque well before the last safe day to act, not right up against it.
@@ -186,7 +193,7 @@ async function createCheque() {
     showToast('Cheque added.');
     loadAlerts(); loadCheques();
   } else {
-    statusEl.textContent = 'Something went wrong.';
+    statusEl.textContent = await errText(res, 'Cheque not added');
   }
 }
 
@@ -199,7 +206,7 @@ async function updateStatus(id, status) {
     showToast('Status updated.');
     loadAlerts(); loadCheques();
   } else {
-    showToast('Something went wrong.');
+    showToast(await errText(res, 'Status not updated'));
   }
 }
 

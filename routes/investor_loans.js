@@ -146,10 +146,16 @@ pool.query(`ALTER TABLE investor_loans ADD COLUMN IF NOT EXISTS qr_outstanding N
 // LKR amount/interest/payments math above since it's a different currency with
 // no exchange-rate conversion built in. Owner updates this by hand when the QR
 // balance changes.
+// ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
+const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
+
 router.put('/investor-loans/:id/qr-balance', async (req, res) => {
     try {
         const { qr_outstanding } = req.body;
         if (qr_outstanding === undefined) return res.status(400).json({ error: 'qr_outstanding is required' });
+        if (!Number.isFinite(Number(qr_outstanding)) || Number(qr_outstanding) < 0) return res.status(400).json({ error: 'qr_outstanding must be a number, 0 or more' });
         const r = await pool.query(`
             UPDATE investor_loans SET qr_outstanding = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 RETURNING id, qr_outstanding
@@ -211,6 +217,10 @@ router.post('/investor-loans', async (req, res) => {
         if (!lender_name || !amount || !date_given) {
             return res.status(400).json({ error: 'lender_name, amount, date_given are required' });
         }
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (profit_rate !== undefined && profit_rate !== null && profit_rate !== '' && !isPct(profit_rate)) return res.status(400).json({ error: 'profit_rate must be between 0 and 100' });
+        if (!isDate(date_given)) return res.status(400).json({ error: 'date_given must be a date (YYYY-MM-DD)' });
+        if (due_date && !isDate(due_date)) return res.status(400).json({ error: 'due_date must be a date (YYYY-MM-DD)' });
         const r = await pool.query(`
             INSERT INTO investor_loans (lender_name, amount, profit_rate, date_given, due_date, notes)
             VALUES ($1,$2,$3,$4,$5,$6)
@@ -224,6 +234,11 @@ router.post('/investor-loans', async (req, res) => {
 router.put('/investor-loans/:id', async (req, res) => {
     try {
         const { lender_name, amount, profit_rate, date_given, due_date, notes, status, clear_due_date } = req.body;
+        if (amount !== undefined && amount !== null && !isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (profit_rate !== undefined && profit_rate !== null && !isPct(profit_rate)) return res.status(400).json({ error: 'profit_rate must be between 0 and 100' });
+        if (date_given && !isDate(date_given)) return res.status(400).json({ error: 'date_given must be a date (YYYY-MM-DD)' });
+        if (due_date && !isDate(due_date)) return res.status(400).json({ error: 'due_date must be a date (YYYY-MM-DD)' });
+        if (status && !['active', 'repaid', 'overdue'].includes(status)) return res.status(400).json({ error: "status must be 'active', 'repaid' or 'overdue'" });
         const r = await pool.query(`
             UPDATE investor_loans
             SET lender_name = COALESCE($1, lender_name),
@@ -247,6 +262,8 @@ router.post('/investor-loans/:id/payments', async (req, res) => {
     try {
         const { amount, payment_date, notes } = req.body;
         if (!amount || !payment_date) return res.status(400).json({ error: 'amount and payment_date are required' });
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (!isDate(payment_date)) return res.status(400).json({ error: 'payment_date must be a date (YYYY-MM-DD)' });
 
         const loan = await pool.query(`SELECT id FROM investor_loans WHERE id = $1`, [req.params.id]);
         if (!loan.rows.length) return res.status(404).json({ error: 'loan not found' });

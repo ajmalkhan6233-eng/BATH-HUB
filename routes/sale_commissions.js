@@ -51,12 +51,20 @@ pool.query(`
 `).catch(e => console.error('[sale_commissions] migration failed:', e.message));
 
 // ═══════════════════════ LOG a sale (creates the commission entry) ═══════════════════════
+// ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
+const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
+
 router.post('/sale-commissions', async (req, res) => {
     try {
         const { staff_id, sale_date, amount, commission_pct, reference_note, notes } = req.body;
         if (!staff_id || !sale_date || !amount || commission_pct === undefined) {
             return res.status(400).json({ error: 'staff_id, sale_date, amount, commission_pct are required' });
         }
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (!isPct(commission_pct)) return res.status(400).json({ error: 'commission_pct must be between 0 and 100' });
+        if (!isDate(sale_date)) return res.status(400).json({ error: 'sale_date must be a date (YYYY-MM-DD)' });
         const commission_amount = Math.round((amount * commission_pct / 100) * 100) / 100;
         const r = await pool.query(`
             INSERT INTO sale_commissions (staff_id, entry_type, sale_date, amount, commission_pct, commission_amount, reference_note, notes)
@@ -95,6 +103,8 @@ router.post('/sale-commissions/:id/return', async (req, res) => {
         if (!new_amount || new_commission_pct === undefined) {
             return res.status(400).json({ error: 'exchange requires new_amount and new_commission_pct' });
         }
+        if (!isPositive(new_amount)) return res.status(400).json({ error: 'new_amount must be a number greater than 0' });
+        if (!isPct(new_commission_pct)) return res.status(400).json({ error: 'new_commission_pct must be between 0 and 100' });
         const new_commission_amount = Math.round((new_amount * new_commission_pct / 100) * 100) / 100;
         const net_adjustment = Math.round((new_commission_amount - sale.commission_amount) * 100) / 100;
         const r = await pool.query(`
