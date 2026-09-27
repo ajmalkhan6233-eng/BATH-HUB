@@ -252,6 +252,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></li>
       <li class="nav-item" data-page="daily-sales"><span class="nav-icon">🧾</span><span class="nav-label">Daily Sales</span></li>
       <li class="nav-item" data-page="stock"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></li>
+      <li class="nav-item" data-page="grn"><span class="nav-icon">📥</span><span class="nav-label">GRN</span></li>
       <li class="nav-item" data-page="expenses"><span class="nav-icon">💸</span><span class="nav-label">Expenses</span></li>
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
@@ -435,6 +436,30 @@ table tr:last-child td{border-bottom:none}
       <div class="card">
         <div class="section-hdr"><div class="section-title">Recent GRN Records</div><button class="btn btn-s" onclick="loadGRN()">↺ Refresh</button></div>
         <div class="tbl-wrap"><table><thead><tr><th>GRN#</th><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Status</th></tr></thead><tbody id="grn-tbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── GRN (manual entry) ── -->
+    <section class="page" id="page-grn">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-hdr"><div class="section-title">New GRN — receive a delivery</div></div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Supplier *</label><input class="fi" id="mg-supplier" list="mg-supplier-list" placeholder="Pick or type a supplier"><datalist id="mg-supplier-list"></datalist></div>
+          <div class="fg"><label class="fl">Date *</label><input type="date" class="fi" id="mg-date"></div>
+          <div class="fg"><label class="fl">Notes</label><input class="fi" id="mg-notes" placeholder="Optional (delivery note no., etc.)"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin:6px 0 10px">Each new item gets the next item code automatically. An item whose name already exists is restocked instead of duplicated.</div>
+        <div id="mg-rows"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <button class="btn btn-s" onclick="mgAddRow()">+ Add item row</button>
+          <div style="margin-left:auto;font-weight:700">Total: <span id="mg-total">LKR 0</span></div>
+          <button class="btn btn-p" id="mg-save" onclick="saveManualGRN()">Save GRN</button>
+        </div>
+        <div id="mg-result" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <div class="section-hdr"><div class="section-title">Recent GRN Records</div><button class="btn btn-s" onclick="loadManualGRNList()">↺ Refresh</button></div>
+        <div class="tbl-wrap"><table><thead><tr><th>GRN#</th><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Total</th></tr></thead><tbody id="mg-tbody"></tbody></table></div>
       </div>
     </section>
 
@@ -718,6 +743,7 @@ const PAGE_META = {
   dashboard:   ['Dashboard',    'Live sales & KPI overview'],
   'daily-sales':['Daily Sales', 'Invoices & payment breakdown'],
   stock:       ['Stock',        'Inventory & GRN records'],
+  grn:         ['GRN',          'Receive a supplier delivery'],
   expenses:    ['Expenses',     'Daily expense detail'],
   cheques:     ['Cheques',      'Cheque register & calendar'],
   vendors:     ['Vendors',      'Supplier directory & payments'],
@@ -736,6 +762,7 @@ function navigate(page) {
   document.getElementById(`page-${page}`).classList.add('active');
   const [title, sub] = PAGE_META[page] || [page, ''];
   document.getElementById('page-title').textContent = title;
+  if (page === 'grn') openGRNPage();
   document.getElementById('page-sub').textContent = sub;
 }
 
@@ -1130,6 +1157,104 @@ function renderStock() {
 }
 
 function filterStock() { renderStock(); }
+
+/* ── Manual GRN page ── */
+let _mgSuppliers = [];
+const mgEsc = v => String(v ?? '—').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function mgAddRow() {
+  const wrap = document.getElementById('mg-rows');
+  const row = document.createElement('div');
+  row.className = 'mg-row';
+  row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--card-border)';
+  row.innerHTML = `
+    <div class="fg" style="flex:2;min-width:160px;margin:0"><label class="fl">Item name</label><input class="fi mg-name" list="mg-item-list" placeholder="Item name"></div>
+    <div class="fg" style="flex:0 0 90px;margin:0"><label class="fl">Qty</label><input type="number" min="0" step="any" class="fi mg-qty" placeholder="0" oninput="mgRecalc()"></div>
+    <div class="fg" style="flex:0 0 120px;margin:0"><label class="fl">Unit cost</label><input type="number" min="0" step="any" class="fi mg-cost" placeholder="0" oninput="mgRecalc()"></div>
+    <div class="fg" style="flex:1;min-width:150px;margin:0"><label class="fl">Photo</label><input type="file" class="fi mg-photo" accept="image/jpeg,image/png,image/webp"></div>
+    <button class="btn btn-s" type="button" title="Remove this row" onclick="mgRemoveRow(this)">✕</button>`;
+  wrap.appendChild(row);
+}
+function mgRemoveRow(btn) {
+  if (document.querySelectorAll('#mg-rows .mg-row').length <= 1) { toast('A GRN needs at least one item row', 'warning'); return; }
+  btn.closest('.mg-row').remove();
+  mgRecalc();
+}
+function mgRecalc() {
+  let t = 0;
+  document.querySelectorAll('#mg-rows .mg-row').forEach(r => {
+    t += (parseFloat(r.querySelector('.mg-qty').value)||0) * (parseFloat(r.querySelector('.mg-cost').value)||0);
+  });
+  document.getElementById('mg-total').textContent = fmtLKR(t);
+}
+async function loadManualGRNList() {
+  const rows = await api('/api/grn');
+  const tbody = document.getElementById('mg-tbody');
+  if (!rows) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">Could not load GRN records</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">No GRN records yet</td></tr>'; return; }
+  // /api/grn sorts by a minute-resolution text alias, so newest-first is enforced here by id.
+  tbody.innerHTML = [...rows].sort((a, b) => b.id - a.id).slice(0, 25).map(r => `<tr>
+    <td>${mgEsc(r.grn_number)}</td><td>${mgEsc(r.grn_date)}</td><td>${mgEsc(r.supplier_name)}</td><td>${mgEsc(r.item_description)}</td>
+    <td>${r.quantity||0}</td><td>${fmtLKR(r.unit_cost)}</td><td>${fmtLKR(r.total_amount)}</td></tr>`).join('');
+}
+async function openGRNPage() {
+  const d = document.getElementById('mg-date');
+  if (!d.value) d.value = today();
+  if (!document.querySelector('#mg-rows .mg-row')) mgAddRow();
+  if (!document.getElementById('mg-item-list')) {
+    const dl = document.createElement('datalist'); dl.id = 'mg-item-list'; document.body.appendChild(dl);
+  }
+  const sup = await api('/api/suppliers');
+  if (sup) {
+    _mgSuppliers = sup;
+    document.getElementById('mg-supplier-list').innerHTML = sup.map(s => `<option value="${mgEsc(s.name)}">`).join('');
+  }
+  document.getElementById('mg-item-list').innerHTML = _stock.map(r => `<option value="${mgEsc(r.name)}">`).join('');
+  loadManualGRNList();
+}
+async function saveManualGRN() {
+  const supplier_name = document.getElementById('mg-supplier').value.trim();
+  const grn_date = document.getElementById('mg-date').value;
+  if (!supplier_name) { toast('Enter the supplier', 'warning'); return; }
+  if (!grn_date) { toast('Pick the GRN date', 'warning'); return; }
+  const lines = [], fd = new FormData();
+  const rows = [...document.querySelectorAll('#mg-rows .mg-row')];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const name = r.querySelector('.mg-name').value.trim();
+    const qty = parseFloat(r.querySelector('.mg-qty').value);
+    const unit_cost = parseFloat(r.querySelector('.mg-cost').value);
+    if (!name) { toast(`Row ${i+1}: enter the item name`, 'warning'); return; }
+    if (!(qty > 0)) { toast(`Row ${i+1} (${name}): quantity must be more than 0`, 'warning'); return; }
+    if (!(unit_cost >= 0)) { toast(`Row ${i+1} (${name}): enter the unit cost`, 'warning'); return; }
+    lines.push({ name, qty, unit_cost });
+    const f = r.querySelector('.mg-photo').files[0];
+    if (f) fd.append('photo_' + i, f);
+  }
+  const sup = _mgSuppliers.find(s => String(s.name).toLowerCase() === supplier_name.toLowerCase());
+  fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, lines }));
+  const btn = document.getElementById('mg-save');
+  btn.disabled = true;
+  try {
+    // Raw fetch: api() forces a JSON Content-Type, which would break the multipart upload.
+    const r = await fetch('/api/grn-manual', { method:'POST', body: fd, credentials:'include' });
+    if (r.status === 401) { showLogin(); return; }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { toast(d.error || `Could not save the GRN (server said ${r.status})`, 'error'); return; }
+    toast(`GRN ${d.grn_number} saved`, 'success');
+    document.getElementById('mg-result').innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);font-size:13px">
+      <strong>${mgEsc(d.grn_number)}</strong> — ${mgEsc(d.supplier_name)}, ${mgEsc(d.grn_date)} — ${fmtLKR(d.total)}<br>` +
+      d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span>`).join('<br>') + '</div>';
+    document.getElementById('mg-rows').innerHTML = '';
+    document.getElementById('mg-notes').value = '';
+    mgAddRow(); mgRecalc();
+    loadManualGRNList();
+    loadStock();
+  } catch (e) {
+    toast(`Could not reach the server: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
 
 async function toggleItemForm() {
   const f = document.getElementById('item-form');
