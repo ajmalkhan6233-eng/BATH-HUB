@@ -72,6 +72,11 @@
   .share-btn.download { background: var(--emerald-800); }
   .share-btn.print { background: var(--earth-700); }
   .share-btn:hover { filter: brightness(0.95); }
+  .share-btn.wa-receipt { grid-column: 1 / -1; background: #128C7E; }
+  .share-btn:disabled { opacity: .6; cursor: default; }
+  .wa-receipt-msg { margin-top: 8px; font-size: 12.5px; min-height: 16px; color: var(--earth-700); }
+  .wa-receipt-msg.err { color: #b42318; }
+  .wa-receipt-msg.ok { color: #067647; }
 
   .new-bill-btn {
     width: 100%; margin-top: 10px; background: none; border: 1px solid #ccc; color: var(--earth-700);
@@ -142,7 +147,9 @@
       <a class="share-btn email" id="emailBtn" href="#">Email</a>
       <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
       <button class="share-btn print" onclick="window.print()">Print</button>
+      <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
     </div>
+    <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
     <button class="new-bill-btn" onclick="resetForm()">+ New bill</button>
   </div>
 </div>
@@ -227,7 +234,40 @@ async function generateBill() {
   }
 }
 
+let currentBill = null;
+
+// Sends the designed receipt image for the bill on screen through the WhatsApp bridge.
+async function sendWhatsAppReceipt() {
+  const msg = document.getElementById('waReceiptMsg');
+  const btn = document.getElementById('waReceiptBtn');
+  const setMsg = (t, cls) => { msg.textContent = t; msg.className = 'wa-receipt-msg' + (cls ? ' ' + cls : ''); };
+  if (!currentBill) return;
+  let phone = currentBill.customer_phone;
+  if (!phone) {
+    phone = prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):');
+    if (!phone) return;
+  }
+  btn.disabled = true;
+  setMsg('Building and sending the receipt…');
+  try {
+    const res = await fetch('/api/invoice-receipts/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim() }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.error || 'the server answered ' + res.status);
+    currentBill.customer_phone = phone.trim();
+    setMsg(`Receipt sent to ${d.to}.`, 'ok');
+  } catch (e) {
+    setMsg(`Receipt not sent: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function renderBill(bill) {
+  currentBill = bill;
+  document.getElementById('waReceiptMsg').textContent = '';
   const sym = branding.currency_symbol || 'Rs';
   document.getElementById('rMeta').innerHTML = `
     <div class="row"><span>Bill No:</span><span>${bill.bill_number}</span></div>

@@ -1,12 +1,14 @@
 // routes/invoice_receipts.js
-// WHATSAPP RECEIPTS for Bath Hub Thihariya: attach a customer phone to a saved invoice
-// and send that customer a designed receipt image over the existing WhatsApp bridge.
+// WHATSAPP RECEIPTS for Bath Hub Thihariya: send a customer a designed receipt image for a
+// POS bill (pos_bills / pos_bill_items — the POS Billing screen, where sales are entered)
+// over the existing WhatsApp bridge.
 //
-// - daily_reports (the invoice table) is golden core and is NOT altered. The phone/customer
-//   link and send status live in our own table, invoice_receipts.
+// - pos_bills is read-only here. The phone/customer link and send status live in our own
+//   table, invoice_receipts (bill_id -> customer, status).
 // - Customers: the phone is matched against the existing `customers` table (any stored
 //   format: 0771234567 / 94771234567 / +94 77 123 4567); if there is no match a new
-//   walk_in customer row is created (existing columns only).
+//   walk_in customer row is created (existing columns only). pos_bills.js calls
+//   attachCustomer() right after a bill with a phone is saved.
 // - Receipt image: HTML -> PNG with headless Chrome (puppeteer-core, its own throw-away
 //   profile — it never touches the bridge's WhatsApp session). If Chrome or puppeteer is
 //   unavailable it falls back to a pdfkit PDF, sent as a document.
@@ -58,6 +60,8 @@ pool.query(`
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
 `).then(() => pool.query(`CREATE INDEX IF NOT EXISTS idx_invoice_receipts_date ON invoice_receipts (report_date)`))
+  .then(() => pool.query(`ALTER TABLE invoice_receipts ADD COLUMN IF NOT EXISTS bill_id INT`))
+  .then(() => pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_receipts_bill ON invoice_receipts (bill_id) WHERE bill_id IS NOT NULL`))
   .catch(e => console.error('[invoice_receipts] migration failed:', e.message));
 
 function httpError(status, msg) { const e = new Error(msg); e.status = status; return e; }
@@ -93,41 +97,46 @@ async function matchOrCreateCustomer(phone, name) {
     return { id: ins.rows[0].id, name: name || null, created: true };
 }
 
-// ─── Invoice lookup (read-only on daily_reports) ─────────────────────────────
-async function findInvoice({ report_id, report_date, invoice_no }) {
+// ─── Bill lookup (read-only on pos_bills / pos_bill_items) ───────────────────
+async function findBill({ bill_id, bill_number }) {
     let r;
-    if (report_id) r = await pool.query(`SELECT * FROM daily_reports WHERE id = $1`, [report_id]).catch(() => null);
-    if (!r || !r.rows.length) {
-        if (!report_date) throw httpError(400, 'report_date is required');
-        r = invoice_no
-            ? await pool.query(`SELECT * FROM daily_reports WHERE report_date = $1 AND invoice_no = $2 ORDER BY created_at DESC LIMIT 1`, [report_date, invoice_no])
-            : null;
+    if (bill_id !== undefined && bill_id !== null && bill_id !== '') {
+        if (!Number.isInteger(Number(bill_id))) throw httpError(400, 'bill_id must be a number');
+        r = await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [bill_id]);
+    } else if (bill_number) {
+        r = await pool.query(`SELECT * FROM pos_bills WHERE bill_number = $1`, [bill_number]);
+    } else {
+        throw httpError(400, 'bill_id is required');
     }
-    if (!r || !r.rows.length) throw httpError(404, 'That invoice was not found — save the invoice first');
-    return r.rows[0];
+    if (!r.rows.length) throw httpError(404, 'That bill was not found — generate the bill first');
+    const bill = r.rows[0];
+    bill.items = (await pool.query(`SELECT item_name, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;
+    return bill;
 }
 
 // ─── Receipt rendering ───────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const lkr = n => 'LKR ' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const lkr = n => { const v = Number(n || 0); const f = Number.isInteger(v) ? 0 : 2; return 'LKR ' + v.toLocaleString('en-US', { minimumFractionDigits: f, maximumFractionDigits: f }); };
 const shopName = () => process.env.SHOP_NAME || 'Bath Hub Thihariya';
 
-function receiptData(inv, rec) {
-    const methods = [['Cash', inv.cash_amount], ['Card', inv.card_amount], ['Online', inv.online_amount],
-                     ['Credit', inv.credit_amount], ['Cheque', inv.cheque_amount]]
-        .filter(([, v]) => Number(v) > 0);
-    const d = inv.report_date instanceof Date ? inv.report_date.toISOString().slice(0, 10) : String(inv.report_date).slice(0, 10);
+function receiptData(bill, rec) {
+    const d = bill.created_at instanceof Date ? bill.created_at : new Date(bill.created_at);
+    const pad = n => String(n).padStart(2, '0');
     return {
-        shop: shopName(), invoice_no: inv.invoice_no || '—', date: d,
-        customer: rec.customer_name || '', phone: rec.customer_phone,
-        total: Number(inv.total_sale) || 0, is_refund: !!inv.is_refund, notes: inv.notes || '', methods,
+        shop: shopName(), bill_no: bill.bill_number,
+        date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        customer: rec.customer_name || bill.customer_name || '', phone: rec.customer_phone,
+        items: (bill.items || []).map(i => ({ name: i.item_name, qty: Number(i.qty), total: Number(i.line_total) })),
+        subtotal: Number(bill.subtotal) || 0, discount_pct: Number(bill.discount_pct) || 0,
+        discount: Number(bill.discount_amount) || 0, total: Number(bill.total) || 0,
+        payment: String(bill.payment_method || 'cash'), notes: bill.notes || '',
     };
 }
 
 function receiptHtml(r) {
     const logo = fs.existsSync(LOGO_PATH)
         ? `<img src="data:image/png;base64,${fs.readFileSync(LOGO_PATH).toString('base64')}" style="max-width:100%;max-height:100%">` : '';
-    const rows = r.methods.map(([m, v]) => `<div class="row"><span>${m}</span><span>${lkr(v)}</span></div>`).join('');
+    const rows = r.items.map(i => `<div class="row"><span>${esc(i.name)} × ${i.qty}</span><span>${lkr(i.total)}</span></div>`).join('');
     return `<!doctype html><html><head><meta charset="utf-8"><style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{width:420px;background:#f7f4ec;font-family:'Segoe UI',Arial,sans-serif;color:#201c16}
@@ -140,24 +149,28 @@ function receiptHtml(r) {
       .meta{display:flex;justify-content:space-between;font-size:13px;color:#5c4033;margin-bottom:4px}
       .meta b{color:#201c16}
       hr{border:0;border-top:1px dashed #d8d0bd;margin:14px 0}
-      .row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
-      .total{display:flex;justify-content:space-between;align-items:baseline;background:#f7f4ec;border-radius:6px;padding:12px 14px;margin-top:6px}
+      .row{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:4px 0}
+      .row span:first-child{flex:1}
+      .disc{color:#5c4033}
+      .total{display:flex;justify-content:space-between;align-items:baseline;background:#f7f4ec;border-radius:6px;padding:12px 14px;margin-top:8px}
       .total span:first-child{font-size:13px;color:#5c4033;text-transform:uppercase;letter-spacing:1px}
       .total span:last-child{font-size:24px;font-weight:700;color:#062e21}
-      .refund{display:inline-block;background:#fdeaea;color:#b42318;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px;margin-top:8px}
       .notes{font-size:12px;color:#5c4033;margin-top:10px}
       .thanks{text-align:center;padding:4px 24px 22px;font-size:13px;color:#5c4033}
     </style></head><body><div class="card">
-      <div class="head"><div class="logo">${logo}</div><div class="shop">${esc(r.shop)}</div><div class="tag">${r.is_refund ? 'Refund receipt' : 'Receipt'}</div></div>
+      <div class="head"><div class="logo">${logo}</div><div class="shop">${esc(r.shop)}</div><div class="tag">Receipt</div></div>
       <div class="body">
-        <div class="meta"><span>Invoice</span><b>${esc(r.invoice_no)}</b></div>
+        <div class="meta"><span>Bill</span><b>${esc(r.bill_no)}</b></div>
         <div class="meta"><span>Date</span><b>${esc(r.date)}</b></div>
         ${r.customer ? `<div class="meta"><span>Customer</span><b>${esc(r.customer)}</b></div>` : ''}
         <div class="meta"><span>Phone</span><b>${esc(r.phone)}</b></div>
         <hr>
-        ${rows || '<div class="row"><span>Payment</span><span>—</span></div>'}
-        <div class="total"><span>${r.is_refund ? 'Refunded' : 'Total'}</span><span>${lkr(r.total)}</span></div>
-        ${r.is_refund ? '<div class="refund">REFUND</div>' : ''}
+        ${rows}
+        <hr>
+        <div class="row"><span>Subtotal</span><span>${lkr(r.subtotal)}</span></div>
+        ${r.discount > 0 ? `<div class="row disc"><span>Discount (${r.discount_pct}%)</span><span>-${lkr(r.discount)}</span></div>` : ''}
+        <div class="total"><span>Total</span><span>${lkr(r.total)}</span></div>
+        <div class="row"><span>Paid by</span><span>${esc(r.payment.toUpperCase())}</span></div>
         ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ''}
       </div>
       <div class="thanks">Thank you for shopping with us!</div>
@@ -190,23 +203,27 @@ async function renderPng(r) {
 function renderPdf(r) {
     const PDFDocument = require('pdfkit');
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ size: [300, 480], margin: 20 });
+        const doc = new PDFDocument({ size: [300, 340 + r.items.length * 18], margin: 20 });
         const chunks = [];
         doc.on('data', c => chunks.push(c)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
         doc.rect(0, 0, 300, 70).fill('#062e21');
         doc.fillColor('#f7f4ec').fontSize(17).text(r.shop, 20, 22, { align: 'center', width: 260 });
-        doc.fillColor('#c9a227').fontSize(9).text(r.is_refund ? 'REFUND RECEIPT' : 'RECEIPT', { align: 'center', width: 260 });
-        doc.fillColor('#201c16').fontSize(10).moveDown(2);
-        const line = (a, b) => { const y = doc.y; doc.text(a, 20, y, { width: 130 }); doc.text(b, 150, y, { width: 130, align: 'right' }); doc.moveDown(0.4); };
+        doc.fillColor('#c9a227').fontSize(9).text('RECEIPT', { align: 'center', width: 260 });
+        doc.fillColor('#201c16').fontSize(10);
+        const line = (a, b) => { const y = doc.y; doc.text(a, 20, y, { width: 170 }); doc.text(b, 150, y, { width: 130, align: 'right' }); doc.moveDown(0.4); };
         doc.y = 90;
-        line('Invoice', r.invoice_no); line('Date', r.date);
+        line('Bill', r.bill_no); line('Date', r.date);
         if (r.customer) line('Customer', r.customer);
         line('Phone', r.phone); doc.moveDown(0.5);
-        r.methods.forEach(([m, v]) => line(m, lkr(v)));
-        doc.moveDown(0.5).fontSize(14).fillColor('#062e21');
-        const y = doc.y; doc.text(r.is_refund ? 'Refunded' : 'Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
-        if (r.notes) doc.moveDown(1).fontSize(9).fillColor('#5c4033').text(r.notes, 20, doc.y, { width: 260 });
-        doc.moveDown(2).fontSize(10).fillColor('#5c4033').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
+        r.items.forEach(i => line(`${i.name} x ${i.qty}`, lkr(i.total)));
+        doc.moveDown(0.5);
+        line('Subtotal', lkr(r.subtotal));
+        if (r.discount > 0) line(`Discount (${r.discount_pct}%)`, '-' + lkr(r.discount));
+        doc.moveDown(0.3).fontSize(14).fillColor('#062e21');
+        const y = doc.y; doc.text('Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
+        doc.moveDown(0.6).fontSize(10).fillColor('#201c16'); line('Paid by', r.payment.toUpperCase());
+        if (r.notes) doc.moveDown(0.5).fontSize(9).fillColor('#5c4033').text(r.notes, 20, doc.y, { width: 260 });
+        doc.moveDown(1.5).fontSize(10).fillColor('#5c4033').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
         doc.end();
     });
 }
@@ -222,101 +239,97 @@ async function renderReceipt(r) {
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
-async function linkInvoice(body, phoneRaw) {
-    const inv = await findInvoice(body);
-    const phone = normalizePhone(phoneRaw);
-    const name = String(body.customer_name || '').trim() || null;
+// Match/create the customer for a bill's phone and record the bill -> customer link.
+async function linkBill(bill, phoneRaw, nameRaw) {
+    const phone = normalizePhone(phoneRaw || bill.customer_phone);
+    const name = String(nameRaw || bill.customer_name || '').trim() || null;
     const cust = await matchOrCreateCustomer(phone, name);
-    const invoiceNo = inv.invoice_no || null;
-    const existing = await pool.query(
-        inv.id != null
-            ? `SELECT id FROM invoice_receipts WHERE report_id = $1`
-            : `SELECT id FROM invoice_receipts WHERE report_date = $1 AND invoice_no = $2`,
-        inv.id != null ? [inv.id] : [inv.report_date, invoiceNo]);
-    let rec;
-    if (existing.rows.length) {
-        rec = (await pool.query(
-            `UPDATE invoice_receipts SET customer_id=$1, customer_name=$2, customer_phone=$3, updated_at=NOW() WHERE id=$4 RETURNING *`,
-            [cust.id, cust.name, phone, existing.rows[0].id])).rows[0];
-    } else {
-        rec = (await pool.query(
-            `INSERT INTO invoice_receipts (report_id, report_date, invoice_no, customer_id, customer_name, customer_phone)
-             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [inv.id ?? null, inv.report_date, invoiceNo, cust.id, cust.name, phone])).rows[0];
-    }
-    return { inv, rec, customer_created: cust.created };
+    const rec = (await pool.query(`
+        INSERT INTO invoice_receipts (bill_id, report_date, invoice_no, customer_id, customer_name, customer_phone)
+        VALUES ($1,$2,$3,$4,$5,$6)
+        ON CONFLICT (bill_id) WHERE bill_id IS NOT NULL DO UPDATE SET
+            customer_id = EXCLUDED.customer_id, customer_name = EXCLUDED.customer_name,
+            customer_phone = EXCLUDED.customer_phone, updated_at = NOW()
+        RETURNING *`,
+        [bill.id, new Date(bill.created_at), bill.bill_number, cust.id, cust.name, phone])).rows[0];
+    return { rec, customer_created: cust.created };
+}
+
+// Called by pos_bills.js right after a bill with a phone is saved (best effort there).
+async function attachCustomer(billId) {
+    const bill = await findBill({ bill_id: billId });
+    if (!bill.customer_phone) return null;
+    return linkBill(bill, bill.customer_phone, bill.customer_name);
 }
 
 const fail = (res, e, what) => res.status(e.status || 500).json({ error: e.status ? e.message : `${what}: ${e.message}` });
 
-// Attach a customer phone to an invoice (matches/creates the customer).
+// Attach (or change) the customer phone for a bill.
 router.post('/invoice-receipts/link', async (req, res) => {
     try {
-        const { rec, customer_created } = await linkInvoice(req.body || {}, (req.body || {}).customer_phone);
+        const body = req.body || {};
+        const bill = await findBill(body);
+        const { rec, customer_created } = await linkBill(bill, body.customer_phone, body.customer_name);
         res.status(201).json({ ...rec, customer_created });
-    } catch (e) { fail(res, e, 'Could not link the customer to the invoice'); }
+    } catch (e) { fail(res, e, 'Could not link the customer to the bill'); }
 });
 
-// Links for one day (so the invoice list can show the phone + send status).
+// Receipt status for one bill (or, with ?date=, every bill's receipt status for that day).
 router.get('/invoice-receipts', async (req, res) => {
     try {
-        const { date } = req.query;
-        if (!date) return res.status(400).json({ error: 'date is required' });
-        const r = await pool.query(
-            `SELECT id, report_id, invoice_no, customer_name, customer_phone, status, last_error,
-                    TO_CHAR(sent_at,'YYYY-MM-DD HH24:MI') AS sent_at
-             FROM invoice_receipts WHERE report_date = $1 ORDER BY id DESC`, [date]);
-        res.json(r.rows);
-    } catch (e) { fail(res, e, 'Could not load receipt links'); }
+        const { bill_id, date } = req.query;
+        if (!bill_id && !date) return res.status(400).json({ error: 'bill_id or date is required' });
+        const r = bill_id
+            ? await pool.query(`SELECT * FROM invoice_receipts WHERE bill_id = $1`, [bill_id])
+            : await pool.query(`SELECT * FROM invoice_receipts WHERE bill_id IS NOT NULL AND report_date::date = $1 ORDER BY id DESC`, [date]);
+        res.json(r.rows.map(x => ({ id: x.id, bill_id: x.bill_id, bill_number: x.invoice_no, customer_name: x.customer_name,
+            customer_phone: x.customer_phone, status: x.status, last_error: x.last_error, sent_at: x.sent_at })));
+    } catch (e) { fail(res, e, 'Could not load receipt status'); }
 });
 
 // Preview the receipt image without sending anything.
 router.get('/invoice-receipts/preview', async (req, res) => {
     try {
-        const inv = await findInvoice({ report_id: req.query.report_id, report_date: req.query.date, invoice_no: req.query.invoice_no });
-        const rec = { customer_name: req.query.customer_name || '', customer_phone: req.query.phone || '' };
-        const out = await renderReceipt(receiptData(inv, rec));
+        const bill = await findBill({ bill_id: req.query.bill_id, bill_number: req.query.bill_number });
+        const rec = { customer_name: req.query.customer_name || '', customer_phone: req.query.phone || bill.customer_phone || '' };
+        const out = await renderReceipt(receiptData(bill, rec));
         res.type(out.mimetype).send(out.buffer);
     } catch (e) { fail(res, e, 'Could not build the receipt preview'); }
 });
 
-// Link (if a phone is supplied), render, send over the bridge, record the outcome.
+// Link (phone from the request or the bill), render, send over the bridge, record the outcome.
 router.post('/invoice-receipts/send', async (req, res) => {
     let rec;
     try {
         const body = req.body || {};
-        let inv, customer_created = false;
-        if (body.customer_phone) {
-            ({ inv, rec, customer_created } = await linkInvoice(body, body.customer_phone));
+        const bill = await findBill(body);
+        let customer_created = false;
+        if (body.customer_phone || bill.customer_phone) {
+            ({ rec, customer_created } = await linkBill(bill, body.customer_phone, body.customer_name));
         } else {
-            inv = await findInvoice(body);
-            const q = await pool.query(
-                inv.id != null ? `SELECT * FROM invoice_receipts WHERE report_id = $1`
-                               : `SELECT * FROM invoice_receipts WHERE report_date = $1 AND invoice_no = $2`,
-                inv.id != null ? [inv.id] : [inv.report_date, inv.invoice_no || null]);
-            if (!q.rows.length) throw httpError(400, 'No customer phone is attached to this invoice — enter one');
+            const q = await pool.query(`SELECT * FROM invoice_receipts WHERE bill_id = $1`, [bill.id]);
+            if (!q.rows.length) throw httpError(400, 'No customer phone is attached to this bill — enter one');
             rec = q.rows[0];
         }
 
-        const data = receiptData(inv, rec);
+        const data = receiptData(bill, rec);
         const out = await renderReceipt(data);
-        const caption = `${data.shop}\n${data.is_refund ? 'Refund receipt' : 'Receipt'} — invoice ${data.invoice_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
+        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {
             await axios.post(bridgeUrl, {
                 to: rec.customer_phone, message: caption,
-                media: { data: out.buffer.toString('base64'), mimetype: out.mimetype, filename: `receipt-${String(data.invoice_no).replace(/[^\w-]/g, '_')}.${out.ext}` },
+                media: { data: out.buffer.toString('base64'), mimetype: out.mimetype, filename: `receipt-${String(data.bill_no).replace(/[^\w-]/g, '_')}.${out.ext}` },
             }, { timeout: 30000, maxBodyLength: Infinity });
         } catch (e) {
             const detail = e.response?.data?.error || e.message;
-            const err = httpError(502, e.response
+            throw httpError(502, e.response
                 ? `WhatsApp bridge refused the receipt: ${detail}`
                 : `WhatsApp bridge is not reachable (${detail}) — the receipt was not sent`);
-            throw err;
         }
         await pool.query(`UPDATE invoice_receipts SET status='sent', last_error=NULL, sent_at=NOW(), updated_at=NOW() WHERE id=$1`, [rec.id]);
-        res.json({ sent: true, to: rec.customer_phone, format: out.ext, invoice_no: data.invoice_no, customer_created });
+        res.json({ sent: true, to: rec.customer_phone, format: out.ext, bill_number: data.bill_no, customer_created });
     } catch (e) {
         if (rec) await pool.query(`UPDATE invoice_receipts SET status='failed', last_error=$1, updated_at=NOW() WHERE id=$2`, [e.message, rec.id]).catch(() => {});
         fail(res, e, 'Could not send the receipt');
@@ -325,3 +338,4 @@ router.post('/invoice-receipts/send', async (req, res) => {
 
 module.exports = router;
 module.exports.normalizePhone = normalizePhone;
+module.exports.attachCustomer = attachCustomer;

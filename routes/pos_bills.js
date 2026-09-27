@@ -135,6 +135,12 @@ router.post('/pos-bills', async (req, res) => {
         }
         await client.query('COMMIT');
 
+        // A bill with a phone gets its customer matched/created now (best effort — never fails the sale).
+        if (customer_phone) {
+            try { await require('./invoice_receipts').attachCustomer(billId); }
+            catch (e) { console.warn('[pos_bills] customer link skipped:', e.message); }
+        }
+
         const full = await loadBill(billId);
         res.json(full);
     } catch (e) {
