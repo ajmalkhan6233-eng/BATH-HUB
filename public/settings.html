@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--gold-500:#c9a227;--stone-50:#f7f4ec;--ink:#201c16;
+    --earth-700:#5c4033;--radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);padding-bottom:60px;}
+  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:18px;}
+  main{max-width:640px;margin:0 auto;padding:20px 16px;}
+  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--earth-700);}
+  .row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .row input{flex:1;min-width:100px;padding:8px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;}
+  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:#e8cf7a;}
+  .list-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0ece0;font-size:14px;}
+  .list-row:last-child{border-bottom:none;}
+  .empty{color:#8b6f47;font-size:13px;font-style:italic;}
+  .msg{font-size:13px;color:#5c4033;margin-top:8px;min-height:16px;}
+</style>
+</head>
+<body>
+<header><h1>Settings</h1></header>
+<main>
+
+  <div class="card">
+    <h2>Bank accounts</h2>
+    <div id="accounts-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="acc-label" placeholder="Account label (e.g. Ajmal Khan - Sampath)">
+      <input id="acc-bank" placeholder="Bank">
+      <input id="acc-balance" type="number" placeholder="Current balance">
+    </div>
+    <button class="btn" onclick="addAccount()">Add account</button>
+    <div class="msg" id="acc-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Monthly fixed costs (rent, electricity, salary...)</h2>
+    <div id="overheads-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="oh-name" placeholder="Name (e.g. Rent)">
+      <input id="oh-amount" type="number" placeholder="Monthly amount">
+    </div>
+    <button class="btn" onclick="addOverhead()">Add cost</button>
+    <div class="msg" id="oh-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Discount limit for staff</h2>
+    <div id="discount-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="disc-role" placeholder="Role (leave blank for everyone)">
+      <input id="disc-pct" type="number" placeholder="Max discount %">
+    </div>
+    <button class="btn" onclick="addDiscountRule()">Set limit</button>
+    <div class="msg" id="disc-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Customer credit limits</h2>
+    <div id="credit-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="cr-name" placeholder="Customer name">
+      <input id="cr-limit" type="number" placeholder="Credit limit">
+    </div>
+    <button class="btn" onclick="addCreditLimit()">Set limit</button>
+    <div class="msg" id="cr-msg"></div>
+  </div>
+
+</main>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString();
+
+async function loadAll() {
+  const accounts = await (await fetch('/api/money-control/bank-accounts')).json();
+  const accEl = document.getElementById('accounts-list');
+  accEl.innerHTML = accounts.length ? '' : '<div class="empty">No accounts added yet.</div>';
+  accounts.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${a.account_label}${a.bank ? ' — ' + a.bank : ''}</span><span>${money(a.current_balance)}</span>`;
+    accEl.appendChild(row);
+  });
+
+  const overheads = await (await fetch('/api/money-control/fixed-overheads')).json();
+  const ohEl = document.getElementById('overheads-list');
+  ohEl.innerHTML = overheads.length ? '' : '<div class="empty">No fixed costs added yet.</div>';
+  overheads.forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${o.name}</span><span>${money(o.monthly_amount)}/month</span>`;
+    ohEl.appendChild(row);
+  });
+
+  const discounts = await (await fetch('/api/discount-rules')).json();
+  const discEl = document.getElementById('discount-list');
+  discEl.innerHTML = discounts.length ? '' : '<div class="empty">No limit set — staff can give any discount.</div>';
+  discounts.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${d.role === 'all' ? 'Everyone' : d.role}</span><span>Max ${d.max_discount_pct}%</span>`;
+    discEl.appendChild(row);
+  });
+
+  const credits = await (await fetch('/api/credit-limits')).json();
+  const crEl = document.getElementById('credit-list');
+  crEl.innerHTML = credits.length ? '' : '<div class="empty">No customer credit limits set.</div>';
+  credits.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${c.customer_name}</span><span>${money(c.credit_limit)}</span>`;
+    crEl.appendChild(row);
+  });
+}
+
+async function addAccount() {
+  const account_label = document.getElementById('acc-label').value.trim();
+  const bank = document.getElementById('acc-bank').value.trim();
+  const current_balance = document.getElementById('acc-balance').value;
+  const msg = document.getElementById('acc-msg');
+  if (!account_label) { msg.textContent = 'Enter an account label first.'; return; }
+  const r = await fetch('/api/money-control/bank-accounts', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ account_label, bank, current_balance: Number(current_balance || 0) })
+  });
+  msg.textContent = r.ok ? 'Added.' : 'Something went wrong.';
+  if (r.ok) { document.getElementById('acc-label').value=''; document.getElementById('acc-bank').value=''; document.getElementById('acc-balance').value=''; loadAll(); }
+}
+
+async function addOverhead() {
+  const name = document.getElementById('oh-name').value.trim();
+  const monthly_amount = document.getElementById('oh-amount').value;
+  const msg = document.getElementById('oh-msg');
+  if (!name || !monthly_amount) { msg.textContent = 'Enter both a name and an amount.'; return; }
+  const r = await fetch('/api/money-control/fixed-overheads', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name, monthly_amount: Number(monthly_amount) })
+  });
+  msg.textContent = r.ok ? 'Added.' : 'Something went wrong.';
+  if (r.ok) { document.getElementById('oh-name').value=''; document.getElementById('oh-amount').value=''; loadAll(); }
+}
+
+async function addDiscountRule() {
+  const role = document.getElementById('disc-role').value.trim() || 'all';
+  const max_discount_pct = document.getElementById('disc-pct').value;
+  const msg = document.getElementById('disc-msg');
+  if (!max_discount_pct) { msg.textContent = 'Enter a percentage first.'; return; }
+  const r = await fetch('/api/discount-rules', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ role, max_discount_pct: Number(max_discount_pct) })
+  });
+  msg.textContent = r.ok ? 'Set.' : 'Something went wrong.';
+  if (r.ok) { document.getElementById('disc-role').value=''; document.getElementById('disc-pct').value=''; loadAll(); }
+}
+
+async function addCreditLimit() {
+  const customer_name = document.getElementById('cr-name').value.trim();
+  const credit_limit = document.getElementById('cr-limit').value;
+  const msg = document.getElementById('cr-msg');
+  if (!customer_name || !credit_limit) { msg.textContent = 'Enter both a name and a limit.'; return; }
+  const r = await fetch('/api/credit-limits', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ customer_name, credit_limit: Number(credit_limit) })
+  });
+  msg.textContent = r.ok ? 'Set.' : 'Something went wrong.';
+  if (r.ok) { document.getElementById('cr-name').value=''; document.getElementById('cr-limit').value=''; loadAll(); }
+}
+
+loadAll();
+</script>
+</body>
+</html>

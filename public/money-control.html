@@ -143,6 +143,14 @@
   </div>
 
   <div class="card">
+    <h2>Today's full breakdown — enter once, get the report</h2>
+    <div class="mode-row"><label>Today's expenses</label><input type="number" id="dcp-expenses" value="0"></div>
+    <div class="mode-row"><label>Purchasing/restock budget today</label><input type="number" id="dcp-purchasing" value="0"></div>
+    <button class="btn" onclick="runDailyPlan()">Get today's breakdown</button>
+    <div id="dcp-report" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
     <h2>Today's sales, by payment mode</h2>
     <div id="mode-rows"></div>
     <div class="total-row">
@@ -347,6 +355,46 @@ async function markAllocationDone(id) {
 }
 
 load();
+
+async function runDailyPlan() {
+  const reportEl = document.getElementById('dcp-report');
+  reportEl.innerHTML = '<div class="empty">Working...</div>';
+  const today = new Date().toISOString().slice(0, 10);
+
+  const dashRes = await fetch('/api/money-control/dashboard');
+  const dash = await dashRes.json();
+  const sales_total = dash.sales_total_today;
+  const expenses_total = Number(document.getElementById('dcp-expenses').value || 0);
+  const purchasing_reserve = Number(document.getElementById('dcp-purchasing').value || 0);
+
+  await fetch('/api/money-control/daily-cash-plan', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ report_date: today, sales_total, expenses_total, purchasing_reserve })
+  });
+
+  const r = await fetch('/api/money-control/daily-cash-plan?date=' + today);
+  const d = await r.json();
+  if (!r.ok) { reportEl.innerHTML = '<div class="empty">' + (d.error || 'Something went wrong.') + '</div>'; return; }
+
+  let html = `<div class="total-row" style="border-top:none;padding-top:0;margin-top:0;">
+      <span>Gross profit</span><span>${money(d.gross_profit)}</span>
+    </div>`;
+  html += `<div class="mode-row"><label>Rent/bills/salary reserve</label><span>${money(d.set_aside.overhead_reserve)}</span></div>`;
+  html += `<div class="mode-row"><label>Cheques (spread to due dates)</label><span>${money(d.set_aside.cheques.total)}</span></div>`;
+  d.set_aside.cheques.breakdown.forEach(c => {
+    html += `<div class="list-row" style="font-size:12px;padding:4px 0 4px 12px;"><span class="name">${c.payee}${c.overdue ? ' (overdue)' : ''}</span><span class="amt">${money(c.daily_amount)}/day</span></div>`;
+  });
+  html += `<div class="mode-row"><label>Loans (spread to due dates)</label><span>${money(d.set_aside.loans.total)}</span></div>`;
+  d.set_aside.loans.breakdown.forEach(l => {
+    html += `<div class="list-row" style="font-size:12px;padding:4px 0 4px 12px;"><span class="name">${l.lender_name}${l.overdue ? ' (overdue)' : ''}</span><span class="amt">${money(l.daily_amount)}/day</span></div>`;
+  });
+  html += `<div class="mode-row"><label>Purchasing budget</label><span>${money(d.set_aside.purchasing_reserve)}</span></div>`;
+  html += `<div class="total-row"><span>Total to set aside</span><span>${money(d.set_aside.total_to_set_aside)}</span></div>`;
+  html += `<div class="alert" style="background:${d.safe_to_withdraw >= 0 ? '#e8f3e8' : '#f6dede'};border-color:${d.safe_to_withdraw >= 0 ? '#1e5c3f' : '#a02020'};margin-top:12px;">
+      <div class="detail" style="color:${d.safe_to_withdraw >= 0 ? '#1e5c3f' : '#a02020'};font-weight:700;">${d.verdict}</div>
+    </div>`;
+  reportEl.innerHTML = html;
+}
 </script>
 
 </body>
