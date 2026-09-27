@@ -366,7 +366,7 @@ table tr:last-child td{border-bottom:none}
             <input type="text" class="fi" placeholder="Search..." id="inv-search" oninput="filterInv()">
           </div>
         </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Method</th><th>Amount</th><th>Refund</th><th>Notes</th></tr></thead><tbody id="inv-tbody"></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Method</th><th>Amount</th><th>Refund</th><th>Notes</th><th>Customer / Receipt</th></tr></thead><tbody id="inv-tbody"></tbody></table></div>
       </div>
       <!-- Add invoice form -->
       <div class="card" style="margin-bottom:16px">
@@ -380,6 +380,8 @@ table tr:last-child td{border-bottom:none}
           <div class="fg"><label class="fl">Credit</label><input class="fi" id="n-credit" type="number" placeholder="0"></div>
           <div class="fg"><label class="fl">Cheque</label><input class="fi" id="n-cheque" type="number" placeholder="0"></div>
           <div class="fg"><label class="fl">Notes</label><input class="fi" id="n-notes" placeholder="Optional"></div>
+          <div class="fg"><label class="fl">Customer Phone (for WhatsApp receipt)</label><input class="fi" id="n-phone" type="tel" placeholder="0771234567"></div>
+          <div class="fg"><label class="fl">Customer Name</label><input class="fi" id="n-cname" placeholder="Optional"></div>
         </div>
         <button class="btn btn-p" onclick="saveInvoice()">Save Invoice</button>
       </div>
@@ -646,6 +648,7 @@ table tr:last-child td{border-bottom:none}
 const TARGET = 100000; // daily sales target for the gauge — set to your business's target
 let charts = {};
 let _invoices = [];   // cached for filter
+let _receiptLinks = [];   // customer phone + WhatsApp receipt status per invoice, for the selected day
 let _stock = [];
 let _cheques = [];
 let _bcItems = [];
@@ -963,6 +966,7 @@ async function loadSalesDate() {
 
   _currentSalesDay = summary;
   _invoices = invoices || [];
+  _receiptLinks = (await api(`/api/invoice-receipts?date=${date}`)) || [];
 
   if (summary) {
     const s = summary;
@@ -1035,7 +1039,7 @@ function renderInvoices(filter='') {
   const rows = filter
     ? _invoices.filter(r => r.invoice_no?.toLowerCase().includes(filter) || r.notes?.toLowerCase().includes(filter))
     : _invoices;
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No invoices found</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No invoices found</td></tr>'; return; }
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td><strong>${r.invoice_no||'—'}</strong></td>
@@ -1043,7 +1047,40 @@ function renderInvoices(filter='') {
       <td><strong>${fmtLKR(r.total_sale)}</strong></td>
       <td>${r.is_refund?'<span class="badge br">Refund</span>':'—'}</td>
       <td style="color:var(--text2)">${r.notes||'—'}</td>
+      <td>${receiptCell(r)}</td>
     </tr>`).join('');
+}
+
+/* ── WhatsApp receipts ── */
+function receiptLinkFor(inv) {
+  return _receiptLinks.find(l => (l.report_id != null && inv.id != null) ? l.report_id === inv.id : (l.invoice_no && l.invoice_no === inv.invoice_no));
+}
+function receiptCell(inv) {
+  const l = receiptLinkFor(inv);
+  const i = _invoices.indexOf(inv);
+  const badge = !l ? '' : l.status === 'sent' ? `<span class="badge bg" title="Sent ${mgEsc(l.sent_at)}">Sent</span> `
+                  : l.status === 'failed' ? `<span class="badge br" title="${mgEsc(l.last_error)}">Failed</span> ` : '';
+  const who = l ? `<div style="font-size:11px;color:var(--text2)">${mgEsc(l.customer_name || '')} ${mgEsc(l.customer_phone)}</div>` : '';
+  return `${who}${badge}<button class="btn btn-s" style="padding:3px 8px;font-size:11px" onclick="sendReceipt(${i})">${l && l.status === 'sent' ? 'Resend' : 'Send'} WhatsApp Receipt</button>`;
+}
+async function sendReceipt(i) {
+  const inv = _invoices[i];
+  if (!inv) return;
+  const l = receiptLinkFor(inv);
+  const body = { report_id: inv.id ?? null, report_date: document.getElementById('sales-date').value, invoice_no: inv.invoice_no || null };
+  if (!l) {
+    const phone = prompt(`Customer WhatsApp number for invoice ${inv.invoice_no || ''} (e.g. 0771234567):`);
+    if (!phone) return;
+    body.customer_phone = phone.trim();
+  } else if (!confirm(`Send the receipt for invoice ${inv.invoice_no || ''} to ${l.customer_phone} on WhatsApp?`)) {
+    return;
+  }
+  toast('Building and sending the receipt…', 'info');
+  const r = await api('/api/invoice-receipts/send', { method: 'POST', body: JSON.stringify(body) });
+  if (r) toast(`Receipt sent to ${r.to}`, 'success');
+  // Refresh statuses either way (a failed send is recorded and shown as "Failed").
+  _receiptLinks = (await api(`/api/invoice-receipts?date=${document.getElementById('sales-date').value}`)) || [];
+  renderInvoices(document.getElementById('inv-search').value.toLowerCase());
 }
 
 function filterInv() { renderInvoices(document.getElementById('inv-search').value.toLowerCase()); }
@@ -1071,8 +1108,21 @@ async function saveInvoice() {
     notes:         document.getElementById('n-notes').value || null,
   };
   if (!body.total_sale) { toast('Enter a total sale amount', 'warning'); return; }
+  const phone = document.getElementById('n-phone').value.trim();
+  const cname = document.getElementById('n-cname').value.trim();
   const r = await api('/api/reports', { method:'POST', body:JSON.stringify(body) });
-  if (r) { toast('Invoice saved', 'success'); loadSalesDate(); ['n-inv','n-total','n-cash','n-card','n-online','n-credit','n-cheque','n-notes'].forEach(id=>document.getElementById(id).value=''); }
+  if (r) {
+    toast('Invoice saved', 'success');
+    if (phone) {
+      // Match/create the customer and attach the phone to this invoice.
+      const link = await api('/api/invoice-receipts/link', { method:'POST', body:JSON.stringify({
+        report_id: r.id ?? null, report_date: date, invoice_no: r.invoice_no || null, customer_phone: phone, customer_name: cname || null }) });
+      if (link) toast(link.customer_created ? 'New customer added' : 'Matched existing customer', 'success');
+      else toast('Invoice saved, but the customer phone could not be attached — use "Send WhatsApp Receipt" on the invoice to add it', 'warning');
+    }
+    loadSalesDate();
+    ['n-inv','n-total','n-cash','n-card','n-online','n-credit','n-cheque','n-notes','n-phone','n-cname'].forEach(id=>document.getElementById(id).value='');
+  }
 }
 
 function buildWhatsApp(s) {

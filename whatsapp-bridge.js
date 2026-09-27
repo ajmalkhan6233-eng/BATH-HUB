@@ -41,7 +41,7 @@ const WHITELIST_KNOWN_LIDS = (process.env.WHATSAPP_TEST_WHITELIST_LIDS || '23298
 function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits); }
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
 const client = new Client({
     authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
@@ -209,17 +209,26 @@ client.on('message', async (msg) => {
     }
 });
 
-// Outbound: POST { to, message } -> sends via the linked WhatsApp account.
+// Outbound: POST { to, message, media? } -> sends via the linked WhatsApp account.
+// media (optional) = { data: <base64>, mimetype, filename } — sent as an image/document with
+// `message` as its caption (used for receipts). Without media this is the original text send.
 app.post('/send', async (req, res) => {
-    const { to, message } = req.body;
-    if (!to || !message) return res.status(400).json({ error: 'to and message required' });
+    const { to, message, media } = req.body;
+    if (!to || (!message && !media)) return res.status(400).json({ error: 'to and message required' });
+    if (media && (!media.data || !media.mimetype)) return res.status(400).json({ error: 'media needs data (base64) and mimetype' });
     if (!ready) return res.status(503).json({ error: 'WhatsApp not linked yet — scan the QR code first' });
     try {
         const chatId = to.includes('@') ? to : `${to.replace(/\D/g, '')}@c.us`;
-        const clean = sanitizeAssistantOutput(message);
-        if (!clean) return res.status(400).json({ error: 'message was empty after output sanitization' });
-        await client.sendMessage(chatId, clean);
-        res.json({ success: true, to, message: clean });
+        const clean = message ? sanitizeAssistantOutput(message) : '';
+        if (message && !clean && !media) return res.status(400).json({ error: 'message was empty after output sanitization' });
+        if (media) {
+            const { MessageMedia } = require('whatsapp-web.js');
+            const file = new MessageMedia(media.mimetype, media.data, media.filename || undefined);
+            await client.sendMessage(chatId, file, clean ? { caption: clean } : {});
+        } else {
+            await client.sendMessage(chatId, clean);
+        }
+        res.json({ success: true, to, message: clean, media: !!media });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
