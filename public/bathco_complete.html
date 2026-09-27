@@ -393,12 +393,30 @@ table tr:last-child td{border-bottom:none}
         </div>
         <select class="fs" style="width:160px" id="stk-cat" onchange="filterStock()"><option value="">All Categories</option></select>
         <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-p" onclick="toggleItemForm()">+ Add Item</button>
           <button class="btn btn-p" onclick="toggleGRNForm()">+ GRN Entry</button>
           <button class="btn btn-s" onclick="loadStock()">↺ Refresh</button>
         </div>
       </div>
       <div id="stk-alerts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
-      <div class="card" style="margin-bottom:16px"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Stock</th><th>Level</th><th>Supplier</th></tr></thead><tbody id="stk-tbody"></tbody></table></div></div>
+      <div class="card" style="margin-bottom:16px"><div class="tbl-wrap"><table><thead><tr><th>Photo</th><th>Code</th><th>Name</th><th>Category</th><th>Stock</th><th>Level</th><th>Supplier</th></tr></thead><tbody id="stk-tbody"></tbody></table></div></div>
+      <!-- Add item form -->
+      <div class="card" id="item-form" style="display:none;margin-bottom:16px">
+        <div class="section-hdr"><div class="section-title">Add Item — next code <code style="color:var(--gold)" id="i-next-code">…</code></div><button class="btn btn-s" onclick="toggleItemForm()">✕ Close</button></div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Item Name *</label><input class="fi" id="i-name" placeholder="e.g. Wash basin 20&quot; white"></div>
+          <div class="fg"><label class="fl">Category</label><input class="fi" id="i-cat" placeholder="e.g. Basins" list="i-cat-list"><datalist id="i-cat-list"></datalist></div>
+          <div class="fg"><label class="fl">Selling Price (LKR)</label><input type="number" min="0" class="fi" id="i-price" placeholder="0"></div>
+          <div class="fg"><label class="fl">Cost (LKR)</label><input type="number" min="0" class="fi" id="i-cost" placeholder="0"></div>
+          <div class="fg"><label class="fl">Opening Stock</label><input type="number" min="0" class="fi" id="i-qty" placeholder="0"></div>
+          <div class="fg"><label class="fl">Reorder Level</label><input type="number" min="0" class="fi" id="i-reorder" placeholder="0"></div>
+        </div>
+        <div class="fg"><label class="fl">Photo (JPG / PNG / WEBP, max 5 MB)</label>
+          <input type="file" class="fi" id="i-photo" accept="image/jpeg,image/png,image/webp" onchange="previewItemPhoto(this)">
+          <img id="i-photo-prev" alt="" style="display:none;margin-top:8px;width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--card-border)">
+        </div>
+        <button class="btn btn-p" id="i-save" onclick="saveItem()">Save Item</button>
+      </div>
       <!-- GRN form -->
       <div class="card" id="grn-form" style="display:none">
         <div class="section-hdr"><div class="section-title">GRN Entry</div><button class="btn btn-s" onclick="toggleGRNForm()">✕ Close</button></div>
@@ -1084,7 +1102,7 @@ function renderStock() {
     (!cat || r.category === cat)
   );
   const tbody = document.getElementById('stk-tbody');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">No items found</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">No items found</td></tr>'; return; }
 
   // Alerts
   const zero = rows.filter(r=>r.stock_level<=0).length;
@@ -1100,6 +1118,7 @@ function renderStock() {
     const pct = Math.min((lvl/30)*100,100);
     const cls = lvl<=0?'#ef4444':lvl<=5?'#f59e0b':'#22c55e';
     return `<tr style="${lvl<=0?'background:rgba(239,68,68,0.04)':''}">
+      <td>${r.photo_url?`<img src="${encodeURI(r.photo_url)}" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--card-border)">`:'<span style="color:var(--text3)">—</span>'}</td>
       <td><code style="color:var(--gold)">${r.item_code||'—'}</code></td>
       <td><strong>${r.name}</strong></td>
       <td><span class="badge bb">${r.category||'—'}</span></td>
@@ -1111,6 +1130,55 @@ function renderStock() {
 }
 
 function filterStock() { renderStock(); }
+
+async function toggleItemForm() {
+  const f = document.getElementById('item-form');
+  const open = f.style.display === 'none';
+  f.style.display = open ? 'block' : 'none';
+  if (!open) return;
+  f.scrollIntoView({behavior:'smooth'});
+  document.getElementById('i-cat-list').innerHTML = [...new Set(_stock.map(r=>r.category).filter(Boolean))].map(c=>`<option value="${c.replace(/"/g,'&quot;')}">`).join('');
+  const n = await api('/api/items/next-code');
+  document.getElementById('i-next-code').textContent = n ? n.next_code : '?';
+}
+
+function previewItemPhoto(inp) {
+  const img = document.getElementById('i-photo-prev');
+  const f = inp.files[0];
+  if (!f) { img.style.display = 'none'; return; }
+  img.src = URL.createObjectURL(f);
+  img.style.display = 'block';
+}
+
+async function saveItem() {
+  const name = document.getElementById('i-name').value.trim();
+  if (!name) { toast('Enter the item name', 'warning'); return; }
+  const fd = new FormData();
+  fd.append('name', name);
+  [['category','i-cat'],['selling_price','i-price'],['avg_cost','i-cost'],['stock_level','i-qty'],['reorder_threshold','i-reorder']]
+    .forEach(([k,id]) => fd.append(k, document.getElementById(id).value));
+  const photo = document.getElementById('i-photo').files[0];
+  if (photo) fd.append('photo', photo);
+  const btn = document.getElementById('i-save');
+  btn.disabled = true;
+  try {
+    // Raw fetch: api() forces a JSON Content-Type, which would break the multipart upload.
+    const r = await fetch('/api/items', { method:'POST', body: fd, credentials:'include' });
+    if (r.status === 401) { showLogin(); return; }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { toast(d.error || `Could not save the item (server said ${r.status})`, 'error'); return; }
+    toast(`Saved as item ${d.item_code}`, 'success');
+    ['i-name','i-cat','i-price','i-cost','i-qty','i-reorder','i-photo'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('i-photo-prev').style.display = 'none';
+    await loadStock();
+    const n = await api('/api/items/next-code');
+    document.getElementById('i-next-code').textContent = n ? n.next_code : '?';
+  } catch (e) {
+    toast(`Could not reach the server: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
 function toggleGRNForm() {
   const f = document.getElementById('grn-form');
   f.style.display = f.style.display==='none'?'block':'none';
