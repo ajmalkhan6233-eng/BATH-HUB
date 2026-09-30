@@ -169,6 +169,16 @@ app.use(session({
     cookie: { httpOnly: true, secure: 'auto', maxAge: 12 * 60 * 60 * 1000 },
 }));
 
+// Brute-force limits on the two guessable secrets (password, 4-digit admin PIN). Only FAILED
+// attempts count; a correct login/PIN does not use up the allowance. Loopback is not exempt here.
+const failedAuthLimiter = (max) => rateLimit({
+    windowMs: 15 * 60 * 1000, limit: max, skipSuccessfulRequests: true,
+    standardHeaders: true, legacyHeaders: false,
+    message: { error: 'Too many failed attempts — please wait 15 minutes and try again.' },
+});
+app.use('/api/login', failedAuthLimiter(10));
+app.use('/api/admin/verify', failedAuthLimiter(5));
+
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 
@@ -3086,7 +3096,9 @@ app.post('/api/admin/blend-gp-retroactive', async (req, res) => {
 app.post('/api/admin/verify', (req, res) => {
     const pin = process.env.ADMIN_PIN;
     if (!pin) throw new Error('ADMIN_PIN not set in .env');
-    if (req.body.pin === pin) {
+    const given = String((req.body || {}).pin == null ? '' : req.body.pin);
+    const same = (a, b) => crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(), crypto.createHash('sha256').update(b).digest());
+    if (same(given, pin)) {
         req.session.adminUnlocked = true;
         res.json({ ok: true });
     } else {
