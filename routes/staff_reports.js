@@ -60,6 +60,10 @@ pool.query(`
 `).catch(e => console.error('[staff_reports] staff_leave migration failed:', e.message));
 
 // ═══════════════════════ STAFF: ATTENDANCE (real) ═══════════════════════
+// ─── Input checks (clear 400s instead of raw database errors) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => v !== '' && v !== null && Number.isFinite(Number(v)) && Number(v) > 0;
+
 router.get('/attendance', async (req, res) => {
     try {
         const { staff_id, month } = req.query;
@@ -84,6 +88,8 @@ router.post('/attendance', async (req, res) => {
     try {
         const { staff_id, work_date, status, notes } = req.body;
         if (!staff_id || !work_date) return res.status(400).json({ error: 'staff_id and work_date are required' });
+        if (!isDate(work_date)) return res.status(400).json({ error: 'work_date must be a date (YYYY-MM-DD)' });
+        if (status !== undefined && !['present', 'absent', 'half_day', 'leave'].includes(status)) return res.status(400).json({ error: 'status must be present, absent, half_day or leave' });
         const r = await pool.query(`
             INSERT INTO staff_attendance (staff_id, work_date, status, notes)
             VALUES ($1, $2, $3, $4)
@@ -120,6 +126,8 @@ router.post('/leave', async (req, res) => {
     try {
         const { staff_id, leave_start, leave_end, leave_type, reason } = req.body;
         if (!staff_id || !leave_start || !leave_end) return res.status(400).json({ error: 'staff_id, leave_start, leave_end are required' });
+        if (!isDate(leave_start) || !isDate(leave_end)) return res.status(400).json({ error: 'leave_start and leave_end must be dates (YYYY-MM-DD)' });
+        if (leave_end < leave_start) return res.status(400).json({ error: 'leave_end cannot be before leave_start' });
         const r = await pool.query(`
             INSERT INTO staff_leave (staff_id, leave_start, leave_end, leave_type, reason)
             VALUES ($1,$2,$3,$4,$5)
@@ -174,7 +182,20 @@ router.post('/advances', async (req, res) => {
     try {
         const { staff_id, loan_date, amount, type, notes } = req.body;
         if (!staff_id || !loan_date || !amount) return res.status(400).json({ error: 'staff_id, loan_date, amount are required' });
+        if (!isDate(loan_date)) return res.status(400).json({ error: 'loan_date must be a date (YYYY-MM-DD)' });
+        if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+        if (type !== undefined && !['advance', 'repayment'].includes(type)) return res.status(400).json({ error: "type must be 'advance' or 'repayment'" });
         const t = (type === 'repayment') ? 'repayment' : 'advance';
+        if (t === 'repayment') {
+            // A repayment can't be more than what the person still owes (a typo here silently made the balance negative).
+            const bal = await pool.query(`
+                SELECT COALESCE(SUM(CASE WHEN type='advance' THEN amount ELSE -amount END),0) AS outstanding
+                FROM staff_loans WHERE staff_id = $1 AND type IN ('advance','repayment')`, [staff_id]);
+            const outstanding = Number(bal.rows[0].outstanding);
+            if (Number(amount) > outstanding + 0.005) {
+                return res.status(409).json({ error: `Repayment is more than the outstanding advance (LKR ${outstanding.toLocaleString('en-US')})` });
+            }
+        }
         const r = await pool.query(`
             INSERT INTO staff_loans (staff_id, loan_date, amount, type, notes)
             VALUES ($1,$2,$3,$4,$5)
@@ -204,11 +225,16 @@ router.get('/payroll-export', async (req, res) => {
 
         if (format === 'csv') {
             const headers = ['Name', 'Role', 'Pay Date', 'Amount', 'Commission', 'Total', 'Period Start', 'Period End', 'Notes'];
-            const escCsv = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            // Text cells starting with = + - @ are read as formulas by Excel/Sheets (CSV injection); prefix them with '.
+            const escCsv = (v, isText) => {
+                let t = String(v ?? '');
+                if (isText && /^[=+\-@\x09\x0d]/.test(t)) t = "'" + t;
+                return `"${t.replace(/"/g, '""')}"`;
+            };
             const lines = [headers.join(',')];
             r.rows.forEach(row => {
                 lines.push([row.name, row.role, row.pay_date, row.amount, row.commission, row.total, row.period_start, row.period_end, row.notes]
-                    .map(escCsv).join(','));
+                    .map((v, i) => escCsv(v, i === 0 || i === 1 || i === 8)).join(','));   // name, role, notes are free text
             });
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename="payroll_${start || 'all'}_${end || 'all'}.csv"`);
