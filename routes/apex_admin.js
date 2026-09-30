@@ -24,6 +24,9 @@ router.post('/api/apex/payments', async (req, res) => {
     if (!tenant_id || !amount_lkr || !bank_reference || !deposit_date) {
         return res.status(400).json({ error: 'tenant_id, amount_lkr, bank_reference and deposit_date are required' });
     }
+    // A logged payment is money received: it must be a positive number on a real date (a negative one would cancel a real payment).
+    if (!Number.isFinite(Number(amount_lkr)) || Number(amount_lkr) <= 0) return res.status(400).json({ error: 'amount_lkr must be a number greater than 0' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(deposit_date)) || isNaN(Date.parse(deposit_date))) return res.status(400).json({ error: 'deposit_date must be a date (YYYY-MM-DD)' });
     try {
         const { rows } = await pool.query(
             `INSERT INTO client_payments (tenant_id, amount_lkr, bank_reference, deposit_date, verified_by_admin_id, notes)
