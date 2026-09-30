@@ -3269,8 +3269,7 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
     if (!message || typeof message !== 'string' || !message.trim())
         return res.status(400).json({ error: 'message is required' });
     const trimmedMessage = message.slice(0, 2000);
-    const trimmedHistory = (Array.isArray(history) ? history.slice(-8) : [])
-        .map(m => ({ role: m.role, content: String(m.content || '').slice(0, 2000) }));
+    const trimmedHistory = require('./utils/chatHistory').sanitizeChatHistory(history);
     try {
         let reply;
         try {
