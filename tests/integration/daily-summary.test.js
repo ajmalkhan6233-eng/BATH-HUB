@@ -6,6 +6,8 @@ jest.mock('../../layla', () => ({
   alertOwner:     jest.fn(),
   getOrCreateCustomer: jest.fn(),
 }));
+// In-memory sessions: server.js's pg session store would swallow mocked pool.query results.
+jest.mock('connect-pg-simple', () => (session) => session.MemoryStore);
 jest.mock('bcryptjs', () => ({
   ...jest.requireActual('bcryptjs'),
   compare: jest.fn().mockResolvedValue(true),

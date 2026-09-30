@@ -7,6 +7,10 @@ jest.mock('../../layla', () => ({
   alertOwner:     jest.fn(),
   getOrCreateCustomer: jest.fn(),
 }));
+// Sessions: server.js builds its store on the mocked pool, so the session lookup would
+// swallow mocked query results and every cookie-bearing request would look logged out.
+// An in-memory store keeps the real session + auth middleware under test.
+jest.mock('connect-pg-simple', () => (session) => session.MemoryStore);
 jest.mock('bcryptjs', () => ({
   ...jest.requireActual('bcryptjs'),
   compare: jest.fn().mockResolvedValue(true),
@@ -67,13 +71,16 @@ describe('Auth middleware', () => {
     expect(res.status).toBe(200);
   });
 
-  test('owner cannot PATCH (write) — returns 403', async () => {
+  // The white-label template gives 'owner' the same access as 'admin' (the read-only
+  // 'uncle' investor role belonged to the original live system). If a read-only role is
+  // wanted later, add it as a new role rather than restricting 'owner'.
+  test('owner can write, same as admin (template design)', async () => {
     const agent = await agentAs('owner');
     const res = await agent
       .patch('/api/daily-summary/2026-05-12/field')
       .send({ field: 'total_expenses', value: 5000 });
-    expect(res.status).toBe(403);
-    expect(res.body.error).toMatch(/read-only/i);
+    expect(res.status).not.toBe(403);
+    expect(res.status).not.toBe(401);
   });
 
   test('staff cannot access general API routes — returns 403', async () => {

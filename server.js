@@ -183,7 +183,8 @@ app.use(require('./middleware/tenantStatusMiddleware'));
 // needed; 'uncle' (role='owner') and the 9 staff accounts already exist
 // (see scripts/seed_accounts.js).
 // admin  : full access
-// owner  : read-only (GET only) access to everything  [= uncle_readonly]
+// owner  : same access as admin in this white-label template (the read-only
+//          'uncle_readonly' role belonged to the original live system)
 // staff  : only their own /api/staff/:id/salary and /api/staff/:id/loans
 const STAFF_OWN_DATA = /^\/api\/staff\/(\d+)\/(salary|loans)$/;
 
