@@ -258,6 +258,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
       <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
@@ -711,6 +712,54 @@ table tr:last-child td{border-bottom:none}
       <div id="cp-list"></div>
     </section>
 
+    <!-- ── SHOP TOOLS ── -->
+    <section class="page" id="page-shoptools">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">How many tiles?</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Room length (m)</label><input type="number" step="0.01" class="fi" id="st-len"></div>
+          <div class="fg"><label class="fl">Room width (m)</label><input type="number" step="0.01" class="fi" id="st-wid"></div>
+          <div class="fg"><label class="fl">Tile size (cm)</label><input class="fi" id="st-size" placeholder="60x60"></div>
+          <div class="fg"><label class="fl">Pieces per box (optional)</label><input type="number" class="fi" id="st-ppb"></div>
+          <div class="fg"><label class="fl">Wastage % (default 10)</label><input type="number" class="fi" id="st-waste" placeholder="10"></div>
+        </div>
+        <button class="btn btn-p" onclick="stEstimate()">Work it out</button>
+        <div id="st-est-out" style="margin-top:10px;font-size:14px"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Price per square metre</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Box price</label><input type="number" class="fi" id="sp-box"></div>
+          <div class="fg"><label class="fl">Pieces per box</label><input type="number" class="fi" id="sp-ppb"></div>
+          <div class="fg"><label class="fl">Tile size (cm)</label><input class="fi" id="sp-size" placeholder="60x60"></div>
+        </div>
+        <button class="btn btn-p" onclick="stPerSqm()">Work it out</button>
+        <div id="st-sqm-out" style="margin-top:10px;font-size:14px"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Find an item</div>
+        <input class="fi" id="st-q" placeholder="Name or code" oninput="stFindItems()" style="font-size:16px">
+        <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Stock</th><th>Price</th></tr></thead><tbody id="st-items"></tbody></table></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Till summary</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0"><label class="fl">Day</label><input type="date" class="fi" id="st-day"></div>
+          <button class="btn btn-p" onclick="stTill()">Show</button>
+        </div>
+        <div id="st-till-out" style="margin-top:10px;font-size:14px"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Best sellers (last 30 days, from bills)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Units</th><th>Sales</th><th>Bills</th></tr></thead><tbody id="st-top"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Running low</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Stock</th><th>Level</th><th>Suggested order</th></tr></thead><tbody id="st-low"></tbody></table></div>
+        <button class="btn btn-s" style="margin-top:10px" onclick="window.open('/api/items/export.csv')">Stock-take sheet (CSV)</button>
+      </div>
+    </section>
+
     <!-- ── ENQUIRIES (M2) ── -->
     <section class="page" id="page-enquiries">
       <div class="card" style="margin-bottom:16px">
@@ -905,6 +954,7 @@ const PAGE_META = {
   webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
+  shoptools:   ['Shop Tools',   'Tile calculator, item search, till summary, best sellers, low stock'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
@@ -1108,6 +1158,55 @@ async function cpAdd() {
 async function cpSet(id, patch) { await cpCall('/api/content-posts/' + id, 'PUT', patch); }
 async function cpDel(id) { if (confirm('Delete this post?') && await cpCall('/api/content-posts/' + id, 'DELETE')) loadContent(); }
 
+/* Shop Tools */
+const stNum = id => document.getElementById(id).value;
+const stMoney = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+async function stPost(url, body) {
+  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Failed');
+  return d;
+}
+async function stEstimate() {
+  const out = document.getElementById('st-est-out');
+  try {
+    const d = await stPost('/api/tools/tile-estimate', { room_length_m: stNum('st-len'), room_width_m: stNum('st-wid'), tile_size_cm: stNum('st-size'),
+      pieces_per_box: stNum('st-ppb') || undefined, wastage_pct: stNum('st-waste') || undefined });
+    out.innerHTML = `Room ${d.room_area_m2} m². Needs <b>${d.pieces_needed} pieces</b> (${d.pieces_without_wastage} + ${d.wastage_pct}% for cuts)` +
+      (d.boxes_needed ? `, which is <b>${d.boxes_needed} boxes</b> (${d.pieces_bought} pieces, ${d.spare_pieces} spare, ${d.area_bought_m2} m²).` : '.');
+  } catch (e) { out.textContent = e.message; }
+}
+async function stPerSqm() {
+  const out = document.getElementById('st-sqm-out');
+  try {
+    const d = await stPost('/api/tools/price-per-sqm', { box_price: stNum('sp-box'), pieces_per_box: stNum('sp-ppb'), tile_size_cm: stNum('sp-size') });
+    out.innerHTML = `Per tile <b>${stMoney(d.price_per_tile)}</b> · per m² <b>${stMoney(d.price_per_m2)}</b>`;
+  } catch (e) { out.textContent = e.message; }
+}
+let _stTimer;
+function stFindItems() { clearTimeout(_stTimer); _stTimer = setTimeout(stLoadItems, 250); }
+async function stLoadItems() {
+  const r = await fetch('/api/items?limit=20&q=' + encodeURIComponent(stNum('st-q')));
+  const rows = r.ok ? await r.json() : [];
+  document.getElementById('st-items').innerHTML = rows.map(x => `<tr><td>${arEsc(x.item_code)}</td><td>${arEsc(x.name)}</td><td>${arEsc(x.category)}</td>` +
+    `<td style="${x.low_stock ? 'color:var(--amber);font-weight:700' : ''}">${arEsc(x.stock_level)}</td><td>${stMoney(x.selling_price)}</td></tr>`).join('') || '<tr><td colspan="5" class="no-data">No items</td></tr>';
+}
+async function stTill() {
+  const day = stNum('st-day'); const out = document.getElementById('st-till-out');
+  const r = await fetch('/api/pos-bills/summary?date=' + day); const d = await r.json();
+  if (!r.ok) { out.textContent = d.error; return; }
+  out.innerHTML = `<b>${d.bills} bills</b> · sales ${stMoney(d.subtotal)} · discounts ${stMoney(d.discount)} · <b>total ${stMoney(d.total)}</b><br>` +
+    (d.by_payment.map(p => `${arEsc(p.payment_method)}: ${stMoney(p.total)} (${p.bills})`).join(' · ') || 'No bills that day');
+}
+async function loadShopTools() {
+  const dEl = document.getElementById('st-day'); if (!dEl.value) { const n = new Date(); dEl.value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
+  stLoadItems(); stTill();
+  const [top, low] = await Promise.all([fetch('/api/pos-bills/top-items'), fetch('/api/items/reorder')]);
+  const t = top.ok ? (await top.json()).items : [], l = low.ok ? await low.json() : [];
+  document.getElementById('st-top').innerHTML = t.map(x => `<tr><td>${arEsc(x.item_name)}</td><td>${x.units}</td><td>${stMoney(x.revenue)}</td><td>${x.bills}</td></tr>`).join('') || '<tr><td colspan="4" class="no-data">No bills yet</td></tr>';
+  document.getElementById('st-low').innerHTML = l.map(x => `<tr><td>${arEsc(x.item_code)}</td><td>${arEsc(x.name)}</td><td>${x.stock_level}</td><td>${x.reorder_threshold}</td><td><b>${x.suggested_order_qty}</b></td></tr>`).join('') || '<tr><td colspan="5" class="no-data">Nothing is low</td></tr>';
+}
+
 /* Enquiry Tracker (M2) */
 const ENQ_CHANNELS = ['tiktok','facebook','whatsapp','walk-in','google','other'];
 const ENQ_STATUSES = ['new','quoted','won','lost'];
@@ -1187,6 +1286,7 @@ function navigate(page) {
   if (page === 'grn') openGRNPage();
   if (page === 'agent-rules') loadAgentRules();
   if (page === 'enquiries') loadEnquiries();
+  if (page === 'shoptools') loadShopTools();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
   if (page === 'webcat') loadWebCat();
