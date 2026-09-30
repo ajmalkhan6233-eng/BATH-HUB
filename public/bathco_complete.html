@@ -260,6 +260,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
+      <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -607,6 +608,21 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── COMPETITOR WATCH (M4) ── -->
+    <section class="page" id="page-competitors">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0"><label class="fl">Month</label><input type="month" class="fi" id="cw-month" onchange="loadCompetitors()"></div>
+          <div class="fg" style="margin-bottom:0;flex:1;min-width:160px"><label class="fl">Add competitor</label><input class="fi" id="cw-name" placeholder="Name"></div>
+          <div class="fg" style="margin-bottom:0"><label class="fl">Area</label><input class="fi" id="cw-area" placeholder="nawala / thihariya strip / island-wide"></div>
+          <button class="btn btn-p" onclick="cwAdd()">Add</button>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Monthly check: who posts, who goes live, who has an online store, any promotions. Blank means not checked yet.</div>
+        <div id="cw-msg" style="font-size:12px;margin-top:6px"></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Area</th><th>Channels (tiktok,facebook,site)</th><th>Posts</th><th>Live</th><th>Online store</th><th>Promotions</th><th>Last checked</th><th>Notes</th><th></th></tr></thead><tbody id="cw-tbody"></tbody></table></div></div>
+    </section>
+
     <!-- ── CONTENT CALENDAR (M3) ── -->
     <section class="page" id="page-content">
       <div class="card" style="margin-bottom:16px">
@@ -817,10 +833,57 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  content:     ['Content',      'TikTok / live plan. Post by hand, nothing auto-posts'],
+  competitors: ['Competitors',  'Monthly check: who posts, goes live, sells online'],
+  content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Competitor Watch (M4) */
+function cwMsg(t) { document.getElementById('cw-msg').textContent = t || ''; }
+async function cwCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { cwMsg((await r.json()).error || 'Failed'); return null; }
+  cwMsg(''); return r.json();
+}
+function cwTri(id, field, cur) {
+  const v = cur == null ? '' : String(cur);
+  return `<select class="fs" style="width:auto" onchange="cwCheck(${id},'${field}',this.value)"><option value="" ${v===''?'selected':''}>–</option><option value="true" ${v==='true'?'selected':''}>yes</option><option value="false" ${v==='false'?'selected':''}>no</option></select>`;
+}
+async function loadCompetitors() {
+  const mEl = document.getElementById('cw-month');
+  if (!mEl.value) mEl.value = new Date().toISOString().slice(0, 7);
+  const r = await fetch('/api/competitors/checklist?month=' + mEl.value);
+  if (!r.ok) { document.getElementById('cw-tbody').innerHTML = '<tr><td colspan="10" class="no-data">Owner only</td></tr>'; return; }
+  const data = await r.json();
+  document.getElementById('cw-tbody').innerHTML = data.items.map(x => { const c = x.check || {}; return `<tr>
+    <td>${arEsc(x.name)}</td>
+    <td><input class="fi" style="min-width:110px" value="${arEsc(x.area)}" onchange="cwCall('/api/competitors/${x.id}','PUT',{area:this.value})"></td>
+    <td><input class="fi" style="min-width:110px" value="${arEsc(x.channels)}" onchange="cwCall('/api/competitors/${x.id}','PUT',{channels:this.value})"></td>
+    <td>${cwTri(x.id,'posts',c.posts)}</td><td>${cwTri(x.id,'goes_live',c.goes_live)}</td><td>${cwTri(x.id,'online_store',c.online_store)}</td>
+    <td><input class="fi" style="min-width:130px" value="${arEsc(c.promotions)}" onchange="cwCheck(${x.id},'promotions',this.value)"></td>
+    <td>${arEsc(x.last_checked || '')}</td>
+    <td><input class="fi" style="min-width:130px" value="${arEsc(x.notes)}" onchange="cwCall('/api/competitors/${x.id}','PUT',{notes:this.value})"></td>
+    <td><button class="btn btn-s" onclick="cwDel(${x.id})">✕</button></td></tr>`; }).join('');
+}
+// Each edit of a check field saves a fresh check for the chosen month, carrying over the other answers.
+async function cwCheck(id, field, val) {
+  const r = await fetch('/api/competitors/checklist?month=' + document.getElementById('cw-month').value);
+  const cur = ((await r.json()).items.find(i => i.id === id) || {}).check || {};
+  const body = { posts: cur.posts, goes_live: cur.goes_live, online_store: cur.online_store, promotions: cur.promotions || '' };
+  body[field] = field === 'promotions' ? val : (val === '' ? null : val === 'true');
+  const m = document.getElementById('cw-month').value, today = new Date().toISOString().slice(0, 10);
+  body.checked_on = today.slice(0, 7) === m ? today : m + '-01';
+  if (await cwCall('/api/competitors/' + id + '/checks', 'POST', body)) loadCompetitors();
+}
+async function cwAdd() {
+  const name = document.getElementById('cw-name').value;
+  if (!name.trim()) { cwMsg('Enter a name'); return; }
+  if (await cwCall('/api/competitors', 'POST', { name, area: document.getElementById('cw-area').value })) {
+    document.getElementById('cw-name').value = ''; document.getElementById('cw-area').value = ''; loadCompetitors();
+  }
+}
+async function cwDel(id) { if (confirm('Remove this competitor and its checks?') && await cwCall('/api/competitors/' + id, 'DELETE')) loadCompetitors(); }
 
 /* Content Calendar (M3): manual posting only */
 const CP_STATUSES = ['idea','scripted','filmed','posted'];
@@ -940,6 +1003,7 @@ function navigate(page) {
   if (page === 'agent-rules') loadAgentRules();
   if (page === 'enquiries') loadEnquiries();
   if (page === 'content') loadContent();
+  if (page === 'competitors') loadCompetitors();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
