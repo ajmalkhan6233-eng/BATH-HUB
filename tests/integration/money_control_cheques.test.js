@@ -13,15 +13,18 @@ db.none(`CREATE TABLE cheque_register (id SERIAL PRIMARY KEY, cheque_no TEXT, ba
   account_id INT, held_from_date DATE)`);
 db.none(`CREATE TABLE investor_loans (id SERIAL PRIMARY KEY, lender_name TEXT, amount NUMERIC, profit_rate NUMERIC DEFAULT 0, date_given DATE, due_date DATE, status TEXT DEFAULT 'active', notes TEXT, qr_outstanding NUMERIC DEFAULT 0, created_at TIMESTAMP DEFAULT now(), updated_at TIMESTAMP DEFAULT now())`);
 db.none(`CREATE TABLE investor_loan_payments (id SERIAL PRIMARY KEY, loan_id INT, amount NUMERIC, payment_date DATE, notes TEXT, created_at TIMESTAMP DEFAULT now())`);
+db.none(`CREATE TABLE notification_dismissals (id SERIAL PRIMARY KEY, category TEXT, ref_id INT, due_date DATE, dismissed_at TIMESTAMP DEFAULT now(), UNIQUE(category, ref_id, due_date))`);
 db.none(`CREATE TABLE stock_items (id SERIAL PRIMARY KEY, item_name TEXT, current_qty NUMERIC DEFAULT 0, reorder_level NUMERIC DEFAULT 0)`);
 
 const chequeRouter = require('../../routes/cheque_register');
 const moneyRouter = require('../../routes/money_control');
+const notificationsRouter = require('../../routes/notifications');
 
 const app = express();
 app.use(express.json());
 app.use('/api', chequeRouter);
 app.use('/api/money-control', moneyRouter);
+app.use('/api', notificationsRouter);
 
 const day = off => { const d = new Date(); d.setDate(d.getDate() + off); return d.toISOString().slice(0, 10); };
 const addCheque = async (payee, amount, due) => (await request(app).post('/api/cheque-register').send({ payee, amount, due_date: due })).body.id;
@@ -109,5 +112,17 @@ describe('dashboard "can we cover today?"', () => {
     expect(res.body.sales_total_today).toBe(101000);      // sales include credit
     expect(res.body.cash_in_today).toBe(1000);            // money in hand does not
     expect(res.body.can_cover_today).toBe(false);         // was true: the 100,000 of credit sales was counted as cash
+  });
+});
+
+describe('due-soon notifications', () => {
+  test('a held cheque (postponed, not cancelled) still raises its due-soon alert', async () => {
+    const id = await addCheque('Held payee', 7000, day(1));
+    await request(app).post(`/api/money-control/cheque-register/${id}/hold`).send({ new_due_date: day(3) });
+    const res = await request(app).get('/api/notifications');
+    if (res.status !== 200) throw new Error(JSON.stringify(res.body).slice(0, 300));
+    const mine = res.body.filter(n => n.title === 'Cheque — Held payee');
+    expect(mine).toHaveLength(1);
+    expect(mine[0].due_date).toBe(day(3));
   });
 });
