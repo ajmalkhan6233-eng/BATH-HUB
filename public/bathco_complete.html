@@ -263,6 +263,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
       <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
+      <li class="nav-item" data-page="policy"><span class="nav-icon">⚖️</span><span class="nav-label">Policy Watch</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -610,6 +611,27 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── POLICY WATCH (M7) ── -->
+    <section class="page" id="page-policy">
+      <div class="card" style="margin-bottom:16px;border-left:3px solid var(--amber)">
+        <b>Rates are not verified.</b> Imported tiles carry heavy duty and cess, and policy changes move prices hard.
+        Confirm any number against the source link before using it. A note is "verified" only when you tick it and it has a source link.
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Add note</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="pn-date"></div>
+          <div class="fg"><label class="fl">Topic</label><select class="fs" id="pn-topic"><option>import duty</option><option>cess</option><option>anti-dumping</option><option>import ban</option></select></div>
+          <div class="fg"><label class="fl">Price risk</label><select class="fs" id="pn-risk"><option>low</option><option selected>med</option><option>high</option></select></div>
+        </div>
+        <div class="fg"><label class="fl">Summary</label><textarea class="fi" rows="2" id="pn-summary" style="width:100%"></textarea></div>
+        <div class="fg"><label class="fl">Source link</label><input class="fi" id="pn-url" placeholder="https://..."></div>
+        <button class="btn btn-p" onclick="pnAdd()">Add</button>
+        <div id="pn-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Topic</th><th>Summary</th><th>Source</th><th>Risk</th><th>Verified</th><th></th></tr></thead><tbody id="pn-tbody"></tbody></table></div></div>
+    </section>
+
     <!-- ── REPLY DRAFTS (M6) ── -->
     <section class="page" id="page-replies">
       <div class="card" style="margin-bottom:16px">
@@ -862,13 +884,40 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  replies:     ['Reply Drafts', 'Agent drafts, you approve, you send by hand'],
+  policy:      ['Policy Watch', 'Import duty, cess, bans: unverified until sourced'],
+  replies:     ['Reply Drafts','Agent drafts, you approve, you send by hand'],
   webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Policy Watch (M7) */
+async function pnCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { document.getElementById('pn-msg').textContent = (await r.json()).error || 'Failed'; return null; }
+  document.getElementById('pn-msg').textContent = ''; return r.json();
+}
+async function loadPolicy() {
+  const dEl = document.getElementById('pn-date'); if (!dEl.value) dEl.value = new Date().toISOString().slice(0, 10);
+  const r = await fetch('/api/policy-notes');
+  if (!r.ok) { document.getElementById('pn-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Owner only</td></tr>'; return; }
+  const rows = await r.json();
+  document.getElementById('pn-tbody').innerHTML = rows.map(x => `<tr>
+    <td>${arEsc(x.date)}</td><td>${arEsc(x.topic)}</td><td>${arEsc(x.summary)}</td>
+    <td><input class="fi" style="min-width:150px" value="${arEsc(x.source_url)}" onchange="pnSet(${x.id},{source_url:this.value})"></td>
+    <td><select class="fs" style="width:auto" onchange="pnSet(${x.id},{price_risk:this.value})">${['low','med','high'].map(s => `<option ${s === x.price_risk ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+    <td><input type="checkbox" ${x.verified ? 'checked' : ''} onchange="pnSet(${x.id},{verified:this.checked})"> ${x.verified ? '' : '<span style="color:var(--amber);font-size:11px">unverified</span>'}</td>
+    <td><button class="btn btn-s" onclick="pnDel(${x.id})">✕</button></td></tr>`).join('') || '<tr><td colspan="7" class="no-data">No notes yet</td></tr>';
+}
+async function pnAdd() {
+  const body = { date: document.getElementById('pn-date').value, topic: document.getElementById('pn-topic').value, price_risk: document.getElementById('pn-risk').value,
+    summary: document.getElementById('pn-summary').value, source_url: document.getElementById('pn-url').value };
+  if (await pnCall('/api/policy-notes', 'POST', body)) { document.getElementById('pn-summary').value = ''; document.getElementById('pn-url').value = ''; loadPolicy(); }
+}
+async function pnSet(id, patch) { await pnCall('/api/policy-notes/' + id, 'PUT', patch); loadPolicy(); }
+async function pnDel(id) { if (confirm('Delete this note?') && await pnCall('/api/policy-notes/' + id, 'DELETE')) loadPolicy(); }
 
 /* Reply Drafts (M6): drafts only, nothing is sent from here */
 async function rdCall(url, method, body) {
@@ -1088,6 +1137,7 @@ function navigate(page) {
   if (page === 'competitors') loadCompetitors();
   if (page === 'webcat') loadWebCat();
   if (page === 'replies') loadReplies();
+  if (page === 'policy') loadPolicy();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
