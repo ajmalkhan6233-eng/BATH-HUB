@@ -64,7 +64,7 @@ router.get('/cheque-register/due-soon', async (req, res) => {
             SELECT id, cheque_no, bank, payee, amount,
                    TO_CHAR(due_date,'YYYY-MM-DD') AS due_date, status, notes
             FROM cheque_register
-            WHERE status = 'pending' AND due_date <= CURRENT_DATE + $1::int
+            WHERE status IN ('pending','held') AND due_date <= CURRENT_DATE + $1::int   -- a held cheque is still to be paid, on its new date
             ORDER BY due_date ASC
         `, [days]);
         res.json(r.rows);

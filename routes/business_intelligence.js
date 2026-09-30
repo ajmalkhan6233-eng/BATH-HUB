@@ -75,9 +75,9 @@ router.get('/cash-position-forecast', async (req, res) => {
                     COALESCE((SELECT SUM(total_sale) FROM daily_summary, bounds
                               WHERE report_date BETWEEN bounds.month_start AND LEAST(bounds.month_end, CURRENT_DATE)), 0) AS actual_sales,
                     COALESCE((SELECT SUM(amount) FROM cheque_register, bounds
-                              WHERE status = 'pending' AND due_date BETWEEN bounds.month_start AND bounds.month_end), 0) AS cheques_due,
+                              WHERE status IN ('pending','held') AND due_date BETWEEN bounds.month_start AND bounds.month_end), 0) AS cheques_due,
                     COALESCE((SELECT COUNT(*) FROM cheque_register, bounds
-                              WHERE status = 'pending' AND due_date BETWEEN bounds.month_start AND bounds.month_end), 0) AS cheques_count,
+                              WHERE status IN ('pending','held') AND due_date BETWEEN bounds.month_start AND bounds.month_end), 0) AS cheques_count,
                     COALESCE((SELECT SUM(l.amount + l.amount * l.profit_rate / 100 -
                                 COALESCE((SELECT SUM(p.amount) FROM investor_loan_payments p WHERE p.loan_id = l.id), 0))
                               FROM investor_loans l, bounds

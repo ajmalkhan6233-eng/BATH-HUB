@@ -89,7 +89,8 @@ router.get('/bank-accounts', async (req, res) => {
 router.post('/bank-accounts', async (req, res) => {
     try {
         const { account_label, bank, current_balance } = req.body;
-        if (!account_label) return res.status(400).json({ error: 'account_label is required' });
+        if (!String(account_label || '').trim()) return res.status(400).json({ error: 'account_label is required' });
+        if (current_balance !== undefined && current_balance !== null && current_balance !== '' && !Number.isFinite(Number(current_balance))) return res.status(400).json({ error: 'current_balance must be a number' });
         const r = await pool.query(`
             INSERT INTO bank_accounts (account_label, bank, current_balance)
             VALUES ($1,$2,$3) RETURNING id
@@ -101,7 +102,8 @@ router.post('/bank-accounts', async (req, res) => {
 router.put('/bank-accounts/:id/balance', async (req, res) => {
     try {
         const { current_balance } = req.body;
-        if (current_balance === undefined) return res.status(400).json({ error: 'current_balance is required' });
+        if (current_balance === undefined || current_balance === null || current_balance === '') return res.status(400).json({ error: 'current_balance is required' });
+        if (!Number.isFinite(Number(current_balance))) return res.status(400).json({ error: 'current_balance must be a number' });
         const r = await pool.query(`
             UPDATE bank_accounts SET current_balance = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 RETURNING *
@@ -117,11 +119,17 @@ router.post('/cheque-register/:id/hold', async (req, res) => {
         const { new_due_date } = req.body;
         if (!new_due_date) return res.status(400).json({ error: 'new_due_date is required' });
         if (!/^\d{4}-\d{2}-\d{2}$/.test(String(new_due_date)) || isNaN(Date.parse(new_due_date))) return res.status(400).json({ error: 'new_due_date must be a date (YYYY-MM-DD)' });
-        const existing = await pool.query(`SELECT due_date FROM cheque_register WHERE id = $1`, [req.params.id]);
+        const existing = await pool.query(`SELECT due_date, status FROM cheque_register WHERE id = $1`, [req.params.id]);
         if (!existing.rows.length) return res.status(404).json({ error: 'not found' });
+        // Only a cheque that is still to be paid can be held. (A cleared/bounced cheque used to flip back to
+        // 'held' here and reappear as money owed.)
+        if (!['pending', 'held'].includes(existing.rows[0].status)) {
+            return res.status(409).json({ error: `A ${existing.rows[0].status} cheque cannot be put on hold` });
+        }
+        // held_from_date keeps the ORIGINAL due date across repeated holds (the "old date, crossed out").
         const r = await pool.query(`
             UPDATE cheque_register
-            SET status = 'held', held_from_date = due_date, due_date = $1, updated_at = CURRENT_TIMESTAMP
+            SET status = 'held', held_from_date = COALESCE(held_from_date, due_date), due_date = $1, updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 RETURNING *
         `, [new_due_date, req.params.id]);
         res.json(r.rows[0]);
@@ -136,6 +144,7 @@ router.post('/payment-breakdown', async (req, res) => {
             return res.status(400).json({ error: 'report_date, mode, amount are required' });
         }
         if (!isDate(report_date)) return res.status(400).json({ error: 'report_date must be a date (YYYY-MM-DD)' });
+        if (!['cash', 'card', 'cheque', 'online_transfer', 'credit'].includes(mode)) return res.status(400).json({ error: 'mode must be cash, card, cheque, online_transfer or credit' });
         if (!isNonNegative(amount)) return res.status(400).json({ error: 'amount must be a number, 0 or more' });
         const r = await pool.query(`
             INSERT INTO daily_payment_breakdown (report_date, mode, amount)
@@ -208,6 +217,7 @@ router.post('/money-allocations', async (req, res) => {
     try {
         const { label, category, amount, planned_date, notes } = req.body;
         if (!label || !category || !amount) return res.status(400).json({ error: 'label, category, amount are required' });
+        if (!['investment_in', 'planned_spend'].includes(category)) return res.status(400).json({ error: 'category must be investment_in or planned_spend' });
         if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
         if (planned_date && !isDate(planned_date)) return res.status(400).json({ error: 'planned_date must be a date (YYYY-MM-DD)' });
         const r = await pool.query(`
@@ -221,6 +231,7 @@ router.post('/money-allocations', async (req, res) => {
 router.put('/money-allocations/:id', async (req, res) => {
     try {
         const { status } = req.body;
+        if (status !== undefined && status !== null && !['planned', 'done', 'cancelled'].includes(status)) return res.status(400).json({ error: 'status must be planned, done or cancelled' });
         const r = await pool.query(`
             UPDATE money_allocations SET status = COALESCE($1, status) WHERE id = $2 RETURNING *
         `, [status || null, req.params.id]);
@@ -370,7 +381,7 @@ router.get('/daily-cash-plan', async (req, res) => {
 
         const cheques = await pool.query(`
             SELECT payee, amount, due_date, (due_date - $1::date) AS days_left
-            FROM cheque_register WHERE status = 'pending' ORDER BY due_date ASC
+            FROM cheque_register WHERE status IN ('pending','held') ORDER BY due_date ASC
         `, [date]);
         const chequeBreakdown = cheques.rows.map(c => {
             const daysLeft = Number(c.days_left);
@@ -457,13 +468,16 @@ router.get('/dashboard', async (req, res) => {
         const dueImmediately = [...cheques.rows, ...loans.rows.map(l => ({ due_date: l.due_date, amount: l.outstanding }))]
             .filter(x => x.due_date && (new Date(x.due_date) - new Date(today)) / 86400000 <= 1)
             .reduce((a, x) => a + Number(x.amount), 0);
-        const availableToday = todayTotal + totalBankBalance;
+        // Credit ("on account") sales are not money in hand yet, so they don't count towards covering today's payments.
+        const cashInToday = breakdown.rows.filter(x => x.mode !== 'credit').reduce((a, x) => a + Number(x.amount), 0);
+        const availableToday = cashInToday + totalBankBalance;
         const can_cover_today = availableToday >= dueImmediately;
 
         res.json({
             date: today,
             sales_by_mode: breakdown.rows,
             sales_total_today: todayTotal,
+            cash_in_today: cashInToday,
             daily_overhead_reserve: dailyReserve,
             bank_accounts: accounts.rows,
             cheques_next_14_days: cheques.rows,

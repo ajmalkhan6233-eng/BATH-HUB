@@ -42,7 +42,7 @@ async function getDueSoonNotifications() {
             SELECT id, payee, amount, TO_CHAR(due_date,'YYYY-MM-DD') AS due_date,
                    (due_date - CURRENT_DATE) AS days_to_due
             FROM cheque_register
-            WHERE status = 'pending' AND due_date <= CURRENT_DATE + $1::int
+            WHERE status IN ('pending','held') AND due_date <= CURRENT_DATE + $1::int
             ORDER BY due_date ASC
         `, [DUE_SOON_DAYS]),
         pool.query(`

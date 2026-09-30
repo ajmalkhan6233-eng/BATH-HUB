@@ -11,11 +11,14 @@
 //   - pg_advisory_xact_lock            -> no-op function
 //   - SUBSTRING(bill_number FROM regex) -> rewritten to a fixed-position substring (BHT-YYYYMMDD-NNNN)
 //   - item_code ~ '^[0-9]{1,9}$'        -> IS NOT NULL (tests only ever use numeric item codes)
+//   - correlated "SELECT SUM(amount) FROM investor_loan_payments ... = l.id" -> 0 (pg-mem can't correlate;
+//     tests that use it must not depend on loan repayments)
 const { newDb, DataType } = require('pg-mem');
 
 const REWRITES = [
     [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
     [/item_code ~ '\^\[0-9\]\{1,9\}\$'/g, 'item_code IS NOT NULL'],
+    [/\(SELECT SUM\((?:pm|p)\.amount\) FROM investor_loan_payments (?:pm|p) WHERE (?:pm|p)\.loan_id = l\.id\)/g, '0'],
 ];
 const fix = q => {
     if (typeof q === 'string') return REWRITES.reduce((s, [re, to]) => s.replace(re, to), q);
@@ -28,6 +31,25 @@ module.exports = function makePg() {
     db.public.registerFunction({
         name: 'pg_advisory_xact_lock', args: [DataType.integer], returns: DataType.bool, implementation: () => true,
     });
+    // ROUND(x, n) is missing for floats/numerics in pg-mem.
+    for (const t of [DataType.float, DataType.decimal]) {
+        db.public.registerFunction({
+            name: 'round', args: [t, DataType.integer], returns: t,
+            implementation: (x, n) => Math.round(x * 10 ** n) / 10 ** n,
+        });
+    }
+    // TO_CHAR(date, 'YYYY-MM-DD') is the only format the app uses.
+    for (const t of [DataType.date, DataType.timestamp, DataType.timestamptz]) {
+        db.public.registerFunction({
+            name: 'to_char', args: [t, DataType.text], returns: DataType.text,
+            implementation: (d, fmt) => {
+                if (d == null) return null;
+                const x = d instanceof Date ? d : new Date(d);
+                const p = n => String(n).padStart(2, '0');
+                return fmt === 'YYYY-MM-DD' ? `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}` : x.toISOString();
+            },
+        });
+    }
     const base = db.adapters.createPg();
     class Pool extends base.Pool {
         query(q, ...rest) { return super.query(fix(q), ...rest); }
