@@ -45,7 +45,7 @@ describe('bathco_complete.html', () => {
   });
 
   test('the new tabs only call API routes that exist', () => {
-    const code = scripts.join('\n');
+    const code = html;   // includes onclick window.open('/api/...') attributes, not only the script blocks
     const urls = new Set([...code.matchAll(/['"`](\/api\/[a-z0-9.\-\/]+)/gi)].map(m => m[1].replace(/\/$/, '')));
     const routeSrc = fs.readdirSync(path.join(__dirname, '..', '..', 'routes')).map(f => fs.readFileSync(path.join(__dirname, '..', '..', 'routes', f), 'utf8')).join('\n');
     const mounted = ['/api/agent/rules', '/api/agent/rulebook', '/api/enquiries', '/api/content-posts', '/api/competitors', '/api/catalogue-web',
