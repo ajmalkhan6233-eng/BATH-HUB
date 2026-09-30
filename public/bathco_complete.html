@@ -258,6 +258,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
     <div class="sidebar-footer">
@@ -604,6 +605,24 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── AGENT RULES (M1) ── -->
+    <section class="page" id="page-agent-rules">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px" id="ar-form-title">Add rule</div>
+        <input type="hidden" id="ar-id">
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Topic</label><input class="fi" id="ar-topic" placeholder="commission"></div>
+          <div class="fg" style="grid-column:span 2"><label class="fl">Rule</label><input class="fi" id="ar-text" placeholder="State the rule clearly"></div>
+        </div>
+        <button class="btn btn-p" onclick="arSave()">Save</button>
+        <button class="btn btn-s" onclick="arReset()">Clear</button>
+        <button class="btn btn-s" onclick="window.open('/api/agent/rulebook')">Export text</button>
+        <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="ar-all" onchange="loadAgentRules()"> show old/inactive</label>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Editing saves a new version; the old one is kept.</div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Topic</th><th>Rule</th><th>Ver</th><th>Status</th><th>Action</th></tr></thead><tbody id="ar-tbody"></tbody></table></div></div>
+    </section>
+
     <!-- ── REPORTS ── -->
     <section class="page" id="page-reports">
       <div class="card" style="margin-bottom:16px">
@@ -756,7 +775,39 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
+  'agent-rules': ['Agent Rules',  'What the agent has been taught. Edits make new versions'],
 };
+
+/* Agent Rulebook (M1) */
+let _arRules = [];
+function arEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+async function loadAgentRules() {
+  const all = document.getElementById('ar-all').checked ? '?all=1' : '';
+  const r = await fetch('/api/agent/rules' + all);
+  if (!r.ok) { document.getElementById('ar-tbody').innerHTML = '<tr><td colspan="5" class="no-data">Owner only</td></tr>'; return; }
+  _arRules = await r.json();
+  document.getElementById('ar-tbody').innerHTML = _arRules.map(x =>
+    `<tr style="${x.active ? '' : 'opacity:.5'}"><td>${arEsc(x.topic)}</td><td>${arEsc(x.rule_text)}</td><td>v${x.version}</td><td>${x.active ? 'active' : 'old'}</td>` +
+    `<td>${x.active ? `<button class="btn btn-s" onclick="arEdit(${x.id})">Edit</button> <button class="btn btn-s" onclick="arOff(${x.id})">Deactivate</button>` : ''}</td></tr>`
+  ).join('') || '<tr><td colspan="5" class="no-data">No rules yet</td></tr>';
+}
+function arReset() { ['ar-id','ar-topic','ar-text'].forEach(i => document.getElementById(i).value = ''); document.getElementById('ar-form-title').textContent = 'Add rule'; }
+function arEdit(id) {
+  const x = _arRules.find(r => r.id === id); if (!x) return;
+  document.getElementById('ar-id').value = id; document.getElementById('ar-topic').value = x.topic;
+  document.getElementById('ar-text').value = x.rule_text; document.getElementById('ar-form-title').textContent = 'Correct rule (saves as v' + (x.version + 1) + ')';
+}
+async function arSave() {
+  const id = document.getElementById('ar-id').value;
+  const body = JSON.stringify({ topic: document.getElementById('ar-topic').value, rule_text: document.getElementById('ar-text').value });
+  const r = await fetch('/api/agent/rules' + (id ? '/' + id : ''), { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body });
+  if (!r.ok) { alert((await r.json()).error || 'Save failed'); return; }
+  arReset(); loadAgentRules();
+}
+async function arOff(id) {
+  if (!confirm('Deactivate this rule?')) return;
+  await fetch('/api/agent/rules/' + id + '/deactivate', { method: 'POST' }); loadAgentRules();
+}
 
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', () => navigate(el.dataset.page));
@@ -770,6 +821,7 @@ function navigate(page) {
   const [title, sub] = PAGE_META[page] || [page, ''];
   document.getElementById('page-title').textContent = title;
   if (page === 'grn') openGRNPage();
+  if (page === 'agent-rules') loadAgentRules();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
