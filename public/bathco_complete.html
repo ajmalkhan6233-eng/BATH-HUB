@@ -264,6 +264,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
       <li class="nav-item" data-page="policy"><span class="nav-icon">⚖️</span><span class="nav-label">Policy Watch</span></li>
+      <li class="nav-item" data-page="branches"><span class="nav-icon">🏬</span><span class="nav-label">Branches</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -611,6 +612,20 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── BRANCHES (M8) ── -->
+    <section class="page" id="page-branches">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0;flex:1;min-width:160px"><label class="fl">New branch</label><input class="fi" id="br-name" placeholder="Branch name"></div>
+          <div class="fg" style="margin-bottom:0"><label class="fl">Approver</label><input class="fi" id="br-approver" value="Aj"></div>
+          <button class="btn btn-p" onclick="brAdd()">Add (read-only)</button>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Every branch starts read-only with a 0 spend cap. Ticking more actions or raising the cap asks you to confirm. Even then the agent only prepares work; the approver decides.</div>
+        <div id="br-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div id="br-list"></div>
+    </section>
+
     <!-- ── POLICY WATCH (M7) ── -->
     <section class="page" id="page-policy">
       <div class="card" style="margin-bottom:16px;border-left:3px solid var(--amber)">
@@ -884,7 +899,8 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  policy:      ['Policy Watch', 'Import duty, cess, bans: unverified until sourced'],
+  branches:    ['Branches',     'What the agent may do at each branch (starts read-only)'],
+  policy:      ['Policy Watch','Import duty, cess, bans: unverified until sourced'],
   replies:     ['Reply Drafts','Agent drafts, you approve, you send by hand'],
   webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
@@ -892,6 +908,44 @@ const PAGE_META = {
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Branch Profile (M8): new branches are read-only; widening asks for confirmation */
+const BR_ACTIONS = [['draft','Draft text'],['stage_order','Prepare orders'],['stage_post','Prepare posts']];
+async function brCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { document.getElementById('br-msg').textContent = (await r.json()).error || 'Failed'; return null; }
+  document.getElementById('br-msg').textContent = ''; return r.json();
+}
+async function loadBranches() {
+  const r = await fetch('/api/branches');
+  if (!r.ok) { document.getElementById('br-list').innerHTML = '<div class="card no-data">Owner only</div>'; return; }
+  const rows = await r.json();
+  document.getElementById('br-list').innerHTML = rows.map(x => `<div class="card" style="margin-bottom:10px">
+    <div style="margin-bottom:6px"><b>${arEsc(x.name)}</b> · approver ${arEsc(x.approver)} · agent: <b>${x.agent_allowed_actions.length === 1 ? 'read-only' : arEsc(x.agent_allowed_actions.join(', '))}</b></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      ${BR_ACTIONS.map(([k, label]) => `<label style="font-size:13px"><input type="checkbox" ${x.agent_allowed_actions.includes(k) ? 'checked' : ''} onchange="brToggle(${x.id},'${k}',this.checked)"> ${label}</label>`).join('')}
+      <label style="font-size:13px">Spend cap (LKR) <input class="fi" type="number" min="0" style="width:120px" value="${x.spend_cap_lkr}" onchange="brCap(${x.id},this.value)"></label>
+    </div></div>`).join('') || '<div class="card no-data">No branches yet</div>';
+  window._brRows = rows;
+}
+async function brAdd() {
+  const name = document.getElementById('br-name').value;
+  if (await brCall('/api/branches', 'POST', { name, approver: document.getElementById('br-approver').value })) { document.getElementById('br-name').value = ''; loadBranches(); }
+}
+async function brToggle(id, action, on) {
+  const row = window._brRows.find(r => r.id === id);
+  const set = new Set(row.agent_allowed_actions); on ? set.add(action) : set.delete(action);
+  if (on && !confirm('Let the agent "' + action + '" for ' + row.name + '? It still needs ' + row.approver + '\'s approval each time.')) { loadBranches(); return; }
+  await brCall('/api/branches/' + id, 'PUT', { agent_allowed_actions: [...set], widen_confirm: on });
+  loadBranches();
+}
+async function brCap(id, val) {
+  const row = window._brRows.find(r => r.id === id), n = Number(val);
+  const up = n > row.spend_cap_lkr;
+  if (up && !confirm('Raise the spend cap for ' + row.name + ' to LKR ' + n + '?')) { loadBranches(); return; }
+  await brCall('/api/branches/' + id, 'PUT', { spend_cap_lkr: val, widen_confirm: up });
+  loadBranches();
+}
 
 /* Policy Watch (M7) */
 async function pnCall(url, method, body) {
@@ -1138,6 +1192,7 @@ function navigate(page) {
   if (page === 'webcat') loadWebCat();
   if (page === 'replies') loadReplies();
   if (page === 'policy') loadPolicy();
+  if (page === 'branches') loadBranches();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
