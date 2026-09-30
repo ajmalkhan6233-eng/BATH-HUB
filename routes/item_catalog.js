@@ -149,6 +149,35 @@ router.get('/items', async (req, res) => {
     } catch (e) { res.status(500).json({ error: `Could not search items: ${e.message}` }); }
 });
 
+// GET /items/reorder -> items at or below their reorder level, most urgent first, with a suggested order
+// quantity that tops the item back up to twice its reorder level (at least 1).
+router.get('/items/reorder', async (req, res) => {
+    try {
+        const r = await pool.query(
+            `SELECT item_code, name, category, stock_level, reorder_threshold FROM products
+             WHERE active = true AND stock_level <= reorder_threshold ORDER BY item_code`);
+        const items = r.rows.map(x => {
+            const stock = Number(x.stock_level), level = Number(x.reorder_threshold);
+            return { item_code: x.item_code, name: x.name, category: x.category, stock_level: stock, reorder_threshold: level,
+                     suggested_order_qty: Math.max(1, Math.ceil(level * 2 - stock)) };
+        }).sort((a, b) => (a.stock_level - a.reorder_threshold) - (b.stock_level - b.reorder_threshold) || a.item_code.localeCompare(b.item_code));
+        res.json(items);
+    } catch (e) { res.status(500).json({ error: `Could not build the reorder list: ${e.message}` }); }
+});
+
+// GET /items/export.csv -> a stock-take sheet: code, name, category, system stock, and a blank "counted" column.
+router.get('/items/export.csv', async (req, res) => {
+    try {
+        const { csvRow } = require('../utils/csv');
+        const r = await pool.query(`SELECT item_code, name, category, stock_level FROM products WHERE active = true ORDER BY item_code`);
+        const lines = [csvRow(['Code', 'Name', 'Category', 'System stock', 'Counted'])];
+        for (const x of r.rows) lines.push(csvRow([[x.item_code, true], [x.name, true], [x.category, true], x.stock_level, '']));
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="stock-take.csv"');
+        res.send(lines.join('\r\n') + '\r\n');
+    } catch (e) { res.status(500).json({ error: `Could not build the stock-take sheet: ${e.message}` }); }
+});
+
 router.get('/items/:code', async (req, res) => {
     try {
         const r = await pool.query(`SELECT ${ITEM_COLS} FROM products WHERE active = true AND item_code = $1`, [String(req.params.code)]);
