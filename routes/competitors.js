@@ -154,6 +154,19 @@ function createRouter(pool) {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
+    // Competitors not checked for N days (default 35) or never checked: the "who is due a look" list.
+    router.get('/competitors/due-check', ownerOnly, async (req, res) => {
+        try {
+            await ready;
+            const days = Math.min(Math.max(parseInt(req.query.days, 10) || 35, 1), 365);
+            const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+            const r = await pool.query(`SELECT * FROM competitors ORDER BY name`);
+            const due = r.rows.map(out).filter(c => !c.last_checked || c.last_checked < cutoff)
+                .sort((a, b) => (a.last_checked || '').localeCompare(b.last_checked || '') || a.name.localeCompare(b.name));
+            res.json({ days, never_checked: due.filter(c => !c.last_checked).length, competitors: due });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
     // Monthly checklist: every competitor with its latest check in ?month=YYYY-MM (default: this month),
     // or check = null when not yet done that month.
     router.get('/competitors/checklist', ownerOnly, async (req, res) => {

@@ -64,6 +64,21 @@ function createRouter(pool) {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
+    // What needs attention: high price-risk notes, and anything not yet verified against a source.
+    router.get('/policy-notes/alerts', ownerOnly, async (req, res) => {
+        try {
+            await ready;
+            const r = await pool.query(`SELECT * FROM policy_notes ORDER BY date DESC, id DESC`);
+            const rows = r.rows.map(out);
+            res.json({
+                high_risk: rows.filter(n => n.price_risk === 'high'),
+                unverified: rows.filter(n => !n.verified),
+                high_risk_unverified: rows.filter(n => n.price_risk === 'high' && !n.verified).length,
+                note: 'Do not use any rate or number from an unverified note.',
+            });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
     router.post('/policy-notes', ownerOnly, async (req, res) => {
         try {
             await ready;

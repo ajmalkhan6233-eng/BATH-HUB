@@ -68,4 +68,22 @@ describe('M4 competitors', () => {
         expect((await request(app).post('/api/competitors/9999/checks').send({})).status).toBe(404);
         expect((await request(app).get('/api/competitors/checklist?month=10')).status).toBe(400);
     });
+
+    test('due-check lists never-checked and stale competitors, not recently checked ones', async () => {
+        const app = makeApp('owner');
+        const rows = (await request(app).get('/api/competitors')).body;
+        const id = n => rows.find(r => r.name === n).id;
+        const ago = d => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10);
+        await request(app).post(`/api/competitors/${id('Tile City')}/checks`).send({ checked_on: ago(3) });
+        await request(app).post(`/api/competitors/${id('Ultra Tiles')}/checks`).send({ checked_on: ago(60) });
+        const r = await request(app).get('/api/competitors/due-check');
+        expect(r.status).toBe(200);
+        const names = r.body.competitors.map(c => c.name);
+        expect(names).not.toContain('Tile City');
+        expect(names).toContain('Ultra Tiles');
+        expect(r.body.never_checked).toBe(11);
+        expect(names[names.length - 1]).toBe('Ultra Tiles');
+        expect((await request(app).get('/api/competitors/due-check?days=90')).body.competitors.map(c => c.name)).not.toContain('Ultra Tiles');
+        expect((await request(makeApp('staff')).get('/api/competitors/due-check')).status).toBe(403);
+    });
 });

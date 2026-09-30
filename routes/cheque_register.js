@@ -71,6 +71,19 @@ router.get('/cheque-register/due-soon', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Cheques already past their due date and still to be paid (pending or held), oldest first.
+router.get('/cheque-register/overdue', async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT id, cheque_no, bank, payee, amount, TO_CHAR(due_date,'YYYY-MM-DD') AS due_date, status,
+                   (CURRENT_DATE - due_date) AS days_overdue
+            FROM cheque_register
+            WHERE status IN ('pending','held') AND due_date < CURRENT_DATE
+            ORDER BY due_date ASC`);
+        res.json(r.rows.map(x => ({ ...x, amount: Number(x.amount), days_overdue: Number(x.days_overdue) })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
 const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
 const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;

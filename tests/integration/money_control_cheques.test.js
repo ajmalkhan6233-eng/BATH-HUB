@@ -26,7 +26,9 @@ app.use('/api', chequeRouter);
 app.use('/api/money-control', moneyRouter);
 app.use('/api', notificationsRouter);
 
-const day = off => { const d = new Date(); d.setDate(d.getDate() + off); return d.toISOString().slice(0, 10); };
+// "today" as the in-memory database sees it (its CURRENT_DATE), so the test is stable at any hour
+const dbToday = new Date(db.one('SELECT CURRENT_DATE AS d').d);
+const day = off => { const d = new Date(dbToday); d.setUTCDate(d.getUTCDate() + off); return d.toISOString().slice(0, 10); };
 const addCheque = async (payee, amount, due) => (await request(app).post('/api/cheque-register').send({ payee, amount, due_date: due })).body.id;
 
 beforeAll(() => new Promise(r => setTimeout(r, 100)));   // let the routes' CREATE TABLEs finish
@@ -103,7 +105,9 @@ describe('money control inputs', () => {
 
 describe('dashboard "can we cover today?"', () => {
   test('credit (on account) sales are not counted as money in hand', async () => {
-    const post = (mode, amount) => request(app).post('/api/money-control/payment-breakdown').send({ report_date: day(0), mode, amount });
+    // the dashboard reads "today" as the UTC date (known quirk), so post to that date
+    const utcToday = new Date().toISOString().slice(0, 10);
+    const post = (mode, amount) => request(app).post('/api/money-control/payment-breakdown').send({ report_date: utcToday, mode, amount });
     await post('credit', 100000);                 // sold on account: no cash yet
     await post('cash', 1000);
     await addCheque('Due today', 50000, day(0));

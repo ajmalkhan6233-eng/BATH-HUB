@@ -57,4 +57,19 @@ describe('M7 policy notes', () => {
         expect((await request(app).delete('/api/policy-notes/' + n.id)).status).toBe(200);
         expect((await request(app).delete('/api/policy-notes/' + n.id)).status).toBe(404);
     });
+
+    test('alerts: high-risk notes and unverified notes, with a count of the dangerous overlap', async () => {
+        const app = makeApp('owner');
+        const a = (await request(app).post('/api/policy-notes').send({ date: '2026-09-01', topic: 'cess', summary: 'High, unverified', price_risk: 'high' })).body;
+        await request(app).post('/api/policy-notes').send({ date: '2026-09-02', topic: 'import duty', summary: 'Low, unverified', price_risk: 'low' });
+        const c = (await request(app).post('/api/policy-notes').send({ date: '2026-09-03', topic: 'import ban', summary: 'High, verified', price_risk: 'high', source_url: 'https://example.gov.lk/x' })).body;
+        await request(app).put('/api/policy-notes/' + c.id).send({ verified: true });
+        const r = await request(app).get('/api/policy-notes/alerts');
+        expect(r.status).toBe(200);
+        expect(r.body.high_risk.map(n => n.summary).sort()).toEqual(['High, unverified', 'High, verified']);
+        expect(r.body.unverified.map(n => n.summary).sort()).toEqual(['High, unverified', 'Low, unverified']);
+        expect(r.body.high_risk_unverified).toBe(1);
+        expect(a.verified).toBe(false);
+        expect((await request(makeApp('staff')).get('/api/policy-notes/alerts')).status).toBe(403);
+    });
 });
