@@ -289,6 +289,11 @@ app.post('/api/login', async (req, res) => {
             logLoginAttempt(username || '?', false, ip, 'bad_credentials');
             return res.status(401).json({ error: 'Invalid username or password' });
         }
+        // A disabled account (users.active = false) must not get in, even with the right password.
+        if (user.active === false) {
+            logLoginAttempt(username, false, ip, 'account_disabled');
+            return res.status(403).json({ error: 'This account has been disabled' });
+        }
         // "Remember this device" — extends the session cookie from 12h to 1 year on
         // THIS browser only (still an httpOnly signed cookie). A different browser/
         // device with no cookie still needs the real password; this is not a
@@ -675,10 +680,21 @@ app.patch('/api/users/:id', async (req, res) => {
     }
     if (active !== undefined) { vals.push(active); updates.push(`active=$${vals.length}`); }
     if (!updates.length) return res.status(400).json({ error: 'nothing to update' });
+    // Nobody can lock themselves (and possibly the whole business) out by disabling or demoting their own account.
+    const me = req.session.user;
+    if (me && String(me.id) === String(req.params.id) && (active === false || (role !== undefined && role !== me.role))) {
+        return res.status(400).json({ error: "You can't disable or change the role of your own account" });
+    }
     vals.push(req.params.id);
     try {
         const r = await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id=$${vals.length} RETURNING id, username, name, role, staff_id`, vals);
         if (!r.rowCount) return res.status(404).json({ error: 'user not found' });
+        // Disabling, or changing someone's role, signs them out everywhere: a session keeps the role it was
+        // created with and can last up to a year, so a demoted user would otherwise keep their old access.
+        if ((active === false || role !== undefined) && !(me && String(me.id) === String(req.params.id))) {
+            await pool.query(`DELETE FROM session WHERE (sess::jsonb)->'user'->>'id' = $1`, [String(req.params.id)])
+                .catch(e => console.warn('[users] could not clear sessions for disabled user:', e.message));
+        }
         res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
