@@ -258,6 +258,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -605,6 +606,24 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── ENQUIRIES (M2) ── -->
+    <section class="page" id="page-enquiries">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Quick add</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="enq-channels"></div>
+        <div class="fg"><label class="fl">Product interest</label><input class="fi" id="enq-product" placeholder="e.g. floor tile 60x60" style="font-size:16px"></div>
+        <div class="fg"><label class="fl">How did they find us?</label><input class="fi" id="enq-how" placeholder="e.g. saw TikTok live" style="font-size:16px"></div>
+        <div class="fg"><label class="fl">Notes</label><input class="fi" id="enq-notes" style="font-size:16px"></div>
+        <button class="btn btn-p" style="width:100%;padding:14px;font-size:16px" onclick="enqSave()">Save enquiry</button>
+        <div id="enq-msg" style="font-size:12px;margin-top:6px;color:var(--text2)"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Weekly count by channel (last 8 weeks)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Week of</th><th>Channel</th><th>Enquiries</th></tr></thead><tbody id="enq-weekly"></tbody></table></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Channel</th><th>Interest</th><th>Found us</th><th>Status</th></tr></thead><tbody id="enq-tbody"></tbody></table></div></div>
+    </section>
+
     <!-- ── AGENT RULES (M1) ── -->
     <section class="page" id="page-agent-rules">
       <div class="card" style="margin-bottom:16px">
@@ -775,8 +794,43 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  'agent-rules': ['Agent Rules',  'What the agent has been taught. Edits make new versions'],
+  enquiries:   ['Enquiries',    'Where customers come from: TikTok, walk-in, WhatsApp...'],
+  'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Enquiry Tracker (M2) */
+const ENQ_CHANNELS = ['tiktok','facebook','whatsapp','walk-in','google','other'];
+const ENQ_STATUSES = ['new','quoted','won','lost'];
+let _enqChannel = '';
+function enqPickChannel(c) {
+  _enqChannel = c;
+  document.querySelectorAll('#enq-channels button').forEach(b => b.className = 'btn ' + (b.dataset.c === c ? 'btn-p' : 'btn-s'));
+}
+async function loadEnquiries() {
+  document.getElementById('enq-channels').innerHTML = ENQ_CHANNELS.map(c =>
+    `<button class="btn ${c === _enqChannel ? 'btn-p' : 'btn-s'}" data-c="${c}" style="padding:12px 16px;font-size:15px" onclick="enqPickChannel('${c}')">${c}</button>`).join('');
+  const [l, w] = await Promise.all([fetch('/api/enquiries'), fetch('/api/enquiries/weekly?weeks=8')]);
+  if (!l.ok) { document.getElementById('enq-tbody').innerHTML = '<tr><td colspan="5" class="no-data">Owner only</td></tr>'; return; }
+  const rows = await l.json(), wk = await w.json();
+  document.getElementById('enq-weekly').innerHTML = wk.map(x => `<tr><td>${arEsc(x.week_start)}</td><td>${arEsc(x.channel)}</td><td>${x.n}</td></tr>`).join('') || '<tr><td colspan="3" class="no-data">No enquiries yet</td></tr>';
+  document.getElementById('enq-tbody').innerHTML = rows.map(x =>
+    `<tr><td>${arEsc(String(x.date).slice(0,10))}</td><td>${arEsc(x.channel)}</td><td>${arEsc(x.product_interest)}</td><td>${arEsc(x.how_found_us)}</td>` +
+    `<td><select class="fs" onchange="enqStatus(${x.id}, this.value)">${ENQ_STATUSES.map(s => `<option ${s === x.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td></tr>`
+  ).join('') || '<tr><td colspan="5" class="no-data">No enquiries yet</td></tr>';
+}
+async function enqSave() {
+  const msg = document.getElementById('enq-msg');
+  if (!_enqChannel) { msg.textContent = 'Pick a channel first'; return; }
+  const r = await fetch('/api/enquiries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({
+    channel: _enqChannel, product_interest: document.getElementById('enq-product').value,
+    how_found_us: document.getElementById('enq-how').value, notes: document.getElementById('enq-notes').value }) });
+  if (!r.ok) { msg.textContent = (await r.json()).error || 'Save failed'; return; }
+  ['enq-product','enq-how','enq-notes'].forEach(i => document.getElementById(i).value = '');
+  msg.textContent = 'Saved'; loadEnquiries();
+}
+async function enqStatus(id, status) {
+  await fetch('/api/enquiries/' + id + '/status', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
+}
 
 /* Agent Rulebook (M1) */
 let _arRules = [];
@@ -822,6 +876,7 @@ function navigate(page) {
   document.getElementById('page-title').textContent = title;
   if (page === 'grn') openGRNPage();
   if (page === 'agent-rules') loadAgentRules();
+  if (page === 'enquiries') loadEnquiries();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
