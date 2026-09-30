@@ -540,6 +540,7 @@ app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker
 app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
 app.use('/api', require('./routes/competitors'));          // M4 competitor watch (owner-only) -> /api/competitors*
 app.use('/api', require('./routes/catalogue_feed'));       // M5 website catalogue feed -> /api/public/catalogue (public, whitelisted), /api/catalogue-web* (owner)
+app.use('/api', require('./routes/reply_drafts'));         // M6 reply drafts (owner-only, drafts only, never sends) -> /api/reply-drafts*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,

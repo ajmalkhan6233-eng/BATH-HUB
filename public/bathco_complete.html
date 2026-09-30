@@ -262,6 +262,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
       <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
       <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
+      <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -609,6 +610,23 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── REPLY DRAFTS (M6) ── -->
+    <section class="page" id="page-replies">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">New draft</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Channel</label><select class="fs" id="rd-channel"><option>whatsapp</option><option>email</option></select></div>
+          <div class="fg"><label class="fl">Customer (phone / email)</label><input class="fi" id="rd-ref"></div>
+        </div>
+        <div class="fg"><label class="fl">Customer wrote</label><textarea class="fi" rows="2" id="rd-in" style="width:100%"></textarea></div>
+        <div class="fg"><label class="fl">Draft reply</label><textarea class="fi" rows="3" id="rd-draft" style="width:100%"></textarea></div>
+        <button class="btn btn-p" onclick="rdAdd()">Save draft</button>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is sent from here. Approve the wording, then send it yourself and tap "I sent it". Replies with prices are marked.</div>
+        <div id="rd-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div id="rd-list"></div>
+    </section>
+
     <!-- ── WEBSITE CATALOGUE (M5) ── -->
     <section class="page" id="page-webcat">
       <div class="card" style="margin-bottom:16px;font-size:12px;color:var(--text2)">
@@ -844,12 +862,44 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  webcat:      ['Website Catalogue', 'Choose what the public website shows (no prices)'],
+  replies:     ['Reply Drafts', 'Agent drafts, you approve, you send by hand'],
+  webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Reply Drafts (M6): drafts only, nothing is sent from here */
+async function rdCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { document.getElementById('rd-msg').textContent = (await r.json()).error || 'Failed'; return null; }
+  document.getElementById('rd-msg').textContent = ''; return r.json();
+}
+async function loadReplies() {
+  const r = await fetch('/api/reply-drafts');
+  if (!r.ok) { document.getElementById('rd-list').innerHTML = '<div class="card no-data">Owner only</div>'; return; }
+  const rows = await r.json();
+  document.getElementById('rd-list').innerHTML = rows.map(x => `<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+      <b>${arEsc(x.channel)}</b> <span>${arEsc(x.customer_ref)}</span> <b>${arEsc(x.status)}</b>
+      ${x.has_price ? '<span style="color:var(--amber);font-weight:700">⚠ contains a price</span>' : ''}
+    </div>
+    ${x.incoming_text ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Customer: ${arEsc(x.incoming_text)}</div>` : ''}
+    <textarea class="fi" rows="3" style="width:100%" ${x.status === 'sent' ? 'disabled' : ''} onchange="rdEdit(${x.id},this.value)">${arEsc(x.draft_text)}</textarea>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      ${x.status === 'draft' ? `<button class="btn btn-p" onclick="rdAct(${x.id},'approve')">Approve wording</button>` : ''}
+      ${x.status === 'approved' ? `<button class="btn btn-p" onclick="rdAct(${x.id},'mark-sent')">I sent it</button>` : ''}
+      ${x.status === 'draft' || x.status === 'approved' ? `<button class="btn btn-s" onclick="rdAct(${x.id},'reject')">Reject</button>` : ''}
+    </div></div>`).join('') || '<div class="card no-data">No drafts yet</div>';
+}
+async function rdAdd() {
+  const body = { channel: document.getElementById('rd-channel').value, customer_ref: document.getElementById('rd-ref').value,
+    incoming_text: document.getElementById('rd-in').value, draft_text: document.getElementById('rd-draft').value };
+  if (await rdCall('/api/reply-drafts', 'POST', body)) { ['rd-ref','rd-in','rd-draft'].forEach(i => document.getElementById(i).value = ''); loadReplies(); }
+}
+async function rdEdit(id, text) { if (await rdCall('/api/reply-drafts/' + id, 'PUT', { draft_text: text })) loadReplies(); }
+async function rdAct(id, act) { if (await rdCall('/api/reply-drafts/' + id + '/' + act, 'POST')) loadReplies(); }
 
 /* Website Catalogue (M5) */
 async function loadWebCat() {
@@ -1037,6 +1087,7 @@ function navigate(page) {
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
   if (page === 'webcat') loadWebCat();
+  if (page === 'replies') loadReplies();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
