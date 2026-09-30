@@ -5,16 +5,36 @@
 // Usage at the top of a test file:
 //   jest.mock('pg', () => require('../helpers/pgmock')());
 // Every `new Pool()` in the code under test then shares ONE in-memory database, reachable in
-// tests as `require('pg').__db` (e.g. `await new (require('pg').Pool)().query('CREATE TABLE ...')`).
+// tests as `require('pg').__db` (e.g. `require('pg').__db.public.none('CREATE TABLE ...')`).
+//
+// pg-mem lacks a few Postgres features the app uses. They are patched here, for tests only:
+//   - pg_advisory_xact_lock            -> no-op function
+//   - SUBSTRING(bill_number FROM regex) -> rewritten to a fixed-position substring (BHT-YYYYMMDD-NNNN)
 const { newDb, DataType } = require('pg-mem');
+
+const REWRITES = [
+    [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
+];
+const fix = q => {
+    if (typeof q === 'string') return REWRITES.reduce((s, [re, to]) => s.replace(re, to), q);
+    if (q && typeof q.text === 'string') return { ...q, text: fix(q.text) };
+    return q;
+};
 
 module.exports = function makePg() {
     const db = newDb();
     db.public.registerFunction({
         name: 'pg_advisory_xact_lock', args: [DataType.integer], returns: DataType.bool, implementation: () => true,
     });
-    const pg = db.adapters.createPg();
-    pg.types = { setTypeParser() {} };
-    pg.__db = db;
-    return pg;
+    const base = db.adapters.createPg();
+    class Pool extends base.Pool {
+        query(q, ...rest) { return super.query(fix(q), ...rest); }
+        async connect(...a) {
+            const c = await super.connect(...a);
+            const orig = c.query.bind(c);
+            c.query = (q, ...rest) => orig(fix(q), ...rest);
+            return c;
+        }
+    }
+    return { ...base, Pool, types: { setTypeParser() {} }, __db: db };
 };

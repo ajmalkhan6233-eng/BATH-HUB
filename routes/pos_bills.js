@@ -67,6 +67,9 @@ pool.query(`
     )
 `).catch(e => console.error('[pos_bills] pos_bill_items migration failed:', e.message));
 
+// Bill ids are whole numbers; anything else is simply "not found" (not a database error).
+router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.status(404).json({ error: 'not found' }));
+
 // Sequential per day (BHT-YYYYMMDD-0001, -0002 ...). Must run inside the bill's transaction:
 // the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
 // suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
@@ -82,6 +85,9 @@ async function nextBillNumber(client) {
         [prefix + '%']);
     return prefix + String(r.rows[0].n).padStart(4, '0');
 }
+
+// Round to 2 decimals (money). Adding Number.EPSILON stops 1.005 -> 1.00.
+const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 async function loadBill(id) {
     const bill = await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [id]);
@@ -102,20 +108,31 @@ router.post('/pos-bills', async (req, res) => {
         if (!Array.isArray(items) || !items.length) {
             return res.status(400).json({ error: 'items (non-empty array) is required' });
         }
+        if (items.length > 100) return res.status(400).json({ error: 'a bill can have at most 100 items' });
+        const lines = [];
         for (const [i, it] of items.entries()) {
-            if (!it.item_name || it.qty === undefined || it.unit_price === undefined) {
+            if (!it || !String(it.item_name || '').trim() || it.qty === undefined || it.unit_price === undefined) {
                 return res.status(400).json({ error: `item ${i + 1}: item_name, qty and unit_price are required` });
             }
+            const item_name = String(it.item_name).trim();
+            if (item_name.length > 200) return res.status(400).json({ error: `item ${i + 1}: item_name is too long (max 200 characters)` });
             const q = Number(it.qty), pr = Number(it.unit_price);
-            if (!Number.isFinite(q) || q <= 0) return res.status(400).json({ error: `item ${i + 1} (${it.item_name}): qty must be a number greater than 0` });
-            if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: `item ${i + 1} (${it.item_name}): unit_price must be a number, 0 or more` });
+            if (!Number.isFinite(q) || q <= 0) return res.status(400).json({ error: `item ${i + 1} (${item_name}): qty must be a number greater than 0` });
+            if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: `item ${i + 1} (${item_name}): unit_price must be a number, 0 or more` });
+            if (q > 99999999 || pr > 9999999999) return res.status(400).json({ error: `item ${i + 1} (${item_name}): qty or unit_price is too large` });
+            // Stored to 2 decimals, so price the line on the stored values: what prints is what adds up.
+            const qty = money2(q), unit_price = money2(pr);
+            lines.push({ item_name, qty, unit_price, line_total: money2(qty * unit_price) });
         }
-        const subtotal = items.reduce((sum, it) => sum + Number(it.qty) * Number(it.unit_price), 0);
+        // Subtotal is the sum of the printed line totals (summing unrounded products drifted by cents).
+        const subtotal = money2(lines.reduce((sum, l) => sum + l.line_total, 0));
         const pct = Number(discount_pct) || 0;
         if (pct < 0 || pct > 100) return res.status(400).json({ error: 'discount_pct must be between 0 and 100' });
         if (subtotal <= 0) return res.status(400).json({ error: 'the bill total must be more than 0' });
-        const discount_amount = Math.round(subtotal * pct / 100 * 100) / 100;
-        const total = Math.round((subtotal - discount_amount) * 100) / 100;
+        if (String(customer_name || '').length > 150) return res.status(400).json({ error: 'customer_name is too long (max 150 characters)' });
+        if (String(customer_phone || '').length > 30) return res.status(400).json({ error: 'customer_phone is too long (max 30 characters)' });
+        const discount_amount = money2(subtotal * pct / 100);
+        const total = money2(subtotal - discount_amount);
 
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
@@ -126,12 +143,11 @@ router.post('/pos-bills', async (req, res) => {
         `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payment_method || 'cash', notes || null]);
         const billId = billRes.rows[0].id;
 
-        for (const it of items) {
-            const lineTotal = Math.round(Number(it.qty) * Number(it.unit_price) * 100) / 100;
+        for (const l of lines) {
             await client.query(`
                 INSERT INTO pos_bill_items (bill_id, item_name, qty, unit_price, line_total)
                 VALUES ($1,$2,$3,$4,$5)
-            `, [billId, it.item_name, it.qty, it.unit_price, lineTotal]);
+            `, [billId, l.item_name, l.qty, l.unit_price, l.line_total]);
         }
         await client.query('COMMIT');
 
