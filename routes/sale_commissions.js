@@ -65,6 +65,8 @@ router.post('/sale-commissions', async (req, res) => {
         if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
         if (!isPct(commission_pct)) return res.status(400).json({ error: 'commission_pct must be between 0 and 100' });
         if (!isDate(sale_date)) return res.status(400).json({ error: 'sale_date must be a date (YYYY-MM-DD)' });
+        const staff = await pool.query(`SELECT 1 FROM staff WHERE id = $1`, [Number(staff_id) || 0]);
+        if (!staff.rows.length) return res.status(404).json({ error: 'staff member not found' });
         const commission_amount = Math.round((amount * commission_pct / 100) * 100) / 100;
         const r = await pool.query(`
             INSERT INTO sale_commissions (staff_id, entry_type, sale_date, amount, commission_pct, commission_amount, reference_note, notes)
@@ -78,42 +80,61 @@ router.post('/sale-commissions', async (req, res) => {
 // ═══════════════════════ LOG a return against an earlier sale ═══════════════════════
 // body: { type: 'refund' | 'exchange', new_amount, new_commission_pct, notes }
 router.post('/sale-commissions/:id/return', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { type, new_amount, new_commission_pct, notes } = req.body;
         if (!['refund', 'exchange'].includes(type)) {
             return res.status(400).json({ error: "type must be 'refund' or 'exchange'" });
         }
-        const original = await pool.query(`SELECT * FROM sale_commissions WHERE id = $1 AND entry_type = 'sale'`, [req.params.id]);
-        if (!original.rows.length) return res.status(404).json({ error: 'original sale entry not found' });
+        if (type === 'exchange') {
+            if (!new_amount || new_commission_pct === undefined) {
+                return res.status(400).json({ error: 'exchange requires new_amount and new_commission_pct' });
+            }
+            if (!isPositive(new_amount)) return res.status(400).json({ error: 'new_amount must be a number greater than 0' });
+            if (!isPct(new_commission_pct)) return res.status(400).json({ error: 'new_commission_pct must be between 0 and 100' });
+        }
+
+        await client.query('BEGIN');
+        // Lock the original sale row so two simultaneous returns can't both pass the check below.
+        const original = await client.query(`SELECT * FROM sale_commissions WHERE id = $1 AND entry_type = 'sale' FOR UPDATE`, [Number(req.params.id) || 0]);
+        if (!original.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'original sale entry not found' }); }
         const sale = original.rows[0];
+
+        // A sale can be returned once. A second refund/exchange would claw the commission back twice.
+        const prior = await client.query(`SELECT entry_type FROM sale_commissions WHERE linked_sale_id = $1 AND entry_type IN ('return_refund','return_exchange') LIMIT 1`, [sale.id]);
+        if (prior.rows.length) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: `This sale already has a ${prior.rows[0].entry_type === 'return_refund' ? 'refund' : 'exchange'} recorded` });
+        }
 
         const daysSince = Math.floor((Date.now() - new Date(sale.sale_date).getTime()) / (1000 * 60 * 60 * 24));
         const past_policy_window = daysSince > 15; // soft flag only, never blocks
 
+        let r;
         if (type === 'refund') {
-            const r = await pool.query(`
+            r = await client.query(`
                 INSERT INTO sale_commissions (staff_id, entry_type, sale_date, amount, commission_pct, commission_amount, linked_sale_id, notes)
                 VALUES ($1,'return_refund',CURRENT_DATE,$2,$3,$4,$5,$6)
                 RETURNING id, commission_amount
             `, [sale.staff_id, sale.amount, sale.commission_pct, -sale.commission_amount, sale.id, notes || null]);
-            return res.json({ ...r.rows[0], past_policy_window, days_since_sale: daysSince });
+        } else {
+            // exchange: reverse original + add new commission for the replacement item
+            const new_commission_amount = Math.round((new_amount * new_commission_pct / 100) * 100) / 100;
+            const net_adjustment = Math.round((new_commission_amount - sale.commission_amount) * 100) / 100;
+            r = await client.query(`
+                INSERT INTO sale_commissions (staff_id, entry_type, sale_date, amount, commission_pct, commission_amount, linked_sale_id, notes)
+                VALUES ($1,'return_exchange',CURRENT_DATE,$2,$3,$4,$5,$6)
+                RETURNING id, commission_amount
+            `, [sale.staff_id, new_amount, new_commission_pct, net_adjustment, sale.id, notes || null]);
         }
-
-        // exchange: reverse original + add new commission for the replacement item
-        if (!new_amount || new_commission_pct === undefined) {
-            return res.status(400).json({ error: 'exchange requires new_amount and new_commission_pct' });
-        }
-        if (!isPositive(new_amount)) return res.status(400).json({ error: 'new_amount must be a number greater than 0' });
-        if (!isPct(new_commission_pct)) return res.status(400).json({ error: 'new_commission_pct must be between 0 and 100' });
-        const new_commission_amount = Math.round((new_amount * new_commission_pct / 100) * 100) / 100;
-        const net_adjustment = Math.round((new_commission_amount - sale.commission_amount) * 100) / 100;
-        const r = await pool.query(`
-            INSERT INTO sale_commissions (staff_id, entry_type, sale_date, amount, commission_pct, commission_amount, linked_sale_id, notes)
-            VALUES ($1,'return_exchange',CURRENT_DATE,$2,$3,$4,$5,$6)
-            RETURNING id, commission_amount
-        `, [sale.staff_id, new_amount, new_commission_pct, net_adjustment, sale.id, notes || null]);
+        await client.query('COMMIT');
         res.json({ ...r.rows[0], past_policy_window, days_since_sale: daysSince });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        res.status(500).json({ error: e.message });
+    } finally {
+        client.release();
+    }
 });
 
 // ═══════════════════════ LIST entries (filterable) ═══════════════════════
@@ -144,6 +165,7 @@ router.get('/sale-commissions', async (req, res) => {
 router.get('/sale-commissions/weekly-summary', async (req, res) => {
     try {
         const { week_start } = req.query; // any date; we snap to Mon-Sun containing it
+        if (week_start && !isDate(week_start)) return res.status(400).json({ error: 'week_start must be a date (YYYY-MM-DD)' });
         const anchor = week_start ? new Date(week_start) : new Date();
         const r = await pool.query(`
             SELECT s.id AS staff_id, s.name AS staff_name,
