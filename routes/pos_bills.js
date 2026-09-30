@@ -28,6 +28,7 @@ require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const PDFDocument = require('pdfkit');
+const { todayLK } = require('../utils/lkTime');
 
 const router = express.Router();
 
@@ -74,11 +75,7 @@ router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.statu
 // the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
 // suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
 async function nextBillNumber(client) {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const prefix = `BHT-${y}${m}${d}-`;
+    const prefix = `BHT-${todayLK().replace(/-/g, '')}-`;
     await client.query('SELECT pg_advisory_xact_lock(774413)');
     const r = await client.query(
         `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '-([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number LIKE $1`,
@@ -171,7 +168,7 @@ router.post('/pos-bills', async (req, res) => {
 // GET /pos-bills/summary?from=YYYY-MM-DD&to=YYYY-MM-DD   (both default to today; one date = that day)
 // Totals and a per-payment-method split, for closing the till. Must stay above /pos-bills/:id.
 const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
-const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const todayStr = todayLK;
 
 router.get('/pos-bills/summary', async (req, res) => {
     try {

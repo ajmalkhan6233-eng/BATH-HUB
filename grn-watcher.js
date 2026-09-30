@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./utils/timezone');   // Sri Lanka time for Postgres sessions
 const fs   = require('fs');
 const path = require('path');
 const { Pool } = require('pg');

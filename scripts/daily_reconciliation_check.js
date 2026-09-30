@@ -18,6 +18,7 @@
 
 'use strict';
 require('dotenv').config();
+const { todayLK } = require('../utils/lkTime');
 const { Pool } = require('pg');
 
 const _dbSsl = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('.railway.internal')
@@ -42,7 +43,7 @@ function seqNum(s) {
 }
 
 async function runCheck({ since, until, quiet = false } = {}) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLK();
     const from  = since || '2026-01-01';
     const to    = until || today;
 

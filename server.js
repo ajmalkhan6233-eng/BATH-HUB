@@ -1,4 +1,6 @@
 require('dotenv').config();
+require('./utils/timezone');   // Sri Lanka time for JS dates and Postgres sessions
+const { todayLK } = require('./utils/lkTime');
 const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -575,7 +577,7 @@ require('./scripts/notify_due_soon').start();
 // daily_summary - shows the extracted numbers on screen for the user to act on.
 const INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox');
 app.post('/api/inbox-upload', (req, res) => {
-    const todayDir = new Date().toISOString().slice(0, 10); // upload date, not necessarily the sheet's date
+    const todayDir = todayLK(); // upload date, not necessarily the sheet's date
     const destDir = path.join(INBOX_ROOT, todayDir);
     fs.mkdirSync(destDir, { recursive: true });
     const inboxUpload = multer({
@@ -1272,7 +1274,7 @@ app.post('/api/quotations', async (req, res) => {
         const qr = await client.query(
             `INSERT INTO quotations (customer_id,quote_date,valid_until,status,subtotal,discount,total,notes,created_by)
              VALUES ($1,$2,$3,'draft',$4,$5,$6,$7,$8) RETURNING *`,
-            [customer_id, quote_date||new Date().toISOString().slice(0,10), valid_until||null,
+            [customer_id, quote_date||todayLK(), valid_until||null,
              subtotal, disc, total, notes||null, req.session.user.id]);
         const quotation = qr.rows[0];
         await client.query(`UPDATE quotations SET quote_no='Q-'||LPAD(id::text,4,'0') WHERE id=$1`, [quotation.id]);
@@ -2327,7 +2329,7 @@ app.get('/api/purchases-today', async (req, res) => {
             WHERE p.pay_date = CURRENT_DATE
             ORDER BY p.amount DESC`);
         const total = r.rows.reduce((a,row)=>a+(+row.amount||0),0);
-        res.json({ date: new Date().toISOString().slice(0,10), total, count: r.rows.length, rows: r.rows });
+        res.json({ date: todayLK(), total, count: r.rows.length, rows: r.rows });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2499,7 +2501,7 @@ app.post('/api/nl-query', async (req, res) => {
     try {
         // 1. Parse date range from question using local Ollama (free, no API cost)
         // Uses llama3.2:1b — ~6s warm, ~45s cold (first load after server restart).
-        const today = new Date().toISOString().slice(0,10);
+        const today = todayLK();
         const OLLAMA_BASE  = process.env.OLLAMA_URL        || 'http://localhost:11434';
         const OLLAMA_MODEL = process.env.NL_OLLAMA_MODEL   || 'llama3.2:1b';
         const ollamaMessages = (q) => ([
@@ -3008,7 +3010,7 @@ app.get('/api/quinn-gp', async (req, res) => {
 
 // ─── LAYLA WHATSAPP SUMMARY ───────────────────────────────────────────────────
 app.get('/api/layla-summary', async (req, res) => {
-    const { date } = req.query; const d = date || new Date().toISOString().slice(0,10);
+    const { date } = req.query; const d = date || todayLK();
     try {
         const [summary, alerts, credit] = await Promise.all([
             pool.query(`SELECT * FROM daily_summary WHERE report_date=$1`, [d]),

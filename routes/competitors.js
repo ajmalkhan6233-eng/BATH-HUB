@@ -7,6 +7,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const { todayLK, monthLK, daysAgoLK } = require('../utils/lkTime');
 const { Pool } = require('pg');
 
 const CHANNELS = ['tiktok', 'facebook', 'site'];
@@ -137,7 +138,7 @@ function createRouter(pool) {
             await ready;
             const b = req.body || {};
             const id = Number(req.params.id) || 0;
-            const checked_on = clean(b.checked_on) || new Date().toISOString().slice(0, 10);
+            const checked_on = clean(b.checked_on) || todayLK();
             if (!isDate(checked_on)) return res.status(400).json({ error: 'checked_on must be YYYY-MM-DD' });
             for (const k of ['posts', 'goes_live', 'online_store']) {
                 if (b[k] != null && typeof b[k] !== 'boolean') return res.status(400).json({ error: k + ' must be true or false' });
@@ -159,7 +160,7 @@ function createRouter(pool) {
         try {
             await ready;
             const days = Math.min(Math.max(parseInt(req.query.days, 10) || 35, 1), 365);
-            const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+            const cutoff = daysAgoLK(days);
             const r = await pool.query(`SELECT * FROM competitors ORDER BY name`);
             const due = r.rows.map(out).filter(c => !c.last_checked || c.last_checked < cutoff)
                 .sort((a, b) => (a.last_checked || '').localeCompare(b.last_checked || '') || a.name.localeCompare(b.name));
@@ -172,7 +173,7 @@ function createRouter(pool) {
     router.get('/competitors/checklist', ownerOnly, async (req, res) => {
         try {
             await ready;
-            const month = clean(req.query.month) || new Date().toISOString().slice(0, 7);
+            const month = clean(req.query.month) || monthLK();
             if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return res.status(400).json({ error: 'month must be YYYY-MM' });
             const comps = await pool.query(`SELECT * FROM competitors ORDER BY name`);
             const checks = await pool.query(`SELECT * FROM competitor_checks ORDER BY checked_on, id`);

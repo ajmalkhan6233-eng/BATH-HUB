@@ -48,8 +48,9 @@ only observations are listed separately at the end.
     receipt queue, leave/attendance dates, money-control inputs, year-end closing year, report date ranges.
 
 ## Observations (not changed)
-- Several routes treat "today" as the UTC date, so between midnight and 05:30 Sri Lanka time they mean yesterday.
-  Affects the Money Control dashboard and default dates. Needs a timezone decision (server-wide).
+- (Fixed afterwards) "Today" used to be the UTC date, which is still yesterday between midnight and 05:30 in Colombo. All routes,
+  scripts and the bridge now use Sri Lanka time (`utils/lkTime.js`); the process and Postgres sessions run on `Asia/Colombo`
+  (`utils/timezone.js`; `APP_TIMEZONE` to change, `PG_SET_TIMEZONE=false` if a pooler rejects startup options).
 - `daily-cash-plan` calls sales minus expenses "gross profit"; the business rule says net profit = gross profit - expenses.
   The figure is a cash surplus, not profit. Rename or recompute when convenient.
 - The business routes are open to any logged-in `owner`/`admin`; the `staff` role is blocked from everything except their own salary/loans.

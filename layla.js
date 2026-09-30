@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { todayLK } = require('./utils/lkTime');
 const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -393,7 +394,7 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
     const teachMatch = incomingMessage.match(/^\s*TEACH:\s*(.+)$/is);
     if (teachMatch && digits === OWNER_NUMBER) {
         const fact = teachMatch[1].trim();
-        fs.appendFileSync(TAUGHT_FACTS_PATH, `- (${new Date().toISOString().slice(0, 10)}) ${fact}\n`);
+        fs.appendFileSync(TAUGHT_FACTS_PATH, `- (${todayLK()}) ${fact}\n`);
         // Best-effort mirror to the apex per-tenant store (layla_configs.corrections)
         // so the platform can show per-client corrections. The file above stays the
         // single source injected into the prompt — never inject both.

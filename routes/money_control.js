@@ -10,6 +10,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const { todayLK } = require('../utils/lkTime');
 const { Pool } = require('pg');
 
 const router = express.Router();
@@ -158,7 +159,7 @@ router.post('/payment-breakdown', async (req, res) => {
 
 router.get('/payment-breakdown', async (req, res) => {
     try {
-        const date = req.query.date || new Date().toISOString().slice(0, 10);
+        const date = req.query.date || todayLK();
         const r = await pool.query(`SELECT mode, amount FROM daily_payment_breakdown WHERE report_date = $1`, [date]);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -310,7 +311,7 @@ router.get('/viewer-dashboard', async (req, res) => {
         const check = await pool.query(`SELECT requester_name FROM viewer_access_requests WHERE access_token = $1 AND status = 'approved'`, [token]);
         if (!check.rows.length) return res.status(403).json({ error: 'not approved or invalid link' });
 
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayLK();
         const [breakdown, avgRes] = await Promise.all([
             pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM daily_payment_breakdown WHERE report_date = $1`, [today]),
             pool.query(`SELECT AVG(total_sale) AS avg_daily FROM daily_summary WHERE report_date >= CURRENT_DATE - INTERVAL '30 days'`),
@@ -364,7 +365,7 @@ router.post('/daily-cash-plan', async (req, res) => {
 
 router.get('/daily-cash-plan', async (req, res) => {
     try {
-        const date = req.query.date || new Date().toISOString().slice(0, 10);
+        const date = req.query.date || todayLK();
 
         const plan = await pool.query(`SELECT * FROM daily_cash_plan WHERE report_date = $1`, [date]);
         if (!plan.rows.length) {
@@ -432,7 +433,7 @@ router.get('/daily-cash-plan', async (req, res) => {
 // ═══════════════════════ THE DASHBOARD — one call, everything the page needs ═══════════════════════
 router.get('/dashboard', async (req, res) => {
     try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayLK();
 
         const [breakdown, reserve, accounts, cheques, loans, lowStock, allocations] = await Promise.all([
             pool.query(`SELECT mode, amount FROM daily_payment_breakdown WHERE report_date = $1`, [today]),

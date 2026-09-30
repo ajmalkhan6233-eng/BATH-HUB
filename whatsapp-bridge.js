@@ -3,6 +3,8 @@
 // /webhook/whatsapp, and exposes POST /send for outbound (matches layla.js's
 // WHATSAPP_API_URL default of http://localhost:3001/send).
 require('dotenv').config();
+require('./utils/timezone');
+const { todayLK } = require('./utils/lkTime');
 const express = require('express');
 const axios = require('axios');
 const fs = require('fs');
@@ -178,7 +180,7 @@ client.on('message', async (msg) => {
                 return;
             }
             const ext = media.mimetype === 'image/png' ? 'png' : 'jpg';
-            const todayDir = new Date().toISOString().slice(0, 10);
+            const todayDir = todayLK();
             const destDir = path.join(INBOX_ROOT, todayDir);
             fs.mkdirSync(destDir, { recursive: true });
             const destPath = path.join(destDir, `${Date.now()}-whatsapp-${resolved}.${ext}`);

@@ -5,6 +5,7 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 const express = require('express');
+const { todayLK, monthLK } = require('../utils/lkTime');
 const router = express.Router();
 
 const pool = new Pool({
@@ -54,7 +55,7 @@ router.post('/api/purchase-orders', async (req, res) => {
         const r = await pool.query(`
             INSERT INTO pur_purchase_orders (po_number, supplier_id, supplier_name, po_date, expected_date, total_amount, notes)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-            [po_number, supplier_id || null, supplier_name, po_date || new Date().toISOString().slice(0,10),
+            [po_number, supplier_id || null, supplier_name, po_date || todayLK(),
              expected_date || null, total_amount || 0, notes || null]);
         res.status(201).json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -121,7 +122,7 @@ router.post('/api/supplier-prices', async (req, res) => {
         const r = await pool.query(`
             INSERT INTO pur_supplier_prices (item_description, supplier_id, supplier_name, unit_cost, quoted_date, notes)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [item_description, supplier_id || null, supplier_name, unit_cost, quoted_date || new Date().toISOString().slice(0,10), notes || null]);
+            [item_description, supplier_id || null, supplier_name, unit_cost, quoted_date || todayLK(), notes || null]);
         res.status(201).json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -329,7 +330,7 @@ router.post('/api/journal-entries', async (req, res) => {
         const r = await pool.query(`
             INSERT INTO acc_journal_entries (entry_date, description, debit_account_code, credit_account_code, amount, reference)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [entry_date || new Date().toISOString().slice(0,10), description, debit_account_code, credit_account_code, amount, reference || null]);
+            [entry_date || todayLK(), description, debit_account_code, credit_account_code, amount, reference || null]);
         res.status(201).json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -403,7 +404,7 @@ router.get('/api/pnl', async (req, res) => {
 // GET-only computed, as-of a date: sums journal-entry balances per account, grouped by type.
 // Assets/Expenses shown as debit-positive; Liabilities/Equity/Income shown as credit-positive.
 router.get('/api/balance-sheet', async (req, res) => {
-    const asOf = req.query.as_of || new Date().toISOString().slice(0,10);
+    const asOf = req.query.as_of || todayLK();
     try {
         const r = await pool.query(`
             SELECT coa.account_code, coa.account_name, coa.account_type,
@@ -528,14 +529,14 @@ router.post('/api/petty-cash', async (req, res) => {
         const r = await pool.query(`
             INSERT INTO acc_petty_cash_txns (txn_date, txn_type, amount, description, category)
             VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-            [txn_date || new Date().toISOString().slice(0,10), txn_type, amount, description, category || null]);
+            [txn_date || todayLK(), txn_type, amount, description, category || null]);
         res.status(201).json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ═══════════════════════ ACCOUNTING: EXPENSE CATEGORIES WITH BUDGETS ═══════════════════════
 router.get('/api/expense-budgets', async (req, res) => {
-    const month = req.query.month || new Date().toISOString().slice(0,7); // YYYY-MM
+    const month = req.query.month || monthLK(); // YYYY-MM
     try {
         const cats = await pool.query(`SELECT * FROM acc_expense_categories ORDER BY category_name`);
         const actuals = await pool.query(`

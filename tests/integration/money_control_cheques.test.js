@@ -105,8 +105,8 @@ describe('money control inputs', () => {
 
 describe('dashboard "can we cover today?"', () => {
   test('credit (on account) sales are not counted as money in hand', async () => {
-    // the dashboard reads "today" as the UTC date (known quirk), so post to that date
-    const utcToday = new Date().toISOString().slice(0, 10);
+    // the dashboard's "today" is the Colombo date
+    const utcToday = require('../../utils/lkTime').todayLK();
     const post = (mode, amount) => request(app).post('/api/money-control/payment-breakdown').send({ report_date: utcToday, mode, amount });
     await post('credit', 100000);                 // sold on account: no cash yet
     await post('cash', 1000);
