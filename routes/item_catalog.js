@@ -140,7 +140,10 @@ router.post('/items', photoMiddleware, async (req, res) => {
         const b = req.body || {};
         if (!String(b.name || '').trim()) return res.status(400).json({ error: 'Item name is required' });
         if (req.file) photo_url = savePhoto(req.file.buffer);
-        const item = await createItem({ ...b, photo_url });
+        // allowDuplicate is an internal switch for server-side callers; a web request must not be able to set it
+        // (it would bypass the duplicate-name check and later make GRN stock land on the wrong twin).
+        const { allowDuplicate, photo_url: _ignored, ...fields } = b;
+        const item = await createItem({ ...fields, photo_url });
         res.status(201).json(item);
     } catch (e) {
         if (photo_url) fs.unlink(path.join(PHOTO_DIR, path.basename(photo_url)), () => {});

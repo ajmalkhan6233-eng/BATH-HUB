@@ -10,10 +10,12 @@
 // pg-mem lacks a few Postgres features the app uses. They are patched here, for tests only:
 //   - pg_advisory_xact_lock            -> no-op function
 //   - SUBSTRING(bill_number FROM regex) -> rewritten to a fixed-position substring (BHT-YYYYMMDD-NNNN)
+//   - item_code ~ '^[0-9]{1,9}$'        -> IS NOT NULL (tests only ever use numeric item codes)
 const { newDb, DataType } = require('pg-mem');
 
 const REWRITES = [
     [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
+    [/item_code ~ '\^\[0-9\]\{1,9\}\$'/g, 'item_code IS NOT NULL'],
 ];
 const fix = q => {
     if (typeof q === 'string') return REWRITES.reduce((s, [re, to]) => s.replace(re, to), q);
