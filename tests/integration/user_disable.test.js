@@ -61,7 +61,7 @@ describe('PATCH /api/users/:id', () => {
     expect(pool.query.mock.calls.some(c => /DELETE FROM session/i.test(String(c[0])))).toBe(false);
   });
 
-  test('changing someone else's role also clears their sessions (a session keeps its old role)', async () => {
+  test('changing another user role also clears their sessions (a session keeps its old role)', async () => {
     const agent = await adminAgent();
     pool.query.mockReset().mockResolvedValue({ rows: [], rowCount: 1 });
     pool.query.mockResolvedValueOnce({ rows: [{ id: 7, username: 'sam', name: 'Sam', role: 'staff', staff_id: 3 }], rowCount: 1 });
