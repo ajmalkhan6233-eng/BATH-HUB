@@ -19,6 +19,7 @@ async function makeApp(role) {
     app.use(express.json());
     app.use((req, _res, next) => { req.session = { user: role ? { role } : null }; next(); });
     app.use('/api', createRouter(pool));
+    app.__pool = pool;
     return app;
 }
 
@@ -72,5 +73,30 @@ describe('M5 catalogue feed', () => {
         // hiding removes it again
         await request(app).put('/api/catalogue-web/001').send({ published: false }).expect(200);
         expect((await request(app).get('/api/public/catalogue')).body.items).toEqual([]);
+    });
+
+    test('website search filters and facets expose only safe fields', async () => {
+        const app = await makeApp('owner');
+        // add two more published items
+        await app.__pool.query(`INSERT INTO products VALUES ('004','Matt Wall Tile','Tiles',9,1,3000,1500,'/api/item-photos/d.jpg',true), ('005','Glossy Basin','Sanitary',3,1,9000,4000,'/api/item-photos/e.jpg',true)`);
+        await request(app).put('/api/catalogue-web/001').send({ size_cm: '60x60', finish: 'Glossy', use: 'Floor', published: true }).expect(200);
+        await request(app).put('/api/catalogue-web/004').send({ size_cm: '30x60', finish: 'Matt', use: 'Wall', published: true }).expect(200);
+        await request(app).put('/api/catalogue-web/005').send({ size_cm: '40x40', finish: 'Glossy', use: 'Bathroom', published: true }).expect(200);
+        const names = async qs => (await request(app).get('/api/public/catalogue' + qs)).body.items.map(i => i.name);
+        expect(await names('')).toEqual(['Glossy Basin', 'Marble Floor Tile', 'Matt Wall Tile']);
+        expect(await names('?q=tile')).toEqual(['Marble Floor Tile', 'Matt Wall Tile']);
+        expect(await names('?finish=glossy')).toEqual(['Glossy Basin', 'Marble Floor Tile']);
+        expect(await names('?use=Wall')).toEqual(['Matt Wall Tile']);
+        expect(await names('?size=30 x 60')).toEqual(['Matt Wall Tile']);
+        expect(await names('?size=24x24')).toEqual(['Marble Floor Tile']);        // inches work too
+        expect(await names('?q=tile&finish=matt&use=wall&size=30x60')).toEqual(['Matt Wall Tile']);
+        expect(await names('?q=zzz')).toEqual([]);
+
+        const f = await request(app).get('/api/public/catalogue/facets');
+        expect(f.status).toBe(200);
+        expect(f.body).toEqual({ sizes_cm: ['30x60', '40x40', '60x60'], finishes: ['Glossy', 'Matt'], uses: ['Bathroom', 'Floor', 'Wall'], count: 3 });
+        expect(f.headers['access-control-allow-origin']).toBe('*');
+        const raw = JSON.stringify((await request(app).get('/api/public/catalogue?q=tile')).body) + JSON.stringify(f.body);
+        for (const secret of ['3000', '4500', '1500', '9000', 'avg_cost', 'selling_price', 'stock']) expect(raw).not.toContain(secret);
     });
 });

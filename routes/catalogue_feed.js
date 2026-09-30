@@ -47,24 +47,50 @@ function createRouter(pool) {
     )`).catch(e => console.error('[catalogue_feed] init failed:', e.message));
 
     // ── PUBLIC (no login) ────────────────────────────────────────────────────
+    // Published items, mapped through the explicit whitelist (nothing else ever leaves).
+    async function publishedItems() {
+        await ready;
+        const r = await pool.query(
+            `SELECT p.name, p.photo_url, w.size_cm, w.finish, w.use_case
+             FROM catalogue_web w JOIN products p ON p.item_code = w.item_code
+             WHERE w.published = TRUE AND p.active = TRUE ORDER BY p.name`);
+        return r.rows.map(x => ({
+            name: x.name,
+            size_cm: x.size_cm,
+            size_inches: toInches(x.size_cm),
+            finish: x.finish,
+            use: x.use_case,
+            photo: x.photo_url,
+        }));
+    }
+    const publicHeaders = res => {
+        res.set('Access-Control-Allow-Origin', '*');   // read-only public data; lets bathhub.html load it
+        res.set('Cache-Control', 'public, max-age=300');
+    };
+    const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+
+    // Optional filters for the website search: ?q=text (name contains), ?size=60x60, ?finish=, ?use=
     router.get('/public/catalogue', async (req, res) => {
         try {
-            await ready;
-            const r = await pool.query(
-                `SELECT p.name, p.photo_url, w.size_cm, w.finish, w.use_case
-                 FROM catalogue_web w JOIN products p ON p.item_code = w.item_code
-                 WHERE w.published = TRUE AND p.active = TRUE ORDER BY p.name`);
-            const items = r.rows.map(x => ({          // explicit whitelist, nothing else leaves
-                name: x.name,
-                size_cm: x.size_cm,
-                size_inches: toInches(x.size_cm),
-                finish: x.finish,
-                use: x.use_case,
-                photo: x.photo_url,
-            }));
-            res.set('Access-Control-Allow-Origin', '*');   // read-only public data; lets bathhub.html load it
-            res.set('Cache-Control', 'public, max-age=300');
+            let items = await publishedItems();
+            const q = String(req.query.q || '').trim().toLowerCase();
+            const size = String(req.query.size || '').replace(/\s+/g, '').toLowerCase();
+            if (q) items = items.filter(i => i.name.toLowerCase().includes(q));
+            if (size) items = items.filter(i => i.size_cm === size || i.size_inches === size);
+            if (req.query.finish) items = items.filter(i => same(i.finish, req.query.finish));
+            if (req.query.use) items = items.filter(i => same(i.use, req.query.use));
+            publicHeaders(res);
             res.json({ items });
+        } catch (e) { res.status(500).json({ error: 'Catalogue unavailable' }); }
+    });
+
+    // What the website can filter by: the sizes, finishes and uses that exist among published items.
+    router.get('/public/catalogue/facets', async (req, res) => {
+        try {
+            const items = await publishedItems();
+            const uniq = f => [...new Set(items.map(i => i[f]).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            publicHeaders(res);
+            res.json({ sizes_cm: uniq('size_cm'), finishes: uniq('finish'), uses: uniq('use'), count: items.length });
         } catch (e) { res.status(500).json({ error: 'Catalogue unavailable' }); }
     });
 
