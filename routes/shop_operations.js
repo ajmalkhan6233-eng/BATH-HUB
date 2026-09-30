@@ -95,13 +95,14 @@ router.get('/credit-limits', async (req, res) => {
 router.post('/credit-limits', async (req, res) => {
     try {
         const { customer_name, credit_limit, notes } = req.body;
-        if (!customer_name || !credit_limit) return res.status(400).json({ error: 'customer_name and credit_limit are required' });
+        if (!String(customer_name || '').trim() || credit_limit === undefined || credit_limit === null || credit_limit === '') return res.status(400).json({ error: 'customer_name and credit_limit are required' });
+        if (!Number.isFinite(Number(credit_limit)) || Number(credit_limit) < 0) return res.status(400).json({ error: 'credit_limit must be a number, 0 or more' });
         const r = await pool.query(`
             INSERT INTO customer_credit_limits (customer_name, credit_limit, notes)
             VALUES ($1,$2,$3)
-            ON CONFLICT (customer_name) DO UPDATE SET credit_limit = EXCLUDED.credit_limit, notes = EXCLUDED.notes, updated_at = CURRENT_TIMESTAMP
+            ON CONFLICT (customer_name) DO UPDATE SET credit_limit = EXCLUDED.credit_limit, notes = COALESCE(EXCLUDED.notes, customer_credit_limits.notes), updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        `, [customer_name, credit_limit, notes || null]);
+        `, [String(customer_name).trim(), credit_limit, notes || null]);
         res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -131,7 +132,8 @@ router.get('/discount-rules', async (req, res) => {
 router.post('/discount-rules', async (req, res) => {
     try {
         const { role, max_discount_pct, notes } = req.body;
-        if (max_discount_pct === undefined) return res.status(400).json({ error: 'max_discount_pct is required' });
+        if (max_discount_pct === undefined || max_discount_pct === null || max_discount_pct === '') return res.status(400).json({ error: 'max_discount_pct is required' });
+        if (!Number.isFinite(Number(max_discount_pct)) || Number(max_discount_pct) < 0 || Number(max_discount_pct) > 100) return res.status(400).json({ error: 'max_discount_pct must be between 0 and 100' });
         // One active rule per role: setting a limit again replaces the old one, so the
         // discount check never has two conflicting caps for the same role.
         const upd = await pool.query(`
@@ -151,7 +153,8 @@ router.post('/discount-rules', async (req, res) => {
 router.post('/discount-check', async (req, res) => {
     try {
         const { discount_pct, role } = req.body;
-        if (discount_pct === undefined) return res.status(400).json({ error: 'discount_pct is required' });
+        if (discount_pct === undefined || discount_pct === null || discount_pct === '') return res.status(400).json({ error: 'discount_pct is required' });
+        if (!Number.isFinite(Number(discount_pct)) || Number(discount_pct) < 0 || Number(discount_pct) > 100) return res.status(400).json({ error: 'discount_pct must be between 0 and 100' });
         const r = await pool.query(`
             SELECT max_discount_pct FROM discount_rules
             WHERE active = true AND role IN ($1, 'all')
@@ -188,18 +191,25 @@ router.get('/stock-items/low-stock', async (req, res) => {
 // Create or update an item by name (upsert)
 router.post('/stock-items', async (req, res) => {
     try {
-        const { item_name, unit, current_qty, reorder_level, notes } = req.body;
+        const { unit, current_qty, reorder_level, notes } = req.body;
+        const item_name = String(req.body.item_name || '').trim();
         if (!item_name) return res.status(400).json({ error: 'item_name is required' });
+        for (const [k, v] of [['current_qty', current_qty], ['reorder_level', reorder_level]]) {
+            if (v !== undefined && v !== null && v !== '' && (!Number.isFinite(Number(v)) || Number(v) < 0)) return res.status(400).json({ error: `${k} must be a number, 0 or more` });
+        }
+        // Fields that were not sent stay as they are on an existing item (passing 'pcs'/0 defaults
+        // here used to overwrite a real unit and reorder level whenever only the notes were edited).
+        const has = v => v !== undefined && v !== null && v !== '';
         const r = await pool.query(`
             INSERT INTO stock_items (item_name, unit, current_qty, reorder_level, notes)
-            VALUES ($1,$2,$3,$4,$5)
+            VALUES ($1, COALESCE($2,'pcs'), COALESCE($3,0), COALESCE($4,0), $5)
             ON CONFLICT (item_name) DO UPDATE SET
-                unit = COALESCE(EXCLUDED.unit, stock_items.unit),
-                reorder_level = COALESCE(EXCLUDED.reorder_level, stock_items.reorder_level),
-                notes = COALESCE(EXCLUDED.notes, stock_items.notes),
+                unit = COALESCE($2, stock_items.unit),
+                reorder_level = COALESCE($4, stock_items.reorder_level),
+                notes = COALESCE($5, stock_items.notes),
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        `, [item_name, unit || 'pcs', current_qty || 0, reorder_level || 0, notes || null]);
+        `, [item_name, has(unit) ? unit : null, has(current_qty) ? current_qty : null, has(reorder_level) ? reorder_level : null, notes || null]);
         res.json(r.rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -208,9 +218,14 @@ router.post('/stock-items', async (req, res) => {
 router.post('/stock-items/:id/adjust', async (req, res) => {
     try {
         const { delta, reason, notes } = req.body;
-        if (delta === undefined || !['restock', 'sale', 'correction'].includes(reason)) {
+        if (delta === undefined || delta === null || delta === '' || !['restock', 'sale', 'correction'].includes(reason)) {
             return res.status(400).json({ error: 'delta and a valid reason (restock/sale/correction) are required' });
         }
+        const d = Number(delta);
+        if (!Number.isFinite(d) || d === 0) return res.status(400).json({ error: 'delta must be a number other than 0' });
+        // The log must say what really happened: a restock adds stock, a sale removes it.
+        if (reason === 'restock' && d < 0) return res.status(400).json({ error: 'a restock must be a positive amount (use reason "correction" to reduce stock)' });
+        if (reason === 'sale' && d > 0) return res.status(400).json({ error: 'a sale must be a negative amount (use "restock" or "correction" to add stock)' });
         const item = await pool.query(`SELECT id FROM stock_items WHERE id = $1`, [req.params.id]);
         if (!item.rows.length) return res.status(404).json({ error: 'stock item not found' });
 
@@ -233,6 +248,8 @@ router.post('/receipt-queue', async (req, res) => {
     try {
         const { customer_phone, sale_reference, amount } = req.body;
         if (!customer_phone) return res.status(400).json({ error: 'customer_phone is required' });
+        if (String(customer_phone).length > 30) return res.status(400).json({ error: 'customer_phone is too long (max 30 characters)' });
+        if (amount !== undefined && amount !== null && amount !== '' && (!Number.isFinite(Number(amount)) || Number(amount) < 0)) return res.status(400).json({ error: 'amount must be a number, 0 or more' });
         const r = await pool.query(`
             INSERT INTO receipt_queue (customer_phone, sale_reference, amount)
             VALUES ($1,$2,$3) RETURNING id
