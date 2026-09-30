@@ -57,4 +57,18 @@ describe('M1 agent rulebook', () => {
         expect((await request(app).post('/api/agent/rules').send({ topic: 'x' })).status).toBe(400);
         expect((await request(app).put('/api/agent/rules/9999').send({ rule_text: 'x' })).status).toBe(404);
     });
+
+    test('history lists every version of a rule, oldest first, from any version id', async () => {
+        const app = makeApp('owner');
+        const v1 = (await request(app).post('/api/agent/rules').send({ topic: 'tone', rule_text: 'Be brief.' })).body;
+        const v2 = (await request(app).put('/api/agent/rules/' + v1.id).send({ rule_text: 'Be very brief.' })).body;
+        const v3 = (await request(app).put('/api/agent/rules/' + v2.id).send({ rule_text: 'Five lines max.' })).body;
+        for (const id of [v1.id, v2.id, v3.id]) {
+            const h = await request(app).get('/api/agent/rules/' + id + '/history');
+            expect(h.status).toBe(200);
+            expect(h.body.map(r => [r.version, r.rule_text, r.active])).toEqual([[1, 'Be brief.', false], [2, 'Be very brief.', false], [3, 'Five lines max.', true]]);
+        }
+        expect((await request(app).get('/api/agent/rules/9999/history')).status).toBe(404);
+        expect((await request(makeApp('staff')).get('/api/agent/rules/' + v1.id + '/history')).status).toBe(403);
+    });
 });

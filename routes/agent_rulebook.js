@@ -72,6 +72,17 @@ function createRouter(pool) {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
+    // Every version of one rule, oldest first: what Aj taught, and each correction after it.
+    router.get('/agent/rules/:id/history', ownerOnly, async (req, res) => {
+        try {
+            await ready;
+            const cur = await pool.query(`SELECT rule_key FROM agent_rules WHERE id = $1`, [Number(req.params.id) || 0]);
+            if (!cur.rows[0]) return res.status(404).json({ error: 'Rule not found' });
+            const r = await pool.query(`SELECT * FROM agent_rules WHERE rule_key = $1 ORDER BY version ASC`, [cur.rows[0].rule_key]);
+            res.json(r.rows);
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
     router.post('/agent/rules', ownerOnly, async (req, res) => {
         try {
             await ready;
