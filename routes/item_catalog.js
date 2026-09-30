@@ -125,6 +125,38 @@ router.get('/items/next-code', async (req, res) => {
     catch (e) { res.status(500).json({ error: `Could not work out the next item code: ${e.message}` }); }
 });
 
+// ─── Item lookup (search box / barcode / stock check) ───────────────────────
+// Selling price and stock only: the cost price is deliberately not returned here.
+const ITEM_COLS = `item_code, name, category, stock_level, reorder_threshold, selling_price, photo_url,
+                   (stock_level <= reorder_threshold) AS low_stock`;
+
+// GET /items?q=floor&category=Tiles&low=1&limit=50  -> active items, name or code contains q
+router.get('/items', async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim().toLowerCase().replace(/[\\%_]/g, m => '\\' + m);
+        const category = String(req.query.category || '').trim();
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+        const r = await pool.query(
+            `SELECT ${ITEM_COLS} FROM products
+             WHERE active = true
+               AND ($1 = '' OR LOWER(name) LIKE '%' || $1 || '%' OR item_code LIKE '%' || $1 || '%')
+               AND ($2 = '' OR category = $2)
+               AND ($3::boolean = false OR stock_level <= reorder_threshold)
+             ORDER BY item_code
+             LIMIT ${limit}`,
+            [q, category, req.query.low === '1' || req.query.low === 'true']);
+        res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: `Could not search items: ${e.message}` }); }
+});
+
+router.get('/items/:code', async (req, res) => {
+    try {
+        const r = await pool.query(`SELECT ${ITEM_COLS} FROM products WHERE active = true AND item_code = $1`, [String(req.params.code)]);
+        if (!r.rows.length) return res.status(404).json({ error: 'Item not found' });
+        res.json(r.rows[0]);
+    } catch (e) { res.status(500).json({ error: `Could not load the item: ${e.message}` }); }
+});
+
 function photoMiddleware(req, res, next) {
     photoUpload.single('photo')(req, res, err => {
         if (!err) return next();
