@@ -259,6 +259,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
+      <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -606,6 +607,28 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── CONTENT CALENDAR (M3) ── -->
+    <section class="page" id="page-content">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fg" style="margin-bottom:0"><label class="fl">Week of</label><input type="date" class="fi" id="cp-week"></div>
+          <button class="btn btn-p" onclick="cpPlanWeek()">Plan this week (3 videos + 1 live)</button>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is posted automatically. Film and post by hand, then mark it posted and paste the link.</div>
+        <div id="cp-msg" style="font-size:12px;margin-top:6px"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Add one</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="cp-date"></div>
+          <div class="fg"><label class="fl">Platform</label><select class="fs" id="cp-platform"><option>tiktok</option><option>live</option><option>facebook</option></select></div>
+          <div class="fg"><label class="fl">Type</label><select class="fs" id="cp-type"><option>price-per-sqm</option><option>room idea</option><option>delivery/job clip</option><option>live</option></select></div>
+        </div>
+        <button class="btn btn-p" onclick="cpAdd()">Add</button>
+      </div>
+      <div id="cp-list"></div>
+    </section>
+
     <!-- ── ENQUIRIES (M2) ── -->
     <section class="page" id="page-enquiries">
       <div class="card" style="margin-bottom:16px">
@@ -794,9 +817,48 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  enquiries:   ['Enquiries',    'Where customers come from: TikTok, walk-in, WhatsApp...'],
+  content:     ['Content',      'TikTok / live plan. Post by hand, nothing auto-posts'],
+  enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Content Calendar (M3): manual posting only */
+const CP_STATUSES = ['idea','scripted','filmed','posted'];
+function cpMsg(t) { document.getElementById('cp-msg').textContent = t || ''; }
+async function cpCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) { cpMsg((await r.json()).error || 'Failed'); return null; }
+  cpMsg(''); return r.json();
+}
+async function loadContent() {
+  const r = await fetch('/api/content-posts');
+  if (!r.ok) { document.getElementById('cp-list').innerHTML = '<div class="card no-data">Owner only</div>'; return; }
+  const rows = await r.json();
+  document.getElementById('cp-list').innerHTML = rows.map(x => `<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <b>${arEsc(x.planned_date)}</b> <span>${arEsc(x.platform)} · ${arEsc(x.type)}</span>
+      <select class="fs" style="width:auto" onchange="cpSet(${x.id},{status:this.value})">${CP_STATUSES.map(s => `<option ${s === x.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <button class="btn btn-s" onclick="cpDel(${x.id})">Delete</button>
+    </div>
+    <textarea class="fi" rows="3" placeholder="Script / caption draft" style="width:100%;font-size:14px" onchange="cpSet(${x.id},{script_draft:this.value})">${arEsc(x.script_draft)}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <input class="fi" style="flex:2;min-width:160px" placeholder="Posted link (after you post it)" value="${arEsc(x.posted_url)}" onchange="cpSet(${x.id},{posted_url:this.value})">
+      <input class="fi" type="number" min="0" style="flex:1;min-width:110px" placeholder="Enquiries after" value="${x.enquiries_after == null ? '' : x.enquiries_after}" onchange="cpSet(${x.id},{enquiries_after:this.value===''?null:Number(this.value)})">
+    </div></div>`).join('') || '<div class="card no-data">Nothing planned. Use "Plan this week".</div>';
+}
+async function cpPlanWeek() {
+  const w = document.getElementById('cp-week').value || new Date().toISOString().slice(0, 10);
+  const r = await cpCall('/api/content-posts/plan-week', 'POST', { week_of: w });
+  if (r) { cpMsg(r.created.length ? 'Added ' + r.created.length + ' slots' : 'That week is already planned'); loadContent(); }
+}
+async function cpAdd() {
+  const d = document.getElementById('cp-date').value;
+  if (!d) { cpMsg('Pick a date'); return; }
+  const r = await cpCall('/api/content-posts', 'POST', { planned_date: d, platform: document.getElementById('cp-platform').value, type: document.getElementById('cp-type').value });
+  if (r) loadContent();
+}
+async function cpSet(id, patch) { await cpCall('/api/content-posts/' + id, 'PUT', patch); }
+async function cpDel(id) { if (confirm('Delete this post?') && await cpCall('/api/content-posts/' + id, 'DELETE')) loadContent(); }
 
 /* Enquiry Tracker (M2) */
 const ENQ_CHANNELS = ['tiktok','facebook','whatsapp','walk-in','google','other'];
@@ -877,6 +939,7 @@ function navigate(page) {
   if (page === 'grn') openGRNPage();
   if (page === 'agent-rules') loadAgentRules();
   if (page === 'enquiries') loadEnquiries();
+  if (page === 'content') loadContent();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;

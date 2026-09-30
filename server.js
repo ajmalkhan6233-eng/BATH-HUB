@@ -535,6 +535,7 @@ app.use('/api', require('./routes/grn_manual'));         // routes are relative 
 app.use('/api', require('./routes/invoice_receipts'));   // routes are relative (/invoice-receipts*) -> /api/invoice-receipts*
 app.use('/api', require('./routes/agent_rulebook'));       // M1 agent rulebook (owner-only) -> /api/agent/rules*, /api/agent/rulebook
 app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker (owner-only) -> /api/enquiries*
+app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
