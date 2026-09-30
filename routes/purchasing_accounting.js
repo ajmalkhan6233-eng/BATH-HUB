@@ -23,6 +23,11 @@ const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_re
 // replenish the float and are NEVER treated as an expense. Only EXPENSE rows reduce it.
 const PETTY_CASH_FLOAT = parseFloat(process.env.PETTY_CASH_FLOAT || 0);
 
+// ─── Input checks (clear 400s; amounts can't be negative or text, which silently flipped balances) ───
+const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const isPositive = v => v !== '' && v !== null && typeof v !== 'boolean' && Number.isFinite(Number(v)) && Number(v) > 0;
+const isNonNegative = v => v !== '' && v !== null && typeof v !== 'boolean' && Number.isFinite(Number(v)) && Number(v) >= 0;
+
 // ═══════════════════════ PURCHASING: PURCHASE ORDERS ═══════════════════════
 router.get('/api/purchase-orders', async (req, res) => {
     try {
@@ -40,6 +45,9 @@ router.get('/api/purchase-orders', async (req, res) => {
 router.post('/api/purchase-orders', async (req, res) => {
     const { supplier_id, supplier_name, po_date, expected_date, total_amount, notes } = req.body || {};
     if (!supplier_name) return res.status(400).json({ error: 'supplier_name required' });
+    if (total_amount !== undefined && total_amount !== null && !isNonNegative(total_amount)) return res.status(400).json({ error: 'total_amount must be a number, 0 or more' });
+    if (po_date && !isDate(po_date)) return res.status(400).json({ error: 'po_date must be a date (YYYY-MM-DD)' });
+    if (expected_date && !isDate(expected_date)) return res.status(400).json({ error: 'expected_date must be a date (YYYY-MM-DD)' });
     try {
         const seq = await pool.query(`SELECT COUNT(*)+1 as n FROM pur_purchase_orders`);
         const po_number = 'PO-' + String(seq.rows[0].n).padStart(4, '0');
@@ -54,6 +62,8 @@ router.post('/api/purchase-orders', async (req, res) => {
 
 router.patch('/api/purchase-orders/:id', async (req, res) => {
     const { status, linked_grn_id, total_amount, expected_date, notes } = req.body || {};
+    if (total_amount !== undefined && total_amount !== null && !isNonNegative(total_amount)) return res.status(400).json({ error: 'total_amount must be a number, 0 or more' });
+    if (expected_date && !isDate(expected_date)) return res.status(400).json({ error: 'expected_date must be a date (YYYY-MM-DD)' });
     const sets = [], vals = [];
     if (status !== undefined) { vals.push(status); sets.push(`status=$${vals.length}`); }
     if (linked_grn_id !== undefined) { vals.push(linked_grn_id); sets.push(`linked_grn_id=$${vals.length}`); }
@@ -105,6 +115,8 @@ router.post('/api/supplier-prices', async (req, res) => {
     const { item_description, supplier_id, supplier_name, unit_cost, quoted_date, notes } = req.body || {};
     if (!item_description || !supplier_name || unit_cost == null)
         return res.status(400).json({ error: 'item_description, supplier_name, unit_cost required' });
+    if (!isNonNegative(unit_cost)) return res.status(400).json({ error: 'unit_cost must be a number, 0 or more' });
+    if (quoted_date && !isDate(quoted_date)) return res.status(400).json({ error: 'quoted_date must be a date (YYYY-MM-DD)' });
     try {
         const r = await pool.query(`
             INSERT INTO pur_supplier_prices (item_description, supplier_id, supplier_name, unit_cost, quoted_date, notes)
@@ -174,6 +186,10 @@ router.get('/api/landed-costs', async (req, res) => {
 
 router.post('/api/landed-costs', async (req, res) => {
     const { po_id, po_total, freight, duty, other_costs, notes } = req.body || {};
+    // A typo like "12O0" used to count as 0 and quietly understate the landed cost.
+    for (const [k, v] of [['po_total', po_total], ['freight', freight], ['duty', duty], ['other_costs', other_costs]]) {
+        if (v !== undefined && v !== null && v !== '' && !isNonNegative(v)) return res.status(400).json({ error: `${k} must be a number, 0 or more` });
+    }
     const f = Number(freight) || 0, d = Number(duty) || 0, o = Number(other_costs) || 0, base = Number(po_total) || 0;
     const total_landed_cost = base + f + d + o;
     try {
@@ -285,7 +301,16 @@ router.post('/api/journal-entries', async (req, res) => {
         return res.status(400).json({ error: 'description, debit_account_code, credit_account_code, amount required' });
     if (debit_account_code === credit_account_code)
         return res.status(400).json({ error: 'debit and credit accounts must differ' });
+    if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
+    if (entry_date && !isDate(entry_date)) return res.status(400).json({ error: 'entry_date must be a date (YYYY-MM-DD)' });
     try {
+        // Both accounts must exist: an entry on an unknown code vanished from the journal list (inner join)
+        // while still counting in other totals.
+        const accts = await pool.query(`SELECT account_code FROM acc_chart_of_accounts WHERE account_code IN ($1, $2)`, [debit_account_code, credit_account_code]);
+        const known = new Set(accts.rows.map(a => a.account_code));
+        for (const code of [debit_account_code, credit_account_code]) {
+            if (!known.has(code)) return res.status(400).json({ error: `account ${code} does not exist in the chart of accounts` });
+        }
         const r = await pool.query(`
             INSERT INTO acc_journal_entries (entry_date, description, debit_account_code, credit_account_code, amount, reference)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
@@ -343,6 +368,7 @@ router.get('/api/trial-balance', async (req, res) => {
 router.get('/api/pnl', async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from and to (YYYY-MM-DD) are required' });
+    if (!isDate(from) || !isDate(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
     try {
         const r = await pool.query(`
             SELECT
@@ -393,6 +419,7 @@ const VAT_RATE = 0.18; // 18% placeholder — adjust to the rate the business is
 router.get('/api/vat-report', async (req, res) => {
     const { from, to } = req.query;
     if (!from || !to) return res.status(400).json({ error: 'from and to (YYYY-MM-DD) are required' });
+    if (!isDate(from) || !isDate(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
     try {
         const [sales, purchases] = await Promise.all([
             pool.query(`SELECT COALESCE(SUM(total_sale),0) as total_sale FROM daily_summary WHERE report_date BETWEEN $1 AND $2`, [from, to]),
@@ -420,6 +447,8 @@ router.post('/api/bank-transactions', async (req, res) => {
     const { txn_date, description, amount, txn_type, bank_name, notes } = req.body || {};
     if (!txn_date || amount == null || !txn_type) return res.status(400).json({ error: 'txn_date, amount, txn_type required' });
     if (!['CREDIT','DEBIT'].includes(txn_type)) return res.status(400).json({ error: 'txn_type must be CREDIT or DEBIT' });
+    if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0 (use txn_type for the direction)' });
+    if (!isDate(txn_date)) return res.status(400).json({ error: 'txn_date must be a date (YYYY-MM-DD)' });
     try {
         const r = await pool.query(`
             INSERT INTO acc_bank_transactions (txn_date, description, amount, txn_type, bank_name, notes)
@@ -478,6 +507,8 @@ router.post('/api/petty-cash', async (req, res) => {
     const { txn_date, txn_type, amount, description, category } = req.body || {};
     if (!txn_type || !amount || !description) return res.status(400).json({ error: 'txn_type, amount, description required' });
     if (!['TOPUP','EXPENSE'].includes(txn_type)) return res.status(400).json({ error: 'txn_type must be TOPUP or EXPENSE' });
+    if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0 (a negative expense would add to the float)' });
+    if (txn_date && !isDate(txn_date)) return res.status(400).json({ error: 'txn_date must be a date (YYYY-MM-DD)' });
     try {
         const r = await pool.query(`
             INSERT INTO acc_petty_cash_txns (txn_date, txn_type, amount, description, category)
@@ -505,6 +536,7 @@ router.get('/api/expense-budgets', async (req, res) => {
 router.post('/api/expense-budgets', async (req, res) => {
     const { category_name, monthly_budget, notes } = req.body || {};
     if (!category_name || monthly_budget == null) return res.status(400).json({ error: 'category_name, monthly_budget required' });
+    if (!isNonNegative(monthly_budget)) return res.status(400).json({ error: 'monthly_budget must be a number, 0 or more' });
     try {
         const r = await pool.query(`
             INSERT INTO acc_expense_categories (category_name, monthly_budget, notes)
@@ -527,6 +559,9 @@ router.get('/api/year-end-closings', async (req, res) => {
 router.post('/api/year-end-closings', async (req, res) => {
     const { fiscal_year, notes } = req.body || {};
     if (!fiscal_year) return res.status(400).json({ error: 'fiscal_year required' });
+    if (!/^\d{4}$/.test(String(fiscal_year)) || Number(fiscal_year) < 2000 || Number(fiscal_year) > new Date().getFullYear()) {
+        return res.status(400).json({ error: 'fiscal_year must be a 4-digit year, not in the future' });
+    }
     try {
         const existing = await pool.query(`SELECT id FROM acc_year_end_closings WHERE fiscal_year=$1`, [fiscal_year]);
         if (existing.rows.length) return res.status(409).json({ error: `Fiscal year ${fiscal_year} is already closed` });

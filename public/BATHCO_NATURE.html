@@ -1815,6 +1815,8 @@ function spawnNatureFx(){
 // Data-driven: each entry is {key, flagKey, label, endpoint, cols[], render(row)}.
 // flagKey ties visibility to the feature_flags registry - a tab only renders real data
 // if its module is both built AND enabled; otherwise shows "enable in Settings".
+// First day of the current month, YYYY-MM-DD (the P&L and VAT tabs default to month-to-date).
+function monthStartStr(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; }
 const TAB_CONFIG = {
   purchasing: [
     { key:'po', flagKey:'pur_purchase_orders', label:'Purchase Orders', endpoint:'/api/purchase-orders',
@@ -1822,56 +1824,57 @@ const TAB_CONFIG = {
       render:r=>`<tr><td>${r.po_number}</td><td>${r.supplier_name}</td><td>${r.po_date_str||'—'}</td><td>${r.expected_date_str||'—'}</td><td>${fmt(r.total_amount)}</td><td><span class="badge badge-amber">${r.status||'PENDING'}</span></td></tr>` },
     { key:'matches', flagKey:'pur_po_grn_matching', label:'PO ↔ GRN Matches', endpoint:'/api/po-grn-matches',
       cols:['PO #','GRN #','PO Total','GRN Total','Variance'],
-      render:r=>`<tr><td>${r.po_number||'—'}</td><td>${r.grn_number||'—'}</td><td>${fmt(r.po_total)??'—'}</td><td>${fmt(r.grn_total)??'—'}</td><td>${fmt(r.variance)??'—'}</td></tr>` },
+      render:r=>`<tr><td>${r.po_number||'—'}</td><td>${r.suggested_grn_number||'—'}</td><td>${fmt(r.po_total)??'—'}</td><td>${fmt(r.suggested_grn_amount)??'—'}</td><td>${r.suggested_grn_amount==null?'—':fmt(Number(r.suggested_grn_amount)-Number(r.po_total))}</td></tr>` },
     { key:'prices', flagKey:'pur_price_comparison', label:'Supplier Price Comparison', endpoint:'/api/supplier-prices',
       cols:['Item','Supplier','Price','Date'],
-      render:r=>`<tr><td>${r.item_description||'—'}</td><td>${r.supplier_name||'—'}</td><td>${fmt(r.price)}</td><td>${r.price_date_str||'—'}</td></tr>` },
+      render:r=>`<tr><td>${r.item_description||'—'}</td><td>${r.supplier_name||'—'}</td><td>${fmt(r.unit_cost)}</td><td>${r.quoted_date_str||'—'}</td></tr>` },
     { key:'aging', flagKey:'pur_aging_payables', label:'Supplier Aging / Payables', endpoint:'/api/supplier-aging',
-      cols:['Supplier','Outstanding','Last Payment'],
-      render:r=>`<tr><td>${r.name||'—'}</td><td>${fmt(r.total_paid)??'0'}</td><td>${r.last_payment?new Date(r.last_payment).toLocaleDateString('en-GB'):'—'}</td></tr>` },
+      cols:['Supplier','Outstanding','Oldest unpaid (days)','Age bucket'],
+      render:r=>`<tr><td>${r.supplier_name||'—'}</td><td>${fmt(r.balance_due)??'0'}</td><td>${r.age_days==null?'—':r.age_days}</td><td>${r.aging_bucket||'—'}</td></tr>` },
     { key:'landed', flagKey:'pur_landed_cost', label:'Landed Cost', endpoint:'/api/landed-costs',
       cols:['PO #','Freight','Duty','Total Landed'],
       render:r=>`<tr><td>${r.po_number||'—'}</td><td>${fmt(r.freight)??'0'}</td><td>${fmt(r.duty)??'0'}</td><td>${fmt(r.total_landed_cost)??'—'}</td></tr>` },
     { key:'shipments', flagKey:'pur_shipment_tracker', label:'Shipment Tracker', endpoint:'/api/shipments',
       cols:['Reference','Status','ETA','Notes'],
-      render:r=>`<tr><td>${r.reference||'—'}</td><td><span class="badge badge-amber">${r.status||'—'}</span></td><td>${r.eta_str||'—'}</td><td>${r.notes||'—'}</td></tr>` },
+      render:r=>`<tr><td>${r.shipment_ref||'—'}</td><td><span class="badge badge-amber">${r.status||'—'}</span></td><td>${r.eta_date_str||'—'}</td><td>${r.notes||'—'}</td></tr>` },
   ],
   accounting: [
     { key:'coa', flagKey:'acc_chart_of_accounts', label:'Chart of Accounts', endpoint:'/api/chart-of-accounts',
-      cols:['Code','Name','Type'], render:r=>`<tr><td>${r.code}</td><td>${r.name}</td><td>${r.account_type||'—'}</td></tr>` },
+      cols:['Code','Name','Type'], render:r=>`<tr><td>${r.account_code}</td><td>${r.account_name}</td><td>${r.account_type||'—'}</td></tr>` },
     { key:'journal', flagKey:'acc_journal_entries', label:'Journal Entries', endpoint:'/api/journal-entries',
-      cols:['Date','Account','Debit','Credit','Memo'],
-      render:r=>`<tr><td>${r.entry_date_str||'—'}</td><td>${r.account_code||'—'}</td><td>${fmt(r.debit)??'0'}</td><td>${fmt(r.credit)??'0'}</td><td>${r.memo||'—'}</td></tr>` },
+      cols:['Date','Debit account','Credit account','Amount','Description'],
+      render:r=>`<tr><td>${r.entry_date_str||'—'}</td><td>${r.debit_account_code||'—'} ${r.debit_account_name||''}</td><td>${r.credit_account_code||'—'} ${r.credit_account_name||''}</td><td>${fmt(r.amount)??'0'}</td><td>${r.description||'—'}</td></tr>` },
     { key:'trial', flagKey:'acc_trial_balance', label:'Trial Balance', endpoint:'/api/trial-balance',
-      cols:['Account','Debit','Credit'], render:r=>`<tr><td>${r.account_code||r.name||'—'}</td><td>${fmt(r.debit)??'0'}</td><td>${fmt(r.credit)??'0'}</td></tr>` },
-    { key:'pnl', flagKey:'acc_pnl', label:'P&L Statement', endpoint:'/api/pnl?from=2026-06-01&to=2026-06-30',
+      cols:['Account','Debit','Credit'], rows:d=>d.rows, render:r=>`<tr><td>${r.account_code||'—'} ${r.account_name||''}</td><td>${fmt(r.total_debit)??'0'}</td><td>${fmt(r.total_credit)??'0'}</td></tr>` },
+    { key:'pnl', flagKey:'acc_pnl', label:'P&L Statement', endpoint:'/api/pnl?from=' + monthStartStr() + '&to=' + todayStr(),
       cols:['Metric','Amount'], isSingle:true,
       renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<table><tr><th>Total Sale</th><td>${fmt(r.total_sale)}</td></tr><tr><th>Gross Profit</th><td>${fmt(r.gross_profit)}</td></tr><tr><th>Expenses</th><td>${fmt(r.total_expenses)}</td></tr><tr><th>Net Profit</th><td><b>${fmt(r.net_profit)}</b></td></tr></table>` },
     { key:'balance', flagKey:'acc_balance_sheet', label:'Balance Sheet', endpoint:'/api/balance-sheet',
       cols:[], isSingle:true, renderSingle:r=>`<pre style="white-space:pre-wrap;font-size:12px">${JSON.stringify(r,null,2)}</pre>` },
-    { key:'vat', flagKey:'acc_vat_report', label:'VAT Report', endpoint:'/api/vat-report?from=2026-06-01&to=2026-06-30',
+    { key:'vat', flagKey:'acc_vat_report', label:'VAT Report', endpoint:'/api/vat-report?from=' + monthStartStr() + '&to=' + todayStr(),
       cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<table><tr><th>VAT Rate</th><td>${(r.vat_rate*100).toFixed(0)}%</td></tr><tr><th>Output VAT</th><td>${fmt(r.output_vat)}</td></tr><tr><th>Net VAT Payable</th><td>${fmt(r.net_vat_payable)}</td></tr></table>` },
     { key:'bank', flagKey:'acc_bank_reconciliation', label:'Bank Transactions', endpoint:'/api/bank-transactions',
       cols:['Date','Description','Amount','Matched'],
       render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td>${r.description||'—'}</td><td>${fmt(r.amount)}</td><td>${r.matched?'✓':'—'}</td></tr>` },
     { key:'cheqcal', flagKey:'acc_cheque_calendar', label:'Cheque Calendar', endpoint:'/api/cheque-calendar',
-      cols:['Cheque #','Amount','Due Date','Status'],
-      render:r=>`<tr><td>${r.cheque_number||'—'}</td><td>${fmt(r.amount)}</td><td>${r.due_date?new Date(r.due_date).toLocaleDateString('en-GB'):'—'}</td><td>${r.status||'—'}</td></tr>` },
+      cols:['Cheque #','Amount','Due Date','Status'], rows:d=>d.all,
+      render:r=>`<tr><td>${r.cheque_number||'—'}</td><td>${fmt(r.amount)}</td><td>${r.due_date_str||'—'}</td><td>${r.status||'—'}</td></tr>` },
     { key:'petty', flagKey:'acc_petty_cash', label:'Petty Cash (fixed float)', endpoint:'/api/petty-cash',
-      cols:['Date','Type','Amount','Note'],
-      render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td><span class="badge badge-${r.type==='TOPUP'?'green':'amber'}">${r.type||'—'}</span></td><td>${fmt(r.amount)}</td><td>${r.note||'—'}</td></tr>` },
+      cols:['Date','Type','Amount','Note'], rows:d=>d.transactions,
+      render:r=>`<tr><td>${r.txn_date_str||'—'}</td><td><span class="badge badge-${r.txn_type==='TOPUP'?'green':'amber'}">${r.txn_type||'—'}</span></td><td>${fmt(r.amount)}</td><td>${r.description||'—'}</td></tr>` },
     { key:'budgets', flagKey:'acc_expense_budgets', label:'Expense Budgets', endpoint:'/api/expense-budgets',
-      cols:['Category','Budget','Period'], render:r=>`<tr><td>${r.category||'—'}</td><td>${fmt(r.budget_amount)}</td><td>${r.period||'—'}</td></tr>` },
+      cols:['Category','Budget','Actual','Left'], render:r=>`<tr><td>${r.category_name||'—'}</td><td>${fmt(r.monthly_budget)}</td><td>${fmt(r.actual)??'0'}</td><td>${fmt(r.variance)??'—'}</td></tr>` },
     { key:'yearend', flagKey:'acc_year_end_closing', label:'Year-End Closings', endpoint:'/api/year-end-closings',
-      cols:['Year','Closed On','Net Profit'], render:r=>`<tr><td>${r.fiscal_year||'—'}</td><td>${r.closed_at?new Date(r.closed_at).toLocaleDateString('en-GB'):'—'}</td><td>${fmt(r.net_profit)??'—'}</td></tr>` },
+      cols:['Year','Closed On','Net Profit'], render:r=>`<tr><td>${r.fiscal_year||'—'}</td><td>${r.closing_date_str||'—'}</td><td>${fmt(r.net_profit)??'—'}</td></tr>` },
   ],
   staffext: [
     { key:'attendance', flagKey:'staff_attendance', label:'Attendance', endpoint:'/api/attendance',
-      cols:['Staff','Date','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.att_date_str||'—'}</td><td><span class="badge badge-${r.status==='PRESENT'?'green':'amber'}">${r.status||'—'}</span></td></tr>` },
+      cols:['Staff','Date','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.work_date||'—'}</td><td><span class="badge badge-${String(r.status).toLowerCase()==='present'?'green':'amber'}">${r.status||'—'}</span></td></tr>` },
     { key:'leave', flagKey:'staff_leave_tracker', label:'Leave Tracker', endpoint:'/api/leave',
-      cols:['Staff','From','To','Type','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.from_date_str||'—'}</td><td>${r.to_date_str||'—'}</td><td>${r.leave_type||'—'}</td><td>${r.status||'—'}</td></tr>` },
+      cols:['Staff','From','To','Type','Status'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.leave_start||'—'}</td><td>${r.leave_end||'—'}</td><td>${r.leave_type||'—'}</td><td>${r.status||'—'}</td></tr>` },
     { key:'advances', flagKey:'staff_salary_advances', label:'Salary Advances', endpoint:'/api/advances',
-      cols:['Staff','Amount','Date','Repaid'], render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${fmt(r.amount)}</td><td>${r.advance_date_str||'—'}</td><td>${fmt(r.repaid)??'0'}</td></tr>` },
+      cols:['Staff','Type','Amount','Date'], rows:d=>d.ledger,
+      render:r=>`<tr><td>${r.staff_name||r.staff_id}</td><td>${r.type||'—'}</td><td>${fmt(r.amount)}</td><td>${r.loan_date||'—'}</td></tr>` },
     { key:'commission', flagKey:'staff_commission_autocalc', label:'Commission Auto-Calc', endpoint:'/api/commission-autocalc',
       cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':(r.blocked?`<div class="flag-locked-note">${r.reason}</div>`:`<pre>${JSON.stringify(r,null,2)}</pre>`) },
   ],
@@ -1883,7 +1886,7 @@ const TAB_CONFIG = {
     { key:'forecast', flagKey:'rep_cashflow_forecast', label:'Cash-Flow Forecast', endpoint:'/api/cashflow-forecast',
       cols:[], isSingle:true, renderSingle:r=>!r?'<div class="gap-note">No data</div>':`<div class="gap-note">${r.disclaimer||''}</div><pre>${JSON.stringify(r,null,2)}</pre>` },
     { key:'ltv', flagKey:'rep_customer_ltv', label:'Customer Lifetime Value', endpoint:'/api/customer-ltv',
-      cols:['Customer','Total','Invoices'], render:r=>`<tr><td>${r.customer_name||'—'}</td><td>${fmt(r.total_value)??'0'}</td><td>${r.invoice_count??'0'}</td></tr>`,
+      cols:['Customer','Total','Invoices'], rows:d=>d.rows, render:r=>`<tr><td>${r.customer_name||'—'}</td><td>${fmt(r.total_invoiced)??'0'}</td><td>${r.invoice_count??'0'}</td></tr>`,
       preNote:r=>r?.caveat },
     { key:'heatmap', flagKey:'rep_heatmap', label:'Sales Heatmap', endpoint:'/api/heatmap',
       cols:[], isSingle:true, renderSingle:r=>`<pre style="white-space:pre-wrap;font-size:11px">${JSON.stringify(r,null,2)}</pre>` },
@@ -1925,7 +1928,7 @@ async function genericTabPage(category){
     } else {
       const wrapId = 'gtab-'+category+'-'+tab.key;
       contentEl.innerHTML = `${tab.preNote?.(data)?`<div class="gap-note">${tab.preNote(data)}</div>`:''}<div class="card"><table id="${wrapId}"><thead><tr>${tab.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody></tbody></table></div>`;
-      paginate(wrapId, Array.isArray(data)?data:[], tab.cols.length, tab.render);
+      paginate(wrapId, tab.rows ? (tab.rows(data) || []) : (Array.isArray(data) ? data : []), tab.cols.length, tab.render);
     }
   }catch(e){ contentEl.innerHTML = `<div class="err-flag">Error: ${e.message}</div>`; }
 }
