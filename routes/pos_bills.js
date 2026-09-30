@@ -167,10 +167,74 @@ router.post('/pos-bills', async (req, res) => {
     }
 });
 
+// ═══════════════════════ END-OF-DAY SUMMARY ═══════════════════════
+// GET /pos-bills/summary?from=YYYY-MM-DD&to=YYYY-MM-DD   (both default to today; one date = that day)
+// Totals and a per-payment-method split, for closing the till. Must stay above /pos-bills/:id.
+const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+router.get('/pos-bills/summary', async (req, res) => {
+    try {
+        const from = String(req.query.from || req.query.date || todayStr());
+        const to = String(req.query.to || req.query.date || from);
+        if (!isDay(from) || !isDay(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
+        if (to < from) return res.status(400).json({ error: 'to cannot be before from' });
+        const r = await pool.query(
+            `SELECT COALESCE(payment_method, 'cash') AS payment_method, COUNT(*) AS bills,
+                    SUM(subtotal) AS subtotal, SUM(discount_amount) AS discount, SUM(total) AS total
+             FROM pos_bills WHERE created_at::date BETWEEN $1::date AND $2::date
+             GROUP BY COALESCE(payment_method, 'cash') ORDER BY 1`, [from, to]);
+        const by_payment = r.rows.map(x => ({
+            payment_method: x.payment_method, bills: Number(x.bills),
+            subtotal: money2(x.subtotal), discount: money2(x.discount), total: money2(x.total),
+        })).sort((a, b) => a.payment_method.localeCompare(b.payment_method));
+        const sum = k => money2(by_payment.reduce((a, x) => a + x[k], 0));
+        res.json({
+            from, to, bills: by_payment.reduce((a, x) => a + x.bills, 0),
+            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment,
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ═══════════════════════ LIST bills ═══════════════════════
+// ═══════════════════════ BEST SELLERS (from the bills themselves) ═══════════════════════
+// GET /pos-bills/top-items?from=&to=&limit=10   Units and revenue per item name, biggest revenue first.
+// Revenue is before any bill-level discount. Defaults: the last 30 days. Must stay above /pos-bills/:id.
+router.get('/pos-bills/top-items', async (req, res) => {
+    try {
+        const d = new Date();
+        const to = String(req.query.to || todayStr());
+        const f = new Date(d.getTime() - 29 * 86400000);
+        const from = String(req.query.from || `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`);
+        if (!isDay(from) || !isDay(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
+        if (to < from) return res.status(400).json({ error: 'to cannot be before from' });
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+        const r = await pool.query(
+            `SELECT i.item_name, SUM(i.qty) AS units, SUM(i.line_total) AS revenue, COUNT(DISTINCT i.bill_id) AS bills
+             FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id
+             WHERE b.created_at::date BETWEEN $1::date AND $2::date
+             GROUP BY i.item_name`, [from, to]);
+        const items = r.rows
+            .map(x => ({ item_name: x.item_name, units: money2(x.units), revenue: money2(x.revenue), bills: Number(x.bills) }))
+            .sort((a, b) => b.revenue - a.revenue || a.item_name.localeCompare(b.item_name))
+            .slice(0, limit);
+        res.json({ from, to, items });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Optional filters: ?date=YYYY-MM-DD (that day only) and ?q=text (bill number, customer name or phone contains it).
+// With no filters it is still the latest 200 bills.
 router.get('/pos-bills', async (req, res) => {
     try {
-        const r = await pool.query(`SELECT * FROM pos_bills ORDER BY created_at DESC LIMIT 200`);
+        const date = String(req.query.date || '');
+        if (date && !isDay(date)) return res.status(400).json({ error: 'date must be a date (YYYY-MM-DD)' });
+        const q = String(req.query.q || '').trim().toLowerCase().replace(/[\\%_]/g, m => '\\' + m);
+        const r = await pool.query(
+            `SELECT * FROM pos_bills
+             WHERE ($1::date IS NULL OR created_at::date = $1::date)
+               AND ($2 = '' OR LOWER(bill_number) LIKE '%' || $2 || '%' OR LOWER(COALESCE(customer_name,'')) LIKE '%' || $2 || '%'
+                    OR COALESCE(customer_phone,'') LIKE '%' || $2 || '%')
+             ORDER BY created_at DESC, id DESC LIMIT 200`, [date || null, q]);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
