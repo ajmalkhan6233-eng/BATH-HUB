@@ -75,6 +75,9 @@ async function nextItemCode(db) {
 
 // Creates a product with the next sequential code. `opts.client` lets a caller (GRN)
 // run this inside its own transaction; otherwise a transaction is opened here.
+// Comparison key for item names: lower case; letters, digits and combining marks only (so Sinhala/Tamil vowel signs count).
+const sameNameKey = n => String(n || '').toLowerCase().replace(/[^\p{L}\p{M}\p{N}]+/gu, '');
+
 async function createItem(fields, opts = {}) {
     const name = String(fields.name || '').trim();
     if (!name) { const e = new Error('Item name is required'); e.status = 400; throw e; }
@@ -97,9 +100,12 @@ async function createItem(fields, opts = {}) {
     try {
         if (own) await db.query('BEGIN');
         await db.query('SELECT pg_advisory_xact_lock($1)', [CODE_LOCK_ID]);
-        const dup = await db.query(`SELECT item_code FROM products WHERE LOWER(name) = LOWER($1) AND active = true LIMIT 1`, [name]);
-        if (dup.rows.length && !fields.allowDuplicate) {
-            const e = new Error(`An item named "${name}" already exists (code ${dup.rows[0].item_code})`);
+        // Same name ignoring case, spaces, dashes and punctuation ("Floor Tile 60x60" = "floor-tile 60 x 60").
+        const existing = await db.query(`SELECT item_code, name FROM products WHERE active = true`);
+        const want = sameNameKey(name);
+        const dup = existing.rows.find(x => sameNameKey(x.name) === want);
+        if (dup && !fields.allowDuplicate) {
+            const e = new Error(`An item named "${dup.name}" already exists (code ${dup.item_code})`);
             e.status = 409;
             throw e;
         }
