@@ -142,35 +142,50 @@ router.get('/api/supplier-prices/best', async (req, res) => {
 // aged by the GRN date of the oldest unpaid balance.
 router.get('/api/supplier-aging', async (req, res) => {
     try {
-        const r = await pool.query(`
-            WITH received AS (
-                SELECT supplier_id, supplier_name, SUM(total_amount) as total_received, MIN(grn_date) as oldest_grn
-                FROM grn_records WHERE supplier_id IS NOT NULL GROUP BY supplier_id, supplier_name
-            ), paid AS (
-                SELECT supplier_id, SUM(amount) as total_paid FROM supplier_payments GROUP BY supplier_id
-            )
-            SELECT s.id as supplier_id, s.name as supplier_name,
-                   COALESCE(rc.total_received,0) as total_received,
-                   COALESCE(p.total_paid,0) as total_paid,
-                   COALESCE(rc.total_received,0) - COALESCE(p.total_paid,0) as balance_due,
-                   rc.oldest_grn,
-                   CASE WHEN rc.oldest_grn IS NULL THEN NULL
-                        ELSE (CURRENT_DATE - rc.oldest_grn) END as age_days,
-                   CASE
-                     WHEN rc.oldest_grn IS NULL THEN 'N/A'
-                     WHEN (CURRENT_DATE - rc.oldest_grn) <= 30 THEN '0-30'
-                     WHEN (CURRENT_DATE - rc.oldest_grn) <= 60 THEN '31-60'
-                     WHEN (CURRENT_DATE - rc.oldest_grn) <= 90 THEN '61-90'
-                     ELSE '90+'
-                   END as aging_bucket
-            FROM suppliers s
-            LEFT JOIN received rc ON rc.supplier_id = s.id
-            LEFT JOIN paid p ON p.supplier_id = s.id
-            WHERE COALESCE(rc.total_received,0) - COALESCE(p.total_paid,0) <> 0
-            ORDER BY balance_due DESC`);
-        res.json(r.rows);
+        const [sup, grns, paid] = await Promise.all([
+            pool.query(`SELECT id, name FROM suppliers`),
+            pool.query(`SELECT id, supplier_id, total_amount, grn_date FROM grn_records WHERE supplier_id IS NOT NULL ORDER BY grn_date ASC, id ASC`),
+            pool.query(`SELECT supplier_id, SUM(amount) as total_paid FROM supplier_payments GROUP BY supplier_id`),
+        ]);
+        res.json(buildSupplierAging(sup.rows, grns.rows, paid.rows, new Date()));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+const ymd = v => v instanceof Date
+    ? `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`
+    : String(v).slice(0, 10);
+
+// What is owed to each supplier and how old it is. Payments are applied to the OLDEST goods-received
+// first (FIFO), so the age is that of the oldest GRN that is still (partly) unpaid. It used to be the
+// oldest GRN ever, which made a supplier we pay on time, with one ancient paid invoice, look 90+ days overdue.
+function buildSupplierAging(suppliers, grns, payments, today) {
+    const paidBy = new Map(payments.map(p => [String(p.supplier_id), Number(p.total_paid)]));
+    const grnsBy = new Map();
+    for (const g of grns) {
+        const k = String(g.supplier_id);
+        if (!grnsBy.has(k)) grnsBy.set(k, []);
+        grnsBy.get(k).push(g);
+    }
+    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const out = [];
+    for (const s of suppliers) {
+        const list = grnsBy.get(String(s.id)) || [];
+        const total_received = list.reduce((a, g) => a + Number(g.total_amount), 0);
+        const total_paid = paidBy.get(String(s.id)) || 0;
+        const balance_due = Math.round((total_received - total_paid) * 100) / 100;
+        if (balance_due === 0) continue;
+        let left = total_paid, oldest_grn = null;
+        for (const g of list) {
+            if (left >= Number(g.total_amount)) { left -= Number(g.total_amount); continue; }
+            oldest_grn = ymd(g.grn_date);
+            break;
+        }
+        const age_days = (oldest_grn && balance_due > 0) ? Math.floor((todayUtc - Date.parse(oldest_grn + 'T00:00:00Z')) / 86400000) : null;
+        const aging_bucket = age_days === null ? 'N/A' : age_days <= 30 ? '0-30' : age_days <= 60 ? '31-60' : age_days <= 90 ? '61-90' : '90+';
+        out.push({ supplier_id: s.id, supplier_name: s.name, total_received, total_paid, balance_due, oldest_grn, age_days, aging_bucket });
+    }
+    return out.sort((x, y) => y.balance_due - x.balance_due);
+}
 
 // ═══════════════════════ PURCHASING: LANDED COST ═══════════════════════
 router.get('/api/landed-costs', async (req, res) => {
@@ -579,3 +594,4 @@ router.post('/api/year-end-closings', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.buildSupplierAging = buildSupplierAging;
