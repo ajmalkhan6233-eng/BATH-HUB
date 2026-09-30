@@ -683,7 +683,10 @@ function sanitizeText(input, maxLen = 4000) {
 }
 
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
-app.post('/webhook/whatsapp', async (req, res) => {
+const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
+// Same folder whatsapp-bridge.js saves incoming photos to.
+const WA_INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox');
+app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
     try {
         const body = req.body;
 
@@ -771,9 +774,12 @@ function draftReplyText(draft) {
     return lines.join('\n');
 }
 
-app.post('/webhook/whatsapp-photo', async (req, res) => {
-    const { from, filePath } = req.body;
-    if (!from || !filePath) return res.status(400).json({ error: 'from and filePath required' });
+app.post('/webhook/whatsapp-photo', webhookAuth, async (req, res) => {
+    const { from } = req.body;
+    if (!from || !req.body.filePath) return res.status(400).json({ error: 'from and filePath required' });
+    // Only images the bridge saved in its own inbox folder may be read (no arbitrary server paths).
+    const filePath = safeInboxPath(req.body.filePath, WA_INBOX_ROOT);
+    if (!filePath) return res.status(400).json({ error: 'filePath must be an image inside the WhatsApp inbox folder' });
     try {
         const { ocrPhoto } = require('./scripts/ocr_photo');
         const o = await ocrPhoto(filePath);

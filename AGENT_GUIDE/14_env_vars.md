@@ -32,3 +32,8 @@ Safety guards (do not remove):
   protects against a live .env being copied into a template instance. No override by design.
 - NODE_ENV=production refuses to start while ADMIN_PIN is unset or the 0000 placeholder
   (server.js, next to the SESSION_SECRET check). Local dev may keep 0000.
+
+WEBHOOK_SECRET — optional. When set, /webhook/whatsapp and /webhook/whatsapp-photo require the header
+  `x-webhook-secret: <value>` (the bridge sends it automatically if it has the same value in its .env).
+  When unset, only a direct local caller (the bridge on the same machine) is accepted; tunnelled or
+  proxied requests are refused. Set it if the bridge runs on a different machine from the server.

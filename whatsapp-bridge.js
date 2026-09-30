@@ -17,6 +17,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const { sanitizeAssistantOutput } = require('./utils/laylaOutput');
 
 const PORT = process.env.WHATSAPP_BRIDGE_PORT || 3001;
+// Sent to the main server's /webhook/* routes when WEBHOOK_SECRET is configured (see middleware/webhookAuth.js).
+const WEBHOOK_HEADERS = process.env.WEBHOOK_SECRET ? { 'x-webhook-secret': process.env.WEBHOOK_SECRET } : {};
 const MAIN_SERVER_URL = process.env.MAIN_SERVER_URL || `http://localhost:${process.env.PORT || 3010}`;
 const INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox'); // same drop folder the Nature upload button uses
 
@@ -185,7 +187,7 @@ client.on('message', async (msg) => {
 
             const res = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, {
                 from: resolved, filePath: destPath,
-            }, { timeout: 60000 });
+            }, { timeout: 60000, headers: WEBHOOK_HEADERS });
             const photoReply = sanitizeAssistantOutput(res.data?.reply);
             if (photoReply) await msg.reply(photoReply);
         } catch (err) {
@@ -199,7 +201,7 @@ client.on('message', async (msg) => {
         const res = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, {
             from: resolved,
             message: msg.body,
-        }, { timeout: 60000 });
+        }, { timeout: 60000, headers: WEBHOOK_HEADERS });
         const reply = sanitizeAssistantOutput(res.data?.reply);
         if (reply) {
             await msg.reply(reply);
