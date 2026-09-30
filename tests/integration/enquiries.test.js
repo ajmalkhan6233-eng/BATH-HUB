@@ -47,4 +47,28 @@ describe('M2 enquiries', () => {
         expect(new Set(wk.map(x => x.week_start)).size).toBe(1);
         expect((await request(app).get('/api/enquiries')).body).toHaveLength(3);
     });
+
+    test('summary: per-channel totals, outcomes and win rate, best channel first', async () => {
+        const app = makeApp('owner');
+        const add = async (channel, status) => {
+            const e = (await request(app).post('/api/enquiries').send({ channel })).body;
+            if (status !== 'new') await request(app).put('/api/enquiries/' + e.id + '/status').send({ status });
+        };
+        await add('tiktok', 'won'); await add('tiktok', 'won'); await add('tiktok', 'lost'); await add('tiktok', 'new');
+        await add('walk-in', 'won'); await add('walk-in', 'quoted');
+        await add('facebook', 'lost');
+        const r = await request(app).get('/api/enquiries/summary');
+        expect(r.status).toBe(200);
+        expect(r.body).toMatchObject({ weeks: 8, total: 7, won: 3, won_pct: 42.9 });
+        expect(r.body.channels.map(c => c.channel)).toEqual(['tiktok', 'walk-in', 'facebook']);
+        expect(r.body.channels[0]).toEqual({ channel: 'tiktok', total: 4, new: 1, quoted: 0, won: 2, lost: 1, won_pct: 50 });
+        expect(r.body.channels[1]).toMatchObject({ total: 2, won: 1, quoted: 1, won_pct: 50 });
+        expect((await request(makeApp('staff')).get('/api/enquiries/summary')).status).toBe(403);
+    });
+
+    test('summary with no enquiries is zeros, not an error', async () => {
+        const r = await request(makeApp('owner')).get('/api/enquiries/summary');
+        expect(r.status).toBe(200);
+        expect(r.body).toEqual({ weeks: 8, total: 0, won: 0, won_pct: 0, channels: [] });
+    });
 });

@@ -68,6 +68,27 @@ function createRouter(pool) {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
+    // Which channels turn enquiries into sales? Per channel over the last N weeks (default 8):
+    // total, how many are won / lost / quoted / still new, and won as a % of all enquiries from that channel.
+    router.get('/enquiries/summary', ownerOnly, async (req, res) => {
+        try {
+            await ready;
+            const weeks = Math.min(Math.max(Number(req.query.weeks) || 8, 1), 52);
+            const r = await pool.query(`SELECT channel, status FROM enquiries WHERE date >= CURRENT_DATE - ($1::int * 7)`, [weeks]);
+            const by = {};
+            for (const x of r.rows) {
+                const c = by[x.channel] || (by[x.channel] = { channel: x.channel, total: 0, new: 0, quoted: 0, won: 0, lost: 0 });
+                c.total++;
+                c[x.status] = (c[x.status] || 0) + 1;
+            }
+            const channels = Object.values(by)
+                .map(c => ({ ...c, won_pct: c.total ? Math.round((c.won / c.total) * 1000) / 10 : 0 }))
+                .sort((a, b) => b.won - a.won || b.total - a.total || a.channel.localeCompare(b.channel));
+            const total = channels.reduce((a, c) => a + c.total, 0), won = channels.reduce((a, c) => a + c.won, 0);
+            res.json({ weeks, total, won, won_pct: total ? Math.round((won / total) * 1000) / 10 : 0, channels });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
     // Weekly counts by channel (weeks start Monday), newest week first.
     router.get('/enquiries/weekly', ownerOnly, async (req, res) => {
         try {
