@@ -559,6 +559,7 @@ app.use('/api', require('./routes/catalogue_feed'));       // M5 website catalog
 app.use('/api', require('./routes/reply_drafts'));         // M6 reply drafts (owner-only, drafts only, never sends) -> /api/reply-drafts*
 app.use('/api', require('./routes/policy_notes'));         // M7 policy watch (owner-only) -> /api/policy-notes*
 app.use('/api', require('./routes/branches'));             // M8 branch profile (owner-only, new branches read-only) -> /api/branches*
+app.use('/api', require('./routes/tile_tools'));           // counter tools: tile estimate, price per sqm (no DB) -> /api/tools/*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
