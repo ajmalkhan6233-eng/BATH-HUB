@@ -261,6 +261,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
       <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
+      <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -608,6 +609,16 @@ table tr:last-child td{border-bottom:none}
       </div>
     </section>
 
+    <!-- ── WEBSITE CATALOGUE (M5) ── -->
+    <section class="page" id="page-webcat">
+      <div class="card" style="margin-bottom:16px;font-size:12px;color:var(--text2)">
+        The public website shows only: name, size (cm + inches), finish, use and photo. Never price, cost or stock.
+        Items stay hidden until you tick Show. An item needs a size and a photo first.
+        <div id="wc-msg" style="margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Photo</th><th>Size cm (60x60)</th><th>Finish</th><th>Use</th><th>Show on website</th></tr></thead><tbody id="wc-tbody"></tbody></table></div></div>
+    </section>
+
     <!-- ── COMPETITOR WATCH (M4) ── -->
     <section class="page" id="page-competitors">
       <div class="card" style="margin-bottom:16px">
@@ -833,11 +844,32 @@ const PAGE_META = {
   vendors:     ['Vendors',      'Supplier directory & payments'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
-  competitors: ['Competitors',  'Monthly check: who posts, goes live, sells online'],
+  webcat:      ['Website Catalogue', 'Choose what the public website shows (no prices)'],
+  competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
 };
+
+/* Website Catalogue (M5) */
+async function loadWebCat() {
+  const r = await fetch('/api/catalogue-web');
+  if (!r.ok) { document.getElementById('wc-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Owner only</td></tr>'; return; }
+  const rows = await r.json();
+  document.getElementById('wc-tbody').innerHTML = rows.map(x => `<tr>
+    <td>${arEsc(x.item_code)}</td><td>${arEsc(x.name)}</td>
+    <td>${x.photo_url ? `<img src="${arEsc(x.photo_url)}" style="height:36px">` : '<span style="color:var(--amber)">none</span>'}</td>
+    <td><input class="fi" style="width:90px" value="${arEsc(x.size_cm)}" onchange="wcSave('${arEsc(x.item_code)}',{size_cm:this.value})"></td>
+    <td><input class="fi" style="width:110px" value="${arEsc(x.finish)}" onchange="wcSave('${arEsc(x.item_code)}',{finish:this.value})"></td>
+    <td><input class="fi" style="width:150px" value="${arEsc(x.use)}" onchange="wcSave('${arEsc(x.item_code)}',{use:this.value})"></td>
+    <td><input type="checkbox" ${x.published ? 'checked' : ''} onchange="wcSave('${arEsc(x.item_code)}',{published:this.checked})"></td></tr>`).join('')
+    || '<tr><td colspan="7" class="no-data">No items</td></tr>';
+}
+async function wcSave(code, patch) {
+  const r = await fetch('/api/catalogue-web/' + encodeURIComponent(code), { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(patch) });
+  document.getElementById('wc-msg').textContent = r.ok ? '' : ((await r.json()).error || 'Save failed');
+  if (!r.ok) loadWebCat();
+}
 
 /* Competitor Watch (M4) */
 function cwMsg(t) { document.getElementById('cw-msg').textContent = t || ''; }
@@ -1004,6 +1036,7 @@ function navigate(page) {
   if (page === 'enquiries') loadEnquiries();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
+  if (page === 'webcat') loadWebCat();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;

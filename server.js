@@ -212,7 +212,9 @@ app.use(async (req, res, next) => {
     if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
-    if (req.path === '/api/money-control/viewer-dashboard') return next();                          // investor/friend's token-gated limited view — no login either
+    if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
+    if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
+    if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
     if (LOGIN_DISABLED && !req.session.user) {
         const bypassUser = await getBypassUser();
@@ -537,6 +539,7 @@ app.use('/api', require('./routes/agent_rulebook'));       // M1 agent rulebook 
 app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker (owner-only) -> /api/enquiries*
 app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
 app.use('/api', require('./routes/competitors'));          // M4 competitor watch (owner-only) -> /api/competitors*
+app.use('/api', require('./routes/catalogue_feed'));       // M5 website catalogue feed -> /api/public/catalogue (public, whitelisted), /api/catalogue-web* (owner)
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
