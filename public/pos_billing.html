@@ -250,11 +250,20 @@ async function sendWhatsAppReceipt() {
   btn.disabled = true;
   setMsg('Building and sending the receipt…');
   try {
-    const res = await fetch('/api/invoice-receipts/send', {
+    let res = await fetch('/api/invoice-receipts/send', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim() }),
     });
-    const d = await res.json().catch(() => ({}));
+    let d = await res.json().catch(() => ({}));
+    if (res.status === 409 && d.code === 'already_sent') {
+      // Sent before: only send again if the cashier confirms.
+      if (!confirm(d.error)) { setMsg('Not sent again.', ''); return; }
+      res = await fetch('/api/invoice-receipts/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim(), resend: true }),
+      });
+      d = await res.json().catch(() => ({}));
+    }
     if (!res.ok) throw new Error(d.error || 'the server answered ' + res.status);
     currentBill.customer_phone = phone.trim();
     setMsg(`Receipt sent to ${d.to}.`, 'ok');

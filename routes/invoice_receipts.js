@@ -312,6 +312,16 @@ router.post('/invoice-receipts/send', async (req, res) => {
             rec = q.rows[0];
         }
 
+        // Already sent? Don't message the customer twice on a double-tap; the caller must confirm with resend:true.
+        if (rec.status === 'sent' && body.resend !== true) {
+            const rec409 = rec;
+            rec = undefined;   // not a failure: leave the stored 'sent' status alone
+            return res.status(409).json({
+                error: `This receipt was already sent to ${rec409.customer_phone}. Send it again?`,
+                code: 'already_sent', sent_at: rec409.sent_at,
+            });
+        }
+
         const data = receiptData(bill, rec);
         const out = await renderReceipt(data);
         const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
