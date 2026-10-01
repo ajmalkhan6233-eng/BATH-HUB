@@ -324,6 +324,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
             <div class="dropdown-item nav-btn" data-page="credit" onclick="goPage('credit')">💳 Credit & Aging</div>
             <div class="dropdown-item nav-btn" data-page="suppliers" onclick="goPage('suppliers')">🏭 Suppliers</div>
             <div class="dropdown-item nav-btn" data-page="staff" onclick="goPage('staff')">👤 Staff</div>
+            <div class="dropdown-item nav-btn" data-page="salary" onclick="goPage('salary')">💼 Salary &amp; Costs</div>
             <div class="dropdown-item nav-btn" data-page="docinbox" onclick="goPage('docinbox')">📥 Document Inbox</div>
             <div class="dropdown-item nav-btn" data-page="cheques" onclick="goPage('cheques')">🧾 Cheques</div>
             <div class="dropdown-item nav-btn" data-page="grn" onclick="goPage('grn')">📦 Inventory & GRN</div>
@@ -382,6 +383,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
       <div class="dropdown-item nav-btn" data-page="credit" onclick="mobileGo('credit')">💳 Credit &amp; Aging</div>
       <div class="dropdown-item nav-btn" data-page="suppliers" onclick="mobileGo('suppliers')">🏭 Suppliers</div>
       <div class="dropdown-item nav-btn" data-page="staff" onclick="mobileGo('staff')">👤 Staff</div>
+      <div class="dropdown-item nav-btn" data-page="salary" onclick="mobileGo('salary')">💼 Salary &amp; Costs</div>
       <div class="dropdown-item nav-btn" data-page="docinbox" onclick="mobileGo('docinbox')">📥 Document Inbox</div>
       <div class="dropdown-item nav-btn" data-page="cheques" onclick="mobileGo('cheques')">🧾 Cheques</div>
       <div class="dropdown-item nav-btn" data-page="grn" onclick="mobileGo('grn')">📦 Inventory &amp; GRN</div>
@@ -477,6 +479,12 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
     <!-- STAFF -->
     <div class="page" id="page-staff">
       <div class="card"><table id="tbl-staff"><thead><tr><th>Name</th><th>Role</th><th>Total Salary</th><th>Total Commission</th><th>Loans Outstanding</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- SALARY & COSTS -->
+    <div class="page" id="page-salary">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="sl-tabs"></div>
+      <div id="sl-body"></div>
     </div>
 
     <!-- DOCUMENT INBOX -->
@@ -895,13 +903,13 @@ function goPage(name){
   const target = document.getElementById('page-'+name);
   target.classList.add('active');
   const titles = {home:'Dashboard', daily:'Daily / Weekly / Monthly', customers:'Customers', credit:'Credit & Aging',
-    suppliers:'Suppliers', staff:'Staff', docinbox:'Document Inbox', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
+    suppliers:'Suppliers', staff:'Staff', docinbox:'Document Inbox', salary:'Salary & Costs', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
     pos:'POS Billing', labels:'Barcode Labels', commission:'Staff Commission', assistant:'AI Assistant', settings:'Settings',
     purchasing:'Purchasing', accounting:'Accounting', staffext:'Staff Extended', reports2:'Reports & Analytics', systools:'System Tools', audit:'Audit & Accounting', apex:'Platform Admin'};
   document.getElementById('page-title').textContent = titles[name] || name;
   document.body.classList.toggle('no-watermark', name === 'pos');
   const loaders = { home:loadHome, daily:loadDaily, customers:loadCustomers, credit:loadCredit, suppliers:loadSuppliers,
-    staff:loadStaff, docinbox:()=>loadDocInbox(), cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
+    staff:loadStaff, docinbox:()=>loadDocInbox(), salary:()=>loadSalary(), cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
     commission:loadCommission, settings:loadSettings,
     purchasing:()=>genericTabPage('purchasing'), accounting:()=>genericTabPage('accounting'),
     staffext:()=>genericTabPage('staffext'), reports2:()=>genericTabPage('reports2'), systools:()=>genericTabPage('systools'), audit:loadAudit, apex:loadApex };
@@ -913,7 +921,7 @@ function goPage(name){
 
 // ═══════════════════════ AUTO-REFRESH (every 60s, no more F5) ═══════════════════
 let CURRENT_PAGE = null, CURRENT_LOADER = null;
-const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos','apex','docinbox']); // don't wipe in-progress form input
+const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos','apex','docinbox','salary']); // don't wipe in-progress form input
 async function manualRefresh(){
   if (!CURRENT_LOADER) return;
   const btn = document.getElementById('refresh-btn');
@@ -1623,6 +1631,7 @@ function exportReport(kind){
     </table>
     <p style="color:#888;font-size:11px">Generated ${new Date().toLocaleString()}</p>
   <script src="/document-inbox.js"></script>
+<script src="/salary.js"></script>
 </body></html>`);
   w.document.close(); w.print();
 }

@@ -258,6 +258,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="salary"><span class="nav-icon">💼</span><span class="nav-label">Salary &amp; Costs</span></li>
       <li class="nav-item" data-page="docinbox"><span class="nav-icon">📥</span><span class="nav-label">Document Inbox</span></li>
       <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
@@ -714,6 +715,12 @@ table tr:last-child td{border-bottom:none}
       <div id="cp-list"></div>
     </section>
 
+    <!-- ── SALARY & COSTS ── -->
+    <section class="page" id="page-salary">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="sl-tabs"></div>
+      <div id="sl-body"></div>
+    </section>
+
     <!-- ── DOCUMENT INBOX ── -->
     <section class="page" id="page-docinbox">
       <div class="card" style="margin-bottom:16px">
@@ -988,6 +995,7 @@ const PAGE_META = {
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
+  salary:      ['Salary & Costs', 'Daily cost target, monthly profit split, cheque set-aside'],
   docinbox:    ['Document Inbox', 'Photos of bills, GRNs, cheques and sheets. Check, then file'],
   shoptools:   ['Shop Tools',   'Tile calculator, item search, till summary, best sellers, low stock'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
@@ -1378,6 +1386,7 @@ function navigate(page) {
   if (page === 'enquiries') loadEnquiries();
   if (page === 'shoptools') loadShopTools();
   if (page === 'docinbox') loadDocInbox();
+  if (page === 'salary') loadSalary();
   if (page === 'agentreview') loadAgentReview();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
@@ -2346,5 +2355,6 @@ async function initApp() {
 }
 </script>
 <script src="/document-inbox.js"></script>
+<script src="/salary.js"></script>
 </body>
 </html>

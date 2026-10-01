@@ -7,7 +7,8 @@ const path = require('path');
 const vm = require('vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'bathco_complete.html'), 'utf8');
-const inboxJs = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'document-inbox.js'), 'utf8');
+const inboxOnlyJs = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'document-inbox.js'), 'utf8');
+const inboxJs = inboxOnlyJs + '\n' + fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'salary.js'), 'utf8');   // shared screens, loaded by the page
 const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 const body = html.replace(/<script[\s\S]*?<\/script>/g, '');
 const ids = new Set([...body.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
@@ -24,7 +25,7 @@ describe('bathco_complete.html', () => {
     for (const p of pages) {
       expect(ids.has('page-' + p)).toBe(true);
     }
-    for (const p of ['agent-rules', 'enquiries', 'content', 'competitors', 'webcat', 'replies', 'policy', 'branches', 'shoptools', 'agentreview', 'docinbox']) {
+    for (const p of ['agent-rules', 'enquiries', 'content', 'competitors', 'webcat', 'replies', 'policy', 'branches', 'shoptools', 'agentreview', 'docinbox', 'salary']) {
       expect(pages).toContain(p);
       expect(html).toMatch(new RegExp(`navigate\\(page\\)[\\s\\S]*?if \\(page === '${p}'\\)`));
     }
@@ -32,7 +33,7 @@ describe('bathco_complete.html', () => {
 
   test('ids looked up by the new tabs exist in the page', () => {
     const code = scripts.join('\n');
-    const prefixes = /^(ar|enq|cp|cw|wc|rd|pn|br|st|sp|av|di)-/;
+    const prefixes = /^(ar|enq|cp|cw|wc|rd|pn|br|st|sp|av|di|sl)-/;
     const used = new Set();
     for (const m of code.matchAll(/getElementById\('([^']+)'\)/g)) used.add(m[1]);
     for (const m of code.matchAll(/stNum\('([^']+)'\)/g)) used.add(m[1]);
@@ -51,7 +52,7 @@ describe('bathco_complete.html', () => {
     const routeSrc = fs.readdirSync(path.join(__dirname, '..', '..', 'routes')).map(f => fs.readFileSync(path.join(__dirname, '..', '..', 'routes', f), 'utf8')).join('\n');
     const mounted = ['/api/agent/rules', '/api/agent/rulebook', '/api/enquiries', '/api/content-posts', '/api/competitors', '/api/catalogue-web',
       '/api/reply-drafts', '/api/policy-notes', '/api/branches', '/api/tools/tile-estimate', '/api/tools/price-per-sqm', '/api/items', '/api/items/reorder',
-      '/api/items/export.csv', '/api/pos-bills/summary', '/api/pos-bills/top-items', '/api/agent-brain/draft', '/api/agent-brain/reviews', '/api/document-inbox', '/api/document-inbox/upload'];
+      '/api/items/export.csv', '/api/pos-bills/summary', '/api/pos-bills/top-items', '/api/agent-brain/draft', '/api/agent-brain/reviews', '/api/document-inbox', '/api/document-inbox/upload', '/api/salary/today', '/api/salary/month', '/api/salary/settings'];
     for (const u of mounted) {
       expect(urls.has(u) || [...urls].some(x => x.startsWith(u))).toBe(true);          // the UI uses it
       const route = u.replace('/api', '');
@@ -65,7 +66,21 @@ describe('bathco_complete.html', () => {
     expect(nature).toMatch(/id="page-docinbox"/);
     expect(nature).toMatch(/docinbox:\(\)=>loadDocInbox\(\)/);
     const natIds = new Set([...nature.replace(/<script[\s\S]*?<\/script>/g, '').matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
-    for (const m of inboxJs.matchAll(/getElementById\('([^']+)'\)/g)) if (!m[1].includes('${')) expect(natIds.has(m[1])).toBe(true);
+    for (const m of inboxOnlyJs.matchAll(/getElementById\('([^']+)'\)/g)) if (!m[1].includes('${')) expect(natIds.has(m[1])).toBe(true);
     expect(() => new vm.Script(inboxJs)).not.toThrow();
+  });
+});
+
+describe('Salary tab is registered in both owner screens', () => {
+  const nature = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'BATHCO_NATURE.html'), 'utf8');
+  test('script, page section, loader and the ids it needs', () => {
+    for (const h of [html, nature]) {
+      expect(h).toContain('<script src="/salary.js"></script>');
+      expect(h).toContain('id="page-salary"');
+      expect(h).toContain('id="sl-tabs"');
+      expect(h).toContain('id="sl-body"');
+      expect(h).toMatch(/loadSalary\(\)/);
+    }
+    expect(() => new vm.Script(fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'salary.js'), 'utf8'))).not.toThrow();
   });
 });

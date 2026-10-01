@@ -566,6 +566,7 @@ app.use('/api', require('./routes/policy_notes'));         // M7 policy watch (o
 app.use('/api', require('./routes/branches'));             // M8 branch profile (owner-only, new branches read-only) -> /api/branches*
 app.use('/api', require('./routes/tile_tools'));           // counter tools: tile estimate, price per sqm (no DB) -> /api/tools/*
 app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: LAYLA drafts replies for review, never sends -> /api/agent-brain/*
+app.use('/api', require('./routes/salary'));              // SALARY module (isolated): daily cost target, monthly profit split, cheque set-aside -> /api/salary* (owner only)
 app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
