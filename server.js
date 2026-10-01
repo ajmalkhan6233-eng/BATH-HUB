@@ -512,11 +512,13 @@ const setupGate = (handler) => async (req, res) => {
     try { if (await setupNeeded()) return res.redirect(302, '/setup.html'); } catch {}
     return handler(req, res);
 };
-app.get('/', setupGate((req, res) => res.redirect(302, '/nature')));
-app.get('/app', setupGate((req, res) => res.redirect(302, '/nature')));
+// One site: Bath Hub is the front door; the owner's business screens live at /owner (sign-in required for every private API).
+app.get('/', setupGate((req, res) => res.redirect(302, '/bathhub.html')));
+app.get('/app', setupGate((req, res) => res.redirect(302, '/owner')));
+app.get('/owner', setupGate((req, res) => res.sendFile('public/bathco_complete.html', { root: __dirname })));
 
 // ─── NATURE (new frontend, parallel to the existing dashboard) ───────────────
-app.get('/nature', setupGate((req, res) => res.sendFile('public/BATHCO_NATURE.html', { root: __dirname })));
+app.get('/nature', setupGate((req, res) => res.redirect(302, '/owner')));   // old address kept so bookmarks still work; the old screen file is not deleted yet
 
 // ─── FEATURE FLAGS (DB-backed registry, not localStorage) ─────────────────────
 app.get('/api/feature-flags', async (req, res) => {
