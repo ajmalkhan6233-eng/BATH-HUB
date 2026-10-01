@@ -1,6 +1,8 @@
 'use strict';
 // Receipts: a receipt already sent is not sent again unless the cashier confirms (resend: true).
 jest.mock('pg', () => require('../helpers/pgmock')());
+// Don't launch a real Chrome for the receipt image (slow, machine-dependent): the code falls back to a PDF.
+jest.mock('puppeteer-core', () => { throw new Error('no browser in tests'); });
 jest.mock('axios', () => ({ post: jest.fn().mockResolvedValue({ data: { success: true } }) }));
 
 const express = require('express');
