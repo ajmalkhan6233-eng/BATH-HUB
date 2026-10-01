@@ -1,5 +1,8 @@
 # C:\BATHCO_TEMPLATE — agent entry point
 
+> **Octopus memory:** at session start read `AI_MEMORY/HANDOFF.md` and `AI_MEMORY/OPEN_ITEMS.md`.
+> Universal rules come from the global `~/.claude/CLAUDE.md`. No code changes until Aj says GO.
+
 READ FIRST: `AGENT_GUIDE\README.md` → 01 (file map) → 09 (golden core — NEVER edit those
 files/regions) → 15 (pre-edit checklist). This file only carries the task queue; all rules
 live in AGENT_GUIDE\.
