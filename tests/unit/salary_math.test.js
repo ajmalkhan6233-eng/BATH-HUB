@@ -95,3 +95,20 @@ describe("owner's accessories pricing rules", () => {
     expect(M.priceCheck(1000, 1300).verdict).toMatch(/needs the owner/);
   });
 });
+
+describe('rent, bills and daily pay that are not on the daily sheet', () => {
+  test('the setting is ON by default (owner: they are not on the daily expense sheet)', () => {
+    expect(M.DEFAULTS.add_fixed_to_net).toBe(1);
+  });
+  test('a full month of 26 working days = the full rent and bills + 26 days of daily pay', () => {
+    expect(M.fixedCostsForMonth(26, M.DEFAULTS)).toEqual({ rent_and_bills: 100000, daily_pay: 208000, total: 308000 });
+  });
+  test('part of a month is charged by the days with sales; no days = nothing; never more than the full rent', () => {
+    expect(M.fixedCostsForMonth(13, M.DEFAULTS).rent_and_bills).toBe(50000);
+    expect(M.fixedCostsForMonth(0, M.DEFAULTS).total).toBe(0);
+    expect(M.fixedCostsForMonth(30, M.DEFAULTS).rent_and_bills).toBe(100000);
+  });
+  test('the reference split is unchanged by this setting (it works on whatever net it is given)', () => {
+    expect(M.monthSplit(5000)).toMatchObject({ save: 500, colleague: 675, owner: 450, keep: 3375 });
+  });
+});

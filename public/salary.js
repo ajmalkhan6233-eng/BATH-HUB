@@ -62,7 +62,7 @@ async function slMonth(body, ym) {
   const closable = !m.closed && cur < new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 7);
   body.innerHTML = `<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="sl-month" class="fi" value="${slEsc(cur)}" onchange="slMonth(document.getElementById('sl-body'), this.value)">${m.closed ? '<b style="color:var(--green,#2e7d32)">Closed. Never reopened; late returns become an adjustment next month.</b>' : (closable ? '<button class="btn btn-s" onclick="slClose()">Close this month</button>' : '')}</div></div>
     <div class="card" style="margin-bottom:10px">
-      ${row('Gross profit', slRs(m.gross_profit))}${row('Sales returns', '- ' + slRs(m.returns))}${row('Expenses', '- ' + slRs(m.expenses))}${m.fixed_costs_added ? row('Rent, bills and daily pay (added)', '- ' + slRs(m.fixed_costs_added)) : ''}
+      ${row('Gross profit', slRs(m.gross_profit))}${row('Sales returns', '- ' + slRs(m.returns))}${row('Expenses', '- ' + slRs(m.expenses))}${m.fixed_costs_added ? row('Rent and bills (not on the daily sheet)', '- ' + slRs(m.fixed_costs.rent_and_bills)) + row('Owner + colleague daily pay', '- ' + slRs(m.fixed_costs.daily_pay)) : ''}
       ${row('NET PROFIT', slRs(m.net), true)}${m.note ? `<div style="font-size:13px;color:var(--amber,#b26a00)">${slEsc(m.note)}</div>` : ''}
     </div>
     <div class="card" style="margin-bottom:10px">

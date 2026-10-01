@@ -129,10 +129,11 @@ function createRouter(pool, { today = todayLK } = {}) {
         const agg = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COALESCE(SUM(total_sale),0) AS sales, COUNT(*) AS days FROM daily_summary WHERE report_date >= $1::date AND report_date < $2::date`, [a, b], [{ gp: 0, exp: 0, sales: 0, days: 0 }]))[0];
         const ret = (await soft(`SELECT COALESCE(SUM(CASE WHEN total_sale < 0 THEN -total_sale ELSE total_sale END),0) AS r FROM daily_reports WHERE is_refund = true AND report_date >= $1::date AND report_date < $2::date`, [a, b], [{ r: 0 }]))[0];
         const days = Number(agg.days);
-        const fixed = s.add_fixed_to_net ? s.rent_month + s.utilities_month + (s.owner_daily + s.colleague_daily) * Math.min(days, s.working_days) : 0;
+        const fixedParts = s.add_fixed_to_net ? M.fixedCostsForMonth(days, s) : { rent_and_bills: 0, daily_pay: 0, total: 0 };
+        const fixed = fixedParts.total;
         const gross = M.money2(num(agg.gp)), returns = M.money2(num(ret.r)), expenses = M.money2(num(agg.exp));
         const net = M.money2(gross - returns - expenses - fixed);
-        return { gross_profit: gross, returns, expenses, fixed_costs_added: M.money2(fixed), sales: M.money2(num(agg.sales)), days_with_data: days, net };
+        return { gross_profit: gross, returns, expenses, fixed_costs_added: M.money2(fixed), fixed_costs: fixedParts, sales: M.money2(num(agg.sales)), days_with_data: days, net };
     }
 
     // Adjustments still waiting to be deducted: for every closed month, what late returns (recorded after it was closed) took off its commission, minus what earlier closings already deducted.

@@ -40,7 +40,7 @@ describe('access', () => {
 describe('settings', () => {
   test('defaults are the owner numbers; they are editable and checked', async () => {
     const s = (await get('/salary/settings')).body.settings;
-    expect(s).toMatchObject({ save_pct: 10, colleague_pct: 15, owner_pct: 10, rent_month: 70000, utilities_month: 30000, working_days: 26, owner_daily: 5000, colleague_daily: 3000, cost_normal: 15000, cost_ceiling: 18000, push_1: 100000, push_2: 150000 });
+    expect(s).toMatchObject({ save_pct: 10, colleague_pct: 15, owner_pct: 10, rent_month: 70000, utilities_month: 30000, working_days: 26, owner_daily: 5000, colleague_daily: 3000, add_fixed_to_net: 1, cost_normal: 15000, cost_ceiling: 18000, push_1: 100000, push_2: 150000 });
     expect((await put('/salary/settings', { save_pct: 12 })).body.settings.save_pct).toBe(12);
     expect((await get('/salary/settings')).body.settings.save_pct).toBe(12);
     await put('/salary/settings', { save_pct: 10 });
@@ -97,8 +97,9 @@ describe('Today', () => {
   });
 });
 
-describe('Month, closing and late returns', () => {
-  beforeAll(() => {
+describe('Month, closing and late returns (rent, bills and daily pay switched OFF here, to test the profit split on its own)', () => {
+  beforeAll(async () => {
+    await put('/salary/settings', { add_fixed_to_net: 0 });
     // September: gross 50,000, returns 2,000 (an earlier refund), expenses 30,000 -> net 18,000
     db.none(`DELETE FROM daily_summary`);
     db.none(`INSERT INTO daily_summary (report_date, total_sale, gross_profit, total_expenses, gp_status) VALUES ('2026-09-10', 200000, 30000, 18000, 'LASERSOFT'), ('2026-09-20', 150000, 20000, 12000, 'LASERSOFT')`);
@@ -167,6 +168,34 @@ describe('Month, closing and late returns', () => {
     expect(nov.net).toBe(200);
     expect(nov.colleague_commission.payable).toBe(0);
     expect(nov.colleague_commission.carried_forward).toBeGreaterThan(0);
+  });
+});
+
+describe('rent, bills and daily pay are NOT on the daily sheet: they are added to the month by default', () => {
+  beforeAll(async () => {
+    await put('/salary/settings', { add_fixed_to_net: 1 });
+    TODAY = '2027-02-02';
+    db.none(`INSERT INTO daily_summary (report_date, total_sale, gross_profit, total_expenses, gp_status) VALUES ('2027-01-05', 200000, 40000, 10000, 'LASERSOFT'), ('2027-01-06', 200000, 40000, 10000, 'LASERSOFT')`);
+  });
+  test('two selling days: net = gross - expenses - (rent+bills x 2/26) - (5,000 + 3,000) x 2', async () => {
+    const m = (await get('/salary/month?ym=2027-01')).body;
+    expect(m.fixed_costs).toEqual({ rent_and_bills: 7692.31, daily_pay: 16000, total: 23692.31 });
+    expect(m.net).toBe(36307.69);                                  // 80,000 - 20,000 - 23,692.31
+    expect(m.split.save).toBeCloseTo(3630.77, 2);
+    expect(m.split.colleague).toBeCloseTo((36307.69 - 3630.77) * 0.15, 1);
+  });
+  test('switching it off gives the plain figure; it is just a setting', async () => {
+    await put('/salary/settings', { add_fixed_to_net: 0 });
+    expect((await get('/salary/month?ym=2027-01')).body.net).toBe(60000);
+    await put('/salary/settings', { add_fixed_to_net: 1 });
+  });
+  test('a costly quiet month can turn the net negative: then no savings and no commission', async () => {
+    db.none(`INSERT INTO daily_summary (report_date, total_sale, gross_profit, total_expenses, gp_status) VALUES ('2027-01-20', 20000, 3000, 2000, 'LASERSOFT')`);
+    // 3 days now: gross 83,000 - expenses 22,000 - fixed (100,000 x 3/26 = 11,538.46 + 24,000) = 25,461.54: still positive; push it down
+    db.none(`UPDATE daily_summary SET gross_profit = 1000 WHERE report_date IN ('2027-01-05','2027-01-06')`);
+    const m = (await get('/salary/month?ym=2027-01')).body;
+    expect(m.net).toBeLessThan(0);
+    expect(m.split).toEqual({ save: 0, pool: 0, colleague: 0, owner: 0, keep: 0 });
   });
 });
 

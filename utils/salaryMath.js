@@ -15,7 +15,7 @@ const DEFAULTS = {
     margin_pct: 25,                                                 // used for break-even only when there is no recent sales history
     push_1: 100000, push_2: 150000,                                 // daily sales targets for the staff push
     cheque_days: 7,                                                 // how far ahead the cheque reserve looks
-    add_fixed_to_net: 0,                                            // 1 = also subtract rent/bills/daily pay when the daily sheet does not include them
+    add_fixed_to_net: 1,                                            // 1 = also subtract rent, bills and daily pay (the owner's daily sheet does NOT include them); 0 = they are already in the expenses
     markup: 1.95, disc_min: 10, disc_max: 25, min_over_cost: 1.15,  // accessories pricing rules (owner's rules)
 };
 
@@ -39,6 +39,15 @@ function dailyCosts(s) {
     const total = rent + utilities + s.owner_daily + s.colleague_daily + s.small_daily;
     const status = total > s.cost_ceiling ? 'over_ceiling' : total > s.cost_normal ? 'above_normal' : 'ok';
     return { rent: money2(rent), utilities: money2(utilities), owner: s.owner_daily, colleague: s.colleague_daily, small: s.small_daily, total: money2(total), normal: s.cost_normal, ceiling: s.cost_ceiling, status };
+}
+
+// Costs that are NOT on the daily expense sheet, charged to the month: rent and bills share by working days (a full month
+// of working days = the full monthly amount), and the owner and colleague daily pay for each day that has sales.
+function fixedCostsForMonth(daysWithData, s) {
+    const days = Math.max(0, Number(daysWithData) || 0), wd = s.working_days > 0 ? s.working_days : 26;
+    const rentAndBills = (s.rent_month + s.utilities_month) * Math.min(1, days / wd);
+    const dailyPay = (s.owner_daily + s.colleague_daily) * days;
+    return { rent_and_bills: money2(rentAndBills), daily_pay: money2(dailyPay), total: money2(rentAndBills + dailyPay) };
 }
 
 // Sales needed to cover the day's costs at the given profit margin (percent). null when the margin is unknown or not positive.
@@ -85,4 +94,4 @@ function priceCheck(cost, price, s = {}) {
     return out;
 }
 
-module.exports = { DEFAULTS, money2, monthSplit, dailyCosts, breakEven, chequeReserve, lateAdjustment, priceCheck };
+module.exports = { DEFAULTS, money2, monthSplit, dailyCosts, fixedCostsForMonth, breakEven, chequeReserve, lateAdjustment, priceCheck };
