@@ -82,3 +82,28 @@ describe('the bill page is wired to it', () => {
     for (const code of scripts) expect(() => new vm.Script(code)).not.toThrow();
   });
 });
+
+describe('the bill page: discount cap, item codes, today list', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'pos_billing.html'), 'utf8');
+  test('shows the cap and asks the owner to approve an over-cap discount, then resends with override', () => {
+    expect(html).toMatch(/fetch\('\/api\/pos-bills\/discount-cap'\)/);
+    expect(html).toMatch(/id="capHint"/);
+    expect(html).toMatch(/data\.code === 'discount_over_cap' && data\.can_override/);
+    expect(html).toMatch(/confirm\(/);
+    expect(html).toMatch(/post\(\{ override: true \}\)/);
+  });
+  test('a catalogue item sends its code with the bill, and editing the name drops it', () => {
+    expect(html).toMatch(/item_code: r\.dataset\.itemCode \|\| undefined/);
+    expect(html).toMatch(/row\.dataset\.itemCode = item\.item_code/);
+    expect(html).toMatch(/delete row\.dataset\.itemCode/);
+  });
+  test("today's bills are loaded on start and after each new bill; names are escaped", () => {
+    expect(html).toMatch(/fetch\('\/api\/pos-bills\/today'\)/);
+    expect(html).toMatch(/\nloadToday\(\);/);
+    expect(html).toMatch(/function resetForm\(\) \{\s*loadToday\(\);/);
+    expect(html).toMatch(/esc\(b\.customer_name \|\| 'Walk-in'\)/);
+  });
+  test('starting a new bill clears the discount warning', () => {
+    expect(html).toMatch(/discountPct'\)\.value = 0;\s*updateCapHint\(\);/);
+  });
+});

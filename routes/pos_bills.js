@@ -55,9 +55,7 @@ pool.query(`
         notes            TEXT,
         created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-`).catch(e => console.error('[pos_bills] pos_bills migration failed:', e.message));
-
-pool.query(`
+`).then(() => pool.query(`
     CREATE TABLE IF NOT EXISTS pos_bill_items (
         id          SERIAL PRIMARY KEY,
         bill_id     INT REFERENCES pos_bills(id) ON DELETE CASCADE,
@@ -65,8 +63,11 @@ pool.query(`
         qty         NUMERIC(10,2) NOT NULL DEFAULT 1,
         unit_price  NUMERIC(12,2) NOT NULL,
         line_total  NUMERIC(12,2) NOT NULL
-    )
-`).catch(e => console.error('[pos_bills] pos_bill_items migration failed:', e.message));
+    )`))
+  // additive columns: which bills were given a discount above the cap (by the owner), and which catalogue item a line was
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS discount_override BOOLEAN NOT NULL DEFAULT FALSE`))
+  .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
+  .catch(e => console.error('[pos_bills] migration failed:', e.message));
 
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
 router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.status(404).json({ error: 'not found' }));
@@ -90,11 +91,31 @@ async function loadBill(id) {
     const bill = await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [id]);
     if (!bill.rows.length) return null;
     const items = await pool.query(
-        `SELECT id, item_name, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`,
+        `SELECT id, item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`,
         [id]
     );
     return { ...bill.rows[0], items: items.rows };
 }
+
+// ═══════════════════════ DISCOUNT CAP ═══════════════════════
+// The cap is the owner's discount rule (Money / Shop settings, table discount_rules): a rule for the user's role wins over the
+// rule for "all". No rule means no cap. A bill ABOVE the cap is refused (409) unless the person at the till is the owner/admin
+// and confirms (override: true); that is recorded on the bill. Nobody else can go over the cap.
+const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
+const canOverride = req => ['admin', 'owner'].includes(roleOf(req));
+
+async function discountCapFor(role) {
+    try {
+        const r = await pool.query(
+            `SELECT max_discount_pct FROM discount_rules WHERE active = true AND role IN ($1, 'all') ORDER BY (role = 'all'), id DESC LIMIT 1`, [role]);
+        return r.rows.length ? Number(r.rows[0].max_discount_pct) : null;
+    } catch (e) { return null; }                      // no rules table yet: no cap
+}
+
+// For the bill page: how much discount may I give, and can I go above it?
+router.get('/pos-bills/discount-cap', async (req, res) => {
+    res.json({ max_allowed: await discountCapFor(roleOf(req)), can_override: canOverride(req) });
+});
 
 // ═══════════════════════ CREATE a bill ═══════════════════════
 // body: { customer_name, customer_phone, items:[{item_name, qty, unit_price}], discount_pct, payment_method, notes }
@@ -119,7 +140,8 @@ router.post('/pos-bills', async (req, res) => {
             if (q > 99999999 || pr > 9999999999) return res.status(400).json({ error: `item ${i + 1} (${item_name}): qty or unit_price is too large` });
             // Stored to 2 decimals, so price the line on the stored values: what prints is what adds up.
             const qty = money2(q), unit_price = money2(pr);
-            lines.push({ item_name, qty, unit_price, line_total: money2(qty * unit_price) });
+            const item_code = it.item_code == null || it.item_code === '' ? null : String(it.item_code).trim().slice(0, 50);
+            lines.push({ item_name, item_code, qty, unit_price, line_total: money2(qty * unit_price) });
         }
         // Subtotal is the sum of the printed line totals (summing unrounded products drifted by cents).
         const subtotal = money2(lines.reduce((sum, l) => sum + l.line_total, 0));
@@ -131,20 +153,39 @@ router.post('/pos-bills', async (req, res) => {
         const discount_amount = money2(subtotal * pct / 100);
         const total = money2(subtotal - discount_amount);
 
+        // Discount cap. Refused before anything is saved.
+        let override = false;
+        const cap = pct > 0 ? await discountCapFor(roleOf(req)) : null;
+        if (cap !== null && pct > cap) {
+            if (!(canOverride(req) && req.body.override === true)) {
+                return res.status(409).json({
+                    error: `A ${pct}% discount is more than the allowed ${cap}%` + (canOverride(req) ? '. You can approve it as the owner.' : '. Ask the owner to approve it.'),
+                    code: 'discount_over_cap', max_allowed: cap, can_override: canOverride(req),
+                });
+            }
+            override = true;
+        }
+
+        const deductStock = String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payment_method || 'cash', notes || null]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payment_method || 'cash', notes || null, override]);
         const billId = billRes.rows[0].id;
 
         for (const l of lines) {
             await client.query(`
-                INSERT INTO pos_bill_items (bill_id, item_name, qty, unit_price, line_total)
-                VALUES ($1,$2,$3,$4,$5)
-            `, [billId, l.item_name, l.qty, l.unit_price, l.line_total]);
+                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total)
+                VALUES ($1,$2,$3,$4,$5,$6)
+            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
+            // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
+            // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
+            if (deductStock && l.item_code) {
+                await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
+            }
         }
         await client.query('COMMIT');
 
@@ -155,13 +196,30 @@ router.post('/pos-bills', async (req, res) => {
         }
 
         const full = await loadBill(billId);
-        res.json(full);
+        res.json({ ...full, stock_deducted: deductStock });
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
         res.status(500).json({ error: `Could not save the bill: ${e.message}` });
     } finally {
         client.release();
     }
+});
+
+// ═══════════════════════ TODAY'S BILLS (Sri Lanka date) ═══════════════════════
+router.get('/pos-bills/today', async (req, res) => {
+    try {
+        const date = todayLK();
+        const r = await pool.query(
+            `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, created_at
+             FROM pos_bills WHERE created_at::date = $1::date ORDER BY created_at DESC, id DESC LIMIT 200`, [date]);
+        const bills = r.rows.map(b => ({ ...b, subtotal: Number(b.subtotal), discount_amount: Number(b.discount_amount), total: Number(b.total) }));
+        res.json({
+            date, count: bills.length,
+            total: money2(bills.reduce((a, b) => a + b.total, 0)),
+            discount: money2(bills.reduce((a, b) => a + b.discount_amount, 0)),
+            bills,
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ═══════════════════════ END-OF-DAY SUMMARY ═══════════════════════

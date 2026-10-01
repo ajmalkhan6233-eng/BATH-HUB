@@ -28,6 +28,14 @@
   .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
   .item-row input { margin: 0; }
   .remove-btn { background: none; border: none; color: #b23b3b; font-size: 18px; cursor: pointer; padding: 4px; }
+  .cap-hint { font-size: 12px; margin-top: 4px; color: var(--earth-500); }
+  .cap-hint.warn { color: #b23b3b; font-weight: 700; }
+  .today { margin-top: 18px; }
+  .today h2 { font-size: 15px; color: var(--emerald-900); margin: 0 0 6px; }
+  .today table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .today th, .today td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #eee; }
+  .today td.num, .today th.num { text-align: right; }
+  .today .flag { color: #b26a00; font-size: 11px; }
   /* item picker */
   .pick-wrap { position: relative; }
   .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background: #fff; border: 1px solid #ccc; border-radius: 6px;
@@ -120,7 +128,8 @@
     <button type="button" class="add-btn" onclick="addItemRow()">+ Add item</button>
 
     <label>Discount %</label>
-    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5">
+    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()">
+    <div class="cap-hint" id="capHint"></div>
 
     <label>Payment method</label>
     <select id="paymentMethod">
@@ -131,6 +140,7 @@
 
     <div class="err" id="errMsg"></div>
     <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
+    <div class="today" id="todayBox"></div>
   </div>
 
   <div class="panel" id="billPanel">
@@ -216,7 +226,7 @@ function attachPicker(row) {
   };
   const choose = item => {
     const f = PosPicker.fill(item);
-    chosen = item; nameEl.value = f.name; priceEl.value = f.price;
+    chosen = item; nameEl.value = f.name; priceEl.value = f.price; row.dataset.itemCode = item.item_code || '';
     close(); showHint(); qtyEl.focus(); qtyEl.select();
   };
   const draw = () => {
@@ -234,7 +244,7 @@ function attachPicker(row) {
   };
 
   nameEl.addEventListener('input', () => {
-    if (chosen && nameEl.value !== chosen.name) { chosen = null; showHint(); }            // edited by hand: no longer "that item"
+    if (chosen && nameEl.value !== chosen.name) { chosen = null; delete row.dataset.itemCode; showHint(); }   // edited by hand: no longer "that item"
     clearTimeout(timer);
     const q = nameEl.value, mine = ++seq;
     if (!q.trim()) { close(); return; }
@@ -255,6 +265,7 @@ function attachPicker(row) {
   qtyEl.addEventListener('input', showHint);
 }
 addItemRow();
+loadToday();
 
 function showError(msg) {
   const el = document.getElementById('errMsg');
@@ -267,6 +278,7 @@ async function generateBill() {
   const rows = [...document.querySelectorAll('.item-row')];
   const items = rows.map(r => ({
     item_name: r.querySelector('.i-name').value.trim(),
+    item_code: r.dataset.itemCode || undefined,           // set when the item was picked from the catalogue
     qty: parseFloat(r.querySelector('.i-qty').value),
     unit_price: parseFloat(r.querySelector('.i-price').value),
   }));
@@ -285,18 +297,22 @@ async function generateBill() {
   genBtn.textContent = 'Generating…';
 
   try {
-    const res = await fetch('/api/pos-bills', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_name: document.getElementById('customerName').value.trim() || null,
-        customer_phone: document.getElementById('customerPhone').value.trim() || null,
-        items,
-        discount_pct,
-        payment_method: document.getElementById('paymentMethod').value,
-      }),
-    });
-    const data = await res.json();
+    const payload = {
+      customer_name: document.getElementById('customerName').value.trim() || null,
+      customer_phone: document.getElementById('customerPhone').value.trim() || null,
+      items,
+      discount_pct,
+      payment_method: document.getElementById('paymentMethod').value,
+    };
+    const post = extra => fetch('/api/pos-bills', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
+    let res = await post();
+    let data = await res.json();
+    // Over the discount cap: only the owner can approve it (the server checks), and it is recorded on the bill.
+    if (res.status === 409 && data.code === 'discount_over_cap' && data.can_override) {
+      if (!confirm(`${discount_pct}% is more than the allowed ${data.max_allowed}%.\n\nApprove this discount as the owner?`)) throw new Error('Not approved. Lower the discount or approve it.');
+      res = await post({ override: true });
+      data = await res.json();
+    }
     if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
     renderBill(data);
   } catch (e) {
@@ -393,12 +409,40 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+// Discount cap hint (from the owner's discount rule). A warning only: the server enforces it.
+let discountCap = { max_allowed: null, can_override: false };
+fetch('/api/pos-bills/discount-cap').then(r => r.ok ? r.json() : null).then(c => { if (c) { discountCap = c; updateCapHint(); } }).catch(() => {});
+function updateCapHint() {
+  const el = document.getElementById('capHint');
+  if (discountCap.max_allowed === null) { el.textContent = ''; el.className = 'cap-hint'; return; }
+  const pct = parseFloat(document.getElementById('discountPct').value) || 0, over = pct > discountCap.max_allowed;
+  el.className = 'cap-hint' + (over ? ' warn' : '');
+  el.textContent = over
+    ? `Over the ${discountCap.max_allowed}% limit. ` + (discountCap.can_override ? 'You will be asked to approve it.' : 'The owner must approve this.')
+    : `Maximum discount: ${discountCap.max_allowed}%`;
+}
+
+// Today's bills (Sri Lanka date), with the day's total.
+async function loadToday() {
+  const box = document.getElementById('todayBox');
+  try {
+    const r = await fetch('/api/pos-bills/today');
+    if (!r.ok) { box.textContent = ''; return; }
+    const d = await r.json(), sym = branding.currency_symbol || 'Rs';
+    const esc = escapeHtml;
+    box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
+      d.bills.map(b => `<tr><td>${esc(b.bill_number.split('-').pop())}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td><a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a></td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+  } catch (e) { box.textContent = ''; }
+}
+
 function resetForm() {
+  loadToday();
   document.getElementById('itemRows').innerHTML = '';
   addItemRow();
   document.getElementById('customerName').value = '';
   document.getElementById('customerPhone').value = '';
   document.getElementById('discountPct').value = 0;
+  updateCapHint();
   document.getElementById('formPanel').style.display = 'block';
   document.getElementById('billPanel').style.display = 'none';
 }

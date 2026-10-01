@@ -44,3 +44,8 @@ AGENT_DRAFT_ONLY — optional, default off. Set to true to put live WhatsApp in 
   number (WHATSAPP_TEST_WHITELIST) is not affected. Needs a restart to change. Max 30 drafts per customer per hour.
 WHATSAPP_TEST_WHITELIST — also decides who may use the owner-only business answers (profit, credit, cheques, item cost).
   If it is empty, nobody gets them over WhatsApp.
+
+POS_DEDUCT_STOCK — optional, default off. Set to true and a POS bill takes catalogue items (picked in the item picker) out of
+  stock in the same transaction as the bill. Leave it off if the shop's real stock is kept in another system (Lasersoft):
+  deducting here as well would count every sale twice. There is no "void bill" yet, so a deduction can't be undone from the app.
+  The POS discount cap uses the owner's discount rule (table discount_rules): over-cap bills are refused unless the owner approves.
