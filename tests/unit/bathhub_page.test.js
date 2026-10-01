@@ -8,7 +8,7 @@ const vm = require('vm');
 const BathHubFeed = require('../../public/bathhub-feed');
 
 const html = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'bathhub.html'), 'utf8');
-const pageScript = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+const pageScript = [...html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
 
 function runPage(feedBody, { ok = true } = {}) {
   const els = {};

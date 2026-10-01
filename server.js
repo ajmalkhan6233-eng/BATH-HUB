@@ -225,6 +225,7 @@ app.use(async (req, res, next) => {
     if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
+    if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
     if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either

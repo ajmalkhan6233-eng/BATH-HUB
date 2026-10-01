@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <title>Bath Hub - Tiles and Bathroom Fittings, Thihariya</title>
+<meta name="description" content="Bath Hub, Kandy Road, Thihariya: floor and wall tiles, bathtubs, taps and showers. Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
+<meta name="theme-color" content="#1c2a33">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bath Hub - Tiles and Bathroom Fittings, Thihariya">
+<meta property="og:description" content="Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeGoodsStore","name":"Bath Hub","description":"Tiles and bathroom fittings","address":{"@type":"PostalAddress","streetAddress":"Kandy Road","addressLocality":"Thihariya","addressCountry":"LK"},"telephone":"+94777999219"}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +40,15 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;max-width:980px;margin:0 auto}
 .logo{font-weight:700;font-size:22px;letter-spacing:-.01em}
 .logo small{display:block;font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
+.cform{display:grid;gap:10px;max-width:520px}
+.cform input,.cform textarea{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line,#8886);background:transparent;color:inherit}
+.cform .trap{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.cform button{font:inherit;padding:11px 16px;border-radius:10px;border:0;cursor:pointer;background:#25D366;color:#073b1b;font-weight:700}
+.cform button[disabled]{opacity:.6;cursor:wait}
+.cmsg{min-height:1.4em;font-size:14px}
+.clinks{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.clinks a{color:inherit;border:1px solid currentColor;border-radius:20px;padding:6px 14px;text-decoration:none;font-size:14px;opacity:.85}
+.wafab{position:fixed;right:16px;bottom:16px;z-index:50;width:54px;height:54px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;text-decoration:none;box-shadow:0 4px 14px #0004}
 .langs{display:flex;gap:6px;align-items:center}
 .owner-link{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid currentColor;border-radius:14px;padding:4px 10px;opacity:.7}
 .owner-link:hover{opacity:1}
@@ -163,6 +178,22 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:14px;border-top:1px soli
 </section>
 </main>
 
+<section class="wrap" id="contact-sec">
+  <h2 id="cH"></h2>
+  <p class="lead" id="cP"></p>
+  <form class="cform" id="cform" novalidate>
+    <input id="cName" autocomplete="name" maxlength="80">
+    <input id="cPhone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20">
+    <input id="cProduct" maxlength="120">
+    <textarea id="cMsg" rows="3" maxlength="500"></textarea>
+    <input class="trap" id="cTrap" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button type="submit" id="cSend"></button>
+    <div class="cmsg" id="cOut" role="status" aria-live="polite"></div>
+  </form>
+  <div class="clinks" id="clinks"></div>
+</section>
+<a class="wafab" id="wafab" href="#" aria-label="WhatsApp" hidden>&#128172;</a>
+
 <div class="wrap"><footer id="foot"></footer></div>
 
 <script src="/bathhub-feed.js"></script>
@@ -205,6 +236,8 @@ const T = {
        ["Finishes","Glossy is shiny and bright. Matt is flat and grips better when wet. Nano polish is a polished surface with a protective coating that helps resist stains; ask us about the exact product."],
        ["How much to buy","Measure length and width of the floor, multiply, and add about 10% for cuts. Our calculator does this for you. Always buy all tiles from the same batch."],
        ["What you see on screen","Phone screens change colours. The room picture is a guide, not a promise. Come and see the real tile, and ask us anything: we will tell you honestly what suits your budget."]],
+  cH:"Send us a message", cP:"Tell us what you need. We will call or WhatsApp you, usually the same day.",
+  cName:"Your name", cPhone:"Phone or WhatsApp number", cProduct:"Which tile or item? (optional)", cMsg:"Your message (optional)", cSend:"Send", cOk:"Thank you. We will contact you soon.", cBad:"Please enter your name and a phone number.", cFail:"Could not send. Please message us on WhatsApp.", cMap:"Open map", cCall:"Call us", cWa:"WhatsApp us",
   foot:"Bath Hub, Kandy Road, Thihariya. Prices change with import costs, so we share them when you ask."},
  si:{tag:"ටයිල් සහ නාන කාමර උපාංග, තිහාරිය", h1:"ඔබේ කාමරයේ ටයිල් එක බලන්න", lead:"පහතින් ටයිල් එකක් තෝරන්න, ඔබේ පොළොව වෙනස් වෙන හැටි බලන්න. මෙය මඟ පෙන්වීමක් පමණි. ඔබේ නිවසේදී වර්ණය සහ දිලිසීම වෙනස් විය හැක, එබැවින් තීරණය කිරීමට පෙර ෂෝරූම් එකට පැමිණෙන්න.",
   living:"සාලය", hall:"ශාලාව", size:"ප්‍රමාණය", finish:"නිමාව", best:"සුදුසු තැන්", ask:"WhatsApp හරහා අසන්න", sampleNote:"සාම්පල දත්ත: පළ කිරීමට පෙර සැබෑ භාණ්ඩ ඇතුළත් කරන්න.", noWa:"WhatsApp අංකය ඇතුළත් කර නැත.",
@@ -222,6 +255,8 @@ const T = {
        ["නිමාවන්","දිලිසෙන ටයිල් දීප්තිමත්ය. මැට්, පැතලි වන අතර තෙත් වූ විට ලිස්සීම අඩුය. නැනෝ පොලිෂ් යනු පොලිෂ් කළ මතුපිටක් වන අතර, පැල්ලම් වලට ඔරොත්තු දීමට උපකාරී වන ආරක්ෂිත ආලේපනයක් ඇත. නිශ්චිත භාණ්ඩය ගැන අපෙන් අසන්න."],
        ["කොපමණ ගන්නද","පොළොවේ දිග සහ පළල මැන, ගුණ කර, කැපීම් සඳහා 10% ක් පමණ එකතු කරන්න. අපගේ ගණකය මෙය ඔබ වෙනුවෙන් කරයි. සෑම විටම එකම බැච් එකේ ටයිල් ගන්න."],
        ["තිරයේ පෙනෙන දේ","දුරකථන තිර වර්ණ වෙනස් කරයි. කාමර රූපය මඟ පෙන්වීමක් මිස පොරොන්දුවක් නොවේ. සැබෑ ටයිල් එක බලන්න එන්න, ඕනෑම දෙයක් අපෙන් අසන්න: ඔබේ අයවැයට ගැළපෙන්නේ මොනවාදැයි අපි අවංකව කියන්නෙමු."]],
+  cH:"අපට පණිවිඩයක් එවන්න", cP:"ඔබට අවශ්‍ය දේ කියන්න. අපි ඇමතුමක් හෝ WhatsApp පණිවිඩයක් දෙන්නෙමු.",
+  cName:"ඔබේ නම", cPhone:"දුරකථන හෝ WhatsApp අංකය", cProduct:"කුමන ටයිල් හෝ භාණ්ඩය? (අවශ්‍ය නම්)", cMsg:"ඔබේ පණිවිඩය (අවශ්‍ය නම්)", cSend:"යවන්න", cOk:"ස්තූතියි. අපි ඉක්මනින් ඔබව සම්බන්ධ කරගන්නෙමු.", cBad:"කරුණාකර නම සහ දුරකථන අංකයක් ඇතුළත් කරන්න.", cFail:"යැවීමට නොහැකි විය. කරුණාකර WhatsApp හරහා පණිවිඩයක් එවන්න.", cMap:"සිතියම", cCall:"අමතන්න", cWa:"WhatsApp",
   foot:"බාත් හබ්, කන්ද පාර, තිහාරිය. ආනයන වියදම් සමඟ මිල වෙනස් වන බැවින්, ඔබ ඇසූ විට අපි මිල කියමු."},
  ta:{tag:"டைல்ஸ் மற்றும் குளியலறை உபகரணங்கள், திஹாரிய", h1:"உங்கள் அறையில் டைல் எப்படி இருக்கும் என்று பாருங்கள்", lead:"கீழே ஒரு டைலைத் தேர்ந்தெடுங்கள், உங்கள் தரை மாறுவதைப் பாருங்கள். இது ஒரு வழிகாட்டி மட்டுமே. உங்கள் வீட்டில் நிறமும் பளபளப்பும் வேறுபடலாம், எனவே முடிவு செய்வதற்கு முன் ஷோரூமுக்கு வாருங்கள்.",
   living:"வரவேற்பறை", hall:"ஹால்", size:"அளவு", finish:"மேற்பரப்பு", best:"பொருத்தமான இடம்", ask:"WhatsApp-ல் கேளுங்கள்", sampleNote:"மாதிரி தரவு: வெளியிடும் முன் உண்மையான பொருட்களை சேர்க்கவும்.", noWa:"WhatsApp எண் சேர்க்கப்படவில்லை.",
@@ -239,6 +274,8 @@ const T = {
        ["மேற்பரப்பு வகைகள்","பளபளப்பு டைல் மின்னும். மேட் தட்டையானது, ஈரத்தில் வழுக்குவது குறைவு. நானோ பாலிஷ் என்பது கறைகளை எதிர்க்க உதவும் பாதுகாப்பு பூச்சுடன் கூடிய பாலிஷ் மேற்பரப்பு. குறிப்பிட்ட பொருள் பற்றி எங்களிடம் கேளுங்கள்."],
        ["எவ்வளவு வாங்க வேண்டும்","தரையின் நீளம் மற்றும் அகலத்தை அளந்து பெருக்கி, வெட்டுக்காக சுமார் 10% சேர்க்கவும். எங்கள் கணக்கீட்டுக் கருவி இதைச் செய்யும். எப்போதும் ஒரே பேட்ச் டைல்ஸ் வாங்குங்கள்."],
        ["திரையில் தெரிவது","தொலைபேசித் திரைகள் நிறங்களை மாற்றும். அறைப் படம் ஒரு வழிகாட்டி மட்டுமே, வாக்குறுதி அல்ல. உண்மையான டைலைப் பார்க்க வாருங்கள், எதுவும் கேளுங்கள்: உங்கள் பட்ஜெட்டுக்கு எது பொருந்தும் என்று நேர்மையாகச் சொல்வோம்."]],
+  cH:"எங்களுக்கு செய்தி அனுப்புங்கள்", cP:"உங்களுக்கு என்ன தேவை என்று சொல்லுங்கள். நாங்கள் அழைப்போம் அல்லது WhatsApp செய்வோம்.",
+  cName:"உங்கள் பெயர்", cPhone:"தொலைபேசி அல்லது WhatsApp எண்", cProduct:"எந்த டைல் அல்லது பொருள்? (விருப்பம்)", cMsg:"உங்கள் செய்தி (விருப்பம்)", cSend:"அனுப்பு", cOk:"நன்றி. விரைவில் தொடர்பு கொள்வோம்.", cBad:"உங்கள் பெயரையும் தொலைபேசி எண்ணையும் உள்ளிடவும்.", cFail:"அனுப்ப முடியவில்லை. WhatsApp மூலம் தொடர்பு கொள்ளவும்.", cMap:"வரைபடம்", cCall:"அழைக்க", cWa:"WhatsApp",
   foot:"பாத் ஹப், கண்டி ரோடு, திஹாரிய. இறக்குமதிச் செலவுக்கு ஏற்ப விலை மாறும், எனவே நீங்கள் கேட்கும்போது விலை சொல்வோம்."}
 };
 
@@ -295,8 +332,29 @@ function renderText(){
   $("how").innerHTML=L.how.map(([h,p])=>`<div><h3>${h}</h3><p>${p}</p></div>`).join("");
   const n=$("sampleNote"); const msgs=[]; if(SAMPLE_MODE)msgs.push(L.sampleNote); if(!WHATSAPP)msgs.push(L.noWa);
   n.hidden=!msgs.length; n.textContent=msgs.join(" ");
+  renderContact();
   renderScenes(); renderSpec(); calc(); renderBuilder();
 }
+function renderContact(){
+  const L=T[lang];
+  $("cH").textContent=L.cH; $("cP").textContent=L.cP; $("cSend").textContent=L.cSend;
+  $("cName").placeholder=L.cName; $("cPhone").placeholder=L.cPhone; $("cProduct").placeholder=L.cProduct; $("cMsg").placeholder=L.cMsg;
+  const maps="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent("Bath Hub Kandy Road Thihariya");
+  $("clinks").innerHTML=(WHATSAPP?`<a href="https://wa.me/${WHATSAPP}">${L.cWa}</a><a href="tel:+${WHATSAPP}">${L.cCall}</a>`:"")+`<a href="${maps}" target="_blank" rel="noopener">${L.cMap}</a>`;
+  const f=$("wafab"); if(WHATSAPP){ f.hidden=false; f.href="https://wa.me/"+WHATSAPP; }
+}
+const cformEl=$("cform");
+if(cformEl&&cformEl.addEventListener) cformEl.addEventListener("submit", async ev=>{
+  ev.preventDefault(); const L=T[lang], out=$("cOut"), btn=$("cSend");
+  const body={name:$("cName").value, phone:$("cPhone").value, product:$("cProduct").value || (sel&&!SAMPLE_MODE?sel.name:""), message:$("cMsg").value, company_site:$("cTrap").value};
+  if(!body.name.trim() || body.phone.replace(/\D/g,"").length<7){ out.textContent=L.cBad; return; }
+  btn.disabled=true; out.textContent="";
+  try{
+    const r=await fetch(API_BASE+"/api/public/enquiry",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(r.ok){ out.textContent=L.cOk; $("cform").reset(); } else { const d=await r.json().catch(()=>({})); out.textContent=d.error||L.cFail; }
+  }catch(e){ out.textContent=L.cFail; }
+  btn.disabled=false;
+});
 /* ===== bathroom builder (simple front-view illustration) ===== */
 let bl="bath", bt="builtin", tp="wall", sh="rain";
 const OPTS={bl:["bath","nobath"],bt:["builtin","free","corner"],tp:["wall","deck","floorT"],sh:["rain","hand","both"]};

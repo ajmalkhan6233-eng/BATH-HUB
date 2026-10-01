@@ -7,8 +7,9 @@
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
+const rateLimit = require('express-rate-limit');
 
-const CHANNELS = ['tiktok', 'facebook', 'whatsapp', 'walk-in', 'google', 'other'];
+const CHANNELS = ['tiktok', 'facebook', 'whatsapp', 'walk-in', 'google', 'website', 'other'];
 const STATUSES = ['new', 'quoted', 'won', 'lost'];
 
 function ownerOnly(req, res, next) {
@@ -18,8 +19,31 @@ function ownerOnly(req, res, next) {
 }
 const clean = v => String(v == null ? '' : v).trim();
 
-function createRouter(pool) {
+// Public website form: no login, so it is strictly limited. Plain text only, short fields, a hidden trap field for bots,
+// and a few messages per visitor per hour. It only ever ADDS one 'new' enquiry (channel 'website'); it can read nothing.
+const noControl = (v, max) => clean(v).replace(/[\u0000-\u001F\u007F<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+
+function createRouter(pool, { publicPerHour = 5 } = {}) {
     const router = express.Router();
+
+    const publicLimiter = rateLimit({
+        windowMs: 60 * 60 * 1000, limit: publicPerHour, standardHeaders: false, legacyHeaders: false,
+        message: { error: 'Too many messages from this device. Please WhatsApp us instead.' },
+    });
+    router.post('/public/enquiry', publicLimiter, async (req, res) => {
+        try {
+            await ready;
+            const b = req.body || {};
+            if (noControl(b.company_site, 50)) return res.status(201).json({ ok: true });      // trap field: bots fill it, people never see it; pretend success
+            const name = noControl(b.name, 80), message = noControl(b.message, 500), product = noControl(b.product, 120);
+            const phone = noControl(b.phone, 20).replace(/[^\d+ ]/g, '');
+            if (!name) return res.status(400).json({ error: 'Please enter your name.' });
+            if (phone.replace(/\D/g, '').length < 7 || phone.replace(/\D/g, '').length > 15) return res.status(400).json({ error: 'Please enter a phone number we can call or WhatsApp.' });
+            const notes = `Website enquiry. Name: ${name}. Phone: ${phone}.${message ? ' Message: ' + message : ''}`;
+            await pool.query(`INSERT INTO enquiries (channel, product_interest, how_found_us, status, notes) VALUES ('website', $1, 'Bath Hub website', 'new', $2)`, [product || null, notes]);
+            res.status(201).json({ ok: true });
+        } catch (e) { res.status(500).json({ error: 'Could not send. Please WhatsApp us.' }); }
+    });
 
     const ready = pool.query(`CREATE TABLE IF NOT EXISTS enquiries (
         id SERIAL PRIMARY KEY,
