@@ -42,10 +42,40 @@ const present = r => {
     const p = parse(r), meta = F.DOC_TYPES[p.doc_type] || F.DOC_TYPES.unknown;
     return { ...p, type_label: meta.label, files_to: meta.files_to, fileable: !!meta.files_to, has_photo: true };
 };
+// GRN: which supplier is this, and which catalogue item is each line? Items are created in the catalogue first, so a
+// line is matched by its item code (exact), else by its exact name. Reads only; a missing table just means "no match".
+async function matchGrn(db, ex) {
+    const out = { supplier: null, items: [] };
+    try {
+        const want = String(ex.supplier_name || '').trim().toLowerCase();
+        if (want) {
+            const all = (await db.query(`SELECT id, name FROM suppliers`)).rows;
+            const low = r => String(r.name || '').trim().toLowerCase();
+            out.supplier = all.find(r => low(r) === want)
+                || (want.length >= 3 ? all.find(r => low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r)))) : null) || null;
+            if (out.supplier) out.supplier = { id: out.supplier.id, name: out.supplier.name };
+        }
+    } catch (e) { /* no suppliers table */ }
+    for (const i of ex.items) {
+        let p = null;
+        try {
+            if (i.item_code) p = (await db.query(`SELECT item_code, name FROM products WHERE item_code = $1 LIMIT 1`, [i.item_code])).rows[0] || null;
+            if (!p && i.description) p = (await db.query(`SELECT item_code, name FROM products WHERE LOWER(name) = LOWER($1) LIMIT 1`, [i.description])).rows[0] || null;
+        } catch (e) { /* no products table */ }
+        out.items.push({ item_code: i.item_code || '', matched: p ? { item_code: p.item_code, name: p.name } : null });
+    }
+    return out;
+}
 const bad = (status, msg) => { const e = new Error(msg); e.status = status; return e; };
 
 function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     const router = express.Router();
+    // what the screen gets: the row, plus (for a GRN waiting to be checked) which supplier / items were recognised
+    const view = async row => {
+        const p = present(row);
+        if (p.doc_type === 'grn' && p.status === 'to_check') p.match = await matchGrn(pool, p.extracted);
+        return p;
+    };
     const ROOT = path.resolve(inboxRoot || path.join(process.env.DROP_ROOT || path.join(__dirname, '..', 'data', 'drop'), 'inbox'));
     const reader = ocr || (async (p) => require('../scripts/ocr_photo').ocrPhoto(p));
 
@@ -120,7 +150,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const row = await pool.query(
                 `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
                 [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note]);
-            res.status(201).json(present(row.rows[0]));
+            res.status(201).json(await view(row.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
@@ -131,7 +161,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const st = String(req.query.status || 'to_check');
             if (!['to_check', 'filed', 'rejected', 'all'].includes(st)) return res.status(400).json({ error: 'status must be to_check, filed, rejected or all' });
             const r = await pool.query(`SELECT * FROM document_inbox WHERE ($1 = 'all' OR status = $1) ORDER BY id DESC LIMIT 200`, [st]);
-            res.json(r.rows.map(present));
+            res.json(await Promise.all(r.rows.map(view)));
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
@@ -163,7 +193,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             if (!F.DOC_TYPES[type]) return res.status(400).json({ error: 'Unknown paper type' });
             const ex = F.normalize(type, b.extracted !== undefined ? b.extracted : (type === row.doc_type ? parse(row).extracted : {}));
             const u = await pool.query(`UPDATE document_inbox SET doc_type = $1, extracted = $2 WHERE id = $3 RETURNING *`, [type, JSON.stringify(ex), row.id]);
-            res.json(present(u.rows[0]));
+            res.json(await view(u.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
@@ -178,7 +208,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const read = await readPhoto(row.file_path, null);
             const u = await pool.query(`UPDATE document_inbox SET doc_type = $1, extracted = $2, confidence = $3, reader_note = $4 WHERE id = $5 RETURNING *`,
                 [read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note, row.id]);
-            res.json(present(u.rows[0]));
+            res.json(await view(u.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
@@ -189,7 +219,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             if (!row) return res.status(404).json({ error: 'Not found' });
             if (row.status !== 'to_check') return res.status(409).json({ error: `This paper is already ${row.status}` });
             const u = await pool.query(`UPDATE document_inbox SET status = 'rejected', filed_at = NOW() WHERE id = $1 RETURNING *`, [row.id]);
-            res.json(present(u.rows[0]));
+            res.json(await view(u.rows[0]));
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
@@ -205,7 +235,20 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             if (row.status !== 'to_check') { await client.query('ROLLBACK'); return res.status(409).json({ error: `This paper is already ${row.status}` }); }
 
             const type = row.doc_type, ex = F.normalize(type, parse(row).extracted);
+            let match = null;
+            const extraWarnings = [];
+            if (type === 'grn') {
+                match = await matchGrn(pool, ex);      // own connection: a missing table must not abort this transaction
+                ex.items.forEach((i, n) => {
+                    const m = match.items[n] && match.items[n].matched;
+                    if (m && !i.description) i.description = m.name;
+                    if (m) i.item_code = m.item_code;
+                    else extraWarnings.push(i.item_code ? `Item code ${i.item_code} (${i.description || 'no name'}) is not in your catalogue. Create the item first, or file anyway.` : `Item ${n + 1} (${i.description || 'no name'}) has no item code that matches your catalogue.`);
+                });
+                if (ex.supplier_name && !match.supplier) extraWarnings.push(`Supplier "${ex.supplier_name}" is not in your Suppliers list. It is filed under that name only.`);
+            }
             const v = F.validateForFiling(type, ex);
+            v.warnings.push(...extraWarnings);
             if (!v.ok) { await client.query('ROLLBACK'); return res.status(400).json({ error: v.errors[0], errors: v.errors }); }
             if (v.warnings.length && (req.body || {}).accept_warnings !== true) {
                 await client.query('ROLLBACK');
@@ -230,17 +273,18 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             } else if (type === 'grn') {
                 const rows = F.grnRows(ex);
                 const grnNumber = ex.grn_number || `DOC-${row.id}`;
-                let supplierId = null;
-                try { supplierId = (await client.query(`SELECT id FROM suppliers WHERE LOWER(name) = LOWER($1) LIMIT 1`, [ex.supplier_name])).rows[0]?.id || null; } catch (e) { /* no suppliers table */ }
+                const supplierId = match && match.supplier ? match.supplier.id : null;
+                const supplierName = match && match.supplier ? match.supplier.name : ex.supplier_name;
                 let firstId = null;
                 for (const g of rows) {
+                    const desc = g.item_code && !String(g.item_description).startsWith(g.item_code) ? `${g.item_code} - ${g.item_description}` : g.item_description;
                     const ins = await client.query(
                         `INSERT INTO grn_records (grn_number, supplier_id, supplier_name, grn_date, item_description, quantity, unit_cost, total_amount, source_file_path, status, notes)
                          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'PENDING_REVIEW',$10) RETURNING id`,
-                        [grnNumber, supplierId, ex.supplier_name, ex.date, g.item_description, g.quantity, g.unit_cost, g.total_amount, row.file_path, `From paper GRN (document #${row.id}). Stock is not changed until reviewed. ${ex.notes}`.trim()]);
+                        [grnNumber, supplierId, supplierName, ex.date, desc, g.quantity, g.unit_cost, g.total_amount, row.file_path, `From paper GRN (document #${row.id}). Stock is not changed until reviewed. ${ex.notes}`.trim()]);
                     if (firstId === null) firstId = ins.rows[0].id;
                 }
-                filed_to = 'grn_records'; filed_id = String(firstId); note = `GRN ${grnNumber}: ${rows.length} item(s), pending review, stock not changed`;
+                filed_to = 'grn_records'; filed_id = String(firstId); note = `GRN ${grnNumber} from ${supplierName}: ${rows.length} item(s), pending review, stock not changed`;
             } else if (type === 'cheque') {
                 const ins = await client.query(
                     `INSERT INTO cheque_register (cheque_no, bank, payee, amount, due_date, notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,

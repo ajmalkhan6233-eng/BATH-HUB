@@ -12,6 +12,7 @@ const DOC_TYPES = {
     cheque:         { label: 'Cheque',               files_to: 'cheque_register' },
     day_sheet:      { label: 'Daily sales sheet',    files_to: 'daily_summary' },
     expense_sheet:  { label: 'Expense list',         files_to: 'daily_summary' },
+    salary_note:    { label: 'Salary list',          files_to: null },
     invoice:        { label: 'Supplier invoice',     files_to: null },
     customer_photo: { label: 'Customer photo',       files_to: null },
     unknown:        { label: 'Not recognised',       files_to: null },
@@ -49,7 +50,7 @@ function normalize(docType, raw) {
         case 'grn':
             return {
                 grn_number: str(r.grn_number, 40), date: day(r.date), supplier_name: str(r.supplier_name, 150),
-                items: items(r.items).map(i => ({ description: str(i && (i.description || i.name), 200), qty: num(i && i.qty), unit_cost: num(i && i.unit_cost), amount: num(i && i.amount) })),
+                items: items(r.items).map(i => ({ item_code: str(i && i.item_code, 40), description: str(i && (i.description || i.name), 200), qty: num(i && i.qty), unit_cost: num(i && i.unit_cost), amount: num(i && i.amount) })),
                 total: num(r.total), notes: str(r.notes, 500),
             };
         case 'cheque':
@@ -62,6 +63,14 @@ function normalize(docType, raw) {
             return {
                 date: day(r.date || r.report_date), total_sale: num(r.total_sale), cash_sale: num(r.cash_sale), card_sale: num(r.card_sale),
                 online_sale: num(r.online_sale), credit_sale: num(r.credit_sale), total_expenses: num(r.total_expenses), expense_items: str(r.expense_items, 1000), notes: str(r.notes, 500),
+                // seen on the shop's daily sheets; kept for checking (the daily summary has no columns for them)
+                petty_cash: num(r.petty_cash), payouts: str(r.payouts, 1000), total_payouts: num(r.total_payouts), cash_in: num(r.cash_in), cash_out: num(r.cash_out),
+                cash_in_hand: num(r.cash_in_hand), cash_banked: num(r.cash_banked),
+            };
+        case 'salary_note':
+            return {
+                date: day(r.date), total: num(r.total), notes: str(r.notes, 500),
+                lines: (Array.isArray(r.lines) ? r.lines : []).slice(0, 40).map(l => ({ name: str(l && l.name, 80), amount: num(l && l.amount), note: str(l && l.note, 80) })),
             };
         case 'invoice':
             return { invoice_number: str(r.invoice_number, 60), payee: str(r.payee, 150), amount: num(r.amount), date: day(r.date), notes: str(r.notes, 500) };
@@ -112,12 +121,13 @@ function validateForFiling(docType, ex) {
     } else if (docType === 'grn') {
         if (!ex.supplier_name) errors.push('Enter the supplier name.');
         if (!ex.date) errors.push('Enter the date written on the GRN (YYYY-MM-DD).');
-        const rows = ex.items.filter(i => i.description);
+        const rows = ex.items.filter(i => i.description || i.item_code);
         if (!rows.length) errors.push('Add at least one item.');
         rows.forEach((i, n) => {
-            if (!(i.qty > 0)) errors.push(`Item ${n + 1} (${i.description}): the quantity must be more than 0.`);
+            const label = i.description || i.item_code;
+            if (!(i.qty > 0)) errors.push(`Item ${n + 1} (${label}): the quantity must be more than 0.`);
             const cost = i.unit_cost != null ? i.unit_cost : (i.amount != null && i.qty > 0 ? i.amount / i.qty : null);
-            if (cost == null || !(cost >= 0)) errors.push(`Item ${n + 1} (${i.description}): enter the unit cost.`);
+            if (cost == null || !(cost >= 0)) errors.push(`Item ${n + 1} (${label}): enter the unit cost.`);
         });
         if (!errors.length && ex.total != null) {
             const sum = grnRows(ex).reduce((a, r) => a + r.total_amount, 0);
@@ -130,15 +140,24 @@ function validateForFiling(docType, ex) {
     } else if (docType === 'day_sheet' || docType === 'expense_sheet') {
         if (!ex.date) errors.push('Enter the date on the sheet (YYYY-MM-DD).');
         if ([ex.total_sale, ex.total_expenses, ex.cash_sale, ex.card_sale, ex.online_sale, ex.credit_sale].every(v => v == null)) errors.push('Enter at least one figure from the sheet.');
+        // The sheet's own arithmetic: a handwriting slip shows up here.
+        const parts = [ex.cash_sale, ex.card_sale, ex.online_sale, ex.credit_sale];
+        if (ex.total_sale != null && parts.some(v => v != null)) {
+            const sum = money2(parts.reduce((a, v) => a + (v || 0), 0));
+            if (Math.abs(sum - ex.total_sale) > 1) warnings.push(`Cash + card + online + credit (${sum}) is not the total sale written (${money2(ex.total_sale)}). Check the figures against the photo.`);
+        }
+        if (ex.cash_in != null && ex.cash_out != null && ex.cash_in_hand != null && Math.abs(money2(ex.cash_in - ex.cash_out) - ex.cash_in_hand) > 1) {
+            warnings.push(`Cash in (${money2(ex.cash_in)}) minus cash out (${money2(ex.cash_out)}) is not the cash in hand written (${money2(ex.cash_in_hand)}).`);
+        }
     }
     return { ok: !errors.length, errors, warnings };
 }
 
 // GRN: one row per item (that is how grn_records is shaped).
 function grnRows(ex) {
-    return ex.items.filter(i => i.description).map(i => {
+    return ex.items.filter(i => i.description || i.item_code).map(i => {
         const unit_cost = i.unit_cost != null ? money2(i.unit_cost) : money2(i.amount / i.qty);
-        return { item_description: i.description, quantity: money2(i.qty), unit_cost, total_amount: money2(i.qty * unit_cost) };
+        return { item_code: i.item_code || '', item_description: i.description || i.item_code, quantity: money2(i.qty), unit_cost, total_amount: money2(i.qty * unit_cost) };
     });
 }
 

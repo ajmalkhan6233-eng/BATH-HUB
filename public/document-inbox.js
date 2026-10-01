@@ -1,15 +1,15 @@
 const diEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* Document Inbox: photos of papers, read, checked by Aj, then filed. Nothing is filed before Confirm. */
 let _diStatus = 'to_check';
-const DI_TYPES = [['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
+const DI_TYPES = [['salary_note','Salary list'],['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
 const DI_FIELDS = {
   manual_bill: [['bill_number','Bill no.'],['date','Date (YYYY-MM-DD)'],['customer_name','Customer'],['customer_phone','Phone'],['discount','Discount (amount)'],['total','Total written on paper']],
   grn: [['grn_number','GRN no.'],['date','Date (YYYY-MM-DD)'],['supplier_name','Supplier'],['total','Total written on paper']],
   cheque: [['cheque_number','Cheque no.'],['bank','Bank'],['payee','Payee (who it is for)'],['amount','Amount'],['due_date','Cheque date (YYYY-MM-DD)'],['direction','Given or received']],
-  day_sheet: [['date','Date (YYYY-MM-DD)'],['total_sale','Total sale'],['cash_sale','Cash'],['card_sale','Card'],['online_sale','Online'],['credit_sale','Credit'],['total_expenses','Total expenses'],['expense_items','Expense items']],
+  day_sheet: [['date','Date (YYYY-MM-DD)'],['total_sale','Total sale'],['cash_sale','Cash'],['card_sale','Card'],['online_sale','Online'],['credit_sale','Credit'],['total_expenses','Total expenses'],['expense_items','Expense items'],['petty_cash','Petty cash'],['payouts','Payouts'],['cash_in','Cash in'],['cash_out','Cash out'],['cash_in_hand','Cash in hand'],['cash_banked','Cash banked']],
   expense_sheet: [['date','Date (YYYY-MM-DD)'],['total_expenses','Total expenses'],['expense_items','Expense items'],['total_sale','Total sale (if written)']],
 };
-const DI_ITEMS = { manual_bill: [['name','Item'],['qty','Qty'],['unit_price','Unit price'],['amount','Amount']], grn: [['description','Item'],['qty','Qty'],['unit_cost','Unit cost'],['amount','Amount']] };
+const DI_ITEMS = { manual_bill: [['name','Item'],['qty','Qty'],['unit_price','Unit price'],['amount','Amount']], grn: [['item_code','Item code'],['description','Item'],['qty','Qty'],['unit_cost','Unit cost'],['amount','Amount']] };
 function diMsg(t) { document.getElementById('di-msg').textContent = t || ''; }
 async function diCall(url, method, body) {
   const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
@@ -34,7 +34,13 @@ function diForm(x) {
       <button class="btn btn-s" style="margin:6px 0" onclick="document.getElementById('di-items-${x.id}').insertAdjacentHTML('beforeend', diItemRow('${x.doc_type}'))">+ Add item</button>`;
   }
   const pay = x.doc_type === 'manual_bill' ? `<div class="fg"><label class="fl">Paid by</label><select class="fs di-f-payment_method">${['cash','card','online','cheque','credit'].map(m => `<option ${m === ex.payment_method ? 'selected' : ''}>${m}</option>`).join('')}</select></div>` : '';
-  return `<div class="grid-3">${fields}${pay}</div>${items}`;
+  let match = '';
+  if (x.doc_type === 'grn' && x.match) {
+    const sup = x.match.supplier ? `<span style="color:var(--green,#2e7d32)">✓ Supplier: ${diEsc(x.match.supplier.name)}</span>` : `<span style="color:var(--amber)">Supplier not found in Suppliers</span>`;
+    const lines = (x.match.items || []).map((m, n) => m.matched ? `<div style="font-size:12px;color:var(--green,#2e7d32)">✓ line ${n + 1}: ${diEsc(m.matched.item_code)} ${diEsc(m.matched.name)}</div>` : `<div style="font-size:12px;color:var(--amber)">line ${n + 1}: ${m.item_code ? 'code ' + diEsc(m.item_code) + ' not in the catalogue' : 'no item code'}</div>`).join('');
+    match = `<div style="margin:6px 0">${sup}${lines}</div>`;
+  }
+  return `<div class="grid-3">${fields}${pay}</div>${items}${match}`;
 }
 function diCollect(id, type) {
   const card = document.getElementById('di-card-' + id), ex = {};

@@ -12,6 +12,8 @@ const pg = require('pg');
 const db = pg.__db.public;
 db.none(`CREATE TABLE suppliers (id SERIAL PRIMARY KEY, name TEXT)`);
 db.none(`INSERT INTO suppliers (name) VALUES ('Lanka Tiles')`);
+db.none(`CREATE TABLE products (id SERIAL PRIMARY KEY, item_code TEXT, name TEXT)`);
+db.none(`INSERT INTO products (item_code, name) VALUES ('1001', 'Marble Tile 60x60'), ('1002', 'Tile Adhesive 20kg')`);
 db.none(`CREATE TABLE pos_bills (id SERIAL PRIMARY KEY, bill_number VARCHAR(40) UNIQUE, customer_name TEXT, customer_phone TEXT, subtotal NUMERIC, discount_pct NUMERIC, discount_amount NUMERIC, total NUMERIC, payment_method TEXT, notes TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), source VARCHAR(20) NOT NULL DEFAULT 'pos', attachment_path TEXT)`);
 db.none(`CREATE TABLE pos_bill_items (id SERIAL PRIMARY KEY, bill_id INT, item_name TEXT, qty NUMERIC, unit_price NUMERIC, line_total NUMERIC)`);
 db.none(`CREATE TABLE grn_records (id SERIAL PRIMARY KEY, grn_number TEXT, supplier_id INT, supplier_name TEXT, grn_date DATE, item_description TEXT, quantity NUMERIC, unit_cost NUMERIC, total_amount NUMERIC, source_file_path TEXT, status TEXT DEFAULT 'PENDING_REVIEW', notes TEXT)`);
@@ -159,17 +161,32 @@ describe('filing', () => {
     expect(Number(db.many(`SELECT total FROM pos_bills WHERE id = ${f.body.filed_id}`)[0].total)).toBe(4500);
   });
 
-  test('GRN: one row per item, pending review, supplier matched by name, no stock touched', async () => {
+  test('GRN: supplier and items are matched to the catalogue by item code; one row per item, pending review, no stock touched', async () => {
     reading = { document_type: 'grn', grn_number: 'G-55', date: '2026-09-25', supplier_name: 'lanka tiles', total: 30000,
-      items: [{ description: 'Tile 60x60', qty: 10, unit_cost: 2000, amount: 20000 }, { description: 'Tile 30x30', qty: 10, unit_cost: 1000, amount: 10000 }] };
-    const id = (await up(owner)).body.id;
-    const f = await request(owner).post(`/api/document-inbox/${id}/file`).send({});
+      items: [{ item_code: '1001', description: 'tile big', qty: 10, unit_cost: 2000, amount: 20000 }, { item_code: '1002', qty: 10, unit_cost: 1000, amount: 10000 }] };
+    const up1 = await up(owner);
+    expect(up1.body.match.supplier).toMatchObject({ name: 'Lanka Tiles' });
+    expect(up1.body.match.items.map(m => m.matched && m.matched.name)).toEqual(['Marble Tile 60x60', 'Tile Adhesive 20kg']);
+    const f = await request(owner).post(`/api/document-inbox/${up1.body.id}/file`).send({});
     expect(f.status).toBe(200);
     expect(f.body.filed_to).toBe('grn_records');
-    const rows = db.many(`SELECT * FROM grn_records WHERE grn_number = 'G-55'`);
+    const rows = db.many(`SELECT * FROM grn_records WHERE grn_number = 'G-55' ORDER BY id`);
     expect(rows).toHaveLength(2);
-    expect(rows.every(r => r.status === 'PENDING_REVIEW' && r.supplier_id === 1)).toBe(true);
-    expect(rows.map(r => Number(r.total_amount)).sort()).toEqual([10000, 20000]);
+    expect(rows.every(r => r.status === 'PENDING_REVIEW' && r.supplier_id === 1 && r.supplier_name === 'Lanka Tiles')).toBe(true);
+    expect(rows.map(r => r.item_description)).toEqual(['1001 - tile big', '1002 - Tile Adhesive 20kg']);   // code first; a line with no written name takes the catalogue name
+    expect(rows.map(r => Number(r.total_amount))).toEqual([20000, 10000]);
+  });
+
+  test('GRN: an item code that is not in the catalogue, or an unknown supplier, needs "file anyway"', async () => {
+    reading = { document_type: 'grn', grn_number: 'G-56', date: '2026-09-26', supplier_name: 'Woos Trading', items: [{ item_code: '9999', description: 'mystery', qty: 1, unit_cost: 500 }] };
+    const id = (await up(owner)).body.id;
+    const first = await request(owner).post(`/api/document-inbox/${id}/file`).send({});
+    expect(first.status).toBe(409);
+    expect(first.body.warnings.join(' ')).toMatch(/9999.*not in your catalogue/);
+    expect(first.body.warnings.join(' ')).toMatch(/Woos Trading.*not in your Suppliers/);
+    expect(db.many(`SELECT * FROM grn_records WHERE grn_number = 'G-56'`)).toHaveLength(0);
+    expect((await request(owner).post(`/api/document-inbox/${id}/file`).send({ accept_warnings: true })).status).toBe(200);
+    expect(db.many(`SELECT supplier_id, item_description FROM grn_records WHERE grn_number = 'G-56'`)[0]).toMatchObject({ supplier_id: null, item_description: '9999 - mystery' });
   });
 
   test('a supplier invoice has no home: refused until the type is changed', async () => {

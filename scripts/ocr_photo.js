@@ -18,16 +18,23 @@ const PROMPT = `You are reading a photo from a Sri Lankan retail shop's paperwor
 
 FIRST look for a HEADING written or printed at the top of the paper. The shop writes one of these: "BILL" (a manual customer bill), "GRN" or "GOODS RECEIVED" (goods received from a supplier), "CHEQUE" (a cheque note), "EXPENSES" (an expense list), "DAILY SALES" or "DAY SHEET" (the day's sales). The heading decides the type. If there is no heading, decide from the content.
 
-Possible document_type values: "manual_bill" (heading BILL: a handwritten customer bill with items and a total), "grn" (heading GRN: goods received from a supplier, with items and quantities), "day_sheet" (daily sales/petty cash sheet), "expense_sheet" (handwritten expense list), "cheque_note" (heading CHEQUE: a handwritten note recording a cheque - has a cheque number, payee, amount, bank), "invoice" (a printed supplier/vendor invoice or receipt with no GRN heading), "unknown" (anything else - a person, product photo, room, random object).
+DATES are written day/month/year in Sri Lanka: "09/07/2026" or "09-07-2026" means 9 July 2026, so output "2026-07-09". Never read them month-first. If the year is missing, use null.
+Amounts are written like "25000/-" or "1150001-": the slash or dash after the number is not part of it. Numbers must be plain (no commas).
+
+Possible document_type values: "manual_bill" (heading BILL: a handwritten customer bill with items and a total), "grn" (heading GRN: goods received from a supplier, with items and quantities), "day_sheet" (daily sales/petty cash sheet: date, petty cash, expenses list, payouts/payments list, total sale, total cash/card/online, cash in, cash out, cash in hand, cash banked), "expense_sheet" (handwritten expense list), "salary_note" (a list of staff names with an amount each, usually headed Salary), "cheque_note" (heading CHEQUE: a handwritten note recording a cheque - has a cheque number, payee, amount, bank), "invoice" (a printed supplier/vendor invoice or receipt with no GRN heading), "unknown" (anything else - a person, product photo, room, random object).
 
 For document_type "manual_bill", output:
 {"document_type":"manual_bill","bill_number":"string or null","date":"YYYY-MM-DD or null","customer_name":"string or null","customer_phone":"string or null","items":[{"name":"string","qty":number,"unit_price":number or null,"amount":number or null}],"subtotal":number or null,"discount":number or null,"total":number or null,"payment_method":"cash|card|online|cheque|credit or null","confidence":"high|medium|low","notes":"anything unclear or illegible"}
 
 For document_type "grn", output:
-{"document_type":"grn","grn_number":"string or null","date":"YYYY-MM-DD or null","supplier_name":"string or null","items":[{"description":"string","qty":number,"unit_cost":number or null,"amount":number or null}],"total":number or null,"confidence":"high|medium|low","notes":"anything unclear or illegible"}
+{"document_type":"grn","grn_number":"string or null","date":"YYYY-MM-DD or null","supplier_name":"string or null","items":[{"item_code":"the item code/number written beside the line, or null","description":"string","qty":number,"unit_cost":number or null,"amount":number or null}],"total":number or null,"confidence":"high|medium|low","notes":"anything unclear or illegible"}
+On a GRN the supplier (company) name is usually written at the top or on the supplier's invoice; copy it exactly. Copy each item code exactly as written, digits and letters.
 
 For document_type "day_sheet" or "expense_sheet", output:
-{"document_type":"day_sheet","date":"YYYY-MM-DD or null","total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null,"total_expenses":number or null,"expense_items":"short text description of expense line items, or null","confidence":"high|medium|low","notes":"anything unclear or illegible"}
+{"document_type":"day_sheet","date":"YYYY-MM-DD or null","total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null,"total_expenses":number or null,"expense_items":"short text description of expense line items, or null","petty_cash":number or null,"payouts":"short text of the payouts/payments lines (who and how much), or null","total_payouts":number or null,"cash_in":number or null,"cash_out":number or null,"cash_in_hand":number or null,"cash_banked":number or null,"confidence":"high|medium|low","notes":"anything unclear or illegible, and any totals that do not add up"}
+
+For document_type "salary_note", output:
+{"document_type":"salary_note","date":"YYYY-MM-DD or null","lines":[{"name":"string","amount":number,"note":"e.g. advance, or null"}],"total":number or null,"confidence":"high|medium|low","notes":"anything unclear, crossed out or illegible"}
 
 For document_type "cheque_note", output:
 {"document_type":"cheque_note","cheque_number":"string or null","bank":"string or null","amount":number or null,"payee":"string or null","due_date":"YYYY-MM-DD or null","confidence":"high|medium|low","notes":"anything unclear or illegible"}

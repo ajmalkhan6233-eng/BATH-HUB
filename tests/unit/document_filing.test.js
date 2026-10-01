@@ -38,4 +38,29 @@ describe('documentFiling', () => {
     expect(F.validateForFiling('cheque', F.normalize('cheque', { payee: 'X', amount: 0, due_date: '2026-09-01' })).ok).toBe(false);
     expect(F.validateForFiling('invoice', F.normalize('invoice', {})).ok).toBe(false);
   });
+
+  test("the shop's own daily sheet (09/07/2026): the reader is told day/month/year, and the sheet's arithmetic is checked", () => {
+    expect(PROMPT).toMatch(/day\/month\/year/);
+    expect(PROMPT).toContain('2026-07-09');
+    // figures as written on the 09/07/2026 sheet: cash + card + online does not equal the total sale written
+    const ex = F.normalize('day_sheet', { date: '2026-07-09', total_sale: 1636640, cash_sale: 1286440, card_sale: 280825, online_sale: 87875, total_expenses: 25090, cash_in: 1286440, cash_out: 36490, cash_in_hand: 1249950, cash_banked: 1150000, petty_cash: 25000 });
+    const v = F.validateForFiling('day_sheet', ex);
+    expect(v.ok).toBe(true);
+    expect(v.warnings).toHaveLength(1);
+    expect(v.warnings[0]).toMatch(/1655140.*1636640/);
+    expect(ex.cash_banked).toBe(1150000);
+    // a sheet that adds up gives no warning
+    const good = F.validateForFiling('day_sheet', F.normalize('day_sheet', { date: '2026-07-05', total_sale: 1000, cash_sale: 600, card_sale: 300, online_sale: 100, cash_in: 600, cash_out: 100, cash_in_hand: 500 }));
+    expect(good.warnings).toEqual([]);
+    // cash in - cash out must equal cash in hand
+    expect(F.validateForFiling('day_sheet', F.normalize('day_sheet', { date: '2026-07-05', cash_sale: 600, cash_in: 600, cash_out: 100, cash_in_hand: 450 })).warnings[0]).toMatch(/cash in hand/);
+  });
+
+  test('a salary list is recognised (it is not filed yet) and a GRN line keeps its item code', () => {
+    expect(F.typeFromOcr({ document_type: 'salary_note' })).toBe('salary_note');
+    expect(F.DOC_TYPES.salary_note.files_to).toBe(null);
+    const n = F.normalize('salary_note', { lines: [{ name: 'Imran', amount: '5500' }, { name: 'Jazeel', amount: 2600, note: '400 advance' }], total: 20100 });
+    expect(n.lines[0]).toMatchObject({ name: 'Imran', amount: 5500 });
+    expect(F.normalize('grn', { items: [{ item_code: ' 1001 ', description: 'x', qty: 1 }] }).items[0].item_code).toBe('1001');
+  });
 });
