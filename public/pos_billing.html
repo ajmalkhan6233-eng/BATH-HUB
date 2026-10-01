@@ -28,6 +28,18 @@
   .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
   .item-row input { margin: 0; }
   .remove-btn { background: none; border: none; color: #b23b3b; font-size: 18px; cursor: pointer; padding: 4px; }
+  /* item picker */
+  .pick-wrap { position: relative; }
+  .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background: #fff; border: 1px solid #ccc; border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15); max-height: 260px; overflow-y: auto; }
+  .pick-list.open { display: block; }
+  .pick-opt { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0ece4; }
+  .pick-opt:last-child { border-bottom: none; }
+  .pick-opt.active, .pick-opt:hover { background: #f3efe6; }
+  .pick-opt b { display: block; font-size: 14px; color: var(--emerald-900); }
+  .pick-opt span { font-size: 12px; color: var(--earth-500); }
+  .stock-hint { font-size: 11px; margin-top: 3px; min-height: 0; }
+  .stock-hint.ok { color: #2e7d32; } .stock-hint.low { color: #b26a00; } .stock-hint.out, .stock-hint.over { color: #b23b3b; font-weight: 700; }
   .add-btn {
     background: var(--emerald-800); color: #fff; border: none; border-radius: 6px;
     padding: 8px 14px; font-size: 13px; cursor: pointer; margin-top: 4px;
@@ -154,6 +166,7 @@
   </div>
 </div>
 
+<script src="/pos-picker.js"></script>
 <script>
 let branding = { company_name: 'Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
 
@@ -174,12 +187,72 @@ function addItemRow(name, qty, price) {
   const row = document.createElement('div');
   row.className = 'item-row';
   row.innerHTML = `
-    <input type="text" placeholder="Item name" class="i-name" value="${name || ''}">
+    <div class="pick-wrap">
+      <input type="text" placeholder="Item name or code" class="i-name" autocomplete="off">
+      <div class="pick-list"></div>
+      <div class="stock-hint"></div>
+    </div>
     <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
     <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01" onfocus="this.select()">
     <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
   `;
+  row.querySelector('.i-name').value = name || '';      // set as a value, never as HTML
   document.getElementById('itemRows').appendChild(row);
+  attachPicker(row);
+}
+
+// Item picker: type a name or code, choose from the catalogue, name + selling price fill in (both stay editable).
+// Free-typed items still work. Stock is shown, and a warning appears if the quantity is more than what is in stock.
+function attachPicker(row) {
+  const nameEl = row.querySelector('.i-name'), listEl = row.querySelector('.pick-list'), hintEl = row.querySelector('.stock-hint');
+  const qtyEl = row.querySelector('.i-qty'), priceEl = row.querySelector('.i-price');
+  let timer = null, results = [], active = -1, chosen = null, seq = 0;
+
+  const close = () => { listEl.classList.remove('open'); listEl.textContent = ''; results = []; active = -1; };
+  const showHint = () => {
+    if (!chosen) { hintEl.textContent = ''; hintEl.className = 'stock-hint'; return; }
+    const s = PosPicker.stockStatus(chosen, qtyEl.value);
+    hintEl.textContent = s.text; hintEl.className = 'stock-hint ' + s.level;
+  };
+  const choose = item => {
+    const f = PosPicker.fill(item);
+    chosen = item; nameEl.value = f.name; priceEl.value = f.price;
+    close(); showHint(); qtyEl.focus(); qtyEl.select();
+  };
+  const draw = () => {
+    listEl.textContent = '';
+    results.forEach((item, i) => {
+      const o = PosPicker.optionLabel(item), div = document.createElement('div');
+      div.className = 'pick-opt' + (i === active ? ' active' : '');
+      const b = document.createElement('b'); b.textContent = o.title;
+      const s = document.createElement('span'); s.textContent = o.detail;
+      div.append(b, s);
+      div.addEventListener('mousedown', e => { e.preventDefault(); choose(item); });      // before the field loses focus
+      listEl.appendChild(div);
+    });
+    listEl.classList.toggle('open', results.length > 0);
+  };
+
+  nameEl.addEventListener('input', () => {
+    if (chosen && nameEl.value !== chosen.name) { chosen = null; showHint(); }            // edited by hand: no longer "that item"
+    clearTimeout(timer);
+    const q = nameEl.value, mine = ++seq;
+    if (!q.trim()) { close(); return; }
+    timer = setTimeout(async () => {
+      const found = await PosPicker.search(q);
+      if (mine !== seq) return;                                                           // a newer search is running
+      results = found; active = -1; draw();
+    }, 200);
+  });
+  nameEl.addEventListener('keydown', e => {
+    if (!results.length) return;
+    if (e.key === 'ArrowDown') { active = (active + 1) % results.length; draw(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = (active - 1 + results.length) % results.length; draw(); e.preventDefault(); }
+    else if (e.key === 'Enter' && active >= 0) { choose(results[active]); e.preventDefault(); }
+    else if (e.key === 'Escape') close();
+  });
+  nameEl.addEventListener('blur', () => setTimeout(close, 120));
+  qtyEl.addEventListener('input', showHint);
 }
 addItemRow();
 
