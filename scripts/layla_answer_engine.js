@@ -155,6 +155,9 @@ async function classifyAndAnswer(pool, rawText) {
             intent: 'item_lookup',
             reply: `${row.item_code} — ${row.name}: Price LKR ${Number(row.selling_price).toLocaleString()}, ` +
                 `Cost LKR ${Number(row.avg_cost).toLocaleString()}, Stock ${row.stock_level} units.`,
+            // Structured facts for callers that must build their own (e.g. customer-safe) wording. The reply above is
+            // OWNER-facing and includes cost; the Agent Brain (M9) never forwards it to a customer.
+            data: { item_code: row.item_code, name: row.name, stock_level: Number(row.stock_level), selling_price: Number(row.selling_price), avg_cost: Number(row.avg_cost) },
         };
     }
 

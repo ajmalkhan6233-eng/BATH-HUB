@@ -64,3 +64,8 @@ desktop.ini
 reports/*.html
 reports/*.pdf
 local_ops/
+
+# local test database helpers (never commit)
+.pg_test_superpw
+.test-login.txt
+.dev/

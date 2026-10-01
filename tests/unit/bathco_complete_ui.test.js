@@ -23,7 +23,7 @@ describe('bathco_complete.html', () => {
     for (const p of pages) {
       expect(ids.has('page-' + p)).toBe(true);
     }
-    for (const p of ['agent-rules', 'enquiries', 'content', 'competitors', 'webcat', 'replies', 'policy', 'branches', 'shoptools']) {
+    for (const p of ['agent-rules', 'enquiries', 'content', 'competitors', 'webcat', 'replies', 'policy', 'branches', 'shoptools', 'agentreview']) {
       expect(pages).toContain(p);
       expect(html).toMatch(new RegExp(`navigate\\(page\\)[\\s\\S]*?if \\(page === '${p}'\\)`));
     }
@@ -31,7 +31,7 @@ describe('bathco_complete.html', () => {
 
   test('ids looked up by the new tabs exist in the page', () => {
     const code = scripts.join('\n');
-    const prefixes = /^(ar|enq|cp|cw|wc|rd|pn|br|st|sp)-/;
+    const prefixes = /^(ar|enq|cp|cw|wc|rd|pn|br|st|sp|av)-/;
     const used = new Set();
     for (const m of code.matchAll(/getElementById\('([^']+)'\)/g)) used.add(m[1]);
     for (const m of code.matchAll(/stNum\('([^']+)'\)/g)) used.add(m[1]);
@@ -50,7 +50,7 @@ describe('bathco_complete.html', () => {
     const routeSrc = fs.readdirSync(path.join(__dirname, '..', '..', 'routes')).map(f => fs.readFileSync(path.join(__dirname, '..', '..', 'routes', f), 'utf8')).join('\n');
     const mounted = ['/api/agent/rules', '/api/agent/rulebook', '/api/enquiries', '/api/content-posts', '/api/competitors', '/api/catalogue-web',
       '/api/reply-drafts', '/api/policy-notes', '/api/branches', '/api/tools/tile-estimate', '/api/tools/price-per-sqm', '/api/items', '/api/items/reorder',
-      '/api/items/export.csv', '/api/pos-bills/summary', '/api/pos-bills/top-items'];
+      '/api/items/export.csv', '/api/pos-bills/summary', '/api/pos-bills/top-items', '/api/agent-brain/draft', '/api/agent-brain/reviews'];
     for (const u of mounted) {
       expect(urls.has(u) || [...urls].some(x => x.startsWith(u))).toBe(true);          // the UI uses it
       const route = u.replace('/api', '');

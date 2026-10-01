@@ -562,6 +562,7 @@ app.use('/api', require('./routes/reply_drafts'));         // M6 reply drafts (o
 app.use('/api', require('./routes/policy_notes'));         // M7 policy watch (owner-only) -> /api/policy-notes*
 app.use('/api', require('./routes/branches'));             // M8 branch profile (owner-only, new branches read-only) -> /api/branches*
 app.use('/api', require('./routes/tile_tools'));           // counter tools: tile estimate, price per sqm (no DB) -> /api/tools/*
+app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: LAYLA drafts replies for review, never sends -> /api/agent-brain/*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,

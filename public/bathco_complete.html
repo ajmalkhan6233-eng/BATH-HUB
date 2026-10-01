@@ -266,6 +266,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
       <li class="nav-item" data-page="policy"><span class="nav-icon">⚖️</span><span class="nav-label">Policy Watch</span></li>
       <li class="nav-item" data-page="branches"><span class="nav-icon">🏬</span><span class="nav-label">Branches</span></li>
+      <li class="nav-item" data-page="agentreview"><span class="nav-icon">🧠</span><span class="nav-label">Agent Review</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
     </ul>
@@ -778,6 +779,20 @@ table tr:last-child td{border-bottom:none}
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Channel</th><th>Interest</th><th>Found us</th><th>Status</th></tr></thead><tbody id="enq-tbody"></tbody></table></div></div>
     </section>
 
+    <!-- ── AGENT REVIEW (M9) ── -->
+    <section class="page" id="page-agentreview">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Try a customer message</div>
+        <div class="fg"><label class="fl">Customer wrote</label><input class="fi" id="av-in" placeholder="e.g. Do you have item 1001 in stock?" style="font-size:16px"></div>
+        <label style="font-size:13px"><input type="checkbox" id="av-price"> include the price (it will be marked "needs Aj approval")</label>
+        <div style="margin-top:8px"><button class="btn btn-p" onclick="avDraft()">Let the agent draft a reply</button></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is sent from here. The agent drafts, checks its own draft, and you approve or reject. Approve means "the wording is fine": you still send it yourself.</div>
+        <div id="av-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="av-tabs"></div>
+      <div id="av-list"></div>
+    </section>
+
     <!-- ── AGENT RULES (M1) ── -->
     <section class="page" id="page-agent-rules">
       <div class="card" style="margin-bottom:16px">
@@ -954,6 +969,7 @@ const PAGE_META = {
   webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
+  agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
   shoptools:   ['Shop Tools',   'Tile calculator, item search, till summary, best sellers, low stock'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
@@ -1241,6 +1257,51 @@ async function enqStatus(id, status) {
   await fetch('/api/enquiries/' + id + '/status', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
 }
 
+/* Agent Review (M9): LAYLA drafts, checks itself, Aj approves or rejects. Nothing is sent. */
+let _avStatus = 'draft';
+async function avCall(url, method, body) {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { document.getElementById('av-msg').textContent = d.error || 'Failed'; return null; }
+  document.getElementById('av-msg').textContent = ''; return d;
+}
+function avTabs() {
+  document.getElementById('av-tabs').innerHTML = [['draft','To review'],['approved','Approved'],['rejected','Rejected']].map(([k, l]) =>
+    `<button class="btn ${k === _avStatus ? 'btn-p' : 'btn-s'}" onclick="_avStatus='${k}';loadAgentReview()">${l}</button>`).join('');
+}
+async function loadAgentReview() {
+  avTabs();
+  const r = await fetch('/api/agent-brain/reviews?status=' + _avStatus);
+  if (!r.ok) { document.getElementById('av-list').innerHTML = '<div class="card no-data">Owner only</div>'; return; }
+  const rows = await r.json();
+  document.getElementById('av-list').innerHTML = rows.map(x => {
+    const c = x.check || { checks: [], rules_used: [], reasoning: '', passed: false };
+    const checks = c.checks.map(k => `<div style="font-size:13px;margin:2px 0"><b style="color:${k.pass ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">${k.pass ? '✓' : '✗'}</b> ${arEsc(k.label)} <span style="color:var(--text2)">· ${arEsc(k.detail)}</span></div>`).join('');
+    const rules = c.rules_used.map(u => `[${arEsc(u.topic)}] v${u.version}`).join(', ') || 'none';
+    const actions = x.status === 'draft'
+      ? `<button class="btn btn-p" ${c.passed ? '' : 'disabled title="Fix the failed checks first"'} onclick="avAct(${x.id},'approve')">Approve wording</button>
+         <button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>
+         <button class="btn btn-s" onclick="avSave(${x.id})">Save my edit and re-check</button>`
+      : (x.status === 'approved' ? `<button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>` : '');
+    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${c.passed ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">
+      <div style="margin-bottom:6px"><b>${arEsc(x.channel)}</b> · ${arEsc(x.customer_ref || 'no reference')} · <b>${arEsc(x.status)}</b> · checks: <b>${c.passed ? 'all passed' : 'FAILED'}</b></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Customer wrote: ${arEsc(x.incoming_text)}</div>
+      <textarea class="fi" id="av-t-${x.id}" rows="3" style="width:100%" ${x.status === 'draft' ? '' : 'disabled'}>${arEsc(x.draft_text)}</textarea>
+      <div style="margin:8px 0">${checks}</div>
+      <details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:12px">How the agent decided (rules used: ${rules})</summary><pre style="white-space:pre-wrap;font-size:12px">${arEsc(c.reasoning)}</pre></details>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></div>`;
+  }).join('') || '<div class="card no-data">Nothing here</div>';
+}
+async function avDraft() {
+  const text = document.getElementById('av-in').value;
+  if (!text.trim()) { document.getElementById('av-msg').textContent = 'Type the customer message first'; return; }
+  if (await avCall('/api/agent-brain/draft', 'POST', { channel: 'whatsapp', incoming_text: text, allow_price: document.getElementById('av-price').checked })) {
+    document.getElementById('av-in').value = ''; _avStatus = 'draft'; loadAgentReview();
+  }
+}
+async function avAct(id, act) { if (await avCall('/api/agent-brain/drafts/' + id + '/' + act, 'POST')) loadAgentReview(); }
+async function avSave(id) { if (await avCall('/api/agent-brain/drafts/' + id, 'PUT', { draft_text: document.getElementById('av-t-' + id).value })) loadAgentReview(); }
+
 /* Agent Rulebook (M1) */
 let _arRules = [];
 function arEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -1287,6 +1348,7 @@ function navigate(page) {
   if (page === 'agent-rules') loadAgentRules();
   if (page === 'enquiries') loadEnquiries();
   if (page === 'shoptools') loadShopTools();
+  if (page === 'agentreview') loadAgentReview();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
   if (page === 'webcat') loadWebCat();
