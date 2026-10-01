@@ -65,6 +65,8 @@ describe('bathhub.html wiring', () => {
     expect(JSON.parse(p.get('JSON.stringify(tiles[0])'))).toMatchObject({ name: 'Marble Floor Tile', w: 60, h: 120, finish: 'glossy', use: ['floor', 'bathroom'], photo: '/api/item-photos/a.jpg', type: 'plain' });
     expect(JSON.parse(p.get('JSON.stringify(tiles[1])'))).toMatchObject({ w: 30, h: 60, finish: 'nano', use: ['wall', 'kitchen'] });
     expect(p.get('sel.name')).toBe('Marble Floor Tile');
+    expect(p.els.spec.innerHTML).toContain('60 x 120 cm (24 x 47 in)');           // inches shown once, not twice
+    expect(p.els.spec.innerHTML).not.toMatch(/in, 24 x 47 in/);
     expect(p.get('texture(tiles[0], 1)')).toBe('url("/api/item-photos/a.jpg")');          // the real photo is the texture
     expect(p.get('texture(tiles[1], 1)')).toMatch(/^url\("data:image\/svg/);               // no photo: generated texture
   });

@@ -24,6 +24,9 @@ const pool = new Pool({
 });
 
 // ─── Schema ───────────────────────────────────────────────────────────────
+// Run in order, one after the other: bank_accounts first, then cheque_register (created here too if the cheque module has
+// not started yet, same definition as routes/cheque_register.js), then the columns this module adds to it. Running them in
+// parallel failed on a brand-new database (the ALTER ran before the table existed) and needed a second restart.
 pool.query(`
     CREATE TABLE IF NOT EXISTS bank_accounts (
         id             SERIAL PRIMARY KEY,
@@ -33,13 +36,22 @@ pool.query(`
         active         BOOLEAN NOT NULL DEFAULT true,
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-`).catch(e => console.error('[money_control] bank_accounts migration failed:', e.message));
-
-// Additive only — cheque_register already exists (from this same build series).
-pool.query(`ALTER TABLE cheque_register ADD COLUMN IF NOT EXISTS account_id INT REFERENCES bank_accounts(id)`)
-    .catch(e => console.error('[money_control] cheque_register.account_id migration failed:', e.message));
-pool.query(`ALTER TABLE cheque_register ADD COLUMN IF NOT EXISTS held_from_date DATE`)
-    .catch(e => console.error('[money_control] cheque_register.held_from_date migration failed:', e.message));
+`).then(() => pool.query(`
+    CREATE TABLE IF NOT EXISTS cheque_register (
+        id          SERIAL PRIMARY KEY,
+        cheque_no   VARCHAR(50),
+        bank        VARCHAR(100),
+        payee       VARCHAR(150) NOT NULL,
+        amount      NUMERIC(12,2) NOT NULL,
+        due_date    DATE NOT NULL,
+        status      VARCHAR(20) NOT NULL DEFAULT 'pending',
+        notes       TEXT,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`))
+  .then(() => pool.query(`ALTER TABLE cheque_register ADD COLUMN IF NOT EXISTS account_id INT REFERENCES bank_accounts(id)`))
+  .then(() => pool.query(`ALTER TABLE cheque_register ADD COLUMN IF NOT EXISTS held_from_date DATE`))
+  .catch(e => console.error('[money_control] bank_accounts / cheque_register migration failed:', e.message));
 
 pool.query(`
     CREATE TABLE IF NOT EXISTS daily_payment_breakdown (

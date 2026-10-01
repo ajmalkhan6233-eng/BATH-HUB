@@ -57,7 +57,7 @@
         var hv = hash(t.name);
         return {
             id: 'feed' + index, name: t.name, w: w, h: h,
-            nom: t.sizeInches ? t.sizeInches.replace('x', ' x ') + ' in' : '',
+            nom: '',                                   // the page already prints the inches itself
             finish: finish, use: use,
             base: hsl(hv, 14, 84), vein: hsl(hv, 18, 58), type: 'plain',
             photo: t.photo,
