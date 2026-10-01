@@ -37,3 +37,10 @@ WEBHOOK_SECRET — optional. When set, /webhook/whatsapp and /webhook/whatsapp-p
   `x-webhook-secret: <value>` (the bridge sends it automatically if it has the same value in its .env).
   When unset, only a direct local caller (the bridge on the same machine) is accepted; tunnelled or
   proxied requests are refused. Set it if the bridge runs on a different machine from the server.
+
+AGENT_DRAFT_ONLY — optional, default off. Set to true to put live WhatsApp in DRAFT-ONLY mode: a customer's message is
+  not answered by LAYLA. It becomes a checked draft in the Agent Review tab (M9) and the webhook returns an empty reply, so
+  the bridge sends nothing. You approve, then send it yourself (the tab has an "Open in WhatsApp" button). The owner's own
+  number (WHATSAPP_TEST_WHITELIST) is not affected. Needs a restart to change. Max 30 drafts per customer per hour.
+WHATSAPP_TEST_WHITELIST — also decides who may use the owner-only business answers (profit, credit, cheques, item cost).
+  If it is empty, nobody gets them over WhatsApp.

@@ -714,6 +714,7 @@ function sanitizeText(input, maxLen = 4000) {
 
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
 const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
+const agentWhatsapp = require('./utils/agentWhatsapp');
 // Same folder whatsapp-bridge.js saves incoming photos to.
 const WA_INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox');
 app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
@@ -741,6 +742,17 @@ app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
         if (draftReply) {
             console.log(`[LAYLA] → ${phone}: ${draftReply.message}`);
             return res.json({ success: true, reply: draftReply.message, escalated: false });
+        }
+
+        // DRAFT-ONLY MODE (AGENT_DRAFT_ONLY=true): a customer's message becomes a checked draft for Aj (Agent Review tab)
+        // and NO reply goes back, so the bridge sends nothing. The owner's own number is unaffected. See utils/agentWhatsapp.js.
+        if (agentWhatsapp.isDraftOnly() && !agentWhatsapp.isOwner(phone)) {
+            const out = await agentWhatsapp.draftOnly({
+                phone, text, isVoiceNote, brain: require('./routes/agent_brain').getBrain(),
+                notify: msg => pool.query(`INSERT INTO alerts (type, message, priority) VALUES ('agent_draft', $1, 'normal')`, [msg]),
+            });
+            console.log(`[AGENT-DRAFT-ONLY] ${phone}: ${out.drafted ? 'draft #' + out.draft_id + ' saved for review' : 'not drafted (' + out.reason + ')'}; nothing sent`);
+            return res.json({ success: true, reply: '', escalated: false, drafted: out.drafted, draft_id: out.draft_id || null });
         }
 
         const result = await processMessage(phone, text, isVoiceNote);

@@ -9,6 +9,10 @@ jest.mock('../../layla', () => ({
   getOrCreateCustomer: jest.fn(),
 }));
 
+// A real .env (loaded by server.js) must not change these tests: draft-only mode is OFF here, and no owner number is set.
+process.env.AGENT_DRAFT_ONLY = 'false';
+process.env.WHATSAPP_TEST_WHITELIST = '';
+
 const request = require('supertest');
 const path = require('path');
 const app = require('../../server');

@@ -128,35 +128,51 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
         return parse(r.rows[0]);
     }
 
+    // The whole drafting pipeline in one place, used by the Agent Review tab AND by the WhatsApp webhook (draft-only mode).
+    // Always saves a 'draft'. Throws an Error with .status = 400 for bad input.
+    async function createDraft({ channel, customer_ref, incoming_text, allow_price = false } = {}) {
+        await ready;
+        const ch = clean(channel) || 'whatsapp', incoming = clean(incoming_text);
+        const bad = m => { const e = new Error(m); e.status = 400; return e; };
+        if (!CHANNELS.includes(ch)) throw bad('channel must be one of: ' + CHANNELS.join(', '));
+        if (!incoming) throw bad('incoming_text is required');
+        if (incoming.length > 2000) throw bad('incoming_text is too long (max 2000 characters)');
+
+        const rules = await loadRules();
+        const steps = [`Loaded ${rules.length} active rule(s) from the rulebook${rules.length ? ': ' + rules.map(r => `[${r.topic}] v${r.version}`).join(', ') : ' (the rulebook is empty)'}.`];
+        const c = await compose(incoming, { allowPrice: allow_price === true, rules });
+        steps.push(...c.steps);
+        let result = checkReply(c.text, c.ctx);
+        let text = c.text;
+        if (!result.passed) {
+            steps.push('A check failed on the first wording: ' + result.checks.filter(x => !x.pass).map(x => `${x.id} (${x.detail})`).join('; ') + '. Falling back to the safe reply.');
+            text = c.ctx.dataMissing ? UNKNOWN_REPLY : SAFE_REFUSAL;
+            result = checkReply(text, c.ctx);
+        }
+        steps.push(result.passed ? 'All four checks passed.' : 'Checks still failing: Aj can edit or reject, not approve.');
+
+        const d = await pool.query(
+            `INSERT INTO reply_drafts (channel, customer_ref, incoming_text, draft_text, status) VALUES ($1,$2,$3,$4,'draft') RETURNING *`,
+            [ch, clean(customer_ref), incoming, text]);
+        const check = await saveCheck(d.rows[0].id, 'created', c.intent, rules, steps, result);
+        return { draft: d.rows[0], customer_text: customerText(text), needs_approval: /needs\s+aj\s+approval/i.test(text), check };
+    }
+
+    // How many drafts this customer has already caused recently (flood guard for the WhatsApp webhook).
+    async function recentCount(customer_ref, minutes = 60) {
+        await ready;
+        const since = new Date(Date.now() - minutes * 60000);
+        const r = await pool.query(`SELECT COUNT(*) AS n FROM reply_drafts WHERE customer_ref = $1 AND created_at > $2`, [clean(customer_ref), since]);
+        return Number(r.rows[0].n);
+    }
+    router.brain = { createDraft, recentCount, ready };
+
     // POST /agent-brain/draft  { channel, customer_ref, incoming_text, allow_price? }
     router.post('/agent-brain/draft', ownerOnly, async (req, res) => {
         try {
-            await ready;
-            const b = req.body || {};
-            const channel = clean(b.channel) || 'whatsapp', incoming = clean(b.incoming_text);
-            if (!CHANNELS.includes(channel)) return res.status(400).json({ error: 'channel must be one of: ' + CHANNELS.join(', ') });
-            if (!incoming) return res.status(400).json({ error: 'incoming_text is required' });
-            if (incoming.length > 2000) return res.status(400).json({ error: 'incoming_text is too long (max 2000 characters)' });
-
-            const rules = await loadRules();
-            const steps = [`Loaded ${rules.length} active rule(s) from the rulebook${rules.length ? ': ' + rules.map(r => `[${r.topic}] v${r.version}`).join(', ') : ' (the rulebook is empty)'}.`];
-            const c = await compose(incoming, { allowPrice: b.allow_price === true, rules });
-            steps.push(...c.steps);
-            let result = checkReply(c.text, c.ctx);
-            let text = c.text;
-            if (!result.passed) {
-                steps.push('A check failed on the first wording: ' + result.checks.filter(x => !x.pass).map(x => `${x.id} (${x.detail})`).join('; ') + '. Falling back to the safe reply.');
-                text = c.ctx.dataMissing ? UNKNOWN_REPLY : SAFE_REFUSAL;
-                result = checkReply(text, c.ctx);
-            }
-            steps.push(result.passed ? 'All four checks passed.' : 'Checks still failing: Aj can edit or reject, not approve.');
-
-            const d = await pool.query(
-                `INSERT INTO reply_drafts (channel, customer_ref, incoming_text, draft_text, status) VALUES ($1,$2,$3,$4,'draft') RETURNING *`,
-                [channel, clean(b.customer_ref), incoming, text]);
-            const check = await saveCheck(d.rows[0].id, 'created', c.intent, rules, steps, result);
-            res.status(201).json({ draft: d.rows[0], customer_text: customerText(text), needs_approval: /needs\s+aj\s+approval/i.test(text), check });
-        } catch (e) { res.status(500).json({ error: e.message }); }
+            const out = await createDraft(req.body || {});
+            res.status(201).json(out);
+        } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
     // GET /agent-brain/reviews?status=draft|approved|rejected|all  (agent-made drafts only, newest first, with the latest check)
@@ -239,11 +255,14 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
 }
 
 let _router;
-module.exports = function (req, res, next) {
+function init() {
     if (!_router) _router = createRouter(new Pool({
         host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
         user: process.env.DB_USER, password: process.env.DB_PASSWORD,
     }));
-    _router(req, res, next);
-};
+    return _router;
+}
+module.exports = function (req, res, next) { init()(req, res, next); };
 module.exports.createRouter = createRouter;
+// For the WhatsApp webhook (draft-only mode): the same drafting pipeline, on this module's own database pool.
+module.exports.getBrain = () => init().brain;

@@ -430,11 +430,16 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
 
     // Business-question answer engine — deterministic DB lookups for money/
     // stock figures, bypasses the AI entirely so numbers can't be hallucinated.
+    // OWNER ONLY. Its replies include profit, credit balances, cheques and item COST. They used to be produced for any
+    // sender, so a customer asking "net profit yesterday" or "cost of item 1001" would have been answered with them.
+    // Customers go on to the normal shop flow below (and, in draft-only mode, never reach this function at all).
     let businessAnswer = null;
-    try {
-        businessAnswer = await classifyAndAnswer(pool, incomingMessage);
-    } catch (e) {
-        console.error('[LAYLA] answer engine error:', e.message);
+    if (OWNER_NUMBER && digits === OWNER_NUMBER) {
+        try {
+            businessAnswer = await classifyAndAnswer(pool, incomingMessage);
+        } catch (e) {
+            console.error('[LAYLA] answer engine error:', e.message);
+        }
     }
     console.log(`[LAYLA] intent=${businessAnswer ? businessAnswer.intent : 'shop_ai_or_unknown'} phone=${digits}`);
     if (businessAnswer) {

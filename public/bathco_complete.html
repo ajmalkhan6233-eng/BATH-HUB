@@ -1282,7 +1282,7 @@ async function loadAgentReview() {
       ? `<button class="btn btn-p" ${c.passed ? '' : 'disabled title="Fix the failed checks first"'} onclick="avAct(${x.id},'approve')">Approve wording</button>
          <button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>
          <button class="btn btn-s" onclick="avSave(${x.id})">Save my edit and re-check</button>`
-      : (x.status === 'approved' ? `<button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>` : '');
+      : (x.status === 'approved' ? avSendButtons(x) + `<button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>` : '');
     return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${c.passed ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">
       <div style="margin-bottom:6px"><b>${arEsc(x.channel)}</b> · ${arEsc(x.customer_ref || 'no reference')} · <b>${arEsc(x.status)}</b> · checks: <b>${c.passed ? 'all passed' : 'FAILED'}</b></div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Customer wrote: ${arEsc(x.incoming_text)}</div>
@@ -1291,6 +1291,16 @@ async function loadAgentReview() {
       <details style="margin-bottom:8px"><summary style="cursor:pointer;font-size:12px">How the agent decided (rules used: ${rules})</summary><pre style="white-space:pre-wrap;font-size:12px">${arEsc(c.reasoning)}</pre></details>
       <div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></div>`;
   }).join('') || '<div class="card no-data">Nothing here</div>';
+}
+// Sending stays manual: this only OPENS WhatsApp with the approved text filled in, or copies it. You press send yourself.
+function avSendButtons(x) {
+  const num = String(x.customer_ref || '').replace(/\D/g, '');
+  const link = num.length >= 9 ? `<a class="btn btn-p" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${encodeURIComponent(x.customer_text)}">Open in WhatsApp (you press send)</a>` : '';
+  return link + `<button class="btn btn-s" onclick="avCopy(${x.id})">Copy text</button>`;
+}
+function avCopy(id) {
+  const t = document.getElementById('av-t-' + id).value.split('\n').filter(l => !/needs\s+aj\s+approval/i.test(l)).join('\n').trim();
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { document.getElementById('av-msg').textContent = 'Copied. Paste it into WhatsApp.'; }, () => { document.getElementById('av-msg').textContent = 'Could not copy: select the text in the box and copy it.'; });
 }
 async function avDraft() {
   const text = document.getElementById('av-in').value;

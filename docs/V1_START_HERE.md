@@ -4,7 +4,7 @@
 - **Shop screens** (`/bathco_complete.html`): Dashboard, Daily Sales, Stock, POS Billing, GRN, Expenses, Cheques, Vendors, Barcode, Reports.
 - **Shop Tools tab:** tile calculator (room size to boxes), price per m², item search, till summary, best sellers, low stock, stock-take sheet.
 - **Growth tabs:** Enquiries (which channel brings customers), Content (TikTok/live plan, you post by hand), Competitors, Website Catalogue (what the public site shows), Reply Drafts, Policy Watch, Branches, Agent Rules.
-- **Agent Review tab:** LAYLA drafts a reply to a customer message and checks itself (no cost/margin/loan/commission, prices marked "needs Aj approval", halal, "I don't know" instead of guessing). You approve or reject. **Nothing is ever sent for you.**
+- **Agent Review tab:** LAYLA drafts a reply to a customer message and checks itself (no cost/margin/loan/commission, prices marked "needs Aj approval", halal, "I don't know" instead of guessing). You approve or reject. **Nothing is ever sent for you** (approved drafts have an "Open in WhatsApp" button; you press send).
 - **Public website** (`/bathhub.html`): shows the tiles you tick "Show on website". Until one is published it shows sample tiles.
 - Original dashboard: `/nature`.
 
@@ -31,4 +31,4 @@ node scripts/dev/seed_test_data.js        (demo sales, items with pictures, enqu
 ## Before using it with real customers
 - Have a native speaker check the Sinhala and Tamil text on the website.
 - Confirm the real database is UTF8 and has the live schema (the test schema here is only for trying things out).
-- Decide whether to connect the agent to live WhatsApp (v1 does not).
+- Live WhatsApp draft-only mode is built but OFF. To turn it on: set `AGENT_DRAFT_ONLY=true` in `.env` and restart. Customers' messages then become drafts in Agent Review and nothing is sent automatically; the owner's own number still works as before.
