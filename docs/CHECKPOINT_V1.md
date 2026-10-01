@@ -1,6 +1,6 @@
-# Checkpoint: V1 complete (git tag `v1.0`)
+# Checkpoint: V1 complete (git tags `v1.0` first, `v1.1` final with Salary)
 
-Return to this exact working state any time: `git checkout v1.0` (look), or `git reset --hard v1.0` on a branch (go back).
+Return to the final state any time: `git checkout v1.1` (the earlier checkpoint is `v1.0`) (look), or `git reset --hard v1.0` on a branch (go back).
 
 ## What V1 contains
 - **One site:** `/` is the public Bath Hub website; the Owner button opens `/owner` (all business screens, login required). `/nature` and `/app` redirect to `/owner`.
@@ -10,7 +10,9 @@ Return to this exact working state any time: `git checkout v1.0` (look), or `git
 - **Document Inbox:** photos of manual bills, GRNs, cheques and day/expense sheets (upload or WhatsApp), read by the heading, checked by you, filed only when you press Confirm.
 - **Growth tabs:** Agent Rules, Enquiries, Content Calendar, Competitor Watch, Website Catalogue, Reply Drafts, Policy Notes, Branches, Shop Tools, Agent Review.
 - **LAYLA draft-only mode:** built, OFF by default (`AGENT_DRAFT_ONLY=true` turns it on). Never sends to customers by itself.
-- **Tests:** all pass (see the last commit).
+- **Salary & Costs tab** (own module: routes/salary.js, utils/salaryMath.js, public/salary.js): Today (sales, net, daily cost target 15,000 / ceiling 18,000, break-even, push targets 100,000 and 150,000, cheque set-aside), Month (net profit, savings 10% first, colleague 15% and owner 10% of the pool, late-return adjustments, what stays with the owner), Settings (every number editable). Rent, bills and daily pay are NOT on the daily sheet, so they are added to the month net (setting add_fixed_to_net = 1). Zero or negative net means no savings and no commission.
+- **Document Inbox extras:** GRN supplier + item-code matching, daily-sheet arithmetic checks, salary list recognised (not filed yet).
+- **Tests:** 438 pass in 55 suites.
 
 ## Needs a restart or setting on the shop computer
 1. Pull the latest code, restart the server.
@@ -22,3 +24,5 @@ Return to this exact working state any time: `git checkout v1.0` (look), or `git
 - UNVERIFIED: a real WhatsApp send and the number check against your live WhatsApp (tested with a stand-in bridge only; the bridge was never started here).
 - Website is not online yet (needs hosting, a web address and real tiles).
 - Receipt design is a first version.
+- Salary: sales and returns come from the database (daily_summary, daily_reports); the Lasersoft files folder C:BathcoAI-Data is not on this PC. A "late return" = a refund row recorded after the month was closed.
+- Accessories pricing rules (1.95x, 10-25%) exist as /api/salary/price-check and are not wired into POS.
