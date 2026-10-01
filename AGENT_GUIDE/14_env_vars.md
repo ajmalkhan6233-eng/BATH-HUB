@@ -42,6 +42,9 @@ AGENT_DRAFT_ONLY — optional, default off. Set to true to put live WhatsApp in 
   not answered by LAYLA. It becomes a checked draft in the Agent Review tab (M9) and the webhook returns an empty reply, so
   the bridge sends nothing. You approve, then send it yourself (the tab has an "Open in WhatsApp" button). The owner's own
   number (WHATSAPP_TEST_WHITELIST) is not affected. Needs a restart to change. Max 30 drafts per customer per hour.
+WHATSAPP_PAPER_NUMBERS — optional, comma separated phone numbers (digits). Besides the owner, these numbers may send photos of
+  papers (manual bills, GRNs, cheques, sheets) that are read into the Document Inbox. In draft-only mode a photo from any other
+  number is only kept (never read, never answered).
 WHATSAPP_TEST_WHITELIST — also decides who may use the owner-only business answers (profit, credit, cheques, item cost).
   If it is empty, nobody gets them over WhatsApp.
 

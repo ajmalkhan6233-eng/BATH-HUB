@@ -5,6 +5,7 @@
 - **Shop Tools tab:** tile calculator (room size to boxes), price per m², item search, till summary, best sellers, low stock, stock-take sheet.
 - **Growth tabs:** Enquiries (which channel brings customers), Content (TikTok/live plan, you post by hand), Competitors, Website Catalogue (what the public site shows), Reply Drafts, Policy Watch, Branches, Agent Rules.
 - **Agent Review tab:** LAYLA drafts a reply to a customer message and checks itself (no cost/margin/loan/commission, prices marked "needs Aj approval", halal, "I don't know" instead of guessing). You approve or reject. **Nothing is ever sent for you** (approved drafts have an "Open in WhatsApp" button; you press send).
+- **Document Inbox tab** (in `/nature` and the full app): photos of your handwritten papers, sent by direct upload or to LAYLA on WhatsApp. Write the heading at the top: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. The photo shows beside the fields it was read into; you fix anything wrong and press **Confirm and file**. Bill goes to POS bills (marked as a paper bill, with the date on the paper), GRN to goods received (pending review, stock not changed), cheque to the cheque register, sales/expense sheet to the daily summary. **Nothing is filed until you press Confirm.** Handwriting reading is UNVERIFIED until real photos are tried; you can always correct or type the fields by hand.
 - **Public website** (`/bathhub.html`): shows the tiles you tick "Show on website". Until one is published it shows sample tiles.
 - Original dashboard: `/nature`.
 

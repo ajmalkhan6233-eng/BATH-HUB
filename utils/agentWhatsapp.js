@@ -14,6 +14,11 @@ const isDraftOnly = () => String(process.env.AGENT_DRAFT_ONLY).toLowerCase() ===
 const ownerDigits = () => digitsOf(process.env.WHATSAPP_TEST_WHITELIST);
 const isOwner = phone => { const o = ownerDigits(); return !!o && digitsOf(phone) === o; };
 
+// Who may send papers (bills, GRNs, cheques, sheets) for reading: the owner plus the numbers in WHATSAPP_PAPER_NUMBERS
+// (comma separated). In draft-only mode photos from every other number are just kept, never read or answered.
+const paperNumbers = () => [ownerDigits(), ...String(process.env.WHATSAPP_PAPER_NUMBERS || '').split(',').map(digitsOf)].filter(Boolean);
+const canSendPapers = phone => paperNumbers().includes(digitsOf(phone));
+
 /**
  * @param {object} a { phone, text, isVoiceNote, brain: {createDraft, recentCount}, notify?: async (message) => void }
  * @returns {Promise<{drafted: boolean, draft_id?: number, reason?: string}>}  never throws
@@ -34,4 +39,4 @@ async function draftOnly({ phone, text, isVoiceNote = false, brain, notify }) {
     }
 }
 
-module.exports = { draftOnly, isDraftOnly, isOwner, MAX_DRAFTS_PER_HOUR };
+module.exports = { draftOnly, isDraftOnly, isOwner, canSendPapers, MAX_DRAFTS_PER_HOUR };

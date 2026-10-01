@@ -563,6 +563,7 @@ app.use('/api', require('./routes/policy_notes'));         // M7 policy watch (o
 app.use('/api', require('./routes/branches'));             // M8 branch profile (owner-only, new branches read-only) -> /api/branches*
 app.use('/api', require('./routes/tile_tools'));           // counter tools: tile estimate, price per sqm (no DB) -> /api/tools/*
 app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: LAYLA drafts replies for review, never sends -> /api/agent-brain/*
+app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
@@ -715,6 +716,22 @@ function sanitizeText(input, maxLen = 4000) {
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
 const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
 const agentWhatsapp = require('./utils/agentWhatsapp');
+const documentInbox = require('./routes/document_inbox');
+const getInbox = documentInbox.getInbox;
+// Filing a daily/expense sheet from the Document Inbox goes through exactly the same careful merge as the WhatsApp YES reply
+// (it never overwrites figures that are already there). A throw-away sender number lets us reuse that code unchanged.
+documentInbox.configure({
+    fileDaySheet: async ex => {
+        const fake = String(9000000000000 + Math.floor(Math.random() * 999999));
+        await pool.query(
+            `INSERT INTO whatsapp_draft_entries (from_number, photo_path, report_date, total_sale, cash_sale, card_sale, online_sale, credit_sale, total_expenses, expense_items, confidence, ocr_raw)
+             VALUES ($1,'',$2,$3,$4,$5,$6,$7,$8,$9,'checked by owner',$10)`,
+            [fake, ex.date, ex.total_sale, ex.cash_sale, ex.card_sale, ex.online_sale, ex.credit_sale, ex.total_expenses, ex.expense_items || null, JSON.stringify({ document_type: 'day_sheet' })]);
+        const out = await handlePendingDraftReply(fake, 'YES');
+        if (out && /^Can't save|^Discarded/.test(out.message)) { const e = new Error(out.message); e.status = 400; throw e; }
+        return out;
+    },
+});
 // Same folder whatsapp-bridge.js saves incoming photos to.
 const WA_INBOX_ROOT = path.join(process.env.DROP_ROOT || path.join(__dirname, 'data', 'drop'), 'inbox');
 app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
@@ -773,6 +790,20 @@ app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
 // draft must never look like real data), and reply asking for YES/NO.
 function draftReplyText(draft) {
     const o = draft;
+    // manual_bill / grn: read back the headline and send Aj to the Document Inbox, where the photo sits beside the fields.
+    if (o.document_type === 'manual_bill' || o.document_type === 'grn') {
+        const isBill = o.document_type === 'manual_bill';
+        const lines = [`*Read from your photo — ${isBill ? 'manual bill' : 'GRN'}* (confidence: ${o.confidence || 'unknown'}):`];
+        if (isBill ? o.bill_number : o.grn_number) lines.push(`${isBill ? 'Bill' : 'GRN'} No: ${isBill ? o.bill_number : o.grn_number}`);
+        if (o.date) lines.push(`Date: ${o.date}`);
+        if (isBill && o.customer_name) lines.push(`Customer: ${o.customer_name}`);
+        if (!isBill && o.supplier_name) lines.push(`Supplier: ${o.supplier_name}`);
+        lines.push(`Items read: ${Array.isArray(o.items) ? o.items.length : 0}`);
+        if (o.total != null) lines.push(`Total: LKR ${Number(o.total).toLocaleString()}`);
+        if (o.confidence === 'low' || o.notes) lines.push(``, `⚠ ${o.notes || 'Low confidence — some fields may be wrong.'}`);
+        lines.push(``, `It is in the *Document Inbox* in the app: check the fields against the photo and press Confirm to file it. Nothing is filed until you do.`);
+        return lines.join('\n');
+    }
     // cheque_note / invoice (Item 3B, 2026-07-04) — distinct read-back per type,
     // same YES/NO confirmation pattern as the original day-sheet flow.
     if (o.document_type === 'cheque_note') {
@@ -823,12 +854,19 @@ app.post('/webhook/whatsapp-photo', webhookAuth, async (req, res) => {
     const filePath = safeInboxPath(req.body.filePath, WA_INBOX_ROOT);
     if (!filePath) return res.status(400).json({ error: 'filePath must be an image inside the WhatsApp inbox folder' });
     try {
+        // Draft-only mode: a photo from anyone who is not the owner / a staff number is kept for Aj to look at (no reading, no reply).
+        if (agentWhatsapp.isDraftOnly() && !agentWhatsapp.canSendPapers(from)) {
+            await getInbox().record({ source: 'whatsapp', from_ref: String(from), file_path: filePath, doc_type: 'customer_photo', reader_note: 'Photo from a customer number. Not read; nothing was sent back.' }).catch(e => console.error('[document_inbox] could not record:', e.message));
+            return res.json({ reply: '' });
+        }
         const { ocrPhoto } = require('./scripts/ocr_photo');
         const o = await ocrPhoto(filePath);
         // document_type replaces the old boolean is_document (Item 3B, 2026-07-04) —
         // day_sheet/expense_sheet keep the existing dedicated columns; cheque_note/
         // invoice reuse the same table's flexible ocr_raw JSONB (no schema change),
         // leaving the day-sheet-specific columns NULL for those types.
+        // Every photo is also listed in the Document Inbox (with the photo beside what was read), recognised or not.
+        await getInbox().record({ source: 'whatsapp', from_ref: String(from), file_path: filePath, ocr_result: o }).catch(e => console.error('[document_inbox] could not record:', e.message));
         if (!o.document_type || o.document_type === 'unknown') {
             console.log(`[WHATSAPP-PHOTO] not a recognized document, saved for review only: ${filePath}`);
             return res.json({ reply: `Photo saved for review. Thanks!` });
@@ -847,6 +885,8 @@ app.post('/webhook/whatsapp-photo', webhookAuth, async (req, res) => {
         res.json({ reply: draftReplyText(o) });
     } catch (e) {
         console.error('[WHATSAPP-PHOTO] OCR/staging failed:', e.message);
+        // keep the photo for Aj to type in by hand, even though the reader failed
+        await getInbox().record({ source: 'whatsapp', from_ref: String(from), file_path: filePath, reader_note: `Could not read the photo (${String(e.message).slice(0, 160)}). Choose the type and type the details in.` }).catch(() => {});
         res.json({ reply: `Couldn't read that photo (${e.message}). Please retake it — flat, well-lit, whole sheet in frame — and resend.` });
     }
 });
@@ -881,6 +921,10 @@ async function handlePendingDraftReply(phone, text) {
     // the real destination table/schema — that's a schema/financial-routing
     // decision, not something to guess through.
     const docType = draft.ocr_raw?.document_type;
+    if (docType === 'manual_bill' || docType === 'grn') {
+        await pool.query(`UPDATE whatsapp_draft_entries SET status='CONFIRMED_UNFILED' WHERE id=$1`, [draft.id]);
+        return { message: `Kept. Open the *Document Inbox* in the app to check the ${docType === 'grn' ? 'GRN' : 'bill'} against the photo and file it. Nothing is filed until you press Confirm there.` };
+    }
     if (docType === 'cheque_note' || docType === 'invoice') {
         await pool.query(`UPDATE whatsapp_draft_entries SET status='CONFIRMED_UNFILED' WHERE id=$1`, [draft.id]);
         return {
@@ -928,6 +972,9 @@ async function handlePendingDraftReply(phone, text) {
     }
 
     await pool.query(`UPDATE whatsapp_draft_entries SET status='CONFIRMED', confirmed_at=NOW() WHERE id=$1`, [draft.id]);
+    // the same photo may also be waiting in the Document Inbox: it is filed now
+    await pool.query(`UPDATE document_inbox SET status='filed', filed_to='daily_summary', filed_id=$1, filed_note='Filed by the WhatsApp YES reply', filed_at=NOW() WHERE file_path=$2 AND status='to_check'`,
+        [draft.report_date ? String(draft.report_date).slice(0, 10) : null, draft.photo_path]).catch(() => {});
 
     let msg = `Saved for ${draft.report_date}.`;
     if (conflicts.length) msg += ` Note: ${conflicts.join('; ')}.`;

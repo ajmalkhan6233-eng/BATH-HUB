@@ -324,6 +324,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
             <div class="dropdown-item nav-btn" data-page="credit" onclick="goPage('credit')">💳 Credit & Aging</div>
             <div class="dropdown-item nav-btn" data-page="suppliers" onclick="goPage('suppliers')">🏭 Suppliers</div>
             <div class="dropdown-item nav-btn" data-page="staff" onclick="goPage('staff')">👤 Staff</div>
+            <div class="dropdown-item nav-btn" data-page="docinbox" onclick="goPage('docinbox')">📥 Document Inbox</div>
             <div class="dropdown-item nav-btn" data-page="cheques" onclick="goPage('cheques')">🧾 Cheques</div>
             <div class="dropdown-item nav-btn" data-page="grn" onclick="goPage('grn')">📦 Inventory & GRN</div>
             <div class="dropdown-item nav-btn" data-page="quotations" onclick="goPage('quotations')">📄 Quotations</div>
@@ -381,6 +382,7 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
       <div class="dropdown-item nav-btn" data-page="credit" onclick="mobileGo('credit')">💳 Credit &amp; Aging</div>
       <div class="dropdown-item nav-btn" data-page="suppliers" onclick="mobileGo('suppliers')">🏭 Suppliers</div>
       <div class="dropdown-item nav-btn" data-page="staff" onclick="mobileGo('staff')">👤 Staff</div>
+      <div class="dropdown-item nav-btn" data-page="docinbox" onclick="mobileGo('docinbox')">📥 Document Inbox</div>
       <div class="dropdown-item nav-btn" data-page="cheques" onclick="mobileGo('cheques')">🧾 Cheques</div>
       <div class="dropdown-item nav-btn" data-page="grn" onclick="mobileGo('grn')">📦 Inventory &amp; GRN</div>
       <div class="dropdown-item nav-btn" data-page="quotations" onclick="mobileGo('quotations')">📄 Quotations</div>
@@ -475,6 +477,21 @@ body.theme-light #mobile-nav{background:rgba(244,241,234,0.97);}
     <!-- STAFF -->
     <div class="page" id="page-staff">
       <div class="card"><table id="tbl-staff"><thead><tr><th>Name</th><th>Role</th><th>Total Salary</th><th>Total Commission</th><th>Loans Outstanding</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- DOCUMENT INBOX -->
+    <div class="page" id="page-docinbox">
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="di-type"><option value="auto">Let the app decide (from the heading)</option><option value="manual_bill">Manual bill</option><option value="grn">GRN (goods received)</option><option value="cheque">Cheque</option><option value="day_sheet">Daily sales sheet</option><option value="expense_sheet">Expense list</option></select>
+          <input type="file" id="di-file" accept="image/*,application/pdf" capture="environment">
+          <button onclick="diUpload()">Upload and read</button>
+        </div>
+        <div style="font-size:12px;opacity:.75;margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
+        <div id="di-msg" style="font-size:13px;margin-top:6px;color:#b26a00"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="di-tabs"></div>
+      <div id="di-list"></div>
     </div>
 
     <!-- CHEQUES -->
@@ -878,13 +895,13 @@ function goPage(name){
   const target = document.getElementById('page-'+name);
   target.classList.add('active');
   const titles = {home:'Dashboard', daily:'Daily / Weekly / Monthly', customers:'Customers', credit:'Credit & Aging',
-    suppliers:'Suppliers', staff:'Staff', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
+    suppliers:'Suppliers', staff:'Staff', docinbox:'Document Inbox', cheques:'Cheques', grn:'Inventory & GRN', quotations:'Quotations',
     pos:'POS Billing', labels:'Barcode Labels', commission:'Staff Commission', assistant:'AI Assistant', settings:'Settings',
     purchasing:'Purchasing', accounting:'Accounting', staffext:'Staff Extended', reports2:'Reports & Analytics', systools:'System Tools', audit:'Audit & Accounting', apex:'Platform Admin'};
   document.getElementById('page-title').textContent = titles[name] || name;
   document.body.classList.toggle('no-watermark', name === 'pos');
   const loaders = { home:loadHome, daily:loadDaily, customers:loadCustomers, credit:loadCredit, suppliers:loadSuppliers,
-    staff:loadStaff, cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
+    staff:loadStaff, docinbox:()=>loadDocInbox(), cheques:loadCheques, grn:loadGrn, quotations:loadQuotations, labels:loadLabelsProducts,
     commission:loadCommission, settings:loadSettings,
     purchasing:()=>genericTabPage('purchasing'), accounting:()=>genericTabPage('accounting'),
     staffext:()=>genericTabPage('staffext'), reports2:()=>genericTabPage('reports2'), systools:()=>genericTabPage('systools'), audit:loadAudit, apex:loadApex };
@@ -896,7 +913,7 @@ function goPage(name){
 
 // ═══════════════════════ AUTO-REFRESH (every 60s, no more F5) ═══════════════════
 let CURRENT_PAGE = null, CURRENT_LOADER = null;
-const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos','apex']); // don't wipe in-progress form input
+const AUTO_REFRESH_EXCLUDED = new Set(['settings','pos','apex','docinbox']); // don't wipe in-progress form input
 async function manualRefresh(){
   if (!CURRENT_LOADER) return;
   const btn = document.getElementById('refresh-btn');
@@ -1605,7 +1622,8 @@ function exportReport(kind){
       <tr><th align="left">Status</th><td>${r.day_status} / GP: ${r.gp_status}</td></tr>
     </table>
     <p style="color:#888;font-size:11px">Generated ${new Date().toLocaleString()}</p>
-  </body></html>`);
+  <script src="/document-inbox.js"></script>
+</body></html>`);
   w.document.close(); w.print();
 }
 async function shareToWhatsApp(){

@@ -16,7 +16,15 @@ const OCR_TIMEOUT_MS = 45000; // free vision models can be slow/flaky - fail fas
 // type are simply absent, not fabricated.
 const PROMPT = `You are reading a photo from a Sri Lankan retail shop's paperwork. First classify what KIND of document this is, then extract only the fields that apply to that type. Output ONLY valid JSON, no markdown, no explanation.
 
-Possible document_type values: "day_sheet" (daily sales/petty cash sheet), "expense_sheet" (handwritten expense list), "cheque_note" (a handwritten note recording a cheque being issued - has a cheque number, payee, amount, bank), "invoice" (a supplier/vendor invoice or receipt), "unknown" (anything else - a person, product photo, room, random object).
+FIRST look for a HEADING written or printed at the top of the paper. The shop writes one of these: "BILL" (a manual customer bill), "GRN" or "GOODS RECEIVED" (goods received from a supplier), "CHEQUE" (a cheque note), "EXPENSES" (an expense list), "DAILY SALES" or "DAY SHEET" (the day's sales). The heading decides the type. If there is no heading, decide from the content.
+
+Possible document_type values: "manual_bill" (heading BILL: a handwritten customer bill with items and a total), "grn" (heading GRN: goods received from a supplier, with items and quantities), "day_sheet" (daily sales/petty cash sheet), "expense_sheet" (handwritten expense list), "cheque_note" (heading CHEQUE: a handwritten note recording a cheque - has a cheque number, payee, amount, bank), "invoice" (a printed supplier/vendor invoice or receipt with no GRN heading), "unknown" (anything else - a person, product photo, room, random object).
+
+For document_type "manual_bill", output:
+{"document_type":"manual_bill","bill_number":"string or null","date":"YYYY-MM-DD or null","customer_name":"string or null","customer_phone":"string or null","items":[{"name":"string","qty":number,"unit_price":number or null,"amount":number or null}],"subtotal":number or null,"discount":number or null,"total":number or null,"payment_method":"cash|card|online|cheque|credit or null","confidence":"high|medium|low","notes":"anything unclear or illegible"}
+
+For document_type "grn", output:
+{"document_type":"grn","grn_number":"string or null","date":"YYYY-MM-DD or null","supplier_name":"string or null","items":[{"description":"string","qty":number,"unit_cost":number or null,"amount":number or null}],"total":number or null,"confidence":"high|medium|low","notes":"anything unclear or illegible"}
 
 For document_type "day_sheet" or "expense_sheet", output:
 {"document_type":"day_sheet","date":"YYYY-MM-DD or null","total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null,"total_expenses":number or null,"expense_items":"short text description of expense line items, or null","confidence":"high|medium|low","notes":"anything unclear or illegible"}
@@ -48,7 +56,7 @@ async function ocrPhoto(filePath) {
                 { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
             ],
         }],
-        max_tokens: 500,
+        max_tokens: 1800,          // a manual bill or GRN lists every item
     }, { timeout: OCR_TIMEOUT_MS });
 
     const raw = response.choices?.[0]?.message?.content || '';
@@ -58,4 +66,4 @@ async function ocrPhoto(filePath) {
     return { ...parsed, _raw: raw, _model: VISION_MODEL, _file: filePath };
 }
 
-module.exports = { ocrPhoto };
+module.exports = { ocrPhoto, PROMPT };

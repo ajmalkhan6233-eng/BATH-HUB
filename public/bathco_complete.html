@@ -258,6 +258,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
+      <li class="nav-item" data-page="docinbox"><span class="nav-icon">📥</span><span class="nav-label">Document Inbox</span></li>
       <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
@@ -713,6 +714,23 @@ table tr:last-child td{border-bottom:none}
       <div id="cp-list"></div>
     </section>
 
+    <!-- ── DOCUMENT INBOX ── -->
+    <section class="page" id="page-docinbox">
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Add a paper</div>
+        <div class="grid-3">
+          <div class="fg"><label class="fl">What is it?</label>
+            <select class="fs" id="di-type"><option value="auto">Let the app decide (from the heading)</option><option value="manual_bill">Manual bill</option><option value="grn">GRN (goods received)</option><option value="cheque">Cheque</option><option value="day_sheet">Daily sales sheet</option><option value="expense_sheet">Expense list</option></select></div>
+          <div class="fg" style="grid-column:span 2"><label class="fl">Photo (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf" capture="environment"></div>
+        </div>
+        <button class="btn btn-p" onclick="diUpload()">Upload and read</button>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
+        <div id="di-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="di-tabs"></div>
+      <div id="di-list"></div>
+    </section>
+
     <!-- ── SHOP TOOLS ── -->
     <section class="page" id="page-shoptools">
       <div class="card" style="margin-bottom:16px">
@@ -970,6 +988,7 @@ const PAGE_META = {
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
+  docinbox:    ['Document Inbox', 'Photos of bills, GRNs, cheques and sheets. Check, then file'],
   shoptools:   ['Shop Tools',   'Tile calculator, item search, till summary, best sellers, low stock'],
   enquiries:   ['Enquiries',   'Where customers come from: TikTok, walk-in, WhatsApp...'],
   'agent-rules': ['Agent Rules', 'What the agent has been taught. Edits make new versions'],
@@ -1358,6 +1377,7 @@ function navigate(page) {
   if (page === 'agent-rules') loadAgentRules();
   if (page === 'enquiries') loadEnquiries();
   if (page === 'shoptools') loadShopTools();
+  if (page === 'docinbox') loadDocInbox();
   if (page === 'agentreview') loadAgentReview();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
@@ -2325,5 +2345,6 @@ async function initApp() {
   document.getElementById('page-sub').textContent = fmtDate(today()) + ' — Connected to database';
 }
 </script>
+<script src="/document-inbox.js"></script>
 </body>
 </html>

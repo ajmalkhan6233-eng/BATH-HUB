@@ -67,6 +67,8 @@ pool.query(`
   // additive columns: which bills were given a discount above the cap (by the owner), and which catalogue item a line was
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS discount_override BOOLEAN NOT NULL DEFAULT FALSE`))
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
   .catch(e => console.error('[pos_bills] migration failed:', e.message));
 
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
@@ -210,7 +212,7 @@ router.get('/pos-bills/today', async (req, res) => {
     try {
         const date = todayLK();
         const r = await pool.query(
-            `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, created_at
+            `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, source, created_at
              FROM pos_bills WHERE created_at::date = $1::date ORDER BY created_at DESC, id DESC LIMIT 200`, [date]);
         const bills = r.rows.map(b => ({ ...b, subtotal: Number(b.subtotal), discount_amount: Number(b.discount_amount), total: Number(b.total) }));
         res.json({
