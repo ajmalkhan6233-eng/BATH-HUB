@@ -38,6 +38,32 @@
         };
     }
 
+    // Feed item -> the exact tile shape bathhub.html draws: {id, name, w, h, nom, finish, use[], base, vein, type, photo}.
+    // The feed has no colour data, so a calm colour pair is derived from the name (same name = same colour) and
+    // the real photo, when there is one, is drawn instead.
+    var FINISHES = [['nano', /nano|polish/i], ['glossy', /gloss|shin/i], ['matt', /matt|satin|rough/i]];
+    var USES = ['floor', 'wall', 'bathroom', 'kitchen'];
+    function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+    function hsl(h, s, l) { return 'hsl(' + (h % 360) + ',' + s + '%,' + l + '%)'; }
+
+    // `t` is a tile as returned by load() / toTile().
+    function toPageTile(t, index) {
+        var m = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)$/.exec(t.sizeCm);
+        var w = m ? Number(m[1]) : 60, h = m ? Number(m[2]) : 60;       // unknown size draws as 60 x 60
+        var finish = 'matt';
+        for (var i = 0; i < FINISHES.length; i++) if (FINISHES[i][1].test(t.finish)) { finish = FINISHES[i][0]; break; }
+        var use = USES.filter(function (u) { return t.use.toLowerCase().indexOf(u) !== -1; });
+        if (!use.length) use = ['floor'];
+        var hv = hash(t.name);
+        return {
+            id: 'feed' + index, name: t.name, w: w, h: h,
+            nom: t.sizeInches ? t.sizeInches.replace('x', ' x ') + ' in' : '',
+            finish: finish, use: use,
+            base: hsl(hv, 14, 84), vein: hsl(hv, 18, 58), type: 'plain',
+            photo: t.photo,
+        };
+    }
+
     function isItem(x) {
         return x && typeof x === 'object' && typeof x.name === 'string' && x.name.trim() !== '';
     }
@@ -70,5 +96,5 @@
             .catch(function (e) { return fallback(e && e.message ? e.message : String(e)); });
     }
 
-    return { load: load, toTile: toTile, ENDPOINT: ENDPOINT };
+    return { load: load, toTile: toTile, toPageTile: toPageTile, ENDPOINT: ENDPOINT };
 }));

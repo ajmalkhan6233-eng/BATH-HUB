@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bath Hub - Tiles and Bathroom Fittings, Thihariya</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&family=Noto+Sans+Sinhala:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F6F6; --surface:#FFFFFF; --ink:#12232A; --muted:#51666E; --line:#D3DEE0;
+  --accent:#0E6E8C; --accent-ink:#FFFFFF; --grout:#0000001f; --wall:#E4EBEC; --wall2:#CFDADD;
+  --sofa:#3D5560; --sofa2:#2F434C; --note:#FFF3C9; --note-ink:#4A3B00;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1A1F; --surface:#15272E; --ink:#E6F0F2; --muted:#9BB1B8; --line:#27414A;
+    --accent:#4DB6D6; --accent-ink:#06222B; --wall:#22363D; --wall2:#1A2C32; --sofa:#6E8C98; --sofa2:#57747F;
+    --note:#3B3200; --note-ink:#FFE9A0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1A1F; --surface:#15272E; --ink:#E6F0F2; --muted:#9BB1B8; --line:#27414A;
+  --accent:#4DB6D6; --accent-ink:#06222B; --wall:#22363D; --wall2:#1A2C32; --sofa:#6E8C98; --sofa2:#57747F;
+  --note:#3B3200; --note-ink:#FFE9A0;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Outfit','Noto Sans Sinhala','Noto Sans Tamil',system-ui,sans-serif;font-size:16px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;max-width:980px;margin:0 auto}
+.logo{font-weight:700;font-size:22px;letter-spacing:-.01em}
+.logo small{display:block;font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
+.langs{display:flex;gap:6px}
+.langs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;font:inherit;font-size:14px;cursor:pointer}
+.langs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{background:var(--note);color:var(--note-ink);font-size:13px;padding:8px 16px;text-align:center}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.15;margin:24px 0 6px;letter-spacing:-.02em}
+h2{font-size:24px;margin:0 0 6px;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:0 0 16px;max-width:60ch}
+section{padding:28px 0}
+/* room */
+.scenes{display:flex;gap:8px;margin:8px 0}
+.scenes button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer}
+.scenes button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.room{position:relative;aspect-ratio:8/5;border-radius:12px;overflow:hidden;background:var(--wall);border:1px solid var(--line)}
+.wall{position:absolute;inset:0 0 48% 0;background:linear-gradient(var(--wall),var(--wall2))}
+.floorbox{position:absolute;left:0;right:0;top:52%;bottom:0;overflow:hidden}
+.plane{position:absolute;left:-30%;width:160%;top:0;height:260%;transform-origin:50% 0;transform:perspective(380px) rotateX(55deg)}
+.floorshade{position:absolute;inset:0;background:linear-gradient(#0000002b,#00000000 45%);pointer-events:none}
+.furn{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.strip{display:flex;gap:10px;overflow-x:auto;padding:12px 2px;margin:0 -2px}
+.sw{flex:0 0 auto;width:84px;border:2px solid transparent;border-radius:10px;background:var(--surface);padding:4px;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.sw[aria-pressed="true"]{border-color:var(--accent)}
+.sw i{display:block;width:100%;aspect-ratio:1;border-radius:6px;background-size:cover;border:1px solid var(--line)}
+.sw span{display:block;font-size:12px;line-height:1.2;margin-top:4px;color:var(--muted)}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.spec h3{margin:0 0 8px;font-size:20px}
+.spec dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}
+.spec dt{color:var(--muted)} .spec dd{margin:0}
+.cta{display:inline-block;margin-top:12px;background:var(--accent);color:var(--accent-ink);padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:500}
+/* calc */
+.calc{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.calc label{display:flex;flex-direction:column;font-size:14px;color:var(--muted);gap:4px}
+.calc input{width:110px;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+.calc output{font-weight:500;flex:1 1 220px}
+/* accessories */
+.acc{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.acc div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.acc b{display:block;font-weight:500}
+.acc small{color:var(--muted)}
+.how{display:grid;gap:12px}
+.how div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.how h3{margin:0 0 4px;font-size:18px}.how p{margin:0;color:var(--muted);max-width:70ch}
+footer{padding:24px 0 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+
+.bathroom{position:relative;aspect-ratio:8/5;border-radius:12px;overflow:hidden;background:linear-gradient(var(--wall),var(--wall2));border:1px solid var(--line)}
+.bfloor{position:absolute;left:0;right:0;bottom:0;height:28%;box-shadow:inset 0 10px 14px -8px #0000003a}
+#bsvg{position:absolute;inset:0;width:100%;height:100%}
+.bctl{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.bgrp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bgrp>span{min-width:92px;color:var(--muted);font-size:14px}
+.bgrp button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
+.bgrp button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+@media (prefers-reduced-motion:no-preference){.sw,.cta,.langs button{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+<div class="note" id="sampleNote" hidden></div>
+<header><div class="bar">
+  <div class="logo">Bath Hub<small id="tag"></small></div>
+  <div class="langs" role="group" aria-label="Language">
+    <button data-l="en" aria-pressed="true">English</button>
+    <button data-l="si" aria-pressed="false">සිංහල</button>
+    <button data-l="ta" aria-pressed="false">தமிழ்</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+<section id="room-sec">
+  <h1 id="h1"></h1>
+  <p class="lead" id="lead"></p>
+  <div class="scenes" id="scenes"></div>
+  <div class="room" id="room">
+    <div class="wall"></div>
+    <div class="floorbox" id="floorbox"><div class="plane" id="plane"></div><div class="floorshade"></div></div>
+    <svg class="furn" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g id="gLiving">
+        <rect x="90" y="70" width="190" height="130" rx="6" fill="#9CC7D6" opacity=".55"/><path d="M185 70v130M90 135h190" stroke="#fff" stroke-width="6" opacity=".8"/>
+        <rect x="190" y="215" width="420" height="110" rx="26" fill="var(--sofa)"/>
+        <rect x="170" y="240" width="48" height="110" rx="20" fill="var(--sofa2)"/><rect x="582" y="240" width="48" height="110" rx="20" fill="var(--sofa2)"/>
+        <rect x="210" y="190" width="380" height="70" rx="22" fill="var(--sofa2)"/>
+        <rect x="330" y="360" width="140" height="44" rx="6" fill="#5A4636"/>
+        <path d="M690 300v-110" stroke="#444" stroke-width="5"/><path d="M660 190h60l-14-40h-32z" fill="#E8D9A8"/>
+      </g>
+      <g id="gHall" style="display:none">
+        <rect x="80" y="60" width="150" height="250" rx="6" fill="#7A5A3F"/><circle cx="210" cy="190" r="6" fill="#E3C66B"/>
+        <rect x="320" y="90" width="160" height="110" rx="6" fill="#B9D5DE" opacity=".6" stroke="#8A9BA2" stroke-width="6"/>
+        <rect x="290" y="255" width="220" height="16" rx="4" fill="#5A4636"/><rect x="302" y="271" width="10" height="70" fill="#5A4636"/><rect x="488" y="271" width="10" height="70" fill="#5A4636"/>
+        <rect x="640" y="230" width="60" height="110" rx="10" fill="#6F8F7A"/><rect x="655" y="330" width="30" height="30" rx="4" fill="#5A4636"/>
+      </g>
+    </svg>
+  </div>
+  <div class="strip" id="strip" role="group"></div>
+  <div class="spec" id="spec"></div>
+</section>
+
+<section>
+  <h2 id="bH"></h2>
+  <p class="lead" id="bP"></p>
+  <div class="bctl" id="bctl"></div>
+  <div class="bathroom"><div class="bfloor" id="bfloor"></div>
+    <svg id="bsvg" viewBox="0 0 800 500" role="img" aria-label="Bathroom illustration"></svg></div>
+  <p class="lead" id="bTip" style="margin-top:10px"></p>
+</section>
+
+<section>
+  <h2 id="calcH"></h2>
+  <p class="lead" id="calcP"></p>
+  <div class="calc">
+    <label><span id="lenL"></span><input id="len" type="number" min="1" value="12" inputmode="decimal"></label>
+    <label><span id="widL"></span><input id="wid" type="number" min="1" value="10" inputmode="decimal"></label>
+    <output id="calcOut" aria-live="polite"></output>
+  </div>
+</section>
+
+<section>
+  <h2 id="accH"></h2>
+  <p class="lead" id="accP"></p>
+  <div class="acc" id="acc"></div>
+</section>
+
+<section>
+  <h2 id="howH"></h2>
+  <div class="how" id="how"></div>
+</section>
+</main>
+
+<div class="wrap"><footer id="foot"></footer></div>
+
+<script src="/bathhub-feed.js"></script>
+<script>
+/* ===== EDIT THIS BLOCK: real business data ===== */
+/* Stays true while the shop has published no real items. The page switches it off by itself the moment
+   /api/public/catalogue returns real tiles (see the end of this script); until then the sample tiles show. */
+let SAMPLE_MODE = true;
+const API_BASE = "";               // "" when this page is served by the shop app; otherwise e.g. "https://your-app-address"
+const WHATSAPP = "94777999219";             // e.g. "94771234567" (country code, no + or spaces)
+let tiles = [
+  {id:"t1", name:"Sample Marble Ivory",  w:60, h:60,  nom:"2x2 ft", finish:"nano", use:["floor","wall"],           base:"#E9E4DA", vein:"#B8B0A0", type:"veins"},
+  {id:"t2", name:"Sample Carrara Grey",  w:60, h:120, nom:"2x4 ft", finish:"nano", use:["floor"],                  base:"#DADDDF", vein:"#8D949A", type:"veins"},
+  {id:"t3", name:"Sample Slate Charcoal",w:60, h:60,  nom:"2x2 ft", finish:"matt", use:["floor","bathroom"],       base:"#45494D", vein:"#2E3235", type:"speckle"},
+  {id:"t4", name:"Sample Oak Plank",     w:20, h:120, nom:"8 in x 4 ft", finish:"matt", use:["floor"],             base:"#B98B5E", vein:"#8E6440", type:"wood"},
+  {id:"t5", name:"Sample Sand Stone",    w:60, h:60,  nom:"2x2 ft", finish:"matt", use:["floor","kitchen"],        base:"#CDBFA5", vein:"#A99A7E", type:"speckle"},
+  {id:"t6", name:"Sample Blue Terrazzo", w:60, h:60,  nom:"2x2 ft", finish:"glossy", use:["floor","wall"],         base:"#9FB8C4", vein:"#2F5D73", type:"speckle"},
+  {id:"t7", name:"Sample Onyx Gold",     w:60, h:120, nom:"2x4 ft", finish:"glossy", use:["wall"],                 base:"#E6D7B3", vein:"#B68A2E", type:"veins"},
+  {id:"t8", name:"Sample Cement Grey",   w:60, h:60,  nom:"2x2 ft", finish:"matt", use:["floor","kitchen"],        base:"#A9ADAE", vein:"#8A8F91", type:"plain"},
+  {id:"t9", name:"Sample Clay Red",      w:30, h:30,  nom:"1x1 ft", finish:"matt", use:["floor"],                  base:"#B5583C", vein:"#8F4029", type:"plain"},
+  {id:"t10",name:"Sample Mint Wall",     w:30, h:60,  nom:"1x2 ft", finish:"glossy", use:["wall","bathroom","kitchen"], base:"#BFE0D3", vein:"#8FBFAE", type:"plain"}
+];
+const accessories = ["tap","shower","wc","basin","towel","spray","mirror","drain"];
+/* ===== end of data block ===== */
+
+const T = {
+ en:{tag:"Tiles and bathroom fittings, Thihariya", h1:"See the tile in your room", lead:"Pick a tile below and watch your floor change. It is a guide only: real colour and shine can look different in your home, so visit the showroom before you decide.",
+  living:"Living room", hall:"Hall", size:"Size", finish:"Finish", best:"Best for", ask:"Ask on WhatsApp", sampleNote:"SAMPLE DATA: replace with real products before launch.", noWa:"WhatsApp number not set.",
+  glossy:"Glossy", matt:"Matt", nano:"Nano polish", floor:"Floor", wall:"Wall", bathroom:"Bathroom", kitchen:"Kitchen",
+  calcH:"How many tiles do I need?", calcP:"Enter your room size in feet. We add 10% extra for cuts and breakage.", len:"Length (ft)", wid:"Width (ft)",
+  calcOut:(n,a)=>`About ${n} tiles for ${a} sq ft, including 10% extra.`, calcNone:"Pick a tile first.",
+  accH:"Bathroom accessories", accP:"Taps, showers, toilets, basins and more. Sizes, finishes and availability on request.",
+  acc:{tap:"Basin and bath taps",shower:"Shower sets",wc:"Toilets (WC)",basin:"Wash basins",towel:"Towel rails",spray:"Bidet sprays",mirror:"Mirrors and cabinets",drain:"Floor drains"},
+  bH:"Build your bathroom", bP:"Pick a layout, then a bathtub, tap and shower. The drawings are simple illustrations, not specific brands or models. The floor uses the tile you picked above.",
+  bTip:"When you ask about any tap, shower or bathtub, ask for: material, finish, guarantee, and minimum water pressure. Low pressure matters in homes with a roof tank.",
+  g:{bl:"Layout",bt:"Bathtub",tp:"Tap",sh:"Shower"},
+  o:{bath:"With bathtub",nobath:"No bathtub (simple)",builtin:"Built-in",free:"Freestanding",corner:"Corner",wall:"Wall-mounted",deck:"On the edge",floorT:"Floor-standing",rain:"Overhead rain",hand:"Hand shower",both:"Rain + hand"},
+  howH:"How it works, in plain words",
+  how:[["Sizes: inches and centimetres","1 foot is about 30 cm. A 2x2 ft tile is about 60x60 cm (24x24 in). Every tile page shows both."],
+       ["Finishes","Glossy is shiny and bright. Matt is flat and grips better when wet. Nano polish is a polished surface with a protective coating that helps resist stains; ask us about the exact product."],
+       ["How much to buy","Measure length and width of the floor, multiply, and add about 10% for cuts. Our calculator does this for you. Always buy all tiles from the same batch."],
+       ["What you see on screen","Phone screens change colours. The room picture is a guide, not a promise. Come and see the real tile, and ask us anything: we will tell you honestly what suits your budget."]],
+  foot:"Bath Hub, Kandy Road, Thihariya. Prices change with import costs, so we share them when you ask."},
+ si:{tag:"ටයිල් සහ නාන කාමර උපාංග, තිහාරිය", h1:"ඔබේ කාමරයේ ටයිල් එක බලන්න", lead:"පහතින් ටයිල් එකක් තෝරන්න, ඔබේ පොළොව වෙනස් වෙන හැටි බලන්න. මෙය මඟ පෙන්වීමක් පමණි. ඔබේ නිවසේදී වර්ණය සහ දිලිසීම වෙනස් විය හැක, එබැවින් තීරණය කිරීමට පෙර ෂෝරූම් එකට පැමිණෙන්න.",
+  living:"සාලය", hall:"ශාලාව", size:"ප්‍රමාණය", finish:"නිමාව", best:"සුදුසු තැන්", ask:"WhatsApp හරහා අසන්න", sampleNote:"සාම්පල දත්ත: පළ කිරීමට පෙර සැබෑ භාණ්ඩ ඇතුළත් කරන්න.", noWa:"WhatsApp අංකය ඇතුළත් කර නැත.",
+  glossy:"දිලිසෙන", matt:"මැට්", nano:"නැනෝ පොලිෂ්", floor:"පොළොව", wall:"බිත්තිය", bathroom:"නාන කාමරය", kitchen:"මුළුතැන්ගෙය",
+  calcH:"මට ටයිල් කීයක් ඕනේද?", calcP:"ඔබේ කාමරයේ ප්‍රමාණය අඩි වලින් ඇතුළත් කරන්න. කැපීම් සහ කැඩීම් සඳහා 10% ක් අමතරව එකතු කරමු.", len:"දිග (අඩි)", wid:"පළල (අඩි)",
+  calcOut:(n,a)=>`වර්ග අඩි ${a} ක් සඳහා ටයිල් ආසන්න වශයෙන් ${n} ක් (10% අමතරව ඇතුළුව).`, calcNone:"මුලින් ටයිල් එකක් තෝරන්න.",
+  accH:"නාන කාමර උපාංග", accP:"කරාම, ෂවර්, වැසිකිලි, වොෂ් බේසම් සහ තවත් බොහොමයක්. ප්‍රමාණ, නිමාවන් සහ තොග ගැන ඇසූ විට කියමු.",
+  acc:{tap:"බේසම් සහ බාත් කරාම",shower:"ෂවර් කට්ටල",wc:"වැසිකිලි (WC)",basin:"වොෂ් බේසම්",towel:"තුවා රේල්",spray:"බිඩෙට් ස්ප්‍රේ",mirror:"කැඩපත් සහ කැබිනට්",drain:"පොළොව කාණු"},
+  bH:"ඔබේ නාන කාමරය සාදන්න", bP:"පිරිසැලසුමක් තෝරා, ඉන්පසු නාන ටබ් එකක්, කරාමයක් සහ ෂවර් එකක් තෝරන්න. රූප සටහන් සරල නිදර්ශන පමණි; නිශ්චිත වෙළඳ නාම හෝ මාදිලි නොවේ. පොළොව සඳහා ඔබ ඉහතින් තෝරාගත් ටයිල් එක භාවිත වේ.",
+  bTip:"කරාමයක්, ෂවර් එකක් හෝ නාන ටබ් එකක් ගැන අසන විට අසන්න: ද්‍රව්‍ය, නිමාව, වගකීම සහ අවම ජල පීඩනය. වහලේ ටැංකියක් ඇති නිවාසවල ජල පීඩනය අඩු විය හැකි බැවින් මෙය වැදගත් වේ.",
+  g:{bl:"පිරිසැලසුම",bt:"නාන ටබ්",tp:"කරාමය",sh:"ෂවර්"},
+  o:{bath:"නාන ටබ් සමඟ",nobath:"නාන ටබ් නැතිව (සරල)",builtin:"බිත්තියට සවි කළ",free:"තනිව සිටින",corner:"කොන",wall:"බිත්තියේ සවි කළ",deck:"ටබ් මත සවි කළ",floorT:"පොළොවේ සවි කළ",rain:"ඉහළින් වැටෙන (රේන්)",hand:"අතින් ගන්නා",both:"රේන් + අතින් ගන්නා"},
+  howH:"සරල වචනවලින් කියනවා නම්",
+  how:[["ප්‍රමාණ: අඟල් සහ සෙන්ටිමීටර්","අඩියක් යනු ආසන්න වශයෙන් සෙ.මී. 30 කි. 2x2 අඩි ටයිල් එකක් සෙ.මී. 60x60 (අඟල් 24x24) පමණ වේ. සෑම ටයිල් එකකම දෙකම පෙන්වයි."],
+       ["නිමාවන්","දිලිසෙන ටයිල් දීප්තිමත්ය. මැට්, පැතලි වන අතර තෙත් වූ විට ලිස්සීම අඩුය. නැනෝ පොලිෂ් යනු පොලිෂ් කළ මතුපිටක් වන අතර, පැල්ලම් වලට ඔරොත්තු දීමට උපකාරී වන ආරක්ෂිත ආලේපනයක් ඇත. නිශ්චිත භාණ්ඩය ගැන අපෙන් අසන්න."],
+       ["කොපමණ ගන්නද","පොළොවේ දිග සහ පළල මැන, ගුණ කර, කැපීම් සඳහා 10% ක් පමණ එකතු කරන්න. අපගේ ගණකය මෙය ඔබ වෙනුවෙන් කරයි. සෑම විටම එකම බැච් එකේ ටයිල් ගන්න."],
+       ["තිරයේ පෙනෙන දේ","දුරකථන තිර වර්ණ වෙනස් කරයි. කාමර රූපය මඟ පෙන්වීමක් මිස පොරොන්දුවක් නොවේ. සැබෑ ටයිල් එක බලන්න එන්න, ඕනෑම දෙයක් අපෙන් අසන්න: ඔබේ අයවැයට ගැළපෙන්නේ මොනවාදැයි අපි අවංකව කියන්නෙමු."]],
+  foot:"බාත් හබ්, කන්ද පාර, තිහාරිය. ආනයන වියදම් සමඟ මිල වෙනස් වන බැවින්, ඔබ ඇසූ විට අපි මිල කියමු."},
+ ta:{tag:"டைல்ஸ் மற்றும் குளியலறை உபகரணங்கள், திஹாரிய", h1:"உங்கள் அறையில் டைல் எப்படி இருக்கும் என்று பாருங்கள்", lead:"கீழே ஒரு டைலைத் தேர்ந்தெடுங்கள், உங்கள் தரை மாறுவதைப் பாருங்கள். இது ஒரு வழிகாட்டி மட்டுமே. உங்கள் வீட்டில் நிறமும் பளபளப்பும் வேறுபடலாம், எனவே முடிவு செய்வதற்கு முன் ஷோரூமுக்கு வாருங்கள்.",
+  living:"வரவேற்பறை", hall:"ஹால்", size:"அளவு", finish:"மேற்பரப்பு", best:"பொருத்தமான இடம்", ask:"WhatsApp-ல் கேளுங்கள்", sampleNote:"மாதிரி தரவு: வெளியிடும் முன் உண்மையான பொருட்களை சேர்க்கவும்.", noWa:"WhatsApp எண் சேர்க்கப்படவில்லை.",
+  glossy:"பளபளப்பு", matt:"மேட்", nano:"நானோ பாலிஷ்", floor:"தரை", wall:"சுவர்", bathroom:"குளியலறை", kitchen:"சமையலறை",
+  calcH:"எனக்கு எத்தனை டைல்ஸ் தேவை?", calcP:"உங்கள் அறையின் அளவை அடிகளில் உள்ளிடுங்கள். வெட்டு மற்றும் உடைவுக்காக 10% கூடுதலாகச் சேர்க்கிறோம்.", len:"நீளம் (அடி)", wid:"அகலம் (அடி)",
+  calcOut:(n,a)=>`${a} சதுர அடிக்கு சுமார் ${n} டைல்ஸ் (10% கூடுதலுடன்).`, calcNone:"முதலில் ஒரு டைலைத் தேர்ந்தெடுங்கள்.",
+  accH:"குளியலறை உபகரணங்கள்", accP:"குழாய்கள், ஷவர்கள், கழிப்பறைகள், வாஷ் பேசின்கள் மற்றும் பல. அளவுகள், பூச்சுகள் மற்றும் இருப்பு பற்றி கேட்டால் சொல்வோம்.",
+  acc:{tap:"பேசின் மற்றும் பாத் குழாய்கள்",shower:"ஷவர் செட்கள்",wc:"கழிப்பறைகள் (WC)",basin:"வாஷ் பேசின்கள்",towel:"துண்டு ரெயில்கள்",spray:"பிடெட் ஸ்பிரே",mirror:"கண்ணாடி மற்றும் அலமாரிகள்",drain:"தரை வடிகால்கள்"},
+  bH:"உங்கள் குளியலறையை உருவாக்குங்கள்", bP:"ஒரு அமைப்பைத் தேர்ந்தெடுத்து, பின்னர் குளியல் தொட்டி, குழாய், ஷவரைத் தேர்ந்தெடுங்கள். வரைபடங்கள் எளிய விளக்கப் படங்கள் மட்டுமே; குறிப்பிட்ட பிராண்டுகள் அல்லது மாடல்கள் அல்ல. தரைக்கு நீங்கள் மேலே தேர்ந்தெடுத்த டைல் பயன்படுத்தப்படும்.",
+  bTip:"குழாய், ஷவர் அல்லது குளியல் தொட்டி பற்றிக் கேட்கும்போது இவற்றைக் கேளுங்கள்: பொருள், மேற்பரப்பு, உத்தரவாதம், குறைந்தபட்ச நீர் அழுத்தம். கூரைத் தொட்டி உள்ள வீடுகளில் அழுத்தம் குறைவாக இருக்கலாம் என்பதால் இது முக்கியம்.",
+  g:{bl:"அமைப்பு",bt:"குளியல் தொட்டி",tp:"குழாய்",sh:"ஷவர்"},
+  o:{bath:"குளியல் தொட்டியுடன்",nobath:"தொட்டி இல்லாமல் (எளிமையான)",builtin:"சுவரில் பொருத்திய",free:"தனித்து நிற்கும்",corner:"மூலை",wall:"சுவரில் பொருத்திய",deck:"விளிம்பில்",floorT:"தரையில் நிற்கும்",rain:"மேலிருந்து (ரெயின்)",hand:"கை ஷவர்",both:"ரெயின் + கை ஷவர்"},
+  howH:"எளிய வார்த்தைகளில் விளக்கம்",
+  how:[["அளவுகள்: அங்குலம் மற்றும் செ.மீ.","ஒரு அடி என்பது சுமார் 30 செ.மீ. 2x2 அடி டைல் சுமார் 60x60 செ.மீ (24x24 அங்குலம்). ஒவ்வொரு டைலிலும் இரண்டும் காட்டப்படும்."],
+       ["மேற்பரப்பு வகைகள்","பளபளப்பு டைல் மின்னும். மேட் தட்டையானது, ஈரத்தில் வழுக்குவது குறைவு. நானோ பாலிஷ் என்பது கறைகளை எதிர்க்க உதவும் பாதுகாப்பு பூச்சுடன் கூடிய பாலிஷ் மேற்பரப்பு. குறிப்பிட்ட பொருள் பற்றி எங்களிடம் கேளுங்கள்."],
+       ["எவ்வளவு வாங்க வேண்டும்","தரையின் நீளம் மற்றும் அகலத்தை அளந்து பெருக்கி, வெட்டுக்காக சுமார் 10% சேர்க்கவும். எங்கள் கணக்கீட்டுக் கருவி இதைச் செய்யும். எப்போதும் ஒரே பேட்ச் டைல்ஸ் வாங்குங்கள்."],
+       ["திரையில் தெரிவது","தொலைபேசித் திரைகள் நிறங்களை மாற்றும். அறைப் படம் ஒரு வழிகாட்டி மட்டுமே, வாக்குறுதி அல்ல. உண்மையான டைலைப் பார்க்க வாருங்கள், எதுவும் கேளுங்கள்: உங்கள் பட்ஜெட்டுக்கு எது பொருந்தும் என்று நேர்மையாகச் சொல்வோம்."]],
+  foot:"பாத் ஹப், கண்டி ரோடு, திஹாரிய. இறக்குமதிச் செலவுக்கு ஏற்ப விலை மாறும், எனவே நீங்கள் கேட்கும்போது விலை சொல்வோம்."}
+};
+
+let lang="en", sel=tiles[0], scene="living";
+const $=id=>document.getElementById(id);
+
+/* --- tile texture as inline SVG (no external images) --- */
+function rng(seed){let s=0;for(const c of seed)s=(s*31+c.charCodeAt(0))>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function texture(t,px){ // px = pixels per cm
+  if(t.photo)return `url("${String(t.photo).replace(/["\\]/g,"")}")`;   // real product photo from the catalogue
+  const W=Math.max(8,Math.round(t.w*px)),H=Math.max(8,Math.round(t.h*px)),r=rng(t.id);let d="";
+  if(t.type==="veins"){for(let i=0;i<5;i++){const x=r()*W,y=r()*H;d+=`<path d="M${x} 0 Q${r()*W} ${H/2} ${x+r()*40-20} ${H}" stroke="${t.vein}" stroke-width="${r()*1.6+.4}" fill="none" opacity=".55"/>`}}
+  else if(t.type==="speckle"){for(let i=0;i<90;i++){d+=`<circle cx="${r()*W}" cy="${r()*H}" r="${r()*2.2+.4}" fill="${t.vein}" opacity="${r()*.5+.25}"/>`}}
+  else if(t.type==="wood"){for(let i=0;i<14;i++){const y=r()*H;d+=`<path d="M0 ${y} Q${W/2} ${y+r()*6-3} ${W} ${y+r()*4-2}" stroke="${t.vein}" stroke-width=".8" fill="none" opacity=".5"/>`}}
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${t.base}"/>${d}<rect x=".5" y=".5" width="${W-1}" height="${H-1}" fill="none" stroke="#00000033" stroke-width="1.5"/></svg>`;
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+}
+const inch=cm=>Math.round(cm/2.54);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function drawFloor(){
+  const w=$("room").clientWidth||360, px=Math.max(.6,w/420*.9);
+  const p=$("plane"); p.style.backgroundImage=texture(sel,px); p.style.backgroundSize=`${Math.round(sel.w*px)}px ${Math.round(sel.h*px)}px`;
+  p.style.backgroundPosition="center top";
+}
+function renderStrip(){
+  const s=$("strip"); s.innerHTML="";
+  tiles.forEach(t=>{const b=document.createElement("button");b.className="sw";b.setAttribute("aria-pressed",t===sel);
+    b.innerHTML=`<i style="background-image:${texture(t,1.2)};background-size:cover"></i><span>${esc(t.name.replace("Sample ",""))}</span>`;
+    b.onclick=()=>{sel=t;renderStrip();drawFloor();renderSpec();calc();drawBath()};s.appendChild(b)});
+}
+function renderSpec(){
+  const L=T[lang], t=sel, uses=t.use.map(u=>L[u]).join(", ");
+  const wa=WHATSAPP?`<a class="cta" href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Bath Hub: I am interested in "+t.name)}">${L.ask}</a>`:"";
+  $("spec").innerHTML=`<h3>${esc(t.name)}</h3><dl><dt>${L.size}</dt><dd>${t.w} x ${t.h} cm (${inch(t.w)} x ${inch(t.h)} in${t.nom?", "+esc(t.nom):""})</dd><dt>${L.finish}</dt><dd>${L[t.finish]}</dd><dt>${L.best}</dt><dd>${uses}</dd></dl>${wa}`;
+}
+function calc(){
+  const L=T[lang], l=+$("len").value, w=+$("wid").value;
+  if(!(l>0&&w>0)){$("calcOut").textContent="";return}
+  const area=l*w, tileSqFt=(sel.w/30.48)*(sel.h/30.48), n=Math.ceil(area*1.1/tileSqFt);
+  $("calcOut").textContent=L.calcOut(n,Math.round(area*10)/10);
+}
+function renderScenes(){
+  const L=T[lang]; $("scenes").innerHTML="";
+  [["living",L.living],["hall",L.hall]].forEach(([k,n])=>{const b=document.createElement("button");b.textContent=n;b.setAttribute("aria-pressed",scene===k);
+    b.onclick=()=>{scene=k;$("gLiving").style.display=k==="living"?"":"none";$("gHall").style.display=k==="hall"?"":"none";renderScenes()};$("scenes").appendChild(b)});
+}
+function renderText(){
+  const L=T[lang]; document.documentElement.lang=lang;
+  $("tag").textContent=L.tag; $("h1").textContent=L.h1; $("lead").textContent=L.lead;
+  $("calcH").textContent=L.calcH; $("calcP").textContent=L.calcP; $("lenL").textContent=L.len; $("widL").textContent=L.wid;
+  $("accH").textContent=L.accH; $("accP").textContent=L.accP; $("howH").textContent=L.howH; $("foot").textContent=L.foot;
+  $("acc").innerHTML=accessories.map(a=>`<div><b>${L.acc[a]}</b></div>`).join("");
+  $("how").innerHTML=L.how.map(([h,p])=>`<div><h3>${h}</h3><p>${p}</p></div>`).join("");
+  const n=$("sampleNote"); const msgs=[]; if(SAMPLE_MODE)msgs.push(L.sampleNote); if(!WHATSAPP)msgs.push(L.noWa);
+  n.hidden=!msgs.length; n.textContent=msgs.join(" ");
+  renderScenes(); renderSpec(); calc(); renderBuilder();
+}
+/* ===== bathroom builder (simple front-view illustration) ===== */
+let bl="bath", bt="builtin", tp="wall", sh="rain";
+const OPTS={bl:["bath","nobath"],bt:["builtin","free","corner"],tp:["wall","deck","floorT"],sh:["rain","hand","both"]};
+const M="#8A9BA2", WH="#F4F7F8", ST="#B9C6CB", WT="#8EC5DA";
+function tapAt(type,x,rim){
+  if(type==="wall")return `<rect x="${x-5}" y="${rim-76}" width="10" height="12" fill="${M}"/><path d="M${x} ${rim-66} v22 q0 10 10 10" stroke="${M}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="${x-26}" cy="${rim-70}" r="8" fill="${M}"/><circle cx="${x+26}" cy="${rim-70}" r="8" fill="${M}"/>`;
+  if(type==="deck")return `<rect x="${x-10}" y="${rim-10}" width="20" height="10" fill="${M}"/><path d="M${x} ${rim-8} V${rim-38} Q${x} ${rim-52} ${x-18} ${rim-48}" stroke="${M}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="${x-40}" cy="${rim-5}" r="6" fill="${M}"/><circle cx="${x+40}" cy="${rim-5}" r="6" fill="${M}"/>`;
+  return `<path d="M${x} 358 V${rim-70} Q${x} ${rim-86} ${x-20} ${rim-82}" stroke="${M}" stroke-width="8" fill="none" stroke-linecap="round"/><ellipse cx="${x}" cy="358" rx="14" ry="4" fill="${M}"/>`;
+}
+function showerAt(sx,type){
+  const rain=()=>{let r=`<rect x="${sx-76}" y="70" width="10" height="190" fill="${M}" opacity=".5"/><path d="M${sx-70} 82 H${sx}" stroke="${M}" stroke-width="7"/><ellipse cx="${sx}" cy="92" rx="36" ry="8" fill="${M}"/>`;
+    for(let i=-3;i<=3;i++)r+=`<line x1="${sx+i*10}" y1="104" x2="${sx+i*10}" y2="${i%2?220:200}" stroke="${WT}" stroke-width="2" stroke-dasharray="6 7"/>`;
+    return r+`<circle cx="${sx-71}" cy="230" r="9" fill="${M}"/>`};
+  const hand=x=>`<rect x="${x-3}" y="100" width="6" height="150" fill="${M}"/><rect x="${x-8}" y="140" width="16" height="10" fill="${M}"/><rect x="${x+8}" y="118" width="11" height="34" rx="5" fill="${M}" transform="rotate(12 ${x+13} 135)"/><path d="M${x} 250 q-28 -10 -8 -60" stroke="${M}" stroke-width="3" fill="none"/>`;
+  if(type==="rain")return rain();
+  if(type==="hand")return hand(sx)+`<circle cx="${sx}" cy="262" r="9" fill="${M}"/>`;
+  return rain()+hand(sx+70);
+}
+function bathSVG(){
+  const tub=bl==="bath"; let o="";
+  if(tub){
+    if(bt==="builtin")o+=`<rect x="50" y="300" width="400" height="60" rx="6" fill="${WH}" stroke="${ST}" stroke-width="3"/><rect x="50" y="300" width="400" height="10" fill="#E3EAEC"/>`;
+    if(bt==="free")o+=`<path d="M60 300 H440 Q452 300 446 332 Q440 352 400 354 H100 Q60 352 54 332 Q48 300 60 300Z" fill="${WH}" stroke="${ST}" stroke-width="3"/><circle cx="100" cy="358" r="7" fill="${M}"/><circle cx="400" cy="358" r="7" fill="${M}"/>`;
+    if(bt==="corner")o+=`<path d="M50 300 H480 L445 360 H50Z" fill="${WH}" stroke="${ST}" stroke-width="3"/><path d="M50 312 H470" stroke="${ST}" stroke-width="2"/>`;
+    o+=showerAt(130,sh)+tapAt(tp,bt==="corner"?250:(tp==="floorT"?410:250),300);
+  } else {
+    o+=`<rect x="50" y="70" width="250" height="290" fill="#9CC7D6" opacity=".18" stroke="#7FB2C4" stroke-width="3"/><rect x="50" y="350" width="250" height="10" fill="${WH}" stroke="${ST}" stroke-width="2"/>`+showerAt(175,sh);
+  }
+  const bx=tub?560:400, wx=tub?690:620;
+  o+=`<rect x="${bx+35}" y="300" width="30" height="60" fill="${WH}" stroke="${ST}" stroke-width="3"/><path d="M${bx} 270 H${bx+100} Q${bx+95} 305 ${bx+50} 305 Q${bx+5} 305 ${bx} 270Z" fill="${WH}" stroke="${ST}" stroke-width="3"/>`;
+  o+=tub?tapAt("deck",bx+50,270):tapAt(tp,tp==="floorT"?bx+125:bx+50,270);
+  o+=`<rect x="${wx+32}" y="226" width="56" height="62" rx="6" fill="${WH}" stroke="${ST}" stroke-width="3"/><circle cx="${wx+60}" cy="238" r="5" fill="${M}"/><path d="M${wx+12} 288 H${wx+98} Q${wx+106} 346 ${wx+66} 353 H${wx+34} Q${wx+4} 346 ${wx+12} 288Z" fill="${WH}" stroke="${ST}" stroke-width="3"/><rect x="${wx+28}" y="350" width="50" height="10" fill="${WH}" stroke="${ST}" stroke-width="2"/>`;
+  return o;
+}
+function drawBath(){
+  $("bsvg").innerHTML=bathSVG();
+  const w=$("bfloor").clientWidth||360, px=Math.max(.6,w/420*.9), f=$("bfloor");
+  f.style.backgroundImage=texture(sel,px); f.style.backgroundSize=`${Math.round(sel.w*px)}px ${Math.round(sel.h*px)}px`;
+}
+function renderBuilder(){
+  const L=T[lang]; $("bH").textContent=L.bH; $("bP").textContent=L.bP; $("bTip").textContent=L.bTip;
+  const c=$("bctl"); c.innerHTML="";
+  const st={bl:()=>bl,bt:()=>bt,tp:()=>tp,sh:()=>sh};
+  ["bl","bt","tp","sh"].forEach(k=>{
+    if(k==="bt"&&bl==="nobath")return;
+    const g=document.createElement("div"); g.className="bgrp"; g.innerHTML=`<span>${L.g[k]}</span>`;
+    OPTS[k].forEach(v=>{const b=document.createElement("button");b.textContent=L.o[v];b.setAttribute("aria-pressed",st[k]()===v);
+      b.onclick=()=>{if(k==="bl")bl=v;if(k==="bt")bt=v;if(k==="tp")tp=v;if(k==="sh")sh=v;renderBuilder()};g.appendChild(b)});
+    c.appendChild(g);
+  });
+  drawBath();
+}
+document.querySelectorAll(".langs button").forEach(b=>b.onclick=()=>{lang=b.dataset.l;document.querySelectorAll(".langs button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderText()});
+$("len").oninput=calc; $("wid").oninput=calc;
+addEventListener("resize",()=>{drawFloor();drawBath()});
+renderStrip(); renderText(); drawFloor();
+
+/* Real products: replace the sample tiles with whatever the shop has published (no prices, ever). */
+BathHubFeed.load({ sampleTiles: tiles, apiBase: API_BASE }).then(r=>{
+  if(r.sample) return;                                   // nothing published yet: keep the samples and SAMPLE_MODE on
+  tiles = r.tiles.map(BathHubFeed.toPageTile);
+  sel = tiles[0]; SAMPLE_MODE = false;
+  renderStrip(); renderText(); drawFloor(); drawBath();
+});
+</script>
+</body>
+</html>
