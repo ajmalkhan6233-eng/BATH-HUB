@@ -13,3 +13,7 @@
   then set DB_NAME=client_slug in .env and restart — the setup wizard appears.
 - NEVER run UPDATE/DELETE on financial tables by hand. NEVER connect a template/dev
   copy to a live client database.
+
+- Encoding: the database MUST be UTF8 (Sinhala and Tamil customer messages and item names). A Windows-default WIN1252
+  database rejects them with "has no equivalent in encoding WIN1252". Create new databases with:
+  CREATE DATABASE name ENCODING 'UTF8' TEMPLATE template0;  (check with: SELECT pg_encoding_to_char(encoding) FROM pg_database;)

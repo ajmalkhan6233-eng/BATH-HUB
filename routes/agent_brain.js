@@ -18,6 +18,7 @@ const { Pool } = require('pg');
 const { classifyAndAnswer } = require('../scripts/layla_answer_engine');
 const {
     checkReply, markPriceIfNeeded, customerText, hasPrice,
+    screenIncoming, markApproval, OVERRIDE_REPLY, INTEREST_REPLY, APPROVAL_SENTENCE,
     INTERNAL_INTENTS, SAFE_REFUSAL, UNKNOWN_REPLY,
 } = require('../utils/agentBrain');
 
@@ -64,11 +65,24 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
     }
 
     // 2-3. Work out the customer-safe reply and why.
-    async function compose(incoming, { allowPrice = false } = {}) {
+    async function compose(incoming, { allowPrice = false, rules = [] } = {}) {
         const steps = [];
+        // The active rules are instructions to the agent, not customer content: their wording must never appear in a reply.
+        const ctx = { dataMissing: false, internalValues: rules.map(r => r.rule_text).filter(t => String(t).length >= 20) };
+
+        // 2a. Screen the customer's message first. Blocked messages never reach the answer engine at all.
+        const screen = screenIncoming(incoming);
+        if (screen.block) {
+            const label = { override: 'an attempt to change the agent\'s rules', internal: 'a request for internal data', interest: 'an interest-based / guaranteed-return request' }[screen.block];
+            steps.push(`BLOCKED: the message is ${label} (${screen.reasons.join('; ')}). It was not sent to the answer engine; the customer gets a polite refusal and nothing was looked up.`);
+            if (screen.block === 'override') steps.push('The rulebook is unchanged by anything a customer writes.');
+            let text = screen.block === 'override' ? OVERRIDE_REPLY : screen.block === 'interest' ? INTEREST_REPLY : SAFE_REFUSAL;
+            if (screen.approval.length) { text = markApproval(text, screen.approval); steps.push(`Also marked "needs Aj approval": ${screen.approval.join('; ')}.`); }
+            return { text, intent: `blocked_${screen.block}`, ctx, steps };
+        }
+
         let answer = null;
         try { answer = await answerFn(pool, incoming); } catch (e) { steps.push(`Answer engine failed (${e.message}): treated as no data.`); }
-        const ctx = { dataMissing: false, internalValues: [] };
         let intent = answer && answer.intent || 'unrecognised';
         let text;
 
@@ -80,7 +94,7 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
             text = SAFE_REFUSAL;
         } else if (answer.intent === 'item_lookup' && answer.data) {
             const d = answer.data;
-            ctx.internalValues = [d.avg_cost];                 // the cost figure must never appear in the reply
+            ctx.internalValues.push(d.avg_cost);               // the cost figure must never appear in the reply
             steps.push(`Found item ${d.item_code} (${d.name}). Using only its name, availability and (if allowed) selling price; the cost is left out.`);
             const avail = d.stock_level > 0 ? 'is available' : 'is out of stock at the moment';
             text = `${d.name} ${avail}.`;
@@ -92,6 +106,12 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
         } else {
             text = UNKNOWN_REPLY; ctx.dataMissing = true;
             steps.push(`Intent "${answer.intent}" has no customer-safe answer: "I don't know".`);
+        }
+        // Discounts, special / bulk prices and credit are Aj's decision: answer politely, promise nothing, mark for Aj.
+        if (screen.approval.length) {
+            text = `${text} ${APPROVAL_SENTENCE}`.replace(/\s+/g, ' ').trim();
+            text = markApproval(text, screen.approval);
+            steps.push(`Marked "needs Aj approval": ${screen.approval.join('; ')}. No discount or special price was offered.`);
         }
         text = markPriceIfNeeded(text);
         if (hasPrice(text)) steps.push('The reply contains a price, so it is marked "needs Aj approval".');
@@ -120,7 +140,7 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
 
             const rules = await loadRules();
             const steps = [`Loaded ${rules.length} active rule(s) from the rulebook${rules.length ? ': ' + rules.map(r => `[${r.topic}] v${r.version}`).join(', ') : ' (the rulebook is empty)'}.`];
-            const c = await compose(incoming, { allowPrice: b.allow_price === true });
+            const c = await compose(incoming, { allowPrice: b.allow_price === true, rules });
             steps.push(...c.steps);
             let result = checkReply(c.text, c.ctx);
             let text = c.text;
@@ -135,7 +155,7 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
                 `INSERT INTO reply_drafts (channel, customer_ref, incoming_text, draft_text, status) VALUES ($1,$2,$3,$4,'draft') RETURNING *`,
                 [channel, clean(b.customer_ref), incoming, text]);
             const check = await saveCheck(d.rows[0].id, 'created', c.intent, rules, steps, result);
-            res.status(201).json({ draft: d.rows[0], customer_text: customerText(text), check });
+            res.status(201).json({ draft: d.rows[0], customer_text: customerText(text), needs_approval: /needs\s+aj\s+approval/i.test(text), check });
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
@@ -150,7 +170,7 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
             const latest = new Map();
             for (const c of checks) latest.set(c.draft_id, c);
             const out = drafts.filter(d => st === 'all' || d.status === st)
-                .map(d => ({ ...d, customer_text: customerText(d.draft_text), check: latest.get(d.id) || null }));
+                .map(d => ({ ...d, customer_text: customerText(d.draft_text), needs_approval: /needs\s+aj\s+approval/i.test(d.draft_text), check: latest.get(d.id) || null }));
             res.json(out);
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
