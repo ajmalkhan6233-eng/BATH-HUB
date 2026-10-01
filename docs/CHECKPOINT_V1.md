@@ -1,6 +1,6 @@
 # Checkpoint: V1 complete (git tags `v1.0` first, `v1.1` final with Salary)
 
-Return to the final state any time: `git checkout v1.1` (the earlier checkpoint is `v1.0`) (look), or `git reset --hard v1.0` on a branch (go back).
+Return to the final state any time: `git checkout v1.1` (to look), or `git reset --hard v1.1` on a branch (to go back). The earlier checkpoint is `v1.0`.
 
 ## What V1 contains
 - **One site:** `/` is the public Bath Hub website; the Owner button opens `/owner` (all business screens, login required). `/nature` and `/app` redirect to `/owner`.
@@ -24,5 +24,5 @@ Return to the final state any time: `git checkout v1.1` (the earlier checkpoint 
 - UNVERIFIED: a real WhatsApp send and the number check against your live WhatsApp (tested with a stand-in bridge only; the bridge was never started here).
 - Website is not online yet (needs hosting, a web address and real tiles).
 - Receipt design is a first version.
-- Salary: sales and returns come from the database (daily_summary, daily_reports); the Lasersoft files folder C:BathcoAI-Data is not on this PC. A "late return" = a refund row recorded after the month was closed.
+- Salary: sales and returns come from the database (daily_summary, daily_reports); the Lasersoft files folder C:\Bathco\AI-Data is not on this PC. A "late return" = a refund row recorded after the month was closed.
 - Accessories pricing rules (1.95x, 10-25%) exist as /api/salary/price-check and are not wired into POS.
