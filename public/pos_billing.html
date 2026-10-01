@@ -121,7 +121,9 @@
     <input type="text" id="customerName" placeholder="Walk-in customer">
 
     <label>Customer phone (optional, for WhatsApp share)</label>
-    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567">
+    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()">
+    <div id="waCheck" class="wa-receipt-msg" role="status"></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send the receipt to the customer's WhatsApp when I press Print</label>
 
     <label>Items</label>
     <div id="itemRows"></div>
@@ -168,7 +170,7 @@
       <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
       <a class="share-btn email" id="emailBtn" href="#">Email</a>
       <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
-      <button class="share-btn print" onclick="window.print()">Print</button>
+      <button class="share-btn print" onclick="printBill()">Print</button>
       <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
     </div>
     <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
@@ -325,13 +327,45 @@ async function generateBill() {
 
 let currentBill = null;
 
+// Is the typed number on WhatsApp? Asked while the cashier types (after a short pause). Sends nothing.
+let _waTimer = null, _waSeq = 0;
+function waCheckSoon() {
+  const out = document.getElementById('waCheck');
+  clearTimeout(_waTimer);
+  const phone = document.getElementById('customerPhone').value.trim();
+  if (phone.replace(/\D/g, '').length < 9) { out.textContent = ''; out.className = 'wa-receipt-msg'; return; }
+  out.textContent = 'Checking WhatsApp…'; out.className = 'wa-receipt-msg';
+  const mine = ++_waSeq;
+  _waTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/invoice-receipts/check-number?phone=' + encodeURIComponent(phone));
+      const d = await r.json().catch(() => ({}));
+      if (mine !== _waSeq) return;
+      if (!r.ok) { out.textContent = d.error || 'Check the number'; out.className = 'wa-receipt-msg err'; }
+      else if (d.registered === true) { out.textContent = '✓ This number is on WhatsApp'; out.className = 'wa-receipt-msg ok'; }
+      else if (d.registered === false) { out.textContent = '✗ This number is NOT on WhatsApp. Check it, or hand over the printed bill.'; out.className = 'wa-receipt-msg err'; }
+      else { out.textContent = 'Could not check WhatsApp right now (it will still try when you print).'; out.className = 'wa-receipt-msg'; }
+    } catch (e) { if (mine === _waSeq) { out.textContent = ''; } }
+  }, 700);
+}
+try { if (localStorage.getItem('pos_auto_wa') === '0') document.getElementById('autoWa').checked = false; } catch (e) {}
+
+// Print the bill and, if the box is ticked and the bill has a phone, send the receipt to the customer's WhatsApp.
+async function printBill() {
+  window.print();
+  if (!currentBill || !document.getElementById('autoWa').checked || !currentBill.customer_phone) return;
+  await sendWhatsAppReceipt(true);
+}
+
 // Sends the designed receipt image for the bill on screen through the WhatsApp bridge.
-async function sendWhatsAppReceipt() {
+// auto = called by Print: never asks questions, never sends twice, and says plainly what happened.
+async function sendWhatsAppReceipt(auto) {
   const msg = document.getElementById('waReceiptMsg');
   const btn = document.getElementById('waReceiptBtn');
   const setMsg = (t, cls) => { msg.textContent = t; msg.className = 'wa-receipt-msg' + (cls ? ' ' + cls : ''); };
   if (!currentBill) return;
   let phone = currentBill.customer_phone;
+  if (!phone && auto) return;
   if (!phone) {
     phone = prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):');
     if (!phone) return;
@@ -345,6 +379,7 @@ async function sendWhatsAppReceipt() {
     });
     let d = await res.json().catch(() => ({}));
     if (res.status === 409 && d.code === 'already_sent') {
+      if (auto) { setMsg('Receipt was already sent to this customer.', 'ok'); return; }
       // Sent before: only send again if the cashier confirms.
       if (!confirm(d.error)) { setMsg('Not sent again.', ''); return; }
       res = await fetch('/api/invoice-receipts/send', {
@@ -431,7 +466,7 @@ async function loadToday() {
     const d = await r.json(), sym = branding.currency_symbol || 'Rs';
     const esc = escapeHtml;
     box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
-      d.bills.map(b => `<tr><td>${esc(b.bill_number.split('-').pop())}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td><a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a></td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+      d.bills.map(b => `<tr><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td><a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a></td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
   } catch (e) { box.textContent = ''; }
 }
 
@@ -441,6 +476,7 @@ function resetForm() {
   addItemRow();
   document.getElementById('customerName').value = '';
   document.getElementById('customerPhone').value = '';
+  document.getElementById('waCheck').textContent = '';
   document.getElementById('discountPct').value = 0;
   updateCapHint();
   document.getElementById('formPanel').style.display = 'block';

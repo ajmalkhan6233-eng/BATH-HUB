@@ -255,6 +255,16 @@ async function linkBill(bill, phoneRaw, nameRaw) {
     return { rec, customer_created: cust.created };
 }
 
+// Is the number on WhatsApp? true / false, or null when we cannot tell (bridge down or an older bridge): the caller
+// then still tries to send, exactly as before. Asks the bridge; sends nothing.
+async function isOnWhatsApp(phone) {
+    const bridgeUrl = (process.env.WHATSAPP_API_URL || 'http://localhost:3001/send').replace(/\/send\/?$/, '/check');
+    try {
+        const r = await axios.post(bridgeUrl, { to: phone }, { timeout: 8000 });
+        return typeof (r.data && r.data.registered) === 'boolean' ? r.data.registered : null;
+    } catch (e) { return null; }
+}
+
 // Called by pos_bills.js right after a bill with a phone is saved (best effort there).
 async function attachCustomer(billId) {
     const bill = await findBill({ bill_id: billId });
@@ -285,6 +295,14 @@ router.get('/invoice-receipts', async (req, res) => {
         res.json(r.rows.map(x => ({ id: x.id, bill_id: x.bill_id, bill_number: x.invoice_no, customer_name: x.customer_name,
             customer_phone: x.customer_phone, status: x.status, last_error: x.last_error, sent_at: x.sent_at })));
     } catch (e) { fail(res, e, 'Could not load receipt status'); }
+});
+
+// Live check while the cashier types the number: { registered: true | false | null (cannot tell) }.
+router.get('/invoice-receipts/check-number', async (req, res) => {
+    try {
+        const phone = normalizePhone(req.query.phone);
+        res.json({ phone, registered: await isOnWhatsApp(phone) });
+    } catch (e) { fail(res, e, 'Could not check the number'); }
 });
 
 // Preview the receipt image without sending anything.
@@ -322,6 +340,11 @@ router.post('/invoice-receipts/send', async (req, res) => {
             });
         }
 
+        // No WhatsApp on that number: say so plainly and send nothing.
+        if (await isOnWhatsApp(rec.customer_phone) === false) {
+            throw httpError(422, `${rec.customer_phone} is not on WhatsApp. Check the number, or give the customer the printed bill.`);
+        }
+
         const data = receiptData(bill, rec);
         const out = await renderReceipt(data);
         const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
@@ -349,3 +372,4 @@ router.post('/invoice-receipts/send', async (req, res) => {
 module.exports = router;
 module.exports.normalizePhone = normalizePhone;
 module.exports.attachCustomer = attachCustomer;
+module.exports.isOnWhatsApp = isOnWhatsApp;

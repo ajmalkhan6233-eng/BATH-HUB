@@ -238,6 +238,20 @@ app.post('/send', async (req, res) => {
     }
 });
 
+// Is this number on WhatsApp? POST { to } -> { registered: true|false }. Used before a receipt is sent, so a
+// number that has no WhatsApp is told to the cashier instead of silently failing. Sends nothing.
+app.post('/check', async (req, res) => {
+    const digits = String((req.body && req.body.to) || '').replace(/\D/g, '');
+    if (!digits) return res.status(400).json({ error: 'to required' });
+    if (!ready) return res.status(503).json({ error: 'WhatsApp not linked yet — scan the QR code first' });
+    try {
+        const id = await client.getNumberId(digits);
+        res.json({ registered: !!id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/qr', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     if (ready) {

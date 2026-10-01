@@ -29,6 +29,8 @@ app.use('/api', router);
 const send = body => request(app).post('/api/invoice-receipts/send').send(body);
 const status = id => db.many(`SELECT status FROM invoice_receipts WHERE bill_id = ${id}`)[0].status;
 
+// the WhatsApp check also goes through axios: count only the real sends
+const sends = () => axios.post.mock.calls.filter(c => /\/send$/.test(c[0]));
 beforeEach(() => axios.post.mockClear());
 
 describe('receipt resend guard', () => {
@@ -36,24 +38,24 @@ describe('receipt resend guard', () => {
     const r = await send({ bill_id: 1 });
     expect(r.status).toBe(409);
     expect(r.body.code).toBe('already_sent');
-    expect(axios.post).not.toHaveBeenCalled();
+    expect(sends()).toHaveLength(0);
     expect(status(1)).toBe('sent');                 // the guard must not flip it to 'failed'
   });
 
   test('with resend: true it is sent again', async () => {
     const r = await send({ bill_id: 1, resend: true });
     expect(r.status).toBe(200);
-    expect(axios.post).toHaveBeenCalledTimes(1);
-    expect(axios.post.mock.calls[0][1].to).toBe('94771234567');
+    expect(sends()).toHaveLength(1);
+    expect(sends()[0][1].to).toBe('94771234567');
   });
 
   test('a not-yet-sent receipt sends normally, and only once per click', async () => {
     const r = await send({ bill_id: 2 });
     expect(r.status).toBe(200);
     expect(status(2)).toBe('sent');
-    expect(axios.post).toHaveBeenCalledTimes(1);
+    expect(sends()).toHaveLength(1);
     expect((await send({ bill_id: 2 })).status).toBe(409);   // the second tap is caught
-    expect(axios.post).toHaveBeenCalledTimes(1);
+    expect(sends()).toHaveLength(1);
   });
 
   test('a failed receipt can be retried without resend', async () => {
