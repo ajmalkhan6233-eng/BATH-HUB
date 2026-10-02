@@ -922,7 +922,7 @@ table tr:last-child td{border-bottom:none}
 /* ─────────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────────── */
-const TARGET = 100000; // daily sales target for the gauge — set to your business's target
+let TARGET = 100000; // daily sales target for the gauge: replaced by the Admin Settings value (dashboard_sales_target) after login
 let charts = {};
 let _invoices = [];   // cached for filter
 let _stock = [];
@@ -1480,6 +1480,42 @@ function routeFromHash() {
 window.addEventListener('popstate', routeFromHash);
 window.addEventListener('hashchange', routeFromHash);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+
+/* Admin Settings -> shop name, dashboard target, menu hide/show/order. Admin-only screens are added for admins. */
+const ADMIN_FRAMES = [
+  { key: 'adminsettings', label: 'Admin Settings', icon: '⚙️', url: '/admin_settings.html', sub: 'Shop, targets, WhatsApp switch, feature flags, menu' },
+  { key: 'corrections', label: 'Edit & Void', icon: '✏️', url: '/admin_corrections.html', sub: 'Fix or void vendors, stock, items, commissions, staff, cheques, discount rules' },
+];
+async function applyAppSettings() {
+  try {
+    const me = await fetch('/api/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null);
+    if (me && me.role === 'admin' && !document.getElementById('admin-sep')) {
+      const sep = document.createElement('li'); sep.id = 'admin-sep'; sep.className = 'nav-sep'; sep.textContent = 'Admin';
+      document.querySelector('.sidebar-nav').appendChild(sep);
+      ADMIN_FRAMES.forEach(addFramePage);
+    }
+    const [s, m] = await Promise.all([
+      fetch('/api/app-settings/public', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/menu-config', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null)]);
+    if (s) {
+      if (Number(s.dashboard_sales_target) > 0) {
+        TARGET = Number(s.dashboard_sales_target);
+        const tl = document.getElementById('target-label'); if (tl) tl.textContent = 'LKR ' + TARGET.toLocaleString() + ' target';
+      }
+      if (s.shop_name) { const lt = document.querySelector('.logo-text'); if (lt) lt.textContent = s.shop_name; document.title = s.shop_name + ' — Owner'; }
+    }
+    if (Array.isArray(m) && m.length) {
+      const ul = document.querySelector('.sidebar-nav');
+      m.slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).forEach(row => {
+        const li = ul.querySelector('.nav-item[data-page="' + row.item_key + '"]'); if (!li) return;
+        if (row.label) li.querySelector('.nav-label').textContent = row.label;
+        li.style.display = row.visible === false ? 'none' : '';
+        ul.appendChild(li);                                    // in saved order; items not in the list keep their place at the end
+      });
+      const sep = document.getElementById('admin-sep'); if (sep) { ul.appendChild(sep); ADMIN_FRAMES.forEach(f => { const li = ul.querySelector('.nav-item[data-page="' + f.key + '"]'); if (li) ul.appendChild(li); }); }
+    }
+  } catch (e) { /* settings are a nicety: the app works without them */ }
+}
 
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
@@ -2385,6 +2421,7 @@ async function loadReport() {
    INIT APP (called after login)
 ───────────────────────────────────────────── */
 async function initApp() {
+  applyAppSettings();
   if (/^#\/[\w-]+/.test(location.hash)) setTimeout(routeFromHash, 400);        // open the page named in the address
   // Load the most recent date that has actual data
   const latestDay = await api('/api/daily-summary?latest=1');

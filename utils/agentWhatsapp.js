@@ -10,7 +10,15 @@
 const MAX_DRAFTS_PER_HOUR = 30;   // flood guard per customer number
 
 const digitsOf = v => String(v == null ? '' : v).replace(/\D/g, '');
-const isDraftOnly = () => String(process.env.AGENT_DRAFT_ONLY).toLowerCase() === 'true';
+// The admin switch (Admin Settings, key whatsapp_draft_only) wins over the .env value once watchDbSwitch(pool) is running.
+let _dbSwitch = null;
+const isDraftOnly = () => _dbSwitch !== null ? _dbSwitch : String(process.env.AGENT_DRAFT_ONLY).toLowerCase() === 'true';
+function watchDbSwitch(pool) {
+    const { getBool } = require('./appSettings');
+    const read = () => pool.query(`SELECT value FROM app_settings WHERE key = 'whatsapp_draft_only'`)
+        .then(r => { _dbSwitch = r.rows.length ? (r.rows[0].value === true || r.rows[0].value === 'true') : null; }).catch(() => {});
+    read(); setInterval(read, 5000).unref();
+}
 const ownerDigits = () => digitsOf(process.env.WHATSAPP_TEST_WHITELIST);
 const isOwner = phone => { const o = ownerDigits(); return !!o && digitsOf(phone) === o; };
 
@@ -39,4 +47,4 @@ async function draftOnly({ phone, text, isVoiceNote = false, brain, notify }) {
     }
 }
 
-module.exports = { draftOnly, isDraftOnly, isOwner, canSendPapers, MAX_DRAFTS_PER_HOUR };
+module.exports = { watchDbSwitch, draftOnly, isDraftOnly, isOwner, canSendPapers, MAX_DRAFTS_PER_HOUR };

@@ -24,6 +24,7 @@ const { runCheck: runReconCheck } = require('./scripts/daily_reconciliation_chec
 // table ownership (or ALTER privileges) with it, otherwise every line below
 // fails invisibly.
 pool.query(`ALTER TABLE cheques ADD COLUMN IF NOT EXISTS payee VARCHAR(150)`).catch(()=>{});
+pool.query(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS details JSONB DEFAULT '{}'::jsonb`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS cheq_payment NUMERIC(14,2) DEFAULT 0`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS photo_data JSONB DEFAULT NULL`).catch(()=>{});
@@ -552,6 +553,7 @@ app.use('/api', require('./routes/shop_operations'));     // routes are relative
 app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
+app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
@@ -723,6 +725,7 @@ function sanitizeText(input, maxLen = 4000) {
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
 const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
 const agentWhatsapp = require('./utils/agentWhatsapp');
+agentWhatsapp.watchDbSwitch(pool);   // the Admin Settings switch (app_settings.whatsapp_draft_only) overrides AGENT_DRAFT_ONLY
 const documentInbox = require('./routes/document_inbox');
 const getInbox = documentInbox.getInbox;
 // Filing a daily/expense sheet from the Document Inbox goes through exactly the same careful merge as the WhatsApp YES reply
