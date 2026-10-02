@@ -17,6 +17,7 @@ const QRCode = require('qrcode');
 const axios = require('axios');
 const { processMessage, alertOwner, getOrCreateCustomer, pool } = require('./layla');
 const { ensureVoids, notVoided } = require('./utils/voids');
+const { registerLogin } = require('./utils/sessionCap');
 const { runCheck: runReconCheck } = require('./scripts/daily_reconciliation_check');
 
 // Idempotent schema migrations
@@ -154,7 +155,7 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 // Railway's health probe is unaffected.
 app.use(rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    limit: 300,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests — please try again later.' },
@@ -163,7 +164,12 @@ app.use(rateLimit({
     // source, so this doesn't weaken what the limit is actually for (the
     // public ngrok/Railway-facing surface). Added after local automated test
     // traffic tripped the limit.
-    skip: (req) => req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1',
+    // 2026-10-02: a phone on the shop Wi-Fi loads dozens of files and screens per visit and was locked out (429 on everything,
+    // login included). Devices on the shop's own network (private addresses) are not counted, and neither are plain
+    // files (scripts, styles, fonts, pages). Public addresses (e.g. through a tunnel) are still limited, per API call.
+    // The failed-login (10) and PIN (5) limits below are NOT affected.
+    skip: (req) => /^(::ffff:)?(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(req.ip || '') || req.ip === '::1' || /^fe80:/i.test(req.ip || '')
+        || (req.method === 'GET' && !req.path.startsWith('/api/')),
 }));
 
 app.use(session({
@@ -319,6 +325,7 @@ app.post('/api/login', async (req, res) => {
             return res.json({ ok: true, needs_totp: true });
         }
         req.session.user = { id: user.id, username: user.username, name: user.name, role: user.role, staff_id: user.staff_id };
+        await registerLogin(req, pool, user.id);           // several devices at once: keep the newest 5, quietly drop older ones
         logLoginAttempt(username, true, ip, null);
         res.json({ ok: true, user: req.session.user });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -345,6 +352,7 @@ app.post('/api/auth/verify-totp', async (req, res) => {
         }
         req.session.user = pa;
         delete req.session.partial_auth;
+        await registerLogin(req, pool, pa.id);
         logLoginAttempt(pa.username, true, ip, null);
         res.json({ ok: true, user: req.session.user });
     } catch (e) { res.status(500).json({ error: e.message }); }
