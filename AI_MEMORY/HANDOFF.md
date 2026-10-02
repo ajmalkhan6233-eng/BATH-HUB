@@ -1,11 +1,9 @@
-# HANDOFF (2026-10-02)
+# HANDOFF (2026-10-02, evening)
 
-- Owner server is LIVE ON THIS LAPTOP: pm2 app apex-server, port 3100, run from this folder (local_ops/ecosystem.local.config.js, gitignored). Always `pm2 ... --only apex-server`.
-- DB: PostgreSQL 18 Windows service (5432), database bathco_owner, own user. Credentials only in .env + .pg_owner_superpw (both gitignored). Zero data; only structure rows (feature flags, agent rules, salary settings, chart of accounts).
-- Aj has not yet created his owner login: /owner redirects to /setup.html until he does. ADMIN_PIN was shown to Aj once (not stored here).
-- Backups: local_ops/backup_owner_db.ps1 (PG18 pg_dump) -> backups/, task Apex_Owner_DB_Backup daily 23:00, keeps 14. Logon start: task Apex_Owner_Server_Start (pm2 resurrect).
-- bathco_test (port 5433, temp embedded process) was wiped 2026-10-02 with NO backup (pg_dump v16 mismatch); it is throwaway, rebuild via scripts/dev.
-- Sidebar now links Investor Loans, Money Control, Sale Commissions, Settings. Bridge fix from investor branch merged.
-- Tests: 17 failed / 1319 passed (baseline 17, not grown).
-- Next: Aj restarts laptop -> check /health and /owner return by themselves; Aj completes setup wizard.
-- UNVERIFIED: reboot survival, real WhatsApp send, website not online.
+- Owner server LIVE on this laptop: pm2 apex-server :3100 (always `--only apex-server`). DB = PostgreSQL 18 service, db bathco_owner. Secrets only in .env + .pg_owner_superpw (gitignored). Zero data except structure rows.
+- Aj has NOT yet created his owner login (/owner -> /setup.html). ADMIN_PIN was shown once in chat.
+- DONE this round (pushed, master e2b218c): sidebar fits + scrolls, all 26 links open in-shell (tested 1366x768); POS bill correction (owner-only Void/Edit, history + voids tables, VOID excluded from totals; API 24/24 + UI checked).
+- QUEUED (Aj approved, not started): Salary key-money/target 18,000 + dashboard savings card; verify Loans page; attachments widget (photo/upload/download, table attachments); OFFLINE mode (read docs OFFLINE_LEDGER_V2_RESUME.md first; queue + sync_log; Phase B doc only).
+- Backups: local_ops/backup_owner_db.ps1, daily 23:00 task, keeps 14. Test instance (port 3199, DB bathco_test on 5433 temp process) is for testing only; it rewrites config/active.branding.json -> always `git checkout -- config/active.branding.json` after.
+- Tests: top-level tests = only rotating flaky failures under load; whole-repo count 17-20 varies (worktree copies under .claude/ are counted too).
+- UNVERIFIED: non-owner gets 403 on void/edit (code only), reboot survival of pm2 (screenshot showed resurrect worked), real WhatsApp.
