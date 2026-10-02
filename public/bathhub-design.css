@@ -84,14 +84,15 @@ a { color:var(--gold-text); }
 /* ---- 4. TOUCH TARGETS: at least 48 x 48 ---- */
 button, .btn, [role="button"], [role="tab"], .tab, .tab-btn, .nav-item, .nav-link, .mini-btn, .theme-toggle, summary,
 input[type="button"], input[type="submit"], a.btn, a.share-btn, .share-btn, .remove-btn, .generate-btn {
-  min-height:var(--touch-target); min-width:var(--touch-target);
+  min-height:var(--touch-target) !important; min-width:var(--touch-target) !important;   /* hard rule: a page's own smaller size must not win */
   font-family:inherit; font-size:max(14px, 1em);
 }
 select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="file"]) {
-  min-height:var(--touch-target); font-family:inherit; font-size:max(15px, 1em);
+  min-height:var(--touch-target) !important; font-family:inherit; font-size:max(15px, 1em);
   color:var(--text-primary); background-color:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
 }
-textarea { min-height:96px; }
+textarea { min-height:96px !important; }
+input[type="color"] { min-height:var(--touch-target) !important; min-width:var(--touch-target) !important; padding:4px; }
 select:focus, textarea:focus, input:focus { outline:none; border-color:var(--border-focus); box-shadow:0 0 0 3px var(--gold-bg-subtle); }
 input[type="checkbox"], input[type="radio"] { width:24px; height:24px; accent-color:var(--gold-primary); cursor:pointer; vertical-align:middle; }
 label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display:inline-flex; align-items:center; gap:var(--space-2); min-height:var(--touch-target); cursor:pointer; }
