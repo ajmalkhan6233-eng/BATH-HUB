@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/credit');</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,18 +12,19 @@
 h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
-button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+button.gold{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}@media(max-width:520px){.kpis{grid-template-columns:1fr}}
 .kpi .v{font-size:20px;font-weight:700}.kpi .l{color:var(--text2);font-size:12px}
-.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:13px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:14px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
 .badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
 .b-current,.b-settled{color:var(--green)}.b-61-90{color:var(--amber)}.b-90{color:var(--red)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
 .modal.show{display:flex}.box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:440px;max-height:85vh;overflow:auto}
 label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
 .acts{display:flex;gap:6px;margin-top:12px}#msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.meta{color:var(--text2);font-size:12px}
-</style></head><body>
+</style><link rel="stylesheet" href="/bathhub-design.css">
+</head><body>
 <h1>Credit and Aging</h1><div class="sub">Money customers owe. Age counts days past the due date. Outstanding = amount minus paid.</div>
 <div class="bar"><button class="gold" id="add">+ Add credit entry</button><button id="reload">Refresh</button><label style="margin:0"><input type="checkbox" id="settled" style="width:auto"> show settled</label></div>
 <div id="msg"></div>
