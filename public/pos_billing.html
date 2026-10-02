@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/pos');   // one app: opened on its own -> open it inside /owner</script>
 <meta charset="UTF-8">
@@ -15,100 +16,100 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, Segoe UI, Arial, sans-serif;
-    margin: 0; padding: 24px; background: #f4f1ea; color: var(--earth-800);
+    margin: 0; padding: 24px; background:var(--bg-canvas); color:var(--text-primary);
   }
   .wrap { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
   @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
 
-  .panel { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  h1 { font-size: 20px; color: var(--emerald-900); margin: 0 0 4px; }
-  .sub { color: var(--earth-500); font-size: 13px; margin-bottom: 18px; }
+  .panel { background:var(--bg-surface); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  h1 { font-size:20px; color:var(--text-primary); margin: 0 0 4px; }
+  .sub { color:var(--text-muted); font-size:14px; margin-bottom: 18px; }
 
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--earth-700); margin: 10px 0 4px; }
-  input, select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+  label { display: block; font-size:12px; font-weight: 600; color:var(--text-secondary); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 8px 10px; border:1px solid var(--border-subtle); border-radius: 6px; font-size:14px; }
 
   .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
   .item-row input { margin: 0; }
-  .remove-btn { background: none; border: none; color: #b23b3b; font-size: 18px; cursor: pointer; padding: 4px; }
-  .cap-hint { font-size: 12px; margin-top: 4px; color: var(--earth-500); }
-  .cap-hint.warn { color: #b23b3b; font-weight: 700; }
+  .remove-btn { background: none; border: none; color:var(--status-danger); font-size:18px; cursor: pointer; padding: 4px; }
+  .cap-hint { font-size:12px; margin-top: 4px; color:var(--text-muted); }
+  .cap-hint.warn { color:var(--status-danger); font-weight: 700; }
   .today { margin-top: 18px; }
-  .today h2 { font-size: 15px; color: var(--emerald-900); margin: 0 0 6px; }
-  .today table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .today th, .today td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #eee; }
+  .today h2 { font-size:15px; color:var(--text-primary); margin: 0 0 6px; }
+  .today table { width: 100%; border-collapse: collapse; font-size:14px; }
+  .today th, .today td { text-align: left; padding: 5px 4px; border-bottom:1px solid var(--border-subtle); }
   .today td.num, .today th.num { text-align: right; }
-  .today .flag { color: #b26a00; font-size: 11px; }
-  .today tr.void td { color: #999; text-decoration: line-through; background: #f4f4f4; }
+  .today .flag { color:var(--status-warning); font-size:12px; }
+  .today tr.void td { color:var(--text-muted); text-decoration: line-through; background:var(--bg-surface-elevated); }
   .today tr.void td:last-child, .today tr.void td .void-tag { text-decoration: none; }
-  .void-tag { display: inline-block; background: #b3261e; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
-  .today .mini-btn { font-size: 12px; padding: 2px 8px; margin-left: 4px; border: 1px solid #c9bfae; background: #fff; border-radius: 6px; cursor: pointer; }
-  .today .mini-btn.danger { color: #b3261e; border-color: #b3261e; }
-  .edit-banner { background: #fff4d6; border: 1px solid #e0b84a; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 13px; display: none; }
+  .void-tag { display: inline-block; background:var(--status-danger); color: #fff; font-size:12px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+  .today .mini-btn { font-size:12px; padding: 2px 8px; margin-left: 4px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius: 6px; cursor: pointer; }
+  .today .mini-btn.danger { color:var(--status-danger); border-color:var(--status-danger); }
+  .edit-banner { background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size:14px; display: none; }
   /* item picker */
   .pick-wrap { position: relative; }
-  .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background: #fff; border: 1px solid #ccc; border-radius: 6px;
+  .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background:var(--bg-surface); border:1px solid var(--border-strong); border-radius: 6px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.15); max-height: 260px; overflow-y: auto; }
   .pick-list.open { display: block; }
-  .pick-opt { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0ece4; }
+  .pick-opt { padding: 8px 10px; cursor: pointer; border-bottom:1px solid var(--border-subtle); }
   .pick-opt:last-child { border-bottom: none; }
-  .pick-opt.active, .pick-opt:hover { background: #f3efe6; }
-  .pick-opt b { display: block; font-size: 14px; color: var(--emerald-900); }
-  .pick-opt span { font-size: 12px; color: var(--earth-500); }
-  .stock-hint { font-size: 11px; margin-top: 3px; min-height: 0; }
-  .stock-hint.ok { color: #2e7d32; } .stock-hint.low { color: #b26a00; } .stock-hint.out, .stock-hint.over { color: #b23b3b; font-weight: 700; }
+  .pick-opt.active, .pick-opt:hover { background:var(--bg-surface-elevated); }
+  .pick-opt b { display: block; font-size:14px; color:var(--text-primary); }
+  .pick-opt span { font-size:12px; color:var(--text-muted); }
+  .stock-hint { font-size:12px; margin-top: 3px; min-height: 0; }
+  .stock-hint.ok { color:var(--status-success); } .stock-hint.low { color:var(--status-warning); } .stock-hint.out, .stock-hint.over { color:var(--status-danger); font-weight: 700; }
   .add-btn {
-    background: var(--emerald-800); color: #fff; border: none; border-radius: 6px;
-    padding: 8px 14px; font-size: 13px; cursor: pointer; margin-top: 4px;
+    background:var(--gold-primary); color:var(--text-on-accent); border: none; border-radius: 6px;
+    padding: 8px 14px; font-size:14px; cursor: pointer; margin-top: 4px;
   }
-  .add-btn:hover { background: var(--emerald-700); }
+  .add-btn:hover { background:var(--gold-primary); }
 
   .generate-btn {
-    width: 100%; margin-top: 18px; background: var(--gold-500); color: var(--emerald-900);
-    border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+    width: 100%; margin-top: 18px; background:var(--gold-primary); color:var(--text-primary);
+    border: none; border-radius: 8px; padding: 12px; font-size:15px; font-weight: 700; cursor: pointer;
   }
-  .generate-btn:hover { background: var(--gold-400); }
+  .generate-btn:hover { background:var(--gold-primary); }
   .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .err { color: #b23b3b; font-size: 13px; margin-top: 8px; display: none; }
+  .err { color:var(--status-danger); font-size:14px; margin-top: 8px; display: none; }
 
   /* Bill preview (receipt style) */
   #billPanel { display: none; }
   .receipt {
-    background: #fff; border: 1px dashed #ccc; border-radius: 8px; padding: 18px;
-    font-family: 'Courier New', monospace; font-size: 12.5px; color: #111;
+    background:var(--bg-surface); border:1px dashed var(--border-strong); border-radius: 8px; padding: 18px;
+    font-family: 'Courier New', monospace; font-size:14px; color:var(--text-primary);
   }
   .receipt .logo-row { text-align: center; margin-bottom: 6px; }
   .receipt .logo-row svg { width: 64px; height: 64px; }
-  .receipt .shop-name { text-align: center; font-weight: 700; font-size: 15px; color: var(--emerald-900); }
-  .receipt .shop-tagline { text-align: center; font-size: 10.5px; color: var(--earth-500); margin-bottom: 8px; }
+  .receipt .shop-name { text-align: center; font-weight: 700; font-size:15px; color:var(--text-primary); }
+  .receipt .shop-tagline { text-align: center; font-size:12px; color:var(--text-muted); margin-bottom: 8px; }
   .receipt hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
   .receipt .row { display: flex; justify-content: space-between; }
   .receipt .items .row { margin-bottom: 2px; }
   .receipt .totals .row { margin-top: 2px; }
-  .receipt .discount-line { color: var(--earth-500); }
-  .receipt .grand-total { font-weight: 700; font-size: 14px; color: var(--emerald-900); }
-  .receipt .footer { text-align: center; margin-top: 10px; font-size: 10.5px; color: var(--earth-500); }
+  .receipt .discount-line { color:var(--text-muted); }
+  .receipt .grand-total { font-weight: 700; font-size:14px; color:var(--text-primary); }
+  .receipt .footer { text-align: center; margin-top: 10px; font-size:12px; color:var(--text-muted); }
 
   .share-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
   .share-btn {
     display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 10px; border-radius: 6px; border: none; font-size:14px; font-weight: 600; cursor: pointer;
     text-decoration: none; color: #fff;
   }
   .share-btn.whatsapp { background: #25D366; }
   .share-btn.email { background: #4a5a6a; }
-  .share-btn.download { background: var(--emerald-800); }
+  .share-btn.download { background:var(--gold-primary); }
   .share-btn.print { background: var(--earth-700); }
   .share-btn:hover { filter: brightness(0.95); }
   .share-btn.wa-receipt { grid-column: 1 / -1; background: #128C7E; }
   .share-btn:disabled { opacity: .6; cursor: default; }
-  .wa-receipt-msg { margin-top: 8px; font-size: 12.5px; min-height: 16px; color: var(--earth-700); }
+  .wa-receipt-msg { margin-top: 8px; font-size:14px; min-height: 16px; color:var(--text-secondary); }
   .wa-receipt-msg.err { color: #b42318; }
   .wa-receipt-msg.ok { color: #067647; }
 
   .new-bill-btn {
-    width: 100%; margin-top: 10px; background: none; border: 1px solid #ccc; color: var(--earth-700);
-    border-radius: 6px; padding: 8px; font-size: 13px; cursor: pointer;
+    width: 100%; margin-top: 10px; background: none; border:1px solid var(--border-strong); color:var(--text-secondary);
+    border-radius: 6px; padding: 8px; font-size:14px; cursor: pointer;
   }
 
   @media print {
@@ -117,6 +118,7 @@
     .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
   }
 </style>
+<link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
 
@@ -442,7 +444,7 @@ function renderBill(bill) {
 
   document.getElementById('formPanel').style.display = 'none';
   document.getElementById('billPanel').style.display = 'block';
-  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:#8b6f47">Attach a photo or file to this bill</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
+  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Attach a photo or file to this bill</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
 }
 
 // wa.me needs the full international number, no leading 0 and no '+'.
@@ -484,7 +486,7 @@ async function loadToday() {
     const d = await r.json(), sym = branding.currency_symbol || 'Rs';
     const esc = escapeHtml;
     box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}${d.bills.some(b => b.voided) ? ' <span class="sub">(void bills not counted)</span>' : ''}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
-      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a> <button type="button" class="mini-btn" title="Photos and files" onclick="toggleBillFiles(${b.id}, this)">📎</button>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a> <button type="button" class="mini-btn" title="Photos and files" onclick="toggleBillFiles(${b.id}, this)"><svg class="bh-icon" aria-hidden="true"><use href="#i-paperclip"/></svg></button>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
   } catch (e) { box.textContent = ''; }
 }
 

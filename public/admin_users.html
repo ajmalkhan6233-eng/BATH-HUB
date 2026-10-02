@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Users</title>
 <style>
 :root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444}
@@ -8,18 +9,19 @@
 h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
-button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}button.danger{color:var(--red)}
+button.gold{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}button.danger{color:var(--red)}
 button:disabled{opacity:.4;cursor:not-allowed}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
 .row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.name{font-weight:600}.meta{color:var(--text2);font-size:12px;margin-top:2px}
 .badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
 .on{color:var(--green)}.off{color:var(--red)}.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:14px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
 .modal.show{display:flex}.box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:440px;max-height:85vh;overflow:auto}
 label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
 #msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}
-</style></head><body>
+</style><link rel="stylesheet" href="/bathhub-design.css">
+</head><body>
 <h1>Users</h1><div class="sub">Admin only. Add people, change roles, disable, reset passwords, sign people out.</div>
 <div class="bar"><button class="gold" id="add">+ Add user</button><button id="reload">Refresh</button><a href="admin_audit.html" style="color:var(--gold)">Audit log</a></div>
 <div id="msg"></div><div id="list"></div>

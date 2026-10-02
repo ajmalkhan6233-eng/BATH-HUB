@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/moneycontrol');   // one app: opened on its own -> open it inside /owner</script>
 <meta charset="UTF-8">
@@ -33,7 +34,7 @@
     padding-bottom:60px;
   }
   header{
-    background:var(--emerald-900);
+    background:var(--gold-primary);
     color:var(--stone-50);
     padding:20px 20px;
   }
@@ -44,13 +45,13 @@
   }
   header .date{
     color:var(--gold-300);
-    font-size:13px;
+    font-size:14px;
     margin-top:4px;
   }
   main{max-width:720px;margin:0 auto;padding:20px 16px;}
 
   .card{
-    background:#fff;
+    background:var(--bg-surface);
     border:1px solid #e2dccb;
     border-radius:var(--radius);
     padding:20px;
@@ -60,24 +61,24 @@
     font-size:15px;
     text-transform:none;
     margin:0 0 14px;
-    color:var(--earth-800);
+    color:var(--text-primary);
   }
   .big-number{
     font-size:34px;
     font-weight:700;
-    color:var(--emerald-900);
+    color:var(--text-primary);
   }
   .sub{
-    font-size:13px;
-    color:var(--earth-500);
+    font-size:14px;
+    color:var(--text-muted);
   }
 
   .mode-row{
     display:flex;justify-content:space-between;align-items:center;
-    padding:8px 0;border-bottom:1px solid #f0ece0;
+    padding:8px 0;border-bottom:1px solid var(--border-subtle);
   }
   .mode-row:last-child{border-bottom:none;}
-  .mode-row label{font-size:14px;color:var(--earth-700);}
+  .mode-row label{font-size:14px;color:var(--text-secondary);}
   .mode-row input{
     width:120px;text-align:right;
     padding:6px 8px;border:1px solid #d8d0bd;border-radius:4px;
@@ -85,7 +86,7 @@
   }
   .total-row{
     display:flex;justify-content:space-between;
-    margin-top:12px;padding-top:12px;border-top:2px solid var(--earth-800);
+    margin-top:12px;padding-top:12px;border-top:2px solid var(--border-strong);
     font-weight:700;font-size:16px;
   }
 
@@ -96,34 +97,35 @@
     padding:14px 16px;margin-bottom:10px;
   }
   .alert .title{color:var(--red-600);font-weight:700;font-size:14px;}
-  .alert .detail{font-size:13px;color:var(--earth-800);margin-top:4px;}
+  .alert .detail{font-size:14px;color:var(--text-primary);margin-top:4px;}
 
   .list-row{
     display:flex;justify-content:space-between;align-items:baseline;
-    padding:10px 0;border-bottom:1px solid #f0ece0;font-size:14px;
+    padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:14px;
   }
   .list-row:last-child{border-bottom:none;}
   .list-row .name{color:var(--ink);}
-  .list-row .amt{color:var(--earth-800);font-weight:600;}
-  .list-row .meta{font-size:12px;color:var(--earth-500);display:block;}
+  .list-row .amt{color:var(--text-primary);font-weight:600;}
+  .list-row .meta{font-size:12px;color:var(--text-muted);display:block;}
   .held-strike{text-decoration:line-through;color:#b0a894;}
 
-  .empty{color:var(--earth-500);font-size:13px;font-style:italic;}
+  .empty{color:var(--text-muted);font-size:14px;font-style:italic;}
 
   .btn{
-    background:var(--gold-500);color:var(--emerald-900);
+    background:var(--gold-primary);color:var(--text-primary);
     border:none;border-radius:4px;padding:8px 16px;
-    font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;
+    font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;
   }
-  .btn:hover{background:var(--gold-300);}
+  .btn:hover{background:var(--gold-primary);}
 
   .refresh{
     position:fixed;bottom:16px;right:16px;
-    background:var(--emerald-900);color:#fff;
+    background:var(--gold-primary);color:var(--text-on-accent);
     border:none;border-radius:24px;padding:12px 20px;
-    font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2);
   }
 </style>
+<link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
 
@@ -135,8 +137,8 @@
 <main>
 <div data-attach="money_control" data-attach-id="@month"></div>
 
-  <div class="card" style="border:2px solid var(--emerald-900);">
-    <h2 style="color:var(--emerald-900);margin:0;">Rule #1 — a cheque must never bounce or return</h2>
+  <div class="card" style="border:2px solid var(--border-strong);">
+    <h2 style="color:var(--text-primary);margin:0;">Rule #1 — a cheque must never bounce or return</h2>
     <div class="sub" style="margin-top:4px;">Pay early. Money has to be settled before the promised date, not on it.</div>
   </div>
 
@@ -191,7 +193,7 @@
   <div class="card">
     <h2>Planned money — investment in / spend out</h2>
     <div id="allocations-list"></div>
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0ece0;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-subtle);display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <input id="alloc-label" placeholder="What is it (e.g. New tile order)">
       <select id="alloc-category">
         <option value="planned_spend">Going out</option>
@@ -326,7 +328,7 @@ async function load() {
     row.className = 'list-row';
     const tag = a.category === 'investment_in' ? 'Coming in' : 'Going out';
     row.innerHTML = `<span class="name">${a.label}<span class="meta">${tag}${a.planned_date ? ' · ' + a.planned_date : ''}</span></span>` +
-      `<span class="amt">${money(a.amount)} <button class="btn" style="padding:3px 8px;font-size:11px;margin:0 0 0 8px;" onclick="markAllocationDone(${a.id})">Done</button></span>`;
+      `<span class="amt">${money(a.amount)} <button class="btn" style="padding:3px 8px;font-size:12px;margin:0 0 0 8px;" onclick="markAllocationDone(${a.id})">Done</button></span>`;
     allocEl.appendChild(row);
   });
 }

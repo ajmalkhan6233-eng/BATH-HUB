@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/staff');</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -13,21 +14,22 @@ h1{font-size:20px;margin:0 0 4px;color:var(--gold)}h3{margin:0 0 8px;font-size:1
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 button,.btn{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
 button.on{background:rgba(245,166,35,.2);border-color:var(--gold)}
-button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+button.gold{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
 .note{color:var(--text2);font-size:12px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.warn{color:var(--amber)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
 .bar>div{min-width:120px}.bar label{display:block;color:var(--text2);font-size:12px;margin-bottom:3px}
 input,select{width:100%;padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
 .wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:14px;white-space:nowrap}
 th{color:var(--text2);font-weight:600;font-size:12px}td.n,th.n{text-align:right}
 tr.click{cursor:pointer}tr.click:hover{background:var(--card)}
 .badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
 .b-ok{color:var(--green)}.b-bad{color:var(--red)}.b-mid{color:var(--amber)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 #msg{min-height:20px;margin-bottom:8px}
-</style></head><body>
+</style><link rel="stylesheet" href="/bathhub-design.css">
+</head><body>
 <h1>Staff</h1>
 <div class="sub">People, salary, loans, attendance, leave, advances and commission.</div>
 <div class="tabs" id="tabs"></div>

@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 // Ported pages labels.html and assistant.html: file exists, redirect into the shell, no external URLs, scripts parse,
 // and the Code-128 encoder gives a correct checksum.
 const fs = require('fs');
@@ -15,7 +15,7 @@ describe.each(Object.entries(PAGES))('%s page', (key, file) => {
   });
   test('has no external URLs', () => {
     expect(html).not.toMatch(/https?:\/\//i);
-    expect(html).not.toMatch(/<script[^>]+src=/i);
+    expect(html).not.toMatch(/<script[^>]+src="(?!\/bathhub-(theme|icons)\.js)/i);   // only the shared design scripts may be linked
   });
   test('inline scripts parse', () => {
     expect(scripts.length).toBeGreaterThan(1);
