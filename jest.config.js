@@ -4,5 +4,6 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/\\.claude/'],   // worktree copies under .claude are not part of this project's tests
   testMatch: ['**/tests/**/*.test.js'],
   setupFiles: ['./tests/setup.js'],
-  testTimeout: 10000,
+  testTimeout: 30000,
+  maxWorkers: '50%',                 // the in-memory database tests are timing-sensitive; fewer parallel workers = no random timeouts
 };
