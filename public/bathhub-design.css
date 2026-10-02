@@ -169,3 +169,10 @@ dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-prim
 .receipt { --text-primary:#111; --text-secondary:#333; --text-muted:#555; --border-subtle:#ddd; --border-strong:#999; --bg-surface:#fff; --gold-primary:#6b4f08; --gold-text:#6b4f08; }
 
 .item-row { grid-template-columns:1fr 84px 110px 48px !important; }
+
+/* ---- 9. PHONE FIT ---- */
+input, select, textarea { box-sizing:border-box; max-width:100%; min-width:0; }
+@media (max-width:480px) {
+  .item-row { grid-template-columns:1fr 1fr 48px !important; }          /* POS: name on its own line, then qty, price, remove */
+  .item-row .pick-wrap { grid-column:1 / -1; }
+}
