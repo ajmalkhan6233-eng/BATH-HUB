@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if (window.top === window.self) location.replace('/owner#/auditacc');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audit &amp; Accounting</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:var(--bg);color:var(--text);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+h3{font-size:13px;color:var(--gold);margin:16px 0 6px;text-transform:uppercase}
+button,.btn{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit;display:inline-block}
+button.primary{background:rgba(245,166,35,.2);border-color:var(--gold)}
+button:disabled{opacity:.4;cursor:default}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.bar{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.bar label{font-size:11px;color:var(--text2)}
+input,select{padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+th{color:var(--text2);font-size:11px;text-transform:uppercase}
+td.click{cursor:pointer;text-decoration:underline dotted}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.badge.red{color:var(--red);border-color:var(--red)}.badge.amber{color:var(--gold);border-color:var(--gold)}
+.err{color:var(--red)}.pending{color:var(--text2)}
+.note{color:var(--text2);font-size:12.5px;margin:8px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.lbl{font-size:11px;color:var(--text2);text-transform:uppercase}
+.txt{font-size:12.5px;margin-top:8px;line-height:1.6;white-space:normal}
+.pg{display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--text2);font-size:12px}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:12px;z-index:5}
+#modal.show{display:flex}
+#modal .box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:560px;max-height:85vh;overflow:auto}
+</style>
+</head>
+<body>
+<h1>Audit &amp; Accounting</h1>
+<div class="sub">Sales, profit, cash proof and exceptions for any date range</div>
+
+<div class="card bar">
+  <label>From<br><input type="date" id="from"></label>
+  <label>To<br><input type="date" id="to"></label>
+  <label>View<br><select id="gran"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" selected>Monthly</option><option value="quarterly">Quarterly</option></select></label>
+  <button class="primary" id="go">Generate</button>
+  <button id="xls">⬇ Excel (Full Report)</button>
+  <button id="pdf">⬇ PDF (Full Report)</button>
+  <button id="wa">📤 Send to WhatsApp</button>
+  <label class="btn">📷 Upload Source Document<input type="file" id="up" accept=".jpg,.jpeg,.png,.pdf" style="display:none"></label>
+</div>
+<div id="upres"></div>
+<div id="msg"></div>
+<div class="note">DAILY DETAIL is real POS sales data (date/invoice/item/qty/price — exact). Unit Cost/COGS/GP use today's average cost as an estimate of historical cost — flagged "EST-AVG-COST", not a real historical figure. Rows with no cost data anywhere are flagged "MISSING", never guessed.</div>
+
+<h3>Summary</h3>
+<div class="card wrap"><table><thead><tr><th>Period</th><th>Sales</th><th>Gross Profit</th><th>Expenses</th><th>Net Profit</th><th>Cash</th><th>Card</th><th>Online</th><th>Cheque</th><th>Credit</th><th>Days</th></tr></thead><tbody id="sum"></tbody></table></div>
+
+<h3>Reconciliation — flagged days (Excel vs POS vs expense-sheet)</h3>
+<div class="card wrap"><table><thead><tr><th>Date</th><th>Excel Total</th><th>Source</th><th>Expense Source</th><th>Conflict Variance</th></tr></thead><tbody id="recon"></tbody></table></div>
+
+<h3>Cash Proof <span class="note">— opening float + cash sales − expenses − payments = closing cash</span></h3>
+<div class="card wrap"><table><thead><tr><th>Date</th><th>Cash Sale</th><th>Expenses</th><th>Payments</th><th>Expected Closing</th><th>Actual Closing</th><th>Variance</th></tr></thead><tbody id="cash"></tbody></table></div>
+
+<h3>Exceptions</h3>
+<div class="grid">
+  <div class="card"><div class="lbl">Defaulted expense days</div><div class="txt" id="exd"></div></div>
+  <div class="card"><div class="lbl">Cheque alerts — next 7 days</div><div class="txt" id="exc"></div></div>
+  <div class="card"><div class="lbl">Pending reconciliation</div><div class="txt" id="exp"></div></div>
+  <div class="card"><div class="lbl">GRN / stock caveats</div><div class="txt" id="exg"></div></div>
+</div>
+<div class="note">Card/online settlements can post 1-2 days after the sale date — this is a normal processor delay, not a reconciliation error.</div>
+
+<h3>Audit Flags <span id="fc" class="badge amber"></span></h3>
+<div class="card"><div class="wrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Code</th><th>Detail</th></tr></thead><tbody id="flags"></tbody></table></div><div class="pg" id="flagspg"></div></div>
+
+<h3>Staff</h3>
+<div class="card wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Total Paid</th><th>Commission (stored)</th></tr></thead><tbody id="staff"></tbody></table></div>
+<div class="note" id="staffnote"></div>
+
+<h3>Commentary</h3>
+<div class="card txt" id="narr">Not generated — click "Generate" to include AI commentary on the numbers above (optional, local Ollama).</div>
+
+<h3>Sign-off</h3>
+<div class="card txt" id="sign" style="line-height:2"></div>
+
+<h3>Daily Detail (item-level)</h3>
+<div class="card"><div class="wrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Item</th><th>Qty</th><th>Price</th><th>Line Total</th><th>Unit Cost</th><th>COGS</th><th>GP</th><th>Source</th></tr></thead><tbody id="detail"></tbody></table></div><div class="pg" id="detailpg"></div></div>
+
+<div id="modal"><div class="box"><div id="mbody"></div><div style="margin-top:10px"><button id="mclose">Close</button></div></div></div>
+
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(n){return (n===null||n===undefined||n===''||isNaN(n))?null:Number(n).toLocaleString('en-US',{maximumFractionDigits:0});}
+function f0(n){var v=fmt(n);return v===null?'—':v;}
+function pad(n){return String(n).padStart(2,'0');}
+function ymd(t){return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());}
+function $(id){return document.getElementById(id);}
+async function api(p,opts){
+  var r=await fetch(p,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opts||{}));
+  if(r.status===401) throw new Error('Please sign in again (session expired).');
+  if(!r.ok){var j=await r.json().catch(function(){return {error:r.statusText};});throw new Error(j.error||r.statusText);}
+  return r.json();
+}
+(function(){var t=new Date();$('to').value=ymd(t);t.setMonth(t.getMonth()-1);$('from').value=ymd(t);})();
+function range(){return {from:$('from').value,to:$('to').value,gran:$('gran').value};}
+
+// simple client-side paged table body
+function paged(tbodyId,pgId,rows,render,cols,size){
+  size=size||25;var page=0;
+  function draw(){
+    var pages=Math.max(1,Math.ceil(rows.length/size));if(page>=pages)page=pages-1;
+    var sl=rows.slice(page*size,page*size+size);
+    $(tbodyId).innerHTML=sl.length?sl.map(render).join(''):'<tr><td colspan="'+cols+'" class="pending">No data</td></tr>';
+    $(pgId).innerHTML='<button id="'+pgId+'p"'+(page<=0?' disabled':'')+'>Prev</button><span>Page '+(page+1)+' of '+pages+' ('+rows.length+' rows)</span><button id="'+pgId+'n"'+(page>=pages-1?' disabled':'')+'>Next</button>';
+    $(pgId+'p').onclick=function(){page--;draw();};
+    $(pgId+'n').onclick=function(){page++;draw();};
+  }
+  draw();
+}
+function listOrNone(arr,fn){return arr&&arr.length?arr.map(function(x){return '<div>'+fn(x)+'</div>';}).join(''):'<span class="pending">None</span>';}
+
+async function generate(){
+  var R=range();
+  if(!R.from||!R.to){$('msg').innerHTML='<div class="err">Pick a date range first.</div>';return;}
+  $('msg').innerHTML='';
+  var q='from='+encodeURIComponent(R.from)+'&to='+encodeURIComponent(R.to);
+  var res=await Promise.all([
+    api('/api/audit/summary?'+q+'&granularity='+R.gran).catch(function(){return [];}),
+    api('/api/audit/flags?'+q).catch(function(){return {total_flags:0,flags:[]};}),
+    api('/api/audit/daily-detail?'+q).catch(function(){return [];})
+  ]);
+  var summary=res[0],flagsRes=res[1],detail=res[2];
+  var clickable=R.gran==='daily';
+  $('sum').innerHTML=summary.map(function(r){
+    function c(type,val){return clickable?'<td class="click" data-t="'+type+'" data-d="'+esc(r.period)+'" title="Click for the breakdown">'+val+'</td>':'<td>'+val+'</td>';}
+    return '<tr><td>'+esc(r.period)+'</td>'+c('total_sale',f0(r.sales))+c('gross_profit',f0(r.gross_profit))+'<td>'+f0(r.expenses)+'</td>'+
+      c('net_profit',r.net_profit==null?'<span class="pending">PENDING</span>':f0(r.net_profit))+
+      '<td>'+f0(r.cash)+'</td><td>'+f0(r.card)+'</td><td>'+f0(r.online)+'</td><td>'+f0(r.cheque)+'</td><td>'+f0(r.credit)+'</td><td>'+esc(r.total_days!=null?r.total_days:(r.days||''))+'</td></tr>';
+  }).join('')||'<tr><td colspan="11" class="pending">No data</td></tr>';
+  Array.prototype.forEach.call(document.querySelectorAll('#sum td.click'),function(td){td.onclick=function(){breakdown(td.getAttribute('data-t'),td.getAttribute('data-d'));};});
+
+  $('fc').textContent=flagsRes.total_flags+' flags';
+  var fr=[];(flagsRes.flags||[]).forEach(function(f){(f.issues||[]).forEach(function(i){fr.push({date:f.date,invoice:f.invoice||'—',code:i.code,detail:i.detail});});});
+  paged('flags','flagspg',fr,function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.invoice)+'</td><td><span class="badge red">'+esc(r.code)+'</span></td><td>'+esc(r.detail)+'</td></tr>';},4);
+  paged('detail','detailpg',detail,function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.invoice_no)+'</td><td>'+esc(r.item_code)+'</td><td>'+esc(r.qty)+'</td><td>'+f0(r.unit_price)+'</td><td>'+f0(r.line_total)+'</td><td>'+(r.unit_cost!=null?f0(r.unit_cost):'<span class="pending">MISSING</span>')+'</td><td>'+(r.line_cogs!=null?f0(r.line_cogs):'—')+'</td><td>'+(r.line_gp!=null?f0(r.line_gp):'—')+'</td><td><span class="badge '+(r.cost_source==='EST-AVG-COST'?'amber':'red')+'">'+esc(r.cost_source)+'</span></td></tr>';},10);
+
+  $('narr').textContent='Generating…';
+  var rep=await api('/api/audit/full-report?'+q+'&narrative=1').catch(function(){return null;});
+  if(!rep){$('narr').textContent='Could not load full report.';return;}
+  $('recon').innerHTML=(rep.reconciliation||[]).map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+f0(r.excel_total)+'</td><td>'+esc(r.source)+'</td><td>'+esc(r.expense_source)+'</td><td>'+(r.conflict?'<span class="badge red">'+f0(r.conflict_variance)+'</span>':'—')+'</td></tr>';}).join('')||'<tr><td colspan="5" class="pending">No reconciliation conflicts or defaulted-expense days in this period.</td></tr>';
+  $('cash').innerHTML=((rep.cashProof||{}).rows||[]).map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+f0(r.cash_sale)+'</td><td>'+f0(r.expenses)+'</td><td>'+f0(r.payments)+'</td><td>'+f0(r.expected_closing)+'</td><td>'+f0(r.actual_closing)+'</td><td><span class="'+(Math.abs(r.variance)>1?'err':'')+'">'+f0(r.variance)+'</span></td></tr>';}).join('')||'<tr><td colspan="7" class="pending">No data</td></tr>';
+  var ex=rep.exceptions||{};
+  $('exd').innerHTML=listOrNone(ex.defaulted_expense_days,function(x){return esc(x);});
+  $('exc').innerHTML=listOrNone(ex.cheque_alerts_7day,function(c){return esc(c.due_date)+' — '+esc(c.bank)+' #'+esc(c.cheque_number)+' ('+f0(c.amount)+')';});
+  $('exp').innerHTML=listOrNone(ex.pending_reconciliation,function(p){return esc(p.date)+' — #'+esc(p.number)+' ('+f0(p.amount)+')';});
+  $('exg').innerHTML=listOrNone(ex.grn_stock_caveats,function(g){return esc(g.grn_date)+' — '+esc(g.supplier_name)+': '+esc(g.caveat_note);});
+  var st=rep.staff||{};
+  $('staff').innerHTML=(st.payments||[]).map(function(s){return '<tr><td>'+esc(s.name)+'</td><td>'+esc(s.role)+'</td><td>'+f0(s.total_amount)+'</td><td>'+f0(s.total_commission_stored)+'</td></tr>';}).join('')||'<tr><td colspan="4" class="pending">No staff payments recorded in this period</td></tr>';
+  $('staffnote').textContent=st.gp_by_staff_commission_autocalc?'GP-by-staff commission auto-calc: BLOCKED — '+st.gp_by_staff_commission_autocalc.reason:'';
+  $('narr').textContent=rep.narrative||'Ollama unavailable or timed out — report is complete and correct without it, just no prose commentary this time.';
+  var so=rep.signOff||{};
+  $('sign').innerHTML='Prepared by: <b>'+esc(so.prepared_by)+'</b> — '+esc(so.prepared_at?new Date(so.prepared_at).toLocaleString():'')+'<br>Reviewed by: <b>Owner</b> — signature: _______________________  Date: _______________';
+}
+
+// breakdown modal (daily rows only): per-invoice lines from /daily-detail for that date
+async function breakdown(type,date){
+  var label={total_sale:'Sales',gross_profit:'Gross profit',net_profit:'Net profit'}[type]||type;
+  $('mbody').innerHTML='<div class="note">Loading…</div>';$('modal').className='show';
+  try{
+    if(type==='net_profit'){
+      var ds=await api('/api/daily-summary?date='+encodeURIComponent(date)).catch(function(){return [];});
+      var s=ds[0];
+      if(!s){$('mbody').innerHTML='<h3 style="margin-top:0">Net Profit — '+esc(date)+'</h3><div class="note">No daily_summary row for this date.</div>';return;}
+      var gp=s.gp_status==='NOT_AVAILABLE'?null:s.gross_profit;
+      $('mbody').innerHTML='<h3 style="margin-top:0">Net Profit — '+esc(date)+'</h3><div style="line-height:1.9">Gross Profit: <b>'+(gp==null?'<span class="pending">PENDING</span>':'LKR '+f0(gp))+'</b><br>− Expenses: <b>'+(s.total_expenses==null?'<span class="pending">PENDING</span>':'LKR '+f0(s.total_expenses))+'</b><br>= Net Profit: <b>'+(s.net_profit==null?'PENDING':'LKR '+f0(s.net_profit))+'</b></div>';
+      return;
+    }
+    var rows=await api('/api/audit/daily-detail?from='+encodeURIComponent(date)+'&to='+encodeURIComponent(date));
+    var by={};rows.forEach(function(r){var b=by[r.invoice_no]||(by[r.invoice_no]={sale:0,gp:0,gpMissing:false});b.sale+=Number(r.line_total)||0;if(r.line_gp!=null)b.gp+=Number(r.line_gp);else b.gpMissing=true;});
+    var keys=Object.keys(by);
+    var showGp=type!=='total_sale';
+    $('mbody').innerHTML='<h3 style="margin-top:0">'+esc(label)+' — '+esc(date)+'</h3>'+(type==='net_profit'?'<div class="note">Net profit = gross profit − the day\'s expenses (see Summary). Per-invoice gross profit shown.</div>':'')+
+      '<div class="wrap"><table><thead><tr><th>Invoice</th><th>Sale</th>'+(showGp?'<th>GP</th>':'')+'</tr></thead><tbody>'+
+      (keys.map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+f0(by[k].sale)+'</td>'+(showGp?'<td>'+f0(by[k].gp)+(by[k].gpMissing?' <span class="pending">(some cost missing)</span>':'')+'</td>':'')+'</tr>';}).join('')||'<tr><td colspan="3" class="pending">No invoice lines for this day.</td></tr>')+'</tbody></table></div>';
+  }catch(e){$('mbody').innerHTML='<div class="err">'+esc(e.message)+'</div>';}
+}
+$('mclose').onclick=function(){$('modal').className='';};
+
+$('go').onclick=function(){generate().catch(function(e){$('msg').innerHTML='<div class="err">'+esc(e.message)+'</div>';});};
+$('xls').onclick=function(){var R=range();if(!R.from||!R.to)return alert('Pick a date range first.');window.location.href='/api/audit/workbook?from='+encodeURIComponent(R.from)+'&to='+encodeURIComponent(R.to)+'&granularity='+encodeURIComponent(R.gran);};
+$('pdf').onclick=function(){var R=range();if(!R.from||!R.to)return alert('Pick a date range first.');window.open('/api/audit/full-report/pdf?from='+encodeURIComponent(R.from)+'&to='+encodeURIComponent(R.to),'_blank');};
+$('wa').onclick=async function(){
+  var R=range();if(!R.from||!R.to)return alert('Pick a date range first.');
+  var num=prompt('Send audit summary to which WhatsApp number?','');if(!num)return;
+  var s=await api('/api/audit/summary?from='+encodeURIComponent(R.from)+'&to='+encodeURIComponent(R.to)+'&granularity='+encodeURIComponent(R.gran)).catch(function(){return [];});
+  var t=s.reduce(function(a,r){return {sales:a.sales+Number(r.sales),gp:a.gp+Number(r.gross_profit),exp:a.exp+Number(r.expenses)};},{sales:0,gp:0,exp:0});
+  var company='Audit Summary';
+  try{var b=await fetch('/api/branding').then(function(r){return r.json();});if(b&&b.company_name)company=b.company_name+' — Audit Summary';}catch(e){}
+  var message='*'+company+'*\n'+R.from+' to '+R.to+'\nSales: LKR '+f0(t.sales)+'\nGross Profit: LKR '+f0(t.gp)+'\nExpenses: LKR '+f0(t.exp)+'\nNet Profit: LKR '+f0(t.gp-t.exp);
+  try{var r=await api('/send',{method:'POST',body:JSON.stringify({to:num,message:message})});alert(r.success?'Sent.':'Failed: '+(r.error||'unknown'));}
+  catch(e){alert('Send failed: '+e.message);}
+};
+$('up').onchange=async function(){
+  var file=this.files[0];if(!file)return;var el=$('upres');
+  el.innerHTML='<div class="note">Uploading and running OCR (photos only — PDFs are saved but not auto-OCR\'d)...</div>';
+  var fd=new FormData();fd.append('file',file);
+  try{
+    var res=await fetch('/api/inbox-upload',{method:'POST',credentials:'same-origin',body:fd});var data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Upload failed');
+    if(data.ocr_error)el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="err">OCR failed: '+esc(data.ocr_error)+'</div></div>';
+    else if(data.ocr){var o=data.ocr;el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="txt"><b>OCR read</b> (confidence: '+esc(o.confidence||'unknown')+')<br>Date: '+esc(o.date||'—')+' | Total Sale: '+(o.total_sale!=null?f0(o.total_sale):'—')+' | Expenses: '+(o.total_expenses!=null?f0(o.total_expenses):'—')+'<br>'+(o.notes?'<span class="pending">'+esc(o.notes)+'</span><br>':'')+'<span class="pending">Read-only preview — nothing was written to daily_summary. Enter the confirmed figures manually.</span></div></div>';}
+    else el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="note">'+esc(data.note||'')+'</div></div>';
+  }catch(e){el.innerHTML='<div class="err">Upload failed: '+esc(e.message)+'</div>';}
+  this.value='';
+};
+generate().catch(function(e){$('msg').innerHTML='<div class="err">'+esc(e.message)+'</div>';});
+</script>
+</body>
+</html>

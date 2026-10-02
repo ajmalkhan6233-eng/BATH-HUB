@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if (window.top === window.self) location.replace('/owner#/accounting');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Accounting</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:var(--bg);color:var(--text);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+h3{font-size:13px;color:var(--gold);margin:12px 0 4px;text-transform:uppercase}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.on{background:rgba(245,166,35,.2);border-color:var(--gold)}
+button:disabled{opacity:.4;cursor:default}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+th{color:var(--text2);font-size:11px;text-transform:uppercase}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.ok{color:var(--green)}.err{color:var(--red)}
+.note{color:var(--text2);font-size:13px;padding:10px 0}
+.range{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:10px}
+.range label{font-size:11px;color:var(--text2)}
+input{padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+input.q{width:100%;max-width:300px;margin-bottom:8px}
+.pg{display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--text2);font-size:12px}
+</style>
+</head>
+<body>
+<h1>Accounting</h1>
+<div class="sub">Chart of accounts, journal, statements, bank, budgets</div>
+<div class="tabs" id="tabs"></div>
+<div id="content"></div>
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(n){return (n===null||n===undefined||n===''||isNaN(n))?null:Number(n).toLocaleString('en-US',{maximumFractionDigits:0});}
+function f0(n){var v=fmt(n);return v===null?'—':v;}
+function fz(n){var v=fmt(n);return v===null?'0':v;}
+function d(v){return (v===null||v===undefined||v==='')?'—':esc(v);}
+function pad(n){return String(n).padStart(2,'0');}
+function todayStr(){var t=new Date();return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());}
+function monthStart(){var t=new Date();return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-01';}
+async function api(p){
+  var r=await fetch(p,{credentials:'same-origin'});
+  if(r.status===401) throw new Error('Please sign in again (session expired).');
+  if(!r.ok){var j=await r.json().catch(function(){return {error:r.statusText};});throw new Error(j.error||r.statusText);}
+  return r.json();
+}
+function badge(t,good){return '<span class="badge'+(good?' ok':'')+'">'+d(t)+'</span>';}
+function kv(pairs){return '<table>'+pairs.map(function(p){return '<tr><th>'+esc(p[0])+'</th><td>'+p[1]+'</td></tr>';}).join('')+'</table>';}
+function secTable(title,rows){
+  return '<h3>'+esc(title)+'</h3><div class="wrap"><table><thead><tr><th>Code</th><th>Account</th><th>Balance</th></tr></thead><tbody>'+
+   (rows.length?rows.map(function(r){return '<tr><td>'+esc(r.account_code)+'</td><td>'+esc(r.account_name)+'</td><td>'+f0(r.balance)+'</td></tr>';}).join(''):'<tr><td colspan="3" class="note">None</td></tr>')+'</tbody></table></div>';
+}
+var RANGE={from:monthStart(),to:todayStr()};
+var TABS=[
+ {key:'coa',flag:'acc_chart_of_accounts',label:'Chart of Accounts',ep:'/api/chart-of-accounts',
+  cols:['Code','Name','Type'],row:function(r){return [esc(r.account_code),esc(r.account_name),d(r.account_type)];}},
+ {key:'journal',flag:'acc_journal_entries',label:'Journal Entries',ep:'/api/journal-entries',
+  cols:['Date','Debit account','Credit account','Amount','Description'],
+  row:function(r){return [d(r.entry_date_str),d(r.debit_account_code)+' '+esc(r.debit_account_name||''),d(r.credit_account_code)+' '+esc(r.credit_account_name||''),fz(r.amount),d(r.description)];}},
+ {key:'trial',flag:'acc_trial_balance',label:'Trial Balance',ep:'/api/trial-balance',rows:function(x){return x.rows;},
+  cols:['Account','Debit','Credit'],row:function(r){return [d(r.account_code)+' '+esc(r.account_name||''),fz(r.total_debit),fz(r.total_credit)];},
+  head:function(x){return '<div class="note">Total debit '+f0(x.total_debit)+' / total credit '+f0(x.total_credit)+' — '+(x.balanced?'<span class="ok">balanced</span>':'<span class="err">NOT balanced</span>')+'</div>';}},
+ {key:'pnl',flag:'acc_pnl',label:'P&L Statement',ep:function(){return '/api/pnl?from='+RANGE.from+'&to='+RANGE.to;},range:true,
+  single:function(r){return !r?'<div class="note">No data</div>':kv([['Total Sale',f0(r.total_sale)],['Gross Profit',f0(r.gross_profit)],['Expenses',f0(r.total_expenses)],['Net Profit','<b>'+f0(r.net_profit)+'</b>'],['Cash out total',f0(r.cash_out_total)],['Days included',esc(r.days_included)]]);}},
+ {key:'balance',flag:'acc_balance_sheet',label:'Balance Sheet',ep:'/api/balance-sheet',
+  single:function(r){return '<div class="note">As of '+d(r.as_of)+' — '+(r.balanced?'<span class="ok">balanced</span>':'<span class="err">NOT balanced</span>')+'</div>'+
+    secTable('Assets',r.assets||[])+'<div class="note">Total assets: '+f0(r.total_assets)+'</div>'+
+    secTable('Liabilities',r.liabilities||[])+'<div class="note">Total liabilities: '+f0(r.total_liabilities)+'</div>'+
+    secTable('Equity',r.equity||[])+'<div class="note">Total equity: '+f0(r.total_equity)+'</div>';}},
+ {key:'vat',flag:'acc_vat_report',label:'VAT Report',ep:function(){return '/api/vat-report?from='+RANGE.from+'&to='+RANGE.to;},range:true,
+  single:function(r){return !r?'<div class="note">No data</div>':kv([['VAT Rate',(Number(r.vat_rate)*100).toFixed(0)+'%'],['Total sale',f0(r.total_sale)],['Total purchases',f0(r.total_purchases)],['Output VAT',f0(r.output_vat)],['Input VAT',f0(r.input_vat)],['Net VAT Payable','<b>'+f0(r.net_vat_payable)+'</b>']]);}},
+ {key:'bank',flag:'acc_bank_reconciliation',label:'Bank Transactions',ep:'/api/bank-transactions',
+  cols:['Date','Bank','Description','Type','Amount','Matched'],
+  row:function(r){return [d(r.txn_date_str),d(r.bank_name),d(r.description),d(r.txn_type),f0(r.amount),r.matched?'<span class="ok">✓</span>'+(r.matched_ref?' '+esc(r.matched_ref):''):'—'];}},
+ {key:'cheqcal',flag:'acc_cheque_calendar',label:'Cheque Calendar',ep:'/api/cheque-calendar',rows:function(x){return x.all;},
+  cols:['Cheque #','Customer','Amount','Due Date','Days','Status'],
+  row:function(r){var n=Number(r.days_until_due);return [d(r.cheque_number),d(r.customer_name),f0(r.amount),d(r.due_date_str),isNaN(n)?'—':(n<0?'<span class="err">'+esc(n)+'</span>':esc(n)),d(r.status)];}},
+ {key:'petty',flag:'acc_petty_cash',label:'Petty Cash (fixed float)',ep:'/api/petty-cash',rows:function(x){return x.transactions;},
+  cols:['Date','Type','Amount','Note'],
+  row:function(r){return [d(r.txn_date_str),badge(r.txn_type,r.txn_type==='TOPUP'),f0(r.amount),d(r.description)];},
+  head:function(x){return '<div class="note">Float '+f0(x.float)+' + top-ups '+f0(x.total_topups)+' − expenses '+f0(x.total_expenses)+' = <b>current balance '+f0(x.current_balance)+'</b></div>';}},
+ {key:'budgets',flag:'acc_expense_budgets',label:'Expense Budgets',ep:'/api/expense-budgets',
+  cols:['Category','Budget','Actual','Left'],row:function(r){return [d(r.category_name),f0(r.monthly_budget),fz(r.actual),f0(r.variance)];}},
+ {key:'yearend',flag:'acc_year_end_closing',label:'Year-End Closings',ep:'/api/year-end-closings',
+  cols:['Year','Closed On','Revenue','Expenses','Net Profit'],row:function(r){return [d(r.fiscal_year),d(r.closing_date_str),f0(r.total_revenue),f0(r.total_expenses),f0(r.net_profit)];}}
+];
+var FLAGS=[],active=TABS[0].key,PAGE=0,SIZE=25,QUERY='',ROWS=[];
+function cur(){return TABS.find(function(t){return t.key===active;});}
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button data-k="'+t.key+'" class="'+(t.key===active?'on':'')+'">'+esc(t.label)+'</button>';}).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){active=b.getAttribute('data-k');QUERY='';PAGE=0;renderTabs();load();};});
+}
+function renderTable(){
+  var tab=cur(),q=QUERY.toLowerCase();
+  var rows=q?ROWS.filter(function(r){return JSON.stringify(r).toLowerCase().indexOf(q)>=0;}):ROWS;
+  var pages=Math.max(1,Math.ceil(rows.length/SIZE));if(PAGE>=pages)PAGE=pages-1;
+  var slice=rows.slice(PAGE*SIZE,PAGE*SIZE+SIZE);
+  var body=slice.length?slice.map(function(r){return '<tr>'+tab.row(r).map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join(''):'<tr><td colspan="'+tab.cols.length+'" class="note">No records.</td></tr>';
+  document.getElementById('tbl').innerHTML='<table><thead><tr>'+tab.cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>'+body+'</tbody></table>';
+  document.getElementById('pg').innerHTML='<button id="pp"'+(PAGE<=0?' disabled':'')+'>Prev</button><span>Page '+(PAGE+1)+' of '+pages+' ('+rows.length+' rows)</span><button id="pn"'+(PAGE>=pages-1?' disabled':'')+'>Next</button>';
+  document.getElementById('pp').onclick=function(){PAGE--;renderTable();};
+  document.getElementById('pn').onclick=function(){PAGE++;renderTable();};
+}
+async function load(){
+  var el=document.getElementById('content'),tab=cur();
+  var flag=FLAGS.find(function(f){return f.module_key===tab.flag;});
+  if(!flag||!flag.built){el.innerHTML='<div class="note">Not built yet.</div>';return;}
+  if(!flag.enabled){el.innerHTML='<div class="note">This module is OFF. Enable "'+esc(flag.label)+'" in Settings to use it.</div>';return;}
+  el.innerHTML='<div class="note">Loading…</div>';
+  try{
+    var data=await api(typeof tab.ep==='function'?tab.ep():tab.ep);
+    var rangeHtml=tab.range?'<div class="range"><div><label>From<br><input type="date" id="rf" value="'+esc(RANGE.from)+'"></label></div><div><label>To<br><input type="date" id="rt" value="'+esc(RANGE.to)+'"></label></div><button id="rg">Apply</button></div>':'';
+    if(tab.single){
+      el.innerHTML='<div class="card">'+rangeHtml+tab.single(data)+'</div>';
+    }else{
+      ROWS=(tab.rows?tab.rows(data):data)||[];if(!Array.isArray(ROWS))ROWS=[];
+      el.innerHTML='<div class="card">'+(tab.head?tab.head(data):'')+'<input class="q" id="q" placeholder="Search…"><div class="wrap" id="tbl"></div><div class="pg" id="pg"></div></div>';
+      document.getElementById('q').oninput=function(e){QUERY=e.target.value;PAGE=0;renderTable();};
+      renderTable();
+    }
+    var rg=document.getElementById('rg');
+    if(rg)rg.onclick=function(){RANGE.from=document.getElementById('rf').value;RANGE.to=document.getElementById('rt').value;load();};
+  }catch(e){el.innerHTML='<div class="err">Error: '+esc(e.message)+'</div>';}
+}
+(async function(){
+  renderTabs();
+  try{FLAGS=await api('/api/feature-flags');}catch(e){FLAGS=[];}
+  load();
+})();
+</script>
+</body>
+</html>
