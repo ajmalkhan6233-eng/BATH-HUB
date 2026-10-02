@@ -15,7 +15,7 @@ describe.each(Object.entries(PAGES))('%s page', (key, file) => {
   });
   test('has no external URLs', () => {
     expect(html).not.toMatch(/https?:\/\//i);
-    expect(html).not.toMatch(/<script[^>]+src="(?!\/bathhub-(theme|icons)\.js)/i);   // only the shared design scripts may be linked
+    expect(html).not.toMatch(/<script[^>]+src="(?!\/bathhub-(theme|icons|a11y)\.js)/i);   // only the shared design scripts may be linked
   });
   test('inline scripts parse', () => {
     expect(scripts.length).toBeGreaterThan(1);
