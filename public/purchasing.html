@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if (window.top === window.self) location.replace('/owner#/purchasing');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Purchasing</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:var(--bg);color:var(--text);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.on{background:rgba(245,166,35,.2);border-color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+th{color:var(--text2);font-size:11px;text-transform:uppercase}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.note{color:var(--text2);font-size:13px;padding:10px 0}.err{color:var(--red)}
+.num{text-align:right}
+input.q{width:100%;max-width:300px;padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit;margin-bottom:8px}
+.pg{display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--text2);font-size:12px}
+</style>
+</head>
+<body>
+<h1>Purchasing</h1>
+<div class="sub">Purchase orders, shipments, supplier prices and payables</div>
+<div class="tabs" id="tabs"></div>
+<div id="content"></div>
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(n){return (n===null||n===undefined||n===''||isNaN(n))?null:Number(n).toLocaleString('en-US',{maximumFractionDigits:0});}
+function f0(n){var v=fmt(n);return v===null?'—':v;}
+function d(v){return (v===null||v===undefined||v==='')?'—':esc(v);}
+async function api(p){
+  var r=await fetch(p,{credentials:'same-origin'});
+  if(r.status===401) throw new Error('Please sign in again (session expired).');
+  if(!r.ok){var j=await r.json().catch(function(){return {error:r.statusText};});throw new Error(j.error||r.statusText);}
+  return r.json();
+}
+function badge(t){return '<span class="badge">'+d(t)+'</span>';}
+var TABS=[
+ {key:'po',flag:'pur_purchase_orders',label:'Purchase Orders',ep:'/api/purchase-orders',
+  cols:['PO #','Supplier','Date','Expected','Total','Status'],
+  row:function(r){return [esc(r.po_number),esc(r.supplier_name),d(r.po_date_str),d(r.expected_date_str),f0(r.total_amount),badge(r.status||'PENDING')];}},
+ {key:'matches',flag:'pur_po_grn_matching',label:'PO ↔ GRN Matches',ep:'/api/po-grn-matches',
+  cols:['PO #','GRN #','PO Total','GRN Total','Variance'],
+  row:function(r){return [d(r.po_number),d(r.suggested_grn_number),f0(r.po_total),f0(r.suggested_grn_amount),r.suggested_grn_amount==null?'—':f0(Number(r.suggested_grn_amount)-Number(r.po_total))];}},
+ {key:'prices',flag:'pur_price_comparison',label:'Supplier Price Comparison',ep:'/api/supplier-prices',
+  cols:['Item','Supplier','Price','Date'],
+  row:function(r){return [d(r.item_description),d(r.supplier_name),f0(r.unit_cost),d(r.quoted_date_str)];}},
+ {key:'aging',flag:'pur_aging_payables',label:'Supplier Aging / Payables',ep:'/api/supplier-aging',
+  cols:['Supplier','Outstanding','Oldest unpaid (days)','Age bucket'],
+  row:function(r){return [d(r.supplier_name),fmt(r.balance_due)===null?'0':fmt(r.balance_due),r.age_days==null?'—':esc(r.age_days),d(r.aging_bucket)];}},
+ {key:'landed',flag:'pur_landed_cost',label:'Landed Cost',ep:'/api/landed-costs',
+  cols:['PO #','Freight','Duty','Total Landed'],
+  row:function(r){return [d(r.po_number),fmt(r.freight)===null?'0':fmt(r.freight),fmt(r.duty)===null?'0':fmt(r.duty),f0(r.total_landed_cost)];}},
+ {key:'shipments',flag:'pur_shipment_tracker',label:'Shipment Tracker',ep:'/api/shipments',
+  cols:['Reference','Status','ETA','Notes'],
+  row:function(r){return [d(r.shipment_ref),badge(r.status),d(r.eta_date_str),d(r.notes)];}}
+];
+var FLAGS=[],active=TABS[0].key,PAGE=0,SIZE=25,QUERY='',ROWS=[];
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS.map(function(t){return '<button data-k="'+t.key+'" class="'+(t.key===active?'on':'')+'">'+esc(t.label)+'</button>';}).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){active=b.getAttribute('data-k');QUERY='';PAGE=0;renderTabs();load();};});
+}
+function renderTable(){
+  var tab=TABS.find(function(t){return t.key===active;});
+  var q=QUERY.toLowerCase();
+  var rows=q?ROWS.filter(function(r){return JSON.stringify(r).toLowerCase().indexOf(q)>=0;}):ROWS;
+  var pages=Math.max(1,Math.ceil(rows.length/SIZE));if(PAGE>=pages)PAGE=pages-1;
+  var slice=rows.slice(PAGE*SIZE,PAGE*SIZE+SIZE);
+  var body=slice.length?slice.map(function(r){return '<tr>'+tab.row(r).map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join(''):'<tr><td colspan="'+tab.cols.length+'" class="note">No records.</td></tr>';
+  document.getElementById('tbl').innerHTML='<table><thead><tr>'+tab.cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>'+body+'</tbody></table>';
+  document.getElementById('pg').innerHTML='<button id="pp"'+(PAGE<=0?' disabled':'')+'>Prev</button><span>Page '+(PAGE+1)+' of '+pages+' ('+rows.length+' rows)</span><button id="pn"'+(PAGE>=pages-1?' disabled':'')+'>Next</button>';
+  document.getElementById('pp').onclick=function(){PAGE--;renderTable();};
+  document.getElementById('pn').onclick=function(){PAGE++;renderTable();};
+}
+async function load(){
+  var el=document.getElementById('content');
+  var tab=TABS.find(function(t){return t.key===active;});
+  var flag=FLAGS.find(function(f){return f.module_key===tab.flag;});
+  if(!flag||!flag.built){el.innerHTML='<div class="note">Not built yet.</div>';return;}
+  if(!flag.enabled){el.innerHTML='<div class="note">This module is OFF. Enable "'+esc(flag.label)+'" in Settings to use it.</div>';return;}
+  el.innerHTML='<div class="note">Loading…</div>';
+  try{
+    var data=await api(tab.ep);
+    ROWS=Array.isArray(data)?data:[];
+    el.innerHTML='<div class="card"><input class="q" id="q" placeholder="Search…"><div class="wrap" id="tbl"></div><div class="pg" id="pg"></div></div>';
+    document.getElementById('q').oninput=function(e){QUERY=e.target.value;PAGE=0;renderTable();};
+    renderTable();
+  }catch(e){el.innerHTML='<div class="err">Error: '+esc(e.message)+'</div>';}
+}
+(async function(){
+  renderTabs();
+  try{FLAGS=await api('/api/feature-flags');}catch(e){FLAGS=[];}
+  load();
+})();
+</script>
+</body>
+</html>
