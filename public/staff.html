@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script>if (window.top === window.self) location.replace('/owner#/staff');</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Staff</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444;--amber:#e0a02a}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}h3{margin:0 0 8px;font-size:15px}.sub{color:var(--text2);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,.btn{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
+button.on{background:rgba(245,166,35,.2);border-color:var(--gold)}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.note{color:var(--text2);font-size:12px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.warn{color:var(--amber)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.bar>div{min-width:120px}.bar label{display:block;color:var(--text2);font-size:12px;margin-bottom:3px}
+input,select{width:100%;padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+.wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+th{color:var(--text2);font-weight:600;font-size:12px}td.n,th.n{text-align:right}
+tr.click{cursor:pointer}tr.click:hover{background:var(--card)}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.b-ok{color:var(--green)}.b-bad{color:var(--red)}.b-mid{color:var(--amber)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+#msg{min-height:20px;margin-bottom:8px}
+</style></head><body>
+<h1>Staff</h1>
+<div class="sub">People, salary, loans, attendance, leave, advances and commission.</div>
+<div class="tabs" id="tabs"></div>
+<div id="msg"></div>
+<div id="body"></div>
+<script src="/attach-widget.js"></script>
+<script>
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const N=v=>(v===null||v===undefined||v===''||isNaN(v))?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+const tod=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+async function api(path,method,body){
+  const r=await fetch(path,{method:method||'GET',credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  if(r.status===401)throw new Error('Please sign in again (not authenticated)');
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||r.statusText);
+  return j;
+}
+function msg(t,ok){$('msg').innerHTML=t?'<span class="'+(ok?'ok':'err')+'">'+E(t)+'</span>':'';}
+function table(cols,rows,numFrom,rowAttr){
+  if(!rows.length)return '<div class="note">No rows.</div>';
+  return '<div class="wrap"><table><thead><tr>'+cols.map((c,i)=>'<th class="'+(i>=numFrom?'n':'')+'">'+E(c)+'</th>').join('')+'</tr></thead><tbody>'
+   +rows.map((r,ri)=>'<tr'+(rowAttr?rowAttr(ri):'')+'>'+r.map((c,i)=>'<td class="'+(i>=numFrom?'n':'')+'">'+(c&&c.raw!==undefined?c.raw:E(c))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+let STAFF=[],CUR='staff',SEL=null;
+const staffOpts=()=>STAFF.map(s=>'<option value="'+E(s.id)+'">'+E(s.name)+'</option>').join('');
+const TABS=[['staff','Staff'],['attendance','Attendance'],['leave','Leave'],['advances','Salary Advances'],['commission','Commission']];
+
+async function loadStaffList(){STAFF=await api('/api/staff');}
+
+/* ---------- Staff tab ---------- */
+async function tStaff(){
+  await loadStaffList();
+  let h='<div class="card"><h3>Add staff member</h3><div class="bar">'
+   +'<div><label>Name</label><input id="n_name"></div><div><label>Phone</label><input id="n_phone"></div>'
+   +'<div><label>Role</label><input id="n_role" value="sales"></div><div><label>Base salary</label><input id="n_base" type="number" min="0"></div>'
+   +'<div><label>Commission %</label><input id="n_pct" type="number" min="0" step="0.01"></div><div><label>Join date</label><input id="n_join" type="date"></div>'
+   +'<button class="gold" id="n_go">Add</button></div></div>';
+  h+='<div class="card"><div class="note">Tap a person to see salary payments and loans.</div>'
+   +table(['Name','Role','Phone','Total salary','Total commission','Total loans','Outstanding'],STAFF.map(s=>[s.name||'—',s.role||'—',s.phone||'—',N(s.total_salary),N(s.total_commission),N(s.total_loans),N(s.outstanding)]),3,i=>' class="click" data-i="'+i+'"')+'</div>';
+  h+='<div id="detail"></div>';
+  $('body').innerHTML=h;
+  $('n_go').onclick=async()=>{
+    const name=$('n_name').value.trim();if(!name)return msg('Name is required');
+    try{
+      await api('/api/staff','POST',{name:name,phone:$('n_phone').value.trim()||null,role:$('n_role').value.trim()||'sales',base_salary:Number($('n_base').value)||0,commission_pct:Number($('n_pct').value)||0,join_date:$('n_join').value||null});
+      msg('Staff member added',1);tStaff();
+    }catch(e){msg(e.message);}
+  };
+  document.querySelector('#body tbody').addEventListener('click',e=>{const tr=e.target.closest('tr[data-i]');if(tr)detail(STAFF[Number(tr.dataset.i)]);});
+  if(SEL){const s=STAFF.find(x=>String(x.id)===String(SEL));if(s)detail(s);}
+}
+async function detail(s){
+  SEL=s.id;const d=$('detail');d.innerHTML='<div class="note">Loading…</div>';
+  try{
+    const [sal,loans]=await Promise.all([api('/api/staff/'+s.id+'/salary'),api('/api/staff/'+s.id+'/loans')]);
+    const dt=x=>x?String(x).slice(0,10):'—';
+    d.innerHTML='<div class="card"><h3>'+E(s.name)+' — salary payments</h3>'
+     +'<div class="bar"><div><label>Pay date</label><input type="date" id="sp_date" value="'+tod()+'"></div><div><label>Amount</label><input type="number" min="0" id="sp_amt"></div>'
+     +'<div><label>Commission</label><input type="number" min="0" id="sp_com"></div><div><label>Notes</label><input id="sp_note"></div><button class="gold" id="sp_go">Record payment</button></div>'
+     +table(['Date','Amount','Commission','Total','Notes'],sal.map(r=>[dt(r.pay_date),N(r.amount),N(r.commission),N(Number(r.amount||0)+Number(r.commission||0)),r.notes||'']),1)
+     +'<div data-attach="salary" data-attach-id="'+E(s.id)+'"></div></div>'
+     +'<div class="card"><h3>'+E(s.name)+' — loans</h3>'
+     +table(['Date','Type','Amount','Repaid','Notes'],loans.map(r=>[dt(r.loan_date),r.type||'loan',N(r.amount),N(r.repaid),r.notes||'']),2)+'</div>';
+    $('sp_go').onclick=async()=>{
+      if(!$('sp_amt').value)return msg('Amount is required');
+      try{await api('/api/staff/'+s.id+'/salary','POST',{pay_date:$('sp_date').value,amount:Number($('sp_amt').value),commission:Number($('sp_com').value)||0,notes:$('sp_note').value||null});msg('Salary payment recorded',1);tStaff();}
+      catch(e){msg(e.message);}
+    };
+    if(window.AttachWidget&&AttachWidget.scan)AttachWidget.scan(d);
+    else{const sc=document.createElement('script');sc.src='/attach-widget.js';document.body.appendChild(sc);}
+    d.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){d.innerHTML='<div class="card err">'+E(e.message)+'</div>';}
+}
+
+/* ---------- Attendance ---------- */
+async function tAttendance(){
+  await loadStaffList();
+  const m=($('a_month')&&$('a_month').value)||tod().slice(0,7);
+  const rows=await api('/api/attendance?month='+encodeURIComponent(m));
+  const cls=s=>({present:'b-ok',absent:'b-bad',half_day:'b-mid',leave:'b-mid'}[String(s).toLowerCase()]||'');
+  $('body').innerHTML='<div class="card"><h3>Mark attendance</h3><div class="bar"><div><label>Staff</label><select id="a_staff">'+staffOpts()+'</select></div>'
+   +'<div><label>Date</label><input type="date" id="a_date" value="'+tod()+'"></div>'
+   +'<div><label>Status</label><select id="a_status"><option value="present">Present</option><option value="absent">Absent</option><option value="half_day">Half day</option><option value="leave">Leave</option></select></div>'
+   +'<div><label>Notes</label><input id="a_notes"></div><button class="gold" id="a_go">Save</button></div><div class="note">Saving again for the same person and date updates that day.</div></div>'
+   +'<div class="bar"><div><label>Month</label><input type="month" id="a_month" value="'+E(m)+'"></div><button id="a_show">Show</button></div>'
+   +'<div class="card">'+table(['Staff','Date','Status','Notes'],rows.map(r=>[r.staff_name||r.staff_id,r.work_date,{raw:'<span class="badge '+cls(r.status)+'">'+E(r.status)+'</span>'},r.notes||'']),9)+'</div>';
+  $('a_show').onclick=()=>show('attendance');
+  $('a_go').onclick=async()=>{
+    try{await api('/api/attendance','POST',{staff_id:Number($('a_staff').value),work_date:$('a_date').value,status:$('a_status').value,notes:$('a_notes').value||null});msg('Attendance saved',1);show('attendance');}
+    catch(e){msg(e.message);}
+  };
+}
+
+/* ---------- Leave ---------- */
+async function tLeave(){
+  await loadStaffList();
+  const rows=await api('/api/leave');
+  const cls=s=>({approved:'b-ok',rejected:'b-bad',pending:'b-mid'}[s]||'');
+  $('body').innerHTML='<div class="card"><h3>Add leave</h3><div class="bar"><div><label>Staff</label><select id="l_staff">'+staffOpts()+'</select></div>'
+   +'<div><label>From</label><input type="date" id="l_from" value="'+tod()+'"></div><div><label>To</label><input type="date" id="l_to" value="'+tod()+'"></div>'
+   +'<div><label>Type</label><select id="l_type"><option>casual</option><option>sick</option><option>annual</option><option>unpaid</option></select></div>'
+   +'<div><label>Reason</label><input id="l_reason"></div><button class="gold" id="l_go">Add</button></div></div>'
+   +'<div class="card">'+table(['Staff','From','To','Type','Reason','Status','Change'],rows.map(r=>[r.staff_name||r.staff_id,r.leave_start,r.leave_end,r.leave_type,r.reason||'',
+      {raw:'<span class="badge '+cls(r.status)+'">'+E(r.status)+'</span>'},
+      {raw:['approved','pending','rejected'].filter(x=>x!==r.status).map(x=>'<button data-id="'+E(r.id)+'" data-st="'+x+'">'+x+'</button>').join(' ')}]),9)+'</div>';
+  $('l_go').onclick=async()=>{
+    try{await api('/api/leave','POST',{staff_id:Number($('l_staff').value),leave_start:$('l_from').value,leave_end:$('l_to').value,leave_type:$('l_type').value,reason:$('l_reason').value||null});msg('Leave added',1);show('leave');}
+    catch(e){msg(e.message);}
+  };
+  $('body').onclick=async e=>{const b=e.target.closest('button[data-st]');if(!b)return;
+    try{await api('/api/leave/'+b.dataset.id,'PATCH',{status:b.dataset.st});msg('Leave '+b.dataset.st,1);show('leave');}catch(x){msg(x.message);}
+  };
+}
+
+/* ---------- Advances ---------- */
+async function tAdvances(){
+  await loadStaffList();
+  const d=await api('/api/advances');
+  $('body').innerHTML='<div class="card"><h3>Record advance or repayment</h3><div class="bar"><div><label>Staff</label><select id="v_staff">'+staffOpts()+'</select></div>'
+   +'<div><label>Type</label><select id="v_type"><option value="advance">Advance given</option><option value="repayment">Repayment received</option></select></div>'
+   +'<div><label>Date</label><input type="date" id="v_date" value="'+tod()+'"></div><div><label>Amount</label><input type="number" min="0" id="v_amt"></div>'
+   +'<div><label>Notes</label><input id="v_note"></div><button class="gold" id="v_go">Save</button></div><div class="note">Records are never deleted. A repayment cannot be more than what is still owed.</div></div>'
+   +'<div class="card"><h3>Balances</h3>'+table(['Staff','Advanced','Repaid','Outstanding'],(d.balances||[]).map(b=>[b.name,N(b.total_advanced),N(b.total_repaid),N(b.outstanding)]),1)+'</div>'
+   +'<div class="card"><h3>Ledger</h3>'+table(['Staff','Date','Type','Amount','Notes'],(d.ledger||[]).map(r=>[r.staff_name||r.staff_id,r.loan_date,r.type,N(r.amount),r.notes||'']),3)+'</div>';
+  $('v_go').onclick=async()=>{
+    if(!$('v_amt').value)return msg('Amount is required');
+    try{await api('/api/advances','POST',{staff_id:Number($('v_staff').value),type:$('v_type').value,loan_date:$('v_date').value,amount:Number($('v_amt').value),notes:$('v_note').value||null});msg('Saved',1);show('advances');}
+    catch(e){msg(e.message);}
+  };
+}
+
+/* ---------- Commission ---------- */
+async function tCommission(){
+  const d=await api('/api/commission-autocalc');
+  $('body').innerHTML=(d.blocked?'<div class="card"><div class="warn">Blocked: cannot be calculated yet</div><div class="note">'+E(d.reason||'')+'</div><div class="note">Needs: '+E(d.data_source_needed||'')+'</div></div>':'')
+   +'<div class="card"><div class="note">Commission figures already stored per staff member.</div>'
+   +table(['Staff','Commission %','Commission stored'],(d.staff_stored_commission||[]).map(r=>[r.name,r.commission_pct==null?'—':r.commission_pct,N(r.total_commission_as_stored)]),1)+'</div>';
+}
+
+const RUN={staff:tStaff,attendance:tAttendance,leave:tLeave,advances:tAdvances,commission:tCommission};
+async function show(k){
+  CUR=k;
+  $('tabs').innerHTML=TABS.map(t=>'<button class="'+(t[0]===k?'on':'')+'" data-k="'+t[0]+'">'+E(t[1])+'</button>').join('');
+  $('body').onclick=null;
+  try{await RUN[k]();}catch(e){$('body').innerHTML='<div class="card err">Error: '+E(e.message)+'</div>';}
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b){msg('');show(b.dataset.k);}});
+show('staff');
+</script>
+</body></html>

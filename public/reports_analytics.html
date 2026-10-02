@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script>if (window.top === window.self) location.replace('/owner#/reports2');</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports &amp; Analytics</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444;--amber:#e0a02a}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,.btn{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}
+button.on{background:rgba(245,166,35,.2);border-color:var(--gold)}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.note{color:var(--text2);font-size:12px;margin-bottom:10px}.err{color:var(--red)}.warn{color:var(--amber)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.bar label{display:block;color:var(--text2);font-size:12px;margin-bottom:3px}
+input,select{padding:7px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+.wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px;white-space:nowrap}
+th{color:var(--text2);font-weight:600;font-size:12px}td.n,th.n{text-align:right}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.kv div{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:10px}
+.kv b{display:block;font-size:18px;margin-top:2px}.kv span{color:var(--text2);font-size:12px}
+.hb{display:flex;align-items:center;gap:8px;margin:5px 0}.hb .l{width:80px;color:var(--text2);font-size:12px}
+.hb .t{flex:1;background:var(--card);border-radius:6px;height:18px;overflow:hidden;border:1px solid var(--card-border)}
+.hb .t i{display:block;height:100%;background:var(--gold)}.hb .v{width:110px;text-align:right;font-size:12px}
+.neg{color:var(--red)}
+</style></head><body>
+<h1>Reports &amp; Analytics</h1>
+<div class="sub">Trends, digest, forecast, customers, margins, daily range and payroll export.</div>
+<div class="tabs" id="tabs"></div>
+<div id="body"></div>
+<script>
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const N=v=>(v===null||v===undefined||v===''||isNaN(v))?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+const P=v=>(v===null||v===undefined||v===''||isNaN(v))?'—':Number(v).toFixed(1)+'%';
+const tod=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const mstart=()=>tod().slice(0,8)+'01';
+async function api(path){
+  const r=await fetch(path,{credentials:'same-origin'});
+  if(r.status===401)throw new Error('Please sign in again (not authenticated)');
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||r.statusText);
+  return j;
+}
+let FLAGS=[],CUR='trends',LAST={cols:[],rows:[]};
+const cls=v=>Number(v)<0?' neg':'';
+function table(cols,rows,numFrom){
+  // cols: header labels; rows: arrays of cells (already text). Numeric columns from index numFrom on are right aligned.
+  LAST={cols:cols,rows:rows};
+  if(!rows.length)return '<div class="note">No rows.</div>';
+  return '<div class="wrap"><table><thead><tr>'+cols.map((c,i)=>'<th class="'+(i>=numFrom?'n':'')+'">'+E(c)+'</th>').join('')+'</tr></thead><tbody>'
+   +rows.map(r=>'<tr>'+r.map((c,i)=>'<td class="'+(i>=numFrom?'n':'')+'">'+E(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+function exportBtn(){return '<div class="bar"><button id="csv">Export CSV</button></div>';}
+function csvFile(name){
+  const q=v=>{let t=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"';};
+  const lines=[LAST.cols.map(q).join(',')].concat(LAST.rows.map(r=>r.map(q).join(',')));
+  const b=new Blob([lines.join('\r\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name+'.csv';document.body.appendChild(a);a.click();a.remove();
+}
+function bindCsv(name){const b=$('csv');if(b)b.onclick=()=>csvFile(name);}
+function kv(items){return '<div class="kv">'+items.map(i=>'<div><span>'+E(i[0])+'</span><b class="'+(i[2]||'')+'">'+E(i[1])+'</b></div>').join('')+'</div>';}
+function bars(rows){ // rows: [label, value, text]
+  const max=Math.max.apply(null,rows.map(r=>Math.abs(r[1])).concat([1]));
+  return rows.map(r=>'<div class="hb"><div class="l">'+E(r[0])+'</div><div class="t"><i style="width:'+Math.max(1,Math.round(Math.abs(r[1])/max*100))+'%"></i></div><div class="v">'+E(r[2])+'</div></div>').join('');
+}
+
+const TABS=[
+ {k:'trends',l:'Monthly Trends',flag:'rep_monthly_trends',run:async()=>{
+   const d=await api('/api/monthly-trends');
+   const last=d.slice(-12);
+   return '<div class="card"><div class="note">Sale per month (last 12)</div>'+bars(last.map(r=>[r.month,Number(r.total_sale),N(r.total_sale)]))+'</div>'
+    +exportBtn()+'<div class="card">'+table(['Month','Days','Sale','Gross profit','Expenses','Net profit'],d.map(r=>[r.month,r.days_recorded,N(r.total_sale),N(r.gross_profit),N(r.total_expenses),N(r.net_profit)]),1)+'</div>';
+ }},
+ {k:'digest',l:"Owner's Daily Digest",flag:'rep_daily_digest',run:async()=>{
+   const d=await api('/api/daily-digest');
+   if(!d||d.found===false)return '<div class="card note">'+E((d&&d.message)||'No data')+'</div>';
+   return '<div class="card"><p>'+E(d.summary_text||'—')+'</p>'+(d.fallback_note?'<div class="note warn">'+E(d.fallback_note)+'</div>':'')+'</div>'
+    +kv([['Total sale',N(d.total_sale)],['Cash',N(d.cash_sale)],['Card',N(d.card_sale)],['Online',N(d.online_sale)],['Credit',N(d.credit_sale)],['Expenses',N(d.total_expenses)],['Gross profit',d.gp_status==='NOT_AVAILABLE'?'PENDING':N(d.gross_profit)],['Net profit',N(d.net_profit),cls(d.net_profit).trim()]]);
+ }},
+ {k:'forecast',l:'Cash-Flow Forecast',flag:'rep_cashflow_forecast',run:async()=>{
+   const d=await api('/api/cashflow-forecast');
+   if(d.estimate===false)return '<div class="card note">'+E(d.message||'No data')+'</div>';
+   return '<div class="note warn">'+E(d.disclaimer||'')+'</div>'
+    +kv([['Days used',d.trailing_days_used],['Avg daily sale',N(d.trailing_avg_daily_sale)],['Avg daily expenses',N(d.trailing_avg_daily_expenses)],['Avg daily net profit',N(d.trailing_avg_daily_net_profit),cls(d.trailing_avg_daily_net_profit).trim()],['Avg cash in hand',N(d.trailing_avg_cash_in_hand)],
+      ['Next 7 days sale',N(d.forecast_next_7_days_sale)],['Next 7 days net',N(d.forecast_next_7_days_net_profit)],['Next 30 days sale',N(d.forecast_next_30_days_sale)],['Next 30 days net',N(d.forecast_next_30_days_net_profit)]]);
+ }},
+ {k:'ltv',l:'Customer Lifetime Value',flag:'rep_customer_ltv',run:async()=>{
+   const d=await api('/api/customer-ltv');
+   return '<div class="note">'+E(d.caveat||'')+'</div>'+exportBtn()+'<div class="card">'+table(['Customer','Invoices','Invoiced','Paid','Outstanding','First','Last'],(d.rows||[]).map(r=>[r.customer_name,r.invoice_count,N(r.total_invoiced),N(r.total_paid),N(r.outstanding),r.first_invoice||'—',r.last_invoice||'—']),1)+'</div>';
+ }},
+ {k:'heatmap',l:'Sales Heatmap',flag:'rep_heatmap',run:async()=>{
+   const d=await api('/api/heatmap');
+   const rows=d.rows||[];
+   return '<div class="note">'+E(d.caveat||'')+'</div><div class="card"><div class="note">Average sale by day of week</div>'+bars(rows.map(r=>[r.dow_name,Number(r.avg_sale),N(r.avg_sale)+' avg']))+'</div>'
+    +exportBtn()+'<div class="card">'+table(['Day','Days recorded','Total sale','Average sale'],rows.map(r=>[r.dow_name,r.day_count,N(r.total_sale),N(r.avg_sale)]),1)+'</div>';
+ }},
+ {k:'topslow',l:'Top / Slow Items',flag:'rep_top_slow_items',run:async()=>{
+   const d=await api('/api/top-slow-items');
+   if(d.available===false)return '<div class="card"><div class="warn">Not available yet</div><div class="note">'+E(d.reason||'')+'</div><div class="note">Needs: '+E(d.data_source_needed||'')+'</div></div>';
+   const rows=d.rows||[];
+   return exportBtn()+'<div class="card">'+table(Object.keys(rows[0]||{}),rows.map(r=>Object.keys(rows[0]).map(k=>r[k])),99)+'</div>';
+ }},
+ {k:'margin',l:'Margin by Product',flag:'rep_margin_by_product',run:async()=>{
+   const d=await api('/api/margin-by-product');
+   return '<div class="note">'+E(d.caveat||'')+'</div>'+exportBtn()+'<div class="card">'+table(['Code','Product','Category','Avg cost','Selling price','Margin','Margin %'],(d.rows||[]).map(r=>[r.item_code,r.name,r.category||'—',N(r.avg_cost),N(r.selling_price),N(r.margin_amt),P(r.margin_pct)]),3)+'</div>';
+ }},
+ {k:'range',l:'Daily Range',run:async()=>{
+   const f=$('rf')?$('rf').value:mstart(),t=$('rt')?$('rt').value:tod();
+   const d=await api('/api/daily-summary?from='+encodeURIComponent(f)+'&to='+encodeURIComponent(t));
+   const tot=k=>d.reduce((a,r)=>a+(Number(r[k])||0),0);
+   return '<div class="bar"><div><label>From</label><input type="date" id="rf" value="'+E(f)+'"></div><div><label>To</label><input type="date" id="rt" value="'+E(t)+'"></div><button class="gold" id="rgo">Show</button><button id="csv">Export CSV</button></div>'
+    +kv([['Days',d.length],['Total sale',N(tot('total_sale'))],['Expenses',N(tot('total_expenses'))],['Gross profit',N(tot('gross_profit'))],['Net profit',N(tot('net_profit')),tot('net_profit')<0?'neg':'']])
+    +'<div class="card">'+table(['Date','Cash','Card','Online','Credit','Total sale','Expenses','Gross profit','Net profit'],d.map(r=>[r.date_str||r.report_date,N(r.cash_sale),N(r.card_sale),N(r.online_sale),N(r.credit_sale),N(r.total_sale),N(r.total_expenses),N(r.gross_profit),N(r.net_profit)]),1)+'</div>';
+ }},
+ {k:'payroll',l:'Payroll Export',flag:'staff_payroll_export',run:async()=>{
+   const f=$('pf')?$('pf').value:mstart(),t=$('pt')?$('pt').value:tod();
+   const d=await api('/api/payroll-export?start='+encodeURIComponent(f)+'&end='+encodeURIComponent(t));
+   const tot=d.reduce((a,r)=>a+(Number(r.total)||0),0);
+   return '<div class="bar"><div><label>From</label><input type="date" id="pf" value="'+E(f)+'"></div><div><label>To</label><input type="date" id="pt" value="'+E(t)+'"></div><button class="gold" id="pgo">Show</button>'
+    +'<a class="btn" href="/api/payroll-export?start='+encodeURIComponent(f)+'&end='+encodeURIComponent(t)+'&format=csv">Download CSV</a></div>'
+    +kv([['Payments',d.length],['Total paid',N(tot)]])
+    +'<div class="card">'+table(['Name','Role','Pay date','Amount','Commission','Total','Period','Notes'],d.map(r=>[r.name,r.role,r.pay_date,N(r.amount),N(r.commission),N(r.total),(r.period_start||'—')+' to '+(r.period_end||'—'),r.notes||'']),3)+'</div>';
+ }},
+ {k:'commission',l:'Commission Auto-Calc',flag:'staff_commission_autocalc',run:async()=>{
+   const d=await api('/api/commission-autocalc');
+   return (d.blocked?'<div class="card"><div class="warn">Blocked: cannot be calculated yet</div><div class="note">'+E(d.reason||'')+'</div><div class="note">Needs: '+E(d.data_source_needed||'')+'</div></div>':'')
+    +'<div class="note">Commission figures already stored per staff member.</div>'+exportBtn()
+    +'<div class="card">'+table(['Staff','Commission %','Commission stored'],(d.staff_stored_commission||[]).map(r=>[r.name,r.commission_pct==null?'—':r.commission_pct,N(r.total_commission_as_stored)]),1)+'</div>';
+ }}
+];
+function bindTab(t){
+  bindCsv('report_'+t.k);
+  const go=$('rgo');if(go)go.onclick=()=>show(t.k);
+  const pg=$('pgo');if(pg)pg.onclick=()=>show(t.k);
+}
+async function show(k){
+  CUR=k;const t=TABS.find(x=>x.k===k);
+  $('tabs').innerHTML=TABS.map(x=>'<button class="'+(x.k===k?'on':'')+'" data-k="'+x.k+'">'+E(x.l)+'</button>').join('');
+  const body=$('body');
+  const fl=t.flag&&FLAGS.find(f=>f.module_key===t.flag);
+  if(fl&&!fl.enabled){body.innerHTML='<div class="card note">This module is OFF. Turn on "'+E(fl.label)+'" in Settings to use it.</div>';return;}
+  body.innerHTML='<div class="note">Loading…</div>';
+  try{body.innerHTML=await t.run();bindTab(t);}
+  catch(e){body.innerHTML='<div class="card err">Error: '+E(e.message)+'</div>';}
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)show(b.dataset.k);});
+(async()=>{FLAGS=await api('/api/feature-flags').catch(()=>[]);show('trends');})();
+</script>
+</body></html>
