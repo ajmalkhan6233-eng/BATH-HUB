@@ -26,6 +26,7 @@ const { runCheck: runReconCheck } = require('./scripts/daily_reconciliation_chec
 // fails invisibly.
 pool.query(`ALTER TABLE cheques ADD COLUMN IF NOT EXISTS payee VARCHAR(150)`).catch(()=>{});
 pool.query(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`).catch(()=>{});
+pool.query(`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS quote_no VARCHAR(20)`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS details JSONB DEFAULT '{}'::jsonb`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS cheq_payment NUMERIC(14,2) DEFAULT 0`).catch(()=>{});
 pool.query(`ALTER TABLE daily_summary ADD COLUMN IF NOT EXISTS photo_data JSONB DEFAULT NULL`).catch(()=>{});
