@@ -1,19 +1,16 @@
-# OPEN_ITEMS (source: CLAUDE.md task queue, docs/V1_START_HERE.md)
+# OPEN_ITEMS
 
-- Railway go-live (parked): Aj says "go live" when ready; then unpause recipe in CLAUDE.md task 1
-- Set real DASH_* credentials before go-live (Aj)
-- Run scripts/railway_harden_db.js at unpause, set DB_USER/DB_PASSWORD on apex-app
-- RAILWAY_API_TOKEN not set; re-verify GraphQL mutation names before first use
-- Decide frontend/ future (adopt src/ or remove): Aj reply "adopt" or "remove"
-- Rename lasersoft_invoices/lasersoft_total: needs ALTER migration + Aj sign-off (golden core)
-- BATHCO product-name rebrand decision: Aj
-- Jest baseline 17 integration failures: fix when touching those modules; re-run to confirm count
-- Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/
+- Aj: save ADMIN_PIN + .pg_owner_superpw password in a password manager; laptop Sleep = Never when plugged in
+- Offline mode (next build, lead only), then docs/SYNC_PHASE_B.md (design only; Railway stays parked until "go-live Railway")
+- Port the Legacy screens into /owner, then delete public/BATHCO_NATURE.html: Customers, Credit & Aging, Quotations, Purchasing, Accounting, Audit & Accounting, Reports, Staff, Labels, Assistant
+- Platform/tenant/fleet admin (old Platform Admin): hidden, PIN only, not in shop menu
+- Reports and lists do not hide VOIDED vendors/commissions/etc. yet (only POS bills do): add record_voids joins
+- A verify-totp step does not re-check users.active (login does): add check in server.js
+- Salary settings endpoint also accepts the read-only 'owner' role: make it admin-only
+- Sale commissions: commission % typed per sale; staff can be added/edited (Edit & Void) but pay rules live in Salary Settings
+- sal_settings has small_daily=3200 copied from the test setup: confirm or change in Salary > Settings
+- competitors table holds 13 default rows seeded by routes/competitors.js (not Aj's data): decide keep or clear
+- Railway go-live (parked): see CLAUDE.md task 1; set real DASH_* creds; scripts/railway_harden_db.js at unpause
 - Native speaker check of Sinhala/Tamil website text
-- Turn on WhatsApp draft-only mode (AGENT_DRAFT_ONLY=true in .env) only when Aj says
-- Locate C:\Bathco\AI-Data\ (Lasersoft exports): Aj to confirm the path
-- Aj: restart laptop, confirm :3100 /health + /owner come back; then create owner login in setup wizard; save ADMIN_PIN + .pg_owner_superpw password in password manager
-- Aj: laptop Sleep = Never when plugged in
-- Postgres 18 listens on all interfaces (0.0.0.0:5432): restrict listen_addresses to localhost (needs admin restart of service)
-- pm2 dump also holds another app (premium-imports-server, not ours); pm2 resurrect restarts it too
-- Stale test files: .test-login.txt (old test user, gone) in overnight worktree
+- Remote GitHub branches still exist (overnight, claude/*, octopus-memory): delete when Aj agrees
+- Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/
