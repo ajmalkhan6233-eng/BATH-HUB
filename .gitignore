@@ -73,3 +73,6 @@ local_ops/
 .pg_owner_superpw
 
 Claude outputs/
+
+backups/*.zip
+backups/*.sql
