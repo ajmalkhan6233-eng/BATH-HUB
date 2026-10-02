@@ -49,7 +49,7 @@ var TABS=[
  {key:'po',flag:'pur_purchase_orders',label:'Purchase Orders',ep:'/api/purchase-orders',
   cols:['PO #','Supplier','Date','Expected','Total','Status'],
   row:function(r){return [esc(r.po_number),esc(r.supplier_name),d(r.po_date_str),d(r.expected_date_str),f0(r.total_amount),badge(r.status||'PENDING')];}},
- {key:'matches',flag:'pur_po_grn_matching',label:'PO <svg class="bh-icon" aria-hidden="true"><use href="#i-arrows"/></svg> GRN Matches',ep:'/api/po-grn-matches',
+ {key:'matches',flag:'pur_po_grn_matching',label:'PO to GRN Matches',ep:'/api/po-grn-matches',
   cols:['PO #','GRN #','PO Total','GRN Total','Variance'],
   row:function(r){return [d(r.po_number),d(r.suggested_grn_number),f0(r.po_total),f0(r.suggested_grn_amount),r.suggested_grn_amount==null?'—':f0(Number(r.suggested_grn_amount)-Number(r.po_total))];}},
  {key:'prices',flag:'pur_price_comparison',label:'Supplier Price Comparison',ep:'/api/supplier-prices',
