@@ -236,6 +236,7 @@ app.use(async (req, res, next) => {
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
+if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
     if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
@@ -292,6 +293,8 @@ const CASH_IN_EXPR  = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
+// Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
+app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root: __dirname }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────
@@ -580,6 +583,7 @@ app.use('/api', require('./routes/sale_commissions'));    // routes are relative
 app.use('/api', require('./routes/shop_operations'));     // routes are relative (/discount-* /stock-* /receipt-queue*) -> /api/discount-*, /api/stock-*, /api/receipt-queue*
 app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
+app.use('/api', require('./routes/site_editor'));             // website editor: public feed /api/site/public, owner-only edits /api/site/*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
 app.use('/api/admin-core', require('./routes/admin_core'));   // admin-only users (add/disable/role/reset/force logout/history) + audit log
 app.use('/api/system', require('./routes/backup_status'));      // admin-only: backups (now/list/download), RESTORE (typed word + PIN + safety backup), status

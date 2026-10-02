@@ -53,6 +53,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;       // writes and other sites: not ours
   if (url.pathname === '/setup.html' || url.pathname === '/setup') return;        // first-run page: never cached
+  if (url.pathname === '/site' || url.pathname.startsWith('/website/')) return;      // public website: the owner app's saved copies never touch it
 
   if (url.pathname.startsWith('/api/')) {
     if (NO_CACHE_API.test(url.pathname + url.search)) return;
