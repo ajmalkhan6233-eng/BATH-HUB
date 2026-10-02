@@ -293,13 +293,17 @@ app.listen(PORT, () => console.log(`[WA-BRIDGE] HTTP API on http://localhost:${P
 // can survive holding .wwebjs_auth/session — then initialize() fails with
 // "browser already running" and the bridge sits as a zombie (online in pm2,
 // ready:false, one grey tick on incoming messages). Kill any such orphan first.
-// Matches ONLY chrome processes whose command line points at OUR session dir.
+// Matches ONLY chrome processes whose command line contains THIS bridge's own absolute
+// session folder (path.resolve of the LocalAuth dataPath). It used to match any Chrome
+// with "wwebjs_auth" in its command line, which also killed a second bridge's Chrome
+// (e.g. the live shop's) when two bridges ran on one machine.
+const OWN_SESSION_DIR = path.resolve('./.wwebjs_auth');
 function killOrphanedSessionBrowsers() {
     try {
         const { execSync } = require('child_process');
         execSync(
-            `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name like '%chrome%'\\" | Where-Object { $_.CommandLine -like '*wwebjs_auth*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`,
-            { stdio: 'ignore', timeout: 30000 }
+            `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name like '%chrome%'\\" | Where-Object { $_.CommandLine -and $env:BRIDGE_SESSION_DIR -and $_.CommandLine.IndexOf($env:BRIDGE_SESSION_DIR, [StringComparison]::OrdinalIgnoreCase) -ge 0 } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"`,
+            { stdio: 'ignore', timeout: 30000, env: { ...process.env, BRIDGE_SESSION_DIR: OWN_SESSION_DIR } }
         );
         console.log('[WA-BRIDGE] Cleared any orphaned session browsers before initialize.');
     } catch (e) {
