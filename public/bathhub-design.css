@@ -1,0 +1,145 @@
+/* ==========================================================================
+   BATH HUB DESIGN LAYER  (public/bathhub-design.css)
+   Visual design only: colours, type, spacing, themes. No logic, no network.
+   Themes: Gold (default dark), Water, Light  ->  <html data-theme="dark|water|light">
+   Rules: every button/tab/toggle/nav item is at least 48 x 48 px; body text >= 14 px, labels >= 12 px; icons are inline SVG (no emoji).
+   Link this file LAST in <head> so it wins over a page's own <style>.
+   ========================================================================== */
+
+/* ---- 1. TOKENS (from the Bath Hub design system) ---- */
+:root, [data-theme="dark"], [data-theme="gold"] {
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --text-xs:12px; --text-sm:14px; --text-base:15px; --text-md:16px; --text-lg:18px; --text-xl:20px; --text-2xl:24px; --text-3xl:30px;
+  --radius-xs:4px; --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:24px; --radius-full:9999px;
+  --touch-target:48px;
+  --shadow-sm:0 1px 2px 0 rgba(0,0,0,.25); --shadow-md:0 4px 12px 0 rgba(0,0,0,.35); --shadow-lg:0 10px 28px 0 rgba(0,0,0,.45); --shadow-gold:0 4px 16px 0 rgba(212,175,55,.2);
+
+  --bg-canvas:#0b0d10; --bg-surface:#14171d; --bg-surface-elevated:#1d2129; --bg-surface-subtle:#181b22; --bg-surface-hover:#262c37; --bg-input:#101216;
+  --bg-glass:rgba(20,23,29,.88); --bg-glass-fallback:#14171df5;
+  --border-subtle:#282f3a; --border-strong:#3b4554; --border-focus:#d4af37;
+  --text-primary:#f8fafc; --text-secondary:#cbd5e1; --text-muted:#94a3b8; --text-on-accent:#000000;
+  --gold-primary:#d4af37; --gold-hover:#e5c158; --gold-active:#bf9b2f; --gold-text:#f0ce64; --gold-bg-subtle:rgba(212,175,55,.12); --gold-border-subtle:rgba(212,175,55,.32);
+  --status-success:#34d399; --status-success-bg:rgba(52,211,153,.14);
+  --status-danger:#f87171;  --status-danger-bg:rgba(248,113,113,.14);
+  --status-warning:#fbbf24; --status-warning-bg:rgba(251,191,36,.14);
+  --status-info:#38bdf8;    --status-info-bg:rgba(56,189,248,.14);
+  --ceramic-white:#ffffff; --water-cyan:#38bdf8;
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg-canvas:#f8f9fa; --bg-surface:#ffffff; --bg-surface-elevated:#f1f3f7; --bg-surface-subtle:#f9fafb; --bg-surface-hover:#eaedf3; --bg-input:#ffffff;
+  --bg-glass:rgba(255,255,255,.9); --bg-glass-fallback:#fffffff5;
+  --border-subtle:#dbe0e8; --border-strong:#b2bcc9; --border-focus:#9e7415;
+  --text-primary:#0f172a; --text-secondary:#334155; --text-muted:#596577; --text-on-accent:#ffffff;
+  --gold-primary:#8f670a; --gold-hover:#755406; --gold-active:#5c4204; --gold-text:#785606; --gold-bg-subtle:rgba(143,103,10,.1); --gold-border-subtle:rgba(143,103,10,.28);
+  --shadow-sm:0 1px 3px 0 rgba(0,0,0,.08); --shadow-md:0 4px 12px 0 rgba(0,0,0,.08); --shadow-lg:0 10px 24px 0 rgba(0,0,0,.1); --shadow-gold:0 4px 16px 0 rgba(143,103,10,.18);
+  --status-success:#059669; --status-success-bg:rgba(5,150,105,.1);
+  --status-danger:#dc2626;  --status-danger-bg:rgba(220,38,38,.1);
+  --status-warning:#b45309; --status-warning-bg:rgba(180,83,9,.1);
+  --status-info:#0284c7;    --status-info-bg:rgba(2,132,199,.1);
+  color-scheme: light;
+}
+[data-theme="water"] {
+  --bg-canvas:#060e15; --bg-surface:#0c1822; --bg-surface-elevated:#132331; --bg-surface-subtle:#0f1c27; --bg-surface-hover:#1b2f42; --bg-input:#081119;
+  --bg-glass:rgba(12,24,34,.88); --bg-glass-fallback:#0c1822f0;
+  --border-subtle:#1e364a; --border-strong:#2f5370; --border-focus:#06b6d4;
+  --text-primary:#f0fdfa; --text-secondary:#99f6e4; --text-muted:#5eead4; --text-on-accent:#042f2e;
+  --gold-primary:#06b6d4; --gold-hover:#22d3ee; --gold-active:#0891b2; --gold-text:#67e8f9; --gold-bg-subtle:rgba(6,182,212,.14); --gold-border-subtle:rgba(6,182,212,.35);
+  --shadow-sm:0 1px 3px 0 rgba(0,0,0,.4); --shadow-md:0 4px 14px 0 rgba(4,30,45,.5); --shadow-lg:0 10px 30px 0 rgba(2,18,28,.6); --shadow-gold:0 4px 20px 0 rgba(6,182,212,.3);
+  --water-cyan:#22d3ee;
+  color-scheme: dark;
+}
+
+/* ---- 2. COMPATIBILITY: the colour names the existing pages already use now follow the design tokens ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  /* owner shell family */
+  --gold:var(--gold-primary); --gold-dark:var(--gold-active); --gold-light:var(--gold-hover);
+  --bg:var(--bg-canvas); --bg2:var(--bg-surface); --bg3:var(--bg-surface-elevated);
+  --card:var(--bg-surface); --card-border:var(--border-subtle); --card-hover:var(--bg-surface-hover);
+  --text:var(--text-primary); --text2:var(--text-secondary); --text3:var(--text-muted);
+  --green:var(--status-success); --red:var(--status-danger); --amber:var(--status-warning); --blue:var(--status-info); --purple:#a78bfa;
+  --radius:var(--radius-lg); --shadow:var(--shadow-md);
+  /* screens that use accent / ink / line names */
+  --accent:var(--gold-primary); --accent-ink:var(--text-on-accent); --ink:var(--text-primary); --txt:var(--text-primary);
+  --bad:var(--status-danger); --ok:var(--status-success); --muted:var(--text-muted);
+  --border:var(--border-subtle); --line:var(--border-subtle); --surface:var(--bg-surface);
+  --note:var(--status-warning-bg); --note-ink:var(--status-warning);
+  --wall:var(--bg-canvas); --wall2:var(--bg-surface); --sofa:var(--bg-surface-elevated); --sofa2:var(--bg-surface-hover);
+}
+
+/* ---- 3. BASE ---- */
+html { font-size:15px; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+body { font-family:var(--font-sans); font-size:var(--text-base); line-height:1.5; color:var(--text-primary); background-color:var(--bg-canvas); overflow-wrap:anywhere; }
+h1,h2,h3,h4 { color:var(--text-primary); letter-spacing:-0.01em; }
+a { color:var(--gold-text); }
+::placeholder { color:var(--text-muted); opacity:1; }
+::selection { background:var(--gold-bg-subtle); }
+:focus-visible { outline:2px solid var(--border-focus); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
+.tabular-nums, .num, td.num, th.num, .money, .money-cell { font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
+::-webkit-scrollbar { width:8px; height:8px; } ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; }
+
+/* ---- 4. TOUCH TARGETS: at least 48 x 48 ---- */
+button, .btn, [role="button"], [role="tab"], .tab, .tab-btn, .nav-item, .nav-link, .mini-btn, .theme-toggle, summary,
+input[type="button"], input[type="submit"], a.btn, a.share-btn, .share-btn, .remove-btn, .generate-btn {
+  min-height:var(--touch-target); min-width:var(--touch-target);
+  font-family:inherit; font-size:max(14px, 1em);
+}
+select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="file"]) {
+  min-height:var(--touch-target); font-family:inherit; font-size:max(15px, 1em);
+  color:var(--text-primary); background-color:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+}
+textarea { min-height:96px; }
+select:focus, textarea:focus, input:focus { outline:none; border-color:var(--border-focus); box-shadow:0 0 0 3px var(--gold-bg-subtle); }
+input[type="checkbox"], input[type="radio"] { width:24px; height:24px; accent-color:var(--gold-primary); cursor:pointer; vertical-align:middle; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display:inline-flex; align-items:center; gap:var(--space-2); min-height:var(--touch-target); cursor:pointer; }
+button, .btn, [role="button"], .tab, .mini-btn { cursor:pointer; border-radius:var(--radius-md); }
+button:disabled, .btn:disabled { opacity:.55; cursor:not-allowed; }
+label, th, .label, .lbl, small { font-size:max(12px, 1em); }
+
+/* ---- 5. SHARED COMPONENT LOOK ---- */
+table { border-collapse:collapse; }
+th { color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--border-strong); }
+td { border-bottom:1px solid var(--border-subtle); }
+tbody tr:hover { background:var(--bg-surface-hover); }
+.card, .panel { background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); color:var(--text-primary); }
+dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-strong); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); }
+.modal-bg, .modal-overlay { background:rgba(0,0,0,.65); }
+
+/* design-system buttons, usable in any markup */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); border:1px solid transparent; font-weight:600; text-decoration:none; transition:background-color .15s, border-color .15s, transform .15s; }
+.btn:active { transform:scale(.98); }
+.btn-primary, .btn-p { background:var(--gold-primary); color:var(--text-on-accent); box-shadow:var(--shadow-gold); }
+.btn-primary:hover, .btn-p:hover { background:var(--gold-hover); }
+.btn-secondary, .btn-s { background:var(--bg-surface-elevated); color:var(--text-primary); border-color:var(--border-subtle); }
+.btn-secondary:hover, .btn-s:hover { background:var(--bg-surface-hover); border-color:var(--border-strong); }
+.btn-outline-gold { background:var(--gold-bg-subtle); color:var(--gold-text); border-color:var(--gold-border-subtle); }
+.btn-danger { background:var(--status-danger-bg); color:var(--status-danger); border-color:var(--status-danger); }
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:var(--radius-full); font-size:var(--text-xs); font-weight:600; background:var(--bg-surface-elevated); color:var(--text-secondary); }
+.badge-ok { background:var(--status-success-bg); color:var(--status-success); } .badge-warn { background:var(--status-warning-bg); color:var(--status-warning); } .badge-bad { background:var(--status-danger-bg); color:var(--status-danger); }
+
+/* inline SVG icons (replace every emoji) */
+.bh-icon { width:1.25em; height:1.25em; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:-.22em; flex-shrink:0; }
+.bh-icon.bh-fill { fill:currentColor; stroke:none; }
+
+/* ---- 6. PHONE ---- */
+@media (max-width:768px) { html { font-size:15px; } }
+/* ---- 7. OWNER SHELL (public/bathco_complete.html) ---- */
+#chip-slot { display:inline-flex; align-items:center; }
+#chip-slot > button { position:static !important; top:auto !important; right:auto !important; z-index:auto !important; min-height:36px; }
+.sidebar { background:var(--bg-glass-fallback); border-right:1px solid var(--border-subtle); }
+.sidebar .nav-item { border:1px solid transparent; border-radius:var(--radius-md); color:var(--text-secondary); padding-top:0; padding-bottom:0; align-items:center; }
+.sidebar .nav-item:hover { background:var(--bg-surface-hover); color:var(--text-primary); }
+.sidebar .nav-item.active { background:var(--gold-bg-subtle); color:var(--gold-text); border-color:var(--gold-border-subtle); font-weight:600; }
+.sidebar .nav-icon .bh-icon, .nav-icon svg { width:20px; height:20px; }
+.nav-label { font-size:var(--text-sm); }
+.nav-sep { font-size:var(--text-xs); color:var(--text-muted); }
+.topbar, header.topbar { background:var(--bg-glass-fallback); border-bottom:1px solid var(--border-subtle); }
+.theme-toggle { width:48px; height:48px; border-radius:var(--radius-full); color:var(--gold-text); }
+.logout-btn { border:1px solid var(--border-subtle); border-radius:var(--radius-md); color:var(--text-primary); background:var(--bg-surface-elevated); padding:0 var(--space-4); }
+.live-clock { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+#bottom-nav { background:var(--bg-glass-fallback); }
+#bottom-nav button .bi .bh-icon { width:22px; height:22px; }
+#bottom-nav button { font-size:var(--text-xs); }
