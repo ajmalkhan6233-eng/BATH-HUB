@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/quotations');</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,9 +12,9 @@
 h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 button,select{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
-button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+button.gold{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
-.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:520px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:13px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:520px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:14px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
 tr.r{cursor:pointer}tr.r:hover{background:var(--card)}
 .badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
 .s-draft{color:var(--text2)}.s-sent{color:var(--amber)}.s-accepted{color:var(--green)}.s-rejected{color:var(--red)}
@@ -23,7 +24,8 @@ label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,tex
 .box select{width:100%}
 .li{display:grid;grid-template-columns:2fr 60px 90px 26px;gap:6px;margin-bottom:6px}.li input{padding:6px}
 .acts{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}#msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.meta{color:var(--text2);font-size:12px}
-</style></head><body>
+</style><link rel="stylesheet" href="/bathhub-design.css">
+</head><body>
 <h1>Quotations</h1><div class="sub">Price offers to customers. Tap a row to see items and change its status.</div>
 <div class="bar"><button class="gold" id="add">+ New quotation</button><button id="reload">Refresh</button>
 <select id="flt"><option value="">All statuses</option><option>draft</option><option>sent</option><option>accepted</option><option>rejected</option></select><span class="meta" id="cnt"></span></div>
