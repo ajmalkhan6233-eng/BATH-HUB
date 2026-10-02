@@ -31,6 +31,8 @@ function createRouter(pool, { today = todayLK } = {}) {
             ym TEXT PRIMARY KEY, net NUMERIC NOT NULL, savings NUMERIC NOT NULL, colleague NUMERIC NOT NULL, owner_comm NUMERIC NOT NULL, keep NUMERIC NOT NULL,
             adj_applied TEXT NOT NULL DEFAULT '{}', closed_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
         await pool.query(`CREATE TABLE IF NOT EXISTS sal_cheque_cover (cheque_id INT PRIMARY KEY, covered_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+        // one-time set-up costs (e.g. key money): NOT part of the daily cost or break-even; shown separately with a payback line
+        await pool.query(`CREATE TABLE IF NOT EXISTS sal_setup_costs (id SERIAL PRIMARY KEY, label TEXT NOT NULL, amount NUMERIC NOT NULL, paid_on DATE NOT NULL, status TEXT NOT NULL DEFAULT 'paid', note TEXT)`);
     })().catch(e => console.error('[salary] init failed:', e.message));
 
     // A core table that may not exist yet on a fresh instance counts as "no rows", never as an error.
@@ -209,6 +211,45 @@ function createRouter(pool, { today = todayLK } = {}) {
             if (!(cost > 0)) return res.status(400).json({ error: 'cost must be more than 0' });
             if (price !== null && !(price >= 0)) return res.status(400).json({ error: 'price must be a number' });
             res.json(M.priceCheck(cost, price, await settings()));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
+    // ── dashboard card + set-up costs (read-only; uses the same settings and the same maths as the screens above) ──
+    router.get('/salary/overview', ownerOnly, async (req, res) => {
+        try {
+            await ready;
+            const s = await settings(), t = today();
+            const ds = (await soft(`SELECT total_sale, gross_profit, total_expenses, gp_status FROM daily_summary WHERE report_date = $1`, [t], []))[0] || null;
+            const gpKnown = ds && !(ds.gp_status === 'NOT_AVAILABLE' && !num(ds.gross_profit));
+            const net = gpKnown && ds.total_expenses != null ? M.money2(num(ds.gross_profit) - num(ds.total_expenses)) : null;
+            const split = net != null ? M.monthSplit(net, s) : null;
+            const cq = await soft(`SELECT c.id, c.amount, c.due_date, c.payee, (v.cheque_id IS NOT NULL) AS covered
+                FROM cheque_register c LEFT JOIN sal_cheque_cover v ON v.cheque_id = c.id
+                WHERE c.status IN ('pending','held') AND c.due_date <= ($1::date + $2::int) ORDER BY c.due_date`, [t, Math.round(s.cheque_days)], []);
+            const reserve = M.chequeReserve(cq.map(r => ({ id: r.id, amount: Number(r.amount), due_date: r.due_date instanceof Date ? r.due_date.toISOString().slice(0, 10) : String(r.due_date).slice(0, 10), covered: r.covered, party: r.payee })), t, Math.round(s.cheque_days));
+            const due7 = M.money2(reserve.lines.reduce((a, l) => a + l.amount, 0));
+
+            const costs = await soft(`SELECT id, label, amount, paid_on, status, note FROM sal_setup_costs ORDER BY paid_on, id`, [], []);
+            const setup = [];
+            for (const c of costs) {
+                const paidOn = c.paid_on instanceof Date ? c.paid_on.toISOString().slice(0, 10) : String(c.paid_on).slice(0, 10);
+                const agg = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COUNT(*) AS days FROM daily_summary WHERE report_date >= $1::date AND gp_status <> 'NOT_AVAILABLE'`, [paidOn], [{ gp: 0, exp: 0, days: 0 }]))[0];
+                const days = Number(agg.days);
+                const fixedPerDay = s.add_fixed_to_net ? (s.rent_month + s.utilities_month) / (s.working_days > 0 ? s.working_days : 26) + s.owner_daily + s.colleague_daily : 0;
+                const profitSince = M.money2(num(agg.gp) - num(agg.exp) - fixedPerDay * days);
+                const amount = Number(c.amount), back = Math.max(0, Math.min(amount, profitSince));
+                setup.push({ id: c.id, label: c.label, amount, paid_on: paidOn, status: c.status, note: c.note,
+                    payback: { profit_since: profitSince, days_counted: days, paid_back: M.money2(back), pct: amount > 0 ? Math.round(back / amount * 1000) / 10 : 0,
+                        note: 'Net profit since the day it was paid (gross profit minus expenses, rent, bills and daily pay). An estimate.' } });
+            }
+            res.json({
+                date: t,
+                cost_target: { target: s.cost_normal, ceiling: s.cost_ceiling },
+                savings_today: { net, pending: net == null, save_pct: s.save_pct, amount: split ? split.save : null },
+                who_gets_what: split ? { savings: split.save, colleague: split.colleague, owner: split.owner, stays: split.keep } : null,
+                cheque_reserve: { set_aside_today: reserve.reserve, due_within_days: Math.round(s.cheque_days), due_total: due7, count: reserve.lines.length },
+                setup_costs: setup,
+            });
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 

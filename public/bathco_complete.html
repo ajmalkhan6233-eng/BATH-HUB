@@ -307,6 +307,7 @@ table tr:last-child td{border-bottom:none}
         </div>
         <div style="font-size:38px">🕌</div>
       </div>
+      <div id="salary-card"></div>
       <!-- Target bar -->
       <div class="card" style="margin-bottom:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -1408,6 +1409,7 @@ function navigate(page) {
   if (page === 'shoptools') loadShopTools();
   if (page === 'docinbox') loadDocInbox();
   if (page === 'salary') loadSalary();
+  if (page === 'dashboard' && typeof loadSalaryCard === 'function') loadSalaryCard();
   if (page === 'agentreview') loadAgentReview();
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();

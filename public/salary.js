@@ -36,6 +36,7 @@ async function slGet(url) {
 
 async function slToday(body) {
   const t = await slGet('/api/salary/today');
+  const ov = await slGet('/api/salary/overview').catch(() => null);
   const c = t.costs, cs = t.cheque_set_aside;
   const statusTxt = { ok: 'within the normal target', above_normal: 'ABOVE the normal target', over_ceiling: 'OVER the hard ceiling' }[c.status];
   const statusCol = { ok: 'var(--green,#2e7d32)', above_normal: 'var(--amber,#b26a00)', over_ceiling: 'var(--red,#c62828)' }[c.status];
@@ -47,6 +48,11 @@ async function slToday(body) {
     slCard('Break-even sales', t.break_even_sales == null ? 'unknown' : slRs(t.break_even_sales), `At ${t.margin_pct}% margin (${slEsc(t.settings_used.margin_source)}). ${t.break_even_reached === true ? '<b style="color:var(--green,#2e7d32)">Reached.</b>' : t.break_even_reached === false ? 'Not reached yet.' : ''}`) +
     t.push.map(p => `<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Push target ${slRs(p.target)}</div><div style="font-size:18px;font-weight:700">${p.pct}% · ${p.remaining ? slRs(p.remaining) + ' to go' : 'reached'}</div>${slBar(p.pct)}</div>`).join('') +
     `<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Cheques</div><div style="font-size:18px;font-weight:700">${slEsc(cs.message)}</div>${cs.warning ? `<div style="color:var(--red,#c62828);font-size:13px;margin-top:4px">⚠ ${slEsc(cs.warning)}</div>` : ''}${cheques || '<div style="font-size:13px;color:var(--text2)">No unpaid cheques due soon.</div>'}</div>`;
+  if (ov && ov.setup_costs && ov.setup_costs.length) {
+    body.innerHTML += '<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">One-time set-up costs (not in the daily cost or break-even)</div>' + ov.setup_costs.map(c =>
+      `<div style="margin-top:8px"><div style="font-size:18px;font-weight:700">${slEsc(c.label)} (${slEsc(c.status)}): ${slRs(c.amount)}</div><div style="font-size:12px;color:var(--text2)">Paid on ${slEsc(c.paid_on)}</div>` +
+      slBar(c.payback.pct) + `<div style="font-size:12px;margin-top:4px">Paid back so far: ${slRs(c.payback.paid_back)} of ${slRs(c.amount)} (${c.payback.pct}%) &middot; <span style="color:var(--text2)">${slEsc(c.payback.note)}</span></div></div>`).join('') + '</div>';
+  }
 }
 
 async function slCover(id, covered) {
@@ -98,3 +104,26 @@ async function slSave() {
   const d = await r.json().catch(() => ({}));
   document.getElementById('sl-msg').textContent = r.ok ? 'Saved.' : (d.error || 'Could not save');
 }
+
+
+/* Dashboard card: today's cost target, savings to set aside, cheque reserve, who gets what. Owner only; hides itself for anyone else. */
+async function loadSalaryCard() {
+  const box = document.getElementById('salary-card');
+  if (!box) return;
+  try {
+    const r = await fetch('/api/salary/overview');
+    if (!r.ok) { box.innerHTML = ''; return; }
+    const o = await r.json();
+    const sv = o.savings_today, w = o.who_gets_what, c = o.cheque_reserve;
+    const km = (o.setup_costs || []).map(x => `${slEsc(x.label)} (${slEsc(x.status)}): ${slRs(x.amount)}`).join(' &middot; ');
+    box.innerHTML = `<div class="card" style="margin-bottom:18px"><div class="section-title" style="margin-bottom:8px">Today's money plan</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
+        <div><div style="font-size:12px;color:var(--text2)">Today's cost target</div><div style="font-size:20px;font-weight:800">${slRs(o.cost_target.target)}</div><div style="font-size:11px;color:var(--text2)">Hard ceiling ${slRs(o.cost_target.ceiling)}</div></div>
+        <div><div style="font-size:12px;color:var(--text2)">Shop savings to set aside today</div><div style="font-size:20px;font-weight:800">${sv.pending ? 'PENDING' : slRs(sv.amount)}</div><div style="font-size:11px;color:var(--text2)">${sv.save_pct}% of net profit${sv.pending ? ' &middot; today\'s sales entry is not complete' : ''} &middot; change in Salary &amp; Costs &gt; Settings</div></div>
+        <div><div style="font-size:12px;color:var(--text2)">Cheque reserve</div><div style="font-size:20px;font-weight:800">${slRs(c.set_aside_today)}</div><div style="font-size:11px;color:var(--text2)">set aside today &middot; ${c.count} cheque(s) due in ${c.due_within_days} days = ${slRs(c.due_total)}</div></div>
+      </div>
+      <div style="font-size:13px;margin-top:10px">Who gets what: ${w ? `savings <b>${slRs(w.savings)}</b> &middot; colleague commission <b>${slRs(w.colleague)}</b> &middot; owner <b>${slRs(w.owner)}</b> &middot; stays in shop <b>${slRs(w.stays)}</b>` : 'PENDING (needs today\'s profit and expenses)'}</div>
+      ${km ? `<div style="font-size:12px;color:var(--text2);margin-top:6px">One-time: ${km}</div>` : ''}</div>`;
+  } catch (e) { box.innerHTML = ''; }
+}
+window.addEventListener('load', () => setTimeout(loadSalaryCard, 1200));
