@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/loans');   // one app: opened on its own -> open it inside /owner</script>
 <meta charset="UTF-8">
@@ -17,41 +18,42 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Work Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);line-height:1.5;padding-bottom:60px;}
-  header{background:var(--emerald-900);color:var(--stone-50);padding:20px;}
+  header{background:var(--gold-primary);color:var(--stone-50);padding:20px;}
   header h1{margin:0;font-size:20px;font-weight:600;}
-  header .sub{color:var(--gold-300);font-size:13px;margin-top:4px;}
+  header .sub{color:var(--gold-300);font-size:14px;margin-top:4px;}
   main{max-width:900px;margin:0 auto;padding:20px 16px;}
-  .card{background:#fff;border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-  .card h2{font-size:15px;margin:0 0 14px;color:var(--earth-800);}
+  .card{background:var(--bg-surface);border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--text-primary);}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:520px){.grid2{grid-template-columns:1fr;}}
-  label{font-size:12px;color:var(--earth-700);display:block;margin-bottom:4px;}
+  label{font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;}
   input,select,textarea{width:100%;padding:8px 10px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;font-family:inherit;margin-bottom:10px;}
-  .btn{background:var(--gold-500);color:var(--emerald-900);border:none;border-radius:4px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;}
-  .btn:hover{background:var(--gold-300);}
+  .btn{background:var(--gold-primary);color:var(--text-primary);border:none;border-radius:4px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--gold-primary);}
   .btn-sm{padding:5px 10px;font-size:12px;}
   .summary-row{display:flex;gap:16px;flex-wrap:wrap;}
   .summary-item{flex:1;min-width:140px;}
-  .summary-item .big{font-size:24px;font-weight:700;color:var(--emerald-900);}
-  .summary-item .lbl{font-size:12px;color:var(--earth-500);}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;color:var(--earth-500);font-weight:600;font-size:11px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--earth-800);position:sticky;top:0;background:#fff;}
-  td{padding:8px;border-bottom:1px solid #f0ece0;vertical-align:top;}
+  .summary-item .big{font-size:24px;font-weight:700;color:var(--text-primary);}
+  .summary-item .lbl{font-size:12px;color:var(--text-muted);}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border-strong);position:sticky;top:0;background:var(--bg-surface);}
+  td{padding:8px;border-bottom:1px solid var(--border-subtle);vertical-align:top;}
   tr:hover{background:var(--stone-100);}
-  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
-  .badge-active{background:var(--gold-300);color:var(--earth-800);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;}
+  .badge-active{background:var(--gold-primary);color:var(--text-primary);}
   .badge-repaid{background:var(--green-100);color:var(--green-700);}
   .badge-overdue{background:var(--red-100);color:var(--red-600);}
-  .empty{color:var(--earth-500);font-size:13px;font-style:italic;padding:10px 0;}
+  .empty{color:var(--text-muted);font-size:14px;font-style:italic;padding:10px 0;}
   .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-  .filters button{background:#fff;border:1px solid #d8d0bd;border-radius:16px;padding:6px 14px;font-size:12px;cursor:pointer;}
-  .filters button.active{background:var(--emerald-900);color:#fff;border-color:var(--emerald-900);}
+  .filters button{background:var(--bg-surface);border:1px solid #d8d0bd;border-radius:16px;padding:6px 14px;font-size:12px;cursor:pointer;}
+  .filters button.active{background:var(--gold-primary);color:var(--text-on-accent);border-color:var(--border-strong);}
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:10;}
   .modal-bg.show{display:flex;}
-  .modal{background:#fff;border-radius:var(--radius);padding:20px;width:90%;max-width:380px;}
+  .modal{background:var(--bg-surface);border-radius:var(--radius);padding:20px;width:90%;max-width:380px;}
   .modal h3{margin:0 0 12px;font-size:15px;}
-  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--emerald-900);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;display:none;}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--gold-primary);color:var(--text-on-accent);padding:10px 20px;border-radius:20px;font-size:14px;display:none;}
 </style>
+<link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
 
@@ -83,7 +85,7 @@
       <div><label>Notes</label><input id="n-notes" placeholder="optional"></div>
     </div>
     <button class="btn" onclick="createLoan()">Add loan</button>
-    <span id="add-status" style="font-size:12px;color:var(--earth-500);margin-left:10px;"></span>
+    <span id="add-status" style="font-size:12px;color:var(--text-muted);margin-left:10px;"></span>
   </div>
 
   <div class="card">
@@ -94,9 +96,9 @@
         <button data-status="active" onclick="setFilter('active', this)">Active</button>
         <button data-status="repaid" onclick="setFilter('repaid', this)">Repaid</button>
       </div>
-      <button class="btn btn-sm" onclick="openPickerModal()">✏️ Edit a loan</button>
+      <button class="btn btn-sm" onclick="openPickerModal()"><svg class="bh-icon" aria-hidden="true"><use href="#i-pencil"/></svg> Edit a loan</button>
     </div>
-    <div style="overflow:auto;max-height:440px;border:1px solid #f0ece0;border-radius:4px;">
+    <div style="overflow:auto;max-height:440px;border:1px solid var(--border-subtle);border-radius:4px;">
     <table>
       <thead><tr>
         <th>Lender</th><th>Given</th><th>Due</th><th>Amount</th><th>Total due</th><th>Outstanding</th><th>Status</th><th>Documents</th><th>Actions</th>
@@ -117,7 +119,7 @@
     <label>Notes</label><input id="p-notes" placeholder="optional">
     <div style="display:flex;gap:8px;margin-top:6px;">
       <button class="btn" onclick="submitPayment()">Save</button>
-      <button class="btn" style="background:#e2dccb;" onclick="closeModal()">Cancel</button>
+      <button class="btn" style="background:var(--bg-surface-elevated);" onclick="closeModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -127,7 +129,7 @@
     <h3>Pick a loan to edit</h3>
     <div id="picker-list" style="max-height:320px;overflow-y:auto;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn" style="background:#e2dccb;" onclick="closePickerModal()">Cancel</button>
+      <button class="btn" style="background:var(--bg-surface-elevated);" onclick="closePickerModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -151,9 +153,9 @@
     <label>Notes</label><input id="e-notes" placeholder="optional">
     <div style="display:flex;gap:8px;margin-top:6px;">
       <button class="btn" onclick="submitEdit()">Save</button>
-      <button class="btn" style="background:#e2dccb;" onclick="closeEditModal()">Cancel</button>
+      <button class="btn" style="background:var(--bg-surface-elevated);" onclick="closeEditModal()">Cancel</button>
     </div>
-    <span id="edit-status" style="font-size:12px;color:var(--earth-500);"></span>
+    <span id="edit-status" style="font-size:12px;color:var(--text-muted);"></span>
   </div>
 </div>
 
@@ -165,9 +167,9 @@
     <input id="docs-file" type="file" accept=".jpg,.jpeg,.png,.pdf">
     <div style="display:flex;gap:8px;margin-top:6px;">
       <button class="btn" onclick="submitDocUpload()">Upload</button>
-      <button class="btn" style="background:#e2dccb;" onclick="closeDocsModal()">Close</button>
+      <button class="btn" style="background:var(--bg-surface-elevated);" onclick="closeDocsModal()">Close</button>
     </div>
-    <span id="docs-status" style="font-size:12px;color:var(--earth-500);"></span>
+    <span id="docs-status" style="font-size:12px;color:var(--text-muted);"></span>
   </div>
 </div>
 
@@ -230,16 +232,16 @@ async function loadLoans() {
   rows.forEach(l => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${l.lender_name}${l.notes ? `<br><span style="color:var(--earth-500);font-size:11px;">${l.notes}</span>` : ''}</td>
+      <td>${l.lender_name}${l.notes ? `<br><span style="color:var(--text-muted);font-size:12px;">${l.notes}</span>` : ''}</td>
       <td>${l.date_given}</td>
       <td>${l.due_date || '—'}</td>
-      <td>${money(l.amount)}${l.profit_rate > 0 ? `<br><span style="color:var(--earth-500);font-size:11px;">+${l.profit_rate}% profit share</span>` : ''}</td>
+      <td>${money(l.amount)}${l.profit_rate > 0 ? `<br><span style="color:var(--text-muted);font-size:12px;">+${l.profit_rate}% profit share</span>` : ''}</td>
       <td>${money(l.total_due)}</td>
       <td>${money(l.outstanding)}</td>
       <td><span class="badge ${badgeClass(l.status, l.days_to_due)}">${badgeLabel(l.status, l.days_to_due)}</span></td>
-      <td><button class="btn btn-sm" onclick="openDocsModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')">📎 Files</button></td>
+      <td><button class="btn btn-sm" onclick="openDocsModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')"><svg class="bh-icon" aria-hidden="true"><use href="#i-paperclip"/></svg> Files</button></td>
       <td style="white-space:nowrap;">
-        <a class="btn btn-sm" style="text-decoration:none;display:inline-block;" href="/api/investor-loans/${l.id}/report/pdf" title="Download full status + payment history as PDF">📄 Report</a>
+        <a class="btn btn-sm" style="text-decoration:none;display:inline-block;" href="/api/investor-loans/${l.id}/report/pdf" title="Download full status + payment history as PDF"><svg class="bh-icon" aria-hidden="true"><use href="#i-file"/></svg> Report</a>
         ${l.status !== 'repaid' ? `<button class="btn btn-sm" onclick="openPayModal(${l.id}, '${l.lender_name.replace(/'/g,"\\'")}')">Record payment</button>` : ''}
       </td>
     `;
@@ -312,9 +314,9 @@ function openPickerModal() {
     listEl.innerHTML = ids.map(id => {
       const l = loansCache[id];
       return `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #f0ece0;cursor:pointer;" onclick="closePickerModal(); openEditModal(${l.id})">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid var(--border-subtle);cursor:pointer;" onclick="closePickerModal(); openEditModal(${l.id})">
           <span>${l.lender_name} <span class="badge ${badgeClass(l.status, l.days_to_due)}" style="margin-left:6px;">${badgeLabel(l.status, l.days_to_due)}</span></span>
-          <span style="color:var(--earth-500);font-size:12px;">${money(l.outstanding)} outstanding</span>
+          <span style="color:var(--text-muted);font-size:12px;">${money(l.outstanding)} outstanding</span>
         </div>`;
     }).join('');
   }
@@ -385,7 +387,7 @@ async function loadDocsList() {
   const rows = await res.json();
   if (!rows.length) { listEl.innerHTML = '<div class="empty">No documents uploaded yet.</div>'; return; }
   listEl.innerHTML = rows.map(d => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0ece0;font-size:13px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:14px;">
       <a href="/api/investor-loans/documents/${d.id}/download" target="_blank">${d.original_name}</a>
       <button class="btn btn-sm" style="background:var(--red-100);color:var(--red-600);" onclick="deleteDoc(${d.id})">Remove</button>
     </div>
