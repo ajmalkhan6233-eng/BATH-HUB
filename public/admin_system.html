@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System &amp; Backups</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.12);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px}
+.card .t{color:var(--text2);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.card .v{font-size:19px;font-weight:600;margin:4px 0}
+.card .d{color:var(--text2);font-size:12px;word-break:break-word}
+.card.green{border-left:4px solid var(--green)}.card.amber{border-left:4px solid var(--amber)}.card.red{border-left:4px solid var(--red)}
+.panel{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px;margin-bottom:16px}
+button{background:var(--gold);color:#111;border:0;border-radius:8px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer;min-height:42px}
+button:disabled{opacity:.5;cursor:default}
+button.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:6px 10px;min-height:34px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--card-border)}
+th{color:var(--text2);font-weight:500;font-size:12px}
+.wrap{overflow-x:auto}
+.restore{border:2px solid var(--red);background:rgba(239,68,68,.07)}
+.restore h2{color:var(--red)}
+.warn{background:rgba(239,68,68,.15);border:1px solid var(--red);border-radius:8px;padding:10px;margin-bottom:10px;font-size:14px}
+label{display:block;font-size:13px;color:var(--text2);margin:10px 0 4px}
+select,input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg2);color:var(--text);font-size:16px}
+button.danger{background:var(--red);color:#fff;width:100%;margin-top:12px;padding:14px;font-size:16px}
+.msg{margin-top:10px;font-size:14px;min-height:20px}.ok{color:var(--green)}.bad{color:var(--red)}
+pre{background:var(--bg2);border:1px solid var(--card-border);border-radius:8px;padding:8px;font-size:11px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+</style></head><body>
+<h1>System &amp; Backups</h1>
+<div class="sub">Admin only. Health of the server, daily backups, and restore.</div>
+
+<div class="grid" id="cards"><div class="card"><div class="t">Loading</div></div></div>
+
+<div class="panel">
+  <div class="row"><h2 style="margin:0">Backups</h2><button id="bnow">Backup now</button><button class="ghost" id="refresh">Refresh</button></div>
+  <div class="msg" id="bmsg"></div>
+  <div class="wrap"><table><thead><tr><th>File</th><th>Size</th><th>Made</th><th></th></tr></thead><tbody id="blist"></tbody></table></div>
+</div>
+
+<div class="panel restore">
+  <h2>Restore (dangerous)</h2>
+  <div class="warn"><b>This replaces ALL current data</b> (sales, stock, money, everything) with the chosen backup. Anything entered after that backup is lost. A safety backup of the current data is taken first (named <i>-pre-restore-</i>) and the restore stops if it cannot be made. You may be asked to log in again afterwards.</div>
+  <label for="rname">Backup to restore</label><select id="rname"></select>
+  <label for="rconf">Type the word RESTORE</label><input id="rconf" autocomplete="off" placeholder="RESTORE">
+  <label for="rpin">Admin PIN</label><input id="rpin" type="password" inputmode="numeric" autocomplete="off">
+  <button class="danger" id="rgo">Restore this backup</button>
+  <div class="msg" id="rmsg"></div>
+</div>
+
+<div class="panel"><h2>Recent server errors</h2><pre id="errs">-</pre><div class="sub" id="errfile" style="margin:6px 0 0"></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path, opt) {
+  const r = await fetch('/api/system' + path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opt));
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(j.error || ('Error ' + r.status));
+  return j;
+}
+const mb = n => (n / 1048576).toFixed(2) + ' MB';
+function card(cls, t, v, d) { return `<div class="card ${cls}"><div class="t">${esc(t)}</div><div class="v">${esc(v)}</div><div class="d">${esc(d)}</div></div>`; }
+function dur(s) { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? d + 'd ' : '') + h + 'h ' + m + 'm'; }
+async function loadStatus() {
+  try {
+    const s = await api('/status'); const c = [];
+    c.push(card(s.health.ok ? (s.health.latency_ms > 500 ? 'amber' : 'green') : 'red', 'Database', s.health.ok ? 'Answering' : 'DOWN', s.health.ok ? s.health.latency_ms + ' ms' : (s.health.error || '')));
+    c.push(card('green', 'Server', 'Up ' + dur(s.server.uptime_seconds), 'Node ' + s.server.node + ' | pid ' + s.server.pid + ' | ' + s.server.memory_mb + ' MB | v' + (s.version || '?')));
+    if (s.db && s.db.name) c.push(card('green', 'Data', s.db.size_mb + ' MB', s.db.name + ' | ' + s.db.tables + ' tables | ' + s.db.connections + ' connections'));
+    const lb = s.last_backup;
+    c.push(card(!lb || !lb.name ? 'red' : lb.warn ? 'amber' : 'green', 'Last backup', lb && lb.name ? lb.age_hours + ' h ago' : 'NONE', lb && lb.name ? lb.name + (lb.warn ? ' (older than 26 h)' : '') : 'No backup found'));
+    const dk = s.disk; if (dk && dk.total_gb) c.push(card(dk.free_gb < 5 ? 'red' : dk.free_gb < 15 ? 'amber' : 'green', 'Disk free', dk.free_gb + ' GB', 'of ' + dk.total_gb + ' GB (' + dk.used_pct + '% used)'));
+    $('cards').innerHTML = c.join('');
+    $('errs').textContent = (s.errors.lines || []).join('\n') || 'No error log found.';
+    $('errfile').textContent = s.errors.file ? s.errors.file : '';
+  } catch (e) { $('cards').innerHTML = card('red', 'Status', 'Not available', e.message); }
+}
+async function loadBackups() {
+  try {
+    const b = (await api('/backups')).backups;
+    $('blist').innerHTML = b.length ? b.map(x => `<tr><td>${esc(x.name)}</td><td>${mb(x.size)}</td><td>${esc(new Date(x.created).toLocaleString())}</td><td><a href="/api/system/backups/${encodeURIComponent(x.name)}/download"><button class="ghost">Download</button></a></td></tr>`).join('') : '<tr><td colspan="4">No backups yet.</td></tr>';
+    $('rname').innerHTML = b.map(x => `<option value="${esc(x.name)}">${esc(x.name)} (${mb(x.size)})</option>`).join('');
+  } catch (e) { $('bmsg').className = 'msg bad'; $('bmsg').textContent = e.message; }
+}
+$('bnow').onclick = async () => {
+  $('bnow').disabled = true; $('bmsg').className = 'msg'; $('bmsg').textContent = 'Backing up...';
+  try { const r = await api('/backups', { method: 'POST', body: '{}' }); $('bmsg').className = 'msg ok'; $('bmsg').textContent = 'Saved ' + r.name; }
+  catch (e) { $('bmsg').className = 'msg bad'; $('bmsg').textContent = e.message; }
+  $('bnow').disabled = false; loadBackups(); loadStatus();
+};
+$('refresh').onclick = () => { loadBackups(); loadStatus(); };
+$('rgo').onclick = async () => {
+  const name = $('rname').value;
+  if (!name) return;
+  if (!confirm('Replace ALL current data with ' + name + '?')) return;
+  $('rgo').disabled = true; $('rmsg').className = 'msg'; $('rmsg').textContent = 'Restoring. Do not close this page...';
+  try {
+    const r = await api('/restore', { method: 'POST', body: JSON.stringify({ name, confirm: $('rconf').value, pin: $('rpin').value }) });
+    $('rmsg').className = 'msg ok'; $('rmsg').textContent = 'Restored ' + r.restored + '. Safety backup: ' + r.pre_restore_backup;
+  } catch (e) { $('rmsg').className = 'msg bad'; $('rmsg').textContent = e.message; }
+  $('rpin').value = ''; $('rgo').disabled = false; loadBackups(); loadStatus();
+};
+loadStatus(); loadBackups(); setInterval(loadStatus, 60000);
+</script></body></html>
