@@ -12,9 +12,9 @@
 // CACHE_NAME bumped so browsers with the old v1 worker installed pick up
 // this fix (their `activate` handler deletes any cache that isn't the
 // current CACHE_NAME).
-const CACHE_NAME = 'bathco-command-v2';
+const CACHE_NAME = 'bathco-command-v3';
 const STATIC_ASSETS = [
-  '/nature',
+  '/owner',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -42,6 +42,8 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache API calls — always live data, requires session cookie.
   if (url.pathname.startsWith('/api/')) return;
+  // Never cache the sign-in / first-run pages.
+  if (url.pathname === '/setup.html' || url.pathname === '/setup') return;
 
   // Only handle same-origin GET requests for the static shell.
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;

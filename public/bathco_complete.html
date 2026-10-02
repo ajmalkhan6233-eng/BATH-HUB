@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bath Hub — Owner</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0D0D0D">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -210,8 +212,15 @@ table tr:last-child td{border-bottom:none}
 .tier-cash{background:rgba(59,130,246,0.15);color:var(--blue)}
 .tier-found{background:rgba(100,100,100,0.15);color:var(--text2)}
 
+#bottom-nav{display:none}
+.nav-sep{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 12px 4px}
 @media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
+  body{padding-bottom:62px}
+  #bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg2);border-top:1px solid var(--card-border);padding:4px 0 max(4px,env(safe-area-inset-bottom))}
+  #bottom-nav button{flex:1;background:none;border:0;color:var(--text2);font:inherit;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer}
+  #bottom-nav button .bi{font-size:20px;line-height:1}
+  #bottom-nav button.active{color:var(--gold)}
+  .sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;z-index:200}
   .sidebar.open{transform:translateX(0)}
   .main-content{margin-left:0!important}
   .kpi-grid,.grid-2,.grid-3{grid-template-columns:1fr}
@@ -222,6 +231,13 @@ table tr:last-child td{border-bottom:none}
 <body>
 <canvas id="confetti-canvas"></canvas>
 <div id="toasts"></div>
+<nav id="bottom-nav" aria-label="Main menu">
+  <button data-go="dashboard" onclick="navigate('dashboard')"><span class="bi">📊</span>Home</button>
+  <button data-go="pos" onclick="navigate('pos')"><span class="bi">🛒</span>POS</button>
+  <button data-go="daily-sales" onclick="navigate('daily-sales')"><span class="bi">🧾</span>Sales</button>
+  <button data-go="stock" onclick="navigate('stock')"><span class="bi">📦</span>Stock</button>
+  <button data-go="__more" onclick="document.getElementById('sidebar').classList.toggle('open')"><span class="bi">☰</span>More</button>
+</nav>
 
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">
@@ -1403,7 +1419,12 @@ document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', () => navigate(el.dataset.page));
 });
 
+let _fromHash = false;
 function navigate(page) {
+  if (!document.getElementById('page-' + page)) page = 'dashboard';           // unknown address -> Dashboard
+  if (!_fromHash && location.hash !== '#/' + page) history.pushState(null, '', '#/' + page);
+  document.getElementById('sidebar').classList.remove('open');               // phone: close the menu after choosing
+  document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.go === page));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
@@ -1429,6 +1450,36 @@ function navigate(page) {
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
 }
+
+/* ONE SHELL: extra screens that open as frames inside /owner (same tab, sidebar kept) + address bar routes (#/page) */
+const EXTRA_FRAMES = [
+  { key: 'chequereg', label: 'Cheque Register', icon: '🧾', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
+  { key: 'legacy', label: 'Legacy screens', icon: '🗂️', url: '/BATHCO_NATURE.html', sub: 'Old screens not moved yet: Customers, Credit, Quotations, Purchasing, Accounting, Reports, Staff' },
+];
+function addFramePage(def) {
+  if (document.getElementById('page-' + def.key)) return;
+  const ul = document.querySelector('.sidebar-nav');
+  const li = document.createElement('li');
+  li.className = 'nav-item'; li.dataset.page = def.key;
+  li.innerHTML = '<span class="nav-icon"></span><span class="nav-label"></span>';
+  li.querySelector('.nav-icon').textContent = def.icon; li.querySelector('.nav-label').textContent = def.label;
+  li.addEventListener('click', () => navigate(def.key));
+  const anchor = def.after && ul.querySelector('.nav-item[data-page="' + def.after + '"]');
+  if (anchor) anchor.after(li); else ul.appendChild(li);
+  const sec = document.createElement('section'); sec.className = 'page'; sec.id = 'page-' + def.key;
+  sec.innerHTML = '<iframe id="frame-' + def.key + '" title="" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>';
+  sec.querySelector('iframe').title = def.label; sec.querySelector('iframe').dataset.src = def.url;
+  document.querySelector('.page').parentNode.appendChild(sec);
+  PAGE_META[def.key] = [def.label, def.sub || ''];
+}
+EXTRA_FRAMES.forEach(addFramePage);
+function routeFromHash() {
+  const m = /^#\/([\w-]+)/.exec(location.hash);
+  _fromHash = true; try { navigate(m ? m[1] : 'dashboard'); } finally { _fromHash = false; }
+}
+window.addEventListener('popstate', routeFromHash);
+window.addEventListener('hashchange', routeFromHash);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
 
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
@@ -2334,6 +2385,7 @@ async function loadReport() {
    INIT APP (called after login)
 ───────────────────────────────────────────── */
 async function initApp() {
+  if (/^#\/[\w-]+/.test(location.hash)) setTimeout(routeFromHash, 400);        // open the page named in the address
   // Load the most recent date that has actual data
   const latestDay = await api('/api/daily-summary?latest=1');
   const latestDate = Array.isArray(latestDay) ? (latestDay[0]?.date_str || today()) : (latestDay?.date_str || today());
