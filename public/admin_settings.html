@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Settings</title>
+<style>
+:root{--gold:#F5A623;--gold-dark:#d4891a;--bg:#0D0D0D;--bg2:#141414;--bg3:#1a1a1a;--card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.08);--text:#f0f0f0;--text2:#999;--text3:#666;--ok:#2ecc71;--bad:#ff6b6b}
+@media (prefers-color-scheme: light){:root{--bg:#f4f5f7;--bg2:#fff;--bg3:#eaedf1;--card:rgba(255,255,255,0.9);--card-border:rgba(0,0,0,0.1);--text:#1a1a1a;--text2:#555;--text3:#888}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:12px}
+h1{font-size:18px;margin:0 0 10px}
+h2{font-size:15px;margin:0 0 8px;color:var(--gold)}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.tab{background:var(--card);border:1px solid var(--card-border);color:var(--text2);padding:9px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;font-size:13px}
+.tab.on{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--text2);margin:10px 0 3px}
+input[type=text],input[type=number],select{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--card-border);border-radius:6px;padding:10px;font-size:15px}
+input[type=color]{width:48px;height:40px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg3);padding:2px}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row>.fixed{flex:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+button{background:var(--gold);color:#111;border:0;border-radius:6px;padding:10px 16px;font-weight:600;font-size:14px;cursor:pointer}
+button.ghost{background:var(--bg3);color:var(--text);border:1px solid var(--card-border)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.msg{margin-top:8px;font-size:13px;min-height:18px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.hint{font-size:12px;color:var(--text3);margin-top:4px}
+.flag{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--card-border)}
+.flag:first-of-type{border-top:0}
+.flag .t{flex:1;min-width:0}.flag .t b{display:block;font-size:14px}.flag .t span{font-size:12px;color:var(--text2)}
+.pill{font-size:11px;border-radius:10px;padding:2px 8px;background:var(--bg3);color:var(--text2);margin-left:4px;white-space:nowrap}
+.sw{position:relative;width:46px;height:26px;flex:none}
+.sw input{opacity:0;width:100%;height:100%;margin:0;position:absolute;cursor:pointer;z-index:2}
+.sw i{position:absolute;inset:0;background:#555;border-radius:13px;transition:.15s}
+.sw i:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.15s}
+.sw input:checked+i{background:var(--gold)}.sw input:checked+i:after{left:23px}
+.sw input:disabled{cursor:not-allowed}.sw input:disabled+i{opacity:.4}
+.mi{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--card-border)}
+.mi:first-of-type{border-top:0}
+.mi input[type=checkbox]{width:22px;height:22px;flex:none}
+.mi input[type=text]{flex:1;padding:8px}
+.mi .k{font-size:11px;color:var(--text3);width:84px;flex:none;overflow:hidden;text-overflow:ellipsis}
+.mi button{padding:6px 10px;font-size:15px}
+.lock{font-size:11px;color:var(--text3)}
+table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;text-align:left;border-top:1px solid var(--card-border);font-size:13px}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;border:1px solid var(--card-border)}
+</style>
+</head>
+<body>
+<h1>Settings &amp; Controls <span class="pill" id="who"></span></h1>
+<div class="tabs" id="tabs">
+  <div class="tab on" data-t="shop">Shop &amp; Branding</div>
+  <div class="tab" data-t="rules">Targets &amp; Rules</div>
+  <div class="tab" data-t="flags">Feature Flags</div>
+  <div class="tab" data-t="menu">Menu</div>
+</div>
+
+<div class="panel on" id="p-shop">
+  <div class="card">
+    <h2>Shop details</h2>
+    <label>Shop name</label><input type="text" id="s_shop_name" maxlength="100">
+    <label>Tagline</label><input type="text" id="s_tagline" maxlength="200">
+    <div class="grid">
+      <div><label>Phone</label><input type="text" id="s_shop_phone" maxlength="40"></div>
+      <div><label>Opening hours</label><input type="text" id="s_opening_hours" maxlength="200" placeholder="Mon-Sat 10am-8pm"></div>
+    </div>
+    <label>Address</label><input type="text" id="s_shop_address" maxlength="300">
+    <div class="grid">
+      <div><label>Main brand colour</label><div class="row"><input type="color" class="fixed" id="c_brand_primary"><input type="text" id="s_brand_primary" maxlength="7"></div></div>
+      <div><label>Accent colour</label><div class="row"><input type="color" class="fixed" id="c_brand_accent"><input type="text" id="s_brand_accent" maxlength="7"></div></div>
+    </div>
+    <div style="margin-top:12px"><button id="saveShop">Save shop details</button></div>
+    <div class="msg" id="m_shop"></div>
+  </div>
+</div>
+
+<div class="panel" id="p-rules">
+  <div class="card">
+    <h2>Dashboard and messages</h2>
+    <label>Daily sales target (shown on the dashboard)</label><input type="number" id="s_dashboard_sales_target" min="0" step="1000">
+    <label style="display:flex;gap:10px;align-items:center;color:var(--text)"><input type="checkbox" id="s_whatsapp_draft_only" style="width:22px;height:22px">WhatsApp: only prepare drafts for me to approve (never send by itself)</label>
+    <div class="hint">If this is ticked, customers never get an automatic reply. Leave it ticked unless you decide otherwise.</div>
+    <div style="margin-top:12px"><button id="saveTargets">Save</button></div>
+    <div class="msg" id="m_targets"></div>
+  </div>
+  <div class="card">
+    <h2>Daily cost target and profit split</h2>
+    <div class="hint">These are the Salary module's own settings. Saving here changes them there (same storage, nothing duplicated).</div>
+    <div class="grid">
+      <div><label>Daily cost target (normal)</label><input type="number" id="z_cost_normal" min="0"></div>
+      <div><label>Daily cost ceiling</label><input type="number" id="z_cost_ceiling" min="0"></div>
+      <div><label>Savings % of profit</label><input type="number" id="z_save_pct" min="0" max="100"></div>
+      <div><label>Colleague commission %</label><input type="number" id="z_colleague_pct" min="0" max="100"></div>
+      <div><label>Owner commission %</label><input type="number" id="z_owner_pct" min="0" max="100"></div>
+      <div><label>Smallest discount %</label><input type="number" id="z_disc_min" min="0" max="100"></div>
+      <div><label>Largest discount %</label><input type="number" id="z_disc_max" min="0" max="100"></div>
+    </div>
+    <div style="margin-top:12px"><button id="saveSalary">Save cost and split</button></div>
+    <div class="msg" id="m_salary"></div>
+  </div>
+  <div class="card">
+    <h2>Discount cap (who can give how much)</h2>
+    <table><thead><tr><th>Role</th><th>Max discount %</th></tr></thead><tbody id="drBody"></tbody></table>
+    <div class="row" style="margin-top:10px">
+      <select id="dr_role"><option value="all">all</option><option value="staff">staff</option><option value="manager">manager</option><option value="admin">admin</option></select>
+      <input type="number" id="dr_pct" min="0" max="100" placeholder="max %">
+      <button class="fixed" id="saveDr">Set</button>
+    </div>
+    <div class="msg" id="m_dr"></div>
+  </div>
+</div>
+
+<div class="panel" id="p-flags">
+  <div class="card"><div class="hint" style="margin:0">Core features are locked on. Features that are not built yet cannot be switched on.</div><div class="msg" id="m_flags"></div></div>
+  <div id="flagList"></div>
+</div>
+
+<div class="panel" id="p-menu">
+  <div class="card">
+    <h2>Owner app menu</h2>
+    <div class="hint" style="margin:0 0 8px">Tick to show, untick to hide. Use the arrows to change the order. Dashboard and Settings always stay.</div>
+    <div id="menuList"></div>
+    <div class="row" style="margin-top:12px"><button id="saveMenu">Save menu</button><button class="ghost" id="resetMenu">Reset to default</button></div>
+    <div class="msg" id="m_menu"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function api(method, url, body) {
+  var o = { method: method, credentials: 'same-origin', headers: {} };
+  if (body !== undefined) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
+  return fetch(url, o).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) {
+      if (!r.ok) { var e = new Error(j.error || ('Error ' + r.status)); e.status = r.status; throw e; }
+      return j;
+    });
+  });
+}
+function say(id, text, ok) { var m = $(id); m.textContent = text || ''; m.className = 'msg ' + (ok ? 'ok' : 'bad'); }
+
+// ── tabs ──
+var loaded = {};
+document.getElementById('tabs').addEventListener('click', function (e) {
+  var t = e.target.closest('.tab'); if (!t) return;
+  [].forEach.call(document.querySelectorAll('.tab'), function (x) { x.classList.toggle('on', x === t); });
+  [].forEach.call(document.querySelectorAll('.panel'), function (x) { x.classList.toggle('on', x.id === 'p-' + t.dataset.t); });
+  open(t.dataset.t);
+});
+function open(t) { if (loaded[t]) return; loaded[t] = true; ({ shop: loadSettings, rules: loadRules, flags: loadFlags, menu: loadMenu })[t](); }
+
+// ── shop + targets (app settings) ──
+var TEXT_KEYS = ['shop_name', 'tagline', 'shop_phone', 'shop_address', 'opening_hours', 'brand_primary', 'brand_accent'];
+function loadSettings() {
+  api('GET', '/api/app-settings').then(function (d) {
+    var s = d.settings;
+    TEXT_KEYS.forEach(function (k) { $('s_' + k).value = s[k]; });
+    $('c_brand_primary').value = s.brand_primary; $('c_brand_accent').value = s.brand_accent;
+    $('s_dashboard_sales_target').value = s.dashboard_sales_target;
+    $('s_whatsapp_draft_only').checked = !!s.whatsapp_draft_only;
+  }).catch(function (e) { say('m_shop', e.status === 403 ? 'Only the admin can open these settings.' : e.message, false); });
+}
+['brand_primary', 'brand_accent'].forEach(function (k) {
+  $('c_' + k).addEventListener('input', function () { $('s_' + k).value = this.value.toUpperCase(); });
+  $('s_' + k).addEventListener('input', function () { if (/^#[0-9a-fA-F]{6}$/.test(this.value)) $('c_' + k).value = this.value; });
+});
+function saveSettings(obj, msgId) {
+  say(msgId, 'Saving...', true);
+  api('PUT', '/api/app-settings', obj).then(function (d) {
+    say(msgId, d.changed && d.changed.length ? 'Saved.' : 'Nothing changed.', true);
+  }).catch(function (e) { say(msgId, e.message, false); });
+}
+$('saveShop').onclick = function () {
+  var o = {}; TEXT_KEYS.forEach(function (k) { o[k] = $('s_' + k).value.trim(); });
+  saveSettings(o, 'm_shop');
+};
+$('saveTargets').onclick = function () {
+  var n = $('s_dashboard_sales_target').value;
+  saveSettings({ dashboard_sales_target: n === '' ? NaN : Number(n), whatsapp_draft_only: $('s_whatsapp_draft_only').checked }, 'm_targets');
+};
+
+// ── salary settings + discount rules (existing endpoints, nothing duplicated) ──
+var SAL = ['cost_normal', 'cost_ceiling', 'save_pct', 'colleague_pct', 'owner_pct', 'disc_min', 'disc_max'];
+function loadRules() {
+  loadSettings();
+  api('GET', '/api/salary/settings').then(function (d) { SAL.forEach(function (k) { $('z_' + k).value = d.settings[k]; }); })
+    .catch(function (e) { say('m_salary', e.message, false); });
+  loadDr();
+}
+$('saveSalary').onclick = function () {
+  var o = {}; SAL.forEach(function (k) { o[k] = $('z_' + k).value; });
+  say('m_salary', 'Saving...', true);
+  api('PUT', '/api/salary/settings', o).then(function () { say('m_salary', 'Saved.', true); }).catch(function (e) { say('m_salary', e.message, false); });
+};
+function loadDr() {
+  api('GET', '/api/discount-rules').then(function (rows) {
+    $('drBody').innerHTML = rows.length ? rows.map(function (r) { return '<tr><td>' + esc(r.role) + '</td><td>' + esc(r.max_discount_pct) + '%</td></tr>'; }).join('') : '<tr><td colspan="2">No cap set.</td></tr>';
+  }).catch(function (e) { say('m_dr', e.message, false); });
+}
+$('saveDr').onclick = function () {
+  var v = $('dr_pct').value;
+  if (v === '') return say('m_dr', 'Enter the max discount %.', false);
+  api('POST', '/api/discount-rules', { role: $('dr_role').value, max_discount_pct: Number(v) })
+    .then(function () { say('m_dr', 'Saved.', true); $('dr_pct').value = ''; loadDr(); }).catch(function (e) { say('m_dr', e.message, false); });
+};
+
+// ── feature flags ──
+function loadFlags() {
+  api('GET', '/api/feature-flags').then(function (rows) {
+    var groups = {}, order = [];
+    rows.forEach(function (f) { var c = f.category || 'other'; if (!groups[c]) { groups[c] = []; order.push(c); } groups[c].push(f); });
+    $('flagList').innerHTML = order.map(function (c) {
+      return '<div class="card"><h2>' + esc(c) + '</h2>' + groups[c].map(function (f) {
+        var locked = f.is_core, unbuilt = !f.built;
+        var tags = (locked ? '<span class="pill">core, locked</span>' : '') + (unbuilt ? '<span class="pill">not built yet</span>' : '');
+        return '<div class="flag"><div class="t"><b>' + esc(f.label || f.module_key) + tags + '</b><span>' + esc(f.description || '') + '</span></div>' +
+          '<label class="sw" style="margin:0"><input type="checkbox" data-key="' + esc(f.module_key) + '" ' + (f.enabled ? 'checked' : '') + (locked || (unbuilt && !f.enabled) ? ' disabled' : '') + '><i></i></label></div>';
+      }).join('') + '</div>';
+    }).join('') || '<div class="card">No features listed.</div>';
+  }).catch(function (e) { say('m_flags', e.message, false); });
+}
+$('flagList').addEventListener('change', function (e) {
+  var cb = e.target; if (!cb.dataset || !cb.dataset.key) return;
+  var want = cb.checked, key = cb.dataset.key;
+  cb.disabled = true;
+  api('PATCH', '/api/feature-flags/' + encodeURIComponent(key), { enabled: want }).then(function () {
+    say('m_flags', key + ' is now ' + (want ? 'ON' : 'OFF') + '.', true);
+    return api('POST', '/api/app-settings/flag-audit', { key: key, enabled: want }).catch(function () {});
+  }).catch(function (err) { cb.checked = !want; say('m_flags', err.message, false); }).then(function () { cb.disabled = false; });
+});
+
+// ── menu ──
+var MENU = [
+  ['dashboard', 'Dashboard'], ['daily-sales', 'Daily Sales'], ['stock', 'Stock'], ['pos', 'POS Billing'], ['grn', 'GRN'], ['expenses', 'Expenses'],
+  ['cheques', 'Cheques'], ['vendors', 'Vendors'], ['barcode', 'Barcode'], ['salary', 'Salary & Costs'], ['docinbox', 'Document Inbox'],
+  ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['commissions', 'Sale Commissions'], ['enquiries', 'Enquiries'],
+  ['replies', 'Reply Drafts'], ['webcat', 'Website Catalogue'], ['policy', 'Policy Watch'], ['branches', 'Branches'], ['settings', 'Settings'],
+  ['shoptools', 'Shop Tools'], ['content', 'Content'], ['competitors', 'Competitors'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['reports', 'Reports']
+];
+var LOCKED = { dashboard: 1, settings: 1 };
+var items = [];
+function loadMenu() {
+  api('GET', '/api/menu-config').then(function (saved) {
+    var by = {}; saved.forEach(function (r) { by[r.item_key] = r; });
+    items = MENU.map(function (m, i) { var s = by[m[0]]; return { item_key: m[0], label: s && s.label ? s.label : m[1], visible: s ? s.visible !== false : true, sort: s && s.sort_order != null ? s.sort_order : 1000 + i }; });
+    items.sort(function (a, b) { return a.sort - b.sort; });
+    drawMenu();
+  }).catch(function (e) { say('m_menu', e.message, false); });
+}
+function drawMenu() {
+  $('menuList').innerHTML = items.map(function (it, i) {
+    var lk = LOCKED[it.item_key];
+    return '<div class="mi"><input type="checkbox" data-i="' + i + '" data-a="vis" ' + (it.visible ? 'checked' : '') + (lk ? ' disabled' : '') + ' aria-label="Show ' + esc(it.label) + '">' +
+      '<input type="text" data-i="' + i + '" data-a="lab" value="' + esc(it.label) + '" maxlength="60"><span class="k">' + (lk ? 'always shown' : esc(it.item_key)) + '</span>' +
+      '<button class="ghost" data-i="' + i + '" data-a="up" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move up">&#9650;</button>' +
+      '<button class="ghost" data-i="' + i + '" data-a="dn" ' + (i === items.length - 1 ? 'disabled' : '') + ' aria-label="Move down">&#9660;</button></div>';
+  }).join('');
+}
+$('menuList').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b || b.disabled) return;
+  var i = Number(b.dataset.i), j = b.dataset.a === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= items.length) return;
+  var t = items[i]; items[i] = items[j]; items[j] = t; drawMenu();
+});
+$('menuList').addEventListener('change', function (e) { var i = e.target.dataset.i; if (e.target.dataset.a === 'vis') items[i].visible = e.target.checked; });
+$('menuList').addEventListener('input', function (e) { var i = e.target.dataset.i; if (e.target.dataset.a === 'lab') items[i].label = e.target.value; });
+$('saveMenu').onclick = function () {
+  var body = items.map(function (it, i) { return { item_key: it.item_key, label: (it.label || '').trim() || it.item_key, visible: !!it.visible || !!LOCKED[it.item_key], sort_order: i + 1 }; });
+  say('m_menu', 'Saving...', true);
+  api('PUT', '/api/menu-config', body).then(function () { say('m_menu', 'Saved. The menu updates next time the app is opened.', true); }).catch(function (e) { say('m_menu', e.message, false); });
+};
+$('resetMenu').onclick = function () {
+  if (!confirm('Put the menu back to the original order with everything shown?')) return;
+  api('POST', '/api/menu-config/reset').then(function () { say('m_menu', 'Menu is back to default.', true); loadMenu(); }).catch(function (e) { say('m_menu', e.message, false); });
+};
+
+api('GET', '/api/me').then(function (u) { var x = u.user || u; if (x && x.username) $('who').textContent = x.username; }).catch(function () {});
+open('shop');
+})();
+</script>
+</body>
+</html>
