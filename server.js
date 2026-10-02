@@ -559,6 +559,9 @@ app.patch('/api/feature-flags/:key', async (req, res) => {
 });
 
 // ─── DORMANT MODULE ROUTERS (feature-flagged, own pool each) ──────────────────
+const sync = require('./routes/sync');
+app.use('/api', sync.idempotency());   // same key twice = one record (offline queue replays)
+app.use('/api', sync);                 // /api/sync/status, needs-review, review
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
 app.use('/api', require('./routes/staff_reports'));       // routes are relative (/attendance etc)
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...

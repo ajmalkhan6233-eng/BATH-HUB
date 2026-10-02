@@ -1,16 +1,15 @@
 # OPEN_ITEMS
 
+- Aj: 2-minute offline test on a phone/Chrome: open /owner on the Wi-Fi, use it once, turn the laptop server off (pm2 stop apex-server) or phone to airplane mode, reload /owner (page must still open), save a bill or vendor (chip says OFFLINE, bill gets OFF-xxxx-n), turn back on, chip goes ONLINE and the entry appears once
+- Aj: decide small_daily (Rs 3,200 now, default 3,000: small daily shop costs in the daily cost target) -> change in Salary & Costs > Settings, or say "keep"
 - Aj: save ADMIN_PIN + .pg_owner_superpw password in a password manager; laptop Sleep = Never when plugged in
-- Offline mode (next build, lead only), then docs/SYNC_PHASE_B.md (design only; Railway stays parked until "go-live Railway")
-- Port the Legacy screens into /owner, then delete public/BATHCO_NATURE.html: Customers, Credit & Aging, Quotations, Purchasing, Accounting, Audit & Accounting, Reports, Staff, Labels, Assistant
-- Platform/tenant/fleet admin (old Platform Admin): hidden, PIN only, not in shop menu
-- Reports and lists do not hide VOIDED vendors/commissions/etc. yet (only POS bills do): add record_voids joins
-- A verify-totp step does not re-check users.active (login does): add check in server.js
-- Salary settings endpoint also accepts the read-only 'owner' role: make it admin-only
-- Sale commissions: commission % typed per sale; staff can be added/edited (Edit & Void) but pay rules live in Salary Settings
-- sal_settings has small_daily=3200 copied from the test setup: confirm or change in Salary > Settings
-- competitors table holds 13 default rows seeded by routes/competitors.js (not Aj's data): decide keep or clear
-- Railway go-live (parked): see CLAUDE.md task 1; set real DASH_* creds; scripts/railway_harden_db.js at unpause
-- Native speaker check of Sinhala/Tamil website text
+- Aj: look at the 10 ported screens with real data (Customers, Credit & Aging, Quotations, Purchasing, Accounting, Audit & Accounting, Reports, Staff, Labels, Assistant); say what is missing before the old file is deleted from git
+- Offline edits/voids wait in "needs review" (never auto-applied): there is no review screen yet (API: /api/sync/review); add a small screen
+- /api/staff `outstanding`/`total_loans` count repayments as loans (server.js): fix with Aj's rule; the Staff screen's Advances tab computes it correctly
+- dev schema (scripts/dev/test_schema.sql) misses columns the live code needs (quotations.quote_no is now auto-added at start-up): audit other tables before building another instance from it
+- Platform/tenant/fleet admin (old Platform Admin, PIN only) is not in the new menu: port or drop
+- competitors table holds 13 default rows seeded by routes/competitors.js (not Aj's data): keep or clear
+- Railway go-live (parked): CLAUDE.md task 1; scripts/railway_harden_db.js at unpause; Phase B = docs/SYNC_PHASE_B.md
+- Native speaker check of Sinhala/Tamil website text; Bath Hub public site still loads Google Fonts (owner app does not)
 - Remote GitHub branches still exist (overnight, claude/*, octopus-memory): delete when Aj agrees
 - Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/

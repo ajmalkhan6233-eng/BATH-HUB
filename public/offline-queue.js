@@ -211,7 +211,8 @@
             var st;
             if (!isOnline()) st = 'offline';
             else if (locked) st = 'syncing';
-            else if (rejected > 0 || lastError) st = 'error';
+            else if (rejected > 0 || (lastError && !/^Network/i.test(String(lastError)))) st = 'error';
+            else if (lastError) st = 'offline';        // the laptop cannot be reached: that is OFFLINE (saved on this device), not an error
             else if (waiting > 0) st = 'syncing';
             else st = 'online';
             return { state: st, waiting: waiting, rejected: rejected, needsReview: serverNeedsReview, lastError: lastError, nextRetryMs: nextDelay };

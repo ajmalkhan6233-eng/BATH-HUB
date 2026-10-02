@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bath Hub — Owner</title>
 <link rel="manifest" href="/manifest.json">
+<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.body)); }</script>
 <meta name="theme-color" content="#0D0D0D">
 <link href="/fonts/inter.css" rel="stylesheet">
 <script src="/vendor/chart.umd.min.js"></script>
@@ -1003,6 +1004,7 @@ document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key =
 document.getElementById('l-user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('l-pass').focus(); });
 
 async function doLogout() {
+  try { if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'clear-api' }); } catch (e) {}
   await fetch('/api/logout', { method: 'POST', credentials: 'include' });
   showLogin();
 }
