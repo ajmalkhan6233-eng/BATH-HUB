@@ -49,7 +49,7 @@ table{border-collapse:collapse;width:100%}
 /* ── LAYOUT ── */
 .app-wrapper{display:flex;min-height:100vh}
 .sidebar{
-  width:var(--sidebar-w);min-height:100vh;background:var(--bg2);
+  width:var(--sidebar-w);height:100vh;height:100dvh;background:var(--bg2);
   border-right:1px solid var(--card-border);display:flex;flex-direction:column;
   position:fixed;top:0;left:0;z-index:100;overflow:hidden;
   transition:width var(--t),transform var(--t)
@@ -59,7 +59,8 @@ table{border-collapse:collapse;width:100%}
 .logo-icon{width:36px;height:36px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .logo-text{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;transition:opacity var(--t)}
 .sidebar.collapsed .logo-text,.sidebar.collapsed .nav-label,.sidebar.collapsed .toggle-lbl{opacity:0;pointer-events:none}
-.sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
+.sidebar-nav{flex:1;min-height:0;padding:10px 8px;overflow-y:auto;overflow-x:hidden;list-style:none;margin:0;scrollbar-width:thin;scrollbar-color:var(--card-border) transparent}
+.sidebar-nav::-webkit-scrollbar{width:6px}.sidebar-nav::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:3px}
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--t);margin-bottom:2px;white-space:nowrap}
 .nav-item:hover{background:var(--card-hover)}
 .nav-item.active{background:rgba(245,166,35,0.15);color:var(--gold)}
@@ -260,21 +261,21 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
       <li class="nav-item" data-page="salary"><span class="nav-icon">💼</span><span class="nav-label">Salary &amp; Costs</span></li>
       <li class="nav-item" data-page="docinbox"><span class="nav-icon">📥</span><span class="nav-label">Document Inbox</span></li>
-      <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
+      <li class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span class="nav-label">Friend &amp; Investor Loans</span></li>
+      <li class="nav-item" data-page="moneycontrol"><span class="nav-icon">🛡️</span><span class="nav-label">Money Control</span></li>
+      <li class="nav-item" data-page="commissions"><span class="nav-icon">🏷️</span><span class="nav-label">Sale Commissions</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
-      <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
-      <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
-      <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
+      <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
       <li class="nav-item" data-page="policy"><span class="nav-icon">⚖️</span><span class="nav-label">Policy Watch</span></li>
       <li class="nav-item" data-page="branches"><span class="nav-icon">🏬</span><span class="nav-label">Branches</span></li>
+      <li class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></li>
+      <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
+      <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
+      <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
       <li class="nav-item" data-page="agentreview"><span class="nav-icon">🧠</span><span class="nav-label">Agent Review</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
-      <li class="nav-item" data-href="/investor_loans.html"><span class="nav-icon">🤝</span><span class="nav-label">Investor &amp; Friend Loans</span></li>
-      <li class="nav-item" data-href="/money-control.html"><span class="nav-icon">🛡️</span><span class="nav-label">Money Control</span></li>
-      <li class="nav-item" data-href="/sale_commissions.html"><span class="nav-icon">🏷️</span><span class="nav-label">Sale Commissions</span></li>
-      <li class="nav-item" data-href="/settings.html"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></li>
     </ul>
     <div class="sidebar-footer">
       <div class="sidebar-toggle" onclick="toggleSidebar()">
@@ -841,6 +842,18 @@ table tr:last-child td{border-bottom:none}
     </section>
 
     <!-- ── REPORTS ── -->
+    <section class="page" id="page-loans">
+      <iframe id="frame-loans" title="Friend &amp; Investor Loans" data-src="/investor_loans.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+    </section>
+    <section class="page" id="page-moneycontrol">
+      <iframe id="frame-moneycontrol" title="Money Control" data-src="/money-control.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+    </section>
+    <section class="page" id="page-commissions">
+      <iframe id="frame-commissions" title="Sale Commissions" data-src="/sale_commissions.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+    </section>
+    <section class="page" id="page-settings">
+      <iframe id="frame-settings" title="Settings" data-src="/settings.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+    </section>
     <section class="page" id="page-reports">
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -999,6 +1012,10 @@ const PAGE_META = {
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
+  loans:       ['Friend & Investor Loans','Money lent to the business: record loans and repayments (halal, no interest)'],
+  moneycontrol:['Money Control','Where the money goes: allocations and viewer access'],
+  commissions: ['Sale Commissions','Commission on sales and exchanges'],
+  settings:    ['Settings','Shop, branding and options'],
   salary:      ['Salary & Costs', 'Daily cost target, monthly profit split, cheque set-aside'],
   docinbox:    ['Document Inbox', 'Photos of bills, GRNs, cheques and sheets. Check, then file'],
   shoptools:   ['Shop Tools',   'Tile calculator, item search, till summary, best sellers, low stock'],
@@ -1375,7 +1392,7 @@ async function arOff(id) {
 }
 
 document.querySelectorAll('.nav-item').forEach(el => {
-  el.addEventListener('click', () => el.dataset.href ? window.open(el.dataset.href, '_blank') : navigate(el.dataset.page));
+  el.addEventListener('click', () => navigate(el.dataset.page));
 });
 
 function navigate(page) {
@@ -1399,6 +1416,7 @@ function navigate(page) {
   if (page === 'policy') loadPolicy();
   if (page === 'branches') loadBranches();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
+  { const fr = document.getElementById('frame-' + page); if (fr && !fr.getAttribute('src')) fr.setAttribute('src', fr.dataset.src); }
   if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
   document.getElementById('page-sub').textContent = sub;
 }
