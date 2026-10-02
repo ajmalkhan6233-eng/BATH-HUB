@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 require('dotenv').config();
 const express = require('express');
 const { todayLK, monthLK } = require('../utils/lkTime');
+const { ensureVoids, notVoided } = require('../utils/voids');
 const router = express.Router();
 
 const pool = new Pool({
@@ -143,8 +144,9 @@ router.get('/api/supplier-prices/best', async (req, res) => {
 // aged by the GRN date of the oldest unpaid balance.
 router.get('/api/supplier-aging', async (req, res) => {
     try {
+        await ensureVoids(pool);
         const [sup, grns, paid] = await Promise.all([
-            pool.query(`SELECT id, name FROM suppliers`),
+            pool.query(`SELECT id, name FROM suppliers WHERE ${notVoided('suppliers', 'id')}`),
             pool.query(`SELECT id, supplier_id, total_amount, grn_date FROM grn_records WHERE supplier_id IS NOT NULL ORDER BY grn_date ASC, id ASC`),
             pool.query(`SELECT supplier_id, SUM(amount) as total_paid FROM supplier_payments GROUP BY supplier_id`),
         ]);

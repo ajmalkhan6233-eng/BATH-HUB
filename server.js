@@ -16,6 +16,7 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const axios = require('axios');
 const { processMessage, alertOwner, getOrCreateCustomer, pool } = require('./layla');
+const { ensureVoids, notVoided } = require('./utils/voids');
 const { runCheck: runReconCheck } = require('./scripts/daily_reconciliation_check');
 
 // Idempotent schema migrations
@@ -244,6 +245,13 @@ app.use(async (req, res, next) => {
         return next(); // serve dashboard shell; frontend shows login screen on 401 from /api/me
     }
 
+    // OWNER_READ_ONLY=true (this shop's .env): the 'owner' role is a read-only viewer. It may read everything but change nothing.
+    // Off by default, because the white-label template gives 'owner' the same rights as 'admin'.
+    if (user.role === 'owner' && String(process.env.OWNER_READ_ONLY).toLowerCase() === 'true') {
+        const readOnlyOk = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS'
+            || req.path === '/api/logout' || req.path === '/api/dashboard-assistant/chat';
+        if (!readOnlyOk) return res.status(403).json({ error: 'This account is read-only.' });
+    }
     if (user.role === 'admin' || user.role === 'owner') return next();
 
     if (user.role === 'staff') {
@@ -320,7 +328,14 @@ app.post('/api/auth/verify-totp', async (req, res) => {
     const pa = req.session.partial_auth;
     if (!pa) return res.status(401).json({ error: 'No pending authentication' });
     try {
-        const r = await pool.query('SELECT totp_secret FROM users WHERE id=$1', [pa.id]);
+        const r = await pool.query('SELECT totp_secret, active, role FROM users WHERE id=$1', [pa.id]);
+        // Step 2 must re-check the account: it may have been disabled (or removed) since step 1.
+        if (!r.rows[0] || r.rows[0].active === false) {
+            delete req.session.partial_auth;
+            logLoginAttempt(pa.username, false, ip, 'account_disabled');
+            return res.status(403).json({ error: 'This account has been disabled' });
+        }
+        if (r.rows[0].role) pa.role = r.rows[0].role;
         const secret = r.rows[0]?.totp_secret;
         if (!secret || !speakeasy.totp.verify({ secret, encoding: 'base32', token: code || '', window: 1 })) {
             logLoginAttempt(pa.username, false, ip, 'bad_totp');
@@ -2361,6 +2376,7 @@ app.get('/api/staff/:id/loans', async (req, res) => {
 // ─── SUPPLIERS ────────────────────────────────────────────────────────────────
 app.get('/api/suppliers', async (req, res) => {
     try {
+        await ensureVoids(pool);
         const r = await pool.query(`
             SELECT s.*, COALESCE(SUM(p.amount),0) as total_paid,
                    TO_CHAR(MAX(p.pay_date),'YYYY-MM-DD') as last_payment,
@@ -2369,7 +2385,7 @@ app.get('/api/suppliers', async (req, res) => {
             FROM suppliers s
             LEFT JOIN supplier_payments p ON p.supplier_id=s.id
             LEFT JOIN cheques ch ON ch.notes ILIKE '%'||s.name||'%'
-            WHERE s.active=true GROUP BY s.id ORDER BY s.name`);
+            WHERE s.active=true AND ${notVoided('suppliers', 's.id')} GROUP BY s.id ORDER BY s.name`);
         res.json(r.rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -2398,7 +2414,7 @@ app.get('/api/purchases-today', async (req, res) => {
             SELECT p.*, s.name as supplier_name
             FROM supplier_payments p
             JOIN suppliers s ON s.id=p.supplier_id
-            WHERE p.pay_date = CURRENT_DATE
+            WHERE p.pay_date = CURRENT_DATE AND ${notVoided('suppliers', 's.id')}
             ORDER BY p.amount DESC`);
         const total = r.rows.reduce((a,row)=>a+(+row.amount||0),0);
         res.json({ date: todayLK(), total, count: r.rows.length, rows: r.rows });
@@ -2909,7 +2925,8 @@ app.get('/api/financial-health', async (req, res) => {
                  SELECT COALESCE(SUM(GREATEST(COALESCE(rc.total_received,0)-COALESCE(p.total_paid,0),0)),0) as total_payable
                  FROM suppliers s
                  LEFT JOIN received rc ON rc.supplier_id = s.id
-                 LEFT JOIN paid p ON p.supplier_id = s.id`),
+                 LEFT JOIN paid p ON p.supplier_id = s.id
+                 WHERE ${notVoided('suppliers', 's.id')}`),
             pool.query(`SELECT TO_CHAR(report_date,'YYYY-MM') as month,
                     SUM(total_sale) as total_sale, SUM(gross_profit) as gross_profit,
                     SUM(total_expenses) as total_expenses,

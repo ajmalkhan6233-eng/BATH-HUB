@@ -52,6 +52,8 @@ pool.query(`
 
 // ═══════════════════════ LOG a sale (creates the commission entry) ═══════════════════════
 // ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
+const { ensureVoids, notVoided } = require('../utils/voids');
+const voidsReady = ensureVoids(pool);
 const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
 const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
 const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
@@ -140,8 +142,9 @@ router.post('/sale-commissions/:id/return', async (req, res) => {
 // ═══════════════════════ LIST entries (filterable) ═══════════════════════
 router.get('/sale-commissions', async (req, res) => {
     try {
+        await voidsReady;
         const { staff_id, from, to } = req.query;
-        const clauses = [];
+        const clauses = [notVoided('commissions', 'c.id')];     // a voided commission is kept but left out
         const vals = [];
         if (staff_id) { vals.push(staff_id); clauses.push(`c.staff_id = $${vals.length}`); }
         if (from) { vals.push(from); clauses.push(`c.sale_date >= $${vals.length}`); }
@@ -164,6 +167,7 @@ router.get('/sale-commissions', async (req, res) => {
 // ═══════════════════════ WEEKLY NET SUMMARY (for payout) ═══════════════════════
 router.get('/sale-commissions/weekly-summary', async (req, res) => {
     try {
+        await voidsReady;
         const { week_start } = req.query; // any date; we snap to Mon-Sun containing it
         if (week_start && !isDate(week_start)) return res.status(400).json({ error: 'week_start must be a date (YYYY-MM-DD)' });
         const anchor = week_start ? new Date(week_start) : new Date();
@@ -177,6 +181,7 @@ router.get('/sale-commissions/weekly-summary', async (req, res) => {
                 ON c.staff_id = s.id
                 AND c.sale_date >= date_trunc('week', $1::date)
                 AND c.sale_date < date_trunc('week', $1::date) + INTERVAL '7 days'
+                AND ${notVoided('commissions', 'c.id')}
             GROUP BY s.id, s.name
             ORDER BY s.name
         `, [anchor.toISOString().slice(0, 10)]);

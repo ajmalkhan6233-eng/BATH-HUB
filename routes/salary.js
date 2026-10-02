@@ -14,6 +14,8 @@ const M = require('../utils/salaryMath');
 function ownerOnly(req, res, next) {
     const u = req.session && req.session.user;
     if (!u || (u.role !== 'admin' && u.role !== 'owner')) return res.status(403).json({ error: 'Owner only' });
+    // read-only 'owner' account (OWNER_READ_ONLY=true): may look at Salary & Costs, never change settings, cover cheques or close a month
+    if (req.method !== 'GET' && u.role !== 'admin' && String(process.env.OWNER_READ_ONLY).toLowerCase() === 'true') return res.status(403).json({ error: 'This account is read-only.' });
     next();
 }
 
