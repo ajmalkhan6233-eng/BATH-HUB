@@ -35,10 +35,10 @@
   --text-primary:#0f172a; --text-secondary:#334155; --text-muted:#596577; --text-on-accent:#ffffff;
   --gold-primary:#8f670a; --gold-hover:#755406; --gold-active:#5c4204; --gold-text:#785606; --gold-bg-subtle:rgba(143,103,10,.1); --gold-border-subtle:rgba(143,103,10,.28);
   --shadow-sm:0 1px 3px 0 rgba(0,0,0,.08); --shadow-md:0 4px 12px 0 rgba(0,0,0,.08); --shadow-lg:0 10px 24px 0 rgba(0,0,0,.1); --shadow-gold:0 4px 16px 0 rgba(143,103,10,.18);
-  --status-success:#059669; --status-success-bg:rgba(5,150,105,.1);
+  --status-success:#047857; --status-success-bg:rgba(4,120,87,.1);
   --status-danger:#dc2626;  --status-danger-bg:rgba(220,38,38,.1);
   --status-warning:#b45309; --status-warning-bg:rgba(180,83,9,.1);
-  --status-info:#0284c7;    --status-info-bg:rgba(2,132,199,.1);
+  --status-info:#0369a1;    --status-info-bg:rgba(3,105,161,.1);
   color-scheme: light;
 }
 [data-theme="water"] {
@@ -184,3 +184,23 @@ input, select, textarea { box-sizing:border-box; max-width:100%; min-width:0; }
 .bh-theme-btn.on { border-color:var(--gold-primary); background:var(--gold-bg-subtle); }
 .bh-theme-btn .bh-sw { width:56px; height:32px; border:2px solid; border-radius:var(--radius-sm); display:flex; align-items:flex-end; padding:4px; }
 .bh-theme-btn .bh-sw i { display:block; width:60%; height:6px; border-radius:3px; }
+
+/* ---- 11. PAGE HEADERS: neutral in every theme (readable text, no gold band) ---- */
+body > header:not(.topbar) { background:var(--bg-surface); color:var(--text-primary); border-bottom:1px solid var(--border-subtle); }
+body > header:not(.topbar) h1 { color:var(--text-primary); }
+body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header:not(.topbar) p { color:var(--text-muted); }
+
+/* ---- 6d. remaining older names some screens still use ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  --stone-50:var(--bg-surface-subtle); --stone-100:var(--bg-surface-elevated);
+  --green-100:var(--status-success-bg); --green-700:var(--status-success);
+  --red-100:var(--status-danger-bg); --red-600:var(--status-danger);
+  --em8:var(--gold-primary); --em9:var(--gold-active); --gold-hover:var(--gold-hover);
+}
+
+/* ---- 12. CONTRAST FIXES FOUND IN THE AUDIT ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="water"] { --text-on-danger:#000000; }
+[data-theme="light"] { --text-on-danger:#ffffff; }
+#sheet { background:var(--bg-surface-hover) !important; }
+
+[data-theme="light"] { --purple:#6d28d9; }
