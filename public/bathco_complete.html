@@ -925,7 +925,12 @@ table tr:last-child td{border-bottom:none}
 /* ─────────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────────── */
-let TARGET = 100000; // daily sales target for the gauge: replaced by the Admin Settings value (dashboard_sales_target) after login
+let TARGET = 100000; // daily sales target for the gauge: replaced by the Admin Settings value (dashboard_sales_target) after loginfunction _paintTarget() {   // the target figure shown on the dashboard always matches the real target (it used to say 250,000 while the gauge used 100,000)
+  const tl = document.getElementById('target-label'), tm = document.getElementById('target-max');
+  if (tl) tl.textContent = 'LKR ' + TARGET.toLocaleString() + ' target'; if (tm) tm.textContent = 'LKR ' + TARGET.toLocaleString();
+}
+document.addEventListener('DOMContentLoaded', _paintTarget);
+
 let charts = {};
 let _invoices = [];   // cached for filter
 let _stock = [];
@@ -1516,7 +1521,7 @@ async function applyAppSettings() {
     if (s) {
       if (Number(s.dashboard_sales_target) > 0) {
         TARGET = Number(s.dashboard_sales_target);
-        const tl = document.getElementById('target-label'); if (tl) tl.textContent = 'LKR ' + TARGET.toLocaleString() + ' target';
+        _paintTarget();
       }
       if (s.shop_name) { const lt = document.querySelector('.logo-text'); if (lt) lt.textContent = s.shop_name; document.title = s.shop_name + ' — Owner'; }
     }

@@ -211,3 +211,14 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
   th, td { white-space:nowrap; }
   td.wrap, td .wrap, td.note, td.notes { white-space:normal; min-width:180px; }
 }
+
+/* ---- 14. PHONE TOP BAR (owner shell) ---- */
+@media (max-width:640px) {
+  header.topbar, .topbar { gap:8px; padding-left:12px !important; padding-right:12px !important; }
+  .topbar > div:first-child { min-width:0; flex:1 1 auto; }
+  #page-title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #page-sub, .live-clock { display:none !important; }
+  .topbar-right { flex-shrink:0; gap:6px !important; }
+  #chip-slot > button { white-space:nowrap; padding:0 10px; font-size:12px; }
+  .logout-btn { white-space:nowrap; padding:0 12px; font-size:13px; }
+}
