@@ -554,6 +554,7 @@ app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/ed
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
 app.use('/api/admin-core', require('./routes/admin_core'));   // admin-only users (add/disable/role/reset/force logout/history) + audit log
+app.use('/api/system', require('./routes/backup_status'));      // admin-only: backups (now/list/download), RESTORE (typed word + PIN + safety backup), status
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
