@@ -1565,6 +1565,7 @@ function toggleTheme() {                      // Gold -> Water -> Light
   _paintThemeButton();
 }
 document.addEventListener('DOMContentLoaded', _paintThemeButton);
+window.addEventListener('storage', e => { if (e.key === 'bathhub-theme' && window.BHTheme) { _theme = BHTheme.current(); _paintThemeButton(); } });   // theme picked inside Settings
 
 /* ─────────────────────────────────────────────
    TOAST

@@ -176,3 +176,11 @@ input, select, textarea { box-sizing:border-box; max-width:100%; min-width:0; }
   .item-row { grid-template-columns:1fr 1fr 48px !important; }          /* POS: name on its own line, then qty, price, remove */
   .item-row .pick-wrap { grid-column:1 / -1; }
 }
+
+/* ---- 10. THEME PICKER (Settings) ---- */
+.bh-theme-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--space-3); }
+.bh-theme-btn { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:var(--space-3); text-align:left; background:var(--bg-surface-elevated); color:var(--text-primary); border:2px solid var(--border-subtle); border-radius:var(--radius-md); }
+.bh-theme-btn small { color:var(--text-muted); font-weight:400; }
+.bh-theme-btn.on { border-color:var(--gold-primary); background:var(--gold-bg-subtle); }
+.bh-theme-btn .bh-sw { width:56px; height:32px; border:2px solid; border-radius:var(--radius-sm); display:flex; align-items:flex-end; padding:4px; }
+.bh-theme-btn .bh-sw i { display:block; width:60%; height:6px; border-radius:3px; }
