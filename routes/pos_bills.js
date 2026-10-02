@@ -205,6 +205,7 @@ router.post('/pos-bills', async (req, res) => {
 
         const full = await loadBill(billId);
         res.json({ ...full, stock_deducted: deductStock });
+        require('../utils/autoReceipt').afterSale(pool, full);   // queue the WhatsApp receipt in the background; never affects the sale
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
         res.status(500).json({ error: `Could not save the bill: ${e.message}` });
