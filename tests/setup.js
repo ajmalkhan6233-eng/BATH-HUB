@@ -10,3 +10,4 @@ process.env.DB_HOST = '127.0.0.1';
 process.env.DB_PORT = '1';
 process.env.DB_NAME = 'bathco_jest_never_used';
 delete process.env.DATABASE_URL;
+process.env.OWNER_READ_ONLY = 'false';   // the shop's .env turns this on; tests choose per test

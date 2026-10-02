@@ -274,7 +274,6 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="expenses"><span class="nav-icon">💸</span><span class="nav-label">Expenses</span></li>
       <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
-      <li class="nav-item" data-page="barcode"><span class="nav-icon">📷</span><span class="nav-label">Barcode</span></li>
       <li class="nav-item" data-page="salary"><span class="nav-icon">💼</span><span class="nav-label">Salary &amp; Costs</span></li>
       <li class="nav-item" data-page="docinbox"><span class="nav-icon">📥</span><span class="nav-label">Document Inbox</span></li>
       <li class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span class="nav-label">Friend &amp; Investor Loans</span></li>
@@ -1453,8 +1452,17 @@ function navigate(page) {
 
 /* ONE SHELL: extra screens that open as frames inside /owner (same tab, sidebar kept) + address bar routes (#/page) */
 const EXTRA_FRAMES = [
+  { key: 'customers', label: 'Customers', icon: '👥', url: '/customers.html', sub: 'Customer list, add and edit', after: 'vendors' },
+  { key: 'credit', label: 'Credit & Aging', icon: '💳', url: '/credit_aging.html', sub: 'Who owes what, and how old it is', after: 'customers' },
+  { key: 'quotations', label: 'Quotations', icon: '📄', url: '/quotations.html', sub: 'Create quotations, track status', after: 'credit' },
+  { key: 'purchasing', label: 'Purchasing', icon: '🚚', url: '/purchasing.html', sub: 'Purchase orders, shipments, supplier prices and aging', after: 'grn' },
+  { key: 'accounting', label: 'Accounting', icon: '📊', url: '/accounting.html', sub: 'Accounts, journal, statements, bank, budgets', after: 'expenses' },
+  { key: 'auditacc', label: 'Audit & Accounting', icon: '🧮', url: '/audit_accounting.html', sub: 'Daily audit, flags, full report, Excel and PDF', after: 'accounting' },
+  { key: 'staff', label: 'Staff', icon: '👤', url: '/staff.html', sub: 'Staff, attendance, leave, advances, commission', after: 'salary' },
+  { key: 'reports2', label: 'Reports & Analytics', icon: '📈', url: '/reports_analytics.html', sub: 'Trends, digest, forecast, heatmap, margins, payroll export', after: 'reports' },
+  { key: 'labels', label: 'Barcode Labels', icon: '🏷️', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
+  { key: 'assistant', label: 'AI Assistant', icon: '✨', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
   { key: 'chequereg', label: 'Cheque Register', icon: '🧾', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
-  { key: 'legacy', label: 'Legacy screens', icon: '🗂️', url: '/BATHCO_NATURE.html', sub: 'Old screens not moved yet: Customers, Credit, Quotations, Purchasing, Accounting, Reports, Staff' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;

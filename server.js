@@ -284,6 +284,7 @@ const CASH_IN_EXPR  = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0
     THEN (cash_sale+card_sale+online_sale+credit_sale) ELSE total_sale END`;
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
+app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────

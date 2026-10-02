@@ -59,28 +59,4 @@ describe('bathco_complete.html', () => {
       expect(routeSrc.includes(`'${route}`) || routeSrc.includes(`'${route}'`)).toBe(true);   // and a route file defines it
     }
   });
-
-  test('the Document Inbox is also in the main BATHCO_NATURE screen, with every id its script needs', () => {
-    const nature = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'BATHCO_NATURE.html'), 'utf8');
-    expect(nature).toContain('<script src="/document-inbox.js"></script>');
-    expect(nature).toMatch(/id="page-docinbox"/);
-    expect(nature).toMatch(/docinbox:\(\)=>loadDocInbox\(\)/);
-    const natIds = new Set([...nature.replace(/<script[\s\S]*?<\/script>/g, '').matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
-    for (const m of inboxOnlyJs.matchAll(/getElementById\('([^']+)'\)/g)) if (!m[1].includes('${')) expect(natIds.has(m[1])).toBe(true);
-    expect(() => new vm.Script(inboxJs)).not.toThrow();
-  });
-});
-
-describe('Salary tab is registered in both owner screens', () => {
-  const nature = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'BATHCO_NATURE.html'), 'utf8');
-  test('script, page section, loader and the ids it needs', () => {
-    for (const h of [html, nature]) {
-      expect(h).toContain('<script src="/salary.js"></script>');
-      expect(h).toContain('id="page-salary"');
-      expect(h).toContain('id="sl-tabs"');
-      expect(h).toContain('id="sl-body"');
-      expect(h).toMatch(/loadSalary\(\)/);
-    }
-    expect(() => new vm.Script(fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'salary.js'), 'utf8'))).not.toThrow();
-  });
 });

@@ -12,7 +12,7 @@
 // CACHE_NAME bumped so browsers with the old v1 worker installed pick up
 // this fix (their `activate` handler deletes any cache that isn't the
 // current CACHE_NAME).
-const CACHE_NAME = 'bathco-command-v3';
+const CACHE_NAME = 'bathco-command-v4';
 const STATIC_ASSETS = [
   '/owner',
   '/manifest.json',
