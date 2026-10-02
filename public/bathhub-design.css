@@ -222,3 +222,10 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
   #chip-slot > button { white-space:nowrap; padding:0 10px; font-size:12px; }
   .logout-btn { white-space:nowrap; padding:0 12px; font-size:13px; }
 }
+
+/* ---- 15. POS: the single column must be allowed to shrink below its content ---- */
+@media (max-width:800px) { .wrap { grid-template-columns:minmax(0,1fr) !important; } .wrap > *, .panel { min-width:0; } .pick-list { min-width:0 !important; max-width:100% !important; } }
+
+/* ---- 16. LABELS: one column on phones must be allowed to shrink ---- */
+@media (max-width:899px) { .cols { grid-template-columns:minmax(0,1fr) !important; } .cols > * { min-width:0; } }
+
