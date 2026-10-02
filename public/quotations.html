@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script>if (window.top === window.self) location.replace('/owner#/quotations');</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quotations</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--amber:#f59e0b;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button,select{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:520px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:13px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
+tr.r{cursor:pointer}tr.r:hover{background:var(--card)}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.s-draft{color:var(--text2)}.s-sent{color:var(--amber)}.s-accepted{color:var(--green)}.s-rejected{color:var(--red)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
+.modal.show{display:flex}.box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:560px;max-height:88vh;overflow:auto}
+label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+.box select{width:100%}
+.li{display:grid;grid-template-columns:2fr 60px 90px 26px;gap:6px;margin-bottom:6px}.li input{padding:6px}
+.acts{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}#msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.meta{color:var(--text2);font-size:12px}
+</style></head><body>
+<h1>Quotations</h1><div class="sub">Price offers to customers. Tap a row to see items and change its status.</div>
+<div class="bar"><button class="gold" id="add">+ New quotation</button><button id="reload">Refresh</button>
+<select id="flt"><option value="">All statuses</option><option>draft</option><option>sent</option><option>accepted</option><option>rejected</option></select><span class="meta" id="cnt"></span></div>
+<div id="msg"></div>
+<div class="card wrap"><table><thead><tr><th>No.</th><th>Customer</th><th class="n">Items</th><th class="n">Total</th><th>Status</th><th>Created</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="modal" id="m"><div class="box" id="mb"></div></div>
+<script>
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);let ROWS=[];
+const fmt=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2});
+const dt=d=>d?new Date(d).toLocaleDateString('en-GB'):'—';
+const STAT=['draft','sent','accepted','rejected'];
+async function api(path,method,body){
+  const r=await fetch(path,{method:method||'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;}
+function msg(t,ok){$('msg').innerHTML='<span class="'+(ok?'ok':'err')+'">'+E(t)+'</span>';}
+async function load(){try{ROWS=await api('/api/quotations');render();}catch(e){msg(e.message)}}
+function render(){
+  const f=$('flt').value;const rows=ROWS.filter(q=>!f||(q.status||'draft')===f);
+  $('cnt').textContent=rows.length+' shown';
+  $('tb').innerHTML=rows.map(q=>'<tr class="r" data-id="'+E(q.id)+'"><td>'+E(q.quote_no||('#'+q.id))+'</td><td>'+E(q.customer_name||'—')+'</td><td class="n">'+E(q.item_count||0)+'</td><td class="n">'+E(fmt(q.total))+'</td><td><span class="badge s-'+E(q.status||'draft')+'">'+E(q.status||'draft')+'</span></td><td>'+E(dt(q.created_at))+'</td></tr>').join('')||'<tr><td colspan="6" class="meta">No quotations.</td></tr>';}
+function close(){$('m').classList.remove('show');}
+async function detail(id){
+  try{
+    const q=await api('/api/quotations/'+encodeURIComponent(id));
+    $('mb').innerHTML='<h3 style="margin-top:0">'+E(q.quote_no||('Quotation #'+q.id))+' <span class="badge s-'+E(q.status)+'">'+E(q.status)+'</span></h3>'
+     +'<div class="meta">'+E(q.customer_name||'—')+(q.customer_phone?' &middot; '+E(q.customer_phone):'')+(q.customer_location?' &middot; '+E(q.customer_location):'')+'</div>'
+     +'<div class="meta">Date: '+E(dt(q.quote_date))+' &middot; Valid until: '+E(dt(q.valid_until))+'</div>'
+     +'<div class="wrap" style="margin-top:8px"><table style="min-width:360px"><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Total</th></tr></thead><tbody>'
+     +(q.items||[]).map(i=>'<tr><td>'+E((i.item_code?i.item_code+' ':'')+(i.description||''))+'</td><td class="n">'+E(i.qty)+'</td><td class="n">'+E(fmt(i.unit_price))+'</td><td class="n">'+E(fmt(i.line_total))+'</td></tr>').join('')
+     +'</tbody></table></div>'
+     +'<div style="text-align:right;margin-top:8px" class="meta">Subtotal '+E(fmt(q.subtotal))+' &middot; Discount '+E(fmt(q.discount))+'</div><div style="text-align:right;font-weight:700">Total '+E(fmt(q.total))+'</div>'
+     +(q.notes?'<div class="meta" style="margin-top:6px">Notes: '+E(q.notes)+'</div>':'')
+     +'<label>Change status</label><div class="acts" style="margin-top:0">'+STAT.map(s=>'<button data-s="'+s+'"'+(s===q.status?' class="gold"':'')+'>'+s+'</button>').join('')+'</div>'
+     +'<div data-attach="general" data-attach-id="quotation-'+E(q.id)+'" style="margin-top:10px"></div>'
+     +'<div id="fe" class="err"></div><div class="acts"><button id="f_x">Close</button></div>';
+    $('m').classList.add('show');$('f_x').onclick=close;
+    $('mb').querySelectorAll('button[data-s]').forEach(b=>b.onclick=async()=>{
+      try{await api('/api/quotations/'+encodeURIComponent(id)+'/status','PUT',{status:b.dataset.s});msg('Status set to '+b.dataset.s,1);close();load();}catch(e){$('fe').textContent=e.message}});
+    if(window.AttachWidget&&AttachWidget.scan)AttachWidget.scan();
+  }catch(e){msg(e.message)}
+}
+function lineRow(){return '<div class="li"><input class="d" placeholder="Description"><input class="q" type="number" step="any" value="1"><input class="p" type="number" step="0.01" placeholder="Price"><button class="x" type="button">x</button></div>';}
+async function addForm(){
+  let cs=[];try{cs=await api('/api/customers');}catch(e){}
+  $('mb').innerHTML='<h3 style="margin-top:0">New quotation</h3><label>Customer</label><select id="f_c"><option value="">Choose...</option>'+cs.map(c=>'<option value="'+E(c.id)+'">'+E((c.name||'(no name)')+' '+(c.phone||''))+'</option>').join('')+'</select>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label>Quote date</label><input id="f_d" type="date"></div><div><label>Valid until</label><input id="f_v" type="date"></div></div>'
+   +'<label>Items (description, qty, unit price)</label><div id="lines">'+lineRow()+'</div><button type="button" id="addline">+ line</button>'
+   +'<label>Discount (LKR)</label><input id="f_disc" type="number" step="0.01" value="0"><label>Notes</label><textarea id="f_t" rows="2"></textarea>'
+   +'<div id="tot" style="text-align:right;font-weight:700;margin-top:8px"></div><div id="fe" class="err"></div><div class="acts"><button class="gold" id="f_go">Create</button><button id="f_x">Cancel</button></div>';
+  $('m').classList.add('show');$('f_x').onclick=close;
+  const recalc=()=>{let s=0;document.querySelectorAll('#lines .li').forEach(l=>{s+=(Number(l.querySelector('.q').value)||0)*(Number(l.querySelector('.p').value)||0);});
+    $('tot').textContent='Total '+fmt(Math.max(0,s-(Number($('f_disc').value)||0)));};
+  $('addline').onclick=()=>{$('lines').insertAdjacentHTML('beforeend',lineRow());};
+  $('mb').addEventListener('input',recalc);
+  $('lines').addEventListener('click',e=>{if(e.target.classList.contains('x')){const ls=document.querySelectorAll('#lines .li');if(ls.length>1){e.target.closest('.li').remove();recalc();}}});
+  $('f_go').onclick=async()=>{
+    const items=[...document.querySelectorAll('#lines .li')].map(l=>({description:l.querySelector('.d').value.trim(),qty:Number(l.querySelector('.q').value)||0,unit_price:Number(l.querySelector('.p').value)||0})).filter(i=>i.description);
+    if(!$('f_c').value){$('fe').textContent='Choose a customer';return;}
+    if(!items.length){$('fe').textContent='Add at least one item';return;}
+    try{await api('/api/quotations','POST',{customer_id:$('f_c').value,quote_date:$('f_d').value||undefined,valid_until:$('f_v').value||undefined,discount:Number($('f_disc').value)||0,notes:$('f_t').value,items:items});close();msg('Quotation created',1);load();}catch(e){$('fe').textContent=e.message}};
+}
+$('add').onclick=addForm;$('reload').onclick=load;$('flt').onchange=render;
+$('m').addEventListener('click',e=>{if(e.target.id==='m')close();});
+$('tb').addEventListener('click',e=>{const tr=e.target.closest('tr[data-id]');if(tr)detail(tr.dataset.id);});
+load();
+</script>
+<script src="/attach-widget.js"></script></body></html>

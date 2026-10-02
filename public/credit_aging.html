@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script>if (window.top === window.self) location.replace('/owner#/credit');</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Credit and Aging</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--amber:#f59e0b;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi .v{font-size:20px;font-weight:700}.kpi .l{color:var(--text2);font-size:12px}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--card-border);font-size:13px}th{color:var(--text2);font-weight:600}td.n,th.n{text-align:right}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.b-current,.b-settled{color:var(--green)}.b-61-90{color:var(--amber)}.b-90{color:var(--red)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
+.modal.show{display:flex}.box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:440px;max-height:85vh;overflow:auto}
+label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+.acts{display:flex;gap:6px;margin-top:12px}#msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}.meta{color:var(--text2);font-size:12px}
+</style></head><body>
+<h1>Credit and Aging</h1><div class="sub">Money customers owe. Age counts days past the due date. Outstanding = amount minus paid.</div>
+<div class="bar"><button class="gold" id="add">+ Add credit entry</button><button id="reload">Refresh</button><label style="margin:0"><input type="checkbox" id="settled" style="width:auto"> show settled</label></div>
+<div id="msg"></div>
+<div class="kpis" id="kpis"></div>
+<div class="card wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Invoice</th><th>Invoice date</th><th>Due date</th><th class="n">Amount</th><th class="n">Paid</th><th class="n">Outstanding</th><th>Age</th><th>Bucket</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="modal" id="m"><div class="box" id="mb"></div></div>
+<script>
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);let ROWS=[];
+const fmt=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2});
+async function api(path,method,body){
+  const r=await fetch(path,{method:method||'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;}
+function msg(t,ok){$('msg').innerHTML='<span class="'+(ok?'ok':'err')+'">'+E(t)+'</span>';}
+function prep(r){
+  const today=new Date();
+  const due=r.due_date_str?new Date(r.due_date_str+'T00:00:00'):null;
+  const age=due?Math.floor((today-due)/86400000):null;
+  const out=Number(r.amount||0)-Number(r.paid||0);
+  let bucket='current';
+  if(out<=0)bucket='settled';else if(age!==null&&age>90)bucket='90+';else if(age!==null&&age>60)bucket='61-90';
+  return Object.assign({},r,{age:age,out:out,bucket:bucket});}
+async function load(){try{ROWS=(await api('/api/credit-customers')).map(prep);render();}catch(e){msg(e.message)}}
+function render(){
+  let cur=0,b61=0,b90=0;
+  ROWS.forEach(r=>{if(r.bucket==='current')cur+=r.out;else if(r.bucket==='61-90')b61+=r.out;else if(r.bucket==='90+')b90+=r.out;});
+  $('kpis').innerHTML='<div class="card kpi"><div class="l">Current (0-60 days)</div><div class="v" style="color:var(--green)">'+E(fmt(cur))+'</div></div>'
+   +'<div class="card kpi"><div class="l">61-90 days</div><div class="v" style="color:var(--amber)">'+E(fmt(b61))+'</div></div>'
+   +'<div class="card kpi"><div class="l">90+ days</div><div class="v" style="color:var(--red)">'+E(fmt(b90))+'</div></div>';
+  const rows=ROWS.filter(r=>$('settled').checked||r.bucket!=='settled');
+  $('tb').innerHTML=rows.map(r=>'<tr><td>'+E(r.customer_name||r.name||'—')+'</td><td>'+E(r.phone||'—')+'</td><td>'+E(r.invoice_no||'—')+'</td><td>'+E(r.invoice_date_str||'—')+'</td><td>'+E(r.due_date_str||'—')+'</td><td class="n">'+E(fmt(r.amount))+'</td><td class="n">'+E(fmt(r.paid))+'</td><td class="n">'+E(fmt(r.out))+'</td><td>'+(r.age===null?'—':E(r.age)+'d')+'</td><td><span class="badge b-'+E(r.bucket.replace('+',''))+'">'+E(r.bucket)+'</span></td></tr>').join('')||'<tr><td colspan="10" class="meta">No credit entries.</td></tr>';}
+function close(){$('m').classList.remove('show');}
+async function addForm(){
+  let cs=[];try{cs=await api('/api/customers');}catch(e){}
+  $('mb').innerHTML='<h3 style="margin-top:0">Add credit entry</h3><label>Customer</label><select id="f_c"><option value="">Choose...</option>'+cs.map(c=>'<option value="'+E(c.id)+'">'+E((c.name||'(no name)')+' '+(c.phone||''))+'</option>').join('')+'</select><label>Invoice no.</label><input id="f_i"><label>Invoice date</label><input id="f_d" type="date"><label>Due date</label><input id="f_u" type="date"><label>Amount (LKR)</label><input id="f_a" type="number" step="0.01"><label>Already paid (LKR)</label><input id="f_p" type="number" step="0.01" value="0"><label>Notes</label><textarea id="f_t" rows="2"></textarea><div id="fe" class="err"></div><div class="acts"><button class="gold" id="f_go">Save</button><button id="f_x">Cancel</button></div>';
+  $('m').classList.add('show');$('f_x').onclick=close;
+  $('f_go').onclick=async()=>{
+    const b={customer_id:$('f_c').value||null,invoice_no:$('f_i').value,invoice_date:$('f_d').value||null,due_date:$('f_u').value||null,amount:Number($('f_a').value),paid:Number($('f_p').value)||0,notes:$('f_t').value};
+    if(!b.customer_id){$('fe').textContent='Choose a customer';return;}
+    if(!(b.amount>0)){$('fe').textContent='Amount must be more than 0';return;}
+    try{await api('/api/credit-customers','POST',b);close();msg('Saved',1);load();}catch(e){$('fe').textContent=e.message}};
+}
+$('add').onclick=addForm;$('reload').onclick=load;$('settled').onchange=render;
+$('m').addEventListener('click',e=>{if(e.target.id==='m')close();});
+load();
+</script></body></html>
