@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 app.use('/api', router);
 
-beforeAll(() => new Promise(r => setTimeout(r, 80)));   // let the route's CREATE TABLEs finish
+beforeAll(() => new Promise(r => setTimeout(r, 500)));   // let the route's CREATE TABLEs finish
 
 const post = body => request(app).post('/api/pos-bills').send(body);
 

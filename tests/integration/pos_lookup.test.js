@@ -18,7 +18,7 @@ const item = (billId, name, qty, unit) =>
   db.none(`INSERT INTO pos_bill_items (bill_id, item_name, qty, unit_price, line_total) VALUES (${billId}, '${name}', ${qty}, ${unit}, ${qty * unit})`);
 
 beforeAll(async () => {
-  await new Promise(r => setTimeout(r, 80));
+  await new Promise(r => setTimeout(r, 500));
   bill(1, 'BHT-20261001-0001', '2026-10-01 10:00:00', 'Kamal Perera', '0771234567', 27000);
   bill(2, 'BHT-20261001-0002', '2026-10-01 15:00:00', null, null, 9000);
   bill(3, 'BHT-20261002-0001', '2026-10-02 11:00:00', 'Sunil Silva', '0712223334', 25000);

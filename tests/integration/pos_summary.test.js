@@ -16,7 +16,7 @@ const ins = (no, at, pay, subtotal, disc, total) =>
   db.none(`INSERT INTO pos_bills (bill_number, subtotal, discount_pct, discount_amount, total, payment_method, created_at) VALUES ('${no}', ${subtotal}, 0, ${disc}, ${total}, ${pay ? `'${pay}'` : 'NULL'}, '${at}')`);
 
 beforeAll(async () => {
-  await new Promise(r => setTimeout(r, 80));            // route creates its tables
+  await new Promise(r => setTimeout(r, 500));            // route creates its tables
   ins('B1', '2026-10-01 09:15:00', 'cash', 10000, 0, 10000);
   ins('B2', '2026-10-01 14:30:00', 'card', 20000, 1000, 19000);
   ins('B3', '2026-10-01 23:59:00', 'cash', 5000, 500, 4500);

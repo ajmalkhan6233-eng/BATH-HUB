@@ -16,12 +16,13 @@ const pool = new Pool({
 
 const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
-const isOwner = req => ['admin', 'owner'].includes(roleOf(req));
+// Only the admin (the shop owner who runs the till) may correct a bill. The read-only 'owner' (uncle) account may not.
+const isOwner = req => roleOf(req) === 'admin';
 const whoOf = req => (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || 'unknown';
 const deductsStock = () => String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
 
 function ownerOnly(req, res, next) {
-    if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner can correct a bill.' });
+    if (!isOwner(req)) return res.status(403).json({ error: 'Only the admin (shop owner) can correct a bill.' });
     next();
 }
 

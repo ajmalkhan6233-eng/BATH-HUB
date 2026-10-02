@@ -339,7 +339,7 @@ async function generateBill() {
 let currentBill = null;
 let editingId = null;                 // set while an existing bill is being edited (owner only)
 let isOwner = false;
-fetch('/api/me').then(r => r.ok ? r.json() : null).then(u => { if (u && ['admin', 'owner'].includes(u.role)) { isOwner = true; loadToday(); } }).catch(() => {});
+fetch('/api/me').then(r => r.ok ? r.json() : null).then(u => { if (u && u.role === 'admin') { isOwner = true; loadToday(); } }).catch(() => {});
 
 // Is the typed number on WhatsApp? Asked while the cashier types (after a short pause). Sends nothing.
 let _waTimer = null, _waSeq = 0;
