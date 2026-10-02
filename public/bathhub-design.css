@@ -143,3 +143,28 @@ dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-prim
 #bottom-nav { background:var(--bg-glass-fallback); }
 #bottom-nav button .bi .bh-icon { width:22px; height:22px; }
 #bottom-nav button { font-size:var(--text-xs); }
+
+/* ---- 6b. older palette names (emerald / earth / gold-NNN) used by a few screens ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  --emerald-900:var(--text-primary); --emerald-800:var(--gold-primary); --emerald-700:var(--gold-primary);
+  --earth-800:var(--text-primary); --earth-700:var(--text-secondary); --earth-500:var(--text-muted);
+  --gold-500:var(--gold-primary); --gold-400:var(--gold-hover); --gold-300:var(--gold-text);
+}
+
+/* ---- 6c. PRINT: paper stays white with dark ink, whatever theme is on screen ---- */
+@media print {
+  :root, [data-theme] {
+    --bg-canvas:#fff; --bg-surface:#fff; --bg-surface-elevated:#f1f3f7; --bg-surface-hover:#eaedf3; --bg-input:#fff;
+    --border-subtle:#cfd6df; --border-strong:#9aa5b4; --text-primary:#000; --text-secondary:#222; --text-muted:#444;
+    --gold-primary:#6b4f08; --gold-text:#6b4f08; --text-on-accent:#fff; --shadow-sm:none; --shadow-md:none;
+  }
+  body { background:#fff !important; color:#000 !important; }
+}
+
+/* ---- 8. SCREEN-SPECIFIC ---- */
+/* POS billing */
+.share-btn.print { background:var(--bg-surface-elevated) !important; color:var(--text-primary) !important; border:1px solid var(--border-strong); }
+.receipt { background:#fff; color:#111; border-radius:var(--radius-md); }       /* the bill is paper: stays white and dark in every theme */
+.receipt { --text-primary:#111; --text-secondary:#333; --text-muted:#555; --border-subtle:#ddd; --border-strong:#999; --bg-surface:#fff; --gold-primary:#6b4f08; --gold-text:#6b4f08; }
+
+.item-row { grid-template-columns:1fr 84px 110px 48px !important; }
