@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script>if (window.top === window.self) location.replace('/owner#/assistant');</script>
+<title>AI Assistant</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.12);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif;display:flex;flex-direction:column}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:10px}
+.tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.tab{background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;min-height:38px}
+.tab.on{background:var(--gold);color:#111}
+.panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px}
+#log{flex:1;min-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
+.b{max-width:88%;padding:9px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.b.user{align-self:flex-end;background:rgba(245,166,35,.18)}
+.b.bot{align-self:flex-start;background:rgba(255,255,255,.07)}
+.b.err{align-self:flex-start;background:rgba(239,68,68,.12);border:1px solid var(--red)}
+.b.off{align-self:flex-start;background:rgba(245,158,11,.12);border:1px solid var(--amber)}
+.b table{border-collapse:collapse;margin:6px 0;font-size:13px;white-space:normal}
+.b td,.b th{padding:3px 8px;border-bottom:1px solid var(--card-border);text-align:left}
+.b .w{color:var(--amber);font-size:12px;margin-top:4px}
+.tw{overflow-x:auto}
+.hint{color:var(--text2);font-size:12px;margin:4px 0 8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{background:transparent;color:var(--text2);border:1px solid var(--card-border);border-radius:99px;padding:5px 10px;font-size:12px;cursor:pointer}
+.bar{display:flex;gap:8px;padding-top:8px;border-top:1px solid var(--card-border)}
+input{flex:1;min-width:0;padding:11px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg2);color:var(--text);font-size:16px}
+button.send{background:var(--gold);color:#111;border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
+button.send:disabled{opacity:.5}
+.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
+</style></head><body>
+<h1>AI Assistant</h1>
+<div class="sub">Ask in plain words. Runs on the shop's AI service and may be unavailable when offline.</div>
+<div class="tabs">
+  <button class="tab on" id="t-data">Business figures</button>
+  <button class="tab" id="t-help">App helper</button>
+  <button class="ghost" id="clr" style="margin-left:auto">Clear chat</button>
+</div>
+<div class="panel">
+  <div id="hint" class="hint"></div>
+  <div class="chips" id="chips"></div>
+  <div id="log"></div>
+  <div class="bar"><input id="in" placeholder="Ask a question..." autocomplete="off"><button class="send" id="go">Ask</button></div>
+</div>
+
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var MODES={
+  data:{hint:'Real figures from your daily records, for example "net profit yesterday" or "total sales last month". Only confirmed days are counted.',
+        chips:['net profit yesterday','total sales last month','total expenses this week','gross profit last week'],
+        hello:'Ask me about sales, profit or expenses for a period.'},
+  help:{hint:'Explains formulas and where to find things in the app. It does not have live figures, use Business figures for those.',
+        chips:['How is net profit calculated?','What is cash in hand?','Where do I see supplier payments?'],
+        hello:'Hi, I can explain formulas or how to find something in the app. For actual figures, use the Business figures tab.'}
+};
+var mode='data';
+var logs={data:[],help:[]};         // chat history kept per tab while this page is open
+var helpHistory=[];                 // plain user/assistant turns sent to the helper route
+var busy=false;
+var OFFLINE_MSG='The AI assistant is not available right now. It needs an internet connection or the shop AI service (Ollama) to be running. Your other screens still work, try again later.';
+
+function metricName(k){return String(k).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
+function num(n){n=Number(n);return isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):String(n);}
+function renderData(r){
+  var h='<div><b>'+esc(r.date_from)+' to '+esc(r.date_to)+'</b> ('+esc(r.confirmed_days)+' confirmed of '+esc(r.total_days)+' days)</div>';
+  var keys=Object.keys(r.summary||{});
+  if (keys.length) h+='<div class="tw"><table>'+keys.map(function(k){return '<tr><th>'+esc(metricName(k))+'</th><td>'+esc(num(r.summary[k]))+'</td></tr>';}).join('')+'</table></div>';
+  (r.warnings||[]).forEach(function(w){h+='<div class="w">'+esc(w)+'</div>';});
+  return h;
+}
+function add(kind,content,isHtml){
+  logs[mode].push({kind:kind,content:content,html:!!isHtml});
+  draw();
+}
+function draw(){
+  var el=document.getElementById('log');
+  var items=logs[mode];
+  if (!items.length) items=[{kind:'bot',content:MODES[mode].hello,html:false}];
+  el.innerHTML=items.map(function(m){return '<div class="b '+m.kind+'">'+(m.html?m.content:esc(m.content))+'</div>';}).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('t-data').className='tab'+(m==='data'?' on':'');
+  document.getElementById('t-help').className='tab'+(m==='help'?' on':'');
+  document.getElementById('hint').textContent=MODES[m].hint;
+  document.getElementById('chips').innerHTML=MODES[m].chips.map(function(c){return '<button class="chip" data-q="'+esc(c)+'">'+esc(c)+'</button>';}).join('');
+  draw();
+}
+function post(url,body){
+  return fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(j){return {status:r.status,body:j};});});
+}
+function ask(q){
+  q=String(q||'').trim(); if(!q||busy) return;
+  var m=mode;
+  add('user',q);
+  document.getElementById('in').value='';
+  if (navigator.onLine===false){ add('off',OFFLINE_MSG); return; }
+  busy=true; document.getElementById('go').disabled=true;
+  var thinking={kind:'bot',content:'Thinking... (the first answer can take up to a minute)',html:false};
+  logs[m].push(thinking); if(mode===m) draw();
+  var p = m==='data' ? post('/api/nl-query',{question:q}) : post('/api/dashboard-assistant/chat',{message:q,history:helpHistory.slice(-8)});
+  p.then(function(res){
+    var i=logs[m].indexOf(thinking); if(i>=0) logs[m].splice(i,1);
+    if (res.status===401){ logs[m].push({kind:'err',content:'Not signed in. Open the owner app and sign in first.'}); return; }
+    if (res.status===503 || (m==='help' && res.status===500)){ logs[m].push({kind:'off',content:OFFLINE_MSG+(res.body&&res.body.error?'\n\nDetail: '+res.body.error:'')}); return; }
+    if (res.status<200||res.status>=300){ logs[m].push({kind:'err',content:(res.body&&res.body.error)||'Something went wrong.'}); return; }
+    if (m==='data') logs[m].push({kind:'bot',content:renderData(res.body),html:true});
+    else { logs[m].push({kind:'bot',content:res.body.reply||'(no answer)'}); helpHistory.push({role:'user',content:q},{role:'assistant',content:res.body.reply||''}); }
+  }).catch(function(){
+    var i=logs[m].indexOf(thinking); if(i>=0) logs[m].splice(i,1);
+    logs[m].push({kind:'off',content:OFFLINE_MSG});
+  }).then(function(){ busy=false; document.getElementById('go').disabled=false; draw(); });
+}
+document.getElementById('t-data').onclick=function(){setMode('data');};
+document.getElementById('t-help').onclick=function(){setMode('help');};
+document.getElementById('go').onclick=function(){ask(document.getElementById('in').value);};
+document.getElementById('in').addEventListener('keydown',function(e){if(e.key==='Enter')ask(this.value);});
+document.getElementById('chips').addEventListener('click',function(e){var q=e.target.getAttribute&&e.target.getAttribute('data-q'); if(q) ask(q);});
+document.getElementById('clr').onclick=function(){logs[mode]=[]; if(mode==='help') helpHistory=[]; draw();};
+setMode('data');
+</script>
+</body></html>

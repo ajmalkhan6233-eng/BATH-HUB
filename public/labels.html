@@ -1,0 +1,182 @@
+﻿<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script>if (window.top === window.self) location.replace('/owner#/labels');</script>
+<title>Barcode Labels</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.12);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:14px}
+.panel{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px;margin-bottom:14px}
+.cols{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.cols{grid-template-columns:1.2fr 1fr}}
+label{display:block;font-size:13px;color:var(--text2);margin:8px 0 4px}
+select,input[type=text],input[type=number],input[type=search]{width:100%;padding:10px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg2);color:var(--text);font-size:16px}
+button{background:var(--gold);color:#111;border:0;border-radius:8px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer;min-height:42px}
+button.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:6px 10px;min-height:34px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.row>*{flex:0 0 auto}.row .grow{flex:1 1 140px}
+.wrap{overflow:auto;max-height:340px;border:1px solid var(--card-border);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--card-border)}
+th{color:var(--text2);font-weight:500;font-size:12px;position:sticky;top:0;background:var(--bg2)}
+td input[type=number]{width:64px;padding:6px}
+td input[type=checkbox]{width:20px;height:20px}
+code{color:var(--gold);font-size:12px}
+.note{background:rgba(245,166,35,.1);border:1px solid var(--amber);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px;color:var(--text2)}
+.msg{font-size:13px;color:var(--text2);margin:6px 0}
+.chk{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;color:var(--text)}
+.chk input{width:18px;height:18px}
+#sheet{display:flex;flex-wrap:wrap;gap:6px;background:#888;padding:8px;border-radius:8px;min-height:60px}
+.lbl{background:#fff;color:#000;border:1px dashed #999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:1mm;text-align:center;line-height:1.1}
+.lbl .nm{font-size:8pt;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbl .pr{font-size:9pt;font-weight:800}
+.lbl svg{display:block;max-width:100%}
+@media print{
+  body{background:#fff;padding:0}
+  body>*:not(#printarea){display:none!important}
+  #printarea{display:block!important;border:0;padding:0;margin:0;background:#fff}
+  #printarea h2{display:none}
+  #sheet{background:#fff;padding:0;gap:0}
+  .lbl{border:0;page-break-inside:avoid;break-inside:avoid}
+}
+</style></head><body>
+<h1>Barcode Labels</h1>
+<div class="sub">Pick products, choose a label size, print. Barcodes are Code 128 drawn on this page (works offline).</div>
+<div class="note">The barcode value is the product item code. Test one printed label with your scanner before printing a big batch. Item codes with non-standard characters (outside plain keyboard characters) are skipped in the bars.</div>
+
+<div class="cols">
+  <div>
+    <div class="panel">
+      <h2>Products</h2>
+      <div class="row">
+        <input type="search" id="q" class="grow" placeholder="Search code or name">
+        <button class="ghost" id="all">All shown</button>
+        <button class="ghost" id="none">None</button>
+      </div>
+      <div class="msg" id="pmsg">Loading products...</div>
+      <div class="wrap"><table><thead><tr><th></th><th>Code</th><th>Name</th><th>Copies</th></tr></thead><tbody id="tb"></tbody></table></div>
+    </div>
+    <div class="panel">
+      <h2>Extra label by code</h2>
+      <div class="row"><input type="text" id="xcode" class="grow" placeholder="Any code, e.g. 1234567"><input type="text" id="xname" class="grow" placeholder="Name (optional)"><input type="number" id="xqty" min="1" max="500" value="1" style="width:80px"><button class="ghost" id="xadd">Add</button></div>
+      <div class="msg" id="xlist"></div>
+    </div>
+  </div>
+  <div>
+    <div class="panel">
+      <h2>Label layout</h2>
+      <label for="size">Label size</label>
+      <select id="size"><option value="50x25">50 x 25 mm</option><option value="40x20">40 x 20 mm</option><option value="60x30">60 x 30 mm</option><option value="70x35">70 x 35 mm</option></select>
+      <label for="copies">Copies per selected item (default for new ticks)</label>
+      <input type="number" id="copies" min="1" max="500" value="1">
+      <div class="chk"><input type="checkbox" id="showName" checked><label for="showName" style="margin:0;color:var(--text)">Show product name</label></div>
+      <div class="chk"><input type="checkbox" id="showPrice"><label for="showPrice" style="margin:0;color:var(--text)">Show selling price</label></div>
+      <div class="row" style="margin-top:12px"><button id="print">Print labels</button><button class="ghost" id="clear">Clear all</button></div>
+      <div class="msg" id="smsg">Nothing selected yet.</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="printarea">
+  <h2>Label sheet preview</h2>
+  <div id="sheet"></div>
+</div>
+<style id="pagecss"></style>
+
+<script>
+// Code 128 (subset B) pattern table; index 106 is the stop pattern.
+var C128 = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function encode128(text){
+  var parts=['211214'], sum=104, pos=0;
+  for (var i=0;i<text.length;i++){
+    var v=text.charCodeAt(i)-32;
+    if (v<0||v>94) continue;
+    pos++; parts.push(C128[v]); sum+=v*pos;
+  }
+  parts.push(C128[sum%103]); parts.push(C128[106]);
+  return parts.join('');
+}
+function barcodeSVG(text, h){
+  var pat=encode128(String(text)), quiet=10, x=quiet, rects='', total=quiet*2;
+  for (var i=0;i<pat.length;i++) total+=Number(pat[i]);
+  for (var j=0;j<pat.length;j++){
+    var w=Number(pat[j]);
+    if (j%2===0) rects+='<rect x="'+x+'" y="0" width="'+w+'" height="'+h+'" fill="#000"/>';
+    x+=w;
+  }
+  return '<svg viewBox="0 0 '+total+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h/3+'mm;max-height:100%">'+rects+'</svg>';
+}
+function api(p){
+  return fetch(p,{credentials:'same-origin'}).then(function(r){
+    if (r.status===401) throw new Error('Not signed in. Open the owner app and sign in first.');
+    if (!r.ok) return r.json().catch(function(){return {};}).then(function(j){throw new Error(j.error||r.statusText);});
+    return r.json();
+  });
+}
+var products=[], sel={}, extras=[];   // sel[id] = copies
+function fmtPrice(n){ n=Number(n); return isFinite(n)&&n>0 ? 'Rs. '+n.toLocaleString('en-US',{maximumFractionDigits:2}) : ''; }
+function visible(){
+  var q=document.getElementById('q').value.trim().toLowerCase();
+  return products.filter(function(p){ return !q || String(p.item_code||'').toLowerCase().indexOf(q)>=0 || String(p.name||'').toLowerCase().indexOf(q)>=0; });
+}
+function renderList(){
+  var rows=visible();
+  document.getElementById('tb').innerHTML=rows.map(function(p){
+    var on=sel[p.id]!=null;
+    return '<tr><td><input type="checkbox" data-id="'+p.id+'" '+(on?'checked':'')+'></td><td><code>'+esc(p.item_code||'-')+'</code></td><td>'+esc(p.name)+'</td><td><input type="number" min="1" max="500" data-copies="'+p.id+'" value="'+(on?sel[p.id]:1)+'"></td></tr>';
+  }).join('')||'<tr><td colspan="4" style="color:var(--text2)">No products</td></tr>';
+}
+function clamp(n){ n=parseInt(n,10); return isFinite(n)&&n>0?Math.min(n,500):1; }
+function renderSheet(){
+  var parts=String(document.getElementById('size').value).split('x'), w=+parts[0], h=+parts[1];
+  var showName=document.getElementById('showName').checked, showPrice=document.getElementById('showPrice').checked;
+  var items=[];
+  products.forEach(function(p){ if (sel[p.id]!=null && p.item_code) for (var i=0;i<sel[p.id];i++) items.push(p); });
+  extras.forEach(function(e){ for (var i=0;i<e.qty;i++) items.push({item_code:e.code,name:e.name,selling_price:0}); });
+  var skipped=products.filter(function(p){ return sel[p.id]!=null && !p.item_code; }).length;
+  var html=items.map(function(p){
+    var bars=barcodeSVG(p.item_code, 30);
+    return '<div class="lbl" style="width:'+w+'mm;height:'+h+'mm">'
+      +(showName&&p.name?'<div class="nm">'+esc(p.name)+'</div>':'')
+      +'<div style="width:'+(w-6)+'mm;height:'+Math.max(6,h*0.42)+'mm">'+bars+'</div>'
+      +'<div style="font-size:7pt">'+esc(p.item_code)+'</div>'
+      +(showPrice&&fmtPrice(p.selling_price)?'<div class="pr">'+esc(fmtPrice(p.selling_price))+'</div>':'')
+      +'</div>';
+  }).join('');
+  document.getElementById('sheet').innerHTML=html||'<span style="color:#222;font-size:13px">No labels yet. Tick products on the left.</span>';
+  document.getElementById('pagecss').textContent='@media print{@page{size:'+w+'mm '+h+'mm;margin:0}}';
+  document.getElementById('smsg').textContent=items.length?(items.length+' label(s) ready'+(skipped?' ('+skipped+' selected product(s) have no item code and are skipped)':'')+'.'):(skipped?skipped+' selected product(s) have no item code, so no label can be made.':'Nothing selected yet.');
+  document.getElementById('xlist').textContent=extras.length?'Extra: '+extras.map(function(e){return e.code+' x'+e.qty;}).join(', '):'';
+}
+function load(){
+  api('/api/products').then(function(rows){
+    products=Array.isArray(rows)?rows:[];
+    document.getElementById('pmsg').textContent=products.length+' active product(s).';
+    renderList(); renderSheet();
+  }).catch(function(e){ document.getElementById('pmsg').textContent='Could not load products: '+e.message; });
+}
+document.getElementById('tb').addEventListener('change',function(ev){
+  var t=ev.target;
+  if (t.dataset.id){ if (t.checked) sel[t.dataset.id]=clamp(document.getElementById('copies').value); else delete sel[t.dataset.id]; renderList(); renderSheet(); }
+  else if (t.dataset.copies){ var id=t.dataset.copies; if (sel[id]!=null){ sel[id]=clamp(t.value); renderSheet(); } }
+});
+document.getElementById('q').addEventListener('input',renderList);
+document.getElementById('all').onclick=function(){ var c=clamp(document.getElementById('copies').value); visible().forEach(function(p){ sel[p.id]=c; }); renderList(); renderSheet(); };
+document.getElementById('none').onclick=function(){ sel={}; renderList(); renderSheet(); };
+document.getElementById('clear').onclick=function(){ sel={}; extras=[]; renderList(); renderSheet(); };
+['size','showName','showPrice'].forEach(function(id){ document.getElementById(id).addEventListener('change',renderSheet); });
+document.getElementById('xadd').onclick=function(){
+  var c=document.getElementById('xcode').value.trim(); if(!c) return;
+  extras.push({code:c,name:document.getElementById('xname').value.trim(),qty:clamp(document.getElementById('xqty').value)});
+  document.getElementById('xcode').value=''; document.getElementById('xname').value=''; renderSheet();
+};
+document.getElementById('print').onclick=function(){
+  if (!document.querySelector('#sheet .lbl')){ document.getElementById('smsg').textContent='Nothing to print. Tick at least one product.'; return; }
+  window.print();
+};
+load();
+</script>
+</body></html>
