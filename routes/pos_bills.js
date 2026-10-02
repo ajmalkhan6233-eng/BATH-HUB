@@ -69,6 +69,11 @@ pool.query(`
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
+  // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
+  .then(() => Promise.all([   // one step (not two) so start-up stays quick
+    pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_voids (bill_id INT PRIMARY KEY REFERENCES pos_bills(id), reason TEXT NOT NULL, voided_by VARCHAR(100), voided_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, stock_restored JSONB)`),
+    pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_history (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), action VARCHAR(10) NOT NULL, reason TEXT, changed_by VARCHAR(100), changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, old_version JSONB)`),
+  ]))
   .catch(e => console.error('[pos_bills] migration failed:', e.message));
 
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
@@ -96,7 +101,8 @@ async function loadBill(id) {
         `SELECT id, item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`,
         [id]
     );
-    return { ...bill.rows[0], items: items.rows };
+    const v = await pool.query(`SELECT reason, voided_by, voided_at FROM pos_bill_voids WHERE bill_id = $1`, [id]).catch(() => ({ rows: [] }));
+    return { ...bill.rows[0], items: items.rows, voided: v.rows.length > 0, void_reason: v.rows[0] ? v.rows[0].reason : null };
 }
 
 // ═══════════════════════ DISCOUNT CAP ═══════════════════════
@@ -212,13 +218,13 @@ router.get('/pos-bills/today', async (req, res) => {
     try {
         const date = todayLK();
         const r = await pool.query(
-            `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, source, created_at
-             FROM pos_bills WHERE created_at::date = $1::date ORDER BY created_at DESC, id DESC LIMIT 200`, [date]);
+            `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, source, created_at, (v.bill_id IS NOT NULL) AS voided
+             FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE created_at::date = $1::date ORDER BY created_at DESC, id DESC LIMIT 200`, [date]);
         const bills = r.rows.map(b => ({ ...b, subtotal: Number(b.subtotal), discount_amount: Number(b.discount_amount), total: Number(b.total) }));
         res.json({
-            date, count: bills.length,
-            total: money2(bills.reduce((a, b) => a + b.total, 0)),
-            discount: money2(bills.reduce((a, b) => a + b.discount_amount, 0)),
+            date, count: bills.filter(b => !b.voided).length,
+            total: money2(bills.filter(b => !b.voided).reduce((a, b) => a + b.total, 0)),
+            discount: money2(bills.filter(b => !b.voided).reduce((a, b) => a + b.discount_amount, 0)),
             bills,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -239,7 +245,7 @@ router.get('/pos-bills/summary', async (req, res) => {
         const r = await pool.query(
             `SELECT COALESCE(payment_method, 'cash') AS payment_method, COUNT(*) AS bills,
                     SUM(subtotal) AS subtotal, SUM(discount_amount) AS discount, SUM(total) AS total
-             FROM pos_bills WHERE created_at::date BETWEEN $1::date AND $2::date
+             FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE v.bill_id IS NULL AND created_at::date BETWEEN $1::date AND $2::date
              GROUP BY COALESCE(payment_method, 'cash') ORDER BY 1`, [from, to]);
         const by_payment = r.rows.map(x => ({
             payment_method: x.payment_method, bills: Number(x.bills),
@@ -268,8 +274,8 @@ router.get('/pos-bills/top-items', async (req, res) => {
         const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
         const r = await pool.query(
             `SELECT i.item_name, SUM(i.qty) AS units, SUM(i.line_total) AS revenue, COUNT(DISTINCT i.bill_id) AS bills
-             FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id
-             WHERE b.created_at::date BETWEEN $1::date AND $2::date
+             FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+             WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date
              GROUP BY i.item_name`, [from, to]);
         const items = r.rows
             .map(x => ({ item_name: x.item_name, units: money2(x.units), revenue: money2(x.revenue), bills: Number(x.bills) }))
@@ -287,7 +293,7 @@ router.get('/pos-bills', async (req, res) => {
         if (date && !isDay(date)) return res.status(400).json({ error: 'date must be a date (YYYY-MM-DD)' });
         const q = String(req.query.q || '').trim().toLowerCase().replace(/[\\%_]/g, m => '\\' + m);
         const r = await pool.query(
-            `SELECT * FROM pos_bills
+            `SELECT pos_bills.*, (v.bill_id IS NOT NULL) AS voided, v.reason AS void_reason FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id
              WHERE ($1::date IS NULL OR created_at::date = $1::date)
                AND ($2 = '' OR LOWER(bill_number) LIKE '%' || $2 || '%' OR LOWER(COALESCE(customer_name,'')) LIKE '%' || $2 || '%'
                     OR COALESCE(customer_phone,'') LIKE '%' || $2 || '%')

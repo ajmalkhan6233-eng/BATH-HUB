@@ -549,6 +549,7 @@ app.use('/', require('./routes/apex_admin'));             // APEX control plane,
 app.use('/api', require('./routes/investor_loans'));      // routes are relative (/investor-loans etc) -> /api/investor-loans*
 app.use('/api', require('./routes/sale_commissions'));    // routes are relative (/sale-commissions etc) -> /api/sale-commissions*
 app.use('/api', require('./routes/shop_operations'));     // routes are relative (/discount-* /stock-* /receipt-queue*) -> /api/discount-*, /api/stock-*, /api/receipt-queue*
+app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock

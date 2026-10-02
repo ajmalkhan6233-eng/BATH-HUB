@@ -36,6 +36,12 @@
   .today th, .today td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #eee; }
   .today td.num, .today th.num { text-align: right; }
   .today .flag { color: #b26a00; font-size: 11px; }
+  .today tr.void td { color: #999; text-decoration: line-through; background: #f4f4f4; }
+  .today tr.void td:last-child, .today tr.void td .void-tag { text-decoration: none; }
+  .void-tag { display: inline-block; background: #b3261e; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+  .today .mini-btn { font-size: 12px; padding: 2px 8px; margin-left: 4px; border: 1px solid #c9bfae; background: #fff; border-radius: 6px; cursor: pointer; }
+  .today .mini-btn.danger { color: #b3261e; border-color: #b3261e; }
+  .edit-banner { background: #fff4d6; border: 1px solid #e0b84a; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 13px; display: none; }
   /* item picker */
   .pick-wrap { position: relative; }
   .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background: #fff; border: 1px solid #ccc; border-radius: 6px;
@@ -140,8 +146,10 @@
       <option value="online">Online transfer</option>
     </select>
 
+    <div class="edit-banner" id="editBanner"></div>
     <div class="err" id="errMsg"></div>
     <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
+    <button type="button" class="mini-btn" id="cancelEditBtn" style="display:none;margin-top:8px" onclick="resetForm()">Cancel edit</button>
     <div class="today" id="todayBox"></div>
   </div>
 
@@ -296,7 +304,7 @@ async function generateBill() {
 
   const genBtn = document.getElementById('genBtn');
   genBtn.disabled = true;
-  genBtn.textContent = 'Generating…';
+  genBtn.textContent = editingId ? 'Saving…' : 'Generating…';
 
   try {
     const payload = {
@@ -306,7 +314,7 @@ async function generateBill() {
       discount_pct,
       payment_method: document.getElementById('paymentMethod').value,
     };
-    const post = extra => fetch('/api/pos-bills', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
+    const post = extra => fetch(editingId ? '/api/pos-bills/' + editingId : '/api/pos-bills', { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
     let res = await post();
     let data = await res.json();
     // Over the discount cap: only the owner can approve it (the server checks), and it is recorded on the bill.
@@ -316,16 +324,22 @@ async function generateBill() {
       data = await res.json();
     }
     if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
+    const wasEdit = !!editingId;
+    editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
     renderBill(data);
+    if (wasEdit) loadToday();
   } catch (e) {
     showError(e.message);
   } finally {
     genBtn.disabled = false;
-    genBtn.textContent = 'Generate Bill';
+    genBtn.textContent = editingId ? 'Save changes' : 'Generate Bill';
   }
 }
 
 let currentBill = null;
+let editingId = null;                 // set while an existing bill is being edited (owner only)
+let isOwner = false;
+fetch('/api/me').then(r => r.ok ? r.json() : null).then(u => { if (u && ['admin', 'owner'].includes(u.role)) { isOwner = true; loadToday(); } }).catch(() => {});
 
 // Is the typed number on WhatsApp? Asked while the cashier types (after a short pause). Sends nothing.
 let _waTimer = null, _waSeq = 0;
@@ -465,13 +479,49 @@ async function loadToday() {
     if (!r.ok) { box.textContent = ''; return; }
     const d = await r.json(), sym = branding.currency_symbol || 'Rs';
     const esc = escapeHtml;
-    box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
-      d.bills.map(b => `<tr><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td><a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a></td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+    box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}${d.bills.some(b => b.voided) ? ' <span class="sub">(void bills not counted)</span>' : ''}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
+      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
   } catch (e) { box.textContent = ''; }
+}
+
+async function voidBill(id, number) {
+  const reason = prompt('Void bill ' + number + '?\nThe bill is kept, marked VOID and left out of today\'s totals. Stock is given back.\n\nReason (required):');
+  if (reason === null) return;
+  if (reason.trim().length < 3) { alert('A reason is required to void a bill.'); return; }
+  const r = await fetch('/api/pos-bills/' + id + '/void', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { alert(d.error || 'Could not void the bill'); return; }
+  loadToday();
+}
+
+async function editBill(id) {
+  const r = await fetch('/api/pos-bills/' + id);
+  if (!r.ok) { alert('Could not load that bill'); return; }
+  const b = await r.json();
+  if (b.voided) { alert('A void bill cannot be edited.'); return; }
+  document.getElementById('itemRows').innerHTML = '';
+  b.items.forEach(it => { addItemRow(it.item_name, Number(it.qty), Number(it.unit_price)); if (it.item_code) document.querySelector('#itemRows .item-row:last-child').dataset.itemCode = it.item_code; });
+  document.getElementById('customerName').value = b.customer_name || '';
+  document.getElementById('customerPhone').value = b.customer_phone || '';
+  document.getElementById('discountPct').value = Number(b.discount_pct) || 0;
+  document.getElementById('paymentMethod').value = b.payment_method || 'cash';
+  editingId = id;
+  const ban = document.getElementById('editBanner');
+  ban.textContent = 'Editing bill ' + b.bill_number + '. The old version is saved in the bill history.'; ban.style.display = 'block';
+  document.getElementById('genBtn').textContent = 'Save changes';
+  document.getElementById('cancelEditBtn').style.display = 'inline-block';
+  updateCapHint();
+  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('billPanel').style.display = 'none';
+  window.scrollTo(0, 0);
 }
 
 function resetForm() {
   loadToday();
+  editingId = null;
+  document.getElementById('editBanner').style.display = 'none';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('genBtn').textContent = 'Generate Bill';
   document.getElementById('itemRows').innerHTML = '';
   addItemRow();
   document.getElementById('customerName').value = '';
