@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bath Hub — Owner</title>
@@ -481,7 +481,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── POS BILLING (embeds public/pos_billing.html) ── -->
     <section class="page" id="page-pos">
-      <iframe id="pos-frame" title="POS Billing" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+      <iframe id="pos-frame" title="POS Billing" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
 
     <!-- ── GRN (manual entry) ── -->
@@ -636,9 +636,9 @@ table tr:last-child td{border-bottom:none}
         <div class="card barcode-panel" id="bc-preview">
           <div class="scan-line"></div>
           <div class="section-title" style="margin-bottom:14px">Label Preview</div>
-          <div style="background:#fff;border-radius:var(--radius-sm);padding:16px 20px;display:inline-block;margin:10px 0;min-width:200px">
+          <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:16px 20px;display:inline-block;margin:10px 0;min-width:200px">
             <div style="font-size:12px;font-weight:700;color:#000;margin-bottom:4px" id="pv-name">Select an item</div>
-            <div style="font-size:12px;color:#555;margin-bottom:8px" id="pv-code">—</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px" id="pv-code">—</div>
             <div id="pv-bars" style="display:flex;align-items:flex-end;gap:1px;height:50px"></div>
             <div style="font-size:12px;font-weight:800;color:#000;margin-top:6px" id="pv-price">—</div>
           </div>
@@ -870,16 +870,16 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── REPORTS ── -->
     <section class="page" id="page-loans">
-      <iframe id="frame-loans" title="Friend &amp; Investor Loans" data-src="/investor_loans.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+      <iframe id="frame-loans" title="Friend &amp; Investor Loans" data-src="/investor_loans.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
     <section class="page" id="page-moneycontrol">
-      <iframe id="frame-moneycontrol" title="Money Control" data-src="/money-control.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+      <iframe id="frame-moneycontrol" title="Money Control" data-src="/money-control.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
     <section class="page" id="page-commissions">
-      <iframe id="frame-commissions" title="Sale Commissions" data-src="/sale_commissions.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+      <iframe id="frame-commissions" title="Sale Commissions" data-src="/sale_commissions.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
     <section class="page" id="page-settings">
-      <iframe id="frame-settings" title="Settings" data-src="/settings.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>
+      <iframe id="frame-settings" title="Settings" data-src="/settings.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
     <section class="page" id="page-reports">
       <div class="card" style="margin-bottom:16px">
@@ -1359,7 +1359,7 @@ async function loadAgentReview() {
          <button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>
          <button class="btn btn-s" onclick="avSave(${x.id})">Save my edit and re-check</button>`
       : (x.status === 'approved' ? avSendButtons(x) + `<button class="btn btn-s" onclick="avAct(${x.id},'reject')">Reject</button>` : '');
-    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${c.passed ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">
+    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${c.passed ? 'var(--green,var(--status-success))' : 'var(--red,#c62828)'}">
       <div style="margin-bottom:6px"><b>${arEsc(x.channel)}</b> · ${arEsc(x.customer_ref || 'no reference')} · <b>${arEsc(x.status)}</b> · checks: <b>${c.passed ? 'all passed' : 'FAILED'}</b></div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Customer wrote: ${arEsc(x.incoming_text)}</div>
       <textarea class="fi" id="av-t-${x.id}" rows="3" style="width:100%" ${x.status === 'draft' ? '' : 'disabled'}>${arEsc(x.draft_text)}</textarea>
@@ -1480,7 +1480,7 @@ function addFramePage(def) {
   const anchor = def.after && ul.querySelector('.nav-item[data-page="' + def.after + '"]');
   if (anchor) anchor.after(li); else ul.appendChild(li);
   const sec = document.createElement('section'); sec.className = 'page'; sec.id = 'page-' + def.key;
-  sec.innerHTML = '<iframe id="frame-' + def.key + '" title="" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:#fff"></iframe>';
+  sec.innerHTML = '<iframe id="frame-' + def.key + '" title="" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>';
   sec.querySelector('iframe').title = def.label; sec.querySelector('iframe').dataset.src = def.url;
   document.querySelector('.page').parentNode.appendChild(sec);
   PAGE_META[def.key] = [def.label, def.sub || ''];

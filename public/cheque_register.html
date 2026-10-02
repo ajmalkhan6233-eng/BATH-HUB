@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/chequereg');   // one app: opened on its own -> open it inside /owner</script>
 <meta charset="UTF-8">
@@ -28,7 +28,7 @@
   @media(max-width:560px){.grid3{grid-template-columns:1fr;}}
   label{font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;}
   input,select{width:100%;padding:8px 10px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;font-family:inherit;margin-bottom:10px;}
-  .btn{background:var(--gold-primary);color:var(--text-primary);border:none;border-radius:4px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn{background:var(--gold-primary);color:var(--text-on-accent);border:none;border-radius:4px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;}
   .btn:hover{background:var(--gold-primary);}
   .btn-sm{padding:5px 10px;font-size:12px;margin-right:4px;}
   table{width:100%;border-collapse:collapse;font-size:14px;}
@@ -36,7 +36,7 @@
   td{padding:8px;border-bottom:1px solid var(--border-subtle);vertical-align:top;}
   tr:hover{background:var(--stone-100);}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;}
-  .badge-pending{background:var(--gold-primary);color:var(--text-primary);}
+  .badge-pending{background:var(--gold-primary);color:var(--text-on-accent);}
   .badge-cleared{background:var(--green-100);color:var(--green-700);}
   .badge-bounced{background:var(--red-100);color:var(--red-600);}
   .empty{color:var(--text-muted);font-size:14px;font-style:italic;padding:10px 0;}

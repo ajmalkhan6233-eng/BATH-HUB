@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Edit &amp; Void</title>
@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,Seg
 h1{font-size:20px;margin:4px 0 10px;color:var(--gold)}
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
 .tabs button{flex:0 0 auto;background:var(--card);color:var(--text2);border:1px solid var(--card-border);border-radius:18px;padding:8px 14px;font-size:14px;cursor:pointer}
-.tabs button.on{color:var(--text-primary);background:var(--gold);border-color:var(--gold);font-weight:600}
+.tabs button.on{color:var(--text-on-accent);background:var(--gold);border-color:var(--gold);font-weight:600}
 .note{background:rgba(212,168,67,.12);border:1px solid var(--gold);border-radius:10px;padding:10px;margin-bottom:10px;color:var(--text);font-size:14px}
 .row{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .row.void{opacity:.55}
@@ -22,7 +22,7 @@ h1{font-size:20px;margin:4px 0 10px;color:var(--gold)}
 .why{color:var(--text2);font-size:14px;margin-top:6px}
 .btns{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 button.b{background:transparent;color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;min-height:40px}
-button.b.gold{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}
+button.b.gold{background:var(--gold);color:var(--text-on-accent);border-color:var(--gold);font-weight:600}
 button.b.red{color:var(--red);border-color:var(--red)}
 button[disabled]{opacity:.4;cursor:not-allowed}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:14px;z-index:10}

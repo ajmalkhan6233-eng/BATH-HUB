@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Settings</title>
@@ -14,7 +14,7 @@ h1{font-size:18px;margin:0 0 10px}
 h2{font-size:15px;margin:0 0 8px;color:var(--gold)}
 .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
 .tab{background:var(--card);border:1px solid var(--card-border);color:var(--text2);padding:9px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;font-size:14px}
-.tab.on{background:var(--gold);color:var(--text-primary);border-color:var(--gold);font-weight:600}
+.tab.on{background:var(--gold);color:var(--text-on-accent);border-color:var(--gold);font-weight:600}
 .panel{display:none}.panel.on{display:block}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:12px}
 label{display:block;font-size:12px;color:var(--text2);margin:10px 0 3px}
@@ -23,7 +23,7 @@ input[type=color]{width:48px;height:40px;border:1px solid var(--card-border);bor
 .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row>.fixed{flex:none}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 @media (max-width:520px){.grid{grid-template-columns:1fr}}
-button{background:var(--gold);color:var(--text-primary);border:0;border-radius:6px;padding:10px 16px;font-weight:600;font-size:14px;cursor:pointer}
+button{background:var(--gold);color:var(--text-on-accent);border:0;border-radius:6px;padding:10px 16px;font-weight:600;font-size:14px;cursor:pointer}
 button.ghost{background:var(--bg3);color:var(--text);border:1px solid var(--card-border)}
 button:disabled{opacity:.45;cursor:not-allowed}
 .msg{margin-top:8px;font-size:14px;min-height:18px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}

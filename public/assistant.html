@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>if (window.top === window.self) location.replace('/owner#/assistant');</script>
 <title>AI Assistant</title>
 <style>
@@ -12,7 +12,7 @@ h1{font-size:20px;margin:0 0 4px}
 .sub{color:var(--text2);font-size:14px;margin-bottom:10px}
 .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .tab{background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;min-height:38px}
-.tab.on{background:var(--gold);color:var(--text-primary)}
+.tab.on{background:var(--gold);color:var(--text-on-accent)}
 .panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px}
 #log{flex:1;min-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
 .b{max-width:88%;padding:9px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap;word-break:break-word}
@@ -29,7 +29,7 @@ h1{font-size:20px;margin:0 0 4px}
 .chip{background:transparent;color:var(--text2);border:1px solid var(--card-border);border-radius:99px;padding:5px 10px;font-size:12px;cursor:pointer}
 .bar{display:flex;gap:8px;padding-top:8px;border-top:1px solid var(--card-border)}
 input{flex:1;min-width:0;padding:11px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg2);color:var(--text);font-size:16px}
-button.send{background:var(--gold);color:var(--text-primary);border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
+button.send{background:var(--gold);color:var(--text-on-accent);border:0;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
 button.send:disabled{opacity:.5}
 .ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
 </style><link rel="stylesheet" href="/bathhub-design.css">
