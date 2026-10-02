@@ -553,6 +553,7 @@ app.use('/api', require('./routes/shop_operations'));     // routes are relative
 app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
+app.use('/api/admin-core', require('./routes/admin_core'));   // admin-only users (add/disable/role/reset/force logout/history) + audit log
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*

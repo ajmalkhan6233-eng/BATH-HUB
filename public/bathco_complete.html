@@ -1483,6 +1483,8 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-wor
 
 /* Admin Settings -> shop name, dashboard target, menu hide/show/order. Admin-only screens are added for admins. */
 const ADMIN_FRAMES = [
+  { key: 'adminusers', label: 'Users', icon: '👥', url: '/admin_users.html', sub: 'Add, disable, change role, reset password, force logout, login history' },
+  { key: 'adminaudit', label: 'Audit Log', icon: '🧾', url: '/admin_audit.html', sub: 'Who changed what, and when' },
   { key: 'adminsettings', label: 'Admin Settings', icon: '⚙️', url: '/admin_settings.html', sub: 'Shop, targets, WhatsApp switch, feature flags, menu' },
   { key: 'corrections', label: 'Edit & Void', icon: '✏️', url: '/admin_corrections.html', sub: 'Fix or void vendors, stock, items, commissions, staff, cheques, discount rules' },
 ];
