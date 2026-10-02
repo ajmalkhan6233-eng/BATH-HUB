@@ -271,6 +271,10 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="agentreview"><span class="nav-icon">🧠</span><span class="nav-label">Agent Review</span></li>
       <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
       <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
+      <li class="nav-item" data-href="/investor_loans.html"><span class="nav-icon">🤝</span><span class="nav-label">Investor &amp; Friend Loans</span></li>
+      <li class="nav-item" data-href="/money-control.html"><span class="nav-icon">🛡️</span><span class="nav-label">Money Control</span></li>
+      <li class="nav-item" data-href="/sale_commissions.html"><span class="nav-icon">🏷️</span><span class="nav-label">Sale Commissions</span></li>
+      <li class="nav-item" data-href="/settings.html"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></li>
     </ul>
     <div class="sidebar-footer">
       <div class="sidebar-toggle" onclick="toggleSidebar()">
@@ -1371,7 +1375,7 @@ async function arOff(id) {
 }
 
 document.querySelectorAll('.nav-item').forEach(el => {
-  el.addEventListener('click', () => navigate(el.dataset.page));
+  el.addEventListener('click', () => el.dataset.href ? window.open(el.dataset.href, '_blank') : navigate(el.dataset.page));
 });
 
 function navigate(page) {
