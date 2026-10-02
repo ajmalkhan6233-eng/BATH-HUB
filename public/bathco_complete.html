@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bath Hub — Owner</title>
 <link rel="manifest" href="/manifest.json">
-<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.body)); }</script>
+<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.getElementById("chip-slot") || document.body)); }</script>
 <meta name="theme-color" content="#0D0D0D">
 <link href="/fonts/inter.css" rel="stylesheet">
 <script src="/vendor/chart.umd.min.js"></script>
@@ -46,7 +47,7 @@ table{border-collapse:collapse;width:100%}
 }
 .login-logo{font-size:48px;margin-bottom:12px}
 .login-title{font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px}
-.login-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+.login-sub{font-size:14px;color:var(--text2);margin-bottom:28px}
 .login-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
 
 /* ── LAYOUT ── */
@@ -68,7 +69,7 @@ table{border-collapse:collapse;width:100%}
 .nav-item:hover{background:var(--card-hover)}
 .nav-item.active{background:rgba(245,166,35,0.15);color:var(--gold)}
 .nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
-.nav-label{font-size:13px;font-weight:500}
+.nav-label{font-size:14px;font-weight:500}
 .sidebar-footer{padding:10px 8px;border-top:1px solid var(--card-border)}
 .sidebar-toggle{display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--t)}
 .sidebar-toggle:hover{background:var(--card)}
@@ -78,7 +79,7 @@ table{border-collapse:collapse;width:100%}
 /* ── TOPBAR ── */
 .topbar{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar-right{display:flex;align-items:center;gap:12px}
-.live-clock{font-size:13px;font-weight:600;color:var(--gold);background:rgba(245,166,35,0.1);padding:5px 12px;border-radius:99px}
+.live-clock{font-size:14px;font-weight:600;color:var(--gold);background:rgba(245,166,35,0.1);padding:5px 12px;border-radius:99px}
 .theme-toggle{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all var(--t)}
 .theme-toggle:hover{transform:scale(1.1)}
 .logout-btn{font-size:12px;padding:6px 12px;border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--card-border);color:var(--text2);transition:all var(--t)}
@@ -103,9 +104,9 @@ table{border-collapse:collapse;width:100%}
 .kpi-card[data-type=cash]{--accent:#3b82f6}
 .kpi-card[data-type=card]{--accent:#8b5cf6}
 .kpi-card[data-type=online]{--accent:#f59e0b}
-.kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+.kpi-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
 .kpi-value{font-size:24px;font-weight:800;margin-bottom:6px;font-variant-numeric:tabular-nums}
-.kpi-change{font-size:11px;font-weight:600;color:var(--text2)}
+.kpi-change{font-size:12px;font-weight:600;color:var(--text2)}
 .kpi-change.up{color:var(--green)}
 .kpi-change.down{color:var(--red)}
 .kpi-sparkline{margin-top:10px;height:36px}
@@ -127,13 +128,13 @@ table{border-collapse:collapse;width:100%}
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto;border-radius:var(--radius)}
-table th{text-align:left;padding:9px 13px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--card-border);background:var(--bg3)}
-table td{padding:9px 13px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04)}
+table th{text-align:left;padding:9px 13px;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--card-border);background:var(--bg3)}
+table td{padding:9px 13px;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.04)}
 table tr:hover td{background:var(--card)}
 table tr:last-child td{border-bottom:none}
 
 /* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:12px;font-weight:600}
 .bg{background:rgba(34,197,94,0.15);color:var(--green)}
 .br{background:rgba(239,68,68,0.15);color:var(--red)}
 .ba{background:rgba(245,158,11,0.15);color:var(--amber)}
@@ -143,14 +144,14 @@ table tr:last-child td{border-bottom:none}
 
 /* ── FORM ── */
 .fg{margin-bottom:14px}
-.fl{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em}
-.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-size:13px;transition:all var(--t)}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-size:14px;transition:all var(--t)}
 .fi:focus,.fs:focus,.fta:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,0.15)}
 .fs option{background:var(--bg2)}
 .fta{resize:vertical;min-height:70px}
 
 /* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;transition:all var(--t)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;transition:all var(--t)}
 .btn-p{background:var(--gold);color:#000}
 .btn-p:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,166,35,0.4)}
 .btn-s{background:var(--card);border:1px solid var(--card-border);color:var(--text)}
@@ -165,7 +166,7 @@ table tr:last-child td{border-bottom:none}
 
 /* ── TOAST ── */
 #toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9998}
-.toast{background:var(--bg2);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:11px 16px;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;box-shadow:var(--shadow);animation:slideUp 0.3s ease;min-width:260px}
+.toast{background:var(--bg2);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:11px 16px;display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500;box-shadow:var(--shadow);animation:slideUp 0.3s ease;min-width:260px}
 .toast.success{border-left:3px solid var(--green)}
 .toast.error{border-left:3px solid var(--red)}
 .toast.warning{border-left:3px solid var(--amber)}
@@ -187,9 +188,9 @@ table tr:last-child td{border-bottom:none}
 .welcome-banner{background:linear-gradient(135deg,rgba(245,166,35,0.12),rgba(245,166,35,0.04));border:1px solid rgba(245,166,35,0.2);border-radius:var(--radius);padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
 .pay-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
 .pay-item{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:12px;text-align:center}
-.pay-label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:5px}
+.pay-label{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;margin-bottom:5px}
 .pay-val{font-size:16px;font-weight:800}
-.report-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--card-border);font-size:13px}
+.report-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--card-border);font-size:14px}
 .report-row:last-child{border-bottom:none}
 .report-row.total{font-weight:800;font-size:15px;color:var(--gold)}
 .upload-box{border:2px dashed var(--card-border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all var(--t)}
@@ -198,27 +199,27 @@ table tr:last-child td{border-bottom:none}
 .stock-fill{height:100%;border-radius:99px}
 .top-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--card-border)}
 .top-item:last-child{border-bottom:none}
-.rank{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rank{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rank.r2{background:var(--text3)}.rank.r3{background:#cd7f32}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:12px}
-.cal-hdr{text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px 0}
-.cal-day{min-height:46px;background:var(--bg3);border-radius:6px;padding:4px;font-size:11px;border:1px solid transparent;transition:all var(--t)}
+.cal-hdr{text-align:center;font-size:12px;font-weight:600;color:var(--text2);padding:4px 0}
+.cal-day{min-height:46px;background:var(--bg3);border-radius:6px;padding:4px;font-size:12px;border:1px solid transparent;transition:all var(--t)}
 .cal-day.c-cheque{border-color:var(--amber);background:rgba(245,158,11,0.1)}
 .cal-day.c-due{border-color:var(--red);background:rgba(239,68,68,0.12)}
 .cal-day.c-clear{border-color:var(--green);background:rgba(34,197,94,0.08)}
 .cal-day-n{font-weight:700;color:var(--text2);margin-bottom:1px}
-.no-data{text-align:center;padding:32px;color:var(--text3);font-size:13px}
-.data-tier{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
+.no-data{text-align:center;padding:32px;color:var(--text3);font-size:14px}
+.data-tier{font-size:12px;padding:2px 6px;border-radius:4px;font-weight:700}
 .tier-full{background:rgba(34,197,94,0.15);color:var(--green)}
 .tier-cash{background:rgba(59,130,246,0.15);color:var(--blue)}
 .tier-found{background:rgba(100,100,100,0.15);color:var(--text2)}
 
 #bottom-nav{display:none}
-.nav-sep{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 12px 4px}
+.nav-sep{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 12px 4px}
 @media(max-width:768px){
   body{padding-bottom:62px}
   #bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg2);border-top:1px solid var(--card-border);padding:4px 0 max(4px,env(safe-area-inset-bottom))}
-  #bottom-nav button{flex:1;background:none;border:0;color:var(--text2);font:inherit;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer}
+  #bottom-nav button{flex:1;background:none;border:0;color:var(--text2);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer}
   #bottom-nav button .bi{font-size:20px;line-height:1}
   #bottom-nav button.active{color:var(--gold)}
   .sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;z-index:200}
@@ -228,22 +229,23 @@ table tr:last-child td{border-bottom:none}
   .pay-grid{grid-template-columns:1fr 1fr}
 }
 </style>
+<link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
 <div id="toasts"></div>
 <nav id="bottom-nav" aria-label="Main menu">
-  <button data-go="dashboard" onclick="navigate('dashboard')"><span class="bi">📊</span>Home</button>
-  <button data-go="pos" onclick="navigate('pos')"><span class="bi">🛒</span>POS</button>
-  <button data-go="daily-sales" onclick="navigate('daily-sales')"><span class="bi">🧾</span>Sales</button>
-  <button data-go="stock" onclick="navigate('stock')"><span class="bi">📦</span>Stock</button>
+  <button data-go="dashboard" onclick="navigate('dashboard')"><span class="bi"><svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg></span>Home</button>
+  <button data-go="pos" onclick="navigate('pos')"><span class="bi"><svg class="bh-icon" aria-hidden="true"><use href="#i-cart"/></svg></span>POS</button>
+  <button data-go="daily-sales" onclick="navigate('daily-sales')"><span class="bi"><svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg></span>Sales</button>
+  <button data-go="stock" onclick="navigate('stock')"><span class="bi"><svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg></span>Stock</button>
   <button data-go="__more" onclick="document.getElementById('sidebar').classList.toggle('open')"><span class="bi">☰</span>More</button>
 </nav>
 
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">
   <div class="login-box">
-    <div class="login-logo">🛁</div>
+    <div class="login-logo"><svg class="bh-icon" aria-hidden="true"><use href="#i-bath"/></svg></div>
     <div class="login-title">Bath Hub</div>
     <div class="login-sub">Owner sign in</div>
     <div class="fg">
@@ -263,39 +265,39 @@ table tr:last-child td{border-bottom:none}
 <div class="app-wrapper">
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🛁</div>
+      <div class="logo-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-bath"/></svg></div>
       <div class="logo-text">Bath Hub</div>
     </div>
     <ul class="sidebar-nav">
-      <li class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></li>
-      <li class="nav-item" data-page="daily-sales"><span class="nav-icon">🧾</span><span class="nav-label">Daily Sales</span></li>
-      <li class="nav-item" data-page="stock"><span class="nav-icon">📦</span><span class="nav-label">Stock</span></li>
-      <li class="nav-item" data-page="pos"><span class="nav-icon">🛒</span><span class="nav-label">POS Billing</span></li>
-      <li class="nav-item" data-page="grn"><span class="nav-icon">📥</span><span class="nav-label">GRN</span></li>
-      <li class="nav-item" data-page="expenses"><span class="nav-icon">💸</span><span class="nav-label">Expenses</span></li>
-      <li class="nav-item" data-page="cheques"><span class="nav-icon">📋</span><span class="nav-label">Cheques</span></li>
-      <li class="nav-item" data-page="vendors"><span class="nav-icon">🤝</span><span class="nav-label">Vendors</span></li>
-      <li class="nav-item" data-page="salary"><span class="nav-icon">💼</span><span class="nav-label">Salary &amp; Costs</span></li>
-      <li class="nav-item" data-page="docinbox"><span class="nav-icon">📥</span><span class="nav-label">Document Inbox</span></li>
-      <li class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span class="nav-label">Friend &amp; Investor Loans</span></li>
-      <li class="nav-item" data-page="moneycontrol"><span class="nav-icon">🛡️</span><span class="nav-label">Money Control</span></li>
-      <li class="nav-item" data-page="commissions"><span class="nav-icon">🏷️</span><span class="nav-label">Sale Commissions</span></li>
-      <li class="nav-item" data-page="enquiries"><span class="nav-icon">📞</span><span class="nav-label">Enquiries</span></li>
-      <li class="nav-item" data-page="replies"><span class="nav-icon">💬</span><span class="nav-label">Reply Drafts</span></li>
-      <li class="nav-item" data-page="webcat"><span class="nav-icon">🌐</span><span class="nav-label">Website Catalogue</span></li>
-      <li class="nav-item" data-page="policy"><span class="nav-icon">⚖️</span><span class="nav-label">Policy Watch</span></li>
-      <li class="nav-item" data-page="branches"><span class="nav-icon">🏬</span><span class="nav-label">Branches</span></li>
-      <li class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></li>
-      <li class="nav-item" data-page="shoptools"><span class="nav-icon">🧰</span><span class="nav-label">Shop Tools</span></li>
-      <li class="nav-item" data-page="content"><span class="nav-icon">🎬</span><span class="nav-label">Content</span></li>
-      <li class="nav-item" data-page="competitors"><span class="nav-icon">🔭</span><span class="nav-label">Competitors</span></li>
-      <li class="nav-item" data-page="agentreview"><span class="nav-icon">🧠</span><span class="nav-label">Agent Review</span></li>
-      <li class="nav-item" data-page="agent-rules"><span class="nav-icon">📖</span><span class="nav-label">Agent Rules</span></li>
-      <li class="nav-item" data-page="reports"><span class="nav-icon">📈</span><span class="nav-label">Reports</span></li>
+      <li class="nav-item active" data-page="dashboard"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span class="nav-label">Dashboard</span></li>
+      <li class="nav-item" data-page="daily-sales"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg></span><span class="nav-label">Daily Sales</span></li>
+      <li class="nav-item" data-page="stock"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg></span><span class="nav-label">Stock</span></li>
+      <li class="nav-item" data-page="pos"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-cart"/></svg></span><span class="nav-label">POS Billing</span></li>
+      <li class="nav-item" data-page="grn"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">GRN</span></li>
+      <li class="nav-item" data-page="expenses"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg></span><span class="nav-label">Expenses</span></li>
+      <li class="nav-item" data-page="cheques"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg></span><span class="nav-label">Cheques</span></li>
+      <li class="nav-item" data-page="vendors"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg></span><span class="nav-label">Vendors</span></li>
+      <li class="nav-item" data-page="salary"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-briefcase"/></svg></span><span class="nav-label">Salary &amp; Costs</span></li>
+      <li class="nav-item" data-page="docinbox"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">Document Inbox</span></li>
+      <li class="nav-item" data-page="loans"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg></span><span class="nav-label">Friend &amp; Investor Loans</span></li>
+      <li class="nav-item" data-page="moneycontrol"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="nav-label">Money Control</span></li>
+      <li class="nav-item" data-page="commissions"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg></span><span class="nav-label">Sale Commissions</span></li>
+      <li class="nav-item" data-page="enquiries"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone-call"/></svg></span><span class="nav-label">Enquiries</span></li>
+      <li class="nav-item" data-page="replies"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chat"/></svg></span><span class="nav-label">Reply Drafts</span></li>
+      <li class="nav-item" data-page="webcat"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-globe"/></svg></span><span class="nav-label">Website Catalogue</span></li>
+      <li class="nav-item" data-page="policy"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-scale"/></svg></span><span class="nav-label">Policy Watch</span></li>
+      <li class="nav-item" data-page="branches"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-store"/></svg></span><span class="nav-label">Branches</span></li>
+      <li class="nav-item" data-page="settings"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-gear"/></svg></span><span class="nav-label">Settings</span></li>
+      <li class="nav-item" data-page="shoptools"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-toolbox"/></svg></span><span class="nav-label">Shop Tools</span></li>
+      <li class="nav-item" data-page="content"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-film"/></svg></span><span class="nav-label">Content</span></li>
+      <li class="nav-item" data-page="competitors"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-eye"/></svg></span><span class="nav-label">Competitors</span></li>
+      <li class="nav-item" data-page="agentreview"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg></span><span class="nav-label">Agent Review</span></li>
+      <li class="nav-item" data-page="agent-rules"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-book"/></svg></span><span class="nav-label">Agent Rules</span></li>
+      <li class="nav-item" data-page="reports"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg></span><span class="nav-label">Reports</span></li>
     </ul>
     <div class="sidebar-footer">
       <div class="sidebar-toggle" onclick="toggleSidebar()">
-        <span style="font-size:18px">◀</span>
+        <span style="font-size:18px"><svg class="bh-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg></span>
         <span class="nav-label toggle-lbl">Collapse</span>
       </div>
     </div>
@@ -305,11 +307,12 @@ table tr:last-child td{border-bottom:none}
     <header class="topbar">
       <div>
         <div style="font-size:16px;font-weight:700" id="page-title">Dashboard</div>
-        <div style="font-size:11px;color:var(--text2)" id="page-sub">Loading…</div>
+        <div style="font-size:12px;color:var(--text2)" id="page-sub">Loading…</div>
       </div>
       <div class="topbar-right">
+        <span id="chip-slot"></span>
         <div class="live-clock" id="clock">00:00:00</div>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <button class="theme-toggle" onclick="toggleTheme()"><svg class="bh-icon" aria-hidden="true"><use href="#i-moon"/></svg></button>
         <button class="logout-btn" onclick="doLogout()">Sign Out</button>
       </div>
     </header>
@@ -318,20 +321,20 @@ table tr:last-child td{border-bottom:none}
     <section class="page active" id="page-dashboard">
       <div class="welcome-banner">
         <div>
-          <div style="font-size:19px;font-weight:800">Welcome back 👋</div>
+          <div style="font-size:19px;font-weight:800">Welcome back </div>
           <div style="font-size:12px;color:var(--text2);margin-top:3px">Live data from your database · <span id="dash-date"></span></div>
         </div>
-        <div style="font-size:38px">🕌</div>
+        <div style="font-size:38px"></div>
       </div>
       <div id="salary-card"></div>
       <!-- Target bar -->
       <div class="card" style="margin-bottom:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div><div style="font-size:13px;font-weight:700">Daily Sales Target</div><div style="font-size:11px;color:var(--text2)" id="target-label">LKR 250,000 target</div></div>
-          <div style="font-size:13px;font-weight:800;color:var(--gold)" id="target-pct">—</div>
+          <div><div style="font-size:14px;font-weight:700">Daily Sales Target</div><div style="font-size:12px;color:var(--text2)" id="target-label">LKR 250,000 target</div></div>
+          <div style="font-size:14px;font-weight:800;color:var(--gold)" id="target-pct">—</div>
         </div>
         <div class="prog-wrap"><div class="prog-bar" id="target-bar" style="width:0%"></div></div>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--text3)">
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text3)">
           <span>LKR 0</span><span id="target-achieved"></span><span id="target-max">LKR 2,50,000</span>
         </div>
       </div>
@@ -341,16 +344,16 @@ table tr:last-child td{border-bottom:none}
       <div class="grid-2" style="margin-bottom:18px">
         <div class="card">
           <div class="section-title" style="margin-bottom:4px">Month to Date</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:14px" id="mtd-days-label">—</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px" id="mtd-days-label">—</div>
           <div id="mtd-rows"></div>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:4px">Weekly Sales</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:10px">This week's daily totals</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">This week's daily totals</div>
           <div class="chart-wrap"><canvas id="weeklyChart"></canvas></div>
         </div>
       </div>
-      <div style="text-align:right;font-size:10px;color:var(--text3)">Last updated: <span id="last-upd">—</span></div>
+      <div style="text-align:right;font-size:12px;color:var(--text3)">Last updated: <span id="last-upd">—</span></div>
     </section>
 
     <!-- ── DAILY SALES ── -->
@@ -358,13 +361,13 @@ table tr:last-child td{border-bottom:none}
       <div data-attach="daily_sales" data-attach-id="@today"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px">
-          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(-1)">◀</button>
+          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(-1)"><svg class="bh-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
           <input type="date" class="fi" style="width:160px" id="sales-date" onchange="loadSalesDate()">
-          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(1)">▶</button>
+          <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(1)"><svg class="bh-icon" aria-hidden="true"><use href="#i-play"/></svg></button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-s" onclick="copyWhatsApp()">📱 WhatsApp</button>
-          <button class="btn btn-s" onclick="window.open('/api/report-download?date='+document.getElementById('sales-date').value)">📄 Excel</button>
+          <button class="btn btn-s" onclick="copyWhatsApp()"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone"/></svg> WhatsApp</button>
+          <button class="btn btn-s" onclick="window.open('/api/report-download?date='+document.getElementById('sales-date').value)"><svg class="bh-icon" aria-hidden="true"><use href="#i-file"/></svg> Excel</button>
         </div>
       </div>
       <!-- Payment breakdown -->
@@ -377,7 +380,7 @@ table tr:last-child td{border-bottom:none}
       </div>
       <!-- Mismatch flag -->
       <div id="mismatch-flag" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red)">
-        ⚠ Cash+Card+Online+Credit+Cheque does not match Total Sale — check records
+        <svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> Cash+Card+Online+Credit+Cheque does not match Total Sale — check records
       </div>
       <!-- Charts -->
       <div class="grid-2" style="margin-bottom:16px">
@@ -398,7 +401,7 @@ table tr:last-child td{border-bottom:none}
         <div class="section-hdr">
           <div class="section-title">Invoices</div>
           <div class="search-wrap" style="max-width:200px">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-search"/></svg></span>
             <input type="text" class="fi" placeholder="Search..." id="inv-search" oninput="filterInv()">
           </div>
         </div>
@@ -426,7 +429,7 @@ table tr:last-child td{border-bottom:none}
       <div data-attach="stock" data-attach-id="general"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
         <div class="search-wrap" style="max-width:220px">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-search"/></svg></span>
           <input type="text" class="fi" placeholder="Search code or name..." id="stk-search" oninput="filterStock()">
         </div>
         <select class="fs" style="width:160px" id="stk-cat" onchange="filterStock()"><option value="">All Categories</option></select>
@@ -524,10 +527,10 @@ table tr:last-child td{border-bottom:none}
           <div class="section-title" style="margin-bottom:14px">Petty Cash</div>
           <div class="kpi-label">Current Balance</div>
           <div class="kpi-value" style="color:var(--green);font-size:28px" id="petty-bal">—</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Float: fixed (set per business)</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Float: fixed (set per business)</div>
           <div class="prog-wrap"><div class="prog-bar" id="petty-bar" style="width:100%;background:linear-gradient(90deg,var(--green),#4ade80)"></div></div>
           <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm)">
-            <div style="font-size:11px;font-weight:700;color:var(--amber)">⚠ RENOVATION — ALWAYS SEPARATE</div>
+            <div style="font-size:12px;font-weight:700;color:var(--amber)"><svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> RENOVATION — ALWAYS SEPARATE</div>
             <div style="font-size:12px;color:var(--text2);margin-top:4px">Renovation costs are never mixed with operating expenses</div>
           </div>
         </div>
@@ -545,12 +548,12 @@ table tr:last-child td{border-bottom:none}
       <div class="kpi-grid" style="margin-bottom:16px" id="cheq-kpi-grid"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
         <div class="search-wrap" style="max-width:220px">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-search"/></svg></span>
           <input type="text" class="fi" placeholder="Search cheque# or vendor..." id="cheq-search" oninput="filterCheques()">
         </div>
         <button class="btn btn-p" onclick="showAddChequeForm()">+ Add Cheque</button>
         <button class="btn btn-s" onclick="loadCheques()">↺ Refresh</button>
-        <button class="btn btn-s" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-s" onclick="window.print()"><svg class="bh-icon" aria-hidden="true"><use href="#i-printer"/></svg> Print</button>
       </div>
       <!-- Add cheque form -->
       <div class="card" id="add-cheq-form" style="display:none;margin-bottom:16px">
@@ -611,7 +614,7 @@ table tr:last-child td{border-bottom:none}
           <div class="card" style="margin-bottom:14px">
             <div class="section-title" style="margin-bottom:12px">Select Items</div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
-              <div class="search-wrap" style="flex:1"><span class="search-icon">🔍</span><input type="text" class="fi" placeholder="Search..." oninput="filterBarcodeItems(this.value)"></div>
+              <div class="search-wrap" style="flex:1"><span class="search-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-search"/></svg></span><input type="text" class="fi" placeholder="Search..." oninput="filterBarcodeItems(this.value)"></div>
               <button class="btn btn-s" onclick="selectAllBC()">All</button>
               <button class="btn btn-s" onclick="deselectAllBC()">None</button>
             </div>
@@ -624,7 +627,7 @@ table tr:last-child td{border-bottom:none}
             <div class="fg"><label class="fl">Label Size</label><select class="fs" id="lbl-size" onchange="updatePreview()"><option value="50x25">50×25 mm</option><option value="40x20">40×20 mm</option><option value="60x30">60×30 mm</option></select></div>
             <div class="fg"><label class="fl">Copies per Item</label><input type="number" class="fi" id="lbl-copies" value="1" min="1" max="100"></div>
             <div style="display:flex;align-items:center;gap:12px">
-              <button class="btn btn-p" onclick="printLabels()">🖨 Print Selected</button>
+              <button class="btn btn-p" onclick="printLabels()"><svg class="bh-icon" aria-hidden="true"><use href="#i-printer"/></svg> Print Selected</button>
               <span style="font-size:12px;color:var(--text2)">Printed today: <strong id="print-cnt">0</strong></span>
             </div>
           </div>
@@ -634,12 +637,12 @@ table tr:last-child td{border-bottom:none}
           <div class="scan-line"></div>
           <div class="section-title" style="margin-bottom:14px">Label Preview</div>
           <div style="background:#fff;border-radius:var(--radius-sm);padding:16px 20px;display:inline-block;margin:10px 0;min-width:200px">
-            <div style="font-size:11px;font-weight:700;color:#000;margin-bottom:4px" id="pv-name">Select an item</div>
-            <div style="font-size:10px;color:#555;margin-bottom:8px" id="pv-code">—</div>
+            <div style="font-size:12px;font-weight:700;color:#000;margin-bottom:4px" id="pv-name">Select an item</div>
+            <div style="font-size:12px;color:#555;margin-bottom:8px" id="pv-code">—</div>
             <div id="pv-bars" style="display:flex;align-items:flex-end;gap:1px;height:50px"></div>
             <div style="font-size:12px;font-weight:800;color:#000;margin-top:6px" id="pv-price">—</div>
           </div>
-          <div style="font-size:11px;color:var(--text2);margin-top:6px">Size: <span id="pv-size">50×25 mm</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-top:6px">Size: <span id="pv-size">50×25 mm</span></div>
         </div>
       </div>
     </section>
@@ -652,7 +655,7 @@ table tr:last-child td{border-bottom:none}
           <div class="fg" style="margin-bottom:0"><label class="fl">Approver</label><input class="fi" id="br-approver" value="Aj"></div>
           <button class="btn btn-p" onclick="brAdd()">Add (read-only)</button>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Every branch starts read-only with a 0 spend cap. Ticking more actions or raising the cap asks you to confirm. Even then the agent only prepares work; the approver decides.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Every branch starts read-only with a 0 spend cap. Ticking more actions or raising the cap asks you to confirm. Even then the agent only prepares work; the approver decides.</div>
         <div id="br-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div id="br-list"></div>
@@ -690,7 +693,7 @@ table tr:last-child td{border-bottom:none}
         <div class="fg"><label class="fl">Customer wrote</label><textarea class="fi" rows="2" id="rd-in" style="width:100%"></textarea></div>
         <div class="fg"><label class="fl">Draft reply</label><textarea class="fi" rows="3" id="rd-draft" style="width:100%"></textarea></div>
         <button class="btn btn-p" onclick="rdAdd()">Save draft</button>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is sent from here. Approve the wording, then send it yourself and tap "I sent it". Replies with prices are marked.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Nothing is sent from here. Approve the wording, then send it yourself and tap "I sent it". Replies with prices are marked.</div>
         <div id="rd-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div id="rd-list"></div>
@@ -715,7 +718,7 @@ table tr:last-child td{border-bottom:none}
           <div class="fg" style="margin-bottom:0"><label class="fl">Area</label><input class="fi" id="cw-area" placeholder="nawala / thihariya strip / island-wide"></div>
           <button class="btn btn-p" onclick="cwAdd()">Add</button>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Monthly check: who posts, who goes live, who has an online store, any promotions. Blank means not checked yet.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Monthly check: who posts, who goes live, who has an online store, any promotions. Blank means not checked yet.</div>
         <div id="cw-msg" style="font-size:12px;margin-top:6px"></div>
       </div>
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Area</th><th>Channels (tiktok,facebook,site)</th><th>Posts</th><th>Live</th><th>Online store</th><th>Promotions</th><th>Last checked</th><th>Notes</th><th></th></tr></thead><tbody id="cw-tbody"></tbody></table></div></div>
@@ -728,7 +731,7 @@ table tr:last-child td{border-bottom:none}
           <div class="fg" style="margin-bottom:0"><label class="fl">Week of</label><input type="date" class="fi" id="cp-week"></div>
           <button class="btn btn-p" onclick="cpPlanWeek()">Plan this week (3 videos + 1 live)</button>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is posted automatically. Film and post by hand, then mark it posted and paste the link.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Nothing is posted automatically. Film and post by hand, then mark it posted and paste the link.</div>
         <div id="cp-msg" style="font-size:12px;margin-top:6px"></div>
       </div>
       <div class="card" style="margin-bottom:16px">
@@ -760,7 +763,7 @@ table tr:last-child td{border-bottom:none}
           <div class="fg" style="grid-column:span 2"><label class="fl">Photo (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf" capture="environment"></div>
         </div>
         <button class="btn btn-p" onclick="diUpload()">Upload and read</button>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
         <div id="di-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="di-tabs"></div>
@@ -838,9 +841,9 @@ table tr:last-child td{border-bottom:none}
       <div class="card" style="margin-bottom:16px">
         <div class="section-title" style="margin-bottom:10px">Try a customer message</div>
         <div class="fg"><label class="fl">Customer wrote</label><input class="fi" id="av-in" placeholder="e.g. Do you have item 1001 in stock?" style="font-size:16px"></div>
-        <label style="font-size:13px"><input type="checkbox" id="av-price"> include the price (it will be marked "needs Aj approval")</label>
+        <label style="font-size:14px"><input type="checkbox" id="av-price"> include the price (it will be marked "needs Aj approval")</label>
         <div style="margin-top:8px"><button class="btn btn-p" onclick="avDraft()">Let the agent draft a reply</button></div>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Nothing is sent from here. The agent drafts, checks its own draft, and you approve or reject. Approve means "the wording is fine": you still send it yourself.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Nothing is sent from here. The agent drafts, checks its own draft, and you approve or reject. Approve means "the wording is fine": you still send it yourself.</div>
         <div id="av-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="av-tabs"></div>
@@ -860,7 +863,7 @@ table tr:last-child td{border-bottom:none}
         <button class="btn btn-s" onclick="arReset()">Clear</button>
         <button class="btn btn-s" onclick="window.open('/api/agent/rulebook')">Export text</button>
         <label style="font-size:12px;margin-left:10px"><input type="checkbox" id="ar-all" onchange="loadAgentRules()"> show old/inactive</label>
-        <div style="font-size:11px;color:var(--text2);margin-top:8px">Editing saves a new version; the old one is kept.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Editing saves a new version; the old one is kept.</div>
       </div>
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Topic</th><th>Rule</th><th>Ver</th><th>Status</th><th>Action</th></tr></thead><tbody id="ar-tbody"></tbody></table></div></div>
     </section>
@@ -884,28 +887,28 @@ table tr:last-child td{border-bottom:none}
           <div class="fg" style="margin-bottom:0;flex:1;min-width:130px"><label class="fl">From</label><input type="date" class="fi" id="rpt-from"></div>
           <div class="fg" style="margin-bottom:0;flex:1;min-width:130px"><label class="fl">To</label><input type="date" class="fi" id="rpt-to"></div>
           <button class="btn btn-p" onclick="loadReport()">Generate</button>
-          <button class="btn btn-s" onclick="window.open('/api/report-download-range?from='+document.getElementById('rpt-from').value+'&to='+document.getElementById('rpt-to').value)">📊 Excel</button>
+          <button class="btn btn-s" onclick="window.open('/api/report-download-range?from='+document.getElementById('rpt-from').value+'&to='+document.getElementById('rpt-to').value)"><svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg> Excel</button>
         </div>
       </div>
       <!-- P&L -->
       <div class="card" style="margin-bottom:16px" id="pl-card">
-        <div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em">Profit &amp; Loss Summary</div>
+        <div style="font-size:14px;font-weight:800;color:var(--gold);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em">Profit &amp; Loss Summary</div>
         <div id="pl-rows"><div class="no-data">Generate a report to see P&amp;L</div></div>
-        <div style="margin-top:10px;font-size:10px;color:var(--amber);padding:8px;background:rgba(245,158,11,0.06);border-radius:6px">
-          ⚠ Rule enforced: Net Profit = Gross Profit − Expenses. Never Total Sale − Expenses.
+        <div style="margin-top:10px;font-size:12px;color:var(--amber);padding:8px;background:rgba(245,158,11,0.06);border-radius:6px">
+          <svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> Rule enforced: Net Profit = Gross Profit − Expenses. Never Total Sale − Expenses.
         </div>
       </div>
       <!-- WhatsApp / Investor -->
       <div class="grid-2" style="margin-bottom:16px">
         <div class="card">
-          <div class="section-title" style="margin-bottom:10px">📱 WhatsApp Daily Report</div>
+          <div class="section-title" style="margin-bottom:10px"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone"/></svg> WhatsApp Daily Report</div>
           <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;font-size:12px;font-family:monospace;line-height:1.9;margin-bottom:10px" id="wa-text">Select a date in Daily Sales tab first</div>
-          <button class="btn btn-g" onclick="copyWA()">📋 Copy &amp; Share</button>
+          <button class="btn btn-g" onclick="copyWA()"><svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg> Copy &amp; Share</button>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:10px">Investor Report</div>
           <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:18px;font-size:20px;font-weight:700;line-height:2.2;text-align:center;margin-bottom:10px" id="investor-text">—</div>
-          <button class="btn btn-s" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-s" onclick="window.print()"><svg class="bh-icon" aria-hidden="true"><use href="#i-printer"/></svg> Print</button>
         </div>
       </div>
       <!-- Daily list -->
@@ -1062,8 +1065,8 @@ async function loadBranches() {
   document.getElementById('br-list').innerHTML = rows.map(x => `<div class="card" style="margin-bottom:10px">
     <div style="margin-bottom:6px"><b>${arEsc(x.name)}</b> · approver ${arEsc(x.approver)} · agent: <b>${x.agent_allowed_actions.length === 1 ? 'read-only' : arEsc(x.agent_allowed_actions.join(', '))}</b></div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-      ${BR_ACTIONS.map(([k, label]) => `<label style="font-size:13px"><input type="checkbox" ${x.agent_allowed_actions.includes(k) ? 'checked' : ''} onchange="brToggle(${x.id},'${k}',this.checked)"> ${label}</label>`).join('')}
-      <label style="font-size:13px">Spend cap (LKR) <input class="fi" type="number" min="0" style="width:120px" value="${x.spend_cap_lkr}" onchange="brCap(${x.id},this.value)"></label>
+      ${BR_ACTIONS.map(([k, label]) => `<label style="font-size:14px"><input type="checkbox" ${x.agent_allowed_actions.includes(k) ? 'checked' : ''} onchange="brToggle(${x.id},'${k}',this.checked)"> ${label}</label>`).join('')}
+      <label style="font-size:14px">Spend cap (LKR) <input class="fi" type="number" min="0" style="width:120px" value="${x.spend_cap_lkr}" onchange="brCap(${x.id},this.value)"></label>
     </div></div>`).join('') || '<div class="card no-data">No branches yet</div>';
   window._brRows = rows;
 }
@@ -1101,7 +1104,7 @@ async function loadPolicy() {
     <td>${arEsc(x.date)}</td><td>${arEsc(x.topic)}</td><td>${arEsc(x.summary)}</td>
     <td><input class="fi" style="min-width:150px" value="${arEsc(x.source_url)}" onchange="pnSet(${x.id},{source_url:this.value})"></td>
     <td><select class="fs" style="width:auto" onchange="pnSet(${x.id},{price_risk:this.value})">${['low','med','high'].map(s => `<option ${s === x.price_risk ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
-    <td><input type="checkbox" ${x.verified ? 'checked' : ''} onchange="pnSet(${x.id},{verified:this.checked})"> ${x.verified ? '' : '<span style="color:var(--amber);font-size:11px">unverified</span>'}</td>
+    <td><input type="checkbox" ${x.verified ? 'checked' : ''} onchange="pnSet(${x.id},{verified:this.checked})"> ${x.verified ? '' : '<span style="color:var(--amber);font-size:12px">unverified</span>'}</td>
     <td><button class="btn btn-s" onclick="pnDel(${x.id})">✕</button></td></tr>`).join('') || '<tr><td colspan="7" class="no-data">No notes yet</td></tr>';
 }
 async function pnAdd() {
@@ -1125,7 +1128,7 @@ async function loadReplies() {
   document.getElementById('rd-list').innerHTML = rows.map(x => `<div class="card" style="margin-bottom:10px">
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
       <b>${arEsc(x.channel)}</b> <span>${arEsc(x.customer_ref)}</span> <b>${arEsc(x.status)}</b>
-      ${x.has_price ? '<span style="color:var(--amber);font-weight:700">⚠ contains a price</span>' : ''}
+      ${x.has_price ? '<span style="color:var(--amber);font-weight:700"><svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> contains a price</span>' : ''}
     </div>
     ${x.incoming_text ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px">Customer: ${arEsc(x.incoming_text)}</div>` : ''}
     <textarea class="fi" rows="3" style="width:100%" ${x.status === 'sent' ? 'disabled' : ''} onchange="rdEdit(${x.id},this.value)">${arEsc(x.draft_text)}</textarea>
@@ -1349,7 +1352,7 @@ async function loadAgentReview() {
   const rows = await r.json();
   document.getElementById('av-list').innerHTML = rows.map(x => {
     const c = x.check || { checks: [], rules_used: [], reasoning: '', passed: false };
-    const checks = c.checks.map(k => `<div style="font-size:13px;margin:2px 0"><b style="color:${k.pass ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">${k.pass ? '✓' : '✗'}</b> ${arEsc(k.label)} <span style="color:var(--text2)">· ${arEsc(k.detail)}</span></div>`).join('');
+    const checks = c.checks.map(k => `<div style="font-size:14px;margin:2px 0"><b style="color:${k.pass ? 'var(--green,#2e7d32)' : 'var(--red,#c62828)'}">${k.pass ? '✓' : '✗'}</b> ${arEsc(k.label)} <span style="color:var(--text2)">· ${arEsc(k.detail)}</span></div>`).join('');
     const rules = c.rules_used.map(u => `[${arEsc(u.topic)}] v${u.version}`).join(', ') || 'none';
     const actions = x.status === 'draft'
       ? `<button class="btn btn-p" ${c.passed ? '' : 'disabled title="Fix the failed checks first"'} onclick="avAct(${x.id},'approve')">Approve wording</button>
@@ -1454,17 +1457,17 @@ function navigate(page) {
 
 /* ONE SHELL: extra screens that open as frames inside /owner (same tab, sidebar kept) + address bar routes (#/page) */
 const EXTRA_FRAMES = [
-  { key: 'customers', label: 'Customers', icon: '👥', url: '/customers.html', sub: 'Customer list, add and edit', after: 'vendors' },
-  { key: 'credit', label: 'Credit & Aging', icon: '💳', url: '/credit_aging.html', sub: 'Who owes what, and how old it is', after: 'customers' },
-  { key: 'quotations', label: 'Quotations', icon: '📄', url: '/quotations.html', sub: 'Create quotations, track status', after: 'credit' },
-  { key: 'purchasing', label: 'Purchasing', icon: '🚚', url: '/purchasing.html', sub: 'Purchase orders, shipments, supplier prices and aging', after: 'grn' },
-  { key: 'accounting', label: 'Accounting', icon: '📊', url: '/accounting.html', sub: 'Accounts, journal, statements, bank, budgets', after: 'expenses' },
-  { key: 'auditacc', label: 'Audit & Accounting', icon: '🧮', url: '/audit_accounting.html', sub: 'Daily audit, flags, full report, Excel and PDF', after: 'accounting' },
-  { key: 'staff', label: 'Staff', icon: '👤', url: '/staff.html', sub: 'Staff, attendance, leave, advances, commission', after: 'salary' },
-  { key: 'reports2', label: 'Reports & Analytics', icon: '📈', url: '/reports_analytics.html', sub: 'Trends, digest, forecast, heatmap, margins, payroll export', after: 'reports' },
-  { key: 'labels', label: 'Barcode Labels', icon: '🏷️', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
-  { key: 'assistant', label: 'AI Assistant', icon: '✨', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
-  { key: 'chequereg', label: 'Cheque Register', icon: '🧾', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
+  { key: 'customers', label: 'Customers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-users"/></svg>', url: '/customers.html', sub: 'Customer list, add and edit', after: 'vendors' },
+  { key: 'credit', label: 'Credit & Aging', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-credit-card"/></svg>', url: '/credit_aging.html', sub: 'Who owes what, and how old it is', after: 'customers' },
+  { key: 'quotations', label: 'Quotations', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-file"/></svg>', url: '/quotations.html', sub: 'Create quotations, track status', after: 'credit' },
+  { key: 'purchasing', label: 'Purchasing', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-truck"/></svg>', url: '/purchasing.html', sub: 'Purchase orders, shipments, supplier prices and aging', after: 'grn' },
+  { key: 'accounting', label: 'Accounting', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg>', url: '/accounting.html', sub: 'Accounts, journal, statements, bank, budgets', after: 'expenses' },
+  { key: 'auditacc', label: 'Audit & Accounting', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-calculator"/></svg>', url: '/audit_accounting.html', sub: 'Daily audit, flags, full report, Excel and PDF', after: 'accounting' },
+  { key: 'staff', label: 'Staff', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-user"/></svg>', url: '/staff.html', sub: 'Staff, attendance, leave, advances, commission', after: 'salary' },
+  { key: 'reports2', label: 'Reports & Analytics', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_analytics.html', sub: 'Trends, digest, forecast, heatmap, margins, payroll export', after: 'reports' },
+  { key: 'labels', label: 'Barcode Labels', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
+  { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
+  { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;
@@ -1472,7 +1475,7 @@ function addFramePage(def) {
   const li = document.createElement('li');
   li.className = 'nav-item'; li.dataset.page = def.key;
   li.innerHTML = '<span class="nav-icon"></span><span class="nav-label"></span>';
-  li.querySelector('.nav-icon').textContent = def.icon; li.querySelector('.nav-label').textContent = def.label;
+  li.querySelector('.nav-icon').innerHTML = def.icon; li.querySelector('.nav-label').textContent = def.label;   // the icon is an inline SVG
   li.addEventListener('click', () => navigate(def.key));
   const anchor = def.after && ul.querySelector('.nav-item[data-page="' + def.after + '"]');
   if (anchor) anchor.after(li); else ul.appendChild(li);
@@ -1493,11 +1496,11 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-wor
 
 /* Admin Settings -> shop name, dashboard target, menu hide/show/order. Admin-only screens are added for admins. */
 const ADMIN_FRAMES = [
-  { key: 'adminsystem', label: 'System & Backups', icon: '🛟', url: '/admin_system.html', sub: 'Server status, backups, restore' },
-  { key: 'adminusers', label: 'Users', icon: '👥', url: '/admin_users.html', sub: 'Add, disable, change role, reset password, force logout, login history' },
-  { key: 'adminaudit', label: 'Audit Log', icon: '🧾', url: '/admin_audit.html', sub: 'Who changed what, and when' },
-  { key: 'adminsettings', label: 'Admin Settings', icon: '⚙️', url: '/admin_settings.html', sub: 'Shop, targets, WhatsApp switch, feature flags, menu' },
-  { key: 'corrections', label: 'Edit & Void', icon: '✏️', url: '/admin_corrections.html', sub: 'Fix or void vendors, stock, items, commissions, staff, cheques, discount rules' },
+  { key: 'adminsystem', label: 'System & Backups', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-lifebuoy"/></svg>', url: '/admin_system.html', sub: 'Server status, backups, restore' },
+  { key: 'adminusers', label: 'Users', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-users"/></svg>', url: '/admin_users.html', sub: 'Add, disable, change role, reset password, force logout, login history' },
+  { key: 'adminaudit', label: 'Audit Log', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/admin_audit.html', sub: 'Who changed what, and when' },
+  { key: 'adminsettings', label: 'Admin Settings', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-gear"/></svg>', url: '/admin_settings.html', sub: 'Shop, targets, WhatsApp switch, feature flags, menu' },
+  { key: 'corrections', label: 'Edit & Void', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-pencil"/></svg>', url: '/admin_corrections.html', sub: 'Fix or void vendors, stock, items, commissions, staff, cheques, discount rules' },
 ];
 async function applyAppSettings() {
   try {
@@ -1549,12 +1552,19 @@ setInterval(tick, 1000); tick();
 /* ─────────────────────────────────────────────
    THEME
 ───────────────────────────────────────────── */
-let _theme = 'dark';
-function toggleTheme() {
-  _theme = _theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', _theme);
-  document.querySelector('.theme-toggle').textContent = _theme === 'dark' ? '🌙' : '☀️';
+let _theme = (window.BHTheme && BHTheme.current()) || 'dark';
+const _themeIcon = { dark: 'moon', water: 'water', light: 'sun' }, _themeName = { dark: 'Gold', water: 'Water', light: 'Light' };
+function _paintThemeButton() {
+  const btn = document.querySelector('.theme-toggle'); if (!btn) return;
+  btn.innerHTML = '<svg class="bh-icon" aria-hidden="true"><use href="#i-' + _themeIcon[_theme] + '"/></svg>';
+  btn.title = 'Theme: ' + _themeName[_theme] + ' (tap to change)';
 }
+function toggleTheme() {                      // Gold -> Water -> Light
+  _theme = window.BHTheme ? BHTheme.next() : (_theme === 'dark' ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', _theme);
+  _paintThemeButton();
+}
+document.addEventListener('DOMContentLoaded', _paintThemeButton);
 
 /* ─────────────────────────────────────────────
    TOAST
@@ -1562,9 +1572,9 @@ function toggleTheme() {
 function toast(msg, type = 'info') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
-  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const icons = { success:'<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', error:'<svg class="bh-icon" aria-hidden="true"><use href="#i-x-circle"/></svg>', warning:'<svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg>', info:'<svg class="bh-icon" aria-hidden="true"><use href="#i-info"/></svg>' };
   t.className = `toast ${type}`;
-  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${icons[type]||'<svg class="bh-icon" aria-hidden="true"><use href="#i-info"/></svg>'}</span><span>${msg}</span>`;
   c.appendChild(t);
   setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(16px)'; t.style.transition='all 0.3s'; setTimeout(()=>t.remove(),300); }, 3500);
 }
@@ -1611,7 +1621,7 @@ function confetti() {
     else { cv.style.display='none'; ctx.clearRect(0,0,cv.width,cv.height); }
   };
   draw();
-  toast('🎉 Daily target reached!', 'success');
+  toast(' Daily target reached!', 'success');
 }
 
 /* ─────────────────────────────────────────────
@@ -1650,12 +1660,12 @@ async function loadDashboard() {
 
   // KPI definitions
   const kpis = [
-    { key:'sale',  label:'Total Sale',  type:'total',   icon:'💰', val:t.sale  },
-    { key:'gp',    label:'Gross Profit',type:'profit',  icon:'📈', val:t.gp   },
-    { key:'np',    label:'Net Profit',  type:'profit',  icon:'💚', val:t.np   },
-    { key:'exp',   label:'Expenses',    type:'expense', icon:'💸', val:t.exp  },
-    { key:'msale', label:'MTD Sales',   type:'total',   icon:'📅', val:m.sale  },
-    { key:'mnp',   label:'MTD Profit',  type:'profit',  icon:'💹', val:m.np   },
+    { key:'sale',  label:'Total Sale',  type:'total',   icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-money"/></svg>', val:t.sale  },
+    { key:'gp',    label:'Gross Profit',type:'profit',  icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', val:t.gp   },
+    { key:'np',    label:'Net Profit',  type:'profit',  icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', val:t.np   },
+    { key:'exp',   label:'Expenses',    type:'expense', icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', val:t.exp  },
+    { key:'msale', label:'MTD Sales',   type:'total',   icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-calendar"/></svg>', val:m.sale  },
+    { key:'mnp',   label:'MTD Profit',  type:'profit',  icon:'<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', val:m.np   },
   ];
 
   grid.innerHTML = kpis.map(k => `
@@ -1678,7 +1688,7 @@ async function loadDashboard() {
     ['Total Expenses', fmtLKR(m.exp)],
     ['Net Profit', fmtLKR(m.np)],
   ].map(([l,v]) => `
-    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:14px">
       <span style="color:var(--text2)">${l}</span><strong>${v}</strong>
     </div>`).join('');
   document.getElementById('mtd-days-label').textContent = `${m.days||0} trading days this month`;
@@ -1780,7 +1790,7 @@ async function loadSalesDate() {
       ['Cash In Hand', fmtLKR(s.cash_in_hand)],
       ['GP Status', `<span class="badge ${s.gp_status==='ACTUAL'?'bg':s.gp_status==='NOT_AVAILABLE'?'br':'ba'}">${s.gp_status||'—'}</span>`],
     ].map(([l,v]) => `
-      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:14px">
         <span style="color:var(--text2)">${l}</span><span>${v}</span>
       </div>`).join('');
 
@@ -1847,20 +1857,20 @@ function buildWhatsApp(s) {
   if (!s) return;
   const text = `*Your Business Name — ${fmtDate(s.report_date||s.date_str)}*\n`+
     `─────────────────────\n`+
-    `💰 Total Sales: *${fmtLKR(s.total_sale)}*\n`+
-    `💵 Cash: ${fmtLKR(s.cash_sale)}\n`+
-    `💳 Card: ${fmtLKR(s.card_sale)}\n`+
-    `📲 Online: ${fmtLKR(s.online_sale)}\n`+
-    `📝 Credit: ${fmtLKR(s.credit_sale)}\n`+
-    `🧾 Cheque: ${fmtLKR(s.cheq_payment)}\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-money"/></svg> Total Sales: *${fmtLKR(s.total_sale)}*\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-cash"/></svg> Cash: ${fmtLKR(s.cash_sale)}\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-credit-card"/></svg> Card: ${fmtLKR(s.card_sale)}\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-phone"/></svg> Online: ${fmtLKR(s.online_sale)}\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-note"/></svg> Credit: ${fmtLKR(s.credit_sale)}\n`+
+    `<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg> Cheque: ${fmtLKR(s.cheq_payment)}\n`+
     `─────────────────────\n`+
-    (s.net_profit != null ? `✅ Net Profit: ${fmtLKR(s.net_profit)}\n` : '')+
+    (s.net_profit != null ? `<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg> Net Profit: ${fmtLKR(s.net_profit)}\n` : '')+
     `_Generated automatically_`;
   document.getElementById('wa-text').innerHTML = text.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>');
 
   document.getElementById('investor-text').innerHTML =
     `Your Business Name<br>`+
-    `<span style="font-size:13px;color:var(--text2);font-weight:400">${fmtDate(s.report_date||s.date_str)}</span><br>`+
+    `<span style="font-size:14px;color:var(--text2);font-weight:400">${fmtDate(s.report_date||s.date_str)}</span><br>`+
     `Total: <span style="color:var(--gold)">${fmt(s.total_sale)}</span><br>`+
     `<span style="font-size:15px">Cash: ${fmt(s.cash_sale)}</span><br>`+
     `<span style="font-size:15px">Card: ${fmt(s.card_sale)}</span><br>`+
@@ -1904,8 +1914,8 @@ function renderStock() {
   const low  = rows.filter(r=>r.stock_level>0 && r.stock_level<=5).length;
   const alertEl = document.getElementById('stk-alerts');
   alertEl.innerHTML = [
-    low>0  && `<span class="badge br">🔴 Low Stock: ${low}</span>`,
-    zero>0 && `<span class="badge br">⬛ Zero Stock: ${zero}</span>`,
+    low>0  && `<span class="badge br"><svg class="bh-icon" aria-hidden="true"><use href="#i-circle"/></svg> Low Stock: ${low}</span>`,
+    zero>0 && `<span class="badge br"><svg class="bh-icon" aria-hidden="true"><use href="#i-square"/></svg> Zero Stock: ${zero}</span>`,
   ].filter(Boolean).join('');
 
   tbody.innerHTML = rows.map(r => {
@@ -2009,7 +2019,7 @@ async function saveManualGRN() {
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { toast(d.error || `Could not save the GRN (server said ${r.status})`, 'error'); return; }
     toast(`GRN ${d.grn_number} saved`, 'success');
-    document.getElementById('mg-result').innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);font-size:13px">
+    document.getElementById('mg-result').innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);font-size:14px">
       <strong>${mgEsc(d.grn_number)}</strong> — ${mgEsc(d.supplier_name)}, ${mgEsc(d.grn_date)} — ${fmtLKR(d.total)}<br>` +
       d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span>`).join('<br>') + '</div>';
     document.getElementById('mg-rows').innerHTML = '';
@@ -2138,7 +2148,7 @@ async function loadExpenses() {
       ['Payments Out', fmtLKR(summary.payments)],
       ['Cash In Hand', fmtLKR(summary.cash_in_hand)],
     ].map(([l,v])=>`
-      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:13px">
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:14px">
         <span style="color:var(--text2)">${l}</span><span>${v}</span>
       </div>`).join('');
 
@@ -2161,7 +2171,7 @@ async function loadExpenses() {
   tbody.innerHTML = detail.map(r => {
     const isReno = r.category?.toLowerCase().includes('reno');
     return `<tr style="${isReno?'background:rgba(245,158,11,0.06)':''}">
-      <td>${isReno?`<span class="badge ba">⚠ ${r.category} (separate)</span>`:`<span class="badge bb">${r.category||'Other'}</span>`}</td>
+      <td>${isReno?`<span class="badge ba"><svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> ${r.category} (separate)</span>`:`<span class="badge bb">${r.category||'Other'}</span>`}</td>
       <td>${r.description||'—'}</td>
       <td style="font-weight:700;color:${isReno?'var(--amber)':'var(--red)'}">${fmtLKR(r.amount)}</td>
     </tr>`;
@@ -2194,7 +2204,7 @@ function renderCheques(filter='') {
     const isNear  = !isToday && due && due <= in3.toISOString().slice(0,10);
     const isClear = r.status==='cleared';
     const statCls = isClear?'bg':isToday?'br':isNear?'ba':'bb';
-    const statLbl = isClear?'✅ Cleared':isToday?'🔴 Due Today':isNear?'🟡 Due Soon':'⏳ Pending';
+    const statLbl = isClear?'<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg> Cleared':isToday?'<svg class="bh-icon" aria-hidden="true"><use href="#i-circle"/></svg> Due Today':isNear?'<svg class="bh-icon" aria-hidden="true"><use href="#i-circle"/></svg> Due Soon':'<svg class="bh-icon" aria-hidden="true"><use href="#i-hourglass"/></svg> Pending';
     return `<tr style="${isToday?'background:rgba(239,68,68,0.05)':''}">
       <td><strong>${r.cheque_no||r.cheque_number||'—'}</strong></td>
       <td>${r.bank||'—'}</td>
@@ -2202,7 +2212,7 @@ function renderCheques(filter='') {
       <td style="${isToday?'color:var(--red);font-weight:700':''}">${fmtDate(due)}</td>
       <td>${r.name||'—'}</td>
       <td><span class="badge ${statCls}">${statLbl}</span></td>
-      <td>${!isClear?`<button class="btn btn-g" style="padding:3px 9px;font-size:11px" onclick="clearCheque(${r.id})">Mark Cleared</button>`:''}</td>
+      <td>${!isClear?`<button class="btn btn-g" style="padding:3px 9px;font-size:12px" onclick="clearCheque(${r.id})">Mark Cleared</button>`:''}</td>
     </tr>`;
   }).join('');
 }
@@ -2250,7 +2260,7 @@ function renderChequeCalendar(rows) {
     const cls = match ? (match.status==='cleared'?'c-clear':ds===nowStr?'c-due':'c-cheque') : '';
     html+=`<div class="cal-day ${cls}">
       <div class="cal-day-n">${day}</div>
-      ${match?`<div style="font-size:9px;color:var(--amber)">${fmt(match.amount/1000)}k</div>`:''}
+      ${match?`<div style="font-size:12px;color:var(--amber)">${fmt(match.amount/1000)}k</div>`:''}
     </div>`;
   }
   cal.innerHTML = html;
@@ -2297,12 +2307,12 @@ async function loadVendors() {
     const paid    = parseFloat(r.total_paid||0);
     const pending = parseFloat(r.pending_cheques||0);
     return `<tr>
-      <td><strong>${r.name}</strong><br><span style="font-size:10px;color:var(--text3)">${r.category||''}</span></td>
+      <td><strong>${r.name}</strong><br><span style="font-size:12px;color:var(--text3)">${r.category||''}</span></td>
       <td style="font-weight:700;color:var(--blue)">${fmtLKR(paid)}</td>
       <td>${r.last_payment?fmtDate(r.last_payment):'—'}</td>
       <td>${pending>0?`<span style="color:var(--amber);font-weight:700">${fmtLKR(pending)}</span>`:'—'}</td>
-      <td><span style="font-size:10px;color:var(--text3)">${r.days_since_payment>=0?r.days_since_payment+' days ago':'—'}</span></td>
-      <td><button class="btn btn-s" style="padding:3px 9px;font-size:11px" onclick="viewVendorPayments(${r.id},'${r.name}')">History</button></td>
+      <td><span style="font-size:12px;color:var(--text3)">${r.days_since_payment>=0?r.days_since_payment+' days ago':'—'}</span></td>
+      <td><button class="btn btn-s" style="padding:3px 9px;font-size:12px" onclick="viewVendorPayments(${r.id},'${r.name}')">History</button></td>
     </tr>`;
   }).join('');
 }
@@ -2332,9 +2342,9 @@ function renderBarcodeItems(filter='') {
   tbody.innerHTML = items.map((r,i) => `
     <tr>
       <td><input type="checkbox" ${r.selected?'checked':''} onchange="_bcItems[${i}].selected=this.checked;previewItem(${i})"></td>
-      <td><code style="color:var(--gold);font-size:11px">${r.item_code||'—'}</code></td>
+      <td><code style="color:var(--gold);font-size:12px">${r.item_code||'—'}</code></td>
       <td style="font-size:12px">${r.name}</td>
-      <td><input type="number" style="width:46px;background:var(--bg3);border:1px solid var(--card-border);border-radius:4px;padding:3px 5px;color:var(--text);font-size:11px" value="${r.copies||1}" min="1" onchange="_bcItems[${i}].copies=parseInt(this.value)||1"></td>
+      <td><input type="number" style="width:46px;background:var(--bg3);border:1px solid var(--card-border);border-radius:4px;padding:3px 5px;color:var(--text);font-size:12px" value="${r.copies||1}" min="1" onchange="_bcItems[${i}].copies=parseInt(this.value)||1"></td>
     </tr>`).join('');
 }
 

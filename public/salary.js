@@ -40,14 +40,14 @@ async function slToday(body) {
   const c = t.costs, cs = t.cheque_set_aside;
   const statusTxt = { ok: 'within the normal target', above_normal: 'ABOVE the normal target', over_ceiling: 'OVER the hard ceiling' }[c.status];
   const statusCol = { ok: 'var(--green,#2e7d32)', above_normal: 'var(--amber,#b26a00)', over_ceiling: 'var(--red,#c62828)' }[c.status];
-  const cheques = cs.lines.map(l => `<div style="font-size:13px;display:flex;justify-content:space-between;gap:8px;border-top:1px solid #8883;padding:5px 0"><span>${slEsc(l.party || 'Cheque')} · due ${slEsc(l.due_date)}${l.late ? ' <b style="color:var(--red,#c62828)">LATE</b>' : ` · ${l.days_left} day${l.days_left === 1 ? '' : 's'}`}</span><span>${slRs(l.set_aside_today)} <button class="btn btn-s" onclick="slCover(${l.id}, true)">Covered</button></span></div>`).join('');
+  const cheques = cs.lines.map(l => `<div style="font-size:14px;display:flex;justify-content:space-between;gap:8px;border-top:1px solid #8883;padding:5px 0"><span>${slEsc(l.party || 'Cheque')} · due ${slEsc(l.due_date)}${l.late ? ' <b style="color:var(--red,#c62828)">LATE</b>' : ` · ${l.days_left} day${l.days_left === 1 ? '' : 's'}`}</span><span>${slRs(l.set_aside_today)} <button class="btn btn-s" onclick="slCover(${l.id}, true)">Covered</button></span></div>`).join('');
   body.innerHTML =
     slCard('Sales today', slRs(t.sales), `Gross profit ${slRs(t.gross_profit)} · expenses ${slRs(t.expenses)}`) +
     slCard('Net today', slRs(t.net), t.net == null ? 'PENDING: today\'s profit or expenses are not entered yet' : '') +
     slCard('Daily cost target', slRs(c.total), `Normal ${slRs(c.normal)}, ceiling ${slRs(c.ceiling)}: <b style="color:${statusCol}">${statusTxt}</b><br>Rent ${slRs(c.rent)} + bills ${slRs(c.utilities)} + owner ${slRs(c.owner)} + colleague ${slRs(c.colleague)} + small ${slRs(c.small)}`, statusCol) +
     slCard('Break-even sales', t.break_even_sales == null ? 'unknown' : slRs(t.break_even_sales), `At ${t.margin_pct}% margin (${slEsc(t.settings_used.margin_source)}). ${t.break_even_reached === true ? '<b style="color:var(--green,#2e7d32)">Reached.</b>' : t.break_even_reached === false ? 'Not reached yet.' : ''}`) +
     t.push.map(p => `<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Push target ${slRs(p.target)}</div><div style="font-size:18px;font-weight:700">${p.pct}% · ${p.remaining ? slRs(p.remaining) + ' to go' : 'reached'}</div>${slBar(p.pct)}</div>`).join('') +
-    `<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Cheques</div><div style="font-size:18px;font-weight:700">${slEsc(cs.message)}</div>${cs.warning ? `<div style="color:var(--red,#c62828);font-size:13px;margin-top:4px">⚠ ${slEsc(cs.warning)}</div>` : ''}${cheques || '<div style="font-size:13px;color:var(--text2)">No unpaid cheques due soon.</div>'}</div>`;
+    `<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Cheques</div><div style="font-size:18px;font-weight:700">${slEsc(cs.message)}</div>${cs.warning ? `<div style="color:var(--red,#c62828);font-size:14px;margin-top:4px"><svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> ${slEsc(cs.warning)}</div>` : ''}${cheques || '<div style="font-size:14px;color:var(--text2)">No unpaid cheques due soon.</div>'}</div>`;
   if (ov && ov.setup_costs && ov.setup_costs.length) {
     body.innerHTML += '<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">One-time set-up costs (not in the daily cost or break-even)</div>' + ov.setup_costs.map(c =>
       `<div style="margin-top:8px"><div style="font-size:18px;font-weight:700">${slEsc(c.label)} (${slEsc(c.status)}): ${slRs(c.amount)}</div><div style="font-size:12px;color:var(--text2)">Paid on ${slEsc(c.paid_on)}</div>` +
@@ -69,7 +69,7 @@ async function slMonth(body, ym) {
   body.innerHTML = `<div class="card" style="margin-bottom:10px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="month" id="sl-month" class="fi" value="${slEsc(cur)}" onchange="slMonth(document.getElementById('sl-body'), this.value)">${m.closed ? '<b style="color:var(--green,#2e7d32)">Closed. Never reopened; late returns become an adjustment next month.</b>' : (closable ? '<button class="btn btn-s" onclick="slClose()">Close this month</button>' : '')}</div></div>
     <div class="card" style="margin-bottom:10px">
       ${row('Gross profit', slRs(m.gross_profit))}${row('Sales returns', '- ' + slRs(m.returns))}${row('Expenses', '- ' + slRs(m.expenses))}${m.fixed_costs_added ? row('Rent and bills (not on the daily sheet)', '- ' + slRs(m.fixed_costs.rent_and_bills)) + row('Owner + colleague daily pay', '- ' + slRs(m.fixed_costs.daily_pay)) : ''}
-      ${row('NET PROFIT', slRs(m.net), true)}${m.note ? `<div style="font-size:13px;color:var(--amber,#b26a00)">${slEsc(m.note)}</div>` : ''}
+      ${row('NET PROFIT', slRs(m.net), true)}${m.note ? `<div style="font-size:14px;color:var(--amber,#b26a00)">${slEsc(m.note)}</div>` : ''}
     </div>
     <div class="card" style="margin-bottom:10px">
       ${row('Shop savings (taken first, untouched)', slRs(m.split.save))}${row('Commission pool', slRs(m.split.pool))}
@@ -94,7 +94,7 @@ async function slSettings(body) {
   const { settings } = await slGet('/api/salary/settings');
   body.innerHTML = SL_FIELDS.map(([g, fields]) => `<div class="card" style="margin-bottom:10px"><div class="section-title" style="margin-bottom:8px">${slEsc(g)}</div>` +
     fields.map(([k, l]) => `<div class="fg"><label class="fl">${slEsc(l)}</label><input class="fi" type="number" step="any" id="sl-set-${k}" value="${slEsc(settings[k])}"></div>`).join('') + '</div>').join('') +
-    `<button class="btn btn-p" onclick="slSave()">Save settings</button> <span id="sl-msg" style="font-size:13px"></span>`;
+    `<button class="btn btn-p" onclick="slSave()">Save settings</button> <span id="sl-msg" style="font-size:14px"></span>`;
 }
 
 async function slSave() {
@@ -118,11 +118,11 @@ async function loadSalaryCard() {
     const km = (o.setup_costs || []).map(x => `${slEsc(x.label)} (${slEsc(x.status)}): ${slRs(x.amount)}`).join(' &middot; ');
     box.innerHTML = `<div class="card" style="margin-bottom:18px"><div class="section-title" style="margin-bottom:8px">Today's money plan</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px">
-        <div><div style="font-size:12px;color:var(--text2)">Today's cost target</div><div style="font-size:20px;font-weight:800">${slRs(o.cost_target.target)}</div><div style="font-size:11px;color:var(--text2)">Hard ceiling ${slRs(o.cost_target.ceiling)}</div></div>
-        <div><div style="font-size:12px;color:var(--text2)">Shop savings to set aside today</div><div style="font-size:20px;font-weight:800">${sv.pending ? 'PENDING' : slRs(sv.amount)}</div><div style="font-size:11px;color:var(--text2)">${sv.save_pct}% of net profit${sv.pending ? ' &middot; today\'s sales entry is not complete' : ''} &middot; change in Salary &amp; Costs &gt; Settings</div></div>
-        <div><div style="font-size:12px;color:var(--text2)">Cheque reserve</div><div style="font-size:20px;font-weight:800">${slRs(c.set_aside_today)}</div><div style="font-size:11px;color:var(--text2)">set aside today &middot; ${c.count} cheque(s) due in ${c.due_within_days} days = ${slRs(c.due_total)}</div></div>
+        <div><div style="font-size:12px;color:var(--text2)">Today's cost target</div><div style="font-size:20px;font-weight:800">${slRs(o.cost_target.target)}</div><div style="font-size:12px;color:var(--text2)">Hard ceiling ${slRs(o.cost_target.ceiling)}</div></div>
+        <div><div style="font-size:12px;color:var(--text2)">Shop savings to set aside today</div><div style="font-size:20px;font-weight:800">${sv.pending ? 'PENDING' : slRs(sv.amount)}</div><div style="font-size:12px;color:var(--text2)">${sv.save_pct}% of net profit${sv.pending ? ' &middot; today\'s sales entry is not complete' : ''} &middot; change in Salary &amp; Costs &gt; Settings</div></div>
+        <div><div style="font-size:12px;color:var(--text2)">Cheque reserve</div><div style="font-size:20px;font-weight:800">${slRs(c.set_aside_today)}</div><div style="font-size:12px;color:var(--text2)">set aside today &middot; ${c.count} cheque(s) due in ${c.due_within_days} days = ${slRs(c.due_total)}</div></div>
       </div>
-      <div style="font-size:13px;margin-top:10px">Who gets what: ${w ? `savings <b>${slRs(w.savings)}</b> &middot; colleague commission <b>${slRs(w.colleague)}</b> &middot; owner <b>${slRs(w.owner)}</b> &middot; stays in shop <b>${slRs(w.stays)}</b>` : 'PENDING (needs today\'s profit and expenses)'}</div>
+      <div style="font-size:14px;margin-top:10px">Who gets what: ${w ? `savings <b>${slRs(w.savings)}</b> &middot; colleague commission <b>${slRs(w.colleague)}</b> &middot; owner <b>${slRs(w.owner)}</b> &middot; stays in shop <b>${slRs(w.stays)}</b>` : 'PENDING (needs today\'s profit and expenses)'}</div>
       ${km ? `<div style="font-size:12px;color:var(--text2);margin-top:6px">One-time: ${km}</div>` : ''}</div>`;
   } catch (e) { box.innerHTML = ''; }
 }

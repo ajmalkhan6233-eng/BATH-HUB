@@ -8,7 +8,7 @@
   var MAX = 10 * 1024 * 1024;
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var kb = function (n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
-  var css = '.aw{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;margin:6px 0}' +
+  var css = '.aw{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;margin:6px 0}' +
     '.aw button{font:inherit;padding:5px 10px;border-radius:8px;border:1px solid var(--card-border,#c9bfae);background:var(--card,#fff);color:inherit;cursor:pointer}' +
     '.aw button:hover{filter:brightness(1.1)}.aw .aw-msg{font-size:12px;opacity:.85}.aw .aw-err{color:#c62828}' +
     '.aw-list{flex-basis:100%;margin:4px 0 0;padding:0;list-style:none;font-size:12px}' +
@@ -38,10 +38,11 @@
 
   function mount(el, opts) {
     addCss();
+    if (!document.getElementById('bh-sprite') && !document.querySelector('script[src="/bathhub-icons.js"]')) { var ic = document.createElement('script'); ic.src = '/bathhub-icons.js'; document.head.appendChild(ic); }   // icons for pages that do not load the design files
     var state = { type: opts.type, id: resolveId(opts.id), open: false, files: [] };
     el.__aw = state; el.classList.add('aw');
-    el.innerHTML = '<button type="button" data-a="photo">📷 Take photo</button><button type="button" data-a="upload">⬆ Upload file</button>' +
-      '<button type="button" data-a="dl">⬇ Download</button><span class="aw-msg"></span><ul class="aw-list" hidden></ul>' +
+    el.innerHTML = '<button type="button" data-a="photo"><svg class="bh-icon" aria-hidden="true"><use href="#i-camera"/></svg> Take photo</button><button type="button" data-a="upload"><svg class="bh-icon" aria-hidden="true"><use href="#i-upload"/></svg> Upload file</button>' +
+      '<button type="button" data-a="dl"><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</button><span class="aw-msg"></span><ul class="aw-list" hidden></ul>' +
       '<input type="file" accept="image/*" capture="environment" hidden data-i="photo"><input type="file" accept="image/*,application/pdf,.pdf,.xlsx,.csv" hidden data-i="upload">';
     var msg = el.querySelector('.aw-msg'), list = el.querySelector('.aw-list');
     function say(t, bad) { msg.textContent = t || ''; msg.className = 'aw-msg' + (bad ? ' aw-err' : ''); }
@@ -54,7 +55,7 @@
       render();
     }
     function render() {
-      el.querySelector('[data-a=dl]').textContent = '⬇ Download' + (state.files.length ? ' (' + state.files.length + ')' : '');
+      el.querySelector('[data-a=dl]').innerHTML = '<svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download' + (state.files.length ? ' (' + state.files.length + ')' : '');
       list.hidden = !state.open;
       if (!state.open) return;
       list.innerHTML = state.files.length

@@ -128,7 +128,7 @@ dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-prim
 @media (max-width:768px) { html { font-size:15px; } }
 /* ---- 7. OWNER SHELL (public/bathco_complete.html) ---- */
 #chip-slot { display:inline-flex; align-items:center; }
-#chip-slot > button { position:static !important; top:auto !important; right:auto !important; z-index:auto !important; min-height:36px; }
+#chip-slot > button { position:static !important; top:auto !important; right:auto !important; z-index:auto !important; min-height:48px; }
 .sidebar { background:var(--bg-glass-fallback); border-right:1px solid var(--border-subtle); }
 .sidebar .nav-item { border:1px solid transparent; border-radius:var(--radius-md); color:var(--text-secondary); padding-top:0; padding-bottom:0; align-items:center; }
 .sidebar .nav-item:hover { background:var(--bg-surface-hover); color:var(--text-primary); }
