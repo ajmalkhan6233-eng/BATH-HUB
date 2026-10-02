@@ -74,6 +74,18 @@ pool.query(`
     )
 `).catch(e => console.error('[shop_operations] receipt_queue migration failed:', e.message));
 
+// One saved receipt picture per queued receipt (new table; the queue table itself is untouched).
+pool.query(`
+    CREATE TABLE IF NOT EXISTS receipt_images (
+        id         SERIAL PRIMARY KEY,
+        queue_id   INT NOT NULL REFERENCES receipt_queue(id),
+        bill_no    VARCHAR(30),
+        file_name  VARCHAR(120) NOT NULL,
+        width      INT, height INT, bytes INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).catch(e => console.error('[shop_operations] receipt_images migration failed:', e.message));
+
 pool.query(`
     CREATE TABLE IF NOT EXISTS customer_credit_limits (
         id            SERIAL PRIMARY KEY,
@@ -266,6 +278,33 @@ router.get('/receipt-queue', async (req, res) => {
         if (status) { vals.push(status); where = `WHERE status = $1`; }
         const r = await pool.query(`SELECT * FROM receipt_queue ${where} ORDER BY created_at DESC`, vals);
         res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ RECEIPT PICTURE for a queued receipt (saved only; nothing is sent) ═══════════════════════
+// POST /receipt-queue/:id/image  body: { shopName, address, phone, billNo, date, customer, items:[{name,qty,price}], discount }
+// Draws the Bath Hub receipt PNG (utils/receiptImage.js) and keeps it for that queue entry. GET returns the newest picture.
+const receiptImage = require('../utils/receiptImage');
+const path = require('path');
+router.post('/receipt-queue/:id/image', async (req, res) => {
+    try {
+        if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'not found' });
+        const q = await pool.query(`SELECT id FROM receipt_queue WHERE id = $1`, [req.params.id]);
+        if (!q.rows.length) return res.status(404).json({ error: 'queue entry not found' });
+        const png = await receiptImage.renderReceiptPng(req.body);
+        const r = await pool.query(
+            `INSERT INTO receipt_images (queue_id, bill_no, file_name, width, height, bytes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+            [req.params.id, String((req.body && req.body.billNo) || '').slice(0, 30) || null, path.basename(png.file), png.width, png.height, png.bytes]);
+        res.status(201).json({ image_id: r.rows[0].id, queue_id: Number(req.params.id), file_name: path.basename(png.file), width: png.width, height: png.height, url: `/api/receipt-queue/${req.params.id}/image` });
+    } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : `Could not draw the receipt: ${e.message}` }); }
+});
+
+router.get('/receipt-queue/:id/image', async (req, res) => {
+    try {
+        if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'not found' });
+        const r = await pool.query(`SELECT file_name FROM receipt_images WHERE queue_id = $1 ORDER BY id DESC LIMIT 1`, [req.params.id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'no picture for this receipt yet' });
+        res.type('png').sendFile(path.basename(r.rows[0].file_name), { root: receiptImage.DEFAULT_DIR }, err => { if (err && !res.headersSent) res.status(404).json({ error: 'the picture file is missing' }); });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

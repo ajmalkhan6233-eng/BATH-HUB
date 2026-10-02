@@ -1,0 +1,90 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bath Hub receipt</title><style>
+@font-face{font-family:Cinzel;font-weight:500;src:url(fonts/cinzel-latin-500-normal.woff2)}
+@font-face{font-family:Cinzel;font-weight:600;src:url(fonts/cinzel-latin-600-normal.woff2)}
+@font-face{font-family:Cormorant;font-weight:500;src:url(fonts/cormorant-garamond-latin-500-normal.woff2)}
+@font-face{font-family:Cormorant;font-weight:600;src:url(fonts/cormorant-garamond-latin-600-normal.woff2)}
+@font-face{font-family:Cormorant;font-weight:500;font-style:italic;src:url(fonts/cormorant-garamond-latin-500-italic.woff2)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1122px}
+body{min-height:1402px;position:relative;padding:78px 110px;background:radial-gradient(120% 70% at 50% 0%,#14295a 0%,#0B1B3A 50%,#071230 100%);font-family:Cormorant,serif;font-variant-numeric:lining-nums;color:#14203f;overflow:hidden}
+.frame{position:absolute;inset:25px;border:3px solid #C9A24B}
+.frame2{position:absolute;inset:36px;border:1.5px solid rgba(201,162,75,.8)}
+.wrap{position:relative}
+.shadow{position:absolute;left:0;right:0;top:6px;bottom:-6px;background:rgba(0,0,0,.45);filter:blur(14px)}
+.sheet{position:relative;background:#F6EFDC;padding:52px 64px 56px;display:flex;flex-direction:column;align-items:center}
+.logo{width:168px;height:168px;border-radius:14px;position:relative;background:linear-gradient(145deg,#1d3a73 0%,#0B1B3A 55%,#071230 100%);box-shadow:0 0 0 4px #C9A24B,0 0 0 7px #0B1B3A,0 0 0 9px #C9A24B,0 12px 22px rgba(5,12,35,.45),inset 0 3px 6px rgba(255,255,255,.18),inset 0 -6px 12px rgba(0,0,0,.55)}
+.logo:before{content:"";position:absolute;inset:11px;border:2px solid rgba(232,207,138,.75);border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.12)}
+.cast{transform:translate(-4px,-5px);position:absolute;inset:0;filter:drop-shadow(10px 14px 7px rgba(0,0,0,.55))}
+.L{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Cinzel;font-weight:600;font-size:88px;letter-spacing:8px;line-height:1;padding-left:8px}
+.front{background:linear-gradient(165deg,#FFF6CF 0%,#F0D27E 28%,#C79A36 58%,#8f6a1c 78%,#E8CF8A 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(-1px -1px 0 rgba(255,250,220,.9)) drop-shadow(0 0 1px rgba(255,236,170,.6))}
+.name{font-family:Cinzel;font-weight:600;font-size:52px;letter-spacing:.36em;margin:26px 0 0 .36em;color:#0B1B3A}
+.addr{font-size:28px;margin-top:8px;color:#4a4f63;text-align:center;line-height:1.35}
+.dash{width:100%;border-top:3px dashed #b99a4f;margin:18px 0}
+.info{width:100%;font-size:30px;line-height:1.55}
+.info div{display:flex;justify-content:space-between}
+.info span{color:#7a5f1f}.info b{font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:31px}
+th{font-family:Cinzel;font-weight:600;font-size:20px;letter-spacing:.1em;color:#7a5f1f;border-bottom:2px solid #C9A24B;padding-bottom:12px;text-align:left}
+td{padding:9px 0;border-bottom:1px solid rgba(11,27,58,.15);font-weight:600}
+th:nth-child(n+2),td:nth-child(n+2){text-align:right}
+td:first-child{width:44%}
+.tot{width:100%;display:flex;justify-content:space-between;font-size:31px;font-weight:600;padding-top:12px}
+.grand{font-family:Cinzel;font-size:42px;color:#0B1B3A;border-top:2px solid #C9A24B;border-bottom:2px solid #C9A24B;margin-top:16px;padding:12px 0}
+.thanks{font-size:40px;font-style:italic;font-weight:500;text-align:center;margin-top:6px;color:#0B1B3A}
+.tag{font-size:26px;color:#7a5f1f;margin-top:8px;font-style:italic;text-align:center}
+</style></head><body>
+<div class="frame"></div><div class="frame2"></div>
+<div class="wrap" id="wrap"><div class="shadow" id="sh"></div>
+<div class="sheet" id="sheet">
+<div class="logo"><div class="cast" id="cast"></div></div>
+<div class="name" id="shopName"></div>
+<div class="addr" id="addr"></div>
+<div class="dash"></div>
+<div class="info" id="info"></div>
+<div class="dash"></div>
+<table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="tot" style="margin-top:8px"><span>Subtotal</span><span id="sub"></span></div>
+<div class="tot" id="discRow"><span>Discount</span><span id="disc"></span></div>
+<div class="tot grand"><span>TOTAL</span><span id="total"></span></div>
+<div class="dash" style="margin-top:24px"></div>
+<div class="thanks" id="thanks"></div>
+<div class="tag" id="tag"></div>
+</div></div>
+<script>
+/* ---- DATA: the app sets window.RECEIPT_DATA before load (or calls renderReceipt(data)) ---- */
+const SAMPLE={shopName:"BATH HUB",address:"Thihariya, Kandy Road",phone:"0777 999 219",
+ billNo:"0001",date:"02 Oct 2026",customer:"Mr. Sample Name",
+ items:[{name:"Wall-hung toilet set",qty:1,price:45000},{name:"Basin mixer tap",qty:2,price:8500},{name:"Shower set, gold finish",qty:1,price:12000}],
+ discount:4000,thanks:"Thank you for choosing Bath Hub",tagline:"Every piece, a little more than you paid for."};
+const n=v=>Number(v).toLocaleString('en-US');
+function renderReceipt(d){
+  d=Object.assign({},SAMPLE,d||{});
+  const $=id=>document.getElementById(id);
+  const c=$('cast');let h='';
+  for(let i=10;i>=1;i--){const s=i*0.8;h+=`<div class="L" style="transform:translate(${s}px,${s*1.05}px);color:${i>7?'#4d3608':(i>4?'#6b4d10':'#8a6516')}">BH</div>`}
+  c.innerHTML=h+'<div class="L front">BH</div>';
+  $('shopName').textContent=d.shopName;
+  $('addr').innerHTML=d.address+(d.phone?'<br>WhatsApp: '+d.phone:'');
+  const rows=[['Bill No.','#'+d.billNo],['Date',d.date],['Customer',d.customer]].filter(r=>r[1]&&r[1]!=='#');
+  $('info').innerHTML=rows.map(r=>`<div><span>${r[0]}</span><b></b></div>`).join('');
+  [...$('info').querySelectorAll('b')].forEach((b,i)=>b.textContent=rows[i][1]);
+  $('rows').innerHTML='';
+  let sub=0;
+  d.items.forEach(it=>{const amt=it.qty*it.price;sub+=amt;const tr=document.createElement('tr');
+    [it.name,it.qty,n(it.price),n(amt)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});$('rows').appendChild(tr)});
+  const disc=Number(d.discount||0);
+  $('sub').textContent='Rs. '+n(sub);
+  $('discRow').style.display=disc?'flex':'none';
+  $('disc').textContent='– Rs. '+n(disc);
+  $('total').textContent='Rs. '+n(sub-disc);
+  $('thanks').textContent=d.thanks;$('tag').textContent=d.tagline;
+  // torn-paper edge (top and bottom), sized to the real height
+  const W=$('sheet').offsetWidth,H=$('sheet').offsetHeight,t=16,p=[];
+  for(let x=0;x<=W;x+=t)p.push(`${x}px ${((x/t)%2)?0:12}px`);
+  for(let k=Math.floor(W/t);k>=0;k--)p.push(`${k*t}px ${H-((k%2)?0:12)}px`);
+  const poly=`polygon(${p.join(',')})`;
+  $('sheet').style.clipPath=poly;$('sh').style.clipPath=poly;
+  document.body.dataset.ready='1';
+}
+document.fonts.ready.then(()=>renderReceipt(window.RECEIPT_DATA));
+</script></body></html>

@@ -6,8 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bath Hub — Owner</title>
 <link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/brand/icon-192.png">
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.getElementById("chip-slot") || document.body)); }</script>
-<meta name="theme-color" content="#0D0D0D">
+<meta name="theme-color" content="#0B1B3A">
 <link href="/fonts/inter.css" rel="stylesheet">
 <script src="/vendor/chart.umd.min.js"></script>
 <style>
@@ -305,10 +307,11 @@ table tr:last-child td{border-bottom:none}
 
   <div class="main-content" id="main-content">
     <header class="topbar">
+      <div class="topbar-brand"><img class="brand-logo" src="/brand/logo-bh-transparent.png" alt="Bath Hub" width="44" height="44">
       <div>
         <div style="font-size:16px;font-weight:700" id="page-title">Dashboard</div>
         <div style="font-size:12px;color:var(--text2)" id="page-sub">Loading…</div>
-      </div>
+      </div></div>
       <div class="topbar-right">
         <span id="chip-slot"></span>
         <div class="live-clock" id="clock">00:00:00</div>
