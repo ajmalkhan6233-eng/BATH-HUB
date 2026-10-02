@@ -168,10 +168,11 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     router.get('/document-inbox/:id/photo', ownerOnly, async (req, res) => {
         try {
             await ready;
-            const r = await pool.query(`SELECT file_path FROM document_inbox WHERE id = $1`, [Number(req.params.id) || 0]);
+            const r = await pool.query(`SELECT id, file_path FROM document_inbox WHERE id = $1`, [Number(req.params.id) || 0]);
             if (!r.rows[0]) return res.status(404).json({ error: 'Not found' });
             const full = path.resolve(r.rows[0].file_path);
             if (!full.startsWith(ROOT + path.sep) || !fs.existsSync(full)) return res.status(404).json({ error: 'The photo file is missing' });
+            if (req.query.download) return res.download(path.relative(ROOT, full), `document-${r.rows[0].id || req.params.id}${path.extname(full)}`, { root: ROOT, dotfiles: 'allow' });   // the Download button
             res.sendFile(path.relative(ROOT, full), { root: ROOT, dotfiles: 'allow' });     // root option: works even when the path has a dot folder
         } catch (e) { res.status(500).json({ error: e.message }); }
     });

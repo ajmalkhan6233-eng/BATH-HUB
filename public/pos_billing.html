@@ -182,6 +182,7 @@
       <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
     </div>
     <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
+    <div id="billAttach" style="margin-top:8px"></div>
     <button class="new-bill-btn" onclick="resetForm()">+ New bill</button>
   </div>
 </div>
@@ -439,6 +440,7 @@ function renderBill(bill) {
 
   document.getElementById('formPanel').style.display = 'none';
   document.getElementById('billPanel').style.display = 'block';
+  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:#8b6f47">Attach a photo or file to this bill</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
 }
 
 // wa.me needs the full international number, no leading 0 and no '+'.
@@ -480,8 +482,17 @@ async function loadToday() {
     const d = await r.json(), sym = branding.currency_symbol || 'Rs';
     const esc = escapeHtml;
     box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}${d.bills.some(b => b.voided) ? ' <span class="sub">(void bills not counted)</span>' : ''}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
-      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a> <button type="button" class="mini-btn" title="Photos and files" onclick="toggleBillFiles(${b.id}, this)">📎</button>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
   } catch (e) { box.textContent = ''; }
+}
+
+function toggleBillFiles(id, btn) {
+  const tr = btn.closest('tr'), next = tr.nextElementSibling;
+  if (next && next.classList.contains('files-row')) { next.remove(); return; }
+  const row = document.createElement('tr'); row.className = 'files-row';
+  row.innerHTML = '<td colspan="4"></td>'; tr.after(row);
+  const w = document.createElement('div'); row.firstChild.appendChild(w);
+  if (window.AttachWidget) AttachWidget.mount(w, { type: 'pos_bill', id });
 }
 
 async function voidBill(id, number) {
@@ -534,5 +545,6 @@ function resetForm() {
 }
 </script>
 
+<script src="/attach-widget.js"></script>
 </body>
 </html>

@@ -339,6 +339,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── DAILY SALES ── -->
     <section class="page" id="page-daily-sales">
+      <div data-attach="daily_sales" data-attach-id="@today"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:10px">
           <button class="btn btn-s" style="padding:6px 10px" onclick="changeDate(-1)">◀</button>
@@ -406,6 +407,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── STOCK ── -->
     <section class="page" id="page-stock">
+      <div data-attach="stock" data-attach-id="general"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
         <div class="search-wrap" style="max-width:220px">
           <span class="search-icon">🔍</span>
@@ -465,6 +467,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── GRN (manual entry) ── -->
     <section class="page" id="page-grn">
+      <div data-attach="grn" data-attach-id="@today"></div>
       <div class="card" style="margin-bottom:16px">
         <div class="section-hdr"><div class="section-title">New GRN — receive a delivery</div></div>
         <div class="grid-3">
@@ -489,6 +492,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── EXPENSES ── -->
     <section class="page" id="page-expenses">
+      <div data-attach="expense" data-attach-id="@today"></div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
         <div><label class="fl" style="display:inline;margin-right:8px">Date</label><input type="date" class="fi" style="width:160px" id="exp-date" onchange="loadExpenses()"></div>
         <button class="btn btn-s" onclick="loadExpenses()">↺ Load</button>
@@ -521,6 +525,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── CHEQUES ── -->
     <section class="page" id="page-cheques">
+      <div data-attach="cheque" data-attach-id="general"></div>
       <div class="kpi-grid" style="margin-bottom:16px" id="cheq-kpi-grid"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
         <div class="search-wrap" style="max-width:220px">
@@ -555,6 +560,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── VENDORS ── -->
     <section class="page" id="page-vendors">
+      <div data-attach="vendor" data-attach-id="general"></div>
       <div class="grid-2" style="margin-bottom:16px">
         <div class="card">
           <div class="section-title" style="margin-bottom:14px">Add Payment to Supplier</div>
@@ -723,6 +729,7 @@ table tr:last-child td{border-bottom:none}
 
     <!-- ── SALARY & COSTS ── -->
     <section class="page" id="page-salary">
+      <div data-attach="salary" data-attach-id="@month"></div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="sl-tabs"></div>
       <div id="sl-body"></div>
     </section>
@@ -2379,6 +2386,7 @@ async function initApp() {
 }
 </script>
 <script src="/document-inbox.js"></script>
+<script src="/attach-widget.js"></script>
 <script src="/salary.js"></script>
 </body>
 </html>
