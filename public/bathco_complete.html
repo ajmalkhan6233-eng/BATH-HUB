@@ -287,6 +287,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="enquiries"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone-call"/></svg></span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chat"/></svg></span><span class="nav-label">Reply Drafts</span></li>
       <li class="nav-item" data-page="webcat"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-globe"/></svg></span><span class="nav-label">Website Catalogue</span></li>
+      <li class="nav-item" data-page="website"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-globe"/></svg></span><span class="nav-label">Website</span></li>
       <li class="nav-item" data-page="policy"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-scale"/></svg></span><span class="nav-label">Policy Watch</span></li>
       <li class="nav-item" data-page="branches"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-store"/></svg></span><span class="nav-label">Branches</span></li>
       <li class="nav-item" data-page="settings"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-gear"/></svg></span><span class="nav-label">Settings</span></li>
@@ -326,6 +327,7 @@ table tr:last-child td{border-bottom:none}
         <div>
           <div style="font-size:19px;font-weight:800">Welcome back </div>
           <div style="font-size:12px;color:var(--text2);margin-top:3px">Live data from your database · <span id="dash-date"></span></div>
+          <a id="website-btn" class="btn btn-s" href="/site" target="_blank" rel="noopener" style="margin-top:8px;padding:5px 12px;font-size:12px">Website</a>
         </div>
         <div style="font-size:38px"></div>
       </div>
@@ -712,6 +714,49 @@ table tr:last-child td{border-bottom:none}
       <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Photo</th><th>Size cm (60x60)</th><th>Finish</th><th>Use</th><th>Show on website</th></tr></thead><tbody id="wc-tbody"></tbody></table></div></div>
     </section>
 
+    <!-- ── WEBSITE EDITOR ── -->
+    <section class="page" id="page-website">
+      <div class="card" style="margin-bottom:16px">
+        <a id="we-view" class="btn btn-p" href="/site" target="_blank" rel="noopener" style="width:100%;justify-content:center;min-height:50px;font-size:16px">View website</a>
+        <div id="we-msg" style="margin-top:10px;font-size:13px"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Tiles on the website</div>
+        <button id="we-add" type="button" class="btn btn-p" style="width:100%;justify-content:center;min-height:50px;font-size:16px">+ Add a tile</button>
+        <div id="we-tiles" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card" id="we-form" style="margin-bottom:16px;display:none">
+        <div class="section-title" id="we-form-title" style="margin-bottom:10px">Add a tile</div>
+        <div class="fg"><label class="fl" for="we-name">Name</label><input class="fi" style="font-size:16px;min-height:46px" id="we-name" maxlength="80"></div>
+        <div class="fg"><label class="fl" for="we-size">Size (for example 24 x 24 in)</label><input class="fi" style="font-size:16px;min-height:46px" id="we-size" maxlength="40"></div>
+        <div class="fg"><label class="fl" for="we-finish">Finish</label><select class="fs" style="font-size:16px;min-height:46px" id="we-finish"><option value="glossy">Glossy</option><option value="matt">Matt</option><option value="polished">Polished</option></select></div>
+        <div class="fg"><label class="fl" for="we-group">Group</label><select class="fs" style="font-size:16px;min-height:46px" id="we-group"><option value="stone">Stone look</option><option value="wood">Wood look</option><option value="wall">Wall and mosaic</option><option value="conc">Concrete and terrazzo</option></select></div>
+        <div class="fg"><label class="fl" for="we-photo">Photo (JPG, PNG or WebP, up to 5 MB)</label><input type="file" class="fi" id="we-photo" accept="image/jpeg,image/png,image/webp" style="font-size:16px"></div>
+        <div id="we-preview" style="display:none;width:120px;height:120px;border-radius:10px;background-size:cover;background-position:center;margin-bottom:12px"></div>
+        <label style="display:flex;align-items:center;gap:12px;min-height:48px;font-size:16px;margin-bottom:12px"><input type="checkbox" id="we-visible" checked style="width:24px;height:24px"> Show on website</label>
+        <button id="we-save" type="button" class="btn btn-p" style="width:100%;justify-content:center;min-height:50px;font-size:16px;margin-bottom:10px">Save tile</button>
+        <button id="we-cancel" type="button" class="btn btn-s" style="width:100%;justify-content:center;min-height:50px;font-size:16px;margin-bottom:10px">Cancel</button>
+        <button id="we-rmphoto" type="button" class="btn btn-s" style="width:100%;justify-content:center;min-height:50px;font-size:16px;margin-bottom:10px;display:none">Remove photo</button>
+        <button id="we-delete" type="button" class="btn btn-d" style="width:100%;justify-content:center;min-height:50px;font-size:16px;display:none">Delete tile</button>
+        <div id="we-fmsg" style="margin-top:10px;font-size:13px"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-title" style="margin-bottom:10px">Website text</div>
+        <div class="fg"><label class="fl" for="we-wa">WhatsApp number</label><input class="fi" style="font-size:16px;min-height:46px" id="we-wa" type="tel" maxlength="20" placeholder="0777999219"></div>
+        <div class="fg"><label class="fl" for="we-addr">Address</label><input class="fi" style="font-size:16px;min-height:46px" id="we-addr" maxlength="200"></div>
+        <div class="fg"><label class="fl" for="we-hen">Promise heading (English)</label><input class="fi" style="font-size:16px;min-height:46px" id="we-hen" maxlength="120"></div>
+        <div class="fg"><label class="fl" for="we-pen">Promise paragraph (English)</label><textarea class="fi" style="font-size:16px;min-height:90px" id="we-pen" maxlength="600"></textarea></div>
+        <div class="fg"><label class="fl" for="we-hsi">Promise heading (Sinhala)</label><input class="fi" style="font-size:16px;min-height:46px" id="we-hsi" maxlength="120"></div>
+        <div class="fg"><label class="fl" for="we-psi">Promise paragraph (Sinhala)</label><textarea class="fi" style="font-size:16px;min-height:90px" id="we-psi" maxlength="600"></textarea></div>
+        <div class="fg"><label class="fl" for="we-hta">Promise heading (Tamil)</label><input class="fi" style="font-size:16px;min-height:46px" id="we-hta" maxlength="120"></div>
+        <div class="fg"><label class="fl" for="we-pta">Promise paragraph (Tamil)</label><textarea class="fi" style="font-size:16px;min-height:90px" id="we-pta" maxlength="600"></textarea></div>
+        <button id="we-tsave" type="button" class="btn btn-p" style="width:100%;justify-content:center;min-height:50px;font-size:16px">Save text</button>
+        <div id="we-tmsg" style="margin-top:10px;font-size:13px"></div>
+      </div>
+    </section>
     <!-- ── COMPETITOR WATCH (M4) ── -->
     <section class="page" id="page-competitors">
       <div class="card" style="margin-bottom:16px">
@@ -1045,6 +1090,7 @@ const PAGE_META = {
   policy:      ['Policy Watch','Import duty, cess, bans: unverified until sourced'],
   replies:     ['Reply Drafts','Agent drafts, you approve, you send by hand'],
   webcat:      ['Website Catalogue','Choose what the public website shows (no prices)'],
+  website:     ['Website','Tiles and text of the public website (/site)'],
   competitors: ['Competitors', 'Monthly check: who posts, goes live, sells online'],
   content:     ['Content',     'TikTok / live plan. Post by hand, nothing auto-posts'],
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
@@ -1454,6 +1500,7 @@ function navigate(page) {
   if (page === 'content') loadContent();
   if (page === 'competitors') loadCompetitors();
   if (page === 'webcat') loadWebCat();
+  if (page === 'website' && typeof loadWebsiteEditor === 'function') loadWebsiteEditor();
   if (page === 'replies') loadReplies();
   if (page === 'policy') loadPolicy();
   if (page === 'branches') loadBranches();
@@ -2507,6 +2554,7 @@ async function initApp() {
 }
 </script>
 <script src="/document-inbox.js"></script>
+<script src="/website-editor.js"></script>
 <script src="/attach-widget.js"></script>
 <script src="/salary.js"></script>
 </body>

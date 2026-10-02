@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Bath Hub, Thihariya, Kandy Road. Tiles, taps and bathroom fittings. See any tile in a room before you buy.">
+<meta name="theme-color" content="#0B1B3A">
+<title>Bath Hub | Tiles and Bathroom Fittings, Thihariya</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@400;500;600&family=Noto+Sans+Sinhala:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1B3A;--navy2:#14295a;--navy3:#071230;--gold:#C9A24B;--gold2:#E8CF8A;--ivory:#F6EFDC;
+  --bg:#F6EFDC;--ink:#0B1B3A;--muted:#5b6070;--card:#fffdf7;--line:rgba(11,27,58,.14);
+  --serif:"Cormorant Garamond",Georgia,serif;--sans:Jost,system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1632;--ink:#F6EFDC;--muted:#b7bccb;--card:#10224a;--line:rgba(232,207,138,.22)}}
+:root[data-theme="dark"]{--bg:#0a1632;--ink:#F6EFDC;--muted:#b7bccb;--card:#10224a;--line:rgba(232,207,138,.22)}
+html{scroll-padding-top:calc(70px + env(safe-area-inset-top,0px));scroll-behavior:smooth}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;-webkit-text-size-adjust:100%;overflow-x:hidden}
+body.si{font-family:"Noto Sans Sinhala","Iskoola Pota",system-ui,sans-serif;line-height:1.75}
+body.ta{font-family:"Noto Sans Tamil","Latha",system-ui,sans-serif;line-height:1.75}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.serif{font-family:var(--serif)}
+body.si .serif,body.ta .serif{font-family:inherit}
+.btn:focus-visible,.lang button:focus-visible,.swatch:focus-visible,.chip:focus-visible,.card:focus-visible,.nav a:focus-visible,.seg button:focus-visible,.wa:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* ===== header ===== */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(11,27,58,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--ivory);border-bottom:1px solid rgba(201,162,75,.45)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 20px;max-width:1160px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.mark{width:42px;height:42px;border-radius:7px;background:linear-gradient(145deg,#1d3a73,#0B1B3A 60%,#071230);box-shadow:0 0 0 2px var(--gold),0 0 0 3.5px var(--navy),0 0 0 4.5px var(--gold);display:grid;place-items:center;flex:none}
+.mark span{font-family:Cinzel,Georgia,serif;font-weight:600;font-size:21px;letter-spacing:1px;padding-left:1px;background:linear-gradient(165deg,#FFF6CF,#E3C06A 45%,#9c741f 80%,#E8CF8A);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(1px 1.5px 0 rgba(0,0,0,.6))}
+.brand b{font-family:Cinzel,Georgia,serif;font-weight:600;letter-spacing:.3em;font-size:17px;color:var(--gold2);white-space:nowrap}
+.nav{display:none;gap:26px}
+.nav a{text-decoration:none;color:var(--gold2);font-size:16px;letter-spacing:.03em}
+.nav a:hover{color:#fff}
+@media(min-width:860px){.nav{display:flex}}
+.lang{display:flex;gap:4px}
+.lang button{background:transparent;border:1px solid rgba(232,207,138,.45);color:var(--gold2);border-radius:999px;padding:6px 12px;font-size:15px;cursor:pointer;min-height:36px}
+.lang button[aria-pressed="true"]{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+@media(max-width:420px){.brand b{letter-spacing:.14em;font-size:15px}.brand{gap:10px}.lang button{padding:6px 10px}}
+
+/* ===== hero ===== */
+.hero{background:radial-gradient(130% 90% at 50% 0%,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);color:var(--ivory);padding:38px 0 54px;position:relative}
+.hero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.kicker{color:var(--gold2);font-size:16px;letter-spacing:.04em}
+.hero h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(40px,8vw,84px);line-height:1.02;margin-top:8px;max-width:11.5em;animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+body.si .hero h1,body.ta .hero h1{font-family:inherit;font-style:normal;font-weight:600;font-size:clamp(30px,6vw,56px);line-height:1.2}
+.hero .sub{color:var(--gold2);margin-top:14px;max-width:34em;font-size:18px;animation:rise .9s .12s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hero h1,.hero .sub{animation:none}html{scroll-behavior:auto}}
+.stage{margin-top:28px;display:grid;gap:18px}
+@media(min-width:940px){.stage{grid-template-columns:1.7fr 1fr;align-items:start}}
+
+/* scene */
+.scene{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#cfc4ae;box-shadow:0 0 0 2px var(--gold),0 0 0 7px rgba(201,162,75,.18),0 30px 60px rgba(0,0,0,.5);isolation:isolate}
+.wall{position:absolute;left:0;right:0;top:0;height:60%;background-color:#E6DCC8;background-repeat:repeat}
+.wall:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 40%,rgba(0,0,0,.18) 100%)}
+.skirt{position:absolute;left:0;right:0;top:58.2%;height:2.4%;background:linear-gradient(#f6f2e8,#e4ddcd);box-shadow:0 2px 4px rgba(0,0,0,.3);z-index:1}
+.fwrap{position:absolute;left:0;right:0;top:60%;bottom:0;overflow:hidden;perspective:520px;background:#7c6c55}
+.floor{position:absolute;left:-130%;right:-130%;bottom:0;height:430%;transform-origin:50% 100%;transform:rotateX(67deg);background-repeat:repeat}
+.floor.swap,.wall.swap{animation:fade .35s ease both}
+@keyframes fade{from{opacity:.25}to{opacity:1}}
+.gloss{position:absolute;left:0;right:0;top:60%;bottom:0;pointer-events:none;opacity:0;transition:opacity .3s;background:linear-gradient(180deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.08) 38%,rgba(255,255,255,0) 60%),linear-gradient(105deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.28) 46%,rgba(255,255,255,0) 60%)}
+.gloss.on{opacity:1}
+.shade{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(120% 90% at 50% 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,.35)),linear-gradient(180deg,rgba(0,0,0,.0) 60%,rgba(0,0,0,.18))}
+.fix{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.fix[hidden]{display:none}
+.tag{position:absolute;left:14px;bottom:14px;z-index:3;background:rgba(11,27,58,.9);color:var(--gold2);border:1px solid var(--gold);border-radius:999px;padding:6px 14px;font-size:15px;max-width:calc(100% - 28px)}
+.panel{background:rgba(255,255,255,.06);border:1px solid rgba(232,207,138,.35);border-radius:12px;padding:18px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--gold);border-radius:999px;overflow:hidden}
+.seg button{background:transparent;color:var(--gold2);border:0;padding:8px 18px;font-size:16px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--navy)}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:16px}
+.swatch{aspect-ratio:1;border-radius:7px;border:2px solid rgba(232,207,138,.3);cursor:pointer;background-size:cover;background-position:center;padding:0;transition:transform .15s}
+.swatch:hover{transform:translateY(-2px)}
+.swatch[aria-pressed="true"]{border-color:var(--gold2);box-shadow:0 0 0 2px var(--gold)}
+.swatch.plain{background:#E6DCC8}
+.pick{margin-top:16px}
+.pick b{display:block;font-family:var(--serif);font-size:28px;line-height:1.1;font-weight:600}
+body.si .pick b,body.ta .pick b{font-family:inherit;font-size:21px}
+.pick small{display:block;color:var(--gold2);font-size:16px;margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:var(--navy);text-decoration:none;font-weight:600;border:0;border-radius:999px;padding:12px 24px;font-size:16px;min-height:48px;cursor:pointer}
+.btn:hover{background:var(--gold2)}
+.btn.ghost{background:transparent;color:var(--gold2);border:1px solid var(--gold)}
+.btn.ghost:hover{background:rgba(201,162,75,.15)}
+.btn svg{width:20px;height:20px;flex:none}
+.pick+.row{margin-top:16px}
+
+/* ===== sections ===== */
+section{padding:72px 0}
+h2{font-family:var(--serif);font-weight:500;font-size:clamp(32px,5.5vw,54px);line-height:1.05;margin-bottom:10px}
+body.si h2,body.ta h2{font-family:inherit;font-weight:600;font-size:clamp(24px,4.4vw,38px);line-height:1.3}
+.lead{color:var(--muted);max-width:38em;margin-bottom:26px;font-size:18px}
+.alt{background:var(--navy);color:var(--ivory)}
+.alt .lead{color:var(--gold2)}
+
+/* promise */
+.promise{background:var(--navy);color:var(--ivory);padding:88px 0}
+.promise .wrap{display:grid;gap:26px}
+@media(min-width:860px){.promise .wrap{grid-template-columns:1.2fr 1fr;align-items:center;gap:60px}}
+.promise h2{font-style:italic;font-size:clamp(40px,7vw,78px);line-height:1.02;margin:0}
+body.si .promise h2,body.ta .promise h2{font-style:normal}
+.promise p{color:var(--gold2);font-size:19px;border-left:2px solid var(--gold);padding-left:22px}
+
+/* tiles */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.chip{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 18px;font-size:16px;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--navy);color:var(--gold2);border-color:var(--navy)}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{background:var(--gold);color:var(--navy)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--gold);color:var(--navy)}}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(5,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column;width:100%;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(11,27,58,.2)}
+.card .img{aspect-ratio:1;background-size:cover;background-position:center;position:relative}
+.card .img:after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,0) 45%)}
+.card .t{padding:12px 14px 14px}
+.card .n{font-family:var(--serif);font-weight:600;font-size:22px;line-height:1.1}
+body.si .card .n,body.ta .card .n{font-family:inherit;font-size:17px}
+.card .s{color:var(--muted);font-size:15px;margin-top:4px}
+.note{color:var(--muted);font-size:15px;margin-top:18px}
+
+/* fittings */
+.cats{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:900px){.cats{grid-template-columns:repeat(5,1fr)}}
+.cat{border:1px solid rgba(201,162,75,.55);border-radius:12px;padding:26px 16px 24px;text-align:center;background:rgba(255,255,255,.04);transition:background .2s,transform .2s}
+.cat:hover{background:rgba(201,162,75,.1);transform:translateY(-3px)}
+.cat svg{width:54px;height:54px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:14px}
+.cat b{display:block;font-family:var(--serif);font-size:25px;font-weight:600;line-height:1.1}
+body.si .cat b,body.ta .cat b{font-family:inherit;font-size:18px}
+.cat small{display:block;color:var(--gold2);font-size:15px;margin-top:6px}
+
+/* steps */
+.steps{display:grid;gap:22px;counter-reset:s}
+@media(min-width:860px){.steps{grid-template-columns:repeat(3,1fr);gap:34px}}
+.step{border-top:2px solid var(--gold);padding-top:16px}
+.step b{display:block;font-family:var(--serif);font-size:28px;font-weight:600;line-height:1.1;margin-bottom:6px}
+body.si .step b,body.ta .step b{font-family:inherit;font-size:19px}
+.step span{color:var(--muted)}
+
+/* visit */
+.visit{display:grid;gap:30px}
+@media(min-width:860px){.visit{grid-template-columns:1fr 1fr;align-items:center}}
+.visit .big{font-family:var(--serif);font-size:clamp(30px,5vw,46px);line-height:1.1;font-weight:500}
+body.si .visit .big,body.ta .visit .big{font-family:inherit;font-size:26px;font-weight:600}
+.contact{display:grid;gap:12px;justify-items:start}
+.contact a.num{font-size:24px;color:var(--gold2);text-decoration:none}
+footer{background:var(--navy3);color:var(--gold2);padding:34px 0 calc(34px + env(safe-area-inset-bottom,0px));text-align:center}
+footer .w{font-family:Cinzel,Georgia,serif;font-weight:600;letter-spacing:.34em;font-size:20px}
+
+/* floating whatsapp */
+.wa{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:8px;background:var(--navy);color:var(--gold2);border:1.5px solid var(--gold);text-decoration:none;border-radius:999px;padding:12px 18px;font-weight:600;box-shadow:0 10px 26px rgba(0,0,0,.4);min-height:48px}
+.wa svg{width:22px;height:22px;fill:var(--gold)}
+@media(max-width:420px){.wa span{display:none}.wa{padding:13px}}
+
+/* dialog */
+dialog{border:0;border-radius:14px;max-width:min(520px,calc(100vw - 28px));width:100%;padding:0;background:var(--card);color:var(--ink);box-shadow:0 0 0 2px var(--gold),0 30px 70px rgba(0,0,0,.55)}
+dialog::backdrop{background:rgba(5,12,35,.72)}
+dialog .big{aspect-ratio:4/3;background-size:cover;background-position:center}
+dialog .in{padding:18px 20px 22px}
+dialog h3{font-family:var(--serif);font-size:34px;line-height:1.05;font-weight:600}
+body.si dialog h3,body.ta dialog h3{font-family:inherit;font-size:24px}
+dialog p{color:var(--muted);margin:6px 0 14px}
+dialog .row{margin-top:6px}
+dialog .btn.ghost{color:var(--ink);border-color:var(--line)}
+dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <a class="brand" href="#top" aria-label="Bath Hub"><div class="mark"><span>BH</span></div><b>BATH HUB</b></a>
+  <nav class="nav" aria-label="Main"><a href="#tiles" data-t="nTiles">Tiles</a><a href="#fittings" data-t="nFit">Fittings</a><a href="#visit" data-t="nVisit">Visit</a></nav>
+  <div class="lang" role="group" aria-label="Language">
+    <button data-l="en" aria-pressed="true">EN</button><button data-l="si" aria-pressed="false">සිං</button><button data-l="ta" aria-pressed="false">தமிழ்</button>
+  </div>
+</div></header>
+
+<main id="top">
+<div class="hero"><div class="wrap">
+  <div class="kicker" data-t="kicker">Thihariya, Kandy Road</div>
+  <h1 data-t="h1">Choose your tile. See it in your room.</h1>
+  <p class="sub" data-t="sub">Tiles, taps and bathroom fittings. Try any design on the floor or wall before you visit.</p>
+
+  <div class="stage">
+    <div class="scene" id="scene" role="img" aria-label="Room preview">
+      <div class="wall" id="wall"></div><div class="skirt"></div>
+      <div class="fwrap"><div class="floor" id="floor"></div></div>
+      <div class="gloss" id="gloss"></div>
+
+      <!-- BATHROOM -->
+      <svg class="fix" id="fxBath" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="porc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9dde2"/></linearGradient>
+          <linearGradient id="porcV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd5db"/></linearGradient>
+          <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5E3A6"/><stop offset=".5" stop-color="#C9A24B"/><stop offset="1" stop-color="#8f6a1c"/></linearGradient>
+          <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dbe8f4"/><stop offset="1" stop-color="#a9c0d8"/></linearGradient>
+          <linearGradient id="vanity" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22427f"/><stop offset="1" stop-color="#10224a"/></linearGradient>
+        </defs>
+        <!-- mirror -->
+        <circle cx="570" cy="178" r="74" fill="url(#gold)"/><circle cx="570" cy="178" r="67" fill="url(#glass)"/>
+        <path d="M520 150 A58 58 0 0 1 560 118" stroke="rgba(255,255,255,.75)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M530 200 A58 58 0 0 0 575 232" stroke="rgba(255,255,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- tap and basin -->
+        <rect x="565" y="262" width="10" height="38" fill="url(#gold)"/>
+        <path d="M570 266 H540 a8 8 0 0 0 -8 8 v6" stroke="url(#gold)" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <rect x="582" y="276" width="8" height="24" rx="3" fill="url(#gold)"/>
+        <ellipse cx="570" cy="300" rx="62" ry="13" fill="url(#porc)"/>
+        <path d="M508 300 Q512 338 570 340 Q628 338 632 300 Z" fill="url(#porcV)"/>
+        <ellipse cx="570" cy="299" rx="50" ry="9" fill="#cfd5db"/>
+        <!-- floating vanity -->
+        <rect x="468" y="334" width="204" height="70" rx="7" fill="url(#vanity)"/>
+        <rect x="468" y="334" width="204" height="6" rx="3" fill="#fff" opacity=".9"/>
+        <rect x="540" y="366" width="60" height="5" rx="2.5" fill="url(#gold)"/>
+        <ellipse cx="570" cy="418" rx="106" ry="9" fill="rgba(0,0,0,.28)"/>
+        <!-- freestanding tub -->
+        <ellipse cx="190" cy="548" rx="170" ry="16" fill="rgba(0,0,0,.35)"/>
+        <path d="M32 440 Q40 548 190 552 Q340 548 348 440 Z" fill="url(#porcV)"/>
+        <path d="M60 520 Q190 566 320 520" stroke="rgba(0,0,0,.08)" stroke-width="8" fill="none"/>
+        <ellipse cx="190" cy="440" rx="158" ry="40" fill="url(#porc)"/>
+        <ellipse cx="190" cy="442" rx="140" ry="31" fill="#d6dce2"/>
+        <ellipse cx="190" cy="450" rx="120" ry="22" fill="#e9edf0"/>
+        <rect x="364" y="342" width="9" height="150" rx="4" fill="url(#gold)"/>
+        <path d="M368 348 H334 a9 9 0 0 0 -9 9 v10" stroke="url(#gold)" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <ellipse cx="368" cy="494" rx="16" ry="5" fill="url(#gold)"/>
+        <!-- towel rail -->
+        <rect x="722" y="170" width="8" height="150" rx="4" fill="url(#gold)"/><rect x="700" y="180" width="52" height="7" rx="3" fill="url(#gold)"/><rect x="700" y="214" width="52" height="7" rx="3" fill="url(#gold)"/>
+        <path d="M706 187 h40 v120 q-20 10 -40 0z" fill="#14295a"/><path d="M706 187 h40 v10 h-40z" fill="#1d3a73"/>
+      </svg>
+
+      <!-- LIVING ROOM -->
+      <svg class="fix" id="fxLiving" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:none">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6d0ec"/><stop offset="1" stop-color="#eef5fc"/></linearGradient>
+          <linearGradient id="gold2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5E3A6"/><stop offset=".5" stop-color="#C9A24B"/><stop offset="1" stop-color="#8f6a1c"/></linearGradient>
+          <linearGradient id="sofa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b4d92"/><stop offset="1" stop-color="#16316a"/></linearGradient>
+        </defs>
+        <rect x="560" y="64" width="170" height="210" rx="4" fill="url(#sky)" stroke="#fbf7ec" stroke-width="9"/>
+        <line x1="645" y1="64" x2="645" y2="274" stroke="#fbf7ec" stroke-width="7"/><line x1="560" y1="170" x2="730" y2="170" stroke="#fbf7ec" stroke-width="7"/>
+        <rect x="120" y="108" width="120" height="86" fill="#0B1B3A" stroke="url(#gold2)" stroke-width="6"/><path d="M134 176 L170 140 L196 164 L214 148 L228 176z" fill="#C9A24B" opacity=".85"/>
+        <rect x="262" y="124" width="62" height="62" fill="#f6efdc" stroke="url(#gold2)" stroke-width="5"/><circle cx="293" cy="155" r="16" fill="#14295a"/>
+        <ellipse cx="400" cy="520" rx="300" ry="50" fill="#f6efdc" opacity=".92"/><ellipse cx="400" cy="520" rx="286" ry="43" fill="none" stroke="#C9A24B" stroke-width="3" opacity=".9"/><ellipse cx="400" cy="520" rx="255" ry="36" fill="none" stroke="#14295a" stroke-width="2" opacity=".35"/>
+        <ellipse cx="400" cy="470" rx="250" ry="14" fill="rgba(0,0,0,.3)"/>
+        <rect x="150" y="318" width="500" height="140" rx="18" fill="url(#sofa)"/>
+        <rect x="126" y="354" width="60" height="112" rx="20" fill="#16316a"/><rect x="614" y="354" width="60" height="112" rx="20" fill="#16316a"/>
+        <rect x="186" y="368" width="428" height="82" rx="14" fill="#2f5199"/><path d="M400 368 v82" stroke="#16316a" stroke-width="3"/>
+        <rect x="218" y="338" width="64" height="48" rx="10" fill="url(#gold2)" transform="rotate(-6 250 362)"/>
+        <rect x="528" y="344" width="60" height="44" rx="10" fill="#f6efdc" transform="rotate(7 558 366)"/>
+        <rect x="738" y="256" width="6" height="210" fill="#8a6516"/><path d="M716 256 h50 l-9 -52 h-32z" fill="#E8CF8A"/><ellipse cx="741" cy="470" rx="26" ry="6" fill="#8a6516"/>
+        <rect x="46" y="396" width="52" height="64" rx="6" fill="#f6efdc" stroke="#C9A24B" stroke-width="3"/>
+        <path d="M72 396 C40 360 38 322 56 292 C70 320 86 330 72 396 M72 396 C96 366 118 350 116 316 C94 330 78 352 72 396" fill="#2f6b4f"/>
+      </svg>
+      <div class="shade"></div>
+      <div class="tag" id="tag"></div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div class="seg" role="group" aria-label="Room"><button id="sBath" aria-pressed="true" data-t="bath">Bathroom</button><button id="sLiv" aria-pressed="false" data-t="living">Living room</button></div>
+        <div class="seg" role="group" aria-label="Apply to"><button id="tFloor" aria-pressed="true" data-t="floor">Floor</button><button id="tWall" aria-pressed="false" data-t="wall">Wall</button></div>
+      </div>
+      <div class="swatches" id="swatches"></div>
+      <div class="pick"><b id="pName"></b><small id="pInfo"></small></div>
+      <div class="row">
+        <a class="btn" id="wa" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.3c-.2.6-1.2 1.2-1.7 1.2-.4.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6-2.7-1.2-4.4-3.9-4.6-4.1-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.1.1.3 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.7 1.2 1.5 1.9 1 .9 1.900 1.200 2.200 1.300.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.800.9c.3.1.4.2.5.3.1.2.1.8-.1 1.400z"/></svg><span data-t="ask">Ask on WhatsApp</span></a>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<section class="promise"><div class="wrap">
+  <h2 data-t="promH">A little more than you paid for.</h2>
+  <p data-t="promP">At Bath Hub we aim to give you slightly more value than the price you pay. Honest sizes, honest stock, and advice you can trust.</p>
+</div></section>
+
+<section id="tiles"><div class="wrap">
+  <h2 data-t="catH">Tile collection</h2>
+  <p class="lead" data-t="catP">Tap a tile to see it larger, or try it in the room above.</p>
+  <div class="chips" id="chips" role="group" aria-label="Filter"></div>
+  <div class="grid" id="grid"></div>
+  <p class="note" data-t="sampleNote">Sample designs. Real stock photos coming soon.</p>
+</div></section>
+
+<section class="alt" id="fittings"><div class="wrap">
+  <h2 data-t="accH">Bathroom fittings</h2>
+  <p class="lead" data-t="accP">Everything for the bathroom, in one place.</p>
+  <div class="cats" id="cats"></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-t="howH">How it works</h2>
+  <div class="steps">
+    <div class="step"><b data-t="s1">Pick a tile</b><span data-t="s1d">Tap any design in the collection.</span></div>
+    <div class="step"><b data-t="s2">See it in a room</b><span data-t="s2d">Switch between floor and wall to compare.</span></div>
+    <div class="step"><b data-t="s3">Message us</b><span data-t="s3d">Send us the tile name on WhatsApp. We confirm sizes and stock.</span></div>
+  </div>
+  <p class="note" style="margin-top:28px;max-width:40em" data-t="note">The preview is a guide. Real colour and finish can look different in your light, so please see the tile in our showroom before you buy.</p>
+</div></section>
+
+<section class="alt" id="visit"><div class="wrap visit">
+  <div><h2 data-t="visitH">Visit Bath Hub</h2><div class="big" data-t="addr">Thihariya, Kandy Road</div></div>
+  <div class="contact">
+    <a class="num" href="https://wa.me/94777999219" target="_blank" rel="noopener">077 799 9219</a>
+    <a class="btn" href="https://wa.me/94777999219" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+    <a class="btn ghost" href="https://www.google.com/maps/search/?api=1&query=Bath+Hub+Thihariya+Kandy+Road" target="_blank" rel="noopener"><span data-t="map">Open in Maps</span></a>
+  </div>
+</div></section>
+</main>
+<footer><div class="w">BATH HUB</div><div style="margin-top:8px" data-t="foot">Every piece, a little more than you paid for.</div></footer>
+
+<a class="wa" href="https://wa.me/94777999219" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.3c-.2.6-1.2 1.200-1.700 1.200-.4.1-1 .1-1.600-.1-.4-.1-.9-.3-1.500-.6-2.700-1.200-4.400-3.900-4.600-4.100-.1-.2-1.100-1.400-1.100-2.700s.7-1.900.9-2.200c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.900c.1.100.1.300 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.7 1.200 1.500 1.900 1 .9 1.900 1.200 2.200 1.300.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.800.9c.3.1.4.2.5.3.1.2.1.8-.1 1.400z"/></svg><span data-t="ask">Ask on WhatsApp</span></a>
+
+<dialog id="dlg" aria-labelledby="dName">
+  <div class="big" id="dImg"></div>
+  <div class="in">
+    <h3 id="dName"></h3><p id="dInfo"></p>
+    <div class="row">
+      <button class="btn" id="dRoom"><span data-t="inRoom">View in room</span></button>
+      <a class="btn ghost" id="dWa" href="#" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+      <button class="btn ghost" id="dClose"><span data-t="close">Close</span></button>
+    </div>
+  </div>
+</dialog>
+<script>
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const NS='xmlns="http://www.w3.org/2000/svg"';
+const grout=(w,h,c,sw)=>`<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+const TEX={
+marble:()=>`<svg ${NS} width="512" height="512"><defs>
+<filter id="a" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="turbulence" baseFrequency=".0032 .0075" numOctaves="4" seed="11" stitchTiles="stitch"/><feGaussianBlur stdDeviation="1.1"/><feColorMatrix type="matrix" values="0 0 0 0 .42  0 0 0 0 .43  0 0 0 0 .48  -7 0 0 0 .95"/></filter>
+<filter id="b" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="turbulence" baseFrequency=".006 .011" numOctaves="4" seed="3" stitchTiles="stitch"/><feGaussianBlur stdDeviation="2"/><feColorMatrix type="matrix" values="0 0 0 0 .72  0 0 0 0 .70  0 0 0 0 .68  -6 0 0 0 .85"/></filter>
+<filter id="c" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".01" numOctaves="3" seed="5" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .8 0 0 0 0 .78 0 0 0 0 .74 0 0 0 .35 0"/></filter></defs>
+<rect width="512" height="512" fill="#F5F3EF"/><rect width="512" height="512" filter="url(#c)"/><rect width="512" height="512" filter="url(#b)" opacity=".55"/><rect width="512" height="512" filter="url(#a)" opacity=".75"/>${grout(512,512,'#c9c4ba',3)}</svg>`,
+nero:()=>`<svg ${NS} width="512" height="512"><defs><filter id="a" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".02 .035" numOctaves="4" seed="8" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .62  0 0 0 0 .64  0 0 0 0 .7  0 0 0 .5 -.12"/></filter><filter id="b" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="turbulence" baseFrequency=".008 .03" numOctaves="3" seed="21" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .8 0 0 0 0 .66 0 0 0 0 .3 -10 0 0 0 .9"/></filter></defs><rect width="512" height="512" fill="#262a32"/><rect width="512" height="512" filter="url(#a)"/><rect width="512" height="512" filter="url(#b)" opacity=".28"/>${grout(512,512,'#12151b',4)}</svg>`,
+travertine:()=>{const r=mulberry(4);let pits='';for(let i=0;i<46;i++){pits+=`<ellipse cx="${r()*512}" cy="${r()*512}" rx="${6+r()*22}" ry="${1+r()*2.2}" fill="#b9a583" opacity="${.35+r()*.3}"/>`}
+return `<svg ${NS} width="512" height="512"><defs><filter id="a" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".004 .09" numOctaves="4" seed="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .6  0 0 0 0 .5  0 0 0 0 .36  0 0 0 .9 -.25"/></filter></defs><rect width="512" height="512" fill="#DCCDAC"/><rect width="512" height="512" filter="url(#a)" opacity=".7"/>${pits}${grout(512,512,'#bfae8c',3)}</svg>`},
+oak:()=>{const cols=['#B98B55','#C79A63','#AF8250','#BD9159'];let p='';const r=mulberry(9);
+for(let row=0;row<4;row++){const y=row*128,off=(row*173)%512;[[off-512,512],[off,512]].forEach(([x0,w],k)=>{p+=`<rect x="${x0}" y="${y}" width="${w}" height="128" fill="${cols[(row+k*2)%4]}" stroke="#8a6238" stroke-width="2.5"/>`})}
+return `<svg ${NS} width="512" height="512"><defs><filter id="g" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".004 .45" numOctaves="3" seed="3" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .24  0 0 0 0 .13  0 0 0 0 .05  1.8 0 0 0 -.62"/></filter></defs><svg x="0" y="0" width="512" height="512" viewBox="0 0 512 512" overflow="hidden">${p}</svg><rect width="512" height="512" filter="url(#g)" opacity=".75"/></svg>`},
+herring:()=>{const cs=['#7a5538','#6a4830','#74503a','#654630'];let p='';
+for(let k=-4;k<10;k++){const o=k*16,c=cs[((k%4)+4)%4];p+=`<path d="M0 ${o+32}L64 ${o}L64 ${o+16}L0 ${o+48}z" fill="${c}" stroke="#3f2b1c" stroke-width="2"/><path d="M64 ${o}L128 ${o+32}L128 ${o+48}L64 ${o+16}z" fill="${c}" stroke="#3f2b1c" stroke-width="2"/>`}
+return `<svg ${NS} width="512" height="512" viewBox="0 0 128 64" preserveAspectRatio="none"><defs><filter id="g" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".02 .5" numOctaves="3" seed="6" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .18  0 0 0 0 .1  0 0 0 0 .04  1.6 0 0 0 -.55"/></filter><clipPath id="cp"><rect width="128" height="64"/></clipPath></defs><g clip-path="url(#cp)">${p}<rect width="128" height="64" filter="url(#g)" opacity=".6"/></g></svg>`},
+hex:()=>{const r=40,w=3*r,h=Math.sqrt(3)*r;const hx=(cx,cy)=>{let d='';for(let i=0;i<6;i++){const a=Math.PI/3*i;d+=(i?'L':'M')+(cx+(r-2)*Math.cos(a)).toFixed(2)+' '+(cy+(r-2)*Math.sin(a)).toFixed(2)}return `<path d="${d}z" fill="#F1EDE4" stroke="#B9B3A5" stroke-width="2"/>`};
+const cells=[[0,0],[w,0],[0,h],[w,h],[1.5*r,h/2]].map(c=>hx(c[0],c[1])).join('');
+return `<svg ${NS} width="360" height="${(h*3).toFixed(1)}" viewBox="0 0 ${w} ${h.toFixed(2)}"><rect width="${w}" height="${h}" fill="#B9B3A5"/>${cells}</svg>`},
+subway:()=>{let p='';for(let row=0;row<8;row++){const off=row%2?50:0;for(let c=-1;c<3;c++){const x=c*100+off,y=row*25;p+=`<rect x="${x+1}" y="${y+1}" width="98" height="23" rx="1.5" fill="url(#gl)"/>`}}
+return `<svg ${NS} width="200" height="200" viewBox="0 0 200 200"><defs><linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#F3F4F2"/><stop offset="1" stop-color="#E4E6E4"/></linearGradient></defs><rect width="200" height="200" fill="#C4C6C2"/>${p}</svg>`},
+terrazzo:()=>{const r=mulberry(17);const cs=['#C9A24B','#14295a','#b88a73','#7b8794','#f6efdc','#3b3f4a'];let p='';
+for(let i=0;i<70;i++){const cx=r()*512,cy=r()*512,R=5+r()*15,n=5+Math.floor(r()*3);let d='';for(let j=0;j<n;j++){const a=Math.PI*2*j/n+r()*.6,rr=R*(.6+r()*.5);d+=(j?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1)}p+=`<path d="${d}z" fill="${cs[Math.floor(r()*cs.length)]}" opacity=".9"/>`}
+return `<svg ${NS} width="512" height="512"><defs><filter id="a" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .7 0 0 0 0 .66 0 0 0 0 .6 0 0 0 .4 -.05"/></filter></defs><rect width="512" height="512" fill="#EAE3D7"/><rect width="512" height="512" filter="url(#a)"/>${p}${grout(512,512,'#cfc7b8',3)}</svg>`},
+zellige:()=>{const r=mulberry(31);const cs=['#173A78','#1d4690','#1b4286','#143570','#244f9c','#183c7d'];let p='';const n=6,s=512/n;
+for(let y=0;y<n;y++)for(let x=0;x<n;x++){const c=cs[Math.floor(r()*cs.length)];p+=`<rect x="${x*s+3}" y="${y*s+3}" width="${s-6}" height="${s-6}" rx="5" fill="${c}"/><path d="M${x*s+10+r()*20} ${y*s+12+r()*10}L${x*s+s-14-r()*20} ${y*s+10+r()*18}" stroke="rgba(255,255,255,.28)" stroke-width="3" stroke-linecap="round"/>`}
+return `<svg ${NS} width="512" height="512"><rect width="512" height="512" fill="#0B1B3A"/>${p}</svg>`},
+cement:()=>`<svg ${NS} width="512" height="512"><defs><filter id="a" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".011" numOctaves="5" seed="14" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .4  0 0 0 0 .41  0 0 0 0 .43  0 0 0 1.4 -.45"/></filter><filter id="b" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="2" seed="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 .2 0 0 0 0 .2 0 0 0 0 .2 0 0 0 .25 0"/></filter></defs><rect width="512" height="512" fill="#999CA0"/><rect width="512" height="512" filter="url(#a)"/><rect width="512" height="512" filter="url(#b)"/>${grout(512,512,'#7d8085',3)}</svg>`
+};
+
+
+/* ===== tiles (sample designs: swap for real photos later) ===== */
+const enc=s=>'url("data:image/svg+xml;utf8,'+encodeURIComponent(s)+'")';
+const TILES=[
+ {k:'marble',n:'Calacatta Marble',size:'24 × 24 in',fin:'polished',g:'stone',f:170,w:130},
+ {k:'nero',n:'Nero Slate',size:'24 × 24 in',fin:'matt',g:'stone',f:170,w:130},
+ {k:'travertine',n:'Travertine Sand',size:'12 × 24 in',fin:'matt',g:'stone',f:160,w:120},
+ {k:'oak',n:'Oak Plank',size:'8 × 48 in',fin:'matt',g:'wood',f:200,w:150},
+ {k:'herring',n:'Walnut Chevron',size:'4 × 24 in',fin:'matt',g:'wood',f:150,w:120},
+ {k:'hex',n:'Ivory Hexagon',size:'8 × 9 in',fin:'matt',g:'wall',f:150,w:110},
+ {k:'subway',n:'White Subway',size:'3 × 6 in',fin:'glossy',g:'wall',f:130,w:110},
+ {k:'terrazzo',n:'Terrazzo Cream',size:'24 × 24 in',fin:'polished',g:'conc',f:190,w:140},
+ {k:'zellige',n:'Navy Zellige',size:'4 × 4 in',fin:'glossy',g:'wall',f:170,w:120},
+ {k:'cement',n:'Grey Cement',size:'24 × 24 in',fin:'matt',g:'conc',f:190,w:140}
+];
+TILES.forEach(t=>t.bg=enc(TEX[t.k]()));
+let WA='94777999219';
+
+/* ===== translations (Sinhala and Tamil: have a native speaker check before launch) ===== */
+const I18={
+en:{nTiles:'Tiles',nFit:'Fittings',nVisit:'Visit',kicker:'Thihariya, Kandy Road',h1:'Choose your tile. See it in your room.',sub:'Tiles, taps and bathroom fittings. Try any design on the floor or wall before you visit.',bath:'Bathroom',living:'Living room',floor:'Floor',wall:'Wall',plain:'Plain wall',ask:'Ask on WhatsApp',
+ promH:'A little more than you paid for.',promP:'At Bath Hub we aim to give you slightly more value than the price you pay. Honest sizes, honest stock, and advice you can trust.',
+ catH:'Tile collection',catP:'Tap a tile to see it larger, or try it in the room above.',sampleNote:'Sample designs. Real stock photos coming soon.',
+ fAll:'All',fStone:'Stone look',fWood:'Wood look',fWall:'Wall and mosaic',fConc:'Concrete and terrazzo',
+ accH:'Bathroom fittings',accP:'Everything for the bathroom, in one place.',howH:'How it works',s1:'Pick a tile',s1d:'Tap any design in the collection.',s2:'See it in a room',s2d:'Switch between floor and wall to compare.',s3:'Message us',s3d:'Send us the tile name on WhatsApp. We confirm sizes and stock.',
+ note:'The preview is a guide. Real colour and finish can look different in your light, so please see the tile in our showroom before you buy.',visitH:'Visit Bath Hub',addr:'Thihariya, Kandy Road',map:'Open in Maps',foot:'Every piece, a little more than you paid for.',
+ size:'Size',glossy:'Glossy',matt:'Matt',polished:'Polished',inRoom:'View in room',close:'Close',msg:'Hello Bath Hub, I am interested in the tile: ',
+ cats:[['Tiles','Floor and wall'],['Taps','Basin, kitchen, shower'],['Showers','Sets and heads'],['Basins & Toilets','Ceramic ware'],['Accessories','Racks, holders, mirrors']]},
+si:{nTiles:'ටයිල්',nFit:'උපාංග',nVisit:'පැමිණෙන්න',kicker:'තිහාරිය, කන්ඩි පාර',h1:'ඔබේ ටයිල් තෝරන්න. ඔබේ කාමරයේ බලන්න.',sub:'ටයිල්, ටැප් සහ නාන කාමර උපාංග. පැමිණීමට පෙර ඕනෑම සැලසුමක් පොළවේ හෝ බිත්තියේ උත්සාහ කර බලන්න.',bath:'නාන කාමරය',living:'විසිත්ත කාමරය',floor:'පොළව',wall:'බිත්තිය',plain:'සාමාන්‍ය බිත්තිය',ask:'WhatsApp හරහා අසන්න',
+ promH:'ගෙවූ මුදලට වඩා තව ටිකක්.',promP:'බාත් හබ් හි අපගේ අරමුණ ඔබ ගෙවන මිලට වඩා තරමක් වැඩි වටිනාකමක් ලබා දීමයි. අව්‍යාජ ප්‍රමාණ, අව්‍යාජ තොග, විශ්වාස කළ හැකි උපදෙස්.',
+ catH:'ටයිල් එකතුව',catP:'විශාලව බැලීමට ටයිල් එකක් ඔබන්න, නැතහොත් ඉහත කාමරයේ උත්සාහ කරන්න.',sampleNote:'නිරූපණ සැලසුම්. සැබෑ තොග ඡායාරූප ඉක්මනින්.',
+ fAll:'සියල්ල',fStone:'ගල් පෙනුම',fWood:'දැව පෙනුම',fWall:'බිත්ති සහ මොසෙයික්',fConc:'කොන්ක්‍රීට් සහ ටෙරාසෝ',
+ accH:'නාන කාමර උපාංග',accP:'නාන කාමරයට අවශ්‍ය සියල්ල එක තැනකින්.',howH:'ක්‍රියා කරන ආකාරය',s1:'ටයිල් එකක් තෝරන්න',s1d:'එකතුවේ ඇති ඕනෑම සැලසුමක් ඔබන්න.',s2:'කාමරයේ බලන්න',s2d:'සසඳා බැලීමට පොළව සහ බිත්තිය මාරු කරන්න.',s3:'අපට පණිවිඩයක් එවන්න',s3d:'ටයිල් එකේ නම WhatsApp හරහා එවන්න. ප්‍රමාණ සහ තොග අපි තහවුරු කරමු.',
+ note:'මෙම පෙරදසුන මාර්ගෝපදේශයක් පමණි. ඔබේ ආලෝකයේ සැබෑ වර්ණය සහ ස්වභාවය වෙනස් විය හැක. මිලදී ගැනීමට පෙර අපගේ ශෝරූම් එකේ ටයිල් එක බලන්න.',visitH:'බාත් හබ් වෙත පැමිණෙන්න',addr:'තිහාරිය, කන්ඩි පාර',map:'සිතියමේ බලන්න',foot:'ඔබ ගෙවූ මුදලට වඩා තව ටිකක් වටින භාණ්ඩයක්.',
+ size:'ප්‍රමාණය',glossy:'දිලිසෙන',matt:'මැට්',polished:'ඔපවත්',inRoom:'කාමරයේ බලන්න',close:'වසන්න',msg:'ආයුබෝවන් Bath Hub, මම මෙම ටයිල් එක ගැන උනන්දුයි: ',
+ cats:[['ටයිල්','පොළව සහ බිත්ති'],['ටැප්','බේසම්, කුස්සිය, ෂවර්'],['ෂවර්','කට්ටල සහ හිස්'],['බේසම් සහ වැසිකිළි','සෙරමික් භාණ්ඩ'],['උපාංග','රාක්ක, ධාරක, කැඩපත්']]},
+ta:{nTiles:'டைல்ஸ்',nFit:'சாதனங்கள்',nVisit:'வருகை',kicker:'திஹாரிய, கண்டி வீதி',h1:'உங்கள் டைலைத் தேர்ந்தெடுங்கள். உங்கள் அறையில் பாருங்கள்.',sub:'டைல்ஸ், குழாய்கள் மற்றும் குளியலறை சாதனங்கள். வருவதற்கு முன் எந்த வடிவமைப்பையும் தரையிலோ சுவரிலோ முயன்று பாருங்கள்.',bath:'குளியலறை',living:'வரவேற்பறை',floor:'தரை',wall:'சுவர்',plain:'சாதாரண சுவர்',ask:'WhatsApp-ல் கேளுங்கள்',
+ promH:'செலுத்தியதை விட சற்று அதிகம்.',promP:'பாத் ஹப்பில் நீங்கள் செலுத்தும் விலையை விட சற்று அதிக மதிப்பை வழங்குவதே எங்கள் நோக்கம். நேர்மையான அளவுகள், நேர்மையான இருப்பு, நம்பகமான ஆலோசனை.',
+ catH:'டைல்ஸ் தொகுப்பு',catP:'பெரிதாகப் பார்க்க ஒரு டைலைத் தொடுங்கள், அல்லது மேலே உள்ள அறையில் முயன்று பாருங்கள்.',sampleNote:'மாதிரி வடிவமைப்புகள். உண்மையான இருப்பு புகைப்படங்கள் விரைவில்.',
+ fAll:'அனைத்தும்',fStone:'கல் தோற்றம்',fWood:'மரத் தோற்றம்',fWall:'சுவர் மற்றும் மொசைக்',fConc:'கான்கிரீட் மற்றும் டெராசோ',
+ accH:'குளியலறை சாதனங்கள்',accP:'குளியலறைக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.',howH:'எப்படி வேலை செய்கிறது',s1:'ஒரு டைலைத் தேர்ந்தெடுங்கள்',s1d:'தொகுப்பில் உள்ள எந்த வடிவமைப்பையும் தொடுங்கள்.',s2:'அறையில் பாருங்கள்',s2d:'ஒப்பிட தரை மற்றும் சுவரை மாற்றிப் பாருங்கள்.',s3:'எங்களுக்கு செய்தி அனுப்புங்கள்',s3d:'டைலின் பெயரை WhatsApp-ல் அனுப்புங்கள். அளவுகளையும் இருப்பையும் நாங்கள் உறுதிப்படுத்துவோம்.',
+ note:'இந்த முன்னோட்டம் ஒரு வழிகாட்டி மட்டுமே. உங்கள் வெளிச்சத்தில் உண்மையான நிறமும் பூச்சும் வேறுபடலாம். வாங்கும் முன் எங்கள் காட்சியறையில் டைலைப் பாருங்கள்.',visitH:'பாத் ஹப்பைப் பார்வையிடுங்கள்',addr:'திஹாரிய, கண்டி வீதி',map:'வரைபடத்தில் பாருங்கள்',foot:'நீங்கள் கொடுத்த பணத்தை விட சற்று அதிக மதிப்புள்ள ஒவ்வொரு பொருளும்.',
+ size:'அளவு',glossy:'பளபளப்பு',matt:'மங்கல்',polished:'மெருகூட்டியது',inRoom:'அறையில் பாருங்கள்',close:'மூடு',msg:'வணக்கம் Bath Hub, இந்த டைலில் எனக்கு ஆர்வம் உள்ளது: ',
+ cats:[['டைல்ஸ்','தரை மற்றும் சுவர்'],['குழாய்கள்','வாஷ்பேசின், சமையலறை, ஷவர்'],['ஷவர்கள்','செட்டுகள் மற்றும் தலைகள்'],['வாஷ்பேசின் & கழிப்பறை','செராமிக் பொருட்கள்'],['சாதனங்கள்','ரேக்குகள், ஹோல்டர்கள், கண்ணாடிகள்']]}
+};
+const ICONS=[
+ '<path d="M6 8h36v32H6z"/><path d="M6 24h36M24 8v32"/>',
+ '<path d="M8 22h22a10 10 0 0 1 10 10v2"/><path d="M18 22v-8h12"/><path d="M40 34v6"/>',
+ '<path d="M8 20a16 16 0 0 1 32 0z"/><path d="M14 28v4M24 28v7M34 28v4M19 37v3M29 37v3"/>',
+ '<path d="M14 6h20v14H14z"/><path d="M9 20h30c0 11-6 19-15 19S9 31 9 20z"/><path d="M18 42h12"/>',
+ '<path d="M8 12h32"/><path d="M12 12v8M36 12v8"/><path d="M10 30h28M10 30v12M38 30v12M18 30v12"/>'
+];
+let lang='en',room='bath',target='floor',floorT=TILES[0],wallT=TILES[6],filter='all',openT=null;
+const $=id=>document.getElementById(id),L=()=>I18[lang];
+function sel(){return target==='floor'?floorT:(wallT||null)}
+function paint(swap){
+  const f=$('floor'),w=$('wall');
+  f.style.backgroundImage=floorT.bg;f.style.backgroundSize=floorT.f+'px auto';
+  if(wallT){w.style.backgroundImage=wallT.bg;w.style.backgroundSize=wallT.w+'px auto';w.style.backgroundColor='transparent'}
+  else{w.style.backgroundImage='none';w.style.backgroundColor='#E6DCC8'}
+  if(swap){const e=target==='floor'?f:w;e.classList.remove('swap');void e.offsetWidth;e.classList.add('swap')}
+  $('gloss').classList.toggle('on',floorT.fin!=='matt');
+  const t=L(),s=sel()||{n:t.plain,size:'',fin:''};
+  $('tag').textContent=floorT.n+(wallT?' + '+wallT.n:'');
+  $('pName').textContent=s.n;
+  $('pInfo').textContent=s.size?(t.size+': '+s.size+' · '+t[s.fin]):'';
+  $('wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.msg+s.n+(s.size?' ('+s.size+')':''));
+  document.querySelectorAll('.swatch').forEach(b=>{const i=b.dataset.i;b.setAttribute('aria-pressed',String(i==='plain'?(target==='wall'&&!wallT):(target==='floor'?floorT===TILES[i]:wallT===TILES[i])))});
+  $('scene').setAttribute('aria-label',(room==='bath'?t.bath:t.living)+': '+$('tag').textContent);
+}
+function pick(i){ if(i==='plain'){wallT=null}else if(target==='floor')floorT=TILES[i];else wallT=TILES[i]; paint(true) }
+function setTarget(x){target=x;$('tFloor').setAttribute('aria-pressed',x==='floor');$('tWall').setAttribute('aria-pressed',x==='wall');$('plainSw').style.display=x==='wall'?'':'none';paint()}
+function setRoom(r){room=r;$('fxBath').style.display=r==='bath'?'':'none';$('fxLiving').style.display=r==='living'?'':'none';$('sBath').setAttribute('aria-pressed',r==='bath');$('sLiv').setAttribute('aria-pressed',r==='living');paint()}
+function buildSwatches(){
+  const box=$('swatches');box.innerHTML='';
+  TILES.forEach((tl,i)=>{const b=document.createElement('button');b.className='swatch';b.dataset.i=i;b.style.backgroundImage=tl.bg;b.setAttribute('aria-label',tl.n);b.onclick=()=>pick(i);box.appendChild(b)});
+  const p=document.createElement('button');p.className='swatch plain';p.id='plainSw';p.dataset.i='plain';p.style.display='none';p.onclick=()=>pick('plain');box.appendChild(p);
+}
+function buildGrid(){
+  const g=$('grid');g.innerHTML='';
+  TILES.forEach((tl,i)=>{
+    if(filter!=='all'&&tl.g!==filter)return;
+    const c=document.createElement('button');c.className='card';c.innerHTML='<div class="img"></div><div class="t"><div class="n"></div><div class="s"></div></div>';
+    c.querySelector('.img').style.backgroundImage=tl.bg;c.querySelector('.n').textContent=tl.n;c.querySelector('.s').textContent=tl.size+' · '+L()[tl.fin];
+    c.onclick=()=>openTile(i);g.appendChild(c);
+  });
+}
+function buildChips(){
+  const t=L(),items=[['all',t.fAll],['stone',t.fStone],['wood',t.fWood],['wall',t.fWall],['conc',t.fConc]];
+  const box=$('chips');box.innerHTML='';
+  items.forEach(([k,l])=>{const b=document.createElement('button');b.className='chip';b.textContent=l;b.setAttribute('aria-pressed',String(filter===k));b.onclick=()=>{filter=k;buildChips();buildGrid()};box.appendChild(b)});
+}
+function openTile(i){
+  openT=i;const t=L(),tl=TILES[i];
+  $('dImg').style.backgroundImage=tl.bg;$('dImg').style.backgroundSize=(tl.f*1.6)+'px auto';
+  $('dName').textContent=tl.n;$('dInfo').textContent=t.size+': '+tl.size+' · '+t[tl.fin];
+  $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.msg+tl.n+' ('+tl.size+')');
+  $('dlg').showModal();
+}
+function text(){
+  const t=L();
+  document.documentElement.lang=lang;document.body.className=lang==='en'?'':lang;
+  document.querySelectorAll('[data-t]').forEach(e=>{const k=e.dataset.t;if(t[k]!==undefined)e.textContent=t[k]});
+  $('cats').innerHTML=t.cats.map((c,i)=>`<div class="cat"><svg viewBox="0 0 48 48" aria-hidden="true">${ICONS[i]}</svg><b></b><small></small></div>`).join('');
+  [...$('cats').children].forEach((el,i)=>{el.querySelector('b').textContent=t.cats[i][0];el.querySelector('small').textContent=t.cats[i][1]});
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.l===lang)));
+  buildChips();buildGrid();
+  if(openT!==null&&$('dlg').open)openTile(openT);
+  paint();
+}
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;try{localStorage.setItem('bh-lang',lang)}catch(e){};text()});
+$('tFloor').onclick=()=>setTarget('floor');$('tWall').onclick=()=>setTarget('wall');
+$('sBath').onclick=()=>setRoom('bath');$('sLiv').onclick=()=>setRoom('living');
+$('dClose').onclick=()=>$('dlg').close();
+$('dRoom').onclick=()=>{const i=openT;$('dlg').close();pick(i);document.getElementById('scene').scrollIntoView({behavior:'smooth',block:'center'})};
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))$('dlg').close()});
+try{const s=localStorage.getItem('bh-lang');if(s&&I18[s])lang=s}catch(e){}
+buildSwatches();text();
+/* ===== live content from the owner app (GET /api/site/public). Any failure keeps the built-in samples above. ===== */
+const GROUP_TEX={stone:['marble','nero','travertine'],wood:['oak','herring'],wall:['hex','subway','zellige'],conc:['terrazzo','cement']};
+const PHOTO_RE=/^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function liveTile(x){
+  if(!x||typeof x.name!=='string'||!x.name)return null;
+  const g=GROUP_TEX[x.group]?x.group:'stone',fin=['glossy','matt','polished'].includes(x.finish)?x.finish:'matt';
+  const size=typeof x.size==='string'?x.size:'',m=/(\d+(?:\.\d+)?)/.exec(size),num=m?parseFloat(m[1]):null;
+  const photo=typeof x.photoUrl==='string'&&PHOTO_RE.test(x.photoUrl)?x.photoUrl:null;
+  const keys=GROUP_TEX[g],k=keys[(Number(x.id)||0)%keys.length];
+  return {k,n:x.name,size,fin,g,photo,
+    f:num===null?150:clamp(num*7,90,220),w:num===null?120:clamp(num*5.5,70,170),
+    bg:photo?'url("'+photo+'")':enc(TEX[k]())};
+}
+function setPhone(d){
+  WA=d;
+  document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a=>{a.href=a.href.replace(/wa\.me\/\d+/,'wa.me/'+d)});
+  const loc='0'+d.slice(2),pretty=d.startsWith('94')&&d.length===11?loc.slice(0,3)+' '+loc.slice(3,6)+' '+loc.slice(6):'+'+d;
+  document.querySelectorAll('a.num').forEach(a=>{a.textContent=pretty});
+}
+async function loadSite(){
+  try{
+    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),6000);
+    const r=await fetch('/api/site/public',{signal:ac.signal,headers:{Accept:'application/json'}});clearTimeout(to);
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d&&d.text){
+      const tx=d.text;
+      if(typeof tx.whatsapp==='string'&&/^\d{9,15}$/.test(tx.whatsapp))setPhone(tx.whatsapp);
+      if(typeof tx.address==='string'&&tx.address.trim())['en','si','ta'].forEach(l=>{I18[l].addr=tx.address.trim()});
+      if(tx.promise)['en','si','ta'].forEach(l=>{const p=tx.promise[l];if(!p)return;
+        if(typeof p.h==='string'&&p.h.trim())I18[l].promH=p.h.trim();
+        if(typeof p.p==='string'&&p.p.trim())I18[l].promP=p.p.trim()});
+    }
+    const live=(d&&Array.isArray(d.tiles)?d.tiles:[]).map(liveTile).filter(Boolean);
+    if(live.length){
+      TILES.length=0;live.forEach(t=>TILES.push(t));
+      floorT=TILES[0];wallT=TILES.find(t=>t.g==='wall')||TILES[1]||null;
+      buildSwatches();
+      if(live.some(t=>t.photo)){const n=document.querySelector('[data-t="sampleNote"]');if(n)n.style.display='none'}
+    }
+    text();
+  }catch(e){/* offline or API down: the built-in samples stay on screen */}
+}
+loadSite();
+const fw=document.querySelector('a.wa');function wv(){fw.style.display=(window.scrollY>520)?'':'none'}wv();addEventListener('scroll',wv,{passive:true});
+</script></body></html>

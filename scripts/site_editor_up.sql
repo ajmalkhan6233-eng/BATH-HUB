@@ -1,0 +1,3 @@
+-- Website editor: new tables only (the app also creates them on start).
+CREATE TABLE IF NOT EXISTS site_tiles (id SERIAL PRIMARY KEY, name VARCHAR(80) NOT NULL, size VARCHAR(40), finish VARCHAR(12) NOT NULL DEFAULT 'matt', grp VARCHAR(8) NOT NULL DEFAULT 'stone', photo_file VARCHAR(60), visible BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS site_text (key VARCHAR(40) PRIMARY KEY, value TEXT NOT NULL DEFAULT '');
