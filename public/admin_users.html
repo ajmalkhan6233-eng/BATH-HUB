@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Users</title>
+<style>
+:root{--gold:#F5A623;--bg:#0D0D0D;--bg2:#141414;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.1);--text:#f0f0f0;--text2:#999;--green:#22c55e;--red:#ef4444}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f7;--bg2:#fff;--card:#fff;--card-border:rgba(0,0,0,.12);--text:#1a1a1a;--text2:#555}}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,sans-serif}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}.sub{color:var(--text2);margin-bottom:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button{background:var(--card);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}button.danger{color:var(--red)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.name{font-weight:600}.meta{color:var(--text2);font-size:12px;margin-top:2px}
+.badge{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;border:1px solid var(--card-border)}
+.on{color:var(--green)}.off{color:var(--red)}.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--card-border);font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
+.modal.show{display:flex}.box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:440px;max-height:85vh;overflow:auto}
+label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg);color:var(--text);font:inherit}
+#msg{min-height:20px;margin-bottom:8px}.err{color:var(--red)}.ok{color:var(--green)}
+</style></head><body>
+<h1>Users</h1><div class="sub">Admin only. Add people, change roles, disable, reset passwords, sign people out.</div>
+<div class="bar"><button class="gold" id="add">+ Add user</button><button id="reload">Refresh</button><a href="admin_audit.html" style="color:var(--gold)">Audit log</a></div>
+<div id="msg"></div><div id="list"></div>
+
+<div class="modal" id="m"><div class="box" id="mb"></div></div>
+<script>
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);let ME=null,USERS=[];
+async function api(path,method,body){
+  const r=await fetch('/api/admin-core'+path,{method:method||'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.error||('Error '+r.status));return j;}
+function msg(t,ok){$('msg').innerHTML='<span class="'+(ok?'ok':'err')+'">'+E(t)+'</span>';}
+const fmt=d=>d?new Date(d).toLocaleString():'never';
+async function load(){
+  try{ if(!ME){const m=await fetch('/api/me',{credentials:'same-origin'});if(m.ok){const j=await m.json();ME=j.user||j;}}
+    USERS=await api('/users');render();}catch(e){msg(e.message)}}
+function render(){
+  $('list').innerHTML=USERS.map(u=>{const self=ME&&String(ME.id)===String(u.id);
+    return '<div class="card"><div class="row"><div><div class="name">'+E(u.name||u.username)+(self?' (you)':'')+'</div><div class="meta">'+E(u.username)+' &middot; '+E(u.role)+'</div></div>'
+    +'<div><span class="badge '+(u.active===false?'off':'on')+'">'+(u.active===false?'Disabled':'Active')+'</span></div></div>'
+    +'<div class="meta">Last login: '+E(fmt(u.last_login))+' &middot; Sessions: '+E(u.active_sessions)+'</div>'
+    +'<div class="acts"><button data-a="role" data-id="'+E(u.id)+'"'+(self?' disabled':'')+'>Role</button>'
+    +(u.active===false?'<button data-a="enable" data-id="'+E(u.id)+'">Enable</button>':'<button class="danger" data-a="disable" data-id="'+E(u.id)+'"'+(self?' disabled':'')+'>Disable</button>')
+    +'<button data-a="pw" data-id="'+E(u.id)+'">Reset password</button>'
+    +'<button class="danger" data-a="out" data-id="'+E(u.id)+'"'+(self?' disabled':'')+'>Force logout</button>'
+    +'<button data-a="hist" data-id="'+E(u.id)+'">History</button></div></div>';}).join('')||'<div class="meta">No users.</div>';}
+function modal(html){$('mb').innerHTML=html;$('m').classList.add('show');}
+function close(){$('m').classList.remove('show');}
+$('m').addEventListener('click',e=>{if(e.target.id==='m'||e.target.dataset.close)close();});
+$('reload').onclick=load;
+$('add').onclick=()=>{modal('<h3>Add user</h3><label>Username</label><input id="f_u" autocomplete="off"><label>Name</label><input id="f_n"><label>Role</label><select id="f_r"><option>staff</option><option>owner</option><option>admin</option></select><label>Password (12+ characters)</label><input id="f_p" type="password" autocomplete="new-password"><div id="fe" class="err"></div><div class="acts"><button class="gold" id="f_go">Add</button><button data-close="1">Cancel</button></div>');
+  $('f_go').onclick=async()=>{try{await api('/users','POST',{username:$('f_u').value,name:$('f_n').value,role:$('f_r').value,password:$('f_p').value});close();msg('User added',1);load();}catch(e){$('fe').textContent=e.message}};};
+$('list').addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const id=b.dataset.id,u=USERS.find(x=>String(x.id)===id),a=b.dataset.a;
+  try{
+    if(a==='disable'){if(!confirm('Disable '+u.username+'? They are signed out now and cannot log in.'))return;await api('/users/'+id+'/disable','POST');msg('Disabled',1);load();}
+    else if(a==='enable'){await api('/users/'+id+'/enable','POST');msg('Enabled',1);load();}
+    else if(a==='out'){if(!confirm('Sign '+u.username+' out everywhere?'))return;const r=await api('/users/'+id+'/force-logout','POST');msg('Signed out ('+r.sessions_cleared+' sessions)',1);load();}
+    else if(a==='role'){modal('<h3>Role for '+E(u.username)+'</h3><label>Name</label><input id="f_n" value="'+E(u.name)+'"><label>Role</label><select id="f_r">'+['admin','owner','staff'].map(r=>'<option'+(r===u.role?' selected':'')+'>'+r+'</option>').join('')+'</select><div id="fe" class="err"></div><div class="acts"><button class="gold" id="f_go">Save</button><button data-close="1">Cancel</button></div>');
+      $('f_go').onclick=async()=>{try{await api('/users/'+id,'PATCH',{role:$('f_r').value,name:$('f_n').value});close();msg('Saved',1);load();}catch(x){$('fe').textContent=x.message}};}
+    else if(a==='pw'){modal('<h3>New password for '+E(u.username)+'</h3><label>Password (12+ characters)</label><input id="f_p" type="password" autocomplete="new-password"><div class="meta">They will be signed out.</div><div id="fe" class="err"></div><div class="acts"><button class="gold" id="f_go">Set password</button><button data-close="1">Cancel</button></div>');
+      $('f_go').onclick=async()=>{try{await api('/users/'+id+'/reset-password','POST',{password:$('f_p').value});close();msg('Password changed',1);load();}catch(x){$('fe').textContent=x.message}};}
+    else if(a==='hist'){const h=await api('/users/'+id+'/login-history');
+      modal('<h3>Login history: '+E(u.username)+'</h3><table><tr><th>When</th><th>Result</th><th>IP</th></tr>'+h.history.map(x=>'<tr><td>'+E(fmt(x.attempted_at))+'</td><td>'+(x.success?'OK':E(x.reason||'failed'))+'</td><td>'+E(x.ip||'')+'</td></tr>').join('')+'</table><div class="acts"><button data-close="1">Close</button></div>');}
+  }catch(x){msg(x.message)}});
+load();
+</script></body></html>
