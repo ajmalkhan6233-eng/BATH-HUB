@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit &amp; Void</title>
+<style>
+:root{--bg:#0f1115;--card:#171a21;--card-border:#2a2f3a;--text:#f2f2f2;--text2:#9aa3b2;--gold:#d4a843;--red:#e5594f;--green:#4cb782}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif;padding:12px 16px 40px}
+h1{font-size:20px;margin:4px 0 10px;color:var(--gold)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
+.tabs button{flex:0 0 auto;background:var(--card);color:var(--text2);border:1px solid var(--card-border);border-radius:18px;padding:8px 14px;font-size:14px;cursor:pointer}
+.tabs button.on{color:#111;background:var(--gold);border-color:var(--gold);font-weight:600}
+.note{background:rgba(212,168,67,.12);border:1px solid var(--gold);border-radius:10px;padding:10px;margin-bottom:10px;color:var(--text);font-size:14px}
+.row{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.row.void{opacity:.55}
+.row .cols{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px}
+.row .cols span b{color:var(--text2);font-weight:400;font-size:12px;display:block}
+.tag{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-left:6px}
+.why{color:var(--text2);font-size:13px;margin-top:6px}
+.btns{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+button.b{background:transparent;color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;min-height:40px}
+button.b.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+button.b.red{color:var(--red);border-color:var(--red)}
+button[disabled]{opacity:.4;cursor:not-allowed}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:14px;z-index:10}
+.modal.show{display:flex}
+.box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;width:100%;max-width:460px;max-height:90vh;overflow:auto}
+.box h2{margin:0 0 10px;font-size:17px}
+label{display:block;font-size:12px;color:var(--text2);margin:10px 0 3px}
+input,textarea,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--card-border);border-radius:8px;padding:10px;font-size:15px}
+.err{color:var(--red);font-size:13px;margin-top:8px;min-height:18px}
+.hist{border-top:1px solid var(--card-border);padding:8px 0;font-size:13px}
+.hist pre{white-space:pre-wrap;word-break:break-word;margin:4px 0 0;color:var(--text2);font-size:12px}
+.empty{color:var(--text2);padding:20px;text-align:center}
+</style>
+</head>
+<body>
+<h1>Edit &amp; Void</h1>
+<div class="tabs" id="tabs"></div>
+<div id="note"></div>
+<div id="list"><div class="empty">Loading...</div></div>
+
+<div class="modal" id="modal"><div class="box" id="box"></div></div>
+
+<script>
+var mods = [], cur = null, curData = null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function api(method, url, body){
+  return fetch(url,{method:method,credentials:'same-origin',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined})
+    .then(function(r){return r.json().catch(function(){return {};}).then(function(j){ if(!r.ok) throw new Error(j.error||('Error '+r.status)); return j; });});
+}
+function fmt(v){
+  if(v===true) return 'yes'; if(v===false) return 'no';
+  if(v==null||v==='') return '-';
+  if(typeof v==='string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) return v.slice(0,10);
+  return String(v);
+}
+function label(c){return c.replace(/_/g,' ');}
+
+function init(){
+  api('GET','/api/corrections/modules').then(function(m){
+    mods = m;
+    document.getElementById('tabs').innerHTML = m.map(function(x){return '<button data-k="'+esc(x.key)+'">'+esc(x.label)+'</button>';}).join('');
+    document.getElementById('tabs').onclick = function(e){ var k=e.target.getAttribute&&e.target.getAttribute('data-k'); if(k) open(k); };
+    open(m[0].key);
+  }).catch(function(e){ document.getElementById('list').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; });
+}
+function open(k){
+  cur = mods.filter(function(x){return x.key===k;})[0];
+  Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.getAttribute('data-k')===k);});
+  document.getElementById('list').innerHTML='<div class="empty">Loading...</div>';
+  api('GET','/api/corrections/'+k).then(function(d){
+    curData = d;
+    document.getElementById('note').innerHTML = d.note ? '<div class="note">'+esc(d.note)+'</div>' : '';
+    if(!d.rows.length){ document.getElementById('list').innerHTML='<div class="empty">Nothing here yet.</div>'; return; }
+    document.getElementById('list').innerHTML = d.rows.map(function(r,i){
+      var cols = cur.columns.map(function(c){return '<span><b>'+esc(label(c))+'</b>'+esc(fmt(r[c]))+'</span>';}).join('');
+      var v = r.voided;
+      return '<div class="row'+(v?' void':'')+'"><div class="cols">'+cols+(v?'<span class="tag">VOID</span>':'')+'</div>'
+        +(v?'<div class="why">Voided by '+esc(r.voided_by)+': '+esc(r.void_reason)+'</div>':'')
+        +'<div class="btns"><button class="b gold" data-a="edit" data-i="'+i+'"'+((v||!d.editable)?' disabled':'')+'>Edit</button>'
+        +'<button class="b red" data-a="void" data-i="'+i+'"'+(v?' disabled':'')+'>Void</button>'
+        +'<button class="b" data-a="hist" data-i="'+i+'">History</button></div></div>';
+    }).join('');
+  }).catch(function(e){ document.getElementById('list').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; });
+}
+document.getElementById('list').onclick = function(e){
+  var a = e.target.getAttribute && e.target.getAttribute('data-a'); if(!a) return;
+  var r = curData.rows[Number(e.target.getAttribute('data-i'))];
+  if(a==='edit') editModal(r); else if(a==='void') voidModal(r); else histModal(r);
+};
+function show(html){ document.getElementById('box').innerHTML=html; document.getElementById('modal').classList.add('show'); }
+function hide(){ document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').onclick = function(e){ if(e.target.id==='modal') hide(); };
+
+function editModal(r){
+  var html = '<h2>Edit '+esc(cur.label)+' #'+esc(r.id)+'</h2>';
+  cur.editable.forEach(function(f){
+    var val = r[f.name];
+    html += '<label>'+esc(label(f.name))+'</label>';
+    if(f.type==='b') html += '<select data-f="'+esc(f.name)+'"><option value="true"'+(val===true?' selected':'')+'>yes</option><option value="false"'+(val===false?' selected':'')+'>no</option></select>';
+    else if(f.type==='d') html += '<input type="date" data-f="'+esc(f.name)+'" value="'+esc(val?String(val).slice(0,10):'')+'">';
+    else html += '<input '+(f.type==='n'?'type="number" step="any" inputmode="decimal"':'type="text"')+' data-f="'+esc(f.name)+'" value="'+esc(val==null?'':val)+'">';
+  });
+  html += '<label>Why are you changing it? (optional)</label><input type="text" id="why">'
+    +'<div class="err" id="err"></div><div class="btns"><button class="b gold" id="save">Save</button><button class="b" id="cancel">Cancel</button></div>';
+  show(html);
+  document.getElementById('cancel').onclick = hide;
+  document.getElementById('save').onclick = function(){
+    var body = {}; Array.prototype.forEach.call(document.querySelectorAll('#box [data-f]'),function(el){
+      var v = el.value; var f = cur.editable.filter(function(x){return x.name===el.getAttribute('data-f');})[0];
+      body[f.name] = f.type==='b' ? v==='true' : v;
+    });
+    body.reason = document.getElementById('why').value;
+    api('PUT','/api/corrections/'+cur.key+'/'+r.id, body).then(function(){hide();open(cur.key);})
+      .catch(function(e){document.getElementById('err').textContent=e.message;});
+  };
+}
+function voidModal(r){
+  show('<h2>Void '+esc(cur.label)+' #'+esc(r.id)+'</h2><div class="why">The record is kept and greyed out. It cannot be edited after this.</div>'
+    +'<label>Reason (required, at least 3 letters)</label><textarea id="why" rows="3"></textarea>'
+    +'<div class="err" id="err"></div><div class="btns"><button class="b red" id="go">Void it</button><button class="b" id="cancel">Cancel</button></div>');
+  document.getElementById('cancel').onclick = hide;
+  document.getElementById('go').onclick = function(){
+    var reason = document.getElementById('why').value.trim();
+    if(reason.length<3){ document.getElementById('err').textContent='Please give a reason.'; return; }
+    api('POST','/api/corrections/'+cur.key+'/'+r.id+'/void',{reason:reason}).then(function(){hide();open(cur.key);})
+      .catch(function(e){document.getElementById('err').textContent=e.message;});
+  };
+}
+function histModal(r){
+  show('<h2>History of #'+esc(r.id)+'</h2><div id="hl" class="empty">Loading...</div><div class="btns"><button class="b" id="cancel">Close</button></div>');
+  document.getElementById('cancel').onclick = hide;
+  api('GET','/api/corrections/'+cur.key+'/'+r.id+'/history').then(function(h){
+    document.getElementById('hl').className='';
+    document.getElementById('hl').innerHTML = h.length ? h.map(function(x){
+      return '<div class="hist"><b>'+esc(x.action.toUpperCase())+'</b> by '+esc(x.changed_by)+' on '+esc(String(x.changed_at).slice(0,16).replace('T',' '))
+        +(x.reason?'<div>Reason: '+esc(x.reason)+'</div>':'')
+        +'<pre>Before: '+esc(JSON.stringify(x.old_version))+'</pre></div>';
+    }).join('') : '<div class="empty">No changes yet.</div>';
+  }).catch(function(e){document.getElementById('hl').textContent=e.message;});
+}
+init();
+</script>
+</body>
+</html>
