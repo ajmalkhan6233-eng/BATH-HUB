@@ -308,4 +308,11 @@ router.get('/receipt-queue/:id/image', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Send the saved receipt picture to the bill's customer on WhatsApp (own module; dry run unless WHATSAPP_LIVE=true).
+// Always answers 200 with the result so a WhatsApp problem can never block billing.
+router.post('/receipt-queue/:id/send', async (req, res) => {
+    const sender = require('../utils/whatsappReceiptSender');
+    res.json(await sender.sendReceiptForQueueItem(pool, req.params.id));
+});
+
 module.exports = router;
