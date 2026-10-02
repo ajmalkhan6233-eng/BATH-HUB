@@ -69,3 +69,5 @@ local_ops/
 .pg_test_superpw
 .test-login.txt
 .dev/
+
+.pg_owner_superpw

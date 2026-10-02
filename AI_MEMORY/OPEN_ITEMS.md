@@ -12,3 +12,8 @@
 - Native speaker check of Sinhala/Tamil website text
 - Turn on WhatsApp draft-only mode (AGENT_DRAFT_ONLY=true in .env) only when Aj says
 - Locate C:\Bathco\AI-Data\ (Lasersoft exports): Aj to confirm the path
+- Aj: restart laptop, confirm :3100 /health + /owner come back; then create owner login in setup wizard; save ADMIN_PIN + .pg_owner_superpw password in password manager
+- Aj: laptop Sleep = Never when plugged in
+- Postgres 18 listens on all interfaces (0.0.0.0:5432): restrict listen_addresses to localhost (needs admin restart of service)
+- pm2 dump also holds another app (premium-imports-server, not ours); pm2 resurrect restarts it too
+- Stale test files: .test-login.txt (old test user, gone) in overnight worktree

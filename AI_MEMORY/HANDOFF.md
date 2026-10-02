@@ -1,8 +1,11 @@
-# HANDOFF (2026-10-01)
+# HANDOFF (2026-10-02)
 
-- Tag v1.0 = checkpoint (docs/CHECKPOINT_V1.md). master has everything up to 874f7fe; SALARY module (26cc560) is committed on branch overnight, NOT pushed (waiting for Aj).
-- SALARY module: routes/salary.js, utils/salaryMath.js, public/salary.js, tab "Salary & Costs" in /owner and /nature. 431 tests pass. Owner's 3 reference splits + late-return adjustment tested.
-- Assumptions to confirm: net = gross profit - returns - recorded expenses (rent/bills/daily pay NOT added unless setting add_fixed_to_net=1); returns = refund rows in daily_reports; "late return" = refund row created after the month was closed.
-- C:\Bathco\AI-Data not on this PC: sales/returns come from DB tables (daily_summary, daily_reports), not the Lasersoft files.
-- UNVERIFIED: real WhatsApp send + number check, handwriting reading on real photos, website not online.
-- Next: Aj decides push; pricing rules (1.95x, 10-25%) exist as /api/salary/price-check but are NOT wired into POS.
+- Owner server is LIVE ON THIS LAPTOP: pm2 app apex-server, port 3100, run from this folder (local_ops/ecosystem.local.config.js, gitignored). Always `pm2 ... --only apex-server`.
+- DB: PostgreSQL 18 Windows service (5432), database bathco_owner, own user. Credentials only in .env + .pg_owner_superpw (both gitignored). Zero data; only structure rows (feature flags, agent rules, salary settings, chart of accounts).
+- Aj has not yet created his owner login: /owner redirects to /setup.html until he does. ADMIN_PIN was shown to Aj once (not stored here).
+- Backups: local_ops/backup_owner_db.ps1 (PG18 pg_dump) -> backups/, task Apex_Owner_DB_Backup daily 23:00, keeps 14. Logon start: task Apex_Owner_Server_Start (pm2 resurrect).
+- bathco_test (port 5433, temp embedded process) was wiped 2026-10-02 with NO backup (pg_dump v16 mismatch); it is throwaway, rebuild via scripts/dev.
+- Sidebar now links Investor Loans, Money Control, Sale Commissions, Settings. Bridge fix from investor branch merged.
+- Tests: 17 failed / 1319 passed (baseline 17, not grown).
+- Next: Aj restarts laptop -> check /health and /owner return by themselves; Aj completes setup wizard.
+- UNVERIFIED: reboot survival, real WhatsApp send, website not online.
