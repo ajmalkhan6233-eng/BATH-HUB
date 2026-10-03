@@ -1258,7 +1258,7 @@ app.patch('/api/cheques/:id/status', async (req, res) => {
     const { status } = req.body;
     try {
         const result = await pool.query(
-            `UPDATE cheques SET status = $1, updated_at = CURRENT_TIMESTAMP
+            `UPDATE cheques SET status = $1
              WHERE id = $2 RETURNING *`,
             [status, req.params.id]
         );
