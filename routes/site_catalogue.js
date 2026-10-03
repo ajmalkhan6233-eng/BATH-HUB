@@ -27,10 +27,14 @@ function siteOrigin() {
     const raw = String(process.env.SITE_URL || '').trim().replace(/\/+$/, '');
     return /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/.test(raw) ? raw : '';
 }
+// For the sitemap and robots.txt, which need full addresses: SITE_URL, else the address the visitor used (only if it looks like a plain host name).
+function originFor(req) {
+    return siteOrigin() || (/^[A-Za-z0-9.-]+(:\d{1,5})?$/.test(req.get('host') || '') ? req.protocol + '://' + req.get('host') : '');
+}
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 router.get('/robots.txt', (req, res) => {
-    const o = siteOrigin();
+    const o = originFor(req);
     const lines = ['User-agent: *', 'Allow: /site', 'Allow: /website/', 'Allow: /api/site/photo/', 'Allow: /api/site/catalogue.pdf',
         'Disallow: /api/', 'Disallow: /owner', 'Disallow: /uploads/'];
     if (o) lines.push('', 'Sitemap: ' + o + '/sitemap.xml');
@@ -38,7 +42,7 @@ router.get('/robots.txt', (req, res) => {
 });
 
 router.get('/sitemap.xml', (req, res) => {
-    const loc = (siteOrigin() || '') + '/site';
+    const loc = originFor(req) + '/site';
     res.type('application/xml').send('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>'
         + esc(loc) + '</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n</urlset>\n');
 });
@@ -148,3 +152,4 @@ router.get('/api/site/catalogue.pdf', limiter, async (req, res) => {
 
 module.exports = router;
 module.exports.siteOrigin = siteOrigin;
+module.exports.catalogueHtml = catalogueHtml;
