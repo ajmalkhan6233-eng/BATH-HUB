@@ -193,6 +193,7 @@ app.use('/api/admin/verify', failedAuthLimiter(5));
 
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
 
 // APEX tenant-status gate (control plane). No-op unless
 // APEX_ENFORCE_TENANT_STATUS=true in .env — see middleware/tenantStatusMiddleware.js.
