@@ -17,10 +17,7 @@ let archiver = null;
 try { archiver = require('archiver'); } catch (e) { archiver = null; }     // zip is optional: the route says so if it is missing
 
 const router = express.Router();
-const pool = new Pool({
-    host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-    user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-});
+const pool = require('../utils/pool');
 
 const DIR = path.join(__dirname, '..', 'uploads', 'attachments');
 if (!fs.existsSync(DIR)) fs.mkdirSync(DIR, { recursive: true });

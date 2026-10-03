@@ -5,6 +5,7 @@ bathco-mobile/node_modules/
 # Environment & secrets
 .env
 .env.*
+!.env.example
 *.env.local
 TEMP_PASSWORDS.txt
 cookies.txt

@@ -256,10 +256,7 @@ function createRouter(pool, { answerFn = classifyAndAnswer } = {}) {
 
 let _router;
 function init() {
-    if (!_router) _router = createRouter(new Pool({
-        host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-        user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-    }));
+    if (!_router) _router = createRouter(require('../utils/pool'));
     return _router;
 }
 module.exports = function (req, res, next) { init()(req, res, next); };

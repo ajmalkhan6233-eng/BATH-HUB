@@ -10,3 +10,4 @@
 - Tests: 67 suites, 545 pass, 1 skipped (E2E restore), 3 clean runs. Tests never touch a real DB (dead port).
 - Test rig only (not the app): temp PG on 5433 (bathco_test, _a.._f), scratchpad scripts. After any setup-wizard test: `git checkout -- config/active.branding.json`.
 - UNVERIFIED: service worker offline pages (the in-app browser refuses service workers; test on a phone/Chrome, see OPEN_ITEMS), pm2 reboot survival after these changes, WhatsApp, queued file uploads in a real browser (unit-tested only).
+- 2026-10-03 branch feature/audit-high-fixes (NOT merged, not pushed): 4 commits after npm audit fix: shared pool utils/pool.js, phone-width CSS, PETTY_CASH_FLOAT warning + .env.example, encrypted backup copy + scripts/restore_encrypted_backup.js. Golden-core skipped: routes/audit.js, purchasing_accounting.js, staff_reports.js keep their own pools. Report: audit/AUDIT.md.

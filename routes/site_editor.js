@@ -21,10 +21,7 @@ const { Pool } = require('pg');
 const siteImage = require('../utils/siteImage');
 
 const router = express.Router();
-const pool = new Pool({
-    host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-    user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-});
+const pool = require('../utils/pool');
 const DIR = process.env.SITE_UPLOAD_DIR || path.join(__dirname, '..', 'uploads', 'site');
 fs.mkdirSync(DIR, { recursive: true });
 

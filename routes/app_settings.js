@@ -14,10 +14,7 @@ const { ensureAdminAudit, logAdmin, adminOnly } = require('../utils/adminAudit')
 const S = require('../utils/appSettings');
 
 const router = express.Router();
-const pool = new Pool({
-    host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-    user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-});
+const pool = require('../utils/pool');
 
 // The owner-app menu items. dashboard and settings can never be hidden.
 const MENU_ITEMS = ['dashboard', 'daily-sales', 'stock', 'pos', 'grn', 'expenses', 'cheques', 'vendors', 'barcode', 'salary', 'docinbox', 'loans',
