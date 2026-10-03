@@ -12,6 +12,7 @@ const { parseRoomSize } = require('./quote');
 const R = (...parts) => new RegExp(parts.join('|'), 'iu');
 
 const OVERRIDE = R(
+    String.raw`\brepeat\s+(?:the\s+)?(?:text|message|words|everything)\s+(?:above|before)\b`, String.raw`\babove\s+this\s+message\b`, String.raw`\b(?:database|server|admin|owner)\s+password\b`,
     String.raw`\b(?:ignore|disregard|forget|override|bypass)\b[^.\n]{0,50}\b(?:rules?|instructions?|prompts?|guidelines?|restrictions?|polic(?:y|ies)|programming|limits?)\b`,
     String.raw`\bsystem\s*prompt\b`, String.raw`\bdeveloper\s*mode\b`, String.raw`\bjailbreak\b`, String.raw`\bdan\s*mode\b`,
     String.raw`\byou\s+are\s+now\b`, String.raw`\bact\s+as\b`, String.raw`\bpretend\s+(?:you|to)\b`,
@@ -24,6 +25,7 @@ const OVERRIDE = R(
 );
 
 const PRIVATE = R(
+    String.raw`\bowner\b[^.\n]{0,25}\b(?:earn\w*|income|makes?|paid)\b`, String.raw`\b(?:last|previous|other|another|all)\s+customers?'?s?\s+(?:phone|number|details|address|names?)\b`, String.raw`\bcustomers?'?s?\s+(?:phone|numbers?|details|list)\b`, 'වෙන\s+ගනුදෙනුකාර', 'අනිත්\s+ගනුදෙනුකාර',
     String.raw`\b(?:profits?|loss(?:es)?|margins?|mark-?ups?|cost\s*price|buying\s*price|purchase\s*price|suppliers?|wholesale\s+price|salary|salaries|wages|payroll|staff\s+pay|loans?|investors?|turnover|revenue|daily\s+sales|total\s+sales|bank\s+balance)\b`,
     String.raw`\bowner'?s?\s+(?:phone|number|address|home)\b`, String.raw`\bother\s+customers?\b`, String.raw`\banother\s+customer\b`, String.raw`\bsomeone\s+else'?s?\b`,
     String.raw`\bwhat\s+did\s+\w+(?:\s+\w+)?\s+(?:buy|purchase|order|pay)\b`,
