@@ -149,6 +149,8 @@ app.set('trust proxy', 1);
 // (X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy, etc.) are
 // same-origin/heuristic and safe to enable as-is. Tightening CSP to nonces
 // would require rewriting every inline script/style — out of scope here.
+// HARDENING (utils/hardening): everything logged has phone numbers cut to the last 3 digits and tokens/keys/passwords removed. HARDENING_LOG_REDACT=off disables.
+require('./utils/hardening').installConsoleRedaction();
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
 // 100 requests / 15 min / IP across the whole app.
@@ -190,10 +192,16 @@ const failedAuthLimiter = (max) => rateLimit({
 });
 app.use('/api/login', failedAuthLimiter(10));
 app.use('/api/admin/verify', failedAuthLimiter(5));
+// HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
+app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
+app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
+app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
+app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
+app.use(['/api/public', '/api/site', '/api/sync'], require('./utils/hardening').jsonDepthGuard());   // HARDENING: refuse absurdly nested/huge JSON on public + sync endpoints
 
 // APEX tenant-status gate (control plane). No-op unless
 // APEX_ENFORCE_TENANT_STATUS=true in .env — see middleware/tenantStatusMiddleware.js.
