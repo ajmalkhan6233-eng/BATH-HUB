@@ -81,7 +81,7 @@ const MONEY = R(
 
 const DISCOUNT = R(
     String.raw`\b(?:discount\w*|reduc\w+|cheaper|lower\s+(?:the\s+)?price|last\s+price|final\s+price|best\s+price|bargain\w*|negotiat\w*|promotion|promo|special\s+price|wholesale|bulk|too\s+(?:expensive|much|high)|expensive)\b`,
-    String.raw`\b\d+\s*(?:%|percent)\s*(?:off|discount)?`,
+    String.raw`\b\d+\s*(?:%|percent)\s*(?:off|discount)?`, String.raw`\b(?:any|special|current)\s+offers?\b`, String.raw`\boffers?\s+(?:ekak|eka|irukka|irukku|thiyenawada)\b`,
     'වට්ටම', 'අඩු\\s+කරන්න', 'අඩුවෙන්', 'අවසාන\\s+මිල', 'මිල\\s+ඉහළයි', 'ගොඩක්\\s+මිල', 'ඔෆර්',
     'தள்ளுபடி', 'குறைக்க', 'குறைவாக', 'கடைசி\\s+விலை', 'விலை\\s+அதிகம்', 'ஆஃபர்',
     String.raw`\b(?:wattama|wattam|adu\s+karanna|adu\s+karala|aduwata|wadi\s+mila|mila\s+wadi|godak\s+mila)\b`,
@@ -98,7 +98,7 @@ const DELIVERY = R(
 const HOURS = R(
     String.raw`\b(?:open(?:ing)?|clos(?:e|ing)|hours?|timings?|working\s+hours|business\s+hours|sundays?|saturdays?|poya|holidays?|weekends?)\b`,
     'ඇරලා', 'ඇරෙන', 'වහන', 'වැහෙන', 'කීයටද', 'වේලාව', 'වෙලාව', 'විවෘත', 'සති\\s+අන්ත', 'පොහොය',
-    'திறக்க', 'திறந்', 'மூட', 'நேரம்', 'ஞாயிறு', 'விடுமுறை',
+    'திறக்க', 'திறப்ப', 'திறந்', 'மூட', 'நேரம்', 'ஞாயிறு', 'விடுமுறை',
     String.raw`\b(?:arinne|arala|wahanne|wahanawa|kiyatada|welawa|welawe|poya|sathiyen)\b`, String.raw`\b(?:eppo\s+thirakkum|thirakkum|moodum|neram|timing)\b`,
 );
 
@@ -119,7 +119,7 @@ const QUOTE = R(
 const LOCATION = R(
     String.raw`\b(?:where|location|address|showroom|directions?|map|how\s+to\s+(?:come|reach|get)|find\s+you|branch)\b`,
     'කොහෙද', 'කොහේද', 'ලිපිනය', 'ෂෝරූම්', 'ස්ථානය', 'එන්නේ\\s+කොහොමද',
-    'எங்கே', 'முகவரி', 'ஷோரூம்', 'எங்க\\b',
+    'எங்கே', 'முகவரி', 'ஷோரூம்', 'எங்க(?![\\u0B80-\\u0BFF])',
     String.raw`\b(?:koheda|kohe|lipinaya|enna\s+kohomada|enne\s+kohomada)\b`, String.raw`\b(?:enga|engey|eppadi\s+varanum)\b`,
 );
 
@@ -129,9 +129,9 @@ const GREETING = R(
     '^\\s*(?:வணக்கம்|ஹலோ|ஹாய்)',
 );
 const THANKS = R(String.raw`\b(?:thanks?|thank\s*you|thx|tnx|appreciate)\b`, 'ස්තූතිය', 'ස්තුති', 'நன்றி', String.raw`\b(?:sthuthi\w*|istuti|stuti|bohoma\s+sthuthi|nandri|nanri)\b`);
-const BYE = R(String.raw`\b(?:bye|goodbye|good\s*night|see\s+you|that'?s\s+all|nothing\s+else)\b`, 'බායි', 'ගිහින්\\s+එන්නම්', 'போய்\\s+வருகிறேன்', 'பை\\b', String.raw`\b(?:giyoth\s+enawa|poitu\s+varen)\b`);
-const AFFIRM = R('^\\s*(?:yes|yeah|yep|yup|ok(?:ay)?|sure|please|go\\s+ahead|do\\s+it|fine|alright|ow|oww|hari|harii|ho|ඔව්|හරි|ඕනේ|ஆம்|ஆமா|சரி|aam|aama|seri|sari|venum|ona|one)\\b');
-const NEGATIVE = R('^\\s*(?:no|nope|nah|not\\s+now|no\\s+thanks|later|naha|nehe|epa|එපා|නෑ|නැහැ|இல்லை|வேண்டாம்|vendam|venam)\\b');
+const BYE = R(String.raw`\b(?:bye|goodbye|good\s*night|see\s+you|that'?s\s+all|nothing\s+else)\b`, 'බායි', 'ගිහින්\\s+එන්නම්', 'போய்\\s+வருகிறேன்', 'பை(?![\\u0B80-\\u0BFF])', String.raw`\b(?:giyoth\s+enawa|poitu\s+varen)\b`);
+const AFFIRM = R('^\\s*(?:yes|yeah|yep|yup|ok(?:ay)?|sure|please|go\\s+ahead|do\\s+it|fine|alright|ow|oww|hari|harii|ho|ඔව්|හරි|ඕනේ|ඕන|ஆம்|ஆமா|சரி|aam|aama|seri|sari|venum|ona|one)(?![A-Za-z\\u0D80-\\u0DFF\\u0B80-\\u0BFF])');
+const NEGATIVE = R('^\\s*(?:no|nope|nah|not\\s+now|no\\s+thanks|later|naha|nehe|epa|එපා|නෑ|නැහැ|இல்லை|வேண்டாம்|vendam|venam)(?![A-Za-z\\u0D80-\\u0DFF\\u0B80-\\u0BFF])');
 
 const NOT_NAMES = new Set('looking interested planning building renovating from a the an trying going wondering asking not just in at using having also calling writing here new very so sorry fine good ok okay want need ready sure still really'.split(' '));
 function parseName(text) {

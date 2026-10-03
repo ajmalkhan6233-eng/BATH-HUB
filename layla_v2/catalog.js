@@ -10,7 +10,7 @@ const { parseTileSize } = require('./quote');
 
 const GENERIC = new Set(('tile price stock floor wall size box piece available have has you your the a an is are do does what how much many for of in on at to me my i we our with and or ' +
     'please pls need want looking show tell any some this that these those it one two three which kind type color colour design designs room bathroom kitchen ' +
-    'inch feet sqft quotation delivery discount location basin tap commode shower matt glossy per each cost rate hi hello hey can could would like get buy order ' +
+    'inch feet sqft quotation delivery discount location matt glossy per each cost rate hi hello hey can could would like get buy order ' +
     'ekak eka ona one thiyenawada thiyenawa kiyada kiyanawada mata mage enakku venum irukka irukkaa irukku enna evlo').split(/\s+/));
 
 const fmtRs = n => 'Rs ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });

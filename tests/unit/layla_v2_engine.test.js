@@ -103,7 +103,7 @@ describe('LAYLA v2 customers: facts only from the database', () => {
     });
     test('several matches: asks which one', async () => {
         const { say } = await setup();
-        const r = await say(CUST, 'do you have white tile or basin white?');
+        const r = await say(CUST, 'do you have anything white?');
         expect(all(r)).toMatch(/Marble White.*Basin Round White|Basin Round White.*Marble White/);
     });
     test('follow-up "and the price?" uses the item discussed before', async () => {

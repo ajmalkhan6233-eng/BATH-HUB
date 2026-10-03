@@ -5,6 +5,7 @@ const { detectLanguage, usesEmoji } = require('./lang');
 const { classify, cleanProfileName } = require('./intent');
 const { render } = require('./phrases');
 const { checkCustomerReply } = require('./guard');
+const { canonicalize } = require('./glossary');
 const { calcTiles, parseTileSize, parseRoomSize } = require('./quote');
 const { fmtRs } = require('./catalog');
 const { getConvo, sendTexts, alertOwners, snippet } = require('./core');
@@ -45,6 +46,7 @@ async function customerTurn(ctx, msg) {
     const avoid = history.filter(h => h.direction === 'out').slice(-8).map(h => h.body);
     const say = (key, p = {}) => { const t = render(key, style, { n: name, ...p }, { rng: ctx.rng, avoid, emoji }); avoid.push(t); return t; };
 
+    const searchText = text + ' ' + canonicalize(text);   // also the English shop words behind Sinhala/Tamil ones
     const parts = [], tasks = [], prices = [];
     const addTask = async (kind, summary, payload) => { const id = await store.createTask({ kind, phone: from, name, summary, payload }); tasks.push(id); return id; };
     const who = () => `${name || 'a customer'} (+${from})`;
@@ -55,6 +57,7 @@ async function customerTurn(ctx, msg) {
     };
 
     await store.addMessage(from, 'in', isMedia ? `[${type}]` : text, style);
+    await store.saveCustomer(from, { name, lang: style });   // remember who this is and which language they use
 
     const createDraft = async d => {
         const roomLabel = `${d.room.length} x ${d.room.width} ${d.room.unit === 'm' ? 'm' : 'ft'}`;
@@ -72,7 +75,7 @@ async function customerTurn(ctx, msg) {
         const data = pdata && (pending === 'awaiting_room' || pending === 'awaiting_tile') ? pdata : {};
         room = room || data.room; wantsQuote = wantsQuote || data.wantsQuote;
         if (!room) { state.pending = 'awaiting_room'; state.data = { wantsQuote, item: data.item || null }; parts.push(say('ask_room')); return; }
-        const found = await catalog.search(text);
+        const found = await catalog.search(searchText);
         const item = pickOne(found) || data.item || state.lastItem || null;
         const tileSize = (item && item.size && sizeToText(item.size)) || extractTileSize(text, room) || data.tileSize || null;
         if (!tileSize) { state.pending = 'awaiting_tile'; state.data = { room, wantsQuote }; parts.push(say('ask_tile_size')); return; }
@@ -159,14 +162,14 @@ async function customerTurn(ctx, msg) {
             else { await addTask('unknown_fact', `Customer asked for the showroom location and no address is saved: "${snippet(text, 200)}"`); parts.push(say('letcheck')); }
             break;
         }
-        case 'product': await productFlow(await catalog.search(text), cls); break;
+        case 'product': await productFlow(await catalog.search(searchText), cls); break;
         case 'name':
             name = cls.name; await store.saveCustomer(from, { name, lang: style }); parts.push(say('name_ack', { n: name })); break;
         case 'thanks': parts.push(say('thanks')); break;
         case 'bye': parts.push(say('bye')); break;
         case 'greeting': parts.push(say('greet')); break;
         default: {
-            const found = await catalog.search(text);
+            const found = await catalog.search(searchText);
             if (found.specific && found.items.length) { await productFlow(found, { asksPrice: false, asksStock: false, asksSize: false }); break; }
             let modelText = null;
             if (ctx.model) {
