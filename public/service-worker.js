@@ -12,7 +12,7 @@ const PRECACHE = [
   '/owner', '/manifest.json', '/bathhub-design.css', '/bathhub-theme.js', '/bathhub-icons.js', '/bathhub-a11y.js', '/brand/icon-192.png', '/brand/icon-512.png', '/brand/favicon-32.png', '/brand/logo-bh-transparent.png', '/fonts/inter.css', '/fonts/inter-latin.woff2', '/vendor/chart.umd.min.js',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png',
   '/salary.js', '/tile-gallery.js', '/tiles/stone-beige.webp', '/tiles/stone-pink.webp', '/tiles/stone-grey.webp', '/tiles/stone-beige-thumb.webp', '/tiles/stone-pink-thumb.webp', '/tiles/stone-grey-thumb.webp', '/website-editor.js', '/document-inbox.js', '/attach-widget.js', '/pos-picker.js', '/offline-queue.js',
-  '/pos_billing.html', '/investor_loans.html', '/money-control.html', '/sale_commissions.html', '/settings.html', '/cheque_register.html',
+  '/pos_billing.html', '/investor_loans.html', '/money-control.html', '/sale_commissions.html', '/settings.html', '/cheque_register.html', '/documents.html',
   '/customers.html', '/credit_aging.html', '/quotations.html', '/purchasing.html', '/accounting.html', '/audit_accounting.html',
   '/staff.html', '/reports_analytics.html', '/labels.html', '/assistant.html',
   '/admin_users.html', '/admin_audit.html', '/admin_settings.html', '/admin_corrections.html', '/admin_system.html',

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script>if (window.top === window.self) location.replace('/owner#/documents');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documents and Reports</title>
+<link rel="stylesheet" href="/bathhub-design.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Work Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-surface,#f7f4ec);color:var(--text-primary,#201c16);line-height:1.45;padding-bottom:60px;font-size:15px;overflow-x:hidden;}
+  main{max-width:900px;margin:0 auto;padding:12px;}
+  h1{font-size:19px;margin:6px 0 2px;} .sub{font-size:13px;color:var(--text-secondary,#5c4033);margin-bottom:10px;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;}
+  .tabs button,.btn{border:1px solid var(--border-strong,#c9a227);background:var(--bg-surface,#fff);color:inherit;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;min-height:40px;}
+  .tabs button.on,.btn.main{background:var(--gold-primary,#c9a227);color:var(--text-on-accent,#201c16);}
+  .btn.warn{border-color:#a02020;color:#a02020;} .btn:disabled{opacity:.5;cursor:default;}
+  .card{border:1px solid var(--border-subtle,#e2dccb);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--card-bg,transparent);}
+  .card h2{font-size:15px;margin:0 0 10px;}
+  label{display:block;font-size:12px;color:var(--text-secondary,#5c4033);margin:8px 0 3px;}
+  input,select{width:100%;padding:9px 10px;border:1px solid #d8d0bd;border-radius:6px;font-size:15px;font-family:inherit;background:var(--bg-surface,#fff);color:inherit;min-height:40px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;} .chips button{border:1px solid #d8d0bd;background:transparent;color:inherit;border-radius:14px;padding:5px 11px;font-size:12px;cursor:pointer;}
+  .rep{display:flex;flex-direction:column;gap:6px;} .rep label.opt{display:flex;gap:8px;align-items:flex-start;margin:0;padding:8px;border:1px solid var(--border-subtle,#e2dccb);border-radius:8px;font-size:14px;color:inherit;cursor:pointer;}
+  .rep label.opt input{flex:none;width:18px;height:18px;min-height:0;margin-top:2px;} .rep .d{font-size:12px;color:var(--text-secondary,#5c4033);}
+  .doc{border:1px solid var(--border-subtle,#e2dccb);border-radius:10px;padding:10px;margin-bottom:8px;}
+  .doc .t{font-weight:600;word-break:break-word;} .doc .m{font-size:12px;color:var(--text-secondary,#5c4033);font-variant-numeric:tabular-nums;margin:2px 0 8px;}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;} .acts .btn{padding:7px 10px;font-size:13px;min-height:36px;}
+  .badge{display:inline-block;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;background:var(--gold-primary,#c9a227);color:var(--text-on-accent,#201c16);margin-right:6px;}
+  .msg{font-size:13px;margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(201,162,39,.15);display:none;} .msg.err{background:rgba(160,32,32,.12);color:#a02020;}
+  .empty{color:var(--text-secondary,#5c4033);font-style:italic;padding:8px 0;font-size:14px;}
+  .chk{display:flex;flex-wrap:wrap;gap:6px 12px;} .chk label{display:flex;gap:5px;align-items:center;margin:0;font-size:13px;color:inherit;} .chk input{width:auto;min-height:0;}
+  .sendbox{display:none;margin-top:8px;padding:8px;border:1px dashed #c9a227;border-radius:8px;} .sendbox.show{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;} td,th{padding:5px 4px;border-bottom:1px solid var(--border-subtle,#e2dccb);text-align:left;vertical-align:top;word-break:break-word;}
+  .pane{display:none;} .pane.on{display:block;}
+</style>
+</head>
+<body>
+<main>
+  <h1>Documents and Reports</h1>
+  <div class="sub">Make a report as PDF or CSV for any dates, keep it here, and send it to people you have approved. Only the owner sees this page.</div>
+  <div class="tabs" role="tablist">
+    <button class="on" data-tab="make">Make a report</button><button data-tab="saved">Saved</button><button data-tab="people">Recipients</button><button data-tab="inbox">Files that arrived</button>
+  </div>
+  <div id="msg" class="msg" role="status"></div>
+
+  <section id="pane-make" class="pane on">
+    <div class="card"><h2>1. Which report?</h2><div id="reports" class="rep"></div></div>
+    <div class="card"><h2>2. Which dates?</h2>
+      <div class="row2"><div><label for="from">From</label><input type="date" id="from"></div><div><label for="to">To</label><input type="date" id="to"></div></div>
+      <div class="chips"><button data-r="today">Today</button><button data-r="week">Last 7 days</button><button data-r="month">This month</button><button data-r="lastmonth">Last month</button><button data-r="year">This year</button></div>
+      <div class="sub" id="snap" style="display:none">Stock reports show stock as it is right now; the dates do not change them.</div>
+    </div>
+    <div class="card"><h2>3. Make it</h2>
+      <div class="chk"><label><input type="checkbox" id="f-pdf" checked> PDF (for reading and sending)</label><label><input type="checkbox" id="f-csv" checked> CSV (for Excel)</label></div>
+      <div style="margin-top:10px"><button class="btn main" id="go">Make document</button></div>
+    </div>
+  </section>
+
+  <section id="pane-saved" class="pane"><div id="docs"></div></section>
+
+  <section id="pane-people" class="pane">
+    <div class="card"><h2>People who may receive documents</h2><div class="sub">Nothing can be sent to anyone who is not on this list. Phone numbers are shown as the last 3 digits only.</div><div id="people"></div></div>
+    <div class="card"><h2>Add a person</h2>
+      <label for="p-name">Name</label><input id="p-name" maxlength="100">
+      <div class="row2"><div><label for="p-role">Who is this?</label><select id="p-role"><option value="owner">Owner</option><option value="colleague">Colleague</option><option value="contact" selected>Named contact</option></select></div>
+      <div><label for="p-phone">Mobile number</label><input id="p-phone" inputmode="tel" placeholder="0771234567" autocomplete="off"></div></div>
+      <label>May receive</label><div class="chk" id="p-types"></div>
+      <div style="margin-top:10px"><button class="btn main" id="p-add">Add to the list</button></div>
+    </div>
+    <div class="card"><h2>What was sent</h2><div id="sends"></div></div>
+  </section>
+
+  <section id="pane-inbox" class="pane">
+    <div class="card"><h2>Files that arrived (waiting in quarantine)</h2>
+      <div class="sub">Nothing here goes into your books by itself. Confirm sends it to the Document Inbox, where you still check the details before filing.</div>
+      <div id="inbox"></div></div>
+    <div class="card"><h2>Add a test file</h2><div class="sub">Photo (JPG, PNG) or PDF, up to 10 MB.</div>
+      <label for="u-file">File</label><input type="file" id="u-file" accept="image/jpeg,image/png,application/pdf">
+      <label for="u-cap">Note (optional, helps the suggestion, e.g. "GRN from ABC")</label><input id="u-cap" maxlength="300">
+      <div style="margin-top:10px"><button class="btn main" id="u-go">Add file</button></div></div>
+  </section>
+</main>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const api = async (url, opt) => {
+    const r = await fetch(url, Object.assign({ credentials: 'include' }, opt));
+    let j = null; try { j = await r.json(); } catch (e) { /* download or empty */ }
+    if (!r.ok) { const e = new Error((j && j.error) || 'Something went wrong (' + r.status + ')'); e.status = r.status; e.body = j; throw e; }
+    return j;
+  };
+  const post = (url, body) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const say = (t, err) => { const m = $('msg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); m.style.display = t ? 'block' : 'none'; if (t) m.scrollIntoView({ block: 'nearest' }); };
+  const size = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  const when = s => { try { return new Date(s).toLocaleString('en-GB', { timeZone: 'Asia/Colombo', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+  let REPORTS = [], PEOPLE = [], PLACES = [];
+  const SNAP = ['stock', 'low_stock'];
+
+  // tabs
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + b.dataset.tab));
+    say('');
+    ({ saved: loadDocs, people: loadPeople, inbox: loadInbox })[b.dataset.tab]?.();
+  });
+
+  // dates
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function setRange(k) {
+    const n = new Date(), y = n.getFullYear(), m = n.getMonth();
+    const r = { today: [n, n], week: [new Date(y, m, n.getDate() - 6), n], month: [new Date(y, m, 1), n], lastmonth: [new Date(y, m - 1, 1), new Date(y, m, 0)], year: [new Date(y, 0, 1), n] }[k];
+    $('from').value = ymd(r[0]); $('to').value = ymd(r[1]);
+  }
+  document.querySelectorAll('.chips button').forEach(b => b.onclick = () => setRange(b.dataset.r));
+  setRange('month');
+
+  async function init() {
+    try {
+      REPORTS = await api('/api/documents/reports');
+      $('reports').innerHTML = REPORTS.map((r, i) => '<label class="opt"><input type="radio" name="rep" value="' + esc(r.key) + '"' + (i === 0 ? ' checked' : '') + '><span><b>' + esc(r.label) + '</b><br><span class="d">' + esc(r.description) + '</span></span></label>').join('');
+      document.querySelectorAll('input[name=rep]').forEach(x => x.onchange = () => { $('snap').style.display = SNAP.includes(x.value) ? 'block' : 'none'; });
+      $('p-types').innerHTML = '<label><input type="checkbox" value="*"> Everything</label>' + REPORTS.map(r => '<label><input type="checkbox" value="' + esc(r.key) + '"> ' + esc(r.label) + '</label>').join('');
+    } catch (e) { say(e.status === 403 ? 'Only the owner can use this page.' : e.message, true); }
+  }
+
+  $('go').onclick = async () => {
+    const rep = document.querySelector('input[name=rep]:checked'); const formats = ['pdf', 'csv'].filter(f => $('f-' + f).checked);
+    if (!rep) return say('Choose a report.', true);
+    if (!formats.length) return say('Choose PDF, CSV or both.', true);
+    $('go').disabled = true; say('Making the document. A PDF can take a few seconds...');
+    try {
+      const r = await post('/api/documents/generate', { report: rep.value, from: $('from').value, to: $('to').value, formats });
+      say('Done: ' + r.documents.length + ' file(s) saved.' + (r.problems.length ? ' ' + r.problems.join(' ') : ''), r.problems.length > 0);
+      document.querySelector('[data-tab=saved]').click(); say('Done: ' + r.documents.length + ' file(s) saved.');
+    } catch (e) { say(e.message, true); } finally { $('go').disabled = false; }
+  };
+
+  // saved documents
+  async function loadDocs() {
+    try {
+      if (!PEOPLE.length) PEOPLE = await api('/api/documents/recipients');
+      const docs = await api('/api/documents');
+      $('docs').innerHTML = docs.length ? docs.map(d => {
+        const opts = PEOPLE.filter(p => p.active && (p.allowed_types.includes('*') || p.allowed_types.includes(d.type))).map(p => '<option value="' + p.id + '">' + esc(p.name) + ' (' + esc(p.phone_hint) + ')</option>').join('');
+        return '<div class="doc" data-id="' + d.id + '"><div class="t"><span class="badge">' + esc(d.format.toUpperCase()) + '</span>' + esc(d.title) + '</div>'
+          + '<div class="m">Made ' + esc(when(d.created_at)) + ' by ' + esc(d.created_by || '') + ' &middot; ' + esc(size(d.bytes || 0)) + '</div>'
+          + '<div class="acts"><a class="btn" href="/api/documents/' + d.id + '/download">Download</a>'
+          + (d.format === 'pdf' ? '<a class="btn" target="_blank" rel="noopener" href="/api/documents/' + d.id + '/download?view=1">View</a>' : '')
+          + '<button class="btn" data-act="send">Send on WhatsApp</button><button class="btn warn" data-act="del">Delete</button></div>'
+          + '<div class="sendbox"><label>Send to</label>' + (opts ? '<select class="rcpt">' + opts + '</select><div style="margin-top:8px"><button class="btn main" data-act="dosend">Send</button></div>'
+            : '<div class="empty">No one on your list may receive this type. Add someone under Recipients.</div>') + '</div></div>';
+      }).join('') : '<div class="empty">Nothing saved yet. Make a report first.</div>';
+    } catch (e) { say(e.message, true); }
+  }
+  $('docs').onclick = async ev => {
+    const b = ev.target.closest('button[data-act]'); if (!b) return; const box = b.closest('.doc'), id = box.dataset.id;
+    if (b.dataset.act === 'send') return box.querySelector('.sendbox').classList.toggle('show');
+    if (b.dataset.act === 'del') { if (!confirm('Delete this document and its file? This cannot be undone.')) return; try { await api('/api/documents/' + id, { method: 'DELETE' }); say('Deleted.'); loadDocs(); } catch (e) { say(e.message, true); } return; }
+    if (b.dataset.act === 'dosend') {
+      const sel = box.querySelector('.rcpt'); if (!sel) return;
+      b.disabled = true;
+      try { const r = await post('/api/documents/' + id + '/send', { recipient_id: Number(sel.value) }); say(r.message || 'Done.'); }
+      catch (e) { say(e.message, true); } finally { b.disabled = false; }
+    }
+  };
+
+  // recipients
+  async function loadPeople() {
+    try {
+      PEOPLE = await api('/api/documents/recipients');
+      $('people').innerHTML = PEOPLE.length ? PEOPLE.map(p => '<div class="doc" data-id="' + p.id + '"><div class="t">' + esc(p.name) + ' <span class="badge">' + esc(p.role) + '</span></div><div class="m">' + esc(p.phone_hint) + ' &middot; may receive: '
+        + esc(p.allowed_types.includes('*') ? 'everything' : p.allowed_types.map(k => (REPORTS.find(r => r.key === k) || { label: k }).label).join(', ')) + '</div><div class="acts"><button class="btn warn" data-act="rm">Remove</button></div></div>').join('')
+        : '<div class="empty">The list is empty, so nothing can be sent yet.</div>';
+      const s = await api('/api/documents/sends');
+      $('sends').innerHTML = s.length ? '<table><tr><th>When</th><th>Document</th><th>To</th><th>Result</th></tr>' + s.slice(0, 30).map(x => '<tr><td>' + esc(when(x.created_at)) + '</td><td>' + esc(x.document_title || '') + '</td><td>' + esc(x.to || '') + '</td><td>' + esc(x.status) + '</td></tr>').join('') + '</table>' : '<div class="empty">Nothing sent yet.</div>';
+    } catch (e) { say(e.message, true); }
+  }
+  $('people').onclick = async ev => { const b = ev.target.closest('button[data-act=rm]'); if (!b) return; if (!confirm('Remove this person from the list?')) return;
+    try { await api('/api/documents/recipients/' + b.closest('.doc').dataset.id, { method: 'DELETE' }); loadPeople(); } catch (e) { say(e.message, true); } };
+  $('p-types').onchange = ev => { if (ev.target.value === '*' && ev.target.checked) $('p-types').querySelectorAll('input:not([value="*"])').forEach(x => x.checked = false); else if (ev.target.value !== '*' && ev.target.checked) $('p-types').querySelector('input[value="*"]').checked = false; };
+  $('p-add').onclick = async () => {
+    const types = [...$('p-types').querySelectorAll('input:checked')].map(x => x.value);
+    try { await post('/api/documents/recipients', { name: $('p-name').value, role: $('p-role').value, phone: $('p-phone').value, allowed_types: types }); $('p-name').value = ''; $('p-phone').value = ''; say('Added.'); loadPeople(); }
+    catch (e) { say(e.message, true); }
+  };
+
+  // inbound files
+  async function loadInbox() {
+    try {
+      const r = await api('/api/documents/inbox'); PLACES = r.places;
+      $('inbox').innerHTML = r.items.length ? r.items.map(x => '<div class="doc" data-id="' + x.id + '"><div class="t">' + esc(x.original_name || 'file') + '</div><div class="m">' + esc(x.mime) + ' &middot; ' + esc(size(x.bytes)) + ' &middot; ' + esc(when(x.created_at))
+        + (x.caption ? ' &middot; "' + esc(x.caption) + '"' : '') + '<br>Suggested: <b>' + esc(x.suggested_label || 'none') + '</b> (' + esc(x.suggested_reason) + ')</div>'
+        + '<label>Where does it belong?</label><select class="place">' + (x.suggested_label ? '' : '<option value="">Choose...</option>') + PLACES.map(p => '<option value="' + p.key + '"' + (p.key === x.suggested_place ? ' selected' : '') + '>' + esc(p.label) + '</option>').join('') + '</select>'
+        + '<div class="acts" style="margin-top:8px"><a class="btn" href="/api/documents/inbox/' + x.id + '/file' + (x.mime.startsWith('image/') ? '?view=1" target="_blank" rel="noopener' : '') + '">Look</a><button class="btn main" data-act="ok">Confirm</button><button class="btn warn" data-act="no">Reject</button></div></div>').join('')
+        : '<div class="empty">Nothing is waiting.</div>';
+    } catch (e) { say(e.message, true); }
+  }
+  $('inbox').onclick = async ev => {
+    const b = ev.target.closest('button[data-act]'); if (!b) return; const box = b.closest('.doc'), id = box.dataset.id;
+    try {
+      if (b.dataset.act === 'ok') { const place = box.querySelector('.place').value; if (!place) return say('Choose where it belongs first.', true); const r = await post('/api/documents/inbox/' + id + '/confirm', { place }); say(r.message); }
+      else { if (!confirm('Reject and delete this file?')) return; await post('/api/documents/inbox/' + id + '/reject'); say('Rejected and deleted.'); }
+      loadInbox();
+    } catch (e) { say(e.message, true); }
+  };
+  $('u-go').onclick = async () => {
+    const f = $('u-file').files[0]; if (!f) return say('Choose a file first.', true);
+    const fd = new FormData(); fd.append('file', f); fd.append('caption', $('u-cap').value);
+    try { await api('/api/documents/inbox/upload', { method: 'POST', body: fd }); $('u-file').value = ''; $('u-cap').value = ''; say('File is in quarantine, waiting for you.'); loadInbox(); }
+    catch (e) { say(e.message, true); }
+  };
+
+  init();
+})();
+</script>
+</body>
+</html>
