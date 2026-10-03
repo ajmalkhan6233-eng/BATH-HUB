@@ -46,7 +46,7 @@ async function logSend(pool, f) {
                 f.to ? T.last3(f.to) : null, f.detail ? String(f.detail).slice(0, 300) : null, f.by || null, f.queue_id || null]);
         console.log(`[documents] send doc=${f.document_id || '-'} to=${f.to ? '***' + T.last3(f.to) : '-'} result=${f.status} by=${f.by || '-'}`);
         return r.rows[0].id;
-    } catch (e) { if (e && e.code === '23505') throw e; console.error('[documents] could not log a send:', e.message); return null; }
+    } catch (e) { if (f.key) throw e; console.error('[documents] could not log a send:', e.message); return null; }   // a key-claiming insert must never fail silently
 }
 
 // Returns { status: <http>, body: {...} } and never throws.
