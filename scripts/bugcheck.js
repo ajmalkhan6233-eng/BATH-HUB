@@ -310,7 +310,7 @@ add('database', 'connection count stays low after the barrage (shared pool)', as
 add('env', 'the server printed the missing-float and backup warnings at start-up', async c => { const log = c.serverLog(); return /PETTY_CASH_FLOAT is not set/.test(log) && /BACKUP_COPY_DIR/.test(log) ? ok() : bad('warnings not in log'); }, LIVE);
 add('pages', 'owner screens: no console errors and no sideways scroll at 390px', async c => {
     if (!c.browser) return skip('no browser');
-    const pages = ['dashboard', 'moneycontrol', 'website', 'pos', 'stock', 'cheques', 'loans', 'commissions', 'grn', 'salary', 'vendors', 'tilegallery'];
+    const pages = ['dashboard', 'moneycontrol', 'website', 'pos', 'stock', 'cheques', 'loans', 'commissions', 'grn', 'salary', 'vendors', 'tilegallery', 'documents'];
     const p = await c.browser.newPage(); await p.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true }); const errs = []; let cur = '';
     p.on('pageerror', e => { if (!/Failed to fetch/.test(e.message)) errs.push(cur + ': ' + e.message.slice(0, 80)); }); p.on('console', m => { if (m.type() === 'error' && !/401|404|Failed to load resource|Failed to fetch/.test(m.text())) errs.push(cur + ': ' + m.text().slice(0, 80)); });
     await p.goto(c.base + '/owner', { waitUntil: 'networkidle2' }); await p.setCookie({ name: c.cookieName, value: c.cookieValue, url: c.base });
@@ -322,6 +322,11 @@ add('pages', 'public website: no console errors and no sideways scroll at 390px'
     if (!c.browser) return skip('no browser'); const p = await c.browser.newPage(); await p.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true }); const errs = [];
     p.on('pageerror', e => errs.push(e.message.slice(0, 80))); await p.goto(c.base + '/site', { waitUntil: 'load' }); await new Promise(r => setTimeout(r, 800));
     const w = await p.evaluate(() => [document.documentElement.scrollWidth, innerWidth]); await p.close(); return w[0] > 390 || w[1] !== 390 || errs.length ? bad(`width ${w[0]} / ${w[1]} ${errs.join('; ')}`) : ok();
+}, LIVE);
+add('pages', 'documents: the page and its API load for the owner and are refused for staff and signed-out visitors', async c => {
+    const own = await c.req('GET', '/api/documents', { cookie: c.admin }), page = await c.req('GET', '/documents.html', { cookie: c.admin });
+    const out = await c.req('GET', '/api/documents'), staff = c.staff ? await c.req('GET', '/api/documents', { cookie: c.staff }) : { status: 403 };
+    return own.status === 200 && page.status === 200 && out.status === 401 && staff.status === 403 ? ok('owner 200, signed-out 401, staff 403') : bad(`owner ${own.status}, page ${page.status}, signed-out ${out.status}, staff ${staff.status}`);
 }, LIVE);
 add('backup', 'the encrypted backup copy restores into a throwaway database (scratch)', async c => (c.restoreCheck ? c.restoreCheck() : skip('no scratch database access')), LIVE);
 add('auth', 'login: repeated wrong passwords get locked out (429); runs last', async c => {
