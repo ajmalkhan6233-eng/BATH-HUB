@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('./utils/timezone');   // Sri Lanka time for JS dates and Postgres sessions
+require('./utils/startupChecks').run();   // prints warnings for PETTY_CASH_FLOAT / backup-copy settings that are missing
 const { todayLK } = require('./utils/lkTime');
 const express = require('express');
 const helmet = require('helmet');
