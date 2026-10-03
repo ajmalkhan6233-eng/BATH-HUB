@@ -207,3 +207,11 @@ describe('CSP', () => {
         expect(next).toHaveBeenCalled(); expect(hd['Content-Security-Policy']).toBeUndefined(); expect(hd['X-Content-Type-Options']).toBe('nosniff');
     });
 });
+
+describe('CSP hash and line endings', () => {
+    test('CRLF and LF versions of the same inline block give the same hash (the browser normalises line breaks before hashing)', () => {
+        const a = H.inlineHashes('<script>\r\nvar a = 1;\r\nvar b = 2;\r\n</script>');
+        const b = H.inlineHashes('<script>\nvar a = 1;\nvar b = 2;\n</script>');
+        expect(a.scripts).toEqual(b.scripts);
+    });
+});

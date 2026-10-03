@@ -10,7 +10,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const sha = txt => "'sha256-" + crypto.createHash('sha256').update(txt, 'utf8').digest('base64') + "'";
+// The browser's HTML parser turns CRLF and lone CR into LF BEFORE it hashes an inline block, so the hash must be taken on the same text.
+const sha = txt => "'sha256-" + crypto.createHash('sha256').update(String(txt).replace(/\r\n?/g, '\n'), 'utf8').digest('base64') + "'";
 
 // Hashes of every inline block. JSON data blocks (type="application/ld+json" etc.) are not executed, so they need none.
 function inlineHashes(html) {

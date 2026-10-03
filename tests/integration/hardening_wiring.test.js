@@ -14,7 +14,7 @@ pg.__db.public.none(`CREATE TABLE users (id SERIAL PRIMARY KEY, username TEXT, r
 pg.__db.public.none(`INSERT INTO users (username, role) VALUES ('a', 'admin')`);
 const app = require('../../server');
 const page = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'website', 'index.html'), 'utf8');
-const h = txt => "'sha256-" + crypto.createHash('sha256').update(txt, 'utf8').digest('base64') + "'";
+const h = txt => "'sha256-" + crypto.createHash('sha256').update(txt.replace(/\r\n?/g, '\n'), 'utf8').digest('base64') + "'";
 const get = (url, ip) => request(app).get(url).set('X-Forwarded-For', ip);
 
 describe('security headers on the public site', () => {
