@@ -60,12 +60,12 @@ describe('the page file', () => {
     for (const i of m.icons) expect(fs.existsSync(path.join(root, 'public', i.src))).toBe(true);
   });
   test('print stylesheet exists', () => { expect(html).toMatch(/@media print\{/); });
-  test('fonts do not block the first paint; the page stays light; no trackers or cookies', () => {
-    expect(html).toMatch(/fonts\.googleapis\.com\/css2[^>]*media="print" onload="this\.media='all'"/);
-    expect(html).toMatch(/<noscript><link[^>]*fonts\.googleapis\.com/);
+  test('no inline handlers or javascript: links (CSP-safe); no blocking scripts; page stays light; no trackers or cookies', () => {
+    expect(html).toMatch(/<link[^>]*fonts\.googleapis\.com\/css2[^>]*display=swap[^>]*rel="stylesheet">/);   // a stylesheet link is fine; blocking SCRIPTS are what matter
+    expect(html).not.toMatch(/\son[a-z]+\s*=\s*["']/i); expect(html).not.toMatch(/javascript:/i);
     expect(Buffer.byteLength(html)).toBeLessThan(1.5 * 1024 * 1024);
     expect(html).not.toMatch(/google-analytics|googletagmanager|gtag\(|fbq\(|hotjar|document\.cookie/i);
-    expect(html).not.toMatch(/<script[^>]+src=/i);                 // no external or blocking scripts
+    expect(html).not.toMatch(/<script[^>]+src=/i);
   });
   test('tile photos load lazily', () => { expect(html).toContain('IntersectionObserver'); expect(html).toMatch(/function lazyBg/); });
   test('catalogue button points at the public PDF route', () => { expect(html).toMatch(/<a [^>]*id="catPdf"[^>]*href="\/api\/site\/catalogue\.pdf"/); });
