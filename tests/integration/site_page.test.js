@@ -29,7 +29,7 @@ describe('wiring through the real server', () => {
     expect((await request(app).get('/api/document-inbox')).status).toBeGreaterThanOrEqual(401);
   });
   test('the website never links to /owner or the private API', () => {
-    expect(read('public/website/index.html')).not.toMatch(/\/owner|bathco_complete|\/api\/(?!site\/public|site\/photo)/i);
+    expect(read('public/website/index.html')).not.toMatch(/\/owner|bathco_complete|\/api\/(?!site\/public|site\/photo|site\/catalogue\.pdf)/i);
   });
   test('owner app: dashboard Website button opens /site in a new tab; Website page exists', () => {
     const h = read('public/bathco_complete.html');
