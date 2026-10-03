@@ -47,7 +47,7 @@ a{color:inherit}
 button{font:inherit;color:inherit}
 .serif{font-family:var(--serif)}
 body.si .serif,body.ta .serif{font-family:inherit}
-.btn:focus-visible,.lang button:focus-visible,.swatch:focus-visible,.chip:focus-visible,.card:focus-visible,.nav a:focus-visible,.seg button:focus-visible,.wa:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn:focus-visible,.lang button:focus-visible,.swatch:focus-visible,.chip:focus-visible,.card:focus-visible,.nav a:focus-visible,.seg button:focus-visible,.wa:focus-visible{outline:3px solid var(--gold);outline-offset:3px;box-shadow:0 0 0 3px var(--navy)}
 
 /* ===== header ===== */
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(11,27,58,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--ivory);border-bottom:1px solid rgba(201,162,75,.45)}
@@ -201,7 +201,7 @@ dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
 .bk svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .bk i{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:99px;background:var(--gold);color:var(--navy);font-style:normal;font-size:12px;font-weight:600;display:grid;place-items:center;padding:0 5px}
 .bk i:empty{display:none}
-.bk:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bk:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--gold);outline-offset:2px;box-shadow:0 0 0 2px var(--navy)}
 .hdr-r{display:flex;align-items:center;gap:10px}
 /* calculator */
 .calc{display:grid;gap:22px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
