@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0B1B3A">
 <title>Bath Hub | Tiles and Bathroom Fittings, Thihariya</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@400;500;600&family=Noto+Sans+Sinhala:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeGoodsStore","name":"Bath Hub","description":"Tiles, taps and bathroom fittings in Thihariya, Kandy Road, Sri Lanka.","telephone":"+94777999219","address":{"@type":"PostalAddress","streetAddress":"Kandy Road","addressLocality":"Thihariya","addressCountry":"LK"}}</script>
 <style>
 :root{
   --navy:#0B1B3A;--navy2:#14295a;--navy3:#071230;--gold:#C9A24B;--gold2:#E8CF8A;--ivory:#F6EFDC;
@@ -42,7 +43,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rg
 .lang{display:flex;gap:4px}
 .lang button{background:transparent;border:1px solid rgba(232,207,138,.45);color:var(--gold2);border-radius:999px;padding:6px 12px;font-size:15px;cursor:pointer;min-height:36px}
 .lang button[aria-pressed="true"]{background:var(--gold);color:var(--navy);border-color:var(--gold)}
-@media(max-width:420px){.brand b{letter-spacing:.14em;font-size:15px}.brand{gap:10px}.lang button{padding:6px 10px}}
+@media(max-width:420px){.bar{padding:10px 12px;gap:8px}.hdr-r{gap:6px}.mark{width:36px;height:36px}.mark span{font-size:18px}.brand{gap:8px;min-width:0}.brand b{letter-spacing:.08em;font-size:14px}.lang{gap:3px}.lang button{padding:6px 8px}}
 
 /* ===== hero ===== */
 .hero{background:radial-gradient(130% 90% at 50% 0%,var(--navy2) 0%,var(--navy) 55%,var(--navy3) 100%);color:var(--ivory);padding:38px 0 54px;position:relative}
@@ -172,14 +173,58 @@ dialog p{color:var(--muted);margin:6px 0 14px}
 dialog .row{margin-top:6px}
 dialog .btn.ghost{color:var(--ink);border-color:var(--line)}
 dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
+
+.skip{position:absolute;left:-999px;top:0;background:var(--gold);color:var(--navy);padding:10px 16px;z-index:100;border-radius:0 0 8px 0}
+.skip:focus{left:0}
+.bk{position:relative;background:transparent;border:1px solid rgba(232,207,138,.45);color:var(--gold2);border-radius:999px;width:40px;height:36px;display:grid;place-items:center;cursor:pointer}
+.bk svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bk i{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:99px;background:var(--gold);color:var(--navy);font-style:normal;font-size:12px;font-weight:600;display:grid;place-items:center;padding:0 5px}
+.bk i:empty{display:none}
+.bk:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+/* calculator */
+.calc{display:grid;gap:22px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+@media(min-width:900px){.calc{grid-template-columns:1.25fr 1fr;align-items:center;padding:30px}}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fld{display:grid;gap:6px;font-size:15px;color:var(--muted)}
+.fld.wide{grid-column:1/-1}
+.fld input,.fld select{font:inherit;font-size:18px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:48px;width:100%}
+.out{background:var(--navy);color:var(--ivory);border:1px solid var(--gold);border-radius:12px;padding:22px;text-align:center}
+.out small{display:block;color:var(--gold2);font-size:15px}
+.out .n{font-family:var(--serif);font-size:clamp(46px,9vw,72px);line-height:1;font-weight:600;margin:6px 0}
+body.si .out .n,body.ta .out .n{font-family:inherit}
+.out .d{color:var(--gold2);font-size:16px}
+.calc .row{margin-top:2px}
+.calc .btn.ghost{color:var(--ink);border-color:var(--line)}
+.btn.dark{background:var(--navy);color:var(--gold2);border:1px solid var(--gold)}
+/* trade */
+.trade{border:1px solid var(--gold);border-radius:14px;padding:28px;display:grid;gap:16px;background:linear-gradient(135deg,rgba(201,162,75,.12),rgba(201,162,75,0))}
+@media(min-width:860px){.trade{grid-template-columns:1.4fr 1fr;align-items:center;padding:38px}}
+.trade h2{margin:0}
+.trade p{color:var(--muted);font-size:18px}
+/* list dialog */
+.li{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.li b{font-family:var(--serif);font-size:22px;line-height:1.1}
+body.si .li b,body.ta .li b{font-family:inherit;font-size:17px}
+.li small{color:var(--muted);grid-column:1}
+.li .q{display:flex;align-items:center;gap:6px;grid-column:2;grid-row:1/3}
+.li .q input{width:76px;font:inherit;font-size:17px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:center;min-height:44px}
+.li button.rm{background:transparent;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;min-height:36px;padding:0 4px;font-size:15px}
+.empty{color:var(--muted);padding:16px 0}
+/* numbers line up */
+.out .n,.out .d,.pick small,.card .s,.li input,.fld input,.contact a.num,.bk i{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
+<a class="skip" href="#tiles" data-t="skip">Skip to content</a>
 <header><div class="bar">
   <a class="brand" href="#top" aria-label="Bath Hub"><div class="mark"><span>BH</span></div><b>BATH HUB</b></a>
-  <nav class="nav" aria-label="Main"><a href="#tiles" data-t="nTiles">Tiles</a><a href="#fittings" data-t="nFit">Fittings</a><a href="#visit" data-t="nVisit">Visit</a></nav>
-  <div class="lang" role="group" aria-label="Language">
-    <button data-l="en" aria-pressed="true">EN</button><button data-l="si" aria-pressed="false">සිං</button><button data-l="ta" aria-pressed="false">தமிழ்</button>
+  <nav class="nav" aria-label="Main"><a href="#tiles" data-t="nTiles">Tiles</a><a href="#tools" data-t="nTools">Tools</a><a href="#fittings" data-t="nFit">Fittings</a><a href="#trade" data-t="nTrade">Trade</a><a href="#visit" data-t="nVisit">Visit</a></nav>
+  <div class="hdr-r">
+    <button class="bk" id="bk" aria-label="My list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><i id="bkN"></i></button>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-l="en" aria-pressed="true">EN</button><button data-l="si" aria-pressed="false">සිං</button><button data-l="ta" aria-pressed="false">தமிழ்</button>
+    </div>
   </div>
 </div></header>
 
@@ -288,6 +333,28 @@ dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
   <p class="note" data-t="sampleNote">Sample designs. Real stock photos coming soon.</p>
 </div></section>
 
+<section id="tools"><div class="wrap">
+  <h2 data-t="calcH">How many tiles do you need?</h2>
+  <p class="lead" data-t="calcP">Enter the room size. We work out the number of tiles, with a little extra for cuts and breakage.</p>
+  <div class="calc">
+    <div class="fields">
+      <label class="fld"><span data-t="length">Length</span><input id="cL" type="number" inputmode="decimal" min="0" step="0.1" value="12"></label>
+      <label class="fld"><span data-t="width">Width</span><input id="cW" type="number" inputmode="decimal" min="0" step="0.1" value="10"></label>
+      <label class="fld"><span data-t="unit">Unit</span><select id="cU"><option value="ft" data-t="ft">feet</option><option value="m" data-t="m">metres</option></select></label>
+      <label class="fld"><span data-t="wasteL">Extra for cuts</span><select id="cX"><option value="5">5%</option><option value="10" selected>10%</option><option value="15">15%</option></select></label>
+      <label class="fld wide"><span data-t="tileL">Tile</span><select id="cT"></select></label>
+    </div>
+    <div>
+      <div class="out" aria-live="polite"><small data-t="needs">Tiles needed</small><div class="n" id="cN">0</div><div class="d" id="cD"></div></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" id="cAdd"><span data-t="addList">Add to my list</span></button>
+        <a class="btn ghost" id="cWa" href="#" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+      </div>
+    </div>
+  </div>
+  <p class="note" data-t="estimateNote">This is an estimate. Please confirm the quantity with our team, because box sizes and the layout can change the number.</p>
+</div></section>
+
 <section class="alt" id="fittings"><div class="wrap">
   <h2 data-t="accH">Bathroom fittings</h2>
   <p class="lead" data-t="accP">Everything for the bathroom, in one place.</p>
@@ -304,18 +371,24 @@ dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
   <p class="note" style="margin-top:28px;max-width:40em" data-t="note">The preview is a guide. Real colour and finish can look different in your light, so please see the tile in our showroom before you buy.</p>
 </div></section>
 
+<section id="trade"><div class="wrap"><div class="trade">
+  <div><h2 data-t="tradeH">For architects, designers and contractors</h2><p data-t="tradeP">Working on a project and need tiles and fittings? Message us on WhatsApp and we will help.</p></div>
+  <div><a class="btn" id="tradeWa" href="#" target="_blank" rel="noopener"><span data-t="tradeBtn">Trade enquiry</span></a></div>
+</div></div></section>
+
 <section class="alt" id="visit"><div class="wrap visit">
   <div><h2 data-t="visitH">Visit Bath Hub</h2><div class="big" data-t="addr">Thihariya, Kandy Road</div></div>
   <div class="contact">
-    <a class="num" href="https://wa.me/94777999219" target="_blank" rel="noopener">077 799 9219</a>
-    <a class="btn" href="https://wa.me/94777999219" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+    <a class="num" data-wa href="https://wa.me/94777999219" target="_blank" rel="noopener">077 799 9219</a>
+    <a class="btn" data-wa href="https://wa.me/94777999219" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+    <a class="btn" id="visitWa" href="#" target="_blank" rel="noopener"><span data-t="bookVisit">Ask when we are open</span></a>
     <a class="btn ghost" href="https://www.google.com/maps/search/?api=1&query=Bath+Hub+Thihariya+Kandy+Road" target="_blank" rel="noopener"><span data-t="map">Open in Maps</span></a>
   </div>
 </div></section>
 </main>
 <footer><div class="w">BATH HUB</div><div style="margin-top:8px" data-t="foot">Every piece, a little more than you paid for.</div></footer>
 
-<a class="wa" href="https://wa.me/94777999219" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.3c-.2.6-1.2 1.200-1.700 1.200-.4.1-1 .1-1.600-.1-.4-.1-.9-.3-1.500-.6-2.700-1.200-4.400-3.900-4.600-4.100-.1-.2-1.100-1.400-1.100-2.700s.7-1.900.9-2.200c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.900c.1.100.1.300 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.7 1.200 1.500 1.900 1 .9 1.900 1.200 2.200 1.300.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.800.9c.3.1.4.2.5.3.1.2.1.8-.1 1.400z"/></svg><span data-t="ask">Ask on WhatsApp</span></a>
+<a class="wa" data-wa href="https://wa.me/94777999219" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.3c-.2.6-1.2 1.200-1.700 1.200-.4.1-1 .1-1.600-.1-.4-.1-.9-.3-1.500-.6-2.700-1.200-4.400-3.900-4.600-4.100-.1-.2-1.100-1.400-1.100-2.700s.7-1.900.9-2.200c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.900c.1.100.1.300 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.7 1.200 1.500 1.900 1 .9 1.900 1.200 2.200 1.300.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.800.9c.3.1.4.2.5.3.1.2.1.8-.1 1.400z"/></svg><span data-t="ask">Ask on WhatsApp</span></a>
 
 <dialog id="dlg" aria-labelledby="dName">
   <div class="big" id="dImg"></div>
@@ -324,7 +397,19 @@ dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
     <div class="row">
       <button class="btn" id="dRoom"><span data-t="inRoom">View in room</span></button>
       <a class="btn ghost" id="dWa" href="#" target="_blank" rel="noopener"><span data-t="ask">Ask on WhatsApp</span></a>
+      <button class="btn dark" id="dAdd"><span data-t="addList">Add to my list</span></button>
       <button class="btn ghost" id="dClose"><span data-t="close">Close</span></button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="listDlg" aria-labelledby="lTitle">
+  <div class="in" style="padding:20px">
+    <h3 id="lTitle" data-t="myList">My list</h3>
+    <div id="lBody"></div>
+    <div class="row" style="margin-top:16px">
+      <a class="btn" id="lWa" href="#" target="_blank" rel="noopener"><span data-t="sendList">Send list on WhatsApp</span></a>
+      <button class="btn ghost" id="lClose"><span data-t="close">Close</span></button>
     </div>
   </div>
 </dialog>
@@ -364,7 +449,7 @@ cement:()=>`<svg ${NS} width="512" height="512"><defs><filter id="a" x="0" y="0"
 
 /* ===== tiles (sample designs: swap for real photos later) ===== */
 const enc=s=>'url("data:image/svg+xml;utf8,'+encodeURIComponent(s)+'")';
-const TILES=[
+let TILES=[
  {k:'marble',n:'Calacatta Marble',size:'24 × 24 in',fin:'polished',g:'stone',f:170,w:130},
  {k:'nero',n:'Nero Slate',size:'24 × 24 in',fin:'matt',g:'stone',f:170,w:130},
  {k:'travertine',n:'Travertine Sand',size:'12 × 24 in',fin:'matt',g:'stone',f:160,w:120},
@@ -377,7 +462,8 @@ const TILES=[
  {k:'cement',n:'Grey Cement',size:'24 × 24 in',fin:'matt',g:'conc',f:190,w:140}
 ];
 TILES.forEach(t=>t.bg=enc(TEX[t.k]()));
-let WA='94777999219';
+let WA='94777999219';   /* default; replaced by the saved site text (d.text.whatsapp) when present */
+let SITE={address:'',promise:{}};   /* saved site text from /api/site/public; empty = keep built-in wording */
 
 /* ===== translations (Sinhala and Tamil: have a native speaker check before launch) ===== */
 const I18={
@@ -406,6 +492,16 @@ ta:{nTiles:'டைல்ஸ்',nFit:'சாதனங்கள்',nVisit:'வ�
  size:'அளவு',glossy:'பளபளப்பு',matt:'மங்கல்',polished:'மெருகூட்டியது',inRoom:'அறையில் பாருங்கள்',close:'மூடு',msg:'வணக்கம் Bath Hub, இந்த டைலில் எனக்கு ஆர்வம் உள்ளது: ',
  cats:[['டைல்ஸ்','தரை மற்றும் சுவர்'],['குழாய்கள்','வாஷ்பேசின், சமையலறை, ஷவர்'],['ஷவர்கள்','செட்டுகள் மற்றும் தலைகள்'],['வாஷ்பேசின் & கழிப்பறை','செராமிக் பொருட்கள்'],['சாதனங்கள்','ரேக்குகள், ஹோல்டர்கள், கண்ணாடிகள்']]}
 };
+
+Object.assign(I18.en,{skip:'Skip to content',nTools:'Tools',nTrade:'Trade',calcH:'How many tiles do you need?',calcP:'Enter the room size. We work out the number of tiles, with a little extra for cuts and breakage.',length:'Length',width:'Width',unit:'Unit',ft:'feet',m:'metres',wasteL:'Extra for cuts',tileL:'Tile',needs:'Tiles needed',tilesWord:'tiles',area:'Area',extra:'extra',estimateNote:'This is an estimate. Please confirm the quantity with our team, because box sizes and the layout can change the number.',addList:'Add to my list',myList:'My list',listEmpty:'Your list is empty.',sendList:'Send list on WhatsApp',remove:'Remove',
+ tradeH:'For architects, designers and contractors',tradeP:'Working on a project and need tiles and fittings? Message us on WhatsApp and we will help.',tradeBtn:'Trade enquiry',bookVisit:'Ask when we are open',
+ listMsg:'Hello Bath Hub, I would like to enquire about these items:',tradeMsg:'Hello Bath Hub, I am an architect, designer or contractor and would like to discuss a project.',visitMsg:'Hello Bath Hub, I would like to visit the showroom. What time are you open?',about:'about'});
+Object.assign(I18.si,{skip:'අන්තර්ගතයට යන්න',nTools:'මෙවලම්',nTrade:'ව්‍යාපාරික',calcH:'ඔබට ටයිල් කීයක් අවශ්‍යද?',calcP:'කාමරයේ ප්‍රමාණය ඇතුළත් කරන්න. කැපීම් සහ කැඩීම් සඳහා ටිකක් අමතරව ටයිල් ගණන අපි ගණනය කරමු.',length:'දිග',width:'පළල',unit:'ඒකකය',ft:'අඩි',m:'මීටර්',wasteL:'කැපීම් සඳහා අමතර',tileL:'ටයිල් එක',needs:'අවශ්‍ය ටයිල් ගණන',tilesWord:'ටයිල්',area:'වර්ගඵලය',extra:'අමතර',estimateNote:'මෙය ඇස්තමේන්තුවකි. පෙට්ටි ප්‍රමාණය සහ අතුරන ආකාරය අනුව ගණන වෙනස් විය හැකි බැවින්, ප්‍රමාණය අපගේ කණ්ඩායම සමඟ තහවුරු කරගන්න.',addList:'මගේ ලැයිස්තුවට එක් කරන්න',myList:'මගේ ලැයිස්තුව',listEmpty:'ඔබේ ලැයිස්තුව හිස්ය.',sendList:'WhatsApp හරහා ලැයිස්තුව එවන්න',remove:'ඉවත් කරන්න',
+ tradeH:'ගෘහ නිර්මාණ ශිල්පීන්, නිර්මාණකරුවන් සහ කොන්ත්‍රාත්කරුවන් සඳහා',tradeP:'ව්‍යාපෘතියක් සඳහා ටයිල් සහ උපාංග අවශ්‍යද? WhatsApp හරහා අපට පණිවිඩයක් එවන්න, අපි උදව් කරමු.',tradeBtn:'ව්‍යාපාරික විමසුම',bookVisit:'විවෘත වේලාව විමසන්න',
+ listMsg:'ආයුබෝවන් Bath Hub, මම මෙම භාණ්ඩ ගැන විමසීමට කැමතියි:',tradeMsg:'ආයුබෝවන් Bath Hub, මම ගෘහ නිර්මාණ ශිල්පියෙක්, නිර්මාණකරුවෙක් හෝ කොන්ත්‍රාත්කරුවෙක්. ව්‍යාපෘතියක් ගැන කතා කිරීමට කැමතියි.',visitMsg:'ආයුබෝවන් Bath Hub, මම ශෝරූම් එකට පැමිණීමට කැමතියි. ඔබ විවෘත වන වේලාව කීයද?',about:'ආසන්න වශයෙන්'});
+Object.assign(I18.ta,{skip:'உள்ளடக்கத்திற்குச் செல்',nTools:'கருவிகள்',nTrade:'தொழில்முறை',calcH:'உங்களுக்கு எத்தனை டைல்கள் தேவை?',calcP:'அறையின் அளவை உள்ளிடுங்கள். வெட்டுதல் மற்றும் உடைவுக்காக சிறிது கூடுதலாக சேர்த்து டைல்களின் எண்ணிக்கையை நாங்கள் கணக்கிடுகிறோம்.',length:'நீளம்',width:'அகலம்',unit:'அலகு',ft:'அடி',m:'மீட்டர்',wasteL:'வெட்டுக்கான கூடுதல்',tileL:'டைல்',needs:'தேவையான டைல்கள்',tilesWord:'டைல்கள்',area:'பரப்பளவு',extra:'கூடுதல்',estimateNote:'இது ஒரு மதிப்பீடு மட்டுமே. பெட்டி அளவும் பதிக்கும் முறையும் எண்ணிக்கையை மாற்றக்கூடும் என்பதால், அளவை எங்கள் குழுவுடன் உறுதிப்படுத்துங்கள்.',addList:'என் பட்டியலில் சேர்',myList:'என் பட்டியல்',listEmpty:'உங்கள் பட்டியல் காலியாக உள்ளது.',sendList:'WhatsApp மூலம் பட்டியலை அனுப்பு',remove:'நீக்கு',
+ tradeH:'கட்டிடக் கலைஞர்கள், வடிவமைப்பாளர்கள் மற்றும் ஒப்பந்ததாரர்களுக்கு',tradeP:'ஒரு திட்டத்திற்கு டைல்ஸ் மற்றும் சாதனங்கள் தேவையா? WhatsApp மூலம் எங்களுக்கு செய்தி அனுப்புங்கள், நாங்கள் உதவுவோம்.',tradeBtn:'தொழில்முறை விசாரணை',bookVisit:'திறந்திருக்கும் நேரத்தைக் கேளுங்கள்',
+ listMsg:'வணக்கம் Bath Hub, இந்த பொருட்கள் பற்றி விசாரிக்க விரும்புகிறேன்:',tradeMsg:'வணக்கம் Bath Hub, நான் கட்டிடக் கலைஞர், வடிவமைப்பாளர் அல்லது ஒப்பந்ததாரர். ஒரு திட்டம் பற்றி பேச விரும்புகிறேன்.',visitMsg:'வணக்கம் Bath Hub, காட்சியறைக்கு வர விரும்புகிறேன். நீங்கள் எத்தனை மணிக்கு திறந்திருப்பீர்கள்?',about:'சுமார்'});
 const ICONS=[
  '<path d="M6 8h36v32H6z"/><path d="M6 24h36M24 8v32"/>',
  '<path d="M8 22h22a10 10 0 0 1 10 10v2"/><path d="M18 22v-8h12"/><path d="M40 34v6"/>',
@@ -426,7 +522,7 @@ function paint(swap){
   const t=L(),s=sel()||{n:t.plain,size:'',fin:''};
   $('tag').textContent=floorT.n+(wallT?' + '+wallT.n:'');
   $('pName').textContent=s.n;
-  $('pInfo').textContent=s.size?(t.size+': '+s.size+' · '+t[s.fin]):'';
+  $('pInfo').textContent=s.size?(t.size+': '+s.size+' · '+(t[s.fin]||s.fin)):'';
   $('wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.msg+s.n+(s.size?' ('+s.size+')':''));
   document.querySelectorAll('.swatch').forEach(b=>{const i=b.dataset.i;b.setAttribute('aria-pressed',String(i==='plain'?(target==='wall'&&!wallT):(target==='floor'?floorT===TILES[i]:wallT===TILES[i])))});
   $('scene').setAttribute('aria-label',(room==='bath'?t.bath:t.living)+': '+$('tag').textContent);
@@ -444,7 +540,7 @@ function buildGrid(){
   TILES.forEach((tl,i)=>{
     if(filter!=='all'&&tl.g!==filter)return;
     const c=document.createElement('button');c.className='card';c.innerHTML='<div class="img"></div><div class="t"><div class="n"></div><div class="s"></div></div>';
-    c.querySelector('.img').style.backgroundImage=tl.bg;c.querySelector('.n').textContent=tl.n;c.querySelector('.s').textContent=tl.size+' · '+L()[tl.fin];
+    c.querySelector('.img').style.backgroundImage=tl.bg;c.querySelector('.n').textContent=tl.n;c.querySelector('.s').textContent=tl.size+' · '+(L()[tl.fin]||tl.fin);
     c.onclick=()=>openTile(i);g.appendChild(c);
   });
 }
@@ -456,7 +552,7 @@ function buildChips(){
 function openTile(i){
   openT=i;const t=L(),tl=TILES[i];
   $('dImg').style.backgroundImage=tl.bg;$('dImg').style.backgroundSize=(tl.f*1.6)+'px auto';
-  $('dName').textContent=tl.n;$('dInfo').textContent=t.size+': '+tl.size+' · '+t[tl.fin];
+  $('dName').textContent=tl.n;$('dInfo').textContent=t.size+': '+tl.size+' · '+(t[tl.fin]||tl.fin);
   $('dWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.msg+tl.n+' ('+tl.size+')');
   $('dlg').showModal();
 }
@@ -469,7 +565,7 @@ function text(){
   document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.l===lang)));
   buildChips();buildGrid();
   if(openT!==null&&$('dlg').open)openTile(openT);
-  paint();
+  paint();afterText();
 }
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;try{localStorage.setItem('bh-lang',lang)}catch(e){};text()});
 $('tFloor').onclick=()=>setTarget('floor');$('tWall').onclick=()=>setTarget('wall');
@@ -478,51 +574,106 @@ $('dClose').onclick=()=>$('dlg').close();
 $('dRoom').onclick=()=>{const i=openT;$('dlg').close();pick(i);document.getElementById('scene').scrollIntoView({behavior:'smooth',block:'center'})};
 $('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))$('dlg').close()});
 try{const s=localStorage.getItem('bh-lang');if(s&&I18[s])lang=s}catch(e){}
-buildSwatches();text();
-/* ===== live content from the owner app (GET /api/site/public). Any failure keeps the built-in samples above. ===== */
-const GROUP_TEX={stone:['marble','nero','travertine'],wood:['oak','herring'],wall:['hex','subway','zellige'],conc:['terrazzo','cement']};
-const PHOTO_RE=/^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/;
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-function liveTile(x){
-  if(!x||typeof x.name!=='string'||!x.name)return null;
-  const g=GROUP_TEX[x.group]?x.group:'stone',fin=['glossy','matt','polished'].includes(x.finish)?x.finish:'matt';
-  const size=typeof x.size==='string'?x.size:'',m=/(\d+(?:\.\d+)?)/.exec(size),num=m?parseFloat(m[1]):null;
-  const photo=typeof x.photoUrl==='string'&&PHOTO_RE.test(x.photoUrl)?x.photoUrl:null;
-  const keys=GROUP_TEX[g],k=keys[(Number(x.id)||0)%keys.length];
-  return {k,n:x.name,size,fin,g,photo,
-    f:num===null?150:clamp(num*7,90,220),w:num===null?120:clamp(num*5.5,70,170),
-    bg:photo?'url("'+photo+'")':enc(TEX[k]())};
+
+/* ===== calculator, list, live data ===== */
+const num=v=>Number(v).toLocaleString('en-US');
+function parseSize(s){const m=String(s||'').match(/(\d+(?:\.\d+)?)\s*[×xX*]\s*(\d+(?:\.\d+)?)/);return m?[+m[1],+m[2]]:null}
+let list=[];let lastCalc=null;
+try{list=JSON.parse(localStorage.getItem('bh-list')||'[]');if(!Array.isArray(list))list=[]}catch(e){list=[]}
+function saveList(){try{localStorage.setItem('bh-list',JSON.stringify(list))}catch(e){};$('bkN').textContent=list.length?String(list.length):''}
+function fillCalcSelect(){const s=$('cT'),cur=s.value;s.innerHTML='';TILES.forEach((tl,i)=>{const o=document.createElement('option');o.value=i;o.textContent=tl.n+' ('+tl.size+')';s.appendChild(o)});if(cur&&TILES[cur])s.value=cur}
+function calc(){
+  const t=L(),Lh=parseFloat($('cL').value)||0,W=parseFloat($('cW').value)||0,u=$('cU').value,waste=+$('cX').value;
+  const sqft=u==='ft'?Lh*W:Lh*W*10.7639,sqm=sqft/10.7639,tl=TILES[$('cT').value]||TILES[0],d=parseSize(tl.size);
+  const per=d?d[0]*d[1]/144:0,need=per?Math.ceil(+(sqft*(1+waste/100)/per).toFixed(6)):0;   /* toFixed: stop 220.00000000000003 rounding up to 221 */
+  $('cN').textContent=num(need);
+  $('cD').textContent=t.area+': '+num(Math.round(sqft))+' sq ft ('+sqm.toFixed(1)+' m²) · +'+waste+'% '+t.extra;
+  lastCalc={tl,need,sqft};
+  const lines=[t.listMsg,'1. '+tl.n+' ('+tl.size+')'+(need?' - '+t.about+' '+need+' '+t.tilesWord:'')+(sqft?', '+Math.round(sqft)+' sq ft':'')];
+  $('cWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(lines.join('\n'));
 }
-function setPhone(d){
-  WA=d;
-  document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a=>{a.href=a.href.replace(/wa\.me\/\d+/,'wa.me/'+d)});
-  const loc='0'+d.slice(2),pretty=d.startsWith('94')&&d.length===11?loc.slice(0,3)+' '+loc.slice(3,6)+' '+loc.slice(6):'+'+d;
-  document.querySelectorAll('a.num').forEach(a=>{a.textContent=pretty});
+function listMsg(){const t=L();const lines=[t.listMsg];list.forEach((x,i)=>lines.push((i+1)+'. '+x.name+' ('+x.size+')'+(x.qty?' - '+t.about+' '+x.qty+' '+t.tilesWord:'')));return lines.join('\n')}
+function addToList(name,size,qty){const f=list.find(x=>x.name===name);if(f){if(qty)f.qty=qty}else list.push({name,size,qty:qty||0});saveList()}
+function renderList(){
+  const t=L(),b=$('lBody');b.innerHTML='';
+  if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent=t.listEmpty;b.appendChild(p)}
+  list.forEach((x,i)=>{
+    const r=document.createElement('div');r.className='li';
+    const nm=document.createElement('b');nm.textContent=x.name;
+    const sm=document.createElement('small');sm.textContent=x.size;
+    const q=document.createElement('div');q.className='q';
+    const inp=document.createElement('input');inp.type='number';inp.min='0';inp.inputMode='numeric';inp.value=x.qty||'';inp.placeholder='0';inp.setAttribute('aria-label',x.name+' '+t.tilesWord);
+    inp.oninput=()=>{x.qty=Math.max(0,parseInt(inp.value)||0);saveList();$('lWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(listMsg())};
+    const rm=document.createElement('button');rm.className='rm';rm.textContent=t.remove;rm.onclick=()=>{list.splice(i,1);saveList();renderList()};
+    q.appendChild(inp);q.appendChild(rm);r.appendChild(nm);r.appendChild(q);r.appendChild(sm);b.appendChild(r);
+  });
+  $('lWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(listMsg());
+  $('lWa').style.display=list.length?'':'none';
 }
-async function loadSite(){
+/* saved site text (from the owner's Website editor) layered over the built-in wording; textContent only */
+function localPhone(d){const m=/^94(\d{9})$/.exec(d);if(!m)return '+'+d;const n='0'+m[1];return n.slice(0,3)+' '+n.slice(3,6)+' '+n.slice(6)}
+function applySite(){
+  document.querySelectorAll('[data-wa]').forEach(a=>{a.href='https://wa.me/'+WA});
+  const num=document.querySelector('#visit a.num');if(num)num.textContent=localPhone(WA);
+  if(SITE.address){const e=document.querySelector('[data-t="addr"]');if(e)e.textContent=SITE.address}
+  const p=SITE.promise&&SITE.promise[lang];
+  if(p&&p.h){const e=document.querySelector('[data-t="promH"]');if(e)e.textContent=p.h}
+  if(p&&p.p){const e=document.querySelector('[data-t="promP"]');if(e)e.textContent=p.p}
+}
+function afterText(){
+  const t=L();
+  fillCalcSelect();calc();saveList();
+  $('tradeWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.tradeMsg);
+  $('visitWa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(t.visitMsg);
+  $('bk').setAttribute('aria-label',t.myList);
+  applySite();
+  if($('listDlg').open)renderList();
+}
+['cL','cW','cU','cX','cT'].forEach(id=>$(id).addEventListener('input',calc));
+$('cAdd').onclick=()=>{if(lastCalc&&lastCalc.need){addToList(lastCalc.tl.n,lastCalc.tl.size,lastCalc.need)}else if(lastCalc){addToList(lastCalc.tl.n,lastCalc.tl.size,0)}renderList();$('listDlg').showModal()};
+$('dAdd').onclick=()=>{const tl=TILES[openT];addToList(tl.n,tl.size,0);$('dlg').close();renderList();$('listDlg').showModal()};
+$('bk').onclick=()=>{renderList();$('listDlg').showModal()};
+$('lClose').onclick=()=>$('listDlg').close();
+$('listDlg').addEventListener('click',e=>{if(e.target===$('listDlg'))$('listDlg').close()});
+
+/* live tiles from the owner app (falls back to the built-in samples if the API is down) */
+const DEFKEY={stone:'travertine',wood:'oak',wall:'subway',conc:'cement'};
+async function loadLive(){
   try{
-    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),6000);
-    const r=await fetch('/api/site/public',{signal:ac.signal,headers:{Accept:'application/json'}});clearTimeout(to);
-    if(!r.ok)return;
+    const r=await fetch('/api/site/public',{cache:'no-store'});if(!r.ok)return;
     const d=await r.json();
-    if(d&&d.text){
-      const tx=d.text;
-      if(typeof tx.whatsapp==='string'&&/^\d{9,15}$/.test(tx.whatsapp))setPhone(tx.whatsapp);
-      if(typeof tx.address==='string'&&tx.address.trim())['en','si','ta'].forEach(l=>{I18[l].addr=tx.address.trim()});
-      if(tx.promise)['en','si','ta'].forEach(l=>{const p=tx.promise[l];if(!p)return;
-        if(typeof p.h==='string'&&p.h.trim())I18[l].promH=p.h.trim();
-        if(typeof p.p==='string'&&p.p.trim())I18[l].promP=p.p.trim()});
+    /* site text: field names exactly as the editor saves them: whatsapp, address, promise.{en,si,ta}.{h,p} */
+    const tx=d&&d.text&&typeof d.text==='object'?d.text:null;
+    if(tx){
+      let wa=String(tx.whatsapp||'').replace(/\D/g,'');if(wa.length===10&&wa[0]==='0')wa='94'+wa.slice(1);
+      if(/^\d{9,15}$/.test(wa))WA=wa;
+      SITE.address=typeof tx.address==='string'?tx.address.trim():'';
+      const pr=tx.promise&&typeof tx.promise==='object'?tx.promise:{};
+      SITE.promise={};
+      ['en','si','ta'].forEach(l=>{const o=pr[l]&&typeof pr[l]==='object'?pr[l]:{};SITE.promise[l]={h:typeof o.h==='string'?o.h.trim():'',p:typeof o.p==='string'?o.p.trim():''}});
+      text();
     }
-    const live=(d&&Array.isArray(d.tiles)?d.tiles:[]).map(liveTile).filter(Boolean);
-    if(live.length){
-      TILES.length=0;live.forEach(t=>TILES.push(t));
-      floorT=TILES[0];wallT=TILES.find(t=>t.g==='wall')||TILES[1]||null;
-      buildSwatches();
-      if(live.some(t=>t.photo)){const n=document.querySelector('[data-t="sampleNote"]');if(n)n.style.display='none'}
-    }
-    text();
-  }catch(e){/* offline or API down: the built-in samples stay on screen */}
+    const arr=Array.isArray(d.tiles)?d.tiles:[];if(!arr.length)return;
+    const out=arr.map(x=>{
+      const n=parseSize(x.size),w=n?n[0]:24;
+      const g=['stone','wood','wall','conc'].includes(x.group)?x.group:'stone';
+      const fin=['glossy','matt','polished'].includes(x.finish)?x.finish:'matt';
+      const u=typeof x.photoUrl==='string'&&/^(\/|https?:\/\/)/.test(x.photoUrl)?x.photoUrl:null;
+      const key=DEFKEY[g];
+      return {k:key,n:String(x.name||'').slice(0,80),size:String(x.size||''),fin,g,
+        f:Math.min(220,Math.max(90,Math.round(w*7))),w:Math.min(170,Math.max(70,Math.round(w*5.5))),
+        bg:u?'url('+JSON.stringify(u)+')':enc(TEX[key]()),photo:!!u};
+    }).filter(x=>x.n);
+    if(!out.length)return;
+    TILES=out;floorT=TILES[0];wallT=TILES[Math.min(1,TILES.length-1)];
+    list=list.filter(x=>TILES.some(tl=>tl.n===x.name));
+    buildSwatches();text();
+    if(TILES.some(x=>x.photo)){const n=document.querySelector('[data-t="sampleNote"]');if(n)n.style.display='none'}
+  }catch(e){}
 }
-loadSite();
+
+buildSwatches();text();loadLive();
+
+
 const fw=document.querySelector('a.wa');function wv(){fw.style.display=(window.scrollY>520)?'':'none'}wv();addEventListener('scroll',wv,{passive:true});
 </script></body></html>
