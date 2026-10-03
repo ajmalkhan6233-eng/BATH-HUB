@@ -82,7 +82,7 @@ pool.query(`
 
 // ═══════════════════════ BANK ACCOUNTS ═══════════════════════
 // ─── Input checks (reject bad values with a clear 400 instead of storing them) ───
-const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const { isRealDate: isDate } = require('../utils/validate');   // real calendar dates only (2026-02-30 is refused)
 const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
 const isNonNegative = v => v !== '' && v !== null && Number.isFinite(Number(v)) && Number(v) >= 0;
 
