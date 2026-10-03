@@ -1,6 +1,9 @@
 'use strict';
 // POS: discount cap (the owner's discount rule), opt-in stock deduction, today's bills (Sri Lanka date).
 jest.mock('pg', () => require('../helpers/pgmock')());
+// Fixed clock (08:00 UTC = 13:30 in Colombo): pg-mem stamps rows in UTC, so between 00:00 and 05:30 Colombo time the bills fell on the
+// previous UTC day and "today's bills" came back empty. Only Date is faked; timers stay real.
+jest.useFakeTimers({ now: new Date('2026-10-04T08:00:00Z'), doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'performance', 'hrtime', 'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback'] });
 
 const express = require('express');
 const request = require('supertest');

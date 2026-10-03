@@ -7,7 +7,9 @@
     "test": "jest",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
-    "start": "node server.js"
+    "start": "node server.js",
+    "bugcheck": "node scripts/bugcheck_scratch.js",
+    "bugcheck:static": "node scripts/bugcheck.js --static"
   },
   "keywords": [],
   "author": "",

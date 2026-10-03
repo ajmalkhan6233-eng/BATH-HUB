@@ -79,7 +79,7 @@ router.get('/cheque-register/overdue', async (req, res) => {
 });
 
 // ─── Input checks (reject bad values with a clear 400 instead of storing them / leaking DB errors) ───
-const isDate = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
+const { isRealDate: isDate } = require('../utils/validate');   // real calendar dates only (2026-02-30 is refused)
 const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
 const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
 
