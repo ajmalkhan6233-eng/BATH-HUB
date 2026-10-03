@@ -26,7 +26,7 @@ const render = require('../utils/documents/render');
 const store = require('../utils/documents/store');
 const sender = require('../utils/documents/sender');
 const Q = require('../utils/documents/quarantine');
-const { parseRange } = require('../utils/documents/format');
+const { parseRange, isDay } = require('../utils/documents/format');
 const { todayLK } = require('../utils/lkTime');
 
 const FORMATS = ['pdf', 'csv'];
@@ -106,8 +106,18 @@ function createRouter(pool, opts = {}) {
     // ───────── saved documents ─────────
     router.get('/documents', async (req, res) => {
         try {
-            const t = req.query.type ? String(req.query.type) : null;
-            const r = t ? await pool.query(`SELECT * FROM documents WHERE type = $1 ORDER BY id DESC LIMIT 300`, [t]) : await pool.query(`SELECT * FROM documents ORDER BY id DESC LIMIT 300`);
+            const q = req.query, one = v => (Array.isArray(v) ? v[0] : v);
+            const type = one(q.type) === undefined || one(q.type) === '' ? null : String(one(q.type));
+            if (type !== null && !/^[a-z_]{1,40}$/.test(type)) return res.status(400).json({ error: 'The document type is not valid.' });
+            const from = one(q.from) === undefined || one(q.from) === '' ? null : String(one(q.from));
+            const to = one(q.to) === undefined || one(q.to) === '' ? null : String(one(q.to));
+            if ((from !== null && !isDay(from)) || (to !== null && !isDay(to))) return res.status(400).json({ error: 'Dates must be real dates like 2026-09-30.' });
+            if (from && to && from > to) return res.status(400).json({ error: 'The start date is after the end date.' });
+            const num = (v, def, min, max) => { const n = Number(one(v)); return one(v) !== undefined && one(v) !== '' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.trunc(n))) : def; };
+            const limit = num(q.limit, 300, 1, 300), offset = num(q.offset, 0, 0, 1000000);
+            const r = await pool.query(
+                `SELECT * FROM documents WHERE ($1::text IS NULL OR type = $1) AND ($2::text IS NULL OR created_at::date >= $2::date) AND ($3::text IS NULL OR created_at::date <= $3::date) ORDER BY id DESC LIMIT $4 OFFSET $5`,
+                [type, from, to, limit, offset]);
             res.json(r.rows.map(presentDoc));
         } catch (e) { fail(res, e, 'Could not load the documents.'); }
     });

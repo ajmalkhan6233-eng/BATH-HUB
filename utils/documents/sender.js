@@ -58,7 +58,7 @@ async function sendDocument(pool, o) {
     try {
         if (!PURPOSE_RE.test(purpose)) return { status: 400, body: { error: 'The purpose is not valid (letters, numbers, - and _ only).' } };
         const rid = Number(o.recipientId);
-        const rec = Number.isInteger(rid) && rid > 0 ? (await pool.query(`SELECT * FROM document_recipients WHERE id = $1 AND active = TRUE`, [rid])).rows[0] : null;
+        const rec = Number.isInteger(rid) && rid > 0 && rid <= 2147483647 ? (await pool.query(`SELECT * FROM document_recipients WHERE id = $1 AND active = TRUE`, [rid])).rows[0] : null;
         if (!rec) { await logSend(pool, { ...base, status: 'refused', detail: 'recipient is not on the allow-list' }); return { status: 403, body: { error: 'That person is not on the allow-list. Add them under Recipients first.' } }; }
         const types = parseTypes(rec.allowed_types);
         const b2 = { ...base, recipient_id: rec.id, to: rec.phone };

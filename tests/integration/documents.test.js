@@ -513,3 +513,36 @@ describe('reverse migration', () => {
         expect([...up.matchAll(/CREATE TABLE IF NOT EXISTS (\w+)/g)].map(m => m[1]).sort()).toEqual(drops);
     });
 });
+
+describe('bad query values never give a 500', () => {
+    const qs = [
+        '?date=abc&from=x&to=y&month=13&ym=2026-99&days=-5&months=999999&limit=-1&offset=-9&page=0',
+        '?date=2026-02-30&from=2026-13-01&to=0000-00-00&days=1e99&limit=99999999999999999999',
+        '?status=%27%3B--&q=%F0%9F%98%80&search=%25&type=%00&category=%22',
+        '?from=2026-10-05&to=2026-10-01&days=0&months=0&year=abc',
+        '?from=2026-02-30', '?type=a&type=b', '?from[]=1', '?limit=1e99&offset=1e99', '?type=%27%3B--',
+    ];
+    test.each(qs)('GET /api/documents%s', async q => {
+        const r = await request(owner).get('/api/documents' + q);
+        expect(r.status).toBeLessThan(500); expect([200, 400]).toContain(r.status);
+        expect(JSON.stringify(r.body)).not.toMatch(/at \w+|node_modules|stack/);
+    });
+    test('good filters still work and limit is clamped', async () => {
+        await make('pnl', ['csv']);
+        const r = await request(owner).get('/api/documents?type=pnl&from=2020-01-01&to=2099-12-31&limit=-5&offset=0');
+        expect(r.status).toBe(200); expect(r.body.length).toBe(1);
+        expect((await request(owner).get('/api/documents?type=pnl&limit=99999999999999999999')).status).toBe(200);
+    });
+    test.each(['/api/documents/99999999999999999999/download', '/api/documents/2147483648/download', '/api/documents/%00/download', '/api/documents/-1/download', '/api/documents/1.5/download', '/api/documents/abc/download?view=%00',
+        '/api/documents/inbox?status=%00', '/api/documents/inbox/99999999999999999999/file', '/api/documents/reports?from=x&to=%00', '/api/documents/sends?limit=-1'])('GET %s', async u => {
+        const r = await request(owner).get(u);
+        expect(r.status).toBeLessThan(500);
+    });
+    test('generate with NUL / huge / impossible values -> 400', async () => {
+        for (const b of [{ report: 'pnl', from: '2026-02-30', to: '2026-03-01' }, { report: 'pnl', from: '0000-00-00', to: '2026-03-01' }, { report: 'pnl\u0000', from: '2026-03-01', to: '2026-03-02' }, { report: 'pnl', from: '2026-03-01\u0000', to: '2026-03-02' }, { report: 'pnl', from: 1e99, to: -1 }])
+            expect((await request(owner).post('/api/documents/generate').send(b)).status).toBe(400);
+        for (const id of ['99999999999999999999', '2147483648', '-1', '1e3'])
+            for (const m of ['post', 'delete']) expect((await request(owner)[m](`/api/documents/${id}${m === 'post' ? '/send' : ''}`).send({ recipient_id: 1 })).status).toBe(404);
+        expect((await request(owner).post('/api/documents/1/send').send({ recipient_id: 99999999999999999999 })).status).toBeLessThan(500);
+    });
+});
