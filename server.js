@@ -619,6 +619,7 @@ app.use('/api', require('./routes/tile_tools'));           // counter tools: til
 app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: LAYLA drafts replies for review, never sends -> /api/agent-brain/*
 app.use('/api', require('./routes/salary'));              // SALARY module (isolated): daily cost target, monthly profit split, cheque set-aside -> /api/salary* (owner only)
 app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
+app.use('/api', require('./routes/documents'));          // DOCUMENTS & REPORTS (owner only): PDF/CSV reports, allow-listed WhatsApp send (dry run unless live), inbound-file quarantine -> /api/documents*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
