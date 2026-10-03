@@ -17,10 +17,7 @@ const { Pool } = require('pg');
 const { ensureAdminAudit, logAdmin, adminOnly } = require('../utils/adminAudit');
 
 const router = express.Router();
-const pool = new Pool({
-    host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-    user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-});
+const pool = require('../utils/pool');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_BODY = 512 * 1024;

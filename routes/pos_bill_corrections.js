@@ -9,10 +9,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const router = express.Router();
 
-const pool = new Pool({
-    host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME,
-    user: process.env.DB_USER, password: process.env.DB_PASSWORD,
-});
+const pool = require('../utils/pool');
 
 const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
