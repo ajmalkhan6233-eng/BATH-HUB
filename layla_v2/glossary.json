@@ -1,0 +1,29 @@
+{
+  "_note": "Shop words in every language style. NEEDS REVIEW BY A NATIVE SINHALA AND TAMIL SPEAKER before going live. Add words here (no code change). 'aliases' are other spellings customers use; they are matched as whole words, any case.",
+  "terms": {
+    "tile":      { "en": "tile",      "si": "ටයිල්",        "ta": "டைல்",          "singlish": "tile",     "tanglish": "tile",     "aliases": ["tiles", "tail", "tails", "ටයිල්ස්", "ටයිල", "டைல்ஸ்", "டைல்கள்", "டைல்ஸ்"] },
+    "floor":     { "en": "floor",     "si": "බිම",          "ta": "தரை",           "singlish": "floor",    "tanglish": "floor",    "aliases": ["flooring", "bima", "tharai", "බිමට", "தரைக்கு"] },
+    "wall":      { "en": "wall",      "si": "බිත්තිය",      "ta": "சுவர்",         "singlish": "wall",     "tanglish": "wall",     "aliases": ["walls", "bittiya", "suvar", "බිත්ති", "சுவருக்கு"] },
+    "bathroom":  { "en": "bathroom",  "si": "නාන කාමරය",    "ta": "குளியலறை",      "singlish": "bathroom", "tanglish": "bathroom", "aliases": ["washroom", "toilet", "bath room", "bathrooms", "nana kamaraya", "kuliyalarai", "නාන කාමරේ", "වැසිකිළිය", "கழிவறை"] },
+    "kitchen":   { "en": "kitchen",   "si": "කුස්සිය",      "ta": "சமையலறை",       "singlish": "kitchen",  "tanglish": "kitchen",  "aliases": ["kussiya", "samaiyalarai", "කුස්සියට", "சமையலறைக்கு"] },
+    "box":       { "en": "box",       "si": "පෙට්ටිය",      "ta": "பெட்டி",        "singlish": "box",      "tanglish": "box",      "aliases": ["boxes", "carton", "pettiya", "petti", "පෙට්ටි", "பெட்டிகள்"] },
+    "piece":     { "en": "piece",     "si": "කෑල්ල",        "ta": "துண்டு",        "singlish": "piece",    "tanglish": "piece",    "aliases": ["pieces", "pcs", "pc", "kalla", "කෑලි", "துண்டுகள்"] },
+    "sqft":      { "en": "sq ft",     "si": "වර්ග අඩි",     "ta": "சதுர அடி",      "singlish": "sq ft",    "tanglish": "sq ft",    "aliases": ["sqft", "sq.ft", "square feet", "square foot", "sft", "වර්ග අඩි", "சதுர அடி"] },
+    "inch":      { "en": "inch",      "si": "අඟල්",         "ta": "அங்குலம்",      "singlish": "inch",     "tanglish": "inch",     "aliases": ["inches", "angul", "අඟල්", "அங்குலம்"] },
+    "feet":      { "en": "feet",      "si": "අඩි",          "ta": "அடி",           "singlish": "feet",     "tanglish": "feet",     "aliases": ["ft", "foot", "adi", "අඩි", "அடி"] },
+    "price":     { "en": "price",     "si": "මිල",          "ta": "விலை",          "singlish": "price",    "tanglish": "price",    "aliases": ["prices", "cost", "rate", "rates", "mila", "milaya", "vilai", "mila kiyada", "මිලක්", "මිලට", "விலை", "விலையை"] },
+    "stock":     { "en": "stock",     "si": "තොගය",         "ta": "கையிருப்பு",    "singlish": "stock",    "tanglish": "stock",    "aliases": ["available", "availability", "in stock", "thiyenawada", "irukka", "irukkaa", "තොග", "තියෙනවද", "තියේද", "තියෙනවාද", "இருக்கா", "இருக்கிறதா", "இருக்கு", "ஸ்டாக்"] },
+    "size":      { "en": "size",      "si": "ප්‍රමාණය",     "ta": "அளவு",          "singlish": "size",     "tanglish": "size",     "aliases": ["sizes", "dimension", "dimensions", "pramanaya", "alavu", "ප්‍රමාණ", "සයිස්", "அளவுகள்", "சைஸ்"] },
+    "quotation": { "en": "quotation", "si": "ඇස්තමේන්තුව",  "ta": "விலைப்புள்ளி",  "singlish": "quotation","tanglish": "quotation","aliases": ["quote", "quotes", "estimate", "quotations", "kotation", "කොටේෂන්", "ඇස්තමේන්තු", "விலைப்புள்ளிக்கு", "கோட்டேஷன்"] },
+    "delivery":  { "en": "delivery",  "si": "බෙදාහැරීම",    "ta": "டெலிவரி",       "singlish": "delivery", "tanglish": "delivery", "aliases": ["deliver", "transport", "ඩිලිවරි", "ඩිලිවරිය", "டெலிவரி", "வினியோகம்"] },
+    "discount":  { "en": "discount",  "si": "වට්ටම",        "ta": "தள்ளுபடி",      "singlish": "discount", "tanglish": "discount", "aliases": ["discounts", "wattama", "reduce", "ඩිස්කවුන්ට්", "වට්ටම්", "தள்ளுபடி", "டிஸ்கவுண்ட்"] },
+    "location":  { "en": "location",  "si": "ස්ථානය",       "ta": "இடம்",          "singlish": "location", "tanglish": "location", "aliases": ["address", "where", "showroom", "sthanaya", "idam", "ලිපිනය", "කොහෙද", "இடம்", "முகவரி", "எங்கே", "ஷோரூம்"] },
+    "basin":     { "en": "basin",     "si": "බේසම",         "ta": "பேசின்",        "singlish": "basin",    "tanglish": "basin",    "aliases": ["wash basin", "washbasin", "sink", "wash bason", "වොෂ් බේසම", "වොශ් බේසම", "வாஷ் பேசின்"] },
+    "tap":       { "en": "tap",       "si": "කරාමය",        "ta": "குழாய்",        "singlish": "tap",      "tanglish": "tap",      "aliases": ["taps", "mixer", "faucet", "karamaya", "කරාම", "குழாய்கள்"] },
+    "commode":   { "en": "commode",   "si": "කොමෝඩ්",       "ta": "கமோட்",         "singlish": "commode",  "tanglish": "commode",  "aliases": ["wc", "toilet bowl", "water closet", "கமோடு"] },
+    "shower":    { "en": "shower",    "si": "ෂවර්",         "ta": "ஷவர்",          "singlish": "shower",   "tanglish": "shower",   "aliases": ["showers", "ஷவர்கள்"] },
+    "room":      { "en": "room",      "si": "කාමරය",        "ta": "அறை",           "singlish": "room",     "tanglish": "room",     "aliases": ["rooms", "kamaraya", "arai", "කාමරේ", "කාමරයේ", "அறையின்"] },
+    "matt":      { "en": "matt",      "si": "මැට්",         "ta": "மேட்",          "singlish": "matt",     "tanglish": "matt",     "aliases": ["matte", "මැට් ෆිනිෂ්"] },
+    "glossy":    { "en": "glossy",    "si": "ග්ලොසි",       "ta": "கிளாசி",        "singlish": "glossy",   "tanglish": "glossy",   "aliases": ["gloss", "shiny", "polished", "ග්ලොසි"] }
+  }
+}
