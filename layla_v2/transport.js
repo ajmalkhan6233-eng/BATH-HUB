@@ -77,7 +77,7 @@ function parseCloudWebhook(body) {
 
 function createCloudApiTransport({ env = process.env, fetch: fetchFn, retries = 1, waitMs = 0 } = {}) {
     const doFetch = fetchFn || (typeof fetch === 'function' ? fetch : null);
-    async function post(path, body) {
+    async function post(path, body, { form = false } = {}) {
         // The three gates. If any fails nothing leaves this function.
         if (!isLive(env)) return { ok: false, error: 'WHATSAPP_LIVE is not true' };
         if (!haveKeys(env)) return { ok: false, error: 'WhatsApp credentials are not set' };
@@ -88,11 +88,11 @@ function createCloudApiTransport({ env = process.env, fetch: fetchFn, retries = 
             try {
                 const res = await doFetch(url, {
                     method: 'POST',
-                    headers: { Authorization: 'Bearer ' + env.WHATSAPP_API_TOKEN, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
+                    headers: form ? { Authorization: 'Bearer ' + env.WHATSAPP_API_TOKEN } : { Authorization: 'Bearer ' + env.WHATSAPP_API_TOKEN, 'Content-Type': 'application/json' },
+                    body: form ? body : JSON.stringify(body),
                 });
                 const data = await res.json().catch(() => ({}));
-                if (res.ok) return { ok: true, id: data.messages && data.messages[0] && data.messages[0].id };
+                if (res.ok) return { ok: true, id: (data.messages && data.messages[0] && data.messages[0].id) || data.id };
                 lastErr = `HTTP ${res.status}` + (data.error && data.error.message ? ' ' + String(data.error.message).slice(0, 120) : '');
                 if (res.status < 500 && res.status !== 429) break;   // a bad request will not get better by retrying
             } catch (e) { lastErr = 'network error'; }
@@ -101,16 +101,32 @@ function createCloudApiTransport({ env = process.env, fetch: fetchFn, retries = 
         return { ok: false, error: lastErr };   // never contains the token
     }
     const base = to => ({ messaging_product: 'whatsapp', recipient_type: 'individual', to: digits(to) });
-    const guard = (kind, to, payload, build) => {
+    // A file given as a Buffer is uploaded first (POST /media), then sent by its media id.
+    async function withMedia(p) {
+        if (!p.buffer || p.mediaId) return { p };
+        const FormDataCls = globalThis.FormData, BlobCls = globalThis.Blob;
+        if (!FormDataCls || !BlobCls) return { error: 'file upload is not available in this Node version' };
+        const form = new FormDataCls();
+        form.append('messaging_product', 'whatsapp');
+        form.append('type', p.mime || 'application/octet-stream');
+        form.append('file', new BlobCls([p.buffer], { type: p.mime || 'application/octet-stream' }), p.filename || 'file');
+        const up = await post('media', form, { form: true });
+        return up.ok && up.id ? { p: { ...p, mediaId: up.id } } : { error: up.error || 'upload failed' };
+    }
+    const guard = async (kind, to, payload, build) => {
         const bad = checkArgs(to, kind, payload);
-        return bad ? Promise.resolve({ ok: false, error: bad }) : post('messages', build());
+        if (bad) return { ok: false, error: bad };
+        if (kind === 'text') return post('messages', build(payload));
+        const m = await withMedia(payload);
+        if (m.error) return { ok: false, error: m.error };
+        return post('messages', build(m.p));
     };
     return {
         name: 'cloud-api',
         sendText: (to, text) => guard('text', to, { text }, () => ({ ...base(to), type: 'text', text: { body: String(text).slice(0, 4000), preview_url: false } })),
         // Images and documents are sent by public link (Cloud API also accepts an uploaded media id as `id`).
-        sendImage: (to, p = {}) => guard('image', to, p, () => ({ ...base(to), type: 'image', image: p.mediaId ? { id: p.mediaId } : { link: p.url, caption: p.caption } })),
-        sendDocument: (to, p = {}) => guard('document', to, p, () => ({ ...base(to), type: 'document', document: p.mediaId ? { id: p.mediaId, filename: p.filename } : { link: p.url, filename: p.filename, caption: p.caption } })),
+        sendImage: (to, p = {}) => guard('image', to, p, q => ({ ...base(to), type: 'image', image: q.mediaId ? { id: q.mediaId, caption: q.caption } : { link: q.url, caption: q.caption } })),
+        sendDocument: (to, p = {}) => guard('document', to, p, q => ({ ...base(to), type: 'document', document: q.mediaId ? { id: q.mediaId, filename: q.filename, caption: q.caption } : { link: q.url, filename: q.filename, caption: q.caption } })),
     };
 }
 

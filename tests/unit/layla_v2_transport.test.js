@@ -85,6 +85,30 @@ describe('LAYLA v2 transport', () => {
         expect(JSON.stringify(r3)).not.toContain('tok-secret');
     });
 
+    test('cloud adapter uploads a Buffer to /media first, then sends by media id', async () => {
+        const env = { WHATSAPP_LIVE: 'true', WHATSAPP_API_TOKEN: 'tok-abc', WHATSAPP_PHONE_NUMBER_ID: '555' };
+        const calls = [];
+        const f = jest.fn(async (url, opts) => {
+            calls.push(url);
+            return { ok: true, status: 200, json: async () => (url.endsWith('/media') ? { id: 'media-9' } : { messages: [{ id: 'wamid.2' }] }) };
+        });
+        const t = T.createCloudApiTransport({ env, fetch: f });
+        const r = await t.sendDocument('94771234567', { buffer: Buffer.from('%PDF-1.4 test'), mime: 'application/pdf', filename: 'q12.pdf', caption: 'Quotation 12' });
+        expect(r).toEqual({ ok: true, id: 'wamid.2' });
+        expect(calls).toEqual(['https://graph.facebook.com/v20.0/555/media', 'https://graph.facebook.com/v20.0/555/messages']);
+        expect(f.mock.calls[0][1].headers['Content-Type']).toBeUndefined();   // multipart boundary is set by FormData
+        const sent = JSON.parse(f.mock.calls[1][1].body);
+        expect(sent.document).toMatchObject({ id: 'media-9', filename: 'q12.pdf', caption: 'Quotation 12' });
+    });
+
+    test('cloud adapter: a failed upload sends nothing', async () => {
+        const env = { WHATSAPP_LIVE: 'true', WHATSAPP_API_TOKEN: 'tok-abc', WHATSAPP_PHONE_NUMBER_ID: '555' };
+        const f = jest.fn(async () => ({ ok: false, status: 400, json: async () => ({ error: { message: 'bad file' } }) }));
+        const r = await T.createCloudApiTransport({ env, fetch: f }).sendDocument('94771234567', { buffer: Buffer.from('x'), filename: 'a.pdf' });
+        expect(r.ok).toBe(false);
+        expect(f).toHaveBeenCalledTimes(1);
+    });
+
     test('selectTransport: dry run unless live flag and keys both present', () => {
         expect(T.selectTransport({}).name).toBe('dry-run');
         expect(T.selectTransport({ WHATSAPP_LIVE: 'true' }).name).toBe('dry-run');
