@@ -75,7 +75,11 @@ add('secrets', 'the real .env and password file were never committed (git histor
 });
 add('packages', 'npm audit summary (production deps): no critical', async () => {
     let j;
-    try { j = JSON.parse(cp.execSync('npm audit --omit=dev --json', { cwd: ROOT, encoding: 'utf8', maxBuffer: 50e6 })); } catch (e) { try { j = JSON.parse(e.stdout); } catch (e2) { return skip('npm audit unavailable (offline?)'); } }
+    // Under `npm run bugcheck` npm passes its own npm_* settings down; a nested `npm audit` then answers without a summary. Run it clean.
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^npm_/i.test(k)));
+    const opts = { cwd: ROOT, encoding: 'utf8', maxBuffer: 50e6, env };
+    try { j = JSON.parse(cp.execSync('npm audit --omit=dev --json', opts)); } catch (e) { try { j = JSON.parse(e.stdout); } catch (e2) { return skip('npm audit unavailable (offline?)'); } }
+    if (!j || !j.metadata || !j.vulnerabilities) return skip('npm audit gave no summary (offline or registry error)');
     const v = j.metadata.vulnerabilities, hi = Object.entries(j.vulnerabilities).filter(([, x]) => x.severity === 'high').map(([k]) => k);
     const line = `critical ${v.critical}, high ${v.high}, moderate ${v.moderate}, low ${v.low}${hi.length ? ' (high: ' + hi.slice(0, 6).join(', ') + ')' : ''}`;
     return v.critical ? bad(line) : ok(line);
