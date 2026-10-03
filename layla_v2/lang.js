@@ -42,8 +42,8 @@ function detectLanguage(text, previous = null) {
     if (sg >= 2 && sg > tg) return { style: 'singlish', confidence: Math.min(1, sg / 4), script: 'latin' };
     if (tg >= 2 && tg > sg) return { style: 'tanglish', confidence: Math.min(1, tg / 4), script: 'latin' };
     // Too little to tell (e.g. "ok", "hi", "tile price"): English, but a caller may prefer the previous style.
-    const style = previous && toks.length <= 3 ? previous : 'en';
-    return { style, confidence: previous && toks.length <= 3 ? 0.4 : 0.6, script: 'latin' };
+    const follow = previous && toks.length <= 2;
+    return { style: follow ? previous : 'en', confidence: follow ? 0.4 : 0.6, script: 'latin' };
 }
 
 const usesEmoji = text => EMOJI_RE.test(String(text || ''));

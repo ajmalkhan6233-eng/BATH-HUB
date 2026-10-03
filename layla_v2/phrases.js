@@ -241,8 +241,11 @@ function render(key, style, p = {}, { rng = Math.random, avoid = [], emoji = fal
     if (!entry) throw new Error('unknown phrase key: ' + key);
     const variants = entry[style] || entry.en;
     const texts = variants.map(v => v(p));
-    const fresh = texts.filter(t => !avoid.includes(t));
-    const pool = fresh.length ? fresh : texts;
+    let pool = texts.filter(t => !avoid.includes(t));
+    if (!pool.length) {   // every variant was used lately: at least do not repeat the most recent one
+        const lastUsed = Math.max(...texts.map(t => avoid.lastIndexOf(t)));
+        pool = texts.length > 1 ? texts.filter(t => avoid.lastIndexOf(t) !== lastUsed) : texts;
+    }
     let out = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
     if (emoji && LIGHT_KEYS.has(key)) out += ' ' + EMOJIS[Math.min(EMOJIS.length - 1, Math.floor(rng() * EMOJIS.length))];
     return out;

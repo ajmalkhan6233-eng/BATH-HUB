@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const digits = v => String(v == null ? '' : v).replace(/\D/g, '');
+const { normalizePhone: digits } = require('./roles');   // 0771234567, +94 77 123 4567 and 94771234567 are the same person
 const KEEP_MESSAGES = 60;   // per phone; LAYLA only reads the latest 20
 
 function createPgStore(pool) {

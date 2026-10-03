@@ -1,7 +1,7 @@
 'use strict';
 // In-memory store with the same interface as store_pg.js. Used by tests and the offline quality set;
 // nothing is written anywhere. See store_pg.js for what each method means.
-const digits = v => String(v == null ? '' : v).replace(/\D/g, '');
+const { normalizePhone: digits } = require('./roles');   // 0771234567, +94 77 123 4567 and 94771234567 are the same person
 
 function createMemoryStore({ now = () => new Date() } = {}) {
     const contacts = new Map();   // phone -> {phone, role, name, active}
