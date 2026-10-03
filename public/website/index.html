@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Bath Hub, Thihariya, Kandy Road. Tiles, taps and bathroom fittings. See any tile in a room before you buy.">
 <meta name="theme-color" content="#0B1B3A">
+<link rel="canonical" href="/site" data-abs>
+<link rel="manifest" href="/website/site.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/brand/icon-192.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bath Hub">
+<meta property="og:title" content="Bath Hub | Tiles and Bathroom Fittings, Thihariya">
+<meta property="og:description" content="Tiles, taps and bathroom fittings. See any tile in a room before you buy.">
+<meta property="og:url" content="/site" data-abs>
+<meta property="og:image" content="/website/og-image.png" data-abs>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bath Hub. Tiles and bathroom fittings, Thihariya, Kandy Road.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bath Hub | Tiles and Bathroom Fittings, Thihariya">
+<meta name="twitter:description" content="Tiles, taps and bathroom fittings. See any tile in a room before you buy.">
+<meta name="twitter:image" content="/website/og-image.png" data-abs>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Bath Hub | Tiles and Bathroom Fittings, Thihariya</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@400;500;600&family=Noto+Sans+Sinhala:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeGoodsStore","name":"Bath Hub","description":"Tiles, taps and bathroom fittings in Thihariya, Kandy Road, Sri Lanka.","telephone":"+94777999219","address":{"@type":"PostalAddress","streetAddress":"Kandy Road","addressLocality":"Thihariya","addressCountry":"LK"}}</script>
@@ -27,7 +46,7 @@ a{color:inherit}
 button{font:inherit;color:inherit}
 .serif{font-family:var(--serif)}
 body.si .serif,body.ta .serif{font-family:inherit}
-.btn:focus-visible,.lang button:focus-visible,.swatch:focus-visible,.chip:focus-visible,.card:focus-visible,.nav a:focus-visible,.seg button:focus-visible,.wa:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn:focus-visible,.lang button:focus-visible,.swatch:focus-visible,.chip:focus-visible,.card:focus-visible,.nav a:focus-visible,.seg button:focus-visible,.wa:focus-visible{outline:3px solid var(--gold);outline-offset:3px;box-shadow:0 0 0 3px var(--navy)}
 
 /* ===== header ===== */
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(11,27,58,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--ivory);border-bottom:1px solid rgba(201,162,75,.45)}
@@ -128,6 +147,7 @@ body.si .promise h2,body.ta .promise h2{font-style:normal}
 body.si .card .n,body.ta .card .n{font-family:inherit;font-size:17px}
 .card .s{color:var(--muted);font-size:15px;margin-top:4px}
 .note{color:var(--muted);font-size:15px;margin-top:18px}
+.catdl{margin-top:14px}
 
 /* fittings */
 .cats{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
@@ -180,7 +200,7 @@ dialog .btn.ghost:hover{background:rgba(11,27,58,.06)}
 .bk svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .bk i{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:99px;background:var(--gold);color:var(--navy);font-style:normal;font-size:12px;font-weight:600;display:grid;place-items:center;padding:0 5px}
 .bk i:empty{display:none}
-.bk:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bk:focus-visible,.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--gold);outline-offset:2px;box-shadow:0 0 0 2px var(--navy)}
 .hdr-r{display:flex;align-items:center;gap:10px}
 /* calculator */
 .calc{display:grid;gap:22px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
@@ -213,6 +233,22 @@ body.si .li b,body.ta .li b{font-family:inherit;font-size:17px}
 .empty{color:var(--muted);padding:16px 0}
 /* numbers line up */
 .out .n,.out .d,.pick small,.card .s,.li input,.fld input,.contact a.num,.bk i{font-variant-numeric:tabular-nums}
+@media print{
+  @page{margin:14mm}
+  html,body{background:#fff!important;color:#000!important}
+  *{animation:none!important;transition:none!important;box-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,.skip,.wa,.chips,.catdl,#tools,dialog,.hero .stage,.hero .sub,#trade,#visit .btn,.btn{display:none!important}
+  .hero{background:#fff!important;color:#000!important;padding:0 0 10px!important}
+  .hero h1{color:#0B1B3A!important}
+  section,.alt{background:#fff!important;color:#000!important;padding:14px 0!important}
+  .alt h2,.alt p,.alt .big,.alt .num,.cat{color:#000!important}
+  .promise{background:#fff!important}.promise h2{color:#0B1B3A!important}.promise p{color:#333!important}
+  .grid{grid-template-columns:repeat(4,1fr)!important}
+  .card{break-inside:avoid;border-color:#bbb!important}
+  .note,.card .s,.muted{color:#333!important}
+  a{color:#000!important;text-decoration:none!important}
+  footer{background:#fff!important;color:#000!important;border-top:1px solid #bbb}.w{color:#0B1B3A!important}
+}
 </style>
 </head>
 <body>
@@ -331,6 +367,7 @@ body.si .li b,body.ta .li b{font-family:inherit;font-size:17px}
   <div class="chips" id="chips" role="group" aria-label="Filter"></div>
   <div class="grid" id="grid"></div>
   <p class="note" data-t="sampleNote">Sample designs. Real stock photos coming soon.</p>
+  <p class="catdl"><a class="btn dark" id="catPdf" href="/api/site/catalogue.pdf" download><span data-t="catBtn">Download catalogue (PDF)</span></a></p>
 </div></section>
 
 <section id="tools"><div class="wrap">
@@ -472,7 +509,7 @@ en:{nTiles:'Tiles',nFit:'Fittings',nVisit:'Visit',kicker:'Thihariya, Kandy Road'
  catH:'Tile collection',catP:'Tap a tile to see it larger, or try it in the room above.',sampleNote:'Sample designs. Real stock photos coming soon.',
  fAll:'All',fStone:'Stone look',fWood:'Wood look',fWall:'Wall and mosaic',fConc:'Concrete and terrazzo',
  accH:'Bathroom fittings',accP:'Everything for the bathroom, in one place.',howH:'How it works',s1:'Pick a tile',s1d:'Tap any design in the collection.',s2:'See it in a room',s2d:'Switch between floor and wall to compare.',s3:'Message us',s3d:'Send us the tile name on WhatsApp. We confirm sizes and stock.',
- note:'The preview is a guide. Real colour and finish can look different in your light, so please see the tile in our showroom before you buy.',visitH:'Visit Bath Hub',addr:'Thihariya, Kandy Road',map:'Open in Maps',foot:'Every piece, a little more than you paid for.',
+ note:'The preview is a guide. Real colour and finish can look different in your light, so please see the tile in our showroom before you buy.',visitH:'Visit Bath Hub',addr:'Thihariya, Kandy Road',map:'Open in Maps',catBtn:'Download catalogue (PDF)',foot:'Every piece, a little more than you paid for.',
  size:'Size',glossy:'Glossy',matt:'Matt',polished:'Polished',inRoom:'View in room',close:'Close',msg:'Hello Bath Hub, I am interested in the tile: ',
  cats:[['Tiles','Floor and wall'],['Taps','Basin, kitchen, shower'],['Showers','Sets and heads'],['Basins & Toilets','Ceramic ware'],['Accessories','Racks, holders, mirrors']]},
 si:{nTiles:'ටයිල්',nFit:'උපාංග',nVisit:'පැමිණෙන්න',kicker:'තිහාරිය, කන්ඩි පාර',h1:'ඔබේ ටයිල් තෝරන්න. ඔබේ කාමරයේ බලන්න.',sub:'ටයිල්, ටැප් සහ නාන කාමර උපාංග. පැමිණීමට පෙර ඕනෑම සැලසුමක් පොළවේ හෝ බිත්තියේ උත්සාහ කර බලන්න.',bath:'නාන කාමරය',living:'විසිත්ත කාමරය',floor:'පොළව',wall:'බිත්තිය',plain:'සාමාන්‍ය බිත්තිය',ask:'WhatsApp හරහා අසන්න',
@@ -480,7 +517,7 @@ si:{nTiles:'ටයිල්',nFit:'උපාංග',nVisit:'පැමිණෙ�
  catH:'ටයිල් එකතුව',catP:'විශාලව බැලීමට ටයිල් එකක් ඔබන්න, නැතහොත් ඉහත කාමරයේ උත්සාහ කරන්න.',sampleNote:'නිරූපණ සැලසුම්. සැබෑ තොග ඡායාරූප ඉක්මනින්.',
  fAll:'සියල්ල',fStone:'ගල් පෙනුම',fWood:'දැව පෙනුම',fWall:'බිත්ති සහ මොසෙයික්',fConc:'කොන්ක්‍රීට් සහ ටෙරාසෝ',
  accH:'නාන කාමර උපාංග',accP:'නාන කාමරයට අවශ්‍ය සියල්ල එක තැනකින්.',howH:'ක්‍රියා කරන ආකාරය',s1:'ටයිල් එකක් තෝරන්න',s1d:'එකතුවේ ඇති ඕනෑම සැලසුමක් ඔබන්න.',s2:'කාමරයේ බලන්න',s2d:'සසඳා බැලීමට පොළව සහ බිත්තිය මාරු කරන්න.',s3:'අපට පණිවිඩයක් එවන්න',s3d:'ටයිල් එකේ නම WhatsApp හරහා එවන්න. ප්‍රමාණ සහ තොග අපි තහවුරු කරමු.',
- note:'මෙම පෙරදසුන මාර්ගෝපදේශයක් පමණි. ඔබේ ආලෝකයේ සැබෑ වර්ණය සහ ස්වභාවය වෙනස් විය හැක. මිලදී ගැනීමට පෙර අපගේ ශෝරූම් එකේ ටයිල් එක බලන්න.',visitH:'බාත් හබ් වෙත පැමිණෙන්න',addr:'තිහාරිය, කන්ඩි පාර',map:'සිතියමේ බලන්න',foot:'ඔබ ගෙවූ මුදලට වඩා තව ටිකක් වටින භාණ්ඩයක්.',
+ note:'මෙම පෙරදසුන මාර්ගෝපදේශයක් පමණි. ඔබේ ආලෝකයේ සැබෑ වර්ණය සහ ස්වභාවය වෙනස් විය හැක. මිලදී ගැනීමට පෙර අපගේ ශෝරූම් එකේ ටයිල් එක බලන්න.',visitH:'බාත් හබ් වෙත පැමිණෙන්න',addr:'තිහාරිය, කන්ඩි පාර',map:'සිතියමේ බලන්න',catBtn:'නාමාවලිය බාගන්න (PDF)',foot:'ඔබ ගෙවූ මුදලට වඩා තව ටිකක් වටින භාණ්ඩයක්.',
  size:'ප්‍රමාණය',glossy:'දිලිසෙන',matt:'මැට්',polished:'ඔපවත්',inRoom:'කාමරයේ බලන්න',close:'වසන්න',msg:'ආයුබෝවන් Bath Hub, මම මෙම ටයිල් එක ගැන උනන්දුයි: ',
  cats:[['ටයිල්','පොළව සහ බිත්ති'],['ටැප්','බේසම්, කුස්සිය, ෂවර්'],['ෂවර්','කට්ටල සහ හිස්'],['බේසම් සහ වැසිකිළි','සෙරමික් භාණ්ඩ'],['උපාංග','රාක්ක, ධාරක, කැඩපත්']]},
 ta:{nTiles:'டைல்ஸ்',nFit:'சாதனங்கள்',nVisit:'வருகை',kicker:'திஹாரிய, கண்டி வீதி',h1:'உங்கள் டைலைத் தேர்ந்தெடுங்கள். உங்கள் அறையில் பாருங்கள்.',sub:'டைல்ஸ், குழாய்கள் மற்றும் குளியலறை சாதனங்கள். வருவதற்கு முன் எந்த வடிவமைப்பையும் தரையிலோ சுவரிலோ முயன்று பாருங்கள்.',bath:'குளியலறை',living:'வரவேற்பறை',floor:'தரை',wall:'சுவர்',plain:'சாதாரண சுவர்',ask:'WhatsApp-ல் கேளுங்கள்',
@@ -488,7 +525,7 @@ ta:{nTiles:'டைல்ஸ்',nFit:'சாதனங்கள்',nVisit:'வ�
  catH:'டைல்ஸ் தொகுப்பு',catP:'பெரிதாகப் பார்க்க ஒரு டைலைத் தொடுங்கள், அல்லது மேலே உள்ள அறையில் முயன்று பாருங்கள்.',sampleNote:'மாதிரி வடிவமைப்புகள். உண்மையான இருப்பு புகைப்படங்கள் விரைவில்.',
  fAll:'அனைத்தும்',fStone:'கல் தோற்றம்',fWood:'மரத் தோற்றம்',fWall:'சுவர் மற்றும் மொசைக்',fConc:'கான்கிரீட் மற்றும் டெராசோ',
  accH:'குளியலறை சாதனங்கள்',accP:'குளியலறைக்குத் தேவையான அனைத்தும் ஒரே இடத்தில்.',howH:'எப்படி வேலை செய்கிறது',s1:'ஒரு டைலைத் தேர்ந்தெடுங்கள்',s1d:'தொகுப்பில் உள்ள எந்த வடிவமைப்பையும் தொடுங்கள்.',s2:'அறையில் பாருங்கள்',s2d:'ஒப்பிட தரை மற்றும் சுவரை மாற்றிப் பாருங்கள்.',s3:'எங்களுக்கு செய்தி அனுப்புங்கள்',s3d:'டைலின் பெயரை WhatsApp-ல் அனுப்புங்கள். அளவுகளையும் இருப்பையும் நாங்கள் உறுதிப்படுத்துவோம்.',
- note:'இந்த முன்னோட்டம் ஒரு வழிகாட்டி மட்டுமே. உங்கள் வெளிச்சத்தில் உண்மையான நிறமும் பூச்சும் வேறுபடலாம். வாங்கும் முன் எங்கள் காட்சியறையில் டைலைப் பாருங்கள்.',visitH:'பாத் ஹப்பைப் பார்வையிடுங்கள்',addr:'திஹாரிய, கண்டி வீதி',map:'வரைபடத்தில் பாருங்கள்',foot:'நீங்கள் கொடுத்த பணத்தை விட சற்று அதிக மதிப்புள்ள ஒவ்வொரு பொருளும்.',
+ note:'இந்த முன்னோட்டம் ஒரு வழிகாட்டி மட்டுமே. உங்கள் வெளிச்சத்தில் உண்மையான நிறமும் பூச்சும் வேறுபடலாம். வாங்கும் முன் எங்கள் காட்சியறையில் டைலைப் பாருங்கள்.',visitH:'பாத் ஹப்பைப் பார்வையிடுங்கள்',addr:'திஹாரிய, கண்டி வீதி',map:'வரைபடத்தில் பாருங்கள்',catBtn:'பட்டியலைப் பதிவிறக்கவும் (PDF)',foot:'நீங்கள் கொடுத்த பணத்தை விட சற்று அதிக மதிப்புள்ள ஒவ்வொரு பொருளும்.',
  size:'அளவு',glossy:'பளபளப்பு',matt:'மங்கல்',polished:'மெருகூட்டியது',inRoom:'அறையில் பாருங்கள்',close:'மூடு',msg:'வணக்கம் Bath Hub, இந்த டைலில் எனக்கு ஆர்வம் உள்ளது: ',
  cats:[['டைல்ஸ்','தரை மற்றும் சுவர்'],['குழாய்கள்','வாஷ்பேசின், சமையலறை, ஷவர்'],['ஷவர்கள்','செட்டுகள் மற்றும் தலைகள்'],['வாஷ்பேசின் & கழிப்பறை','செராமிக் பொருட்கள்'],['சாதனங்கள்','ரேக்குகள், ஹோல்டர்கள், கண்ணாடிகள்']]}
 };
@@ -530,9 +567,12 @@ function paint(swap){
 function pick(i){ if(i==='plain'){wallT=null}else if(target==='floor')floorT=TILES[i];else wallT=TILES[i]; paint(true) }
 function setTarget(x){target=x;$('tFloor').setAttribute('aria-pressed',x==='floor');$('tWall').setAttribute('aria-pressed',x==='wall');$('plainSw').style.display=x==='wall'?'':'none';paint()}
 function setRoom(r){room=r;$('fxBath').style.display=r==='bath'?'':'none';$('fxLiving').style.display=r==='living'?'':'none';$('sBath').setAttribute('aria-pressed',r==='bath');$('sLiv').setAttribute('aria-pressed',r==='living');paint()}
+const lazyIO='IntersectionObserver' in window?new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){e.target.style.backgroundImage=e.target.dataset.bg;o.unobserve(e.target)}})},{rootMargin:'300px'}):null;
+addEventListener('beforeprint',()=>document.querySelectorAll('[data-bg]').forEach(e=>{e.style.backgroundImage=e.dataset.bg}));
+function lazyBg(el,tl){if(tl.photo&&lazyIO){el.dataset.bg=tl.bg;lazyIO.observe(el)}else el.style.backgroundImage=tl.bg}
 function buildSwatches(){
   const box=$('swatches');box.innerHTML='';
-  TILES.forEach((tl,i)=>{const b=document.createElement('button');b.className='swatch';b.dataset.i=i;b.style.backgroundImage=tl.bg;b.setAttribute('aria-label',tl.n);b.onclick=()=>pick(i);box.appendChild(b)});
+  TILES.forEach((tl,i)=>{const b=document.createElement('button');b.className='swatch';b.dataset.i=i;lazyBg(b,tl);b.setAttribute('aria-label',tl.n);b.onclick=()=>pick(i);box.appendChild(b)});
   const p=document.createElement('button');p.className='swatch plain';p.id='plainSw';p.dataset.i='plain';p.style.display='none';p.onclick=()=>pick('plain');box.appendChild(p);
 }
 function buildGrid(){
@@ -540,7 +580,7 @@ function buildGrid(){
   TILES.forEach((tl,i)=>{
     if(filter!=='all'&&tl.g!==filter)return;
     const c=document.createElement('button');c.className='card';c.innerHTML='<div class="img"></div><div class="t"><div class="n"></div><div class="s"></div></div>';
-    c.querySelector('.img').style.backgroundImage=tl.bg;c.querySelector('.n').textContent=tl.n;c.querySelector('.s').textContent=tl.size+' · '+(L()[tl.fin]||tl.fin);
+    lazyBg(c.querySelector('.img'),tl);c.querySelector('.n').textContent=tl.n;c.querySelector('.s').textContent=tl.size+' · '+(L()[tl.fin]||tl.fin);
     c.onclick=()=>openTile(i);g.appendChild(c);
   });
 }
