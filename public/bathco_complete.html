@@ -1588,6 +1588,8 @@ const ADMIN_FRAMES = [
 async function applyAppSettings() {
   try {
     const me = await fetch('/api/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null);
+    // Documents & Reports: owner/admin only (the server refuses everyone else too)
+    if (me && (me.role === 'admin' || me.role === 'owner')) { addFramePage({ key: 'documents', label: 'Documents', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-file"/></svg>', url: '/documents.html', sub: 'Reports as PDF or CSV, send on WhatsApp, files that arrive', after: 'reports2' }); if (location.hash === '#/documents') routeFromHash(); }
     if (me && me.role === 'admin' && !document.getElementById('admin-sep')) {
       const sep = document.createElement('li'); sep.id = 'admin-sep'; sep.className = 'nav-sep'; sep.textContent = 'Admin';
       document.querySelector('.sidebar-nav').appendChild(sep);

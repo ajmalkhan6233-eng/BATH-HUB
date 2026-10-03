@@ -27,7 +27,7 @@ function ownerOnly(req, res, next) {
     next();
 }
 const clean = v => String(v == null ? '' : v).trim();
-const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s + 'T00:00:00Z'));
+const { isRealDate: isDate } = require('../utils/validate');   // real calendar dates only (2026-02-30 is refused)
 const dateStr = v => v instanceof Date
     ? `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`
     : String(v).slice(0, 10);

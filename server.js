@@ -149,6 +149,8 @@ app.set('trust proxy', 1);
 // (X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy, etc.) are
 // same-origin/heuristic and safe to enable as-is. Tightening CSP to nonces
 // would require rewriting every inline script/style — out of scope here.
+// HARDENING (utils/hardening): everything logged has phone numbers cut to the last 3 digits and tokens/keys/passwords removed. HARDENING_LOG_REDACT=off disables.
+require('./utils/hardening').installConsoleRedaction();
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
 // 100 requests / 15 min / IP across the whole app.
@@ -190,9 +192,16 @@ const failedAuthLimiter = (max) => rateLimit({
 });
 app.use('/api/login', failedAuthLimiter(10));
 app.use('/api/admin/verify', failedAuthLimiter(5));
+// HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
+app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
+app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
+app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
+app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
+app.use(['/api/public', '/api/site', '/api/sync'], require('./utils/hardening').jsonDepthGuard());   // HARDENING: refuse absurdly nested/huge JSON on public + sync endpoints
 
 // APEX tenant-status gate (control plane). No-op unless
 // APEX_ENFORCE_TENANT_STATUS=true in .env — see middleware/tenantStatusMiddleware.js.
@@ -238,6 +247,7 @@ app.use(async (req, res, next) => {
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
 if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
+    if (req.method === 'GET' && req.path === '/api/site/catalogue.pdf') return next();                 // website: public catalogue PDF (routes/site_catalogue.js), visible tiles only, rate-limited
     if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
@@ -295,6 +305,7 @@ const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_re
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
+app.use(require('./routes/site_catalogue'));   // website extras: /robots.txt, /sitemap.xml, /site with absolute links when SITE_URL is set, /api/site/catalogue.pdf (public)
 app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root: __dirname }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -608,6 +619,7 @@ app.use('/api', require('./routes/tile_tools'));           // counter tools: til
 app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: LAYLA drafts replies for review, never sends -> /api/agent-brain/*
 app.use('/api', require('./routes/salary'));              // SALARY module (isolated): daily cost target, monthly profit split, cheque set-aside -> /api/salary* (owner only)
 app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
+app.use('/api', require('./routes/documents'));          // DOCUMENTS & REPORTS (owner only): PDF/CSV reports, allow-listed WhatsApp send (dry run unless live), inbound-file quarantine -> /api/documents*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
