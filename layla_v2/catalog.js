@@ -65,7 +65,8 @@ function matchItems(rows, text) {
         if (score > 0 && (specific.length === 0 ? asked && it.size === asked : score >= 2)) scored.push({ it, score });
     }
     scored.sort((a, b) => b.score - a.score || a.it.name.localeCompare(b.it.name));
-    return { items: scored.slice(0, 3).map(s => s.it), sizeAsked: asked, specific: specific.length > 0 };
+    const top = scored.slice(0, 3);
+    return { items: top.map(s => s.it), scores: top.map(s => s.score), sizeAsked: asked, specific: specific.length > 0 };
 }
 
 function createPgCatalog(pool) {

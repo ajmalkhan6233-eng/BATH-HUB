@@ -24,7 +24,7 @@ const OVERRIDE = R(
 );
 
 const PRIVATE = R(
-    String.raw`\b(?:profits?|loss(?:es)?|margins?|mark-?ups?|cost\s*price|buying\s*price|purchase\s*price|suppliers?|wholesale\s+price|salary|salaries|wages?|payroll|staff\s+pay|loans?|investors?|turnover|revenue|daily\s+sales|total\s+sales|bank\s+balance)\b`,
+    String.raw`\b(?:profits?|loss(?:es)?|margins?|mark-?ups?|cost\s*price|buying\s*price|purchase\s*price|suppliers?|wholesale\s+price|salary|salaries|wages|payroll|staff\s+pay|loans?|investors?|turnover|revenue|daily\s+sales|total\s+sales|bank\s+balance)\b`,
     String.raw`\bowner'?s?\s+(?:phone|number|address|home)\b`, String.raw`\bother\s+customers?\b`, String.raw`\banother\s+customer\b`, String.raw`\bsomeone\s+else'?s?\b`,
     String.raw`\bwhat\s+did\s+\w+(?:\s+\w+)?\s+(?:buy|purchase|order|pay)\b`,
     String.raw`\b(?:balance|bill|order|purchase|credit|cheques?)\s+of\s+(?:mr|mrs|ms|miss|dr)?\.?\s*\w+`, String.raw`\b\w+'s\s+(?:balance|bill|order|credit|purchase|cheques?)\b`,
