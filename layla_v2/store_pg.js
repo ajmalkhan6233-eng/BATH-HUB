@@ -13,7 +13,7 @@ function createPgStore(pool) {
         const have = await pool.query(`SELECT 1 FROM layla_messages LIMIT 1`).then(() => true).catch(() => false);
         if (have) return;   // already migrated (also keeps pg-mem happy: it dislikes IF NOT EXISTS on an existing table)
         const sql = fs.readFileSync(path.join(__dirname, 'migrations', '001_layla_v2.sql'), 'utf8')
-            .split('\n').map(l => l.replace(/--.*$/, '')).join('\n');
+            .split(/\r?\n/).map(l => l.replace(/--.*$/, '')).join('\n');
         for (const stmt of sql.split(';').map(s => s.trim()).filter(Boolean)) await pool.query(stmt);
     })().catch(e => { ready = null; throw e; }));
     const q = async (text, params) => { await ensureSchema(); return pool.query(text, params); };
