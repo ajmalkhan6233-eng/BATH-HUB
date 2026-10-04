@@ -29,8 +29,8 @@ describe('screen and offline', () => {
     const page = html.slice(html.indexOf('id="page-tilegallery"'), html.indexOf('COMPETITOR WATCH'));
     expect(page).not.toMatch(/price:|LKR|<input|<form|emoji/i);
   });
-  test('service worker version moved to v19 and every picture + the screen script is precached', () => {
-    expect(sw).toMatch(/const VERSION = 'v19'/);
+  test('service worker version moved to v20 and every picture + the screen script is precached', () => {
+    expect(sw).toMatch(/const VERSION = 'v20'/);
     for (const n of NAMES) { expect(sw).toContain(`'/tiles/${n}.webp'`); expect(sw).toContain(`'/tiles/${n}-thumb.webp'`); }
     expect(sw).toContain("'/tile-gallery.js'");
   });
