@@ -10,7 +10,7 @@ const { classifyAndAnswer } = require('./scripts/layla_answer_engine');
 
 // Same whitelist number used by whatsapp-bridge.js's local test mode — the
 // one person allowed to teach LAYLA permanent facts via "TEACH: <fact>".
-const OWNER_NUMBER = (process.env.WHATSAPP_TEST_WHITELIST || '+94777999219').replace(/\D/g, '');
+const OWNER_NUMBER = (process.env.WHATSAPP_TEST_WHITELIST || '').replace(/\D/g, '');
 const TAUGHT_FACTS_PATH = path.join(__dirname, 'LAYLA_TAUGHT_FACTS.md');
 
 function loadTaughtFacts() {
