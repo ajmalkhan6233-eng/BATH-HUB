@@ -1,0 +1,17 @@
+# BUILD_LOG (one line per step; newest at the bottom)
+
+- 2026-10-04 STEP 0: /usage cannot be run from inside this session (it is a terminal command). Budget watched through the session token counter instead; stop point = 5% of the budget left.
+- 2026-10-04 STEP 1 FACTS (master 22f2fb1 = origin/master):
+  1. Merged into master: audit-high-fixes, auto-send, bugcheck, cheque-clear-fix, documents, hardening, layla-v2, overnight-all-trial, tests-and-checks, website-editor, website-v3, website-v4, whatsapp-send, fix/bugcheck-audit-env.
+  2. NOT merged: review-audit (local), feature/website-preview (old), and the three cloud branches on origin.
+  3. review-audit: 7 commits master lacks (tip 6428d05), 0 behind master. origin/audit-fixes-2026-10-04: 6 ahead, 0 behind (tip fee0af0).
+  4. origin/bathhub-merged-clean: 5 ahead, 0 behind (tip 4c615ac). origin/claude/gallant-brahmagupta-g6tamb: 4 ahead, 0 behind (tip 7cf168b).
+  5. feature/overnight-all-trial (bugcheck, documents, layla-v2, website-v4, hardening) is ALREADY merged into master (89880cf): step 4 is not needed.
+- 2026-10-04 STEP 2 SECRET SCAN (patterns: password/passwd/secret/api key/token/PIN/@gmail/@yahoo/Password:/Sri Lankan phones; scanned every file CHANGED vs master on each branch, no values printed; word-only mentions such as DB_PASSWORD env names are normal code and were left):
+  1. review-audit: 4 files had real values, FIXED and committed (94c92fc): CLAUDE.md (parked Railway URL), docs/bathhub_knowledge/agents/BATHCO_MASTER.md (owner e-mail + a default "Password:" value), scripts/from_bathco/layla_bathco_old.js (owner phone fallback). public/bathhub.html holds the shop's PUBLIC WhatsApp number on purpose (website), left as is.
+  2. origin/bathhub-merged-clean, origin/audit-fixes-2026-10-04, origin/claude/gallant-brahmagupta-g6tamb: same hits, NOT rewritten (no history rewrite): CLAUDE.md, docs/bathhub_knowledge/agents/BATHCO_MASTER.md, scripts/from_bathco/layla_bathco_old.js (+ public/bathhub.html public number on audit-fixes only). These three branches are on the PUBLIC GitHub repo.
+  3. The default-password line and e-mail therefore still exist in those 3 public branches; deleting the remote branches or making the repo private is the only fix (owner decision).
+- 2026-10-04 STEP 3 MERGE review-audit: full tests on review-audit 105 suites / 1221 passed / 0 failed. Merged into master with --no-ff (833a318). Tests on master: first run 1 failure (site_page "public feed needs no login", a load-timing flake: passes alone, 16/16), second full run 105 suites / 1221 passed / 0 failed. Pushed master (22f2fb1..833a318). apex-server restarted with --only apex-server: /health ok, /site 200, /owner shows login, /api/customers and ledger API 401 when signed out, /daily-entry-v2.html 200, no new error lines in the log.
+- 2026-10-04 STEP 4 SKIPPED (nothing to do): feature/overnight-all-trial was already merged into master earlier (89880cf), so bugcheck, documents, layla-v2, website-v4 and hardening are all in master already.
+- 2026-10-04 STEP 5 BLOCKED: no file named bathhub-build-pack*.zip exists in C:\Users\Sony\Downloads (only bath-hub---tile-&-sanitaryware-pos zips and old noor_*.zip) or anywhere under Desktop, Documents or E:\AI Sttuf (searched 3 levels deep). Nothing extracted, apply.ps1 not run, backup script and scripts/migrate_vendor_ledger.js NOT run (the script is not in the repo either). BUILD.md does not exist in the repo root.
+- 2026-10-04 STEP 6 BLOCKED (depends on step 5): no BUILD.md, so the builds W1-W3 and later were not started.
