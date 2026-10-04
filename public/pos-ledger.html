@@ -13,7 +13,7 @@ iframe{flex:1;width:100%;min-height:0;border:1px solid rgba(232,207,138,.3);bord
 @media(max-width:800px){.split{grid-template-columns:1fr;grid-auto-rows:90vh;height:auto}}
 </style></head><body>
 <div class="split">
-  <div class="col"><div class="bar"><span>POS Billing</span><a href="/pos_billing.html" target="_blank" rel="noopener">Full page</a></div><iframe id="pos" title="POS billing" src="/pos_billing.html"></iframe></div>
+  <div class="col"><div class="bar"><span>POS Billing</span><button type="button" id="two" title="Opens POS on the left half and the Daily Ledger on the right half as two normal windows">Open as 2 windows</button><a href="/pos_billing.html" target="_blank" rel="noopener">Full page</a></div><iframe id="pos" title="POS billing" src="/pos_billing.html"></iframe></div>
   <div class="col"><div class="bar"><span>Daily Ledger <span id="note"></span></span><button type="button" id="rl">Refresh</button><a href="/daily-entry-v2.html" target="_blank" rel="noopener" style="margin-left:0">Full page</a></div><iframe id="led" title="Daily ledger" src="/daily-entry-v2.html"></iframe></div>
 </div>
 <script>
@@ -23,6 +23,12 @@ iframe{flex:1;width:100%;min-height:0;border:1px solid rgba(232,207,138,.3);bord
   led.addEventListener('load',hideChrome);
   function reload(){try{led.contentWindow.location.reload()}catch(_){led.src=led.src}note.textContent='updated '+new Date().toLocaleTimeString()}
   document.getElementById('rl').addEventListener('click',reload);
+  document.getElementById('two').addEventListener('click',function(){
+    var W=screen.availWidth,H=screen.availHeight,L=screen.availLeft||0,T=screen.availTop||0,half=Math.floor(W/2);
+    var f=function(w){return 'popup=yes,left='+w.x+',top='+T+',width='+half+',height='+H};
+    var a=window.open('/pos_billing.html','bhpos',f({x:L})),b=window.open('/daily-entry-v2.html','bhledger',f({x:L+half}));
+    if(!a||!b)alert('Please allow pop-ups for this site, then press the button again.');
+  });
   // When a bill is saved in the POS frame, refresh the ledger beside it.
   pos.addEventListener('load',function(){
     try{
