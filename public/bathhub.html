@@ -5,6 +5,8 @@
 <title>Bath Hub - Tiles and Bathroom Fittings, Thihariya</title>
 <meta name="description" content="Bath Hub, Kandy Road, Thihariya: floor and wall tiles, bathtubs, taps and showers. Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
 <meta name="theme-color" content="#1c2a33">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Bath Hub - Tiles and Bathroom Fittings, Thihariya">
 <meta property="og:description" content="Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
@@ -104,6 +106,8 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:14px;border-top:1px soli
 .bgrp button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer}
 .bgrp button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 @media (prefers-reduced-motion:no-preference){.sw,.cta,.langs button{transition:border-color .15s,background .15s}}
+/* phone-friendly tap targets (audit 2026-10-04): every button at least 44px tall */
+.langs button,.scenes button,.bgrp button,.cform button{min-height:44px}
 </style>
 </head>
 <body>

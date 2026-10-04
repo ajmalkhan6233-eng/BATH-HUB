@@ -64,6 +64,7 @@ router.post('/api/daily-entry/sync', async (req, res) => {
 });
 
 router.get('/api/daily-entry/sync/:date', async (req, res) => {
+    if (!isRealDate(req.params.date)) return res.status(400).json({ error: 'date (YYYY-MM-DD) required' });
     try {
         const r = await pool.query(`SELECT payload, updated_at, updated_by FROM daily_entry_live WHERE entry_date = $1`, [req.params.date]);
         if (!r.rows.length) return res.status(404).json({ error: 'not found' });
@@ -75,6 +76,7 @@ router.get('/api/daily-entry/sync/:date', async (req, res) => {
 // version stamp, not the full payload, so devices can poll every few seconds
 // without shipping the whole day's data back and forth each time.
 router.get('/api/daily-entry/meta/:date', async (req, res) => {
+    if (!isRealDate(req.params.date)) return res.status(400).json({ error: 'date (YYYY-MM-DD) required' });
     try {
         const r = await pool.query(`SELECT updated_at, updated_by FROM daily_entry_live WHERE entry_date = $1`, [req.params.date]);
         if (!r.rows.length) return res.json({ updated_at: null, updated_by: null });
@@ -94,7 +96,7 @@ router.get('/api/daily-entry/meta/:date', async (req, res) => {
 router.get('/api/daily-entry/range', async (req, res) => {
     const { from, to } = req.query || {};
     const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-    if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) {
+    if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to) || !isRealDate(from) || !isRealDate(to)) {
         return res.status(400).json({ error: 'from and to (YYYY-MM-DD) required' });
     }
     if (from > to) return res.status(400).json({ error: 'from must not be after to' });
