@@ -15,7 +15,7 @@ button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;borde
 details{margin:8px 0}summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 </style></head><body><main>
 <h1>Vendor ledger</h1>
-<div id="msg" class="sm" role="status"></div>
+<div id="msg" class="sm" role="status"></div><div id="saved" class="sm" role="status"></div>
 <div class="row"><label>Cash on hand <input id="cash" type="number" inputmode="decimal" min="0" placeholder="0"></label><button id="go">Check</button><a class="sm" href="/api/vendor-ledger/export.csv">Download CSV</a></div>
 <h2>Money owed</h2><div class="grid" id="tot"></div>
 <h2>Cheques due</h2><div class="grid" id="cal"></div><div id="bulk" class="sm"></div>
@@ -30,7 +30,7 @@ details{margin:8px 0}summary{cursor:pointer;min-height:44px;display:flex;align-i
 <script>
 const $=(i)=>document.getElementById(i);const money=(n)=>'Rs. '+Math.round(Number(n)||0).toLocaleString('en-US');
 const el=(t,o={},...k)=>{const e=document.createElement(t);Object.entries(o).forEach(([a,v])=>{if(a==='class')e.className=v;else if(a==='on')Object.entries(v).forEach(([x,f])=>e.addEventListener(x,f));else e.setAttribute(a,v)});k.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(String(c))));return e};
-async function api(path,opt){const r=await fetch('/api/vendor-ledger'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opt});if(r.status===401){$('msg').textContent='Please log in to the owner app first.';throw new Error('401')}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
+async function api(path,opt){if(opt&&opt.method&&opt.method!=='GET'&&window.OfflineSave){let body;try{body=opt.body?JSON.parse(opt.body):undefined}catch(_){body=undefined}const o=await OfflineSave.post('/api/vendor-ledger'+path,body,{method:opt.method});if(!o.ok)throw new Error(o.error||'Not saved');if(o.queued){$('msg').textContent='Saved on this phone, will sync';return{queued:true}}return o.response||{}}const r=await fetch('/api/vendor-ledger'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opt});if(r.status===401){$('msg').textContent='Please log in to the owner app first.';throw new Error('401')}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
 const stat=(label,val,cls='')=>el('div',{class:'card'},el('div',{class:'sm'},label),el('div',{class:'big '+cls},money(val)));
 async function load(){
   try{
@@ -56,5 +56,5 @@ async function act(p){try{await api(p,{method:'POST'});load()}catch(e){$('msg').
 $('go').addEventListener('click',load);
 $('billForm').addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));Object.keys(d).forEach(k=>d[k]===''&&delete d[k]);try{await api('/bills',{method:'POST',body:JSON.stringify(d)});e.target.reset();load()}catch(x){$('msg').textContent=x.message}});
 load();
-</script><script src="/bathhub-logo.js"></script>
+</script><script src="/lib/offlineSave.js"></script><script>if(window.OfflineSave)OfflineSave.badge(document.getElementById('saved'))</script><script src="/bathhub-logo.js"></script>
 </body></html>
