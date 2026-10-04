@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POS + Ledger | Bath Hub</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:#0a1632;color:#f6efdc;font:15px system-ui,-apple-system,"Segoe UI",sans-serif}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:100vh;padding:8px}
+.col{display:flex;flex-direction:column;min-width:0;min-height:0}
+.bar{display:flex;align-items:center;gap:10px;padding:6px 12px;background:#0b1b3d;border:1px solid rgba(232,207,138,.3);border-radius:10px 10px 0 0;font-weight:700}
+.bar a,.bar button{margin-left:auto;color:#0b1b3d;background:#c9a24b;border:0;border-radius:8px;padding:6px 12px;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
+.bar a{background:transparent;color:#e8cf8a;text-decoration:underline}
+iframe{flex:1;width:100%;min-height:0;border:1px solid rgba(232,207,138,.3);border-top:0;border-radius:0 0 10px 10px;background:#fff}
+#note{font-weight:400;font-size:13px;opacity:.8}
+@media(max-width:800px){.split{grid-template-columns:1fr;grid-auto-rows:90vh;height:auto}}
+</style></head><body>
+<div class="split">
+  <div class="col"><div class="bar"><span>POS Billing</span><a href="/pos_billing.html" target="_blank" rel="noopener">Full page</a></div><iframe id="pos" title="POS billing" src="/pos_billing.html"></iframe></div>
+  <div class="col"><div class="bar"><span>Daily Ledger <span id="note"></span></span><button type="button" id="rl">Refresh</button><a href="/daily-entry-v2.html" target="_blank" rel="noopener" style="margin-left:0">Full page</a></div><iframe id="led" title="Daily ledger" src="/daily-entry-v2.html"></iframe></div>
+</div>
+<script>
+(function(){
+  var pos=document.getElementById('pos'), led=document.getElementById('led'), note=document.getElementById('note');
+  function hideChrome(){try{var d=led.contentDocument,s=d.createElement('style');s.textContent='.bh-strip{display:none!important}';d.head.appendChild(s)}catch(_){}}
+  led.addEventListener('load',hideChrome);
+  function reload(){try{led.contentWindow.location.reload()}catch(_){led.src=led.src}note.textContent='updated '+new Date().toLocaleTimeString()}
+  document.getElementById('rl').addEventListener('click',reload);
+  // When a bill is saved in the POS frame, refresh the ledger beside it.
+  pos.addEventListener('load',function(){
+    try{
+      var w=pos.contentWindow,orig=w.fetch; if(!orig||w.__ledgerHook)return; w.__ledgerHook=true;
+      w.fetch=function(u,o){var p=orig.apply(this,arguments);
+        try{if(o&&/^(POST|PUT)$/.test(String(o.method||'GET').toUpperCase())&&/\/api\/pos-bills/.test(String(u&&u.url||u)))p.then(function(r){if(r&&r.ok)setTimeout(reload,800)}).catch(function(){})}catch(_){}
+        return p};
+    }catch(_){}
+  });
+})();
+</script>
+<script src="/bathhub-logo.js"></script>
+</body></html>
