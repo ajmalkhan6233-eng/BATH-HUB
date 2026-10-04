@@ -602,8 +602,10 @@ app.use('/api/system', require('./routes/backup_status'));      // admin-only: b
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
-app.use('/api/vendor-ledger', require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
+app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
+const laylaOwner = require('./layla_owner/boot')({ pool: require('./utils/pool') });   // owner assistant (Build 2; router is routes/layla_owner' built inside layla_owner/boot): login enforced by the global /api gate
+app.use('/api/layla-owner', require('./middleware/idempotency')({ pool: require('./utils/pool') }), laylaOwner.router);
 app.use('/', require('./routes/daily_entry_sync'));         // daily ledger sync (ported from BATHCO): /api/daily-entry/sync, /meta, /range (behind login)
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
 app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*
@@ -3418,6 +3420,7 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 // ─── START ────────────────────────────────────────────────────────────────────
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
+        laylaOwner.start();   // reminders every minute; WhatsApp relay only if RELAY_URL is set; DRY RUN unless LAYLA_OWNER_LIVE=true
         console.log(`
 ╔══════════════════════════════════════════╗
 ║   BATHCO COMMAND — PHASE 1 ACTIVE       ║

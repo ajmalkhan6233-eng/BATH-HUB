@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Layla | Bath Hub</title>
+<style>
+:root{--bg:#0B1B3A;--panel:#10224a;--ink:#F6EFDC;--gold:#C9A24B;--me:#C9A24B;--meInk:#0B1B3A;--line:rgba(232,207,138,.25);padding-top:env(safe-area-inset-top,0)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}header b{letter-spacing:.2em;color:#E8CF8A}#badge{font-size:13px;color:#E8CF8A}#badge[data-state=waiting]{color:#ffb74d}#badge[data-state=failed]{color:#ff8a80}
+#log{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.m{max-width:86%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}.me{align-self:flex-end;background:var(--me);color:var(--meInk)}.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.sys{align-self:center;font-size:13px;color:#E8CF8A}
+form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0));border-top:1px solid var(--line);align-items:flex-end}
+textarea{flex:1;min-height:44px;max-height:120px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px;font:inherit;resize:none}
+button,.btn{min-width:44px;min-height:44px;border-radius:12px;border:0;background:var(--gold);color:var(--meInk);font:inherit;font-weight:700;cursor:pointer}button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button.on{background:#ff8a80}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 8px}.chip{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:99px;background:transparent;color:var(--ink);min-height:36px}
+</style></head><body>
+<header><b>LAYLA</b><span id="badge" role="status">All saved</span></header>
+<div id="log" aria-live="polite"></div>
+<div class="chips" id="chips"></div>
+<form id="f"><input id="photo" type="file" accept="image/*" capture="environment" hidden>
+<button type="button" class="ghost" id="cam" aria-label="Send a photo">&#128247;</button>
+<textarea id="t" rows="1" placeholder="Talk to Layla: a bill, a cheque, a question" enterkeyhint="send"></textarea>
+<button type="button" class="ghost" id="mic" aria-label="Speak">&#127908;</button><button type="submit" id="go">Send</button></form>
+<script src="/lib/offlineSave.js"></script>
+<script>
+const $=(i)=>document.getElementById(i), log=$('log');
+const add=(cls,txt)=>{const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;log.append(d);log.scrollTop=log.scrollHeight};
+OfflineSave.badge($('badge'));
+add('bot','Hello. Tell me about a bill you have not entered, a cheque you wrote, or ask about stock, cheques and what you owe. Say "help" for examples.');
+['cheques tomorrow','cash gap',"what's pending",'how much do we owe','help'].forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;b.onclick=()=>send(t);$('chips').append(b)});
+async function send(text){
+  text=(text||'').trim(); if(!text)return; add('me',text);
+  const r=await OfflineSave.post('/api/layla-owner/message',{text},{label:'chat'});
+  if(r.queued)add('sys','No internet. Saved on this phone, I will answer when it is back.');
+  else if(r.ok&&r.response)add('bot',r.response.reply);
+  else add('sys',r.error||'Not saved');
+}
+$('f').addEventListener('submit',e=>{e.preventDefault();const v=$('t').value;$('t').value='';send(v)});
+$('t').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('f').requestSubmit()}});
+$('cam').onclick=()=>$('photo').click();
+$('photo').onchange=async()=>{const f=$('photo').files[0];if(!f)return;if(f.size>12*1024*1024){add('sys','Photo is too big (max 12 MB).');return}
+  const b64=await new Promise((res)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.readAsDataURL(f)});
+  const cap=$('t').value.trim();$('t').value='';add('me','[photo]'+(cap?' '+cap:''));
+  const r=await OfflineSave.post('/api/layla-owner/media',{kind:'image',mime:f.type,data:b64,caption:cap},{label:'photo'});
+  r.queued?add('sys','No internet. Photo saved on this phone, it will be sent later.'):r.ok&&r.response?add('bot',r.response.reply):add('sys',r.error||'Not saved');$('photo').value=''};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+$('mic').onclick=()=>{ if(!SR){add('sys','This browser has no voice typing. Use the microphone key on your keyboard.');return}
+  if(rec){rec.stop();return} rec=new SR();rec.lang='en-US';rec.interimResults=true;rec.continuous=false;$('mic').classList.add('on');
+  rec.onresult=e=>{$('t').value=[...e.results].map(r=>r[0].transcript).join(' ')};
+  rec.onend=()=>{$('mic').classList.remove('on');rec=null;const v=$('t').value;if(v.trim()){$('t').value='';send(v)}};rec.onerror=()=>{};rec.start()};
+</script></body></html>
