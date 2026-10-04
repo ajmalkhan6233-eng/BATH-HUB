@@ -163,7 +163,7 @@ before any SQL ran. Integrated:
 ## 2026-07-11 (later) — Railway deployment attempt: ON HOLD (owner decision)
 
 Owner approved deploying apex as a brand-new isolated Railway project, name confirmed:
-**apex-platform**. Attempt findings (account ajmalkhan6233@gmail.com):
+**apex-platform**. Attempt findings (account [REDACTED]):
 - The LIVE production system runs in Railway project **alert-cooperation** (auto-generated
   name!): service "BATHCO" Online at bathco-production.up.railway.app + 2 Postgres DBs.
   NEVER touch it. If `railway status` in this folder ever shows alert-cooperation linked,
