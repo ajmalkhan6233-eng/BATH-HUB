@@ -1,0 +1,1983 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1st Choice Bathco (Pvt) Ltd — Cyberpunk Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   CSS VARIABLES & RESET
+   ============================================================ */
+:root {
+  --gold: #F5A623;
+  --gold-dark: #d4891a;
+  --gold-light: #ffc15e;
+  --cyan: #00D4FF;
+  --cyan-dark: #0099cc;
+  --bg: #050505;
+  --bg2: rgba(10, 10, 10, 0.8);
+  --bg3: rgba(20, 20, 20, 0.9);
+  --card: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(0, 212, 255, 0.15);
+  --card-hover: rgba(0, 212, 255, 0.08);
+  --text: #e0e0e0;
+  --text2: #888;
+  --text3: #555;
+  --green: #22c55e;
+  --red: #ff3366;
+  --amber: #f59e0b;
+  --purple: #b95cf6;
+  --sidebar-w: 240px;
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.8);
+  --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --bg: #f4f5f7;
+  --bg2: rgba(255, 255, 255, 0.9);
+  --bg3: rgba(240, 240, 240, 0.9);
+  --card: rgba(255, 255, 255, 0.6);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-hover: rgba(0, 0, 0, 0.05);
+  --text: #1a1a1a;
+  --text2: #555;
+  --text3: #888;
+  --shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--transition),color var(--transition)}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+input,select,textarea,button{font-family:inherit}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+button{cursor:pointer;border:none;background:none}
+table{border-collapse:collapse;width:100%}
+h1,h2,h3,h4,h5,.section-title,.welcome-text,.topbar-title,.login-title{font-family:'Poppins',sans-serif}
+.kpi-value, .hero-value, .login-subtitle {font-family:'Orbitron',sans-serif}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--gold),var(--cyan));border-radius:99px}
+
+/* LOADING BAR */
+#loading-bar{position:fixed;top:0;left:0;right:0;height:3px;z-index:10001;display:none}
+#loading-bar.active{display:block}
+.loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan),var(--gold));width:0%;box-shadow:0 0 15px var(--cyan);animation:loadingFill 1.5s ease-out forwards}
+@keyframes loadingFill{0%{width:0%}50%{width:70%}100%{width:100%}}
+
+/* LOGIN SCREEN */
+.login-screen{position:fixed;inset:0;background:#050505;display:flex;align-items:center;justify-content:center;z-index:9000;overflow:hidden}
+.login-screen.fade-out{opacity:0;transition:opacity 0.5s ease;pointer-events:none}
+#particle-canvas{position:absolute;inset:0;z-index:0}
+.login-card{
+  background:rgba(10,10,10,0.85);
+  backdrop-filter:blur(24px);
+  border:1px solid rgba(0,212,255,0.3);
+  border-radius:16px;
+  padding:44px 40px;
+  width:420px;
+  max-width:90%;
+  box-shadow:0 24px 80px rgba(0,0,0,0.8),0 0 60px rgba(0,212,255,0.1);
+  position:relative;
+  z-index:1;
+  animation:loginSlideIn 0.6s cubic-bezier(0.4,0,0.2,1)
+}
+.login-card::after {
+  content:'';position:absolute;inset:-1px;border-radius:16px;padding:1px;
+  background:linear-gradient(45deg,var(--gold),var(--cyan),var(--gold));
+  background-size:400% 400%;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  animation:borderGradient 4s ease infinite;
+  pointer-events:none;
+}
+@keyframes loginSlideIn{from{opacity:0;transform:translateY(30px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.login-card.shake{animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.login-logo{
+  width:64px;height:64px;
+  background:linear-gradient(135deg,var(--gold),var(--cyan));
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;
+  margin:0 auto 16px;
+  box-shadow:0 0 30px rgba(0,212,255,0.4)
+}
+.login-title{text-align:center;font-size:26px;font-weight:800;color:var(--gold);margin-bottom:4px;text-shadow:0 0 15px rgba(245,166,35,0.5)}
+.login-subtitle{text-align:center;font-size:13px;color:var(--cyan);margin-bottom:32px;letter-spacing:1px;text-transform:uppercase}
+.login-input{background:rgba(0,212,255,0.05)!important;border:1px solid rgba(0,212,255,0.2)!important;font-size:15px!important;padding:14px 16px!important}
+.login-input:focus{border-color:var(--cyan)!important;box-shadow:0 0 0 3px rgba(0,212,255,0.2)!important}
+.login-btn{width:100%;padding:14px;font-size:15px;margin-top:8px;justify-content:center;background:linear-gradient(90deg,var(--gold),var(--cyan));color:#000;font-weight:700}
+.login-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:20px;padding:10px;background:rgba(0,212,255,0.05);border-radius:8px;border:1px dashed rgba(0,212,255,0.2)}
+
+/* LAYOUT */
+.app-wrapper{display:none;min-height:100vh;position:relative;z-index:1}
+.app-wrapper.visible{display:flex}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:var(--bg2);
+  border-right:1px solid var(--card-border);
+  display:flex;flex-direction:column;
+  transition:width var(--transition),transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  position:fixed;top:0;left:0;z-index:100;overflow:hidden;
+  backdrop-filter:blur(12px);
+}
+.sidebar.collapsed{width:60px}
+.sidebar-logo{padding:20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--card-border)}
+.sidebar-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 0 15px rgba(0,212,255,0.4)}
+.sidebar-logo-text{font-size:14px;font-weight:700;color:var(--gold);white-space:nowrap;overflow:hidden;opacity:1;transition:opacity var(--transition);font-family:'Poppins',sans-serif;text-shadow:0 0 10px rgba(245,166,35,0.4)}
+.sidebar.collapsed .sidebar-logo-text{opacity:0;pointer-events:none}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;cursor:pointer;transition:all var(--transition);white-space:nowrap;overflow:hidden;position:relative;margin-bottom:2px}
+.nav-item:hover{background:var(--card-hover)}
+.nav-item.active{background:rgba(0,212,255,0.1);color:var(--cyan);box-shadow:inset 0 0 15px rgba(0,212,255,0.1)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:3px;background:var(--cyan);box-shadow:0 0 10px var(--cyan);border-radius:0 4px 4px 0}
+.nav-icon{font-size:20px;flex-shrink:0;width:24px;text-align:center}
+.nav-label{font-size:13px;font-weight:500;opacity:1;transition:opacity var(--transition)}
+.sidebar.collapsed .nav-label{opacity:0;pointer-events:none}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--card-border)}
+.sidebar-toggle{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;cursor:pointer;transition:all var(--transition)}
+.sidebar-toggle:hover{background:var(--card)}
+
+/* MAIN */
+.main-content{margin-left:var(--sidebar-w);flex:1;min-height:100vh;transition:margin-left var(--transition);display:flex;flex-direction:column;position:relative}
+.sidebar.collapsed ~ .main-content{margin-left:60px}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);overflow:hidden}
+.topbar::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.1),rgba(245,166,35,0.1),transparent);animation:shimmerMove 6s infinite linear;pointer-events:none}
+@keyframes shimmerMove{0%{left:-50%}100%{left:100%}}
+.topbar-left{display:flex;flex-direction:column;z-index:1}
+.topbar-title{font-size:18px;font-weight:700;text-shadow:0 0 10px rgba(0,212,255,0.3)}
+.topbar-sub{font-size:12px;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:12px;z-index:1}
+.status-connected{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--green);background:rgba(34,197,94,0.1);padding:6px 12px;border-radius:99px}
+.status-dot{width:8px;height:8px;background:var(--green);border-radius:50%;position:relative}
+.status-dot::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:var(--green);border-radius:50%;animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5);opacity:0}}
+.live-clock{font-size:13px;font-weight:600;color:var(--cyan);background:rgba(0,212,255,0.1);padding:6px 12px;border-radius:99px;font-family:'Orbitron',sans-serif}
+.theme-toggle{width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all var(--transition)}
+.theme-toggle:hover{background:var(--card-hover);transform:scale(1.1);box-shadow:0 0 15px var(--cyan)}
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 5px;background:var(--card);border:1px solid var(--card-border);border-radius:99px}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#000}
+.user-name{font-size:12px;font-weight:600}
+
+/* GLOBAL SEARCH */
+.global-search{position:relative;width:260px}
+.global-search input{padding-left:36px;padding-right:32px;border-color:rgba(0,212,255,0.2)}
+.global-search input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.15)}
+.global-search .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--cyan);pointer-events:none}
+.global-search .kbd-hint{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--cyan);background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px;border:1px solid rgba(0,212,255,0.2)}
+.search-results-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--cyan);border-radius:8px;box-shadow:0 0 30px rgba(0,212,255,0.2);max-height:320px;overflow-y:auto;display:none;z-index:200;backdrop-filter:blur(16px)}
+.search-results-dropdown.show{display:block;animation:fadeIn 0.2s ease}
+.search-result-item{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(0,212,255,0.1)}
+.search-result-item:hover{background:rgba(0,212,255,0.1)}
+.search-result-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 8px;border-radius:99px;background:rgba(0,212,255,0.2);color:var(--cyan);flex-shrink:0}
+.search-result-label{font-size:13px}
+
+/* PAGE CONTENT */
+.page{display:none;padding:24px;animation:fadeInPage 0.4s ease;position:relative}
+.page.active{display:block}
+@keyframes fadeInPage{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* GLASS CARD */
+.card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:20px;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  transition:transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+  will-change:transform;
+}
+.card:hover {
+  border-color:rgba(0,212,255,0.4);
+  box-shadow:0 12px 40px rgba(0,0,0,0.8), 0 0 20px rgba(0,212,255,0.1);
+}
+
+/* HERO KPI & ANIMATIONS */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px}
+.kpi-card-wrapper{animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.kpi-card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  max-height:110px;
+  padding:12px;
+  position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(16px);
+  height:100%;
+  display:flex;flex-direction:column;justify-content:center;
+  animation:flipIn 0.8s cubic-bezier(0.4,0,0.2,1) backwards;
+}
+@keyframes flipIn{0%{transform:perspective(1000px) rotateY(90deg);opacity:0}100%{transform:perspective(1000px) rotateY(0deg);opacity:1}}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--gold));box-shadow:0 0 15px var(--accent,var(--gold))}
+.kpi-card.hero-card {grid-row:span 1;justify-content:center;align-items:center;text-align:center}
+.kpi-card.hero-card::after {
+  content:'';position:absolute;inset:-1px;border-radius:var(--radius);padding:2px;
+  background:linear-gradient(45deg,var(--gold),var(--cyan),var(--gold));
+  background-size:400% 400%;
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  animation:borderGradient 4s ease infinite;
+  pointer-events:none;
+}
+@keyframes borderGradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
+.kpi-value{font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(0,212,255,0.3)}
+.hero-value{font-size:18px;color:var(--gold);text-shadow:0 0 20px rgba(245,166,35,0.5)}
+.kpi-change{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600}
+.kpi-change.up{color:var(--green);text-shadow:0 0 8px var(--green)}
+.kpi-change.down{color:var(--red);text-shadow:0 0 8px var(--red)}
+.kpi-sparkline{margin-top:12px;height:40px;width:100%}
+.kpi-card[data-type="profit"]{--accent:#22c55e}
+.kpi-card[data-type="expense"]{--accent:#ff3366}
+.kpi-card[data-type="cash"]{--accent:#00D4FF}
+.kpi-card[data-type="card"]{--accent:#b95cf6}
+.kpi-card[data-type="online"]{--accent:#f59e0b}
+.kpi-card[data-type="total"]{--accent:#F5A623}
+
+/* SLOT MACHINE NUMBERS */
+.digit-slot-container{display:inline-block;height:1em;line-height:1;overflow:hidden;vertical-align:top;transition:transform 1.2s cubic-bezier(0.2,0.8,0.3,1)}
+.digit-slot{display:inline-block;text-align:center}
+.number-bounce{animation:bounceUp 0.6s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes bounceUp{0%{transform:translateY(20px);opacity:0}60%{transform:translateY(-3px);opacity:1}100%{transform:translateY(0);opacity:1}}
+.glow-gold{animation:glowPulse 1s ease}
+@keyframes glowPulse{0%{text-shadow:0 0 5px var(--gold)}50%{text-shadow:0 0 25px var(--gold),0 0 40px var(--gold),0 0 60px var(--gold)}100%{text-shadow:0 0 5px var(--gold)}}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,rgba(0,212,255,0.05) 25%,rgba(0,212,255,0.15) 50%,rgba(0,212,255,0.05) 75%);background-size:200% 100%;animation:skeleton-pulse 1.5s infinite;border-radius:8px}
+@keyframes skeleton-pulse{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-text{height:14px;margin-bottom:8px;border-radius:4px}
+.skel-value{height:32px;width:60%;margin-bottom:12px;border-radius:4px}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-title{font-size:18px;font-weight:700;text-shadow:0 0 10px rgba(0,212,255,0.3)}
+.section-sub{font-size:13px;color:var(--text2);margin-top:2px}
+
+/* LIQUID PROGRESS BAR */
+.progress-container{background:var(--bg3);border-radius:99px;height:10px;overflow:hidden;margin-top:8px;position:relative;border:1px solid rgba(0,212,255,0.1)}
+.progress-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--cyan));transition:width 1.5s cubic-bezier(0.4,0,0.2,1);box-shadow:0 0 15px var(--cyan);position:relative;overflow:hidden}
+.progress-bar::after{content:'';position:absolute;top:0;left:-50%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);animation:liquidMove 2s infinite linear;transform:skewX(-20deg)}
+@keyframes liquidMove{0%{left:-50%}100%{left:100%}}
+
+/* GRID LAYOUTS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.chart-wrapper{position:relative;height:220px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius)}
+table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:var(--cyan);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--card-border);background:var(--bg3)}
+table td{padding:10px 14px;font-size:13px;border-bottom:1px solid rgba(0,212,255,0.05)}
+table tr:hover td{background:rgba(0,212,255,0.05)}
+table tr:last-child td{border-bottom:none}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid transparent}
+.badge-green{background:rgba(34,197,94,0.15);color:var(--green);border-color:rgba(34,197,94,0.3)}
+.badge-red{background:rgba(255,51,102,0.15);color:var(--red);border-color:rgba(255,51,102,0.3)}
+.badge-amber{background:rgba(245,158,11,0.15);color:var(--amber);border-color:rgba(245,158,11,0.3)}
+.badge-blue{background:rgba(0,212,255,0.15);color:var(--cyan);border-color:rgba(0,212,255,0.3)}
+.badge-gold{background:rgba(245,166,35,0.15);color:var(--gold);border-color:rgba(245,166,35,0.3)}
+
+/* FORM */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em}
+.form-input,.form-select,.form-textarea{width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;transition:all var(--transition)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.15);background:rgba(0,212,255,0.05)}
+.form-select option{background:#111}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;transition:all var(--transition);position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(90deg,var(--gold),var(--cyan));color:#000}
+.btn-primary:hover{box-shadow:0 0 20px rgba(0,212,255,0.5);transform:translateY(-1px)}
+.btn-secondary{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.3);color:var(--cyan)}
+.btn-secondary:hover{background:rgba(0,212,255,0.15);box-shadow:0 0 15px rgba(0,212,255,0.2)}
+.btn-danger{background:rgba(255,51,102,0.15);color:var(--red);border:1px solid rgba(255,51,102,0.3)}
+.btn-danger:hover{background:rgba(255,51,102,0.25);box-shadow:0 0 15px rgba(255,51,102,0.2)}
+.btn-green{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.btn-green:hover{background:rgba(34,197,94,0.25)}
+
+/* RIPPLE */
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.4);transform:scale(0);animation:rippleAnim 0.6s ease-out;pointer-events:none}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+/* DATE NAV */
+.date-nav{display:flex;align-items:center;gap:12px}
+.date-nav-btn{width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all var(--transition)}
+.date-nav-btn:hover{background:var(--cyan);color:#000;box-shadow:0 0 10px var(--cyan)}
+.date-display{font-size:15px;font-weight:700;min-width:140px;text-align:center;font-family:'Orbitron',sans-serif;color:var(--cyan)}
+
+/* CASHFLOW SUMMARY ROW */
+.cf-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.cf-item{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.cf-item::before{content:'';position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 0%,rgba(0,212,255,0.08),transparent 70%);transition:opacity var(--transition)}
+.cf-item:hover::before{opacity:1}
+.cf-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.cf-val{font-size:17px;font-weight:800;font-family:'Orbitron',monospace}
+.cf-item.cf-exp .cf-val{color:var(--amber)}
+.cf-item.cf-pay .cf-val{color:var(--purple,#b95cf6)}
+.cf-item.cf-out .cf-val{color:var(--red)}
+.cf-item.cf-cih .cf-val{color:var(--cyan)}
+.cf-item.cf-np  .cf-val{color:var(--green)}
+.cf-note{font-size:10px;color:var(--text3);margin-top:4px}
+@media(max-width:900px){.cf-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:580px){.cf-row{grid-template-columns:repeat(2,1fr)}}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:9999}
+.toast{background:var(--bg2);border:1px solid var(--cyan);border-radius:8px;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;box-shadow:0 0 20px rgba(0,212,255,0.2);animation:slideUp 0.35s cubic-bezier(0.4,0,0.2,1);min-width:280px;backdrop-filter:blur(12px)}
+.toast.success{border-color:var(--green);box-shadow:0 0 20px rgba(34,197,94,0.2)}
+.toast.error{border-color:var(--red);box-shadow:0 0 20px rgba(255,51,102,0.2)}
+.toast.warning{border-color:var(--amber);box-shadow:0 0 20px rgba(245,158,11,0.2)}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* CONFETTI */
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;display:none}
+
+/* SCROLL TOP */
+#scroll-top-btn{position:fixed;bottom:24px;left:24px;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--cyan));color:#000;font-size:20px;display:none;align-items:center;justify-content:center;z-index:999;box-shadow:0 0 20px rgba(0,212,255,0.4);transition:all var(--transition);border:none;cursor:pointer}
+#scroll-top-btn:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(0,212,255,0.6)}
+#scroll-top-btn.visible{display:flex;animation:fadeIn 0.3s ease}
+
+/* DASH PARTICLES */
+#dash-particles{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* CHEQUE CALENDAR */
+.cheque-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px}
+.cal-header{text-align:center;font-size:11px;font-weight:600;color:var(--cyan);padding:6px 0}
+.cal-day{min-height:52px;background:rgba(0,212,255,0.03);border-radius:8px;padding:6px;font-size:11px;border:1px solid transparent;transition:all var(--transition)}
+.cal-day.has-cheque{border-color:var(--amber);background:rgba(245,158,11,0.05);box-shadow:0 0 10px rgba(245,158,11,0.1)}
+.cal-day.due-today{border-color:var(--red);background:rgba(255,51,102,0.05);box-shadow:0 0 10px rgba(255,51,102,0.1)}
+.cal-day.cleared{border-color:var(--green);background:rgba(34,197,94,0.05)}
+.cal-day-num{font-weight:700;color:var(--text2);margin-bottom:2px}
+
+/* BARCODE */
+.barcode-preview-panel{background:rgba(0,0,0,0.5);border-radius:var(--radius);padding:20px;text-align:center;position:relative;overflow:hidden;border:1px solid rgba(0,212,255,0.2)}
+.barcode-svg-wrap{background:#fff;border-radius:8px;padding:16px 20px;display:inline-block;margin:12px 0}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scan 2s ease-in-out infinite;pointer-events:none;z-index:5;box-shadow:0 0 15px var(--cyan)}
+@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}
+.barcode-bars{display:flex;align-items:flex-end;gap:1px;height:60px}
+.barcode-bars .bar{background:#000;width:3px}
+.barcode-bars .bar.wide{width:6px}
+.barcode-bars .bar.gap{background:transparent}
+
+/* STOCK BARS */
+.stock-level-bar{height:6px;border-radius:99px;background:rgba(0,212,255,0.1);overflow:hidden;margin-top:4px}
+.stock-level-fill{height:100%;border-radius:99px;transition:width 1s ease}
+.stock-level-fill.high{background:var(--green);box-shadow:0 0 8px var(--green)}
+.stock-level-fill.medium{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.stock-level-fill.low{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* VENDOR BALANCE */
+.vendor-balance-bar{height:4px;border-radius:99px;margin-top:6px;background:var(--bg3);overflow:hidden}
+.vendor-balance-fill{height:100%;border-radius:99px;background:var(--red)}
+
+/* UPLOAD */
+.upload-box{border:2px dashed rgba(0,212,255,0.3);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all var(--transition)}
+.upload-box:hover{border-color:var(--cyan);background:rgba(0,212,255,0.05);box-shadow:inset 0 0 20px rgba(0,212,255,0.05)}
+
+/* DONUT LEGEND */
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-right:8px;box-shadow:0 0 8px currentColor}
+.legend-label{flex:1}
+.legend-pct{font-weight:700;color:var(--text2)}
+
+/* REPORT CARD */
+.report-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;margin-bottom:16px;backdrop-filter:blur(16px)}
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--card-border);font-size:14px}
+.report-row:last-child{border-bottom:none}
+.report-row.total{font-weight:800;font-size:16px;color:var(--gold);text-shadow:0 0 10px rgba(245,166,35,0.4)}
+.report-row.positive{color:var(--green)}
+.report-row.negative{color:var(--red)}
+
+/* TOP ITEMS */
+.top-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--card-border)}
+.top-item:last-child{border-bottom:none}
+.top-item-rank{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#000;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 8px var(--gold)}
+.top-item-rank.two{background:#888}
+.top-item-rank.three{background:#cd7f32}
+.top-item-name{flex:1;font-size:13px;font-weight:500}
+.top-item-qty{font-size:12px;color:var(--text2)}
+.top-item-amt{font-size:13px;font-weight:700;color:var(--cyan)}
+
+/* WELCOME BANNER */
+.welcome-banner{background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(245,166,35,0.05));border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius);padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;backdrop-filter:blur(12px)}
+.welcome-banner::after{content:'';position:absolute;top:-50%;right:-10%;width:300px;height:300px;background:radial-gradient(circle,rgba(0,212,255,0.1),transparent 70%);pointer-events:none}
+.welcome-text{font-size:20px;font-weight:800;position:relative;z-index:1;text-shadow:0 0 15px rgba(0,212,255,0.3)}
+.welcome-sub{font-size:13px;color:var(--text2);margin-top:4px;position:relative;z-index:1}
+.welcome-icon{font-size:40px;position:relative;z-index:1}
+
+/* PAYMENT BREAKDOWN */
+.pay-break{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.pay-item{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center;transition:all var(--transition)}
+.pay-item:hover{transform:translateY(-2px);border-color:rgba(0,212,255,0.4);box-shadow:0 0 15px rgba(0,212,255,0.1)}
+.pay-item-label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+.pay-item-val{font-size:17px;font-weight:800;font-family:'Orbitron',sans-serif}
+.pay-item-val.cash-val{color:var(--cyan)}
+.pay-item-val.card-val{color:var(--purple)}
+.pay-item-val.online-val{color:var(--amber)}
+.pay-item-val.credit-val{color:var(--red)}
+.pay-item-val.cheque-val{color:var(--green)}
+
+/* SETTINGS */
+.settings-group{margin-bottom:28px}
+.settings-group-title{font-size:13px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--card-border);text-shadow:0 0 8px rgba(0,212,255,0.3)}
+
+/* KEYBOARD */
+.kbd{display:inline-block;padding:2px 7px;font-size:10px;font-weight:700;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:4px;color:var(--cyan)}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.mobile-open{transform:translateX(0)}
+  .main-content{margin-left:0!important}
+  .kpi-grid{grid-template-columns:1fr}
+  .kpi-card.hero-card{grid-row:span 1}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .pay-break{grid-template-columns:1fr 1fr}
+  .topbar{padding:0 16px}
+  .page{padding:16px}
+  .global-search{width:160px}
+  .global-search .kbd-hint{display:none}
+  .user-name{display:none}
+  #mobile-menu-btn{display:flex!important}
+}
+
+/* PRINT */
+@media print{
+  .sidebar,.topbar,.btn,.theme-toggle,.user-chip,.global-search,#scroll-top-btn,#loading-bar,#dash-particles{display:none!important}
+  .main-content{margin-left:0}
+  .page{display:block!important}
+  .card{box-shadow:none;border:1px solid #ddd}
+  body::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-bar" class="active"><div class="loading-bar-fill"></div></div>
+
+<div class="login-screen" id="login-screen">
+  <canvas id="particle-canvas"></canvas>
+  <div class="login-card" id="login-card">
+    <div class="login-logo">🛁</div>
+    <h1 class="login-title">1st Choice Bathco</h1>
+    <p class="login-subtitle">Management System // 2035</p>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" class="form-input login-input" id="login-username" placeholder="Enter username" value="ajmal" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input login-input" id="login-password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary login-btn" onclick="handleLogin()">Sign In</button>
+    <div class="login-hint">System credentials — <strong style="color:var(--cyan)">ajmal</strong> / <strong style="color:var(--cyan)">Ajmal@123</strong></div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+<button id="scroll-top-btn" onclick="scrollToTop()">↑</button>
+<div id="toast-container"></div>
+
+<div class="app-wrapper" id="app-wrapper">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🛁</div>
+      <div class="sidebar-logo-text">BATHCO_SYS</div>
+    </div>
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard <span class="kbd" style="margin-left:4px">D</span></span>
+      </li>
+      <li class="nav-item" data-page="daily-sales">
+        <span class="nav-icon">🧾</span>
+        <span class="nav-label">Daily Sales</span>
+      </li>
+      <li class="nav-item" data-page="stock">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Stock <span class="kbd" style="margin-left:4px">S</span></span>
+      </li>
+      <li class="nav-item" data-page="expenses">
+        <span class="nav-icon">💸</span>
+        <span class="nav-label">Expenses <span class="kbd" style="margin-left:4px">E</span></span>
+      </li>
+      <li class="nav-item" data-page="cheques">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Cheques <span class="kbd" style="margin-left:4px">C</span></span>
+      </li>
+      <li class="nav-item" data-page="vendors">
+        <span class="nav-icon">🤝</span>
+        <span class="nav-label">Vendors</span>
+      </li>
+      <li class="nav-item" data-page="barcode">
+        <span class="nav-icon">📷</span>
+        <span class="nav-label">Barcode</span>
+      </li>
+      <li class="nav-item" data-page="reports">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Reports <span class="kbd" style="margin-left:4px">R</span></span>
+      </li>
+      <li class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <span>◀</span>
+        <span class="nav-label toggle-label">Collapse</span>
+      </div>
+      <div class="nav-item" onclick="logout()" style="margin-top:8px;color:var(--red)">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-label">Logout</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content" id="main-content">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-sub" id="page-sub">28 Jun 2026 — System Online</div>
+      </div>
+      <div class="topbar-right">
+        <div class="global-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" placeholder="Search database..." id="global-search" oninput="globalSearch(this.value)">
+          <span class="kbd-hint">/</span>
+          <div class="search-results-dropdown" id="search-results"></div>
+        </div>
+        <div class="status-connected">
+          <div class="status-dot"></div> Connected
+        </div>
+        <svg width="30" height="30" viewBox="0 0 30 30" title="Auto-refresh countdown" style="flex-shrink:0;cursor:default">
+          <circle cx="15" cy="15" r="12" fill="none" stroke="rgba(0,212,255,0.15)" stroke-width="2.5"/>
+          <circle id="ring-prog" cx="15" cy="15" r="12" fill="none" stroke="#00D4FF" stroke-width="2.5"
+            stroke-dasharray="75.4" stroke-dashoffset="0" stroke-linecap="round"
+            transform="rotate(-90 15 15)" style="transition:stroke-dashoffset 1s linear"/>
+          <text id="ring-num" x="15" y="19" text-anchor="middle" fill="#00D4FF" font-size="9" font-family="Orbitron,monospace" font-weight="700">60</text>
+        </svg>
+        <div class="live-clock" id="live-clock">00:00:00</div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        <div class="user-chip">
+          <div class="user-avatar">A</div>
+          <span class="user-name">Ajmal</span>
+        </div>
+        <button class="btn btn-secondary" style="display:none" id="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+      </div>
+    </header>
+
+    <!-- PAGE 1: DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <canvas id="dash-particles"></canvas>
+      <div style="position:relative;z-index:1">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--card);border:1px solid var(--card-border);border-radius:8px;margin-bottom:12px">
+          <span style="font-size:12px;color:var(--text2);white-space:nowrap">Target</span>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden">
+            <div id="target-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--cyan));width:0%;transition:width 1.5s ease"></div>
+          </div>
+          <span id="target-achieved" style="font-size:12px;color:var(--cyan);white-space:nowrap">LKR 0</span>
+          <span id="target-pct" style="font-size:13px;font-weight:700;color:var(--gold)">0%</span>
+        </div>
+
+        <div class="kpi-grid" id="kpi-grid"></div>
+
+        <div class="grid-2" style="margin-bottom:24px">
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Hourly Sales Today</div>
+                <div class="section-sub">Revenue by hour</div>
+              </div>
+            </div>
+            <div class="chart-wrapper"><canvas id="hourlyChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Weekly Overview</div>
+                <div class="section-sub">This week vs last week</div>
+              </div>
+            </div>
+            <div class="chart-wrapper"><canvas id="weeklyChart"></canvas></div>
+          </div>
+        </div>
+
+        <div style="text-align:right;font-size:11px;color:var(--text3)">
+          Last sync: <span id="last-updated">just now</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: DAILY SALES -->
+    <section class="page" id="page-daily-sales">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-secondary" style="padding:6px 10px" onclick="changeDate(-1)">◀</button>
+          <input type="date" class="form-input" style="width:160px" id="sales-date-picker" onchange="setDate(this.value)">
+          <button class="btn btn-secondary" style="padding:6px 10px" onclick="changeDate(1)">▶</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="whatsappReport()">📱 WhatsApp</button>
+          <button class="btn btn-secondary" onclick="window.open('/api/report-download?date='+document.getElementById('sales-date-picker').value)">📄 Excel</button>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+
+      <div class="pay-break">
+        <div class="pay-item"><div class="pay-item-label">Cash</div><div class="pay-item-val cash-val" id="pb-cash">—</div></div>
+        <div class="pay-item"><div class="pay-item-label">Card</div><div class="pay-item-val card-val" id="pb-card">—</div></div>
+        <div class="pay-item"><div class="pay-item-label">Online</div><div class="pay-item-val online-val" id="pb-online">—</div></div>
+        <div class="pay-item"><div class="pay-item-label">Credit</div><div class="pay-item-val credit-val" id="pb-credit">—</div></div>
+        <div class="pay-item"><div class="pay-item-label">Cheque</div><div class="pay-item-val cheque-val" id="pb-cheque">—</div></div>
+      </div>
+
+      <!-- CASHFLOW SUMMARY -->
+      <div class="cf-row">
+        <div class="cf-item cf-exp">
+          <div class="cf-label">💸 Expenses</div>
+          <div class="cf-val" id="cf-expenses">—</div>
+          <div class="cf-note">Operating costs for the day</div>
+        </div>
+        <div class="cf-item cf-pay">
+          <div class="cf-label">👤 Payments (Azmin)</div>
+          <div class="cf-val" id="cf-payments">—</div>
+          <div class="cf-note">Daily file payment column</div>
+        </div>
+        <div class="cf-item cf-out">
+          <div class="cf-label">📤 Cash Out</div>
+          <div class="cf-val" id="cf-cashout">—</div>
+          <div class="cf-note">Expenses + Payments</div>
+        </div>
+        <div class="cf-item cf-cih">
+          <div class="cf-label">💰 Cash in Hand</div>
+          <div class="cf-val" id="cf-cashinhand">—</div>
+          <div class="cf-note">Cash received − Cash out</div>
+        </div>
+        <div class="cf-item cf-np">
+          <div class="cf-label">📈 Net Profit</div>
+          <div class="cf-val" id="cf-netprofit">—</div>
+          <div class="cf-note" id="cf-np-note">Gross Profit − Expenses</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:16px">Payment Split</div>
+          <div style="display:flex;gap:20px;align-items:center">
+            <div style="width:160px;height:160px;flex-shrink:0"><canvas id="donutChart"></canvas></div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:16px">Hourly Sales Bar</div>
+          <div class="chart-wrapper"><canvas id="hourlyBarChart2"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-header">
+          <div class="section-title">Invoices</div>
+          <div class="search-box" style="max-width:220px">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-input" placeholder="Search invoice..." id="invoice-search" oninput="filterInvoices()">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="invoice-table">
+            <thead>
+              <tr>
+                <th>Invoice #</th><th>Time</th><th>Customer</th><th>Method</th><th>Items</th><th>Amount</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px">Top 10 Items Sold Today</div>
+        <div id="top-items-list"></div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: STOCK MANAGEMENT -->
+    <section class="page" id="page-stock">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+        <div class="search-box" style="max-width:240px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" placeholder="Search code or name..." id="stock-search" oninput="filterStock()">
+        </div>
+        <select class="form-select" style="width:160px" id="stock-category" onchange="filterStock()">
+          <option value="">All Categories</option>
+          <option>Bath Accessories</option>
+          <option>Tiles</option>
+          <option>Sanitaryware</option>
+          <option>Fittings</option>
+          <option>Mirrors</option>
+          <option>Cleaning Products</option>
+        </select>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+          <button class="btn btn-primary" onclick="openGRNForm()">+ GRN Entry</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="badge badge-red" style="font-size:12px;padding:6px 14px">🔴 Low Stock: 5 items</div>
+        <div class="badge badge-amber" style="font-size:12px;padding:6px 14px">🟡 Slow Moving: 8 items</div>
+        <div class="badge badge-red" style="font-size:12px;padding:6px 14px">⬛ Zero Stock: 2 items</div>
+        <div class="badge badge-green" style="font-size:12px;padding:6px 14px">🟢 Fast Moving: 12 items</div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="table-wrap">
+          <table id="stock-table">
+            <thead>
+              <tr>
+                <th>Code</th><th>Item Name</th><th>Category</th><th>Qty</th><th>Level</th><th>Cost</th><th>Value</th><th>Status</th><th>Variance</th><th>Flags</th>
+              </tr>
+            </thead>
+            <tbody id="stock-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" id="grn-form" style="display:none">
+        <div class="section-header">
+          <div class="section-title">GRN Entry</div>
+          <button class="btn btn-secondary" onclick="closeGRNForm()">✕ Close</button>
+        </div>
+        <div class="grid-3">
+          <div class="form-group"><label class="form-label">Item Code</label><input type="text" class="form-input" placeholder="e.g. BT-001"></div>
+          <div class="form-group"><label class="form-label">Item Name</label><input type="text" class="form-input" placeholder="Item name"></div>
+          <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-input" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Cost Price (LKR)</label><input type="number" class="form-input" placeholder="0"></div>
+          <div class="form-group">
+            <label class="form-label">Supplier</label>
+            <select class="form-select"><option>Rocell Lanka</option><option>Muller & Phipps</option><option>Prima Sanitaryware</option><option>Other</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">GRN Date</label><input type="date" class="form-input" value="2026-06-28"></div>
+        </div>
+        <div class="upload-box" onclick="triggerUpload('grn-photo')">
+          <div class="upload-icon">📸</div>
+          <div class="upload-text">Tap to upload GRN photo</div>
+          <input type="file" id="grn-photo" accept="image/*" style="display:none">
+        </div>
+        <div style="margin-top:16px;display:flex;gap:12px">
+          <button class="btn btn-primary" onclick="saveGRN()">Save GRN</button>
+          <button class="btn btn-secondary" onclick="closeGRNForm()">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: EXPENSES -->
+    <section class="page" id="page-expenses">
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:16px">Add Expense</div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="exp-date" value="2026-06-28"></div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select" id="exp-category">
+              <option value="food">Food</option><option value="electricity">Electricity</option><option value="water">Water</option>
+              <option value="renovation">🔧 Renovation (separate)</option><option value="petty">Petty Cash</option><option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Amount (LKR)</label><input type="number" class="form-input" id="exp-amount" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="exp-desc" placeholder="Brief description..."></div>
+          <div class="upload-box" style="margin-bottom:16px" onclick="triggerUpload('exp-photo')">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">Upload handwritten sheet photo</div>
+            <input type="file" id="exp-photo" accept="image/*" style="display:none">
+          </div>
+          <button class="btn btn-primary" onclick="addExpense()" style="width:100%">Add Expense</button>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="kpi-label">Petty Cash Balance</div>
+            <div class="kpi-value roll-on-view" data-val="18750" data-prefix="LKR " style="color:var(--green)" id="petty-balance">LKR 0</div>
+            <div style="font-size:12px;color:var(--text2)">Float: LKR 25,000 · Spent: LKR 6,250</div>
+            <div class="progress-container" style="margin-top:12px">
+              <div class="progress-bar" style="width:75%;background:linear-gradient(90deg,var(--green),#4ade80)"></div>
+            </div>
+          </div>
+          <div class="card" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.3)">
+            <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px">⚠ RENOVATION — SEPARATE LINE</div>
+            <div class="kpi-value roll-on-view" data-val="45000" data-prefix="LKR " style="font-size:22px">LKR 0</div>
+            <div style="font-size:12px;color:var(--text2)">This month renovation total — NEVER mixed with operating expenses</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-header">
+          <div class="section-title">This Month Expenses</div>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Receipt</th></tr></thead>
+            <tbody id="expense-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px">Monthly Expense Trend</div>
+        <div class="chart-wrapper"><canvas id="expenseChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- PAGE 5: CHEQUES -->
+    <section class="page" id="page-cheques">
+      <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:20px">
+        <div class="kpi-card" data-type="total">
+          <div class="kpi-label">Total Outstanding</div>
+          <div class="kpi-value roll-on-view" data-val="345000">LKR 0</div>
+        </div>
+        <div class="kpi-card" data-type="expense">
+          <div class="kpi-label">Due This Week</div>
+          <div class="kpi-value roll-on-view" data-val="85000">LKR 0</div>
+        </div>
+        <div class="kpi-card" data-type="card">
+          <div class="kpi-label">Due Today</div>
+          <div class="kpi-value roll-on-view" data-val="45000" style="color:var(--red)">LKR 0</div>
+        </div>
+        <div class="kpi-card" data-type="profit">
+          <div class="kpi-label">Cleared This Month</div>
+          <div class="kpi-value roll-on-view" data-val="120000">LKR 0</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="search-box" style="max-width:240px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" placeholder="Search cheque# or vendor..." id="cheque-search" oninput="filterCheques()">
+        </div>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 Print Register</button>
+        <button class="btn btn-primary" onclick="addChequeModal()">+ Add Cheque</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cheque #</th><th>Vendor</th><th>Bank</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="cheque-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px">June 2026 Calendar</div>
+        <div class="cheque-calendar" id="cheque-calendar"></div>
+      </div>
+    </section>
+
+    <!-- PAGE 6: VENDORS -->
+    <section class="page" id="page-vendors">
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:16px">Add Payment</div>
+          <div class="form-group">
+            <label class="form-label">Vendor</label>
+            <select class="form-select" id="vendor-select">
+              <option>Rocell Lanka (Pvt) Ltd</option><option>Muller &amp; Phipps Ceylon</option><option>Prima Sanitaryware</option><option>Lanka Tiles PLC</option><option>Hayleys Fibre</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Amount (LKR)</label><input type="number" class="form-input" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select"><option>Cheque</option><option>Cash</option><option>Online Transfer</option></select></div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" value="2026-06-28"></div>
+          <div class="form-group"><label class="form-label">Reference / Cheque No.</label><input type="text" class="form-input" placeholder="e.g. CHQ-00123"></div>
+          <button class="btn btn-primary" style="width:100%" onclick="addVendorPayment()">Record Payment</button>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="kpi-label">Total Vendor Payables</div>
+            <div class="kpi-value roll-on-view" data-val="875000" style="color:var(--red)">LKR 0</div>
+          </div>
+          <div class="card">
+            <div class="kpi-label">Paid This Month</div>
+            <div class="kpi-value roll-on-view" data-val="320000" style="color:var(--green)">LKR 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Vendor Directory</div>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Vendor Name</th><th>Balance Due</th><th>Last GRN</th><th>Last Payment</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="vendor-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 7: BARCODE SYSTEM -->
+    <section class="page" id="page-barcode">
+      <div class="grid-2">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-title" style="margin-bottom:16px">Select Items</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <div class="search-box" style="flex:1">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="form-input" placeholder="Search code or name..." oninput="filterBarcodeItems(this.value)">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button class="btn btn-secondary" onclick="selectAllItems()">Select All</button>
+              <button class="btn btn-secondary" onclick="deselectAllItems()">Deselect All</button>
+            </div>
+            <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+              <table>
+                <thead><tr><th><input type="checkbox" id="select-all-cb" onchange="toggleAllItems(this)"></th><th>Code</th><th>Item Name</th><th>Qty/Label</th></tr></thead>
+                <tbody id="barcode-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title" style="margin-bottom:16px">Label Settings</div>
+            <div class="form-group">
+              <label class="form-label">Label Size</label>
+              <select class="form-select" id="label-size" onchange="updatePreview()">
+                <option value="50x25">50×25 mm</option><option value="40x20">40×20 mm</option><option value="60x30">60×30 mm</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Copies per Item</label><input type="number" class="form-input" value="1" min="1" max="100" id="label-copies"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="printLabels()">🖨 Print Selected</button>
+              <span style="font-size:12px;color:var(--text2);align-self:center">Printed today: <strong id="print-count">0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card barcode-preview-panel" id="barcode-preview">
+          <div class="scan-line"></div>
+          <div class="section-title" style="margin-bottom:16px">Label Preview</div>
+          <div class="barcode-svg-wrap" id="preview-label">
+            <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#000" id="preview-name">BATH MIXER TAP CHROME</div>
+            <div style="font-size:10px;color:#444;margin-bottom:8px" id="preview-code">BT-042</div>
+            <div class="barcode-bars" id="preview-bars"></div>
+            <div style="font-size:9px;color:#000;margin-top:4px;letter-spacing:2px" id="preview-barcode-num">||||||||||||||||||</div>
+            <div style="font-size:12px;font-weight:800;color:#000;margin-top:6px" id="preview-price">LKR 4,500</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:8px">Size: <span id="preview-size">50×25 mm</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 8: REPORTS -->
+    <section class="page" id="page-reports">
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px"><label class="form-label">From</label><input type="date" class="form-input" id="report-from" value="2026-06-01"></div>
+          <div class="form-group" style="margin-bottom:0;flex:1;min-width:140px"><label class="form-label">To</label><input type="date" class="form-input" id="report-to" value="2026-06-28"></div>
+          <button class="btn btn-primary" onclick="generateReport()">Generate</button>
+          <button class="btn btn-secondary" onclick="exportExcel()">📊 Excel</button>
+          <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF</button>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div style="font-size:14px;font-weight:800;color:var(--gold);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em">Profit &amp; Loss Summary — June 2026</div>
+        <div class="report-row"><span>Total Sales</span><span>LKR 4,235,800</span></div>
+        <div class="report-row"><span>Cost of Goods Sold (COGS)</span><span style="color:var(--red)">− LKR 2,845,000</span></div>
+        <div class="report-row positive"><span>Gross Profit</span><span>LKR 1,390,800</span></div>
+        <div class="report-row" style="background:rgba(255,51,102,0.05);border-radius:8px;padding:10px;margin:4px 0"><span>Operating Expenses</span><span style="color:var(--red)">− LKR 324,500</span></div>
+        <div class="report-row" style="background:rgba(245,158,11,0.08);border-radius:8px;padding:10px;margin:4px 0"><span>Renovation (Separate)</span><span style="color:var(--amber)">− LKR 45,000</span></div>
+        <div class="report-row total"><span>NET PROFIT</span><span style="color:var(--green)">LKR 1,021,300</span></div>
+        <div style="font-size:11px;color:var(--amber);margin-top:8px;padding:8px;background:rgba(245,158,11,0.08);border-radius:8px">⚠ Rule enforced: Net Profit = Gross Profit − Expenses ONLY. Never Total Sale − Expenses.</div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:12px">📱 WhatsApp Daily Report</div>
+          <div style="background:var(--bg3);border-radius:8px;padding:14px;font-size:12px;font-family:monospace;color:var(--text);line-height:1.8;margin-bottom:12px" id="whatsapp-report-text">
+            *1st Choice Bathco — 28/06/2026*<br>─────────────────────<br>💰 Total Sales: *LKR 253,150*<br>💵 Cash: LKR 124,350<br>💳 Card: LKR 68,200<br>📲 Online: LKR 33,100<br>📝 Credit: LKR 15,000<br>🧾 Cheque: LKR 12,500<br>─────────────────────<br>📦 Items Sold: 47<br>🎯 Target: 101% ✅<br>─────────────────────<br>_Generated by Bathco System_
+          </div>
+          <button class="btn btn-green" onclick="copyWhatsApp()">📋 Copy &amp; Share</button>
+        </div>
+
+        <div class="card">
+          <div class="section-title" style="margin-bottom:12px">Mr Azmin Report</div>
+          <div style="background:var(--bg3);border-radius:8px;padding:20px;font-size:18px;font-weight:700;line-height:2.2;margin-bottom:12px;text-align:center">
+            <div>1st Choice Bathco</div>
+            <div style="font-size:13px;color:var(--text2);font-weight:400;margin-bottom:12px">28 June 2026</div>
+            <div>Total: <span style="color:var(--gold)">253,150</span></div>
+            <div style="font-size:15px">Cash: <span>124,350</span></div>
+            <div style="font-size:15px">Card: <span>68,200</span></div>
+            <div style="font-size:15px">Online: <span>33,100</span></div>
+          </div>
+          <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-title" style="margin-bottom:12px">Cash Handover Receipt</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label">Handed By</label><input type="text" class="form-input" value="Ajmal"></div>
+          <div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label">Received By</label><input type="text" class="form-input" placeholder="Receiver name"></div>
+          <div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label">Cash Amount</label><input type="number" class="form-input" value="124350"></div>
+        </div>
+        <button class="btn btn-secondary" onclick="generateHandover()">Generate Receipt</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px">⚠ Missing Dates (June 2026)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="missing-dates-list">
+          <span class="badge badge-red">03/06</span><span class="badge badge-red">07/06</span><span class="badge badge-red">15/06</span><span class="badge badge-amber">No data recorded for 3 dates</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 9: SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="grid-2">
+        <div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="settings-group-title">Shop Information</div>
+            <div class="form-group"><label class="form-label">Shop Name</label><input type="text" class="form-input" value="1st Choice Bathco (Pvt) Ltd"></div>
+            <div class="form-group"><label class="form-label">Address</label><textarea class="form-textarea">No. 45, Main Street, Colombo 03, Sri Lanka</textarea></div>
+            <div class="form-group"><label class="form-label">Phone</label><input type="text" class="form-input" value="+94 11 234 5678"></div>
+            <div class="form-group">
+              <label class="form-label">Logo</label>
+              <div class="upload-box" onclick="triggerUpload('logo-upload')"><div class="upload-icon">🖼</div><div class="upload-text">Upload Logo (PNG/JPG)</div><input type="file" id="logo-upload" accept="image/*" style="display:none"></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+          </div>
+          <div class="card">
+            <div class="settings-group-title">Business Rules (Read Only)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:2">
+              <div>✅ Net Profit = Gross Profit − Expenses</div><div>✅ Petty Cash Float = LKR 25,000</div><div>✅ Renovation = Separate line always</div>
+              <div>✅ Mr Azmin payments ≠ Shop expenses</div><div>✅ Credit shown separately always</div><div>✅ Cash+Card+Online must match Total Sale</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="settings-group-title">Targets &amp; Finance</div>
+            <div class="form-group"><label class="form-label">Daily Sales Target (LKR)</label><input type="number" class="form-input" value="250000" id="settings-target"></div>
+            <div class="form-group"><label class="form-label">Petty Cash Float (LKR)</label><input type="number" class="form-input" value="25000" id="settings-petty"></div>
+            <button class="btn btn-primary" onclick="saveFinanceSettings()">Save</button>
+          </div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="settings-group-title">Staff Members</div>
+            <div id="staff-list">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--card-border)"><span style="font-size:13px">👤 Ajmal (Manager)</span><span class="badge badge-gold">Admin</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--card-border)"><span style="font-size:13px">👤 Ravi (Sales)</span><span class="badge badge-blue">Staff</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="font-size:13px">👤 Nirosha (Cashier)</span><span class="badge badge-blue">Staff</span></div>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:12px">+ Add Staff</button>
+          </div>
+          <div class="card">
+            <div class="settings-group-title">Data &amp; Backup</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button class="btn btn-secondary" onclick="backupData()">💾 Backup All Data (JSON)</button>
+              <button class="btn btn-secondary" onclick="exportExcel()">📊 Export to Excel</button>
+              <button class="btn btn-danger" onclick="confirmClear()">⚠ Clear Demo Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG & STATE
+   ============================================================ */
+let DAILY_TARGET = 250000;
+let sidebarCollapsed = false;
+let currentTheme = 'dark';
+let charts = {};
+let salesDateStr = '';
+let appInitialized = false;
+let dashMouse = { x: null, y: null, radius: 150 };
+let currentUser = { name: 'Ajmal', role: 'admin' };
+let _timerID = null, _timerSec = 60;
+const REFRESH = 60, RING_CIRC = 75.4;
+let liveStock = [], liveCheques = [];
+let printCount = 0;
+
+/* ============================================================
+   API WRAPPER
+   ============================================================ */
+async function api(path, opts = {}) {
+  try {
+    const r = await fetch(path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      ...opts
+    });
+    if (r.status === 401) { showLogin(); return null; }
+    if (r.status === 404) { return null; }
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || r.statusText);
+    return data;
+  } catch (e) {
+    if (e.message && !e.message.includes('fetch')) showToast(e.message, 'error');
+    return null;
+  }
+}
+
+/* ============================================================
+   LOGIN (server-backed)
+   ============================================================ */
+async function handleLogin() {
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value.trim();
+  if (!u || !p) { showToast('Please enter credentials', 'warning'); return; }
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const data = await r.json();
+    if (r.ok && data.ok) {
+      currentUser = data.user || { name: u, role: 'staff' };
+      document.querySelector('.user-name').textContent = currentUser.name || u;
+      document.querySelector('.user-avatar').textContent = (currentUser.name || u)[0].toUpperCase();
+      document.getElementById('login-screen').classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-wrapper').classList.add('visible');
+        setTimeout(() => showToast('Assalamu Alaikum, ' + (currentUser.name || u) + ' 🕌 System Online', 'success'), 300);
+        if (!appInitialized) { init(); appInitialized = true; }
+      }, 500);
+    } else {
+      showToast(data.error || 'Invalid credentials', 'error');
+      const card = document.getElementById('login-card');
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 500);
+    }
+  } catch (e) {
+    showToast('Cannot reach server at localhost:3000', 'error');
+  }
+}
+
+function showLogin() {
+  document.getElementById('app-wrapper').classList.remove('visible');
+  const ls = document.getElementById('login-screen');
+  ls.style.display = 'flex'; ls.classList.remove('fade-out');
+}
+
+function logout() {
+  fetch('/api/logout', { method: 'POST', credentials: 'include' }).finally(() => location.reload());
+}
+
+/* ============================================================
+   AUTO-REFRESH RING (60 s)
+   ============================================================ */
+function startRefreshTimer() {
+  clearInterval(_timerID);
+  _timerSec = REFRESH; updateRing();
+  _timerID = setInterval(() => {
+    _timerSec--; updateRing();
+    if (_timerSec <= 0) { _timerSec = REFRESH; refreshAll(); }
+  }, 1000);
+}
+
+function updateRing() {
+  const offset = RING_CIRC * (1 - _timerSec / REFRESH);
+  const prog = document.getElementById('ring-prog');
+  const num  = document.getElementById('ring-num');
+  if (prog) prog.style.strokeDashoffset = offset;
+  if (num)  num.textContent = _timerSec;
+}
+
+async function refreshAll() {
+  const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
+  const promises = [loadDashboard()];
+  if (activePage === 'daily-sales') promises.push(loadSales());
+  if (activePage === 'stock')       promises.push(loadStock());
+  if (activePage === 'expenses')    promises.push(loadExpenses());
+  if (activePage === 'cheques')     promises.push(loadCheques());
+  if (activePage === 'vendors')     promises.push(loadVendors());
+  await Promise.all(promises);
+}
+
+/* ============================================================
+   PARTICLE NETWORKS
+   ============================================================ */
+function initParticles() {
+  const canvas = document.getElementById('particle-canvas'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const pts = Array.from({length: 80}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5, r: Math.random()*2+1
+  }));
+  function draw() {
+    if (document.getElementById('login-screen').style.display === 'none') return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,212,255,0.6)'; ctx.fill();
+    });
+    for (let i = 0; i < pts.length; i++)
+      for (let j = i+1; j < pts.length; j++) {
+        const dx = pts[i].x-pts[j].x, dy = pts[i].y-pts[j].y, d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 130) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle='rgba(0,212,255,'+(0.2*(1-d/130))+')'; ctx.lineWidth=0.5; ctx.stroke(); }
+      }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function initDashParticles() {
+  const canvas = document.getElementById('dash-particles'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const pts = Array.from({length:40}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3, r: Math.random()*1.5+0.5
+  }));
+  window.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    dashMouse.x = (e.clientX>rect.left&&e.clientX<rect.right&&e.clientY>rect.top&&e.clientY<rect.bottom) ? e.clientX-rect.left : null;
+    dashMouse.y = dashMouse.x !== null ? e.clientY-rect.top : null;
+  });
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p => {
+      if (dashMouse.x !== null) {
+        const dx=p.x-dashMouse.x, dy=p.y-dashMouse.y, d=Math.sqrt(dx*dx+dy*dy);
+        if (d < dashMouse.radius) { const f=(dashMouse.radius-d)/dashMouse.radius; p.x+=dx*f*0.05; p.y+=dy*f*0.05; }
+      }
+      p.x+=p.vx; p.y+=p.vy;
+      if (p.x<0||p.x>canvas.width) p.vx*=-1;
+      if (p.y<0||p.y>canvas.height) p.vy*=-1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(245,166,35,0.5)'; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+function rollNumber(el, target, prefix='LKR ') {
+  if (target === null || target === undefined) { el.textContent = 'N/A'; return; }
+  const str = prefix + fmtNum(target);
+  el.innerHTML = '';
+  const bc = document.createElement('div');
+  bc.className = 'number-bounce'; bc.style.display = 'inline-block';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i], span = document.createElement('span');
+    span.className = 'digit-slot-container';
+    if (!isNaN(parseInt(ch)) && ch !== ' ') {
+      span.classList.add('digit-slot');
+      span.innerHTML = '0<br>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9';
+      setTimeout(() => { span.style.transform = `translateY(-${parseInt(ch)}em)`; }, 100+i*80);
+    } else { span.textContent = ch; span.style.display = 'inline-block'; }
+    bc.appendChild(span);
+  }
+  el.appendChild(bc);
+  setTimeout(() => { el.classList.add('glow-gold'); setTimeout(() => el.classList.remove('glow-gold'), 1000); }, 100+str.length*80+500);
+}
+
+document.addEventListener('mousemove', e => {
+  document.querySelectorAll('.card:hover').forEach(card => {
+    const rect = card.getBoundingClientRect();
+    card.style.transform = `perspective(1000px) rotateX(${((e.clientY-rect.top-rect.height/2)/rect.height)*-5}deg) rotateY(${((e.clientX-rect.left-rect.width/2)/rect.width)*5}deg) translateZ(10px)`;
+  });
+});
+document.addEventListener('mouseout', e => { const c = e.target.closest('.card'); if (c) c.style.transform = ''; });
+
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn,.nav-item,.date-nav-btn,.theme-toggle'); if (!btn) return;
+  const rect = btn.getBoundingClientRect(), ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+  btn.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
+});
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function fmtLKR(v) { return 'LKR '+Number(v||0).toLocaleString('en-IN'); }
+function fmtNum(v)  { return Number(v||0).toLocaleString('en-IN'); }
+
+function updateClock() {
+  const n=new Date(), pad=x=>String(x).padStart(2,'0');
+  document.getElementById('live-clock').textContent = pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+  const lu=document.getElementById('last-updated'); if(lu) lu.textContent=pad(n.getHours())+':'+pad(n.getMinutes());
+}
+setInterval(updateClock, 1000);
+
+window.addEventListener('scroll', () => {
+  const btn=document.getElementById('scroll-top-btn');
+  btn.classList.toggle('visible', window.scrollY > 300);
+});
+function scrollToTop() { window.scrollTo({top:0,behavior:'smooth'}); }
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.querySelector('.toggle-label').textContent = sidebarCollapsed ? 'Expand' : 'Collapse';
+}
+function toggleMobileMenu() { document.getElementById('sidebar').classList.toggle('mobile-open'); }
+function toggleTheme() {
+  currentTheme = currentTheme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  document.querySelector('.theme-toggle').textContent = currentTheme==='dark'?'🌙':'☀️';
+  localStorage.setItem('bathco_theme', currentTheme);
+  setTimeout(() => { if (appInitialized) initBaseCharts(); }, 100);
+}
+
+function showToast(msg, type='info') {
+  const c=document.getElementById('toast-container'), icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  const t=document.createElement('div'); t.className='toast '+type;
+  t.innerHTML='<span>'+(icons[type]||'ℹ️')+'</span><span>'+msg+'</span>';
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s ease';setTimeout(()=>t.remove(),300);},3500);
+}
+
+function launchConfetti() {
+  const canvas=document.getElementById('confetti-canvas'); canvas.style.display='block';
+  const ctx=canvas.getContext('2d'); canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const pts=Array.from({length:120},()=>({x:Math.random()*canvas.width,y:-10,w:Math.random()*10+5,h:Math.random()*6+3,color:['#F5A623','#00D4FF','#22c55e','#ff3366'][Math.floor(Math.random()*4)],vy:Math.random()*3+2,vx:(Math.random()-0.5)*3,rot:Math.random()*360,rotV:(Math.random()-0.5)*8}));
+  let f=0;
+  (function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.rot+=p.rotV;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();});
+    if(++f<180) requestAnimationFrame(draw); else{canvas.style.display='none';ctx.clearRect(0,0,canvas.width,canvas.height);}
+  })();
+  showToast('🎉 Daily target reached! Congratulations!','success');
+}
+
+function triggerUpload(id) { document.getElementById(id).click(); }
+
+/* ============================================================
+   SPARKLINES & CHARTS
+   ============================================================ */
+const glowPlugin={id:'glow',
+  beforeDatasetDraw(chart,args){const{ctx}=chart;ctx.save();ctx.shadowColor=args.meta.dataset.borderColor||'#00D4FF';ctx.shadowBlur=15;},
+  afterDatasetDraw(chart){chart.ctx.restore();}
+};
+Chart.register(glowPlugin);
+
+function renderSparkline(id, data) {
+  const el=document.getElementById(id); if(!el) return;
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(el,{type:'line',data:{labels:data.map((_,i)=>i),datasets:[{data,borderColor:'#00D4FF',borderWidth:2,fill:true,backgroundColor:'rgba(0,212,255,0.1)',tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:1500},plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+}
+
+function initBaseCharts() {
+  const isDark=currentTheme==='dark', grid=isDark?'rgba(0,212,255,0.08)':'rgba(0,0,0,0.08)', tc=isDark?'#888':'#555';
+  const anim={duration:1800,easing:'easeInOutQuart'};
+  const hCtx=document.getElementById('hourlyChart');
+  if(hCtx){if(charts.hourly)charts.hourly.destroy();charts.hourly=new Chart(hCtx,{type:'bar',data:{labels:['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm'],datasets:[{label:'Sales (LKR)',data:new Array(10).fill(0),backgroundColor:'rgba(0,212,255,0.3)',borderColor:'#00D4FF',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,animation:anim,plugins:{legend:{labels:{color:tc,font:{size:11}}}},scales:{x:{ticks:{color:tc},grid:{color:grid}},y:{ticks:{color:tc},grid:{color:grid}}}}});}
+  const eCtx=document.getElementById('expenseChart');
+  if(eCtx){if(charts.expense)charts.expense.destroy();charts.expense=new Chart(eCtx,{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May','Jun'],datasets:[{label:'Operating',data:new Array(6).fill(0),backgroundColor:'rgba(255,51,102,0.5)',borderColor:'#ff3366',borderRadius:4},{label:'Renovation',data:new Array(6).fill(0),backgroundColor:'rgba(245,158,11,0.5)',borderColor:'#f59e0b',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,animation:anim,plugins:{legend:{labels:{color:tc,font:{size:11}}}},scales:{x:{ticks:{color:tc},grid:{color:grid}},y:{ticks:{color:tc},grid:{color:grid}}}}});}
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+const KPI_DEFS=[
+  {key:'total',   label:'Total Sale', type:'total',  icon:'💰',hero:true},
+  {key:'cash',    label:'Cash',       type:'cash',   icon:'💵'},
+  {key:'card',    label:'Card',       type:'card',   icon:'💳'},
+  {key:'online',  label:'Online',     type:'online', icon:'📲'},
+  {key:'profit',  label:'Net Profit', type:'profit', icon:'📈'},
+  {key:'expenses',label:'Expenses',   type:'expense',icon:'💸'}
+];
+
+async function loadDashboard() {
+  const grid=document.getElementById('kpi-grid');
+  if(grid && !grid.querySelector('#kpi-val-total')) {
+    grid.innerHTML=KPI_DEFS.map(()=>'<div class="kpi-card-wrapper"><div class="kpi-card"><div class="skeleton skel-text" style="width:60%"></div><div class="skeleton skel-value"></div><div class="skeleton skel-text" style="width:80%"></div><div class="skeleton" style="height:40px;margin-top:12px;border-radius:4px"></div></div></div>').join('');
+  }
+
+  const [homeStats, weeklyData] = await Promise.all([
+    api('/api/home-stats'),
+    api('/api/weekly-chart')
+  ]);
+
+  // Default to yesterday (today may have no trading data)
+  if (!salesDateStr) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const defaultDate = yesterday.toISOString().split('T')[0];
+    salesDateStr = defaultDate;
+    updateSalesDateDisplay();
+  }
+
+  // Day detail for payment breakdown
+  const dayData = await api('/api/daily-summary/' + salesDateStr);
+
+  // Update date display
+  const [y,m,d] = salesDateStr.split('-');
+  const dateFmt = d+'/'+m+'/'+y;
+  const dd=document.getElementById('dash-date'); if(dd) dd.textContent=dateFmt;
+  const ps=document.getElementById('page-sub'); if(ps&&document.querySelector('.page.active')?.id==='page-dashboard') ps.textContent=dateFmt+' — System Online';
+
+  // KPI values from day data
+  const kv={
+    total:    Number(dayData?.total_sale||0),
+    cash:     Number(dayData?.cash_sale||0),
+    card:     Number(dayData?.card_sale||0),
+    online:   Number(dayData?.online_sale||0),
+    profit:   (dayData?.net_profit!==null&&dayData?.net_profit!==undefined) ? Number(dayData.net_profit) : null,
+    expenses: Number(dayData?.total_expenses||0)
+  };
+
+  // Render KPI cards
+  grid.innerHTML=KPI_DEFS.map((def,i)=>{
+    const val=kv[def.key], notAvail=val===null;
+    const mtdVal=def.key==='total'?homeStats?.mtd?.sale:def.key==='profit'?homeStats?.mtd?.np:def.key==='expenses'?homeStats?.mtd?.exp:null;
+    return '<div class="kpi-card-wrapper" style="animation-delay:'+i*0.1+'s">'+
+      '<div class="kpi-card '+(def.hero?'hero-card':'')+'" data-type="'+def.type+'">'+
+      '<div class="kpi-label">'+def.icon+' '+def.label+'</div>'+
+      '<div class="kpi-value '+(def.hero?'hero-value':'')+'" id="kpi-val-'+def.key+'">LKR 0</div>'+
+      (notAvail?'<div style="font-size:11px;color:var(--amber)">GP data not yet available</div>':
+        mtdVal!=null?'<div class="kpi-change up" style="font-size:11px">MTD: LKR '+fmtNum(mtdVal)+'</div>':
+        '<div class="kpi-change up">Live data</div>')+
+      '<div class="kpi-sparkline"><canvas id="spark-'+def.key+'"></canvas></div>'+
+      '</div></div>';
+  }).join('');
+
+  KPI_DEFS.forEach(def=>{
+    const el=document.getElementById('kpi-val-'+def.key);
+    if(el) rollNumber(el, kv[def.key]===null?0:kv[def.key]);
+    const sparkData=def.key==='total'&&Array.isArray(weeklyData)&&weeklyData.length>0?weeklyData.map(r=>Number(r.total||0)):new Array(7).fill(0);
+    renderSparkline('spark-'+def.key, sparkData);
+  });
+
+  // Target bar
+  const pct=Math.min((kv.total/DAILY_TARGET)*100,100);
+  const tb=document.getElementById('target-bar'); if(tb) tb.style.width=pct+'%';
+  const tp=document.getElementById('target-pct'); if(tp) tp.textContent=pct.toFixed(0)+'%';
+  const ta=document.getElementById('target-achieved'); if(ta) ta.textContent='LKR '+fmtNum(kv.total)+' achieved';
+  if(pct>=100) launchConfetti();
+
+  if(weeklyData) renderWeeklyChart(weeklyData);
+  updateWhatsAppReport(dayData);
+}
+
+function renderWeeklyChart(weeklyData) {
+  const wCtx=document.getElementById('weeklyChart'); if(!wCtx) return;
+  if(charts.weekly) charts.weekly.destroy();
+  const isDark=currentTheme==='dark', grid=isDark?'rgba(0,212,255,0.08)':'rgba(0,0,0,0.08)', tc=isDark?'#888':'#555';
+  const rows=Array.isArray(weeklyData)?weeklyData:[];
+  const labels=rows.map(r=>r.label||new Date(r.report_date).toLocaleDateString('en-GB',{weekday:'short'})||'?');
+  const data=rows.map(r=>Number(r.total||r.total_sale||0));
+  charts.weekly=new Chart(wCtx,{type:'line',data:{labels,datasets:[{label:'This Week',data,borderColor:'#F5A623',backgroundColor:'rgba(245,166,35,0.1)',tension:0.4,fill:true,borderWidth:2,pointRadius:4,pointBackgroundColor:'#F5A623'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:1800,easing:'easeInOutQuart'},plugins:{legend:{labels:{color:tc,font:{size:11}}}},scales:{x:{ticks:{color:tc},grid:{color:grid}},y:{ticks:{color:tc,callback:v=>'LKR '+fmtNum(v/1000)+'k'},grid:{color:grid}}}}});
+}
+
+/* ============================================================
+   DAILY SALES
+   ============================================================ */
+async function loadSales(date) {
+  if(!date) date=salesDateStr;
+  const [summary, reports] = await Promise.all([
+    api('/api/daily-summary/'+date),
+    api('/api/reports?date='+date)
+  ]);
+  renderPayBreak(summary);
+  renderCashflow(summary);
+  renderDonutChart(summary);
+  renderInvoiceTable(reports, summary);
+  renderTopItems(reports);
+  updateWhatsAppReport(summary);
+}
+
+function renderPayBreak(s) {
+  if(!s) return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el) el.textContent='LKR '+fmtNum(v);};
+  set('pb-cash',   Number(s.cash_sale||0));
+  set('pb-card',   Number(s.card_sale||0));
+  set('pb-online', Number(s.online_sale||0));
+  set('pb-credit', Number(s.credit_sale||0));
+  set('pb-cheque', Number(s.cheq_payment||0));
+}
+
+function renderCashflow(s) {
+  if(!s) return;
+  const expenses   = Number(s.total_expenses||0);
+  const payments   = Number(s.payments||0);
+  const cashOut    = expenses + payments;
+  const cashSale   = Number(s.cash_sale||0);
+  const cashInHand = Number(s.cash_in_hand||0) || (cashSale - cashOut);
+  const gp         = Number(s.gross_profit||0);
+  const gpAvail    = s.gp_status==='ACTUAL' || gp>0;
+  const netProfit  = gpAvail ? (gp - expenses) : null;
+
+  const set=(id,v)=>{const el=document.getElementById(id);if(el) el.textContent='LKR '+fmtNum(v);};
+  set('cf-expenses',  expenses);
+  set('cf-payments',  payments);
+  set('cf-cashout',   cashOut);
+  set('cf-cashinhand',cashInHand);
+
+  const npEl=document.getElementById('cf-netprofit');
+  const npNote=document.getElementById('cf-np-note');
+  if(npEl){
+    if(netProfit!==null){
+      npEl.textContent='LKR '+fmtNum(netProfit);
+      npEl.style.color=netProfit>=0?'var(--green)':'var(--red)';
+      if(npNote) npNote.textContent='GP − Expenses';
+    } else {
+      npEl.textContent='N/A';
+      npEl.style.color='var(--amber)';
+      if(npNote) npNote.textContent='GP not available for this date';
+    }
+  }
+}
+
+function renderDonutChart(s) {
+  const dCtx=document.getElementById('donutChart'); if(!dCtx) return;
+  if(charts.donut) charts.donut.destroy();
+  const cash=Number(s?.cash_sale||0),card=Number(s?.card_sale||0),online=Number(s?.online_sale||0),credit=Number(s?.credit_sale||0),cheque=Number(s?.cheq_payment||0);
+  const dd={labels:['Cash','Card','Online','Credit','Cheque'],data:[cash,card,online,credit,cheque],colors:['#00D4FF','#b95cf6','#f59e0b','#ff3366','#22c55e']};
+  const total=dd.data.reduce((a,b)=>a+b,0);
+  charts.donut=new Chart(dCtx,{type:'doughnut',data:{labels:dd.labels,datasets:[{data:dd.data,backgroundColor:dd.colors,borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',animation:{animateRotate:true,animateScale:true,duration:1500},plugins:{legend:{display:false}}}});
+  if(total>0&&document.getElementById('donut-legend')) {
+    document.getElementById('donut-legend').innerHTML=dd.labels.map((l,i)=>'<div class="legend-item"><div class="legend-dot" style="background:'+dd.colors[i]+'"></div><span class="legend-label">'+l+'</span><span class="legend-pct">'+((dd.data[i]/total)*100).toFixed(1)+'%</span></div>').join('');
+  }
+}
+
+function renderInvoiceTable(reports, summary, filter='') {
+  const tb=document.getElementById('invoice-tbody'); if(!tb) return;
+  const rows=Array.isArray(reports)?reports:[];
+  if(!rows.length) {
+    const total=Number(summary?.total_sale||0);
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px">'+
+      '<div style="color:var(--text2);font-size:13px;margin-bottom:8px">No invoice-level records for this date</div>'+
+      (total>0?'<div style="font-size:18px;font-weight:700;color:var(--cyan)">Day Total: LKR '+fmtNum(total)+'</div>':'<div style="color:var(--text3)">No trading data for this date</div>')+
+      '</td></tr>';
+    return;
+  }
+  const filtered=filter?rows.filter(r=>(r.invoice_no||'').toLowerCase().includes(filter)||(r.customer_name||'').toLowerCase().includes(filter)):rows;
+  tb.innerHTML=filtered.map(r=>{
+    const inv=r.invoice_no||'—',time=r.time||'—',customer=r.customer_name||'Walk-in',method=r.payment_type||'Cash';
+    const amount=Number(r.total_sale||r.amount||0),status=r.is_refund?'refund':method==='credit'?'credit':'paid';
+    const sc=status==='paid'?'badge-green':status==='credit'?'badge-red':'badge-amber';
+    return '<tr><td><strong>'+inv+'</strong></td><td>'+time+'</td><td>'+customer+'</td><td><span class="badge badge-blue">'+method+'</span></td><td>'+(r.item_count||'—')+'</td><td><strong>LKR '+fmtNum(amount)+'</strong></td><td><span class="badge '+sc+'">'+status+'</span></td></tr>';
+  }).join('');
+}
+function filterInvoices() { /* cache needed — re-load on filter */ }
+
+function renderTopItems(reports) {
+  const l=document.getElementById('top-items-list'); if(!l) return;
+  const rows=Array.isArray(reports)?reports:[];
+  if(!rows.length) { l.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px">No invoice records — item-level data unavailable</div>'; return; }
+  l.innerHTML=rows.slice(0,10).map((r,i)=>'<div class="top-item"><div class="top-item-rank '+(i===1?'two':i===2?'three':'')+'">'+(i+1)+'</div><div class="top-item-name">'+(r.invoice_no||'Invoice')+'</div><div class="top-item-qty">—</div><div class="top-item-amt">LKR '+fmtNum(r.total_sale||r.amount||0)+'</div></div>').join('');
+}
+
+function updateWhatsAppReport(s) {
+  const el=document.getElementById('whatsapp-report-text'); if(!el||!s||!salesDateStr) return;
+  const [y,m,d]=salesDateStr.split('-');
+  const total=Number(s.total_sale||0),cash=Number(s.cash_sale||0),card=Number(s.card_sale||0),online=Number(s.online_sale||0);
+  const pct=((total/DAILY_TARGET)*100).toFixed(0);
+  el.innerHTML='*1st Choice Bathco — '+d+'/'+m+'/'+y+'*<br>─────────────────────<br>💰 Total Sales: *LKR '+fmtNum(total)+'*<br>💵 Cash: LKR '+fmtNum(cash)+'<br>💳 Card: LKR '+fmtNum(card)+'<br>📲 Online: LKR '+fmtNum(online)+'<br>─────────────────────<br>🎯 Target: '+pct+'%'+(Number(pct)>=100?' ✅':'')+' <br>─────────────────────<br>_Generated by Bathco System_';
+}
+
+function changeDate(dir) {
+  if(!salesDateStr) return;
+  const d=new Date(salesDateStr); d.setDate(d.getDate()+dir);
+  salesDateStr=d.toISOString().substring(0,10);
+  updateSalesDateDisplay(); loadSales(salesDateStr);
+}
+function setDate(val) { salesDateStr=val; updateSalesDateDisplay(); loadSales(salesDateStr); }
+function updateSalesDateDisplay() {
+  if(!salesDateStr) return;
+  const picker=document.getElementById('sales-date-picker'); if(picker) picker.value=salesDateStr;
+}
+
+/* ============================================================
+   STOCK
+   ============================================================ */
+async function loadStock() {
+  const products=await api('/api/products');
+  liveStock=products||[];
+  renderStock(); renderBarcodeItems();
+}
+
+function renderStock(codeFilter='', catFilter='') {
+  const tb=document.getElementById('stock-tbody'); if(!tb) return;
+  if(!liveStock.length) { tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text3)">Loading...</td></tr>'; return; }
+  const rows=liveStock.filter(r=>{
+    const mc=!codeFilter||(r.item_code||'').toLowerCase().includes(codeFilter)||(r.name||'').toLowerCase().includes(codeFilter);
+    const mt=!catFilter||(r.category||'')===catFilter;
+    return mc&&mt;
+  });
+  const MIN=5;
+  tb.innerHTML=rows.map(r=>{
+    const qty=Number(r.stock_level||0),cost=Number(r.cost_price||0);
+    const pct=Math.min((qty/(MIN*3))*100,100);
+    const lc=qty===0?'low':qty<=MIN?'low':qty<=MIN*2?'medium':'high';
+    let slbl='Normal',sbdg='badge-blue';
+    if(qty===0){slbl='Zero Stock';sbdg='badge-red';}else if(qty<=MIN){slbl='Low Stock';sbdg='badge-red';}
+    return '<tr style="'+(qty===0?'background:rgba(255,51,102,0.05)':'')+'">'+
+      '<td><code style="color:var(--cyan)">'+(r.item_code||'—')+'</code></td>'+
+      '<td><strong>'+(r.name||'—')+'</strong></td>'+
+      '<td><span class="badge badge-blue">'+(r.category||'—')+'</span></td>'+
+      '<td><strong '+(qty<=MIN&&qty>0?'style="color:var(--red)"':'')+'>'+qty+'</strong></td>'+
+      '<td style="min-width:80px"><div class="stock-level-bar"><div class="stock-level-fill '+lc+'" style="width:'+pct+'%"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">Min:'+MIN+'</div></td>'+
+      '<td>LKR '+fmtNum(cost)+'</td><td>LKR '+fmtNum(cost*qty)+'</td>'+
+      '<td><span class="badge '+sbdg+'">'+slbl+'</span></td>'+
+      '<td><span style="color:var(--text3)">—</span></td><td></td></tr>';
+  }).join('');
+}
+function filterStock() { renderStock(document.getElementById('stock-search').value.toLowerCase(), document.getElementById('stock-category').value); }
+function openGRNForm() { document.getElementById('grn-form').style.display='block'; document.getElementById('grn-form').scrollIntoView({behavior:'smooth'}); }
+function closeGRNForm() { document.getElementById('grn-form').style.display='none'; }
+function saveGRN() { showToast('GRN saved successfully','success'); closeGRNForm(); }
+
+/* ============================================================
+   EXPENSES
+   ============================================================ */
+async function loadExpenses() {
+  const date=salesDateStr||new Date().toISOString().substring(0,10);
+  const expenses=await api('/api/expenses-detail?date='+date);
+  renderExpenses(expenses||[]);
+}
+
+function renderExpenses(expList) {
+  const tb=document.getElementById('expense-tbody'); if(!tb) return;
+  if(!expList.length) { tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">No expenses for this date</td></tr>'; return; }
+  const opTotal=expList.filter(e=>(e.category||'').toLowerCase()!=='renovation').reduce((s,e)=>s+Number(e.amount||0),0);
+  const pb=document.getElementById('petty-balance');
+  if(pb) pb.textContent='LKR '+fmtNum(Math.max(0,25000-opTotal));
+  tb.innerHTML=expList.map(r=>{
+    const cat=r.category||r.expense_type||'Other',ir=cat.toLowerCase()==='renovation';
+    const dateDisp=r.expense_date||r.date||'—',desc=r.description||r.note||r.notes||'—',amount=Number(r.amount||0);
+    return '<tr style="'+(ir?'background:rgba(245,158,11,0.06)':'')+'">'+
+      '<td>'+dateDisp+'</td>'+
+      '<td>'+(ir?'<span class="badge badge-amber">⚠ '+cat+' (separate)</span>':'<span class="badge badge-blue">'+cat+'</span>')+'</td>'+
+      '<td>'+desc+'</td>'+
+      '<td style="font-weight:700;color:'+(ir?'var(--amber)':'var(--red)')+'">LKR '+fmtNum(amount)+'</td>'+
+      '<td><span style="color:var(--text3)">—</span></td></tr>';
+  }).join('');
+}
+function addExpense() { showToast('Expense entry — use LAYLA system','info'); }
+
+/* ============================================================
+   CHEQUES
+   ============================================================ */
+async function loadCheques() {
+  const data=await api('/api/cheques');
+  liveCheques=data||[];
+  renderCheques(); renderChequeCalendar(); updateChequeKPIs();
+}
+
+function updateChequeKPIs() {
+  const now=new Date(); now.setHours(0,0,0,0);
+  const week=new Date(now); week.setDate(week.getDate()+7);
+  const firstM=new Date(now.getFullYear(),now.getMonth(),1);
+  const pending=liveCheques.filter(c=>(c.status||'').toLowerCase()!=='cleared');
+  const dueToday=pending.filter(c=>{const d=new Date(c.due_date||'');d.setHours(0,0,0,0);return d<=now;});
+  const dueWeek=pending.filter(c=>{const d=new Date(c.due_date||'');d.setHours(0,0,0,0);return d<=week;});
+  const cleared=liveCheques.filter(c=>(c.status||'').toLowerCase()==='cleared'&&new Date(c.due_date||'')>=firstM);
+  const sum=arr=>arr.reduce((s,c)=>s+Number(c.amount||0),0);
+  const kpis=document.querySelectorAll('#page-cheques .kpi-value');
+  if(kpis[0]) kpis[0].textContent='LKR '+fmtNum(sum(pending));
+  if(kpis[1]) kpis[1].textContent='LKR '+fmtNum(sum(dueWeek));
+  if(kpis[2]) kpis[2].textContent='LKR '+fmtNum(sum(dueToday));
+  if(kpis[3]) kpis[3].textContent='LKR '+fmtNum(sum(cleared));
+}
+
+function renderCheques(filter='') {
+  const tb=document.getElementById('cheque-tbody'); if(!tb) return;
+  if(!liveCheques.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">No cheque records</td></tr>';return;}
+  const now=new Date(); now.setHours(0,0,0,0);
+  const rows=filter?liveCheques.filter(r=>(r.cheque_no||'').toLowerCase().includes(filter)||(r.name||'').toLowerCase().includes(filter)):liveCheques;
+  tb.innerHTML=rows.map(r=>{
+    const num=r.cheque_no||'—',vendor=r.name||'Unknown',bank=r.bank||'—',amount=Number(r.amount||0);
+    const dueObj=r.due_date?new Date(r.due_date):null; if(dueObj) dueObj.setHours(0,0,0,0);
+    const dueDsp=dueObj?dueObj.toLocaleDateString('en-GB'):'—';
+    let status=(r.status||'pending').toLowerCase();
+    if(status!=='cleared'&&dueObj&&dueObj<=now) status='due-today';
+    const sm={'due-today':['badge-red','🔴 Due Today'],'pending':['badge-amber','🟡 Pending'],'cleared':['badge-green','✅ Cleared']};
+    const [cls,lbl]=sm[status]||['badge-blue',status];
+    return '<tr '+(status==='due-today'?'style="background:rgba(255,51,102,0.06)"':'')+'>'+
+      '<td><strong>'+num+'</strong></td><td>'+vendor+'</td><td>'+bank+'</td>'+
+      '<td><strong>LKR '+fmtNum(amount)+'</strong></td>'+
+      '<td '+(status==='due-today'?'style="color:var(--red);font-weight:700"':'')+'>'+dueDsp+'</td>'+
+      '<td><span class="badge '+cls+'">'+lbl+'</span></td>'+
+      '<td>'+(status!=='cleared'?'<button class="btn btn-green" style="padding:4px 10px;font-size:11px" onclick="markCleared(\''+num+'\')">Mark Cleared</button>':'')+'</td></tr>';
+  }).join('');
+}
+function filterCheques() { renderCheques(document.getElementById('cheque-search').value.toLowerCase()); }
+function markCleared(num) {
+  const c=liveCheques.find(c=>c.cheque_no===num);
+  if(c){c.status='cleared';renderCheques();updateChequeKPIs();showToast(num+' marked cleared','success');}
+}
+function addChequeModal() { showToast('Add cheque — use LAYLA system','info'); }
+
+function renderChequeCalendar() {
+  const cal=document.getElementById('cheque-calendar'); if(!cal) return;
+  const now=new Date(),year=now.getFullYear(),month=now.getMonth(),today=now.getDate();
+  const daysInMonth=new Date(year,month+1,0).getDate(),firstDay=new Date(year,month,1).getDay();
+  let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="cal-header">'+d+'</div>').join('');
+  for(let i=0;i<firstDay;i++) html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ch=liveCheques.filter(c=>{const dd=new Date(c.due_date||'');return dd.getFullYear()===year&&dd.getMonth()===month&&dd.getDate()===d;});
+    const cleared=ch.length>0&&ch.every(c=>(c.status||'').toLowerCase()==='cleared');
+    const hasPending=ch.some(c=>(c.status||'').toLowerCase()!=='cleared');
+    const cls=d===today&&hasPending?'due-today':cleared?'cleared':hasPending?'has-cheque':'';
+    const total=ch.reduce((s,c)=>s+Number(c.amount||0),0);
+    html+='<div class="cal-day '+cls+'"><div class="cal-day-num">'+d+'</div>'+(total>0?'<div style="font-size:9px;color:var(--amber)">• '+fmtNum(total/1000)+'k</div>':'')+'</div>';
+  }
+  cal.innerHTML=html;
+}
+
+/* ============================================================
+   VENDORS
+   ============================================================ */
+async function loadVendors() {
+  const data=await api('/api/suppliers');
+  renderVendors(data||[]);
+}
+
+function renderVendors(vendors) {
+  const tb=document.getElementById('vendor-tbody'); if(!tb) return;
+  if(!vendors.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">No vendor data</td></tr>';return;}
+  const totalPaid=vendors.reduce((s,v)=>s+Number(v.total_paid||0),0);
+  const kpiEls=document.querySelectorAll('#page-vendors .kpi-value');
+  if(kpiEls[0]) kpiEls[0].textContent='LKR '+fmtNum(totalPaid);
+  tb.innerHTML=vendors.map(v=>{
+    const name=v.name||'—',paid=Number(v.total_paid||0),days=Number(v.days_since_payment||-1);
+    const lastPay=v.last_payment?new Date(v.last_payment).toLocaleDateString('en-GB'):'—';
+    const lastGRN=v.last_grn?new Date(v.last_grn).toLocaleDateString('en-GB'):'—';
+    const pending=Number(v.pending_cheques||0);
+    let dc='var(--green)',dl=days>=0?days+' days ago':'Never';
+    if(days>60) dc='var(--red)'; else if(days>30) dc='var(--amber)';
+    const status=pending>0?'<span class="badge badge-amber">⚠ '+fmtNum(pending)+' pending</span>':days>=0&&days<30?'<span class="badge badge-green">✅ Recent</span>':'<span class="badge badge-blue">Active</span>';
+    return '<tr>'+
+      '<td><strong>'+name+'</strong></td>'+
+      '<td style="font-weight:700;color:var(--cyan)">LKR '+fmtNum(paid)+'</td>'+
+      '<td>'+lastGRN+'</td>'+
+      '<td style="color:'+dc+';font-weight:600">'+dl+'</td>'+
+      '<td>'+status+'</td>'+
+      '<td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="viewVendor(\''+name.replace(/'/g,"\\'")+'\')">View</button></td></tr>';
+  }).join('');
+}
+function viewVendor(name) { showToast('Payment history for '+name,'info'); }
+function addVendorPayment() { showToast('Record payment — use LAYLA system','info'); }
+
+/* ============================================================
+   BARCODE (live stock)
+   ============================================================ */
+function renderBarcodeItems(filter='') {
+  const tb=document.getElementById('barcode-tbody'); if(!tb) return;
+  const src=filter?liveStock.filter(i=>(i.item_code||'').toLowerCase().includes(filter)||(i.name||'').toLowerCase().includes(filter)):liveStock;
+  if(!src.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text3)">No items loaded</td></tr>';return;}
+  tb.innerHTML=src.slice(0,50).map((item,idx)=>'<tr><td><input type="checkbox" '+(item._sel?'checked':'')+' onchange="toggleItem('+idx+',this.checked)"></td><td><code style="color:var(--cyan)">'+(item.item_code||'—')+'</code></td><td>'+(item.name||'—')+'</td><td><input type="number" style="width:50px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:12px" value="'+(item._qty||1)+'" min="1" onchange="setItemQty('+idx+',this.value)" onclick="updatePreviewItem('+idx+')"></td></tr>').join('');
+}
+function filterBarcodeItems(val) { renderBarcodeItems(val.toLowerCase()); }
+function toggleItem(idx,checked) { if(liveStock[idx]) liveStock[idx]._sel=checked; }
+function setItemQty(idx,val) { if(liveStock[idx]) liveStock[idx]._qty=parseInt(val)||1; }
+function selectAllItems() { liveStock.forEach(i=>i._sel=true); renderBarcodeItems(); document.getElementById('select-all-cb').checked=true; }
+function deselectAllItems() { liveStock.forEach(i=>i._sel=false); renderBarcodeItems(); document.getElementById('select-all-cb').checked=false; }
+function toggleAllItems(cb) { if(cb.checked) selectAllItems(); else deselectAllItems(); }
+function updatePreviewItem(idx) {
+  const item=liveStock[idx]; if(!item) return;
+  document.getElementById('preview-name').textContent=item.name||'—';
+  document.getElementById('preview-code').textContent=item.item_code||'—';
+  document.getElementById('preview-price').textContent='LKR '+fmtNum(item.price||item.selling_price||0);
+  generateBarcodeSVG(item.item_code||'ITEM');
+}
+function updatePreview() { document.getElementById('preview-size').textContent=document.getElementById('label-size').value.replace('x','×')+' mm'; }
+function generateBarcodeSVG(code) {
+  const bars=document.getElementById('preview-bars'); if(!bars) return;
+  bars.innerHTML=['<div class="bar" style="height:60px;width:3px;background:#000"></div>','<div class="bar gap" style="width:2px"></div>','<div class="bar" style="height:60px;width:2px;background:#000"></div>',
+    ...Array.from(code).flatMap(c=>{const n=c.charCodeAt(0);return['<div class="bar'+(n%3===0?' wide':'')+'" style="height:'+(n%2===0?60:48)+'px;background:#000;width:'+(n%3===0?5:2)+'px"></div>','<div class="bar gap" style="width:'+(n%4===0?4:2)+'px"></div>'];}),
+    '<div class="bar" style="height:60px;width:2px;background:#000"></div>','<div class="bar gap" style="width:2px"></div>','<div class="bar" style="height:60px;width:3px;background:#000"></div>'].join('');
+  document.getElementById('preview-barcode-num').textContent=code;
+}
+function printLabels() {
+  const s=liveStock.filter(i=>i._sel);
+  if(!s.length){showToast('No items selected','warning');return;}
+  printCount+=s.length; document.getElementById('print-count').textContent=printCount;
+  showToast('Printing '+s.length+' label(s) — total: '+printCount,'success');
+}
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+async function loadReports() {
+  const from=document.getElementById('report-from')?.value;
+  const to=document.getElementById('report-to')?.value||salesDateStr;
+  if(!from||!to) return;
+  const data=await api('/api/daily-summary?from='+from+'&to='+to);
+  if(!data||!Array.isArray(data)||!data.length) return;
+  const ts=data.reduce((s,r)=>s+Number(r.total_sale||0),0);
+  const tgp=data.filter(r=>Number(r.gross_profit||0)>0).reduce((s,r)=>s+Number(r.gross_profit||0),0);
+  const te=data.reduce((s,r)=>s+Number(r.total_expenses||0),0);
+  const tnp=data.filter(r=>r.net_profit!==null).reduce((s,r)=>s+Number(r.net_profit||0),0);
+  const gpAvail=data.filter(r=>Number(r.gross_profit||0)>0).length;
+  const rc=document.querySelector('.report-card');
+  if(rc) rc.innerHTML='<div style="font-size:14px;font-weight:800;color:var(--gold);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.06em">P&L Summary — '+from+' → '+to+'</div>'+
+    '<div class="report-row"><span>Total Sales ('+data.length+' days)</span><span>LKR '+fmtNum(ts)+'</span></div>'+
+    (tgp>0?'<div class="report-row positive"><span>Gross Profit ('+gpAvail+' days with GP data)</span><span>LKR '+fmtNum(tgp)+'</span></div>':'')+
+    '<div class="report-row" style="background:rgba(255,51,102,0.05);border-radius:8px;padding:10px;margin:4px 0"><span>Operating Expenses</span><span style="color:var(--red)">− LKR '+fmtNum(te)+'</span></div>'+
+    (tnp>0?'<div class="report-row total"><span>NET PROFIT (known days)</span><span style="color:var(--green)">LKR '+fmtNum(tnp)+'</span></div>':
+      '<div class="report-row" style="color:var(--amber)"><span>Net Profit</span><span>GP data not fully available</span></div>')+
+    '<div style="font-size:11px;color:var(--amber);margin-top:8px;padding:8px;background:rgba(245,158,11,0.08);border-radius:8px">⚠ Rule enforced: Net Profit = Gross Profit − Expenses ONLY. Never Total Sale − Expenses.</div>';
+}
+function generateReport() { loadReports(); showToast('Report generated','success'); }
+function exportExcel() { if(salesDateStr) window.open('/api/report-download?date='+salesDateStr+'&detail=1'); }
+function exportPDF() { showToast('PDF — use Excel export and print','info'); }
+function copyWhatsApp() { navigator.clipboard.writeText(document.getElementById('whatsapp-report-text').innerText).then(()=>showToast('Copied to clipboard!','success')); }
+function generateHandover() { showToast('Cash handover receipt generated','success'); }
+function whatsappReport() { copyWhatsApp(); }
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function saveSettings() { showToast('Settings saved','success'); }
+function saveFinanceSettings() { DAILY_TARGET=parseInt(document.getElementById('settings-target').value)||250000; showToast('Finance settings saved','success'); }
+function backupData() { showToast('Use /api/report-download-range for data export','info'); }
+function confirmClear() { showToast('This is live data — nothing to clear','info'); }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const PAGE_TITLES={
+  dashboard:    ['Dashboard','Real-time business snapshot'],
+  'daily-sales':['Daily Sales','Invoices & payment breakdown'],
+  stock:        ['Stock Management','Inventory & GRN control'],
+  expenses:     ['Expenses','Daily expense tracker'],
+  cheques:      ['Cheques','Cheque register & calendar'],
+  vendors:      ['Vendors','Supplier directory & payments'],
+  barcode:      ['Barcode System','Label print & preview'],
+  reports:      ['Reports','P&L, export & gap analysis'],
+  settings:     ['Settings','1st Choice Bathco configuration']
+};
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{ const p=item.dataset.page; if(p) navigateTo(p); });
+});
+
+function navigateTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const ni=document.querySelector('.nav-item[data-page="'+page+'"]');
+  const pg=document.getElementById('page-'+page);
+  if(ni) ni.classList.add('active');
+  if(pg) pg.classList.add('active');
+  const [title,sub]=PAGE_TITLES[page]||['',''];
+  document.getElementById('page-title').textContent=title;
+  document.getElementById('page-sub').textContent=sub;
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(page==='daily-sales') loadSales();
+  if(page==='stock')       loadStock();
+  if(page==='expenses')    loadExpenses();
+  if(page==='cheques')     loadCheques();
+  if(page==='vendors')     loadVendors();
+  if(page==='reports')     loadReports();
+  if(page==='barcode'&&!liveStock.length) loadStock();
+}
+
+/* ============================================================
+   KEYBOARD SHORTCUTS & GLOBAL SEARCH
+   ============================================================ */
+document.addEventListener('keydown', function(e) {
+  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();document.getElementById('global-search').focus();return;}
+  if(e.key==='Escape'){document.getElementById('search-results').classList.remove('show');return;}
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT') return;
+  if(e.ctrlKey||e.altKey||e.metaKey) return;
+  const sc={d:'dashboard',s:'stock',e:'expenses',c:'cheques',r:'reports'};
+  const pg=sc[e.key.toLowerCase()]; if(pg){e.preventDefault();navigateTo(pg);}
+});
+
+function globalSearch(query) {
+  const dd=document.getElementById('search-results');
+  query=query.trim().toLowerCase();
+  if(!query){dd.classList.remove('show');return;}
+  const results=[];
+  liveStock.forEach(item=>{if((item.item_code||'').toLowerCase().includes(query)||(item.name||'').toLowerCase().includes(query)) results.push({type:'Stock',label:(item.item_code||'')+'  — '+(item.name||''),page:'stock'});});
+  liveCheques.forEach(chq=>{if((chq.cheque_no||'').toLowerCase().includes(query)||(chq.name||'').toLowerCase().includes(query)) results.push({type:'Cheque',label:(chq.cheque_no||'')+'  — '+(chq.name||''),page:'cheques'});});
+  if(!results.length) dd.innerHTML='<div class="search-result-item" style="color:var(--text3);cursor:default">No results for "'+query+'"</div>';
+  else dd.innerHTML=results.slice(0,10).map(r=>'<div class="search-result-item" onclick="navigateTo(\''+r.page+'\');document.getElementById(\'global-search\').value=\'\';document.getElementById(\'search-results\').classList.remove(\'show\')"><span class="search-result-type">'+r.type+'</span><span class="search-result-label">'+r.label+'</span></div>').join('');
+  dd.classList.add('show');
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.global-search')) document.getElementById('search-results').classList.remove('show');});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init() {
+  updateClock();
+  initBaseCharts();
+  initDashParticles();
+  generateBarcodeSVG('BT-001');
+  await loadDashboard();
+  startRefreshTimer();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const pw=document.getElementById('login-password');
+  if(pw) pw.addEventListener('keypress',e=>{if(e.key==='Enter') handleLogin();});
+  const un=document.getElementById('login-username');
+  if(un) un.addEventListener('keypress',e=>{if(e.key==='Enter') document.getElementById('login-password').focus();});
+});
+
+window.addEventListener('load', () => {
+  const st=localStorage.getItem('bathco_theme');
+  if(st){currentTheme=st;document.documentElement.setAttribute('data-theme',st);document.querySelector('.theme-toggle').textContent=st==='dark'?'🌙':'☀️';}
+  setTimeout(()=>document.getElementById('loading-bar').classList.remove('active'),1500);
+  initParticles();
+  // Auto-login if server session still valid
+  api('/api/me').then(me=>{
+    if(me&&me.id){
+      currentUser={name:me.name||me.username||'Ajmal',role:me.role||'staff'};
+      document.querySelector('.user-name').textContent=currentUser.name;
+      document.querySelector('.user-avatar').textContent=(currentUser.name)[0].toUpperCase();
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-wrapper').classList.add('visible');
+      if(!appInitialized){init();appInitialized=true;}
+    }
+  });
+  if(window.innerWidth<=768) document.getElementById('mobile-menu-btn').style.display='flex';
+});
+window.addEventListener('resize',()=>{
+  if(window.innerWidth<=768) document.getElementById('mobile-menu-btn').style.display='flex';
+  else{document.getElementById('mobile-menu-btn').style.display='none';document.getElementById('sidebar').classList.remove('mobile-open');}
+});
+
+</script>
+</body>
+</html>
