@@ -335,5 +335,6 @@ render();
 // If setup is already done, bounce to the app.
 fetch('/api/setup/status').then(r => r.json()).then(j => { if (!j.setup_needed) location.href = '/nature'; }).catch(()=>{});
 </script>
+<script src="/bathhub-logo.js"></script>
 </body>
 </html>

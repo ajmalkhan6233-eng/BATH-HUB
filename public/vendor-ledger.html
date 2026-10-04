@@ -56,4 +56,5 @@ async function act(p){try{await api(p,{method:'POST'});load()}catch(e){$('msg').
 $('go').addEventListener('click',load);
 $('billForm').addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));Object.keys(d).forEach(k=>d[k]===''&&delete d[k]);try{await api('/bills',{method:'POST',body:JSON.stringify(d)});e.target.reset();load()}catch(x){$('msg').textContent=x.message}});
 load();
-</script></body></html>
+</script><script src="/bathhub-logo.js"></script>
+</body></html>
