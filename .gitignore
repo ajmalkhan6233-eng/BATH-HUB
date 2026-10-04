@@ -77,3 +77,6 @@ Claude outputs/
 
 backups/*.zip
 backups/*.sql
+
+# Daily ledger host backups (real shop data written by routes/daily_entry_sync.js)
+backups/daily/

@@ -602,6 +602,7 @@ app.use('/api/system', require('./routes/backup_status'));      // admin-only: b
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
+app.use('/', require('./routes/daily_entry_sync'));         // daily ledger sync (ported from BATHCO): /api/daily-entry/sync, /meta, /range (behind login)
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
 app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*

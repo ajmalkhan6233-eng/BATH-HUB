@@ -16,7 +16,7 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 1. **Railway go-live (PARKED — owner trigger only).** DEPLOYED + VERIFIED + PARKED
    2026-07-11: project `apex-platform` (ID 8f1fbc70-fc2a-4198-a6a2-47055eba309b), services
    apex-app + Postgres (54 tables, demo tenant, 4 packages, 87 flags on persistent volume).
-   URL (dead while parked): https://apex-app-production-4f8a.up.railway.app
+   URL (dead while parked): https://[REDACTED-URL]
    UNPAUSE recipe (only on explicit owner go-live): from C:\BATHCO_TEMPLATE —
    `railway redeploy -s Postgres` (volume reattaches; if redeploy refuses, deploy from
    dashboard — NEVER `railway add -d postgres` again, that creates a second empty DB),
@@ -44,7 +44,7 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
    remove after all ports land. Do not delete without approval.
 4. **Deferred scrub items** (LEFTOVER_TRACES §a/§b): rename `lasersoft_invoices` table +
    `lasersoft_total` column (needs ALTER migration + owner sign-off — golden core);
-   BATHCO product-name rebrand decision.
+   BATH HUB product-name rebrand decision.
 5. **Jest baseline** — 17 pre-existing integration-test failures (tests/integration);
    fix when touching those modules. Baseline must never grow.
 6. **Client-copy distribution exclusions** — before shipping any client a copy of this
@@ -58,3 +58,4 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 
 
 LAYLA Pro master design = docs/LAYLA_PRO_SPEC.md — read before any LAYLA work.
+BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/README.md (read before touching alerts, reconciliation or tests).
