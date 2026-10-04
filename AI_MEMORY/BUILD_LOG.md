@@ -15,3 +15,4 @@
 - 2026-10-04 STEP 4 SKIPPED (nothing to do): feature/overnight-all-trial was already merged into master earlier (89880cf), so bugcheck, documents, layla-v2, website-v4 and hardening are all in master already.
 - 2026-10-04 STEP 5 BLOCKED: no file named bathhub-build-pack*.zip exists in C:\Users\Sony\Downloads (only bath-hub---tile-&-sanitaryware-pos zips and old noor_*.zip) or anywhere under Desktop, Documents or E:\AI Sttuf (searched 3 levels deep). Nothing extracted, apply.ps1 not run, backup script and scripts/migrate_vendor_ledger.js NOT run (the script is not in the repo either). BUILD.md does not exist in the repo root.
 - 2026-10-04 STEP 6 BLOCKED (depends on step 5): no BUILD.md, so the builds W1-W3 and later were not started.
+- 2026-10-04 12:46 STEP 5 RETRY: still no bathhub-build-pack zip. Downloads newest file is dated 2026-10-02; searched C:\Users\Sony (incl. OneDrive), E:\ and D:\ to depth 4 for *build-pack*: nothing. Nothing run. Waiting for the zip.
