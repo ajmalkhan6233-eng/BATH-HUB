@@ -1551,6 +1551,7 @@ const EXTRA_FRAMES = [
   { key: 'labels', label: 'Barcode Labels', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
   { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
   { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
+  { key: 'vendorledger', label: 'Vendor Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-ledger.html', sub: 'Supplier bills, cheques, payable', after: 'chequereg' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;
