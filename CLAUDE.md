@@ -58,3 +58,4 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 
 
 LAYLA Pro master design = docs/LAYLA_PRO_SPEC.md — read before any LAYLA work.
+BATHCO rules, agent prompts and commands merged in: docs/bathco_knowledge/README.md (read before touching alerts, reconciliation or tests).
