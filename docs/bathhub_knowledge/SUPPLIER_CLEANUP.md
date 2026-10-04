@@ -48,7 +48,7 @@ delete).
 | Item | Detail |
 |---|---|
 | NADIR AZMI vs AZMI | Just confirming these are two different people/entities — not proposing a merge, since AZMI is explicitly protected. NADIR AZMI: 1,570,000 paid, last payment 2026-05-20. |
-| AMERICAN STANDARD, GROHE, IDEAL STANDARD, KOHLER, LANWA, ROCA, ROYAL CERAMICS (7 suppliers) | All real bathroom-fixture/building-material **brand names**, all with **zero payment history** (0 paid, 0 payments recorded), and — unlike all 16 other suppliers — none have the "Added from DALI cheque register" provenance note in `notes`. This pattern suggests these might be product-brand tags that ended up in the `suppliers` table rather than real entities Bathco pays. Worth confirming whether these are (a) real suppliers you just haven't logged a payment for yet, or (b) brand/catalog references that should live somewhere else (e.g. a `products.brand` field) instead of the suppliers table. |
+| AMERICAN STANDARD, GROHE, IDEAL STANDARD, KOHLER, LANWA, ROCA, ROYAL CERAMICS (7 suppliers) | All real bathroom-fixture/building-material **brand names**, all with **zero payment history** (0 paid, 0 payments recorded), and — unlike all 16 other suppliers — none have the "Added from DALI cheque register" provenance note in `notes`. This pattern suggests these might be product-brand tags that ended up in the `suppliers` table rather than real entities Bath Hub pays. Worth confirming whether these are (a) real suppliers you just haven't logged a payment for yet, or (b) brand/catalog references that should live somewhere else (e.g. a `products.brand` field) instead of the suppliers table. |
 
 # UNKNOWN (0)
 

@@ -1,14 +1,14 @@
 ---
 name: bathco-council
-description: "Run any business question or decision through 1st Choice Bathco's full company AI council, assembling all 8 department heads: Accountant, CFO, Auditor, Operations Manager, Inventory Controller, Secretary, CEO Advisor, and Sales Manager. Each advisor independently analyzes the question from their domain, peer-reviews each other anonymously, and a Chairman synthesizes a final board resolution. MANDATORY TRIGGERS: 'company council', 'board meeting', 'run the board', 'call the council', 'business council', 'full board', 'all departments'. STRONG TRIGGERS (use when combined with a real business decision): 'what should we do about', 'business decision', 'should we invest', 'pricing strategy', 'hiring decision', 'supplier issue', 'cash flow problem', 'sales are down', 'expansion', 'new product', 'team problem'. Do NOT trigger on casual questions, personal queries, code tasks, or simple factual lookups."
+description: "Run any business question or decision through Bath Hub's full company AI council, assembling all 8 department heads: Accountant, CFO, Auditor, Operations Manager, Inventory Controller, Secretary, CEO Advisor, and Sales Manager. Each advisor independently analyzes the question from their domain, peer-reviews each other anonymously, and a Chairman synthesizes a final board resolution. MANDATORY TRIGGERS: 'company council', 'board meeting', 'run the board', 'call the council', 'business council', 'full board', 'all departments'. STRONG TRIGGERS (use when combined with a real business decision): 'what should we do about', 'business decision', 'should we invest', 'pricing strategy', 'hiring decision', 'supplier issue', 'cash flow problem', 'sales are down', 'expansion', 'new product', 'team problem'. Do NOT trigger on casual questions, personal queries, code tasks, or simple factual lookups."
 version: 1.0.0
 ---
 
-# 1st Choice Bathco — Company AI Council
+# Bath Hub — Company AI Council
 
 Eight advisors. One decision. No hedging.
 
-Every major business question deserves more than one angle. The Bathco Company Council assembles all eight department heads, each thinking from their domain expertise, challenging each other anonymously, and producing a clear board resolution the CEO can act on.
+Every major business question deserves more than one angle. The Bath Hub Company Council assembles all eight department heads, each thinking from their domain expertise, challenging each other anonymously, and producing a clear board resolution the CEO can act on.
 
 This is structured like a real board meeting: independent analysis, peer challenge, then a unified verdict. The result is a decision with the fingerprints of every department on it — so no angle gets missed.
 
@@ -59,7 +59,7 @@ Owns stock. Knows what's moving, what's dead, what's at risk of stockout, and wh
 Owns documentation, communication, scheduling, and administrative compliance. The Secretary asks: *Is this properly recorded, communicated, and organized?* They catch the things that fall through the cracks: contracts that weren't signed, policies that weren't documented, communications that created ambiguity. They also flag when a decision creates administrative complexity the business isn't set up to handle.
 
 ### 7. The CEO Advisor
-Holds the big picture. Strategy, competitive positioning, long-term vision, and organizational direction. The CEO Advisor asks: *Does this move 1st Choice Bathco toward where it needs to be in 3–5 years?* They assess decisions against the company's strategic trajectory, not just the immediate situation. They push back when short-term thinking sacrifices long-term position, and they spot opportunities others miss because they're too deep in the day-to-day.
+Holds the big picture. Strategy, competitive positioning, long-term vision, and organizational direction. The CEO Advisor asks: *Does this move Bath Hub toward where it needs to be in 3–5 years?* They assess decisions against the company's strategic trajectory, not just the immediate situation. They push back when short-term thinking sacrifices long-term position, and they spot opportunities others miss because they're too deep in the day-to-day.
 
 ### 8. The Sales Manager
 Drives revenue. Customer relationships, market trends, pricing strategy, promotions, and sales team performance. The Sales Manager asks: *What does this mean for revenue, and what's the customer actually going to do?* They know what buyers respond to, where the sales pipeline is strong or weak, and what the competitive landscape looks like from the front line. They push back on decisions that hurt revenue even if they look safe on paper.
@@ -72,23 +72,23 @@ Drives revenue. Customer relationships, market trends, pricing strategy, promoti
 
 When the user triggers the council, do two things before framing:
 
-**A. Load Bathco context.** Read the user's memory files and any relevant business files to give the council grounded, specific context rather than generic advice. Quickly scan and read:
+**A. Load Bath Hub context.** Read the user's memory files and any relevant business files to give the council grounded, specific context rather than generic advice. Quickly scan and read:
 
 - Memory files in `C:\Users\1st Choice\.claude\projects\C--Users-1st-Choice\memory\` — especially business context and key metrics
 - Any files referenced in the user's message
 - Any previous council transcripts for related decisions (to avoid re-covering the same ground)
 - Any sales, inventory, or financial data files available in the workspace
 
-Use `Glob` and `Read` to find these. Don't spend more than 30 seconds. You're looking for the 2–3 pieces of context that will make the council's advice specific to Bathco — not generic business advice.
+Use `Glob` and `Read` to find these. Don't spend more than 30 seconds. You're looking for the 2–3 pieces of context that will make the council's advice specific to Bath Hub — not generic business advice.
 
 **B. Frame the question.** Restate the question as a clear, neutral brief that all eight advisors will receive. Include:
 
 1. The core decision or question
 2. Key context from the user's message
-3. Key Bathco context (business stage, current metrics, relevant constraints)
+3. Key Bath Hub context (business stage, current metrics, relevant constraints)
 4. What's at stake (the cost of getting this wrong)
 
-Don't steer it. Don't add your opinion. But make sure each advisor has enough specifics to give Bathco-relevant advice.
+Don't steer it. Don't add your opinion. But make sure each advisor has enough specifics to give Bath Hub-relevant advice.
 
 If the question is too vague (e.g., "council this: the business"), ask one clarifying question. Just one. Then proceed.
 
@@ -97,7 +97,7 @@ If the question is too vague (e.g., "council this: the business"), ask one clari
 Spawn all 8 advisors simultaneously as sub-agents. Each receives:
 
 1. Their advisor identity and domain expertise (from the descriptions above)
-2. The framed question with Bathco context
+2. The framed question with Bath Hub context
 3. This instruction: *Respond independently. Do not hedge. Lean fully into your domain expertise and your department's perspective. If you see a risk, name it. If you see an opportunity, claim it. The synthesis happens later — your job is to represent your angle as strongly as possible.*
 
 Each advisor produces 150–300 words. Substantive but scannable.
@@ -105,16 +105,16 @@ Each advisor produces 150–300 words. Substantive but scannable.
 **Sub-agent prompt template:**
 
 ```
-You are [Advisor Role] on the 1st Choice Bathco Company Council.
+You are [Advisor Role] on the Bath Hub Company Council.
 
-1st Choice Bathco is a bathroom fittings and tile retail business in Sri Lanka, owned and operated by Ajmal Khan.
+Bath Hub is a bathroom fittings and tile retail business in Sri Lanka, owned and operated by Ajmal Khan.
 
 Your domain: [domain description from above]
 
 The council has been convened on this question:
 
 ---
-[framed question with Bathco context]
+[framed question with Bath Hub context]
 ---
 
 Respond from your domain perspective. Be direct and specific. Do not hedge or try to be balanced. Represent your department's angle as strongly as the evidence supports. The other advisors will cover the angles you're not covering.
@@ -135,7 +135,7 @@ Spawn 8 new sub-agents, one per advisor. Each reviewer sees all 8 anonymized res
 **Reviewer prompt template:**
 
 ```
-You are reviewing the outputs of the 1st Choice Bathco Company Council. Eight advisors independently answered this question:
+You are reviewing the outputs of the Bath Hub Company Council. Eight advisors independently answered this question:
 
 ---
 [framed question]
@@ -182,9 +182,9 @@ The Chairman produces the **Board Resolution** in this exact structure:
 **Chairman prompt template:**
 
 ```
-You are the Chairman of the 1st Choice Bathco Company Council. Your job is to synthesize the work of all 8 department advisors and their peer reviews into a clear board resolution that Ajmal Khan (owner/CEO) can act on.
+You are the Chairman of the Bath Hub Company Council. Your job is to synthesize the work of all 8 department advisors and their peer reviews into a clear board resolution that Ajmal Khan (owner/CEO) can act on.
 
-1st Choice Bathco is a bathroom fittings and tile retail business in Sri Lanka.
+Bath Hub is a bathroom fittings and tile retail business in Sri Lanka.
 
 The question brought to the board:
 ---
@@ -276,10 +276,10 @@ The report is for reading. The transcript is the archive.
 - **Always spawn all 8 advisors in parallel.** Sequential spawning wastes time and lets earlier responses influence later ones.
 - **Always anonymize for peer review.** Advisors should evaluate on merit, not defer to seniority or role.
 - **The Chairman can disagree with the majority.** If 7 advisors say "do it" but the Auditor's dissent is the strongest argument, the Chairman should side with the Auditor and explain why.
-- **Load Bathco context before framing.** Generic council advice is useless. The value is in domain-specific, Bathco-specific analysis.
+- **Load Bath Hub context before framing.** Generic council advice is useless. The value is in domain-specific, Bath Hub-specific analysis.
 - **Don't council trivial questions.** If the question has one right answer, just answer it. The council is for decisions where multiple departments have legitimate, potentially conflicting interests.
 - **The HTML report matters.** Ajmal reads the report, not the raw transcripts. Make it clean, scannable, and decision-ready.
 
 ---
 
-*1st Choice Bathco Company Council — built for Ajmal Khan.*
+*Bath Hub Company Council — built for Ajmal Khan.*

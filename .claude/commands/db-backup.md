@@ -1,2 +1,2 @@
 # /db-backup
-Backup the Bathco PostgreSQL database to a local file with timestamp.
+Backup the Bath Hub PostgreSQL database to a local file with timestamp.

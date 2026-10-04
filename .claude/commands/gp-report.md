@@ -1,2 +1,2 @@
 # /gp-report
-Generate gross profit report by product category for 1st Choice Bathco.
+Generate gross profit report by product category for Bath Hub.

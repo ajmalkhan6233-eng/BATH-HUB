@@ -69,7 +69,7 @@ checked off and `PORTFOLIO_STATUS.md` records the live URL + go-live date.
 ## Phase 4 — Multi-Tenant ("Noor Digital")
 
 Goal: the same codebase serves multiple businesses (not just 1st Choice
-Bathco), each with isolated data, per CLAUDE.md's existing "MULTI-TENANT
+Bath Hub), each with isolated data, per CLAUDE.md's existing "MULTI-TENANT
 ARCHITECTURE RULES" section (currently aspirational/未built).
 
 **Prerequisite**: Phase 3 complete (cloud infrastructure must exist first).
@@ -79,7 +79,7 @@ written, intentionally, since the concrete cloud setup from Phase 3 will
 determine the right approach)**:
 - Add `tenant_id` to every business-data table (`daily_summary`, `customers`,
   `quotations`, `staff`, `expenses_detail`, etc.) — currently single-tenant
-  (implicit tenant = Bathco).
+  (implicit tenant = Bath Hub).
 - `BusinessConfig` per tenant (business_name, currency, tax_rate,
   commission_rate) — referenced in CLAUDE.md but not yet implemented as a
   table/config.
@@ -88,7 +88,7 @@ determine the right approach)**:
   (simpler, recommended to start) vs. one DB per tenant (more isolation, more
   ops overhead).
 
-**Note**: Bathco Aromatic (`PENDING_FROM_AJMAL.md` #8) and Noor Digital are
+**Note**: Bath Hub Aromatic (`PENDING_FROM_AJMAL.md` #8) and Noor Digital are
 related but separate — resolve #8 first; it may inform how Phase 4's tenant
 model is shaped (Aromatic could become the first second-tenant test case).
 

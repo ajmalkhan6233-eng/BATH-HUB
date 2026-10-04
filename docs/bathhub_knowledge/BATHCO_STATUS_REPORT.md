@@ -1,4 +1,4 @@
-﻿# BATHCO STATUS REPORT
+﻿# BATH HUB STATUS REPORT
 Generated: 2026-06-22 (updated — 1122 ingestion complete, 2,187 rows inserted)
 
 ---
@@ -36,7 +36,7 @@ Generated: 2026-06-22 (updated — 1122 ingestion complete, 2,187 rows inserted)
 ### Last git commit
 - Hash: `fbc93a4` — status report updated
 - Committed: `32552be` — scripts/ingest_1122.py (ingestion complete)
-- Branch: `master` → `github.com/ajmalkhan6233-eng/BATHCO`
+- Branch: `master` → `github.com/ajmalkhan6233-eng/BATH HUB`
 - Working tree: clean
 
 ### Processes
@@ -78,7 +78,7 @@ Generated: 2026-06-22 (updated — 1122 ingestion complete, 2,187 rows inserted)
 - #5 Credit total reconciliation: DB 542,300 vs Ajmal figure 385,380 (UNRECONCILED)
 - #6 Daily-wage staff commission rule
 - #7 Lasersoft cutover date confirmation (assumed 2026-04-01)
-- #8 Bathco Aromatic removal from shop_config.json + CLAUDE.md
+- #8 Bath Hub Aromatic removal from shop_config.json + CLAUDE.md
 - #9 Full Lasersoft product/price export (products table has only 85 items)
 - #10 Daily invoice number range for invoice-gap detection
 - #11 ~~May 13 expense mismatch~~ — **CLOSED 2026-06-21.** DB=53,820 confirmed correct. Two summary sheet photos both show 53,820. The ~99,190 figure was a bad sum-of-all-receipts OCR artifact from the first run, not a real discrepancy. May 19 DB=50,400 also confirmed correct by reading the handwritten sheet directly (itemised total = 50,400, matches DB exactly).
@@ -135,7 +135,7 @@ Generated: 2026-06-22 (updated — 1122 ingestion complete, 2,187 rows inserted)
 - `create` — (no description — frontmatter only)
 - `credit-aging` — Show credit aging report for all credit customers
 - `daily-close` — Enter the daily close figures for a given date
-- `dashboard-refresh` — Refresh the Bathco dashboard at localhost:3000 with latest data
+- `dashboard-refresh` — Refresh the Bath Hub dashboard at localhost:3000 with latest data
 - `master-report` — Generate the master all-time report
 - `monthly-report` — Generate the monthly report for a given YYYY-MM
 - `plan` — (no description — frontmatter only)
@@ -153,10 +153,10 @@ Generated: 2026-06-22 (updated — 1122 ingestion complete, 2,187 rows inserted)
 
 ### Agent skill folders under `.claude/` (not standard agents)
 - `banana-claude` — Image generation prompt constructor (Gemini Nano Banana)
-- `bathco-council` — BATHCO AI Council multi-agent routing
+- `bathco-council` — BATH HUB AI Council multi-agent routing
 - `llm-council` — General LLM council orchestration
 
-### BATHCO application agents (in server.js / layla.js — not Claude Code agents)
+### BATH HUB application agents (in server.js / layla.js — not Claude Code agents)
 - `LAYLA` — WhatsApp sales receptionist, AI fallback chain (Anthropic → OpenRouter → Ollama → hardcoded)
 - `CHECKER` — Daily record validator. **Now functional** (BUG-001 fixed). Checks 60 days, found 14 flagged dates on first clean run.
 - `NOVA` — Financial anomaly detection. Referenced in run_agents.py.
@@ -252,4 +252,4 @@ Full report: `BATHCO_QA_REPORT.md` (commit b450830)
 | BUG-006: GRN encoding corruption | LOW | N/A (false positive) | — |
 
 Numbers audit: all June 2026 DB vs API cross-checks passed — zero mismatches.
-Branding audit: all 12 "1st Choice Bathco" instances consistent — no stale references.
+Branding audit: all 12 "Bath Hub" instances consistent — no stale references.

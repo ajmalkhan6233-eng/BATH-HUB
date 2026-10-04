@@ -1,5 +1,5 @@
 # BATHCO_BLUEPRINT — System Rules & Conventions
-*1st Choice Bathco (Pvt) Ltd — LAYLA Dashboard | Last updated: 2026-06-20*
+*Bath Hub — LAYLA Dashboard | Last updated: 2026-06-20*
 
 ---
 

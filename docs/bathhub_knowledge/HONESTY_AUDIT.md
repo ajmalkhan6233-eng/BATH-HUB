@@ -1,4 +1,4 @@
-# HONESTY AUDIT — BATHCO COMMAND Dashboard
+# HONESTY AUDIT — BATH HUB COMMAND Dashboard
 
 Performed 12 Jun 2026, autonomous session. Every number on every dashboard page
 traced to its source. Anything that was fabricated, placeholder, or

@@ -1,4 +1,4 @@
-# BATHCO QA REPORT
+# BATH HUB QA REPORT
 Generated: 2026-06-21 | Scope: localhost:3000 | Session: ajmal (admin) | Read-only (no DB writes)
 
 ---
@@ -135,11 +135,11 @@ The OCR pipeline is complete. These alerts are stale placeholder text from befor
 **Element:** GRN record id=1, `item_description` field
 **Observed:** Text contains `â€"` instead of em-dash `—`:
 ```
-1ST CHOICE BATHCO (PVT) LTD â€" STOCK COUNT REPORT
+1ST CHOICE BATH HUB (PVT) LTD â€" STOCK COUNT REPORT
 ```
 should be:
 ```
-1ST CHOICE BATHCO (PVT) LTD — STOCK COUNT REPORT
+1ST CHOICE BATH HUB (PVT) LTD — STOCK COUNT REPORT
 ```
 
 **Root cause:** UTF-8 em-dash (bytes `E2 80 94`) was stored when the DB connection was using Latin-1 encoding, causing each byte to be stored as a separate Latin-1 character. This is a data corruption issue in the single existing GRN record.
@@ -206,23 +206,23 @@ All 7 June dates: `cash_sale + card_sale + online_sale + credit_sale == total_sa
 
 ---
 
-## BRANDING AUDIT — ALL "1st Choice Bathco" INSTANCES
+## BRANDING AUDIT — ALL "Bath Hub" INSTANCES
 
 No stale, inconsistent, or partial find-and-replace artifacts found. All 12 instances are contextually appropriate.
 
 | File | Line | Text | Status |
 |---|---|---|---|
-| public/dashboard.html | 360 | `1st Choice Bathco · Thihariya` (nav header subtitle) | ✓ Consistent |
-| public/dashboard.html | 2727 | `1ST CHOICE BATHCO (PVT) LTD` (PDF single-day header) | ✓ Consistent |
+| public/dashboard.html | 360 | `Bath Hub · Thihariya` (nav header subtitle) | ✓ Consistent |
+| public/dashboard.html | 2727 | `1ST CHOICE BATH HUB (PVT) LTD` (PDF single-day header) | ✓ Consistent |
 | public/dashboard.html | 2730 | `122, Kandy Rd, Thihariya \| 033 714 5355 \| www.1stchoicebathco.lk` (PDF) | ✓ Consistent |
-| public/dashboard.html | 2831 | `1st Choice Bathco — LAYLA Dashboard` (PDF footer) | ✓ Consistent |
-| public/dashboard.html | 2908 | `1ST CHOICE BATHCO (PVT) LTD` (PDF range header) | ✓ Consistent |
+| public/dashboard.html | 2831 | `Bath Hub — LAYLA Dashboard` (PDF footer) | ✓ Consistent |
+| public/dashboard.html | 2908 | `1ST CHOICE BATH HUB (PVT) LTD` (PDF range header) | ✓ Consistent |
 | public/dashboard.html | 2910 | `122, Kandy Rd, Thihariya \| 033 714 5355 \| www.1stchoicebathco.lk` (PDF) | ✓ Consistent |
-| public/dashboard.html | 2955 | `1st Choice Bathco — LAYLA Dashboard` (PDF range footer) | ✓ Consistent |
-| public/manifest.json | — | `1st Choice Bathco showroom command dashboard` (app description) | ✓ Consistent |
-| server.js | startup | `1st Choice Bathco (Pvt) Ltd` (PM2 banner) | ✓ Consistent |
-| shop_config.json | — | `1st Choice Bathco (Pvt) Ltd` (showroom) | ✓ Consistent |
-| shop_config.json | — | `Bathco Aromatic` (perfume entity — separate business) | ✓ Valid separate entity |
+| public/dashboard.html | 2955 | `Bath Hub — LAYLA Dashboard` (PDF range footer) | ✓ Consistent |
+| public/manifest.json | — | `Bath Hub showroom command dashboard` (app description) | ✓ Consistent |
+| server.js | startup | `Bath Hub` (PM2 banner) | ✓ Consistent |
+| shop_config.json | — | `Bath Hub` (showroom) | ✓ Consistent |
+| shop_config.json | — | `Bath Hub Aromatic` (perfume entity — separate business) | ✓ Valid separate entity |
 | BATHCO_BLUEPRINT.md, CLAUDE.md, GOLDEN_CORE.md, HANDOVER.md | — | Various references | ✓ Documentation only |
 
 ---

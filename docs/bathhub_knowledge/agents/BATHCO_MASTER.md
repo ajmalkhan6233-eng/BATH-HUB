@@ -1,8 +1,8 @@
-# BATHCO MASTER — Session Reference File
+# BATH HUB MASTER — Session Reference File
 ## Read this at the start of EVERY session. Update task queue when tasks are done.
 
 **Owner:** Ajmal Khan | **Email:** AJINFB@yahoo.com
-**Business:** 1st Choice Bathco (Pvt) Ltd, Kandy Road, Thihariya, Sri Lanka
+**Business:** Bath Hub, Kandy Road, Thihariya, Sri Lanka
 **Opened:** 21 December 2025 | **Software:** Lasersoft POS + Accounting
 **Last updated:** 31 May 2026
 
@@ -43,8 +43,8 @@
 - [ ] Start Docker Desktop and verify running (start from taskbar shortcut — needs manual action)
 - [ ] Import n8n workflows from `C:\Users\1st Choice\AI-EMPIRE\` — needs Docker or standalone n8n running
 
-### BATHCO BUSINESS MANAGEMENT SOFTWARE (Phase 1 — COMPLETE)
-- [x] Scaffold Bathco Business OS folder structure — `C:\Users\1st Choice\bathco-software\`
+### BATH HUB BUSINESS MANAGEMENT SOFTWARE (Phase 1 — COMPLETE)
+- [x] Scaffold Bath Hub Business OS folder structure — `C:\Users\1st Choice\bathco-software\`
 - [x] Build database schema in PostgreSQL — 6 tables created (daily_sales, products, sales_transactions, cheques, suppliers, import_log)
 - [x] Build Daily Sales Dashboard (Module 1) — live at localhost:8000
 - [x] Build Supplier Payment Tracker / PDC Cheques (Module 2) — live at localhost:8000/cheques
@@ -52,7 +52,7 @@
 - [x] Build GP% Monitor (Module 4) — live at localhost:8000 (GP Monitor tab)
 - [x] Build Cash Flow Forecast (Module 5) — live at localhost:8000/cashflow
 - [x] Build AI Chat Assistant (Module 6) — live at localhost:8000/assistant (needs ANTHROPIC_API_KEY)
-- [x] Deploy Bathco OS locally — server running on localhost:8000
+- [x] Deploy Bath Hub OS locally — server running on localhost:8000
 
 ### NEXT PHASE
 - [ ] Import all historical data into the software (run `python backend\bulk_import.py`)
@@ -65,7 +65,7 @@
 
 ---
 
-## SOFTWARE BUILT — 1ST CHOICE BATHCO BUSINESS MANAGEMENT
+## SOFTWARE BUILT — 1ST CHOICE BATH HUB BUSINESS MANAGEMENT
 
 **Status:** RUNNING at `http://localhost:8000`
 **Start command:** Double-click `C:\Users\1st Choice\bathco-software\START_BATHCO.bat`
@@ -103,7 +103,7 @@ C:\Users\1st Choice\bathco-software\
 | Inventory | localhost:8000 | Stock by category, slow movers (90+ days no sale) |
 | Cash Flow | localhost:8000 | 3-month forecast: projected sales vs cheques due |
 | GP Monitor | localhost:8000 | All products below 25% GP — colour-coded by severity |
-| AI Assistant | localhost:8000 | Chat with Claude about live Bathco data |
+| AI Assistant | localhost:8000 | Chat with Claude about live Bath Hub data |
 | Import Data | localhost:8000 | Upload Lasersoft Excel files |
 
 ### Database
@@ -123,7 +123,7 @@ C:\Users\1st Choice\bathco-software\
 | nomic-embed-text | NO | NO | Not started |
 | n8n 2.22.5 | YES | NO | Run: n8n start → localhost:5678 |
 | Docker Desktop 29.5.2 | YES | NO | Start from Desktop shortcut |
-| Bathco Business Software | YES | YES | localhost:8000 |
+| Bath Hub Business Software | YES | YES | localhost:8000 |
 
 ---
 

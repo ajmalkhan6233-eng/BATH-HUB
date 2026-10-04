@@ -13,5 +13,5 @@
 - Native speaker check of Sinhala/Tamil website text; Bath Hub public site still loads Google Fonts (owner app does not)
 - Remote GitHub branches still exist (overnight, claude/*, octopus-memory): delete when Aj agrees
 - Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/- Aj (after merging feature/audit-high-fixes): add to .env: PETTY_CASH_FLOAT=25000, BACKUP_COPY_DIR=<folder>, BACKUP_PASSPHRASE=<8+ chars, also in password manager>; point the 23:00 backup task at scripts\backup_owner_db.ps1; run the restore test once: node scripts\restore_encrypted_backup.js <file.sql.enc>
-- Aj: open /daily-entry-v2.html (ported from BATHCO ledger branch) with a fake date and check it saves and reloads; its Cheques tab is local-only on purpose. Decide: wire it to BATH-HUB's cheque register or drop that tab
+- Aj: open /daily-entry-v2.html (ported from BATH HUB ledger branch) with a fake date and check it saves and reloads; its Cheques tab is local-only on purpose. Decide: wire it to BATH-HUB's cheque register or drop that tab
 - Aj: bring the cheque clearing calculator, bank-holiday list, Lasersoft PDF reader and cross-tenant leak test from the laptop (not in any GitHub repo)

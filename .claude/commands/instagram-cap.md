@@ -1,2 +1,2 @@
 # /instagram-cap
-Write an engaging Instagram caption for a Bathco Aromatic perfume product post.
+Write an engaging Instagram caption for a Bath Hub Aromatic perfume product post.

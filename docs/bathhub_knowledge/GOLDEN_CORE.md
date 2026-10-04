@@ -1,7 +1,7 @@
-# BATHCO GOLDEN CORE — v1 (tagged: golden-core-v1)
+# BATH HUB GOLDEN CORE — v1 (tagged: golden-core-v1)
 
 Snapshot of the engine as of 2026-06-19. This document separates what is
-reusable infrastructure from what is BATHCO-specific, so the engine can
+reusable infrastructure from what is BATH HUB-specific, so the engine can
 be extracted or ported to a second client without carrying business-specific
 assumptions.
 
@@ -9,7 +9,7 @@ assumptions.
 
 ## REUSABLE ENGINE
 
-These components contain no BATHCO-specific business logic. They could be
+These components contain no BATH HUB-specific business logic. They could be
 lifted to a new project with only config changes.
 
 | Component | Files | What it does |
@@ -32,14 +32,14 @@ lifted to a new project with only config changes.
 
 ---
 
-## BATHCO-SPECIFIC
+## BATH HUB-SPECIFIC
 
 These sections contain logic, values, or assumptions that are specific to
-1st Choice Bathco (Pvt) Ltd and would need to be changed for any other client.
+Bath Hub and would need to be changed for any other client.
 
-| Item | Location | What makes it BATHCO-specific |
+| Item | Location | What makes it BATH HUB-specific |
 |---|---|---|
-| **Brand identity** | dashboard.html header | "1st Choice BathCo", "Thihariya", bismillah text, gold colour scheme |
+| **Brand identity** | dashboard.html header | "Bath Hub", "Thihariya", bismillah text, gold colour scheme |
 | **50,000/day expense assumption** | Historical OCR notes, AUDIT_REPORT.md | Default daily expense estimate used before OCR; not in live code but referenced in offline scripts |
 | **LKR currency** | fmtN() in dashboard.html, all display labels | "Rs." prefix, Sri Lanka locale formatting |
 | **Lasersoft GP source** | build_master_data.js, server.js gp_status logic | GP comes from Lasersoft RepSalesAnalysis exports; `gp_status='ACTUAL'` means Lasersoft-confirmed |
@@ -47,11 +47,11 @@ These sections contain logic, values, or assumptions that are specific to
 | **Sri Lanka business calendar** | No Sunday closing, no public holiday logic | Days are never skipped; every calendar day is a potential business day |
 | **Checker flag thresholds** | server.js TIER_EXPR, checker_flags logic | `high_expenses` = expenses > 50% of sales; `cash_shortfall` specific to local cash-handling norms |
 | **Admin PIN** | server.js /api/admin/verify-pin | Single shared admin PIN (not per-user); set via ADMIN_PIN in .env |
-| **Upload directory path** | server.js UPLOAD_DIR | Hardcoded to `/uploads` inside __dirname; BATHCO-specific deployment path |
+| **Upload directory path** | server.js UPLOAD_DIR | Hardcoded to `/uploads` inside __dirname; BATH HUB-specific deployment path |
 | **Hardcoded date range** | server.js RANGE_FROM = '2025-12-21' | Business start date; all-time stats count from 21 Dec 2025 |
-| **Staff commission structure** | server.js, Daily Entry form | Commission % per staff member; structure matches BATHCO payroll |
-| **Supplier categories** | suppliers page | Category list matches BATHCO procurement (tiles, bathware, plumbing) |
-| **LAYLA branding** | layla.js, dashboard LAYLA ONLINE pill | AI assistant name; BATHCO-specific persona |
+| **Staff commission structure** | server.js, Daily Entry form | Commission % per staff member; structure matches BATH HUB payroll |
+| **Supplier categories** | suppliers page | Category list matches BATH HUB procurement (tiles, bathware, plumbing) |
+| **LAYLA branding** | layla.js, dashboard LAYLA ONLINE pill | AI assistant name; BATH HUB-specific persona |
 
 ---
 

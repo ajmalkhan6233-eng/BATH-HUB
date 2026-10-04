@@ -44,7 +44,7 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
    remove after all ports land. Do not delete without approval.
 4. **Deferred scrub items** (LEFTOVER_TRACES §a/§b): rename `lasersoft_invoices` table +
    `lasersoft_total` column (needs ALTER migration + owner sign-off — golden core);
-   BATHCO product-name rebrand decision.
+   BATH HUB product-name rebrand decision.
 5. **Jest baseline** — 17 pre-existing integration-test failures (tests/integration);
    fix when touching those modules. Baseline must never grow.
 6. **Client-copy distribution exclusions** — before shipping any client a copy of this
@@ -58,4 +58,4 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 
 
 LAYLA Pro master design = docs/LAYLA_PRO_SPEC.md — read before any LAYLA work.
-BATHCO rules, agent prompts and commands merged in: docs/bathco_knowledge/README.md (read before touching alerts, reconciliation or tests).
+BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/README.md (read before touching alerts, reconciliation or tests).
