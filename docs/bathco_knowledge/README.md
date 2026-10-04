@@ -25,3 +25,11 @@ BATH-HUB code was edited. Nothing here runs by itself.
 - Commands that call endpoints which may not exist here (compare with server.js).
 - Not copied: HANDOVER.md, SECURITY_LOG.md, scripts/ocr_expense_photos.py (hold credentials), big exports, spreadsheets, mobile app, old Python app.
 - Not yet fetched: BATHCO branch ledger-fixes-2026-07-25 (unmerged daily-ledger work).
+
+## Code ported from BATHCO (2026-10-04)
+- PORTED: daily ledger (branch ledger-fixes-2026-07-25): `public/daily-entry-v2.html`, `routes/daily_entry_sync.js` (save/read/meta/range), vendored `public/lib/` (pdf.js, xlsx), test `tests/integration/daily_entry_sync.test.js`.
+  Changes vs BATHCO: shared DB pool, impossible dates refused, sits behind the normal login (BATHCO left it open), backup folder configurable (DAILY_BACKUP_DIR).
+  Open at `/daily-entry-v2.html`. NOT yet checked in a browser with real data.
+- The page's Cheques tab is deliberately cut off from the server (URL points to a dead path, so it keeps cheques in the browser only). BATHCO's cheque route deletes and rewrites the whole table on every save and uses a different table shape; BATH-HUB's `routes/cheque_register.js` is better built (held/overdue/validation), so it was NOT replaced.
+- NOT ported because BATH-HUB is already ahead or equal: staff loans maths (same flaw in both, still open), cheque tracking, audit, staff reports, purchasing, offline sync (BATH-HUB `routes/sync.js` is newer).
+- Not found anywhere in the cloud repos: the cheque clearing calculator + bank-holiday list, Lasersoft PDF reader, stock-count and cross-tenant leak test. They are probably only on the laptop (C:\BATHCO_PHASE1).
