@@ -1619,6 +1619,7 @@ async function applyAppSettings() {
       });
       const sep = document.getElementById('admin-sep'); if (sep) { ul.appendChild(sep); ADMIN_FRAMES.forEach(f => { const li = ul.querySelector('.nav-item[data-page="' + f.key + '"]'); if (li) ul.appendChild(li); }); }
     }
+    if (window.BHMenuPrefs) BHMenuPrefs.apply();   // Dashboard, POS, Daily Ledger first; hide what this device unticked
   } catch (e) { /* settings are a nicety: the app works without them */ }
 }
 
@@ -2592,6 +2593,7 @@ async function initApp() {
 <script src="/tile-gallery.js"></script>
 <script src="/attach-widget.js"></script>
 <script src="/salary.js"></script>
+<script src="/lib/menuPrefs.js"></script>
 <script src="/bathhub-logo.js"></script>
 </body>
 </html>
