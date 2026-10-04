@@ -1,12 +1,12 @@
 /* POS side panel: shows the daily ledger next to the bill form. Self-contained: needs only <div id="ledger-panel"></div> on the page. */
 (function () {
   var host = document.getElementById('ledger-panel'); if (!host) return;
-  var KEY = 'bh_ledger_panel', URL = '/daily-entry-v2.html', wide = window.matchMedia('(min-width:1100px)');
+  var KEY = 'bh_ledger_panel', URL = '/daily-entry-v2.html', wide = window.matchMedia('(min-width:900px)');
   var css = '#ledger-panel{margin:16px 0}#ledger-panel .lp-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b1b3d;color:#f6efdc;border-radius:10px 10px 0 0;font-weight:700}'
     + '#ledger-panel .lp-bar a{margin-left:auto;color:#e8cf8a;font-size:14px}#ledger-panel .lp-bar button{min-height:36px;padding:4px 12px;border-radius:8px;border:0;background:#c9a24b;color:#0b1b3d;font-weight:700;cursor:pointer}'
     + '#ledger-panel iframe{display:block;width:100%;height:70vh;border:1px solid rgba(11,27,58,.2);border-top:0;background:#fff;border-radius:0 0 10px 10px}'
     + '#ledger-panel.lp-hidden iframe{display:none}#ledger-panel.lp-hidden .lp-bar{border-radius:10px}'
-    + '@media(min-width:1100px){body.lp-wide{display:grid;grid-template-columns:minmax(0,920px) minmax(420px,1fr);gap:16px;align-items:start}'
+    + '@media(min-width:900px){body.lp-wide{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,4fr);gap:16px;align-items:start}body.lp-wide .wrap{max-width:none;grid-template-columns:1fr}'
     + 'body.lp-wide #ledger-panel{position:sticky;top:0;margin:0;height:100vh;display:flex;flex-direction:column}body.lp-wide #ledger-panel iframe{flex:1;height:auto;min-height:0}}'
     + '@media print{#ledger-panel{display:none!important}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);

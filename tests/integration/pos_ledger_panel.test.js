@@ -24,7 +24,7 @@ test('POS page carries the panel container and one script tag; module is wired',
   expect(pos.match(/posSidePanel\.js/g).length).toBe(1);
   const mod = fs.readFileSync(path.join(root, 'public', 'lib', 'posSidePanel.js'), 'utf8');
   expect(mod).toContain("'?embed=1'");
-  expect(mod).toMatch(/min-width:1100px/);
+  expect(mod).toMatch(/min-width:900px/);
   const sw = fs.readFileSync(path.join(root, 'public', 'service-worker.js'), 'utf8');
   expect(sw).toContain('/lib/posSidePanel.js');
 });
