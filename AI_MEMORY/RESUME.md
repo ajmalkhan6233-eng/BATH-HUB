@@ -1,6 +1,11 @@
-# RESUME (2026-10-04)
-- Build 1 (vendor ledger + wiring W1/W2 + logo lockup) is merged on master and live on apex-server (port 3100).
-- Only master remains on GitHub (side branches merged/deleted).
-- Next: BUILD.md W3 (GRN -> vendor bill button), W4 photos, W5 cheque import dry run, W6 OUR_BANK; then Build 0/2.
-- Read docs/STATUS_2026-10-04.md and AI_MEMORY/HANDOFF.md first. Never touch the live shop; pm2 only with --only apex-server.
-- Weekly usage was ~80%: spend little, no big file reads.
+# RESUME (2026-10-04 night)
+- master 1a5fec8 is live on apex-server (port 3100). All builds so far merged; only master on GitHub.
+- Done: vendor ledger, logo, Money plan + Morning brief pages, Layla owner chat (DRY RUN), offline save on the vendor ledger page.
+- Layla WhatsApp needs the owner's one-time setup: E:\AI Sttuf\bathhub-layla-pack\BUILD2.md section 5. Leave LAYLA_OWNER_LIVE off until tested.
+- Next (BUILD2 s2 step 9): OfflineSave on the manual GRN page, POS bill, expenses, then the other pages, one commit each.
+- Next (BUILD.md): W3 GRN -> vendor bill button, W4 photos, W5 cheque import dry run, W6 OUR_BANK setting, morning brief 05:25 task.
+- Pip step for voice notes is the owner's: pip install faster-whisper.
+- Not browser-checked while logged in: layla-owner, money-plan, morning-brief, vendor-ledger pages.
+- Rules: never touch the live shop; pm2 only with --only apex-server; full Jest before every merge.
+- Rollback for Build 2: git revert -m 1 1a5fec8.
+- Weekly usage was very high: spend little, no big file reads.
