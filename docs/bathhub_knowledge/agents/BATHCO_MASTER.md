@@ -1,7 +1,7 @@
 # BATH HUB MASTER — Session Reference File
 ## Read this at the start of EVERY session. Update task queue when tasks are done.
 
-**Owner:** Ajmal Khan | **Email:** AJINFB@yahoo.com
+**Owner:** Ajmal Khan | **Email:** [REDACTED]
 **Business:** Bath Hub, Kandy Road, Thihariya, Sri Lanka
 **Opened:** 21 December 2025 | **Software:** Lasersoft POS + Accounting
 **Last updated:** 31 May 2026
@@ -107,7 +107,7 @@ C:\Users\1st Choice\bathco-software\
 | Import Data | localhost:8000 | Upload Lasersoft Excel files |
 
 ### Database
-- Host: localhost:5432 | DB: bathco | User: postgres | Password: postgres
+- Host: localhost:5432 | DB: bathco | User: postgres | Password: [REDACTED]
 - Tables: daily_sales, products, sales_transactions, cheques, suppliers, import_log
 
 ---

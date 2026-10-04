@@ -16,7 +16,7 @@ laptop (kills the live WhatsApp session's Chrome). Never ALTER golden-core finan
 1. **Railway go-live (PARKED — owner trigger only).** DEPLOYED + VERIFIED + PARKED
    2026-07-11: project `apex-platform` (ID 8f1fbc70-fc2a-4198-a6a2-47055eba309b), services
    apex-app + Postgres (54 tables, demo tenant, 4 packages, 87 flags on persistent volume).
-   URL (dead while parked): https://apex-app-production-4f8a.up.railway.app
+   URL (dead while parked): https://[REDACTED-URL]
    UNPAUSE recipe (only on explicit owner go-live): from C:\BATHCO_TEMPLATE —
    `railway redeploy -s Postgres` (volume reattaches; if redeploy refuses, deploy from
    dashboard — NEVER `railway add -d postgres` again, that creates a second empty DB),
