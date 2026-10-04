@@ -41,3 +41,4 @@ Run by the CLOUD session on 2026-10-04 (no E: drive, no Downloads, no pm2, no li
 - Merge to master, push, restart apex-server, /health: NOT DONE in the cloud (no apex-server here, and the laptop's master may differ; merging in two places would collide). Do it on the laptop.
 
 ## Steps 4 to 6: NOT RUN (laptop only), see RESUME.md
+- 2026-10-04 Builds 6+7: routes/money_plan.js, public/money-plan.html + morning-brief.html, menu entries, 3 tests. Merge bec9907 pushed, apex-server restarted, /health ok. Rollback: git revert -m 1 bec9907. Not done: Task Scheduler 05:25 morning job, festivals table, auto-pricing on GRN, item_prices, below-cost weekly report.
