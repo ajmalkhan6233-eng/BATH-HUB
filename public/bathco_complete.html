@@ -254,8 +254,7 @@ table tr:last-child td{border-bottom:none}
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">
   <div class="login-box">
-    <div class="login-logo"><svg class="bh-icon" aria-hidden="true"><use href="#i-bath"/></svg></div>
-    <div class="login-title">Bath Hub</div>
+    <div class="login-logo" style="font-size:inherit"><span class="bh-lockup bh-lockup-lg"><img src="/brand/logo-bh-transparent.png" alt="BH"><span><span class="bh-name">Bath Hub</span><span class="bh-sub">Thihariya</span></span></span></div>
     <div class="login-sub">Owner sign in</div>
     <div class="fg">
       <label class="fl">Username</label>
@@ -274,8 +273,7 @@ table tr:last-child td{border-bottom:none}
 <div class="app-wrapper">
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-bath"/></svg></div>
-      <div class="logo-text">Bath Hub</div>
+      <span class="bh-lockup"><img src="/brand/logo-bh-transparent.png" alt="BH"><span><span class="bh-name">Bath Hub</span><span class="bh-sub">Thihariya</span></span></span>
     </div>
     <ul class="sidebar-nav">
       <li class="nav-item active" data-page="dashboard"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span class="nav-label">Dashboard</span></li>
@@ -1551,6 +1549,7 @@ const EXTRA_FRAMES = [
   { key: 'labels', label: 'Barcode Labels', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
   { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
   { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
+  { key: 'vendorledger', label: 'Vendor Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-ledger.html', sub: 'Supplier bills, cheques, payable', after: 'chequereg' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;
@@ -2588,5 +2587,6 @@ async function initApp() {
 <script src="/tile-gallery.js"></script>
 <script src="/attach-widget.js"></script>
 <script src="/salary.js"></script>
+<script src="/bathhub-logo.js"></script>
 </body>
 </html>

@@ -154,4 +154,5 @@ async function show(k){
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)show(b.dataset.k);});
 (async()=>{FLAGS=await api('/api/feature-flags').catch(()=>[]);show('trends');})();
 </script>
+<script src="/bathhub-logo.js"></script>
 </body></html>

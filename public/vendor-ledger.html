@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vendor ledger | Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:720px;margin:0 auto;padding:14px}h1{font-size:22px;margin:6px 0 12px}h2{font-size:17px;margin:20px 0 8px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.big{font-size:22px;font-weight:700}.sm{color:var(--muted);font-size:14px}.bad{color:var(--red)}.good{color:var(--green)}
+input,select,button{font:inherit;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 10px;max-width:100%}
+button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;border:0}button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid var(--line)}
+.bill{border-top:1px solid var(--line);padding:10px 0}.wrap{overflow-x:auto}form.add{display:grid;gap:8px;grid-template-columns:1fr 1fr}form.add .full{grid-column:1/-1}
+details{margin:8px 0}summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+</style></head><body><main>
+<h1>Vendor ledger</h1>
+<div id="msg" class="sm" role="status"></div>
+<div class="row"><label>Cash on hand <input id="cash" type="number" inputmode="decimal" min="0" placeholder="0"></label><button id="go">Check</button><a class="sm" href="/api/vendor-ledger/export.csv">Download CSV</a></div>
+<h2>Money owed</h2><div class="grid" id="tot"></div>
+<h2>Cheques due</h2><div class="grid" id="cal"></div><div id="bulk" class="sm"></div>
+<h2>Warnings</h2><div id="warn" class="sm">None</div>
+<h2>Vendors</h2><div id="ven" class="wrap"></div>
+<h2>Bills</h2>
+<details><summary>Add a bill</summary>
+<form class="add" id="billForm"><input class="full" name="vendor_name" placeholder="Vendor" required><input name="bill_no" placeholder="Bill no."><input name="total" type="number" step="0.01" min="0.01" placeholder="Total" required>
+<label>Bill date<input name="bill_date" type="date" required></label><label>Due date<input name="due_date" type="date"></label><input class="full" name="notes" placeholder="Notes"><button class="full">Save bill</button></form></details>
+<div id="bills"></div>
+</main>
+<script>
+const $=(i)=>document.getElementById(i);const money=(n)=>'Rs. '+Math.round(Number(n)||0).toLocaleString('en-US');
+const el=(t,o={},...k)=>{const e=document.createElement(t);Object.entries(o).forEach(([a,v])=>{if(a==='class')e.className=v;else if(a==='on')Object.entries(v).forEach(([x,f])=>e.addEventListener(x,f));else e.setAttribute(a,v)});k.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(String(c))));return e};
+async function api(path,opt){const r=await fetch('/api/vendor-ledger'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opt});if(r.status===401){$('msg').textContent='Please log in to the owner app first.';throw new Error('401')}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
+const stat=(label,val,cls='')=>el('div',{class:'card'},el('div',{class:'sm'},label),el('div',{class:'big '+cls},money(val)));
+async function load(){
+  try{
+    const cash=Number($('cash').value||0);
+    const [s,c,g,k,b]=await Promise.all([api('/summary'),api('/calendar'),api(`/cash-gap?cash=${cash}&days=2`),api('/checks'),api('/bills')]);
+    $('tot').replaceChildren(stat('Payable',s.totals.outstanding),stat('Covered by cheque (not cleared)',s.totals.covered),stat('Not covered',s.totals.uncovered,s.totals.uncovered>0?'bad':''),stat(`Cash short, next ${g.days} days`,g.gap,g.gap>0?'bad':'good'));
+    $('cal').replaceChildren(stat('Today',c.today),stat('Tomorrow',c.tomorrow),stat('Monday '+c.monday.date,c.monday.amount),stat(`Overdue (${c.overdue.count})`,c.overdue.amount,c.overdue.count?'bad':''),stat('Next 7 days',c.windows[7]),stat('Next 14 days',c.windows[14]),stat('Next 30 days',c.windows[30]));
+    $('bulk').textContent=c.bulkDays.length?'Bulk days: '+c.bulkDays.map(d=>d.date+' '+money(d.amount)).join(', '):'';
+    const w=[];k.duplicates.sameNumber.forEach(p=>w.push(`Same cheque number on cheques ${p.join(' and ')}`));k.duplicates.likely.forEach(p=>w.push(`Possible duplicate: cheques ${p.join(' and ')}`));k.warnings.forEach(x=>w.push(`Cheque ${x.id}: ${x.flags.join(', ')}`));
+    $('warn').replaceChildren(...(w.length?w.map(t=>el('div',{},t)):['None']));
+    $('ven').replaceChildren(el('table',{width:'100%'},...s.vendors.map(v=>el('tr',{},el('td',{},v.vendor),el('td',{style:'text-align:right'},money(v.outstanding)),el('td',{class:'sm',style:'text-align:right'},'not covered '+money(v.uncovered))))));
+    $('bills').replaceChildren(...b.map(bill=>el('div',{class:'bill'},
+      el('div',{class:'row'},el('b',{},bill.vendor_name),el('span',{class:'chip'},bill.state.replace('_',' ')),bill.hasBounced?el('span',{class:'chip bad'},'bounced'):''),
+      el('div',{class:'sm'},`${bill.bill_no||''} ${String(bill.bill_date).slice(0,10)} total ${money(bill.total)} owed ${money(bill.outstanding)} covered ${money(bill.covered)}`),
+      ...bill.cheques.map(ch=>el('div',{class:'row sm'},`Cheque ${ch.cheque_no||''} ${money(ch.amount)} due ${String(ch.due_date).slice(0,10)} ${ch.status}`,
+        ch.status==='ISSUED'?[el('button',{class:'ghost',on:{click:()=>act('/cheques/'+ch.id+'/clear')}},'Cleared'),el('button',{class:'ghost',on:{click:()=>act('/cheques/'+ch.id+'/bounce')}},'Bounced')]:'')),
+      el('details',{},el('summary',{},'Add cheque'),(()=>{const f=el('form',{class:'add'},el('input',{name:'cheque_no',placeholder:'Cheque no.'}),el('input',{name:'bank',placeholder:'Bank'}),el('input',{name:'amount',type:'number',step:'0.01',min:'0.01',placeholder:'Amount',required:''}),el('label',{},'Cheque date',el('input',{name:'cheque_date',type:'date',required:''})),el('input',{class:'full',name:'payee',placeholder:'Payee (the vendor, not CASH)'}),el('label',{class:'full'},el('input',{name:'same_bank',type:'checkbox'}),' same bank'),el('button',{class:'full'},'Save cheque'));
+        f.addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));d.same_bank=!!d.same_bank;try{const r=await api(`/bills/${bill.id}/cheques`,{method:'POST',body:JSON.stringify(d)});$('msg').textContent=(r.warnings.length?'Check: '+r.warnings.join(', ')+'. ':'')+'Words: '+r.words;load()}catch(x){$('msg').textContent=x.message}});return f})())
+    )));
+  }catch(e){if(e.message!=='401')$('msg').textContent=e.message}
+}
+async function act(p){try{await api(p,{method:'POST'});load()}catch(e){$('msg').textContent=e.message}}
+$('go').addEventListener('click',load);
+$('billForm').addEventListener('submit',async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));Object.keys(d).forEach(k=>d[k]===''&&delete d[k]);try{await api('/bills',{method:'POST',body:JSON.stringify(d)});e.target.reset();load()}catch(x){$('msg').textContent=x.message}});
+load();
+</script><script src="/bathhub-logo.js"></script>
+</body></html>

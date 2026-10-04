@@ -68,4 +68,5 @@ $('list').addEventListener('click',async e=>{const b=e.target.closest('button[da
       modal('<h3>Login history: '+E(u.username)+'</h3><table><tr><th>When</th><th>Result</th><th>IP</th></tr>'+h.history.map(x=>'<tr><td>'+E(fmt(x.attempted_at))+'</td><td>'+(x.success?'OK':E(x.reason||'failed'))+'</td><td>'+E(x.ip||'')+'</td></tr>').join('')+'</table><div class="acts"><button data-close="1">Close</button></div>');}
   }catch(x){msg(x.message)}});
 load();
-</script></body></html>
+</script><script src="/bathhub-logo.js"></script>
+</body></html>

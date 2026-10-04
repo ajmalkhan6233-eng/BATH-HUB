@@ -4,12 +4,12 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v10';
+const VERSION = 'v11';
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
 const PRECACHE = [
-  '/owner', '/manifest.json', '/bathhub-design.css', '/bathhub-theme.js', '/bathhub-icons.js', '/bathhub-a11y.js', '/brand/icon-192.png', '/brand/icon-512.png', '/brand/favicon-32.png', '/brand/logo-bh-transparent.png', '/fonts/inter.css', '/fonts/inter-latin.woff2', '/vendor/chart.umd.min.js',
+  '/owner', '/manifest.json', '/bathhub-design.css', '/bathhub-logo.js', '/bathhub-theme.js', '/bathhub-icons.js', '/bathhub-a11y.js', '/brand/icon-192.png', '/brand/icon-512.png', '/brand/favicon-32.png', '/brand/logo-bh-transparent.png', '/fonts/inter.css', '/fonts/inter-latin.woff2', '/vendor/chart.umd.min.js',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png',
   '/salary.js', '/tile-gallery.js', '/tiles/stone-beige.webp', '/tiles/stone-pink.webp', '/tiles/stone-grey.webp', '/tiles/stone-beige-thumb.webp', '/tiles/stone-pink-thumb.webp', '/tiles/stone-grey-thumb.webp', '/website-editor.js', '/document-inbox.js', '/attach-widget.js', '/pos-picker.js', '/offline-queue.js',
   '/pos_billing.html', '/investor_loans.html', '/money-control.html', '/sale_commissions.html', '/settings.html', '/cheque_register.html', '/documents.html',
