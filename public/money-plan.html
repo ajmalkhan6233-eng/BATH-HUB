@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money plan | Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:720px;margin:0 auto;padding:14px}h1{font-size:22px;margin:6px 0 12px}h2{font-size:17px;margin:20px 0 8px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.big{font-size:22px;font-weight:700}.sm{color:var(--muted);font-size:14px}.bad{color:var(--red)}.good{color:var(--green)}
+input,button{font:inherit;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 10px;max-width:100%}
+button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;border:0}.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+pre{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit}
+</style></head><body><main>
+<h1>Money plan</h1><div id="msg" class="sm" role="status"></div>
+<div class="row"><label>From <input id="from" type="date"></label><label>To <input id="to" type="date"></label><button id="go">Show</button></div>
+<h2>Where the profit goes</h2><div class="grid" id="wf"></div><div class="sm" id="phase"></div>
+<h2>Split of what is left</h2><div class="grid" id="sp"></div>
+<details><summary class="row">Settings (owner)</summary><form id="sf" class="row" style="margin-top:8px"></form></details>
+<script>
+const f=n=>'Rs. '+Math.round(Number(n)||0).toLocaleString('en-US');const $=id=>document.getElementById(id);
+const L={monthlyCosts:'Monthly running cost',commissionRatePct:'Commission % of profit',depositAmount:'Deposit',depositMonths:'Deposit months',shopCash:'Shop cash',dailyCost:'Daily cost target',dailySalesTarget:'Daily sales target',cashOnHand:'Cash on hand',savingsTarget:'Savings target',savingsSaved:'Savings saved'};
+const card=(t,v,c)=>'<div class="card"><div class="sm">'+t+'</div><div class="big '+(c||'')+'">'+v+'</div></div>';
+async function api(u,o){const r=await fetch(u,o);const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('Error '+r.status));return j}
+async function load(){try{const q=new URLSearchParams();if($('from').value)q.set('from',$('from').value);if($('to').value)q.set('to',$('to').value);
+const d=await api('/api/money/waterfall?'+q);$('from').value=d.from;$('to').value=d.to;const w=d.waterfall;
+$('wf').innerHTML=card('Gross profit',f(w.grossProfit))+card('Running costs ('+d.days+' days)',f(w.fixedCosts))+card('Commission',f(w.commission))+card('Deposit set-aside',f(w.depositSetAside))+card('Left to split',f(w.splitBase),w.splitBase<0?'bad':'good')+card('Profit vs daily target',f(d.grossProfitVsTarget),d.grossProfitVsTarget<0?'bad':'good');
+$('phase').textContent='Phase '+w.phase+(w.phase===1?' (until shop cash reaches one month of costs)':'')+'. '+d.recordedDays+' of '+d.days+' days recorded.';
+$('sp').innerHTML=Object.entries(w.split||{}).map(([k,v])=>card(k,f(v))).join('');
+const s=d.settings;$('sf').innerHTML=Object.keys(L).map(k=>'<label>'+L[k]+' <input name="'+k+'" type="number" inputmode="decimal" min="0" value="'+s[k]+'"></label>').join('')+'<button type="submit">Save</button>';
+$('msg').textContent=''}catch(e){$('msg').textContent=e.message}}
+$('go').onclick=load;
+$('sf').onsubmit=async e=>{e.preventDefault();const b={};new FormData(e.target).forEach((v,k)=>b[k]=v);try{await api('/api/money/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});$('msg').textContent='Saved';load()}catch(x){$('msg').textContent=x.message}};
+load();
+</script><script src="/bathhub-logo.js"></script>
+</main></body></html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Morning brief | Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:720px;margin:0 auto;padding:14px}h1{font-size:22px;margin:6px 0 12px}h2{font-size:17px;margin:20px 0 8px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.big{font-size:22px;font-weight:700}.sm{color:var(--muted);font-size:14px}.bad{color:var(--red)}.good{color:var(--green)}
+input,button{font:inherit;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 10px;max-width:100%}
+button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;border:0}.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+pre{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit}
+</style></head><body><main>
+<h1>Morning brief</h1><div id="msg" class="sm" role="status">Loading…</div>
+<div class="grid" id="k"></div><h2>Today</h2><ol id="act"></ol>
+<h2>Message</h2><pre id="txt"></pre><div class="row"><button id="cp">Copy text</button><button id="rf">Refresh</button></div>
+<script>
+const f=n=>'Rs. '+Math.round(Number(n)||0).toLocaleString('en-US');const $=id=>document.getElementById(id);
+const card=(t,v,c)=>'<div class="card"><div class="sm">'+t+'</div><div class="big '+(c||'')+'">'+v+'</div></div>';
+async function load(){try{const r=await fetch('/api/morning-brief');const d=await r.json();if(!r.ok)throw new Error(d.error||('Error '+r.status));const s=d.sections,y=s.yesterday;
+$('k').innerHTML=card('Yesterday sales',f(y.sales)+' ('+y.salesPct+'%)')+card('Profit vs daily cost',f(y.profitVsCost),y.ahead?'good':'bad')+card('Cheques today / tomorrow',f(s.cheques.today)+' / '+f(s.cheques.tomorrow))+card('Cash gap (2 days)',f(s.cash.gap),s.cash.gap>0?'bad':'good');
+$('act').innerHTML=d.actions.map(a=>'<li>'+a.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+'</li>').join('');$('txt').textContent=d.text;$('msg').textContent=d.date}catch(e){$('msg').textContent=e.message}}
+$('rf').onclick=load;$('cp').onclick=async()=>{try{await navigator.clipboard.writeText($('txt').textContent);$('msg').textContent='Copied'}catch(_){$('msg').textContent='Select the text and copy'}};
+load();
+</script><script src="/bathhub-logo.js"></script>
+</main></body></html>

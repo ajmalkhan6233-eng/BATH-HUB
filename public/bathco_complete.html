@@ -1550,6 +1550,8 @@ const EXTRA_FRAMES = [
   { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
   { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
   { key: 'vendorledger', label: 'Vendor Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-ledger.html', sub: 'Supplier bills, cheques, payable', after: 'chequereg' },
+  { key: 'moneyplan', label: 'Money Plan', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/money-plan.html', sub: 'Profit waterfall, commission, split', after: 'vendorledger' },
+  { key: 'morningbrief', label: 'Morning Brief', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/morning-brief.html', sub: 'Yesterday, cheques due and what to do today', after: 'moneyplan' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;
