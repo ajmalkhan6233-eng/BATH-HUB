@@ -4,8 +4,8 @@ const r2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const SPLITS = { 1: { shop: 50, commitments: 30, savings: 10, owner: 10 }, 2: { shop: 30, commitments: 40, savings: 10, owner: 20 } };
 
 const depositSetAside = (deposit = 200000, months = 24) => r2(deposit / months);
-/** Commission is a percent of profit (never negative). Rate is an owner setting; the default 5% is a recommendation. */
-const commission = (profit, ratePct = 5) => (profit > 0 ? r2((profit * ratePct) / 100) : 0);
+/** Commission is a percent of profit (never negative). Rate is an owner setting; the default 2% is the owner's decision (2026-10-04). */
+const commission = (profit, ratePct = 2) => (profit > 0 ? r2((profit * ratePct) / 100) : 0);
 /** Phase 1 until the shop holds one month of running costs in cash; then phase 2. */
 const phaseFor = ({ shopCash = 0, monthlyCosts }) => (shopCash >= monthlyCosts ? 2 : 1);
 
@@ -19,7 +19,7 @@ function splitNetProfit(amount, phase = 1, splits = SPLITS) {
 }
 
 /** weekly({ grossProfit, fixedCosts, commissionRatePct, depositPerPeriod, shopCash, monthlyCosts }) */
-function waterfall({ grossProfit, fixedCosts, commissionRatePct = 5, depositPerPeriod = 0, shopCash = 0, monthlyCosts = 0 }) {
+function waterfall({ grossProfit, fixedCosts, commissionRatePct = 2, depositPerPeriod = 0, shopCash = 0, monthlyCosts = 0 }) {
   const afterFixed = r2(grossProfit - fixedCosts);
   const comm = commission(afterFixed > 0 ? grossProfit : 0, commissionRatePct); // commission on profit; zero when the period loses money
   const net = r2(afterFixed - comm);

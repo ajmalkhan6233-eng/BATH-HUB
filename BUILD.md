@@ -22,10 +22,10 @@
 Bath Hub, Kandy Road, Thihariya. Bathroom accessories, fittings, ceramics (commodes, basins). **No tiles for now.** Cash is tight (start about 200,000). Stock comes on vendor credit paid by post-dated cheques (cheques written Saturdays, cleared Monday if another bank). Prices are flexible, owner enters the real sold price, no approval steps.
 - Running cost without owner pay: **316,000/month** (~10,500/day). Daily all-in cost target 15,000, hard ceiling 18,000.
 - Pricing: accessories list = cost x 1.8 + 150, red line = cost x 1.3. Ceramics: red line = cost + minimum profit, list = red line x 1.25 (25,000 commode: red line 30,000, list 37,500, safe discount 20%). Tiles: percent of cost (First Choice Bathco gross margin is about 18% of price, about 22% on cost).
-- Commission: percent of profit, default **5%** (editable; First Choice Bathco pays 1% of gross profit; owner may lower it). Zero on a bill with no profit.
+- Commission: percent of profit, default **2%** (owner decision 2026-10-04; editable in settings; First Choice Bathco pays 1% of gross profit). Zero on a bill with no profit.
 - Net profit split, phase 1 until shop cash reaches one month of costs: shop 50, commitments 30, savings 10, owner 10. Phase 2: 30, 40, 10, 20. Editable. Deposit set-aside 200,000 / 24 = 8,333 a month before any split.
 - Languages for customer messages: English and Sinhala.
-- Real commode costs (RK Trading, Dec 2025): economy round 21,000; eco SQ 26,500; SQ set 35,000; back-to-wall 36,000; 1-unit SQ 39,000; round 45,000; round black 49,500. Package prices drafted earlier (52,900 / 77,900 / 99,900 / 149,900) are too low for 30% margin with these costs: B, C, D need about 85,100 / 115,200 / 172,100 or cheaper commodes. Use `packageQuote()` to test.
+- Real commode costs (RK Trading, Dec 2025): economy round 21,000; eco SQ 26,500; SQ set 35,000; back-to-wall 36,000; 1-unit SQ 39,000; round 45,000; round black 49,500. **Package price list (owner accepted 2026-10-04, replaces the old bands 40-60k / 60-80k / 80-100k / 100k+):** A 52,900; B 85,400; C 115,400; D 172,400, built from real commode costs 21,000 / 26,500 / 35,000 / 49,500. Use `packageQuote()` to test.
 
 ## 3. Pack contents (copy from `root/`, already tested: 45 tests)
 | File | What it is |
@@ -75,7 +75,7 @@ Paths are inside the BATHCO clone (`BATHCO/BATHCO/...`) unless stated. Use the s
 
 ### BUILD 0: HARVEST A (rules, brain, safety; quick)
 1. Write `audit/HARVEST_MAP.md` from the map above (add the paths you confirm).
-2. Write `AI_MEMORY/KNOWLEDGE.md` and `AI_MEMORY/skills/` from the TAKE (knowledge) and TAKE (agents and commands) lists. Do not mount any agent. Keep LAYLA's honesty clause. Note the live shop pays 1% of gross profit as commission; Bath Hub's default is 5% of profit and the owner may change it.
+2. Write `AI_MEMORY/KNOWLEDGE.md` and `AI_MEMORY/skills/` from the TAKE (knowledge) and TAKE (agents and commands) lists. Do not mount any agent. Keep LAYLA's honesty clause. Note the live shop pays 1% of gross profit as commission; Bath Hub's default is 2% of profit (owner decision) and is editable in settings.
 3. **Test guard** in the jest setup: abort unless `DB_NAME` is a test database; tests use a fixed fake date, never the real day (20 July 2026 lesson: tests ran against a real date and wiped a day). Port the cross-tenant leak test from bathco-vault, adapted to `branch_id`.
 4. List in `OPEN_ITEMS.md` every place BATH-HUB shows 0 for a missing figure (rule: PENDING, never 0).
 
