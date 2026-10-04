@@ -1,30 +1,30 @@
 'use strict';
-const request = require('supertest');
-// POS page shows the daily ledger beside the bill form: framing allowed for same origin only, ledger data still behind login.
+// POS and the daily ledger side by side on one page (two full pages in two columns). Ledger framing is same-origin only; its data stays behind login.
 jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn(), fromBuffer: jest.fn() }));
 jest.mock('connect-pg-simple', () => (session) => session.MemoryStore);
 jest.mock('pg', () => require('../helpers/pgmock')());
 jest.mock('../../layla', () => ({ pool: { query: jest.fn().mockResolvedValue({ rows: [{ n: 1 }] }) }, processMessage: jest.fn(), alertOwner: jest.fn(), getOrCreateCustomer: jest.fn() }));
+const request = require('supertest');
 const fs = require('fs');
 const path = require('path');
 const app = require('../../server');
 const root = path.join(__dirname, '..', '..');
+const read = (...p) => fs.readFileSync(path.join(root, ...p), 'utf8');
 
-test('daily ledger page can be framed by this same site only, and its data still needs login', async () => {
-  const page = await request(app).get('/daily-entry-v2.html');
-  expect(page.status).toBe(200);
-  expect(page.headers['x-frame-options']).toBe('SAMEORIGIN');
-  expect(String(page.headers['content-security-policy'] || '')).not.toMatch(/frame-ancestors\s+\*/);
-  expect((await request(app).get('/api/daily-entry/meta')).status).toBe(401);   // the ledger's data is behind login
+test('pages can be framed by this same site only; ledger data still needs login', async () => {
+  for (const u of ['/daily-entry-v2.html', '/pos_billing.html', '/pos-ledger.html']) {
+    const r = await request(app).get(u);
+    expect(r.status).toBe(200);
+    expect(r.headers['x-frame-options']).toBe('SAMEORIGIN');
+  }
+  expect((await request(app).get('/api/daily-entry/meta')).status).toBe(401);
 });
 
-test('POS page carries the panel container and one script tag; module is wired', () => {
-  const pos = fs.readFileSync(path.join(root, 'public', 'pos_billing.html'), 'utf8');
-  expect(pos).toContain('<div id="ledger-panel"></div>');
-  expect(pos.match(/posSidePanel\.js/g).length).toBe(1);
-  const mod = fs.readFileSync(path.join(root, 'public', 'lib', 'posSidePanel.js'), 'utf8');
-  expect(mod).toContain("'?embed=1'");
-  expect(mod).toMatch(/min-width:900px/);
-  const sw = fs.readFileSync(path.join(root, 'public', 'service-worker.js'), 'utf8');
-  expect(sw).toContain('/lib/posSidePanel.js');
+test('split page holds both full pages and refreshes the ledger after a bill; POS page is back to normal', () => {
+  const page = read('public', 'pos-ledger.html');
+  expect(page).toContain('src="/pos_billing.html"');
+  expect(page).toContain('src="/daily-entry-v2.html"');
+  expect(page).toContain('pos-bills');
+  expect(read('public', 'pos_billing.html')).not.toContain('ledger-panel');
+  expect(read('public', 'service-worker.js')).toContain('/pos-ledger.html');
 });

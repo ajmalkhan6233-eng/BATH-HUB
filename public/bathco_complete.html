@@ -1554,6 +1554,7 @@ const EXTRA_FRAMES = [
   { key: 'morningbrief', label: 'Morning Brief', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/morning-brief.html', sub: 'Yesterday, cheques due and what to do today', after: 'moneyplan' },
   { key: 'layla', label: 'Layla', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/layla-owner.html', sub: 'Chat, voice, reminders, cheque notes', after: 'morningbrief' },
   { key: 'dailyledger', label: 'Daily Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/daily-entry-v2.html', sub: 'Daily sales, expenses and cash entry', after: 'layla' },
+  { key: 'posledger', label: 'POS + Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/pos-ledger.html', sub: 'Bill and daily ledger side by side', after: 'dailyledger' },
 ];
 function addFramePage(def) {
   if (document.getElementById('page-' + def.key)) return;
