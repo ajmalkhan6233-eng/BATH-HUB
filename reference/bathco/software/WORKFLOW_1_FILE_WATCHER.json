@@ -1,0 +1,226 @@
+{
+  "name": "Bathco — New File Detector & Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "C:\\Users\\1st Choice\\Desktop\\bathco-data",
+        "events": ["add"],
+        "options": {
+          "awaitWriteFinish": true
+        }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Watch bathco-data Folder",
+      "type": "n8n-nodes-base.localFileTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "filter-xlsx",
+              "leftValue": "={{ $json.path }}",
+              "rightValue": ".xlsx",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "Only XLSX Files",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "command": "=python \"C:\\Users\\1st Choice\\bathco-data\\process_new_file.py\" \"{{ $json.path }}\""
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "Run Python Analyzer",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Parse the Python script output and extract business metrics\nconst stdout = $input.first().json.stdout || '';\nconst filePath = $input.first().json.path || '';\nconst filename = filePath.split('\\\\').pop() || filePath.split('/').pop();\n\nconst lines = stdout.split('\\n');\nlet totalSales = 0;\nlet gpPercent = 0;\nlet transactions = 0;\nlet stockValue = 0;\nlet alerts = [];\nlet summaryLines = [];\n\nfor (const line of lines) {\n  const lower = line.toLowerCase();\n  \n  // Extract total sales\n  if ((lower.includes('total sales') || lower.includes('net revenue') || lower.includes('gross sales')) && totalSales === 0) {\n    const match = line.match(/([\\d,]+\\.?\\d*)/);\n    if (match) totalSales = parseFloat(match[1].replace(/,/g, ''));\n  }\n  \n  // Extract GP margin\n  if (lower.includes('gp') || lower.includes('gross profit')) {\n    const match = line.match(/(\\d+\\.?\\d*)%/);\n    if (match) gpPercent = parseFloat(match[1]);\n  }\n  \n  // Extract transactions\n  if (lower.includes('transaction')) {\n    const match = line.match(/(\\d+)/);\n    if (match) transactions = parseInt(match[1]);\n  }\n  \n  // Extract stock value\n  if (lower.includes('stock') && lower.includes('value')) {\n    const match = line.match(/([\\d,]+\\.?\\d*)/);\n    if (match) stockValue = parseFloat(match[1].replace(/,/g, ''));\n  }\n  \n  // Collect alert lines\n  if (lower.includes('alert') || lower.includes('critical') || lower.includes('warning') || lower.includes('below cost')) {\n    summaryLines.push(line.trim());\n  }\n}\n\n// Generate alerts based on thresholds\nif (gpPercent > 0 && gpPercent < 20) {\n  alerts.push(`GP margin ${gpPercent.toFixed(1)}% is BELOW 20% target`);\n}\nif (totalSales > 0 && totalSales < 400000) {\n  alerts.push(`Daily sales Rs.${Math.round(totalSales).toLocaleString()} is BELOW Rs.400,000 threshold`);\n}\nif (summaryLines.length > 0) {\n  alerts = alerts.concat(summaryLines.slice(0, 3));\n}\n\nconst now = new Date();\nconst sriLankaTime = now.toLocaleString('en-US', {\n  timeZone: 'Asia/Colombo',\n  day: '2-digit', month: 'short', year: 'numeric',\n  hour: '2-digit', minute: '2-digit', hour12: true\n});\n\nreturn [{\n  json: {\n    filename,\n    filePath,\n    totalSales,\n    gpPercent,\n    transactions,\n    stockValue,\n    alerts,\n    hasAlerts: alerts.length > 0,\n    rawOutput: stdout.slice(0, 2000),\n    processedAt: sriLankaTime\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "Parse & Extract Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "check-alerts",
+              "leftValue": "={{ $json.hasAlerts }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "Has Alerts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "msg-alert",
+              "name": "whatsappMessage",
+              "value": "=🔴 *BATHCO ALERT — New File Processed*\n━━━━━━━━━━━━━━━━━━━━\n📁 File: {{ $json.filename }}\n⏰ {{ $json.processedAt }}\n\n📊 *EXTRACTED DATA:*\n💰 Sales: Rs. {{ $json.totalSales > 0 ? Math.round($json.totalSales).toLocaleString() : 'See file' }}\n📈 GP Margin: {{ $json.gpPercent > 0 ? $json.gpPercent.toFixed(1) + '%' : 'See file' }}\n🧾 Transactions: {{ $json.transactions > 0 ? $json.transactions : 'See file' }}\n\n⚠️ *ALERTS FOUND:*\n{{ $json.alerts.join('\\n• ') }}\n\n━━━━━━━━━━━━━━━━━━━━\n_1st Choice Bathco | AI Monitor_",
+              "type": "string"
+            },
+            {
+              "id": "status-alert",
+              "name": "status",
+              "value": "ALERT",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "Format ALERT Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1340, 180]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "msg-ok",
+              "name": "whatsappMessage",
+              "value": "=✅ *BATHCO — New File Processed*\n━━━━━━━━━━━━━━━━━━━━\n📁 File: {{ $json.filename }}\n⏰ {{ $json.processedAt }}\n\n📊 *EXTRACTED DATA:*\n💰 Sales: Rs. {{ $json.totalSales > 0 ? Math.round($json.totalSales).toLocaleString() : 'See file' }}\n📈 GP Margin: {{ $json.gpPercent > 0 ? $json.gpPercent.toFixed(1) + '%' : 'See file' }}\n🧾 Transactions: {{ $json.transactions > 0 ? $json.transactions : 'See file' }}\n\n✅ No alerts — all metrics normal.\n\n━━━━━━━━━━━━━━━━━━━━\n_1st Choice Bathco | AI Monitor_",
+              "type": "string"
+            },
+            {
+              "id": "status-ok",
+              "name": "status",
+              "value": "OK",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000007",
+      "name": "Format OK Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1340, 420]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000008",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Save the WhatsApp message as a text file on the Desktop\nconst msg = $input.first().json.whatsappMessage || '';\nconst status = $input.first().json.status || 'OK';\nconst filename = $input.first().json.filename || 'report';\n\n// Create filename with timestamp\nconst now = new Date();\nconst ts = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);\nconst outFilename = `BATHCO_${status}_${ts}.txt`;\nconst outPath = `C:\\\\Users\\\\1st Choice\\\\Desktop\\\\${outFilename}`;\n\n// Write using a PowerShell command approach\nreturn [{\n  json: {\n    message: msg,\n    outputPath: outPath,\n    outputFilename: outFilename,\n    status\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000009",
+      "name": "Prepare Report File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "command": "=powershell -Command \"Set-Content -Path '{{ $json.outputPath }}' -Value '{{ $json.message.replace(/'/g, \"''\") }}' -Encoding UTF8\""
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000010",
+      "name": "Save Report to Desktop",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2000, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Watch bathco-data Folder": {
+      "main": [[{"node": "Only XLSX Files", "type": "main", "index": 0}]]
+    },
+    "Only XLSX Files": {
+      "main": [[{"node": "Run Python Analyzer", "type": "main", "index": 0}]]
+    },
+    "Run Python Analyzer": {
+      "main": [[{"node": "Parse & Extract Metrics", "type": "main", "index": 0}]]
+    },
+    "Parse & Extract Metrics": {
+      "main": [[{"node": "Has Alerts?", "type": "main", "index": 0}]]
+    },
+    "Has Alerts?": {
+      "main": [
+        [{"node": "Format ALERT Message", "type": "main", "index": 0}],
+        [{"node": "Format OK Message", "type": "main", "index": 0}]
+      ]
+    },
+    "Format ALERT Message": {
+      "main": [[{"node": "Merge Paths", "type": "main", "index": 0}]]
+    },
+    "Format OK Message": {
+      "main": [[{"node": "Merge Paths", "type": "main", "index": 1}]]
+    },
+    "Merge Paths": {
+      "main": [[{"node": "Prepare Report File", "type": "main", "index": 0}]]
+    },
+    "Prepare Report File": {
+      "main": [[{"node": "Save Report to Desktop", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "bathco-v1-file-watcher",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  },
+  "id": "bathco-workflow-001",
+  "tags": [{"name": "bathco"}, {"name": "automation"}]
+}

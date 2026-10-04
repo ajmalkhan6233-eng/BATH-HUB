@@ -1,0 +1,157 @@
+{
+  "name": "Bathco — Daily 8AM Summary Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000001",
+      "name": "Every Day at 8:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "powershell -Command \"Get-Content 'C:\\Users\\1st Choice\\Desktop\\bathco-data\\SESSION_MEMORY.md' -Raw\""
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000002",
+      "name": "Read Session Memory",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "command": "powershell -Command \"Get-ChildItem 'C:\\Users\\1st Choice\\Desktop\\bathco-data\\' -Filter '*.xlsx' | Sort-Object LastWriteTime -Descending | Select-Object -First 5 | ForEach-Object { $_.Name + '|' + $_.LastWriteTime + '|' + [math]::Round($_.Length/1KB,1) + 'KB' }\""
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "name": "Get Recent Files",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "command": "powershell -Command \"Get-ChildItem 'C:\\Users\\1st Choice\\Desktop\\' -Filter 'BATHCO_ALERT_*.txt' | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object { Get-Content $_.FullName -Raw }\""
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000004",
+      "name": "Get Latest Alert",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 660]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000005",
+      "name": "Combine All Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [700, 480]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Build the daily 8am WhatsApp summary\nconst items = $input.all();\n\n// Get data from each branch\nconst memoryRaw = items[0]?.json?.stdout || '';\nconst filesRaw = items[1]?.json?.stdout || '';\nconst alertRaw = items[2]?.json?.stdout || '';\n\n// Parse SESSION_MEMORY for key business figures\nlet maySales = 'N/A';\nlet avgDaily = 'N/A';\nlet gpMargin = 'N/A';\nlet pendingCheques = 'N/A';\nlet pendingTasks = [];\n\nconst memLines = memoryRaw.split('\\n');\nfor (const line of memLines) {\n  const l = line.toLowerCase();\n  if (l.includes('may 2026 sales') || l.includes('sales (to')) {\n    const m = line.match(/rs\\.?\\s*([\\d,\\.]+)/i);\n    if (m) maySales = 'Rs. ' + m[1];\n  }\n  if (l.includes('avg') && l.includes('day')) {\n    const m = line.match(/rs\\.?\\s*([\\d,\\.]+)/i);\n    if (m) avgDaily = 'Rs. ' + m[1];\n  }\n  if (l.includes('gp') && l.includes('%')) {\n    const m = line.match(/(\\d+\\.?\\d*)%/);\n    if (m) gpMargin = m[1] + '%';\n  }\n  if (l.includes('pending cheque') || l.includes('rs.49')) {\n    const m = line.match(/rs\\.?\\s*([\\d,\\.]+m?)/i);\n    if (m) pendingCheques = 'Rs. ' + m[1];\n  }\n  if (line.trim().match(/^\\d+\\./) && l.includes('fix') || l.includes('call') || l.includes('verify')) {\n    pendingTasks.push(line.trim().slice(0, 60));\n  }\n}\n\n// Parse recent files list\nconst recentFiles = filesRaw.trim().split('\\n')\n  .filter(l => l.trim())\n  .slice(0, 3)\n  .map(l => {\n    const parts = l.split('|');\n    return `📄 ${parts[0] || l}`;\n  })\n  .join('\\n');\n\n// Count alerts from yesterday\nconst hasYesterdayAlert = alertRaw.trim().length > 20;\n\n// Build the morning summary\nconst now = new Date();\nconst dateStr = now.toLocaleDateString('en-GB', {\n  timeZone: 'Asia/Colombo',\n  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'\n});\n\n// Determine GP status emoji\nconst gpNum = parseFloat(gpMargin);\nconst gpEmoji = gpNum < 18 ? '🔴' : gpNum < 22 ? '🟡' : '🟢';\n\n// Pending tasks (top 3)\nconst tasksText = pendingTasks.length > 0\n  ? pendingTasks.slice(0, 3).map(t => `  • ${t}`).join('\\n')\n  : '  • None pending';\n\nconst summary = `🌅 *BATHCO MORNING BRIEFING*\n━━━━━━━━━━━━━━━━━━━━\n📅 ${dateStr}\n⏰ 8:00 AM Daily Report\n\n📊 *BUSINESS SNAPSHOT:*\n💰 May Sales: ${maySales}\n📈 Avg/Day: ${avgDaily}\n${gpEmoji} GP Margin: ${gpMargin} (target: 25%+)\n🏦 Pending Cheques: ${pendingCheques}\n\n📁 *RECENT FILES:*\n${recentFiles || '  No new files'}\n\n${hasYesterdayAlert ? '⚠️ *UNRESOLVED ALERTS FROM YESTERDAY*\\n  Check Desktop for BATHCO_ALERT_*.txt' : '✅ No unresolved alerts'}\n\n📋 *PENDING ACTIONS:*\n${tasksText}\n\n━━━━━━━━━━━━━━━━━━━━\n_Good morning, Ajmal 🙏_\n_1st Choice Bathco | AI System_`;\n\nreturn [{\n  json: {\n    summary,\n    date: dateStr,\n    maySales,\n    gpMargin,\n    pendingCheques,\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000006",
+      "name": "Build Morning Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 480]
+    },
+    {
+      "parameters": {
+        "command": "=powershell -Command \"\n$date = Get-Date -Format 'yyyy-MM-dd';\n$path = \"\"C:\\Users\\1st Choice\\Desktop\\BATHCO_MORNING_$date.txt\"\";\nSet-Content -Path $path -Value @'\n{{ $json.summary }}\n'@ -Encoding UTF8;\nWrite-Host \"Saved: $path\"\n\""
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000007",
+      "name": "Save Morning Report",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1160, 480]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "display-summary",
+              "name": "result",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "copy-instructions",
+              "name": "instructions",
+              "value": "Copy the 'result' field above and paste into WhatsApp. File also saved to Desktop.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-0002-0002-000000000008",
+      "name": "Display in n8n UI",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1380, 480]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every Day at 8:00 AM": {
+      "main": [
+        [
+          {"node": "Read Session Memory", "type": "main", "index": 0},
+          {"node": "Get Recent Files", "type": "main", "index": 0},
+          {"node": "Get Latest Alert", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Read Session Memory": {
+      "main": [[{"node": "Combine All Data", "type": "main", "index": 0}]]
+    },
+    "Get Recent Files": {
+      "main": [[{"node": "Combine All Data", "type": "main", "index": 1}]]
+    },
+    "Get Latest Alert": {
+      "main": [[{"node": "Combine All Data", "type": "main", "index": 2}]]
+    },
+    "Combine All Data": {
+      "main": [[{"node": "Build Morning Summary", "type": "main", "index": 0}]]
+    },
+    "Build Morning Summary": {
+      "main": [[{"node": "Save Morning Report", "type": "main", "index": 0}]]
+    },
+    "Save Morning Report": {
+      "main": [[{"node": "Display in n8n UI", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "bathco-v1-daily-report",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  },
+  "id": "bathco-workflow-002",
+  "tags": [{"name": "bathco"}, {"name": "daily-report"}]
+}
