@@ -626,6 +626,7 @@ app.use('/api', require('./routes/salary'));              // SALARY module (isol
 app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
 app.use('/api', require('./routes/documents'));          // DOCUMENTS & REPORTS (owner only): PDF/CSV reports, allow-listed WhatsApp send (dry run unless live), inbound-file quarantine -> /api/documents*
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
+app.use('/api/assistant', require('./routes/assistant'));   // floating owner assistant (text only, owner/admin only, Gemini) -> /api/assistant/whoami, /chat
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
 // $0, until WHATSAPP_API_TOKEN/PHONE_NUMBER_ID/TO_NUMBER are set in .env —
