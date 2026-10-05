@@ -195,6 +195,7 @@ app.use('/api/admin/verify', failedAuthLimiter(5));
 // HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
 app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
+app.use('/api/public/availability', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
 app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
@@ -246,6 +247,7 @@ app.use(async (req, res, next) => {
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
+    if (req.method === 'GET' && req.path === '/api/public/availability') return next();             // website stock feed: true/false per published item, nothing else (routes/public_availability.js)
 if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
     if (req.method === 'GET' && req.path === '/api/site/catalogue.pdf') return next();                 // website: public catalogue PDF (routes/site_catalogue.js), visible tiles only, rate-limited
     if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
@@ -617,6 +619,7 @@ app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker
 app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
 app.use('/api', require('./routes/competitors'));          // M4 competitor watch (owner-only) -> /api/competitors*
 app.use('/api', require('./routes/catalogue_feed'));       // M5 website catalogue feed -> /api/public/catalogue (public, whitelisted), /api/catalogue-web* (owner)
+app.use('/api', require('./routes/public_availability'));   // website stock feed -> /api/public/availability (public, booleans only)
 app.use('/api', require('./routes/reply_drafts'));         // M6 reply drafts (owner-only, drafts only, never sends) -> /api/reply-drafts*
 app.use('/api', require('./routes/policy_notes'));         // M7 policy watch (owner-only) -> /api/policy-notes*
 app.use('/api', require('./routes/branches'));             // M8 branch profile (owner-only, new branches read-only) -> /api/branches*
