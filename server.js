@@ -268,7 +268,7 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
     // Off by default, because the white-label template gives 'owner' the same rights as 'admin'.
     if (user.role === 'owner' && String(process.env.OWNER_READ_ONLY).toLowerCase() === 'true') {
         const readOnlyOk = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS'
-            || req.path === '/api/logout' || req.path === '/api/dashboard-assistant/chat';
+            || req.path === '/api/logout' || req.path === '/api/dashboard-assistant/chat' || (req.method === 'POST' && req.path === '/api/assistant/chat');
         if (!readOnlyOk) return res.status(403).json({ error: 'This account is read-only.' });
     }
     if (user.role === 'admin' || user.role === 'owner') return next();
