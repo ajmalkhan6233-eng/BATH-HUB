@@ -10,6 +10,7 @@
 // - Everything runs in one transaction: if any line is invalid nothing is saved and any
 //   photos written for the request are removed.
 
+const { lineTotal, weightedAvgCost, round2 } = require('../utils/grn_math');
 require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
@@ -55,6 +56,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         const grn_date = String(payload.grn_date || '').trim();
         if (!supplier_name) throw badRequest('Enter the supplier');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(grn_date) || isNaN(Date.parse(grn_date))) throw badRequest('Enter a valid GRN date');
+        if (grn_date > new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10)) throw badRequest('GRN date cannot be in the future');
         const lines = Array.isArray(payload.lines) ? payload.lines : [];
         if (!lines.length) throw badRequest('Add at least one item');
         if (lines.length > MAX_LINES) throw badRequest(`Too many item rows (max ${MAX_LINES})`);
@@ -62,14 +64,18 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         // Validate every line before touching the DB.
         const files = {};
         (req.files || []).forEach(f => { files[f.fieldname] = f; });
+        const seenNames = new Set();
         const clean = lines.map((l, i) => {
             const n = i + 1;
             const name = String(l.name || '').trim();
             const qty = Number(l.qty);
             const cost = Number(l.unit_cost);
             if (!name) throw badRequest(`Row ${n}: enter the item name`);
+            if (seenNames.has(name.toLowerCase())) throw badRequest(`"${name}" is listed twice — combine it into one row`);
+            seenNames.add(name.toLowerCase());
             if (!Number.isFinite(qty) || qty <= 0) throw badRequest(`Row ${n} (${name}): quantity must be more than 0`);
             if (!Number.isFinite(cost) || cost < 0) throw badRequest(`Row ${n} (${name}): unit cost must be 0 or more`);
+            if (l.selling_price !== undefined && l.selling_price !== null && l.selling_price !== '' && (!Number.isFinite(Number(l.selling_price)) || Number(l.selling_price) < 0)) throw badRequest(`Row ${n} (${name}): selling price must be 0 or more`);
             return { name, qty, cost, category: l.category, selling_price: l.selling_price, file: files[`photo_${i}`] };
         });
 
@@ -85,11 +91,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         const grn_number = `MG-${grn_date.replace(/-/g, '')}-${String(Number(c.rows[0].n) + 1).padStart(2, '0')}`;
 
         const results = [];
-        const seenNames = new Set();
         for (const l of clean) {
-            const key = l.name.toLowerCase();
-            if (seenNames.has(key)) throw badRequest(`"${l.name}" is listed twice — combine it into one row`);
-            seenNames.add(key);
             const photo_url = l.file ? catalog.savePhoto(l.file.buffer) : null;
             if (photo_url) savedPhotos.push(photo_url);
 
@@ -99,8 +101,9 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                 isNew = false;
                 const u = await client.query(
                     `UPDATE products SET stock_level = COALESCE(stock_level,0) + $1,
+                            avg_cost = $4,
                             photo_url = COALESCE(photo_url, $2) WHERE id = $3 RETURNING *`,
-                    [l.qty, photo_url, ex.rows[0].id]);
+                    [l.qty, photo_url, ex.rows[0].id, weightedAvgCost(ex.rows[0].stock_level, ex.rows[0].avg_cost, l.qty, l.cost)]);
                 item = u.rows[0];
             } else {
                 isNew = true;
@@ -114,12 +117,12 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                                           quantity, unit_cost, total_amount, source_file_path, status, notes)
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'PENDING_REVIEW',$10)`,
                 [grn_number, supplier_id, supplier_name, grn_date, `${item.item_code} - ${item.name}`,
-                 l.qty, l.cost, l.qty * l.cost, item.photo_url || null,
+                 l.qty, l.cost, lineTotal(l.qty, l.cost), item.photo_url || null,
                  String(payload.notes || '').trim() || 'Manual GRN entry']);
             results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, is_new: isNew });
         }
         await client.query('COMMIT');
-        res.status(201).json({ grn_number, supplier_name, grn_date, total: results.reduce((s, r) => s + r.qty * r.unit_cost, 0), items: results });
+        res.status(201).json({ grn_number, supplier_name, grn_date, total: round2(results.reduce((s, r) => s + lineTotal(r.qty, r.unit_cost), 0)), items: results });
     } catch (e) {
         if (client) await client.query('ROLLBACK').catch(() => {});
         savedPhotos.forEach(u => fs.unlink(path.join(PHOTO_DIR, path.basename(u)), () => {}));
