@@ -1,5 +1,5 @@
 'use strict';
-// One site: Bath Hub is the front door, /owner is the business screens, the old addresses redirect.
+// One site: Royal Bath Hub is the front door, /owner is the business screens, the old addresses redirect.
 jest.mock('file-type', () => ({ fileTypeFromBuffer: jest.fn() }));
 jest.mock('connect-pg-simple', () => (session) => session.MemoryStore);
 jest.mock('pg', () => require('../helpers/pgmock')());
@@ -12,7 +12,7 @@ pg.__db.public.none(`CREATE TABLE users (id SERIAL PRIMARY KEY, username TEXT, r
 pg.__db.public.none(`INSERT INTO users (username, role) VALUES ('a', 'admin')`);
 const app = require('../../server');
 
-test('the front door is Bath Hub; /app and /nature go to /owner', async () => {
+test('the front door is Royal Bath Hub; /app and /nature go to /owner', async () => {
   const gate = r => r.headers.location;
   const root = await request(app).get('/');
   expect([root.status, gate(root)]).toEqual([302, '/bathhub.html']);
@@ -22,7 +22,7 @@ test('the front door is Bath Hub; /app and /nature go to /owner', async () => {
 test('/owner serves the business screens (login is still required for private data)', async () => {
   const r = await request(app).get('/owner');
   expect(r.status).toBe(200);
-  expect(r.text).toContain('Bath Hub');
+  expect(r.text).toContain('Royal Bath Hub');
   expect(r.text).toContain('id="page-docinbox"');
   expect((await request(app).get('/api/document-inbox')).status).toBeGreaterThanOrEqual(401);
 });

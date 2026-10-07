@@ -1,7 +1,7 @@
 # CLOUD_DEPLOY_GUIDE.md — Phase 3 Execution Spec
 
 Written so a future small session (or a technician with no prior context) can
-take BATH HUB COMMAND from "running on Ajmal's Windows PC" to "accessible from
+take ROYAL BATH HUB COMMAND from "running on Ajmal's Windows PC" to "accessible from
 anywhere over HTTPS", without breaking the AI ingestion pipeline (LAYLA/
 CHECKER/OCR) that currently runs locally.
 
@@ -13,7 +13,7 @@ CHECKER/OCR) that currently runs locally.
 |---|---|---|
 | **Dashboard** (`server.js` + `public/dashboard.html`) | Windows PC, `localhost:3000` | Cloud host, HTTPS domain |
 | **Database** (`bathco` Postgres) | Local Postgres 16 on the same PC | Managed cloud Postgres (same data, migrated) |
-| **AI ingestion** (`C:\Bath Hub\AI-Data\run_agents.py`, `process_inbox.py`, OCR, LAYLA WhatsApp bot) | Windows PC, Python | **Stays on the Windows PC** for Phase 3 — just points at the cloud DB instead of localhost. Full migration of the Python/OCR pipeline is Phase 4 (multi-tenant). |
+| **AI ingestion** (`C:\Royal Bath Hub\AI-Data\run_agents.py`, `process_inbox.py`, OCR, LAYLA WhatsApp bot) | Windows PC, Python | **Stays on the Windows PC** for Phase 3 — just points at the cloud DB instead of localhost. Full migration of the Python/OCR pipeline is Phase 4 (multi-tenant). |
 
 This split means: Ajmal/Uncle/staff get a real web dashboard immediately,
 while the existing OCR/photo-upload workflow keeps working unchanged (it just
@@ -32,7 +32,7 @@ app.use(express.static('C:\\BATHCO_PHASE1\\public'));
 // line 110
 app.get('/', (req, res) => res.sendFile('C:\\BATHCO_PHASE1\\public\\dashboard.html'));
 // line 383
-execFile('python', ['C:\\Bath Hub\\AI-Data\\process_inbox.py'], ...)
+execFile('python', ['C:\\Royal Bath Hub\\AI-Data\\process_inbox.py'], ...)
 ```
 
 Fix:

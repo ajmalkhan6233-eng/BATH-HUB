@@ -15,11 +15,11 @@ const s = n => (n ? ' ' + n : '');           // " Nimal"
 
 const P = {
     greet: {
-        en: [p => `Hello${c(p.n)}! Welcome to Bath Hub. What can I help you with today?`, p => `Hi${c(p.n)}, thanks for messaging Bath Hub. What are you looking for?`, p => `Good day${c(p.n)}! How can I help you?`],
-        si: [p => `ආයුබෝවන්${s(p.n)}! Bath Hub වෙත සාදරයෙන් පිළිගන්නවා. මම ඔබට උදව් කරන්නේ කොහොමද?`, p => `ආයුබෝවන්${s(p.n)}! ඔබට අවශ්‍ය මොනවාද කියලා කියන්න, මම බලලා කියන්නම්.`],
-        ta: [p => `வணக்கம்${s(p.n)}! Bath Hub-க்கு வரவேற்கிறோம். உங்களுக்கு என்ன உதவி வேண்டும்?`, p => `வணக்கம்${s(p.n)}! என்ன டைல் தேடுகிறீர்கள் என்று சொல்லுங்கள், நான் பார்த்துச் சொல்கிறேன்.`],
-        singlish: [p => `Hello${c(p.n)}! Bath Hub ekata welcome. Mata oyata kohomada udaw karanna puluwan?`, p => `Ayubowan${c(p.n)}! Mokakda balanna one?`],
-        tanglish: [p => `Vanakkam${c(p.n)}! Bath Hub-ku welcome. Ungalukku enna help venum?`, p => `Vanakkam${c(p.n)}! Enna tile paakkureenga, sollunga.`],
+        en: [p => `Hello${c(p.n)}! Welcome to Royal Bath Hub. What can I help you with today?`, p => `Hi${c(p.n)}, thanks for messaging Royal Bath Hub. What are you looking for?`, p => `Good day${c(p.n)}! How can I help you?`],
+        si: [p => `ආයුබෝවන්${s(p.n)}! Royal Bath Hub වෙත සාදරයෙන් පිළිගන්නවා. මම ඔබට උදව් කරන්නේ කොහොමද?`, p => `ආයුබෝවන්${s(p.n)}! ඔබට අවශ්‍ය මොනවාද කියලා කියන්න, මම බලලා කියන්නම්.`],
+        ta: [p => `வணக்கம்${s(p.n)}! Royal Bath Hub-க்கு வரவேற்கிறோம். உங்களுக்கு என்ன உதவி வேண்டும்?`, p => `வணக்கம்${s(p.n)}! என்ன டைல் தேடுகிறீர்கள் என்று சொல்லுங்கள், நான் பார்த்துச் சொல்கிறேன்.`],
+        singlish: [p => `Hello${c(p.n)}! Royal Bath Hub ekata welcome. Mata oyata kohomada udaw karanna puluwan?`, p => `Ayubowan${c(p.n)}! Mokakda balanna one?`],
+        tanglish: [p => `Vanakkam${c(p.n)}! Royal Bath Hub-ku welcome. Ungalukku enna help venum?`, p => `Vanakkam${c(p.n)}! Enna tile paakkureenga, sollunga.`],
     },
     ask_product: {
         en: [() => 'Which tile or item are you looking at? A name or a size, like 24 x 24, helps me find it.', () => 'Sure. Can you tell me the tile name or the size you have in mind?'],
@@ -134,11 +134,11 @@ const P = {
         tanglish: [() => 'Kandippa. Engaloda team-la oruthar ungala contact panna sollirukken.'],
     },
     ai_honest: {
-        en: [() => "I'm Bath Hub's virtual assistant, not a person. I can help with tiles, sizes and prices, and I can connect you with one of our team whenever you like. Would you like that?"],
-        si: [() => 'මම Bath Hub එකේ virtual assistant, මනුස්සයෙක් නෙවෙයි. ටයිල්, ප්‍රමාණ, මිල ගැන මට උදව් කරන්න පුළුවන්, ඔබට ඕන නම් අපේ කණ්ඩායමේ කෙනෙක්ව සම්බන්ධ කරලා දෙන්නත් පුළුවන්. එහෙම කරන්නද?'],
-        ta: [() => 'நான் Bath Hub-இன் virtual assistant, மனிதர் இல்லை. டைல், அளவு, விலை பற்றி உதவ முடியும், நீங்கள் விரும்பினால் எங்கள் குழுவில் ஒருவரை இணைத்து தருகிறேன். வேண்டுமா?'],
-        singlish: [() => 'Mama Bath Hub eke virtual assistant kenek, manussayek newei. Tile, size, mila gana mata udaw karanna puluwan, oyata one nam api team eke kenekwa connect karala denna puluwan. Ona da?'],
-        tanglish: [() => 'Naan Bath Hub-oda virtual assistant, manushan illa. Tile, size, vilai pathi help panna mudiyum, venumna engaloda team-la oruthara connect panni tharuven. Venuma?'],
+        en: [() => "I'm Royal Bath Hub's virtual assistant, not a person. I can help with tiles, sizes and prices, and I can connect you with one of our team whenever you like. Would you like that?"],
+        si: [() => 'මම Royal Bath Hub එකේ virtual assistant, මනුස්සයෙක් නෙවෙයි. ටයිල්, ප්‍රමාණ, මිල ගැන මට උදව් කරන්න පුළුවන්, ඔබට ඕන නම් අපේ කණ්ඩායමේ කෙනෙක්ව සම්බන්ධ කරලා දෙන්නත් පුළුවන්. එහෙම කරන්නද?'],
+        ta: [() => 'நான் Royal Bath Hub-இன் virtual assistant, மனிதர் இல்லை. டைல், அளவு, விலை பற்றி உதவ முடியும், நீங்கள் விரும்பினால் எங்கள் குழுவில் ஒருவரை இணைத்து தருகிறேன். வேண்டுமா?'],
+        singlish: [() => 'Mama Royal Bath Hub eke virtual assistant kenek, manussayek newei. Tile, size, mila gana mata udaw karanna puluwan, oyata one nam api team eke kenekwa connect karala denna puluwan. Ona da?'],
+        tanglish: [() => 'Naan Royal Bath Hub-oda virtual assistant, manushan illa. Tile, size, vilai pathi help panna mudiyum, venumna engaloda team-la oruthara connect panni tharuven. Venuma?'],
     },
     refuse_private: {
         en: [() => "Sorry, I can't share that. I'm happy to help with tiles, sizes and availability though."],
@@ -169,11 +169,11 @@ const P = {
         tanglish: [() => 'Paravaillai! Epo venumnaalum message pannunga.', () => 'Help panna mudinjathu santhosham.'],
     },
     bye: {
-        en: [p => `Thank you for contacting Bath Hub${c(p.n)}. Have a good day!`, p => `Take care${c(p.n)}, talk soon.`],
-        si: [() => 'Bath Hub එකට මැසේජ් කළාට ස්තූතියි. ඔබට සුබ දවසක්!'],
-        ta: [() => 'Bath Hub-ஐத் தொடர்பு கொண்டதற்கு நன்றி. இனிய நாளாக அமையட்டும்!'],
-        singlish: [() => 'Bath Hub ekata message kala ekata sthuthiyi. Hodama dawasak!'],
-        tanglish: [() => 'Bath Hub-a contact panninathukku nandri. Nalla naala amaiyattum!'],
+        en: [p => `Thank you for contacting Royal Bath Hub${c(p.n)}. Have a good day!`, p => `Take care${c(p.n)}, talk soon.`],
+        si: [() => 'Royal Bath Hub එකට මැසේජ් කළාට ස්තූතියි. ඔබට සුබ දවසක්!'],
+        ta: [() => 'Royal Bath Hub-ஐத் தொடர்பு கொண்டதற்கு நன்றி. இனிய நாளாக அமையட்டும்!'],
+        singlish: [() => 'Royal Bath Hub ekata message kala ekata sthuthiyi. Hodama dawasak!'],
+        tanglish: [() => 'Royal Bath Hub-a contact panninathukku nandri. Nalla naala amaiyattum!'],
     },
     name_ack: {
         en: [p => `Nice to meet you, ${p.n}! What are you looking for?`],

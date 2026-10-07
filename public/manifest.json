@@ -1,7 +1,7 @@
 {
-  "name": "Bath Hub Owner",
-  "short_name": "Bath Hub",
-  "description": "Bath Hub Thihariya owner app",
+  "name": "Royal Bath Hub Owner",
+  "short_name": "Royal Bath Hub",
+  "description": "Royal Bath Hub Thihariya owner app",
   "start_url": "/owner",
   "scope": "/",
   "display": "standalone",

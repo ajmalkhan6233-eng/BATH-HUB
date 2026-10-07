@@ -3,7 +3,7 @@
 Return to the final state any time: `git checkout v1.1` (to look), or `git reset --hard v1.1` on a branch (to go back). The earlier checkpoint is `v1.0`.
 
 ## What V1 contains
-- **One site:** `/` is the public Bath Hub website; the Owner button opens `/owner` (all business screens, login required). `/nature` and `/app` redirect to `/owner`.
+- **One site:** `/` is the public Royal Bath Hub website; the Owner button opens `/owner` (all business screens, login required). `/nature` and `/app` redirect to `/owner`.
 - **Website:** English / Sinhala / Tamil, tile picker and calculator, contact form (saved to Enquiries as "website", rate-limited), WhatsApp button, map and call links. Sample tiles until real items are published.
 - **POS billing:** item picker, discount cap (owner can approve over the cap), optional stock deduction (`POS_DEDUCT_STOCK`), today's bills with a "paper bill" tag.
 - **WhatsApp receipt:** type the customer's number (it is checked on WhatsApp as you type), press **Print**, and the receipt image goes to the customer's WhatsApp automatically (tick box, on by default). A number that is not on WhatsApp is told to you and nothing is sent. A receipt is never sent twice unless you confirm. The receipt design is a first version; it is designed later.

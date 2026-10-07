@@ -1,4 +1,4 @@
-/* utils/receiptImage.js: turns a bill into the Bath Hub receipt PNG (the WhatsApp receipt design in public/brand/receipt-template).
+/* utils/receiptImage.js: turns a bill into the Royal Bath Hub receipt PNG (the WhatsApp receipt design in public/brand/receipt-template).
    It opens the template in headless Chromium (puppeteer, already installed), hands it the bill as window.RECEIPT_DATA, waits for
    body[data-ready="1"], and saves a full-page PNG. Nothing here sends anything: the PNG is only saved for the receipt queue. */
 const fs = require('fs');

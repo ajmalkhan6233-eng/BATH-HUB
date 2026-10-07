@@ -40,7 +40,7 @@ function createRouter(pool, { publicPerHour = 5 } = {}) {
             if (!name) return res.status(400).json({ error: 'Please enter your name.' });
             if (phone.replace(/\D/g, '').length < 7 || phone.replace(/\D/g, '').length > 15) return res.status(400).json({ error: 'Please enter a phone number we can call or WhatsApp.' });
             const notes = `Website enquiry. Name: ${name}. Phone: ${phone}.${message ? ' Message: ' + message : ''}`;
-            await pool.query(`INSERT INTO enquiries (channel, product_interest, how_found_us, status, notes) VALUES ('website', $1, 'Bath Hub website', 'new', $2)`, [product || null, notes]);
+            await pool.query(`INSERT INTO enquiries (channel, product_interest, how_found_us, status, notes) VALUES ('website', $1, 'Royal Bath Hub website', 'new', $2)`, [product || null, notes]);
             res.status(201).json({ ok: true });
         } catch (e) { res.status(500).json({ error: 'Could not send. Please WhatsApp us.' }); }
     });

@@ -1,4 +1,4 @@
-# Bath Hub v1: start here
+# Royal Bath Hub v1: start here
 
 ## What is in v1
 - **Shop screens** (`/bathco_complete.html`): Dashboard, Daily Sales, Stock, POS Billing, GRN, Expenses, Cheques, Vendors, Barcode, Reports.

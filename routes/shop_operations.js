@@ -1,5 +1,5 @@
 // routes/shop_operations.js
-// SHOP OPERATIONS module for Bath Hub Thihariya: discount caps, manual stock/low-stock
+// SHOP OPERATIONS module for Royal Bath Hub Thihariya: discount caps, manual stock/low-stock
 // tracking, and a WhatsApp receipt queue. Own Pool, same conventions as staff_reports.js.
 //
 // Notes on scope:
@@ -277,7 +277,7 @@ router.get('/receipt-queue', async (req, res) => {
 
 // ═══════════════════════ RECEIPT PICTURE for a queued receipt (saved only; nothing is sent) ═══════════════════════
 // POST /receipt-queue/:id/image  body: { shopName, address, phone, billNo, date, customer, items:[{name,qty,price}], discount }
-// Draws the Bath Hub receipt PNG (utils/receiptImage.js) and keeps it for that queue entry. GET returns the newest picture.
+// Draws the Royal Bath Hub receipt PNG (utils/receiptImage.js) and keeps it for that queue entry. GET returns the newest picture.
 const receiptImage = require('../utils/receiptImage');
 const path = require('path');
 router.post('/receipt-queue/:id/image', async (req, res) => {

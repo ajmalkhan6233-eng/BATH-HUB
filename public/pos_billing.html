@@ -6,7 +6,7 @@
 <script>if (window.top === window.self) location.replace('/owner#/pos');   // one app: opened on its own -> open it inside /owner</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generate Bill — Bath Hub Thihariya</title>
+<title>Generate Bill — Royal Bath Hub Thihariya</title>
 <style>
   :root {
     --emerald-900:#062e21; --emerald-800:#0a4531; --emerald-700:#0f5132;
@@ -125,7 +125,7 @@
 <div class="wrap">
   <div class="panel" id="formPanel">
     <h1>Generate Bill</h1>
-    <div class="sub">Bath Hub Thihariya — POS Bill Generator</div>
+    <div class="sub">Royal Bath Hub Thihariya — POS Bill Generator</div>
 
     <label>Customer name (optional)</label>
     <input type="text" id="customerName" placeholder="Walk-in customer">
@@ -167,7 +167,7 @@
           <path d="M74 86 C74 76 88 66 88 66 C88 66 102 76 102 86 C102 94.28 95.28 101 87 101 C78.72 101 74 94.28 74 86 Z" fill="#c9a227"/>
         </svg>
       </div>
-      <div class="shop-name" id="rShopName">Bath Hub Thihariya</div>
+      <div class="shop-name" id="rShopName">Royal Bath Hub Thihariya</div>
       <div class="shop-tagline" id="rTagline">Everything for your bathroom, on Kandy Road</div>
       <hr>
       <div id="rMeta"></div>
@@ -193,7 +193,7 @@
 
 <script src="/pos-picker.js"></script>
 <script>
-let branding = { company_name: 'Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
+let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
 
 fetch('/api/discount-rules').catch(() => {}); // warm connection, ignore result
 
@@ -437,9 +437,9 @@ function renderBill(bill) {
   totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
   document.getElementById('rTotals').innerHTML = totalsHtml;
 
-  const summaryText = `${branding.company_name || 'Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
+  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
   document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
-  document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
+  document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
   document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
 
   document.getElementById('formPanel').style.display = 'none';

@@ -1,7 +1,7 @@
 # PHASE 2 PIVOT — STATUS
 
-Generated 15 June 2026. Summarizes the PWA pivot session. Scope: BATH HUB COMMAND
-only — Dubai Imports and Bath Hub Aromatic were not touched.
+Generated 15 June 2026. Summarizes the PWA pivot session. Scope: ROYAL BATH HUB COMMAND
+only — Dubai Imports and Royal Bath Hub Aromatic were not touched.
 
 ## 1. bathco-mobile — PAUSED ✅
 
@@ -14,8 +14,8 @@ for PWA auth, though it turned out not to be needed (see §3).
 
 ## 2. PWA conversion ✅
 
-- **`public/manifest.json`** — added. Name "BATH HUB COMMAND", short name
-  "BATH HUB", dark/gold theme (`background_color`/`theme_color`: `#06120d`),
+- **`public/manifest.json`** — added. Name "ROYAL BATH HUB COMMAND", short name
+  "ROYAL BATH HUB", dark/gold theme (`background_color`/`theme_color`: `#06120d`),
   `display: standalone`, `start_url: /dashboard.html`.
 - **Icons** — `public/icons/icon-192.png`, `icon-512.png`,
   `icon-maskable-512.png` generated programmatically (gold 3×3 tile motif on

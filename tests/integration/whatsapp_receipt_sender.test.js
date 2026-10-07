@@ -100,7 +100,7 @@ describe('sending', () => {
     const r = await pool.query(`SELECT bill_no, phone_last3 FROM wa_receipt_log WHERE bill_no='B-OK'`);
     expect(r.rows.length).toBeGreaterThan(0); expect(r.rows[0].phone_last3).toBe('219');
   });
-  test('caption text is exactly the approved one', () => expect(S.CAPTION).toBe('Thank you for shopping at Bath Hub. Your receipt is attached.'));
+  test('caption text is exactly the approved one', () => expect(S.CAPTION).toBe('Thank you for shopping at Royal Bath Hub. Your receipt is attached.'));
 });
 
 // Live test: ONLY to the owner's own number and ONLY when WHATSAPP_LIVE=true and keys exist. Otherwise skipped.

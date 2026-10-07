@@ -1,5 +1,5 @@
 # BATHCO_BLUEPRINT — System Rules & Conventions
-*Bath Hub — LAYLA Dashboard | Last updated: 2026-06-20*
+*Royal Bath Hub — LAYLA Dashboard | Last updated: 2026-06-20*
 
 ---
 

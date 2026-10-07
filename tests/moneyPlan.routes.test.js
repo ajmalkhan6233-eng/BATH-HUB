@@ -43,5 +43,5 @@ test('morning brief reports yesterday and a cheque due today', async () => {
   expect(r.status).toBe(200);
   expect(r.body.sections.yesterday.sales).toBe(60000);
   expect(r.body.sections.cheques.today).toBe(25000);
-  expect(r.body.text).toMatch(/Bath Hub brief/);
+  expect(r.body.text).toMatch(/Royal Bath Hub brief/);
 });

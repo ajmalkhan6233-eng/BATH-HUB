@@ -1,5 +1,5 @@
 // routes/pos_bills.js
-// POS BILL GENERATOR for Bath Hub Thihariya — a standalone, own-table bill/receipt
+// POS BILL GENERATOR for Royal Bath Hub Thihariya — a standalone, own-table bill/receipt
 // feature. Own Pool, same conventions as investor_loans.js / sale_commissions.js.
 //
 // WHY A NEW TABLE (not lasersoft_invoices / daily_summary):
@@ -312,7 +312,7 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         const bill = await loadBill(req.params.id);
         if (!bill) return res.status(404).json({ error: 'not found' });
 
-        let branding = { company_name: 'Bath Hub Thihariya', tagline: '', currency_symbol: 'Rs' };
+        let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: '', currency_symbol: 'Rs' };
         try {
             const fs = require('fs');
             const path = require('path');
@@ -347,7 +347,7 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         y = logoTop + 44 + 8; // logo bottom (44px tall) + gap before the shop name
 
         doc.font('Helvetica-Bold').fontSize(13).fillColor('#0a4531')
-            .text(branding.company_name || 'Bath Hub Thihariya', MARGIN, y, { width: CONTENT_W, align: 'center' });
+            .text(branding.company_name || 'Royal Bath Hub Thihariya', MARGIN, y, { width: CONTENT_W, align: 'center' });
         y = doc.y + 2;
         if (branding.tagline) {
             doc.font('Helvetica').fontSize(7).fillColor('#5c4033')

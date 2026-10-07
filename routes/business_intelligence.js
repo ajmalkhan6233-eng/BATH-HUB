@@ -1,5 +1,5 @@
 // routes/business_intelligence.js
-// CASH-FLOW FORECAST + NON-MOVING STOCK for Bath Hub Thihariya.
+// CASH-FLOW FORECAST + NON-MOVING STOCK for Royal Bath Hub Thihariya.
 //
 // Cash-flow forecast logic is a direct port of the owner's own cashflow.py
 // (built over ~8 months for the earlier tile-shop system) — same core idea:
@@ -27,7 +27,7 @@ const pool = require('../utils/pool');
 // ═══════════════════════ CASH-FLOW FORECAST ═══════════════════════
 // GET /cash-position-forecast?months=3&healthy_threshold=200000
 // healthy_threshold is configurable — the original script hardcoded a number
-// sized for a bigger shop; this one shouldn't assume Bath Hub Thihariya's scale.
+// sized for a bigger shop; this one shouldn't assume Royal Bath Hub Thihariya's scale.
 //
 // NOTE: routes/staff_reports.js (golden-core, never modified) already owns the
 // path /cashflow-forecast — a simple trailing-average sales/expenses/profit

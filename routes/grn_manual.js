@@ -1,5 +1,5 @@
 // routes/grn_manual.js
-// MANUAL GRN entry for Bath Hub Thihariya: type in a supplier delivery (supplier, date,
+// MANUAL GRN entry for Royal Bath Hub Thihariya: type in a supplier delivery (supplier, date,
 // several item rows, a photo per item) instead of waiting for the Excel-drop watcher.
 //
 // - Same tables as the watcher path: one grn_records row per item line, plus products.

@@ -1,5 +1,5 @@
 // routes/sale_commissions.js
-// SALESPERSON COMMISSION + RETURNS module for BATHCO Nature ERP (Bath Hub Thihariya).
+// SALESPERSON COMMISSION + RETURNS module for BATHCO Nature ERP (Royal Bath Hub Thihariya).
 // Own Pool. Same conventions as staff_reports.js / investor_loans.js.
 //
 // WHY THIS EXISTS AS ITS OWN LEDGER (not hooked into lasersoft_invoices):

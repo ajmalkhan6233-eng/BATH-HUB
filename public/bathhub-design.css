@@ -1,12 +1,12 @@
 /* ==========================================================================
-   BATH HUB DESIGN LAYER  (public/bathhub-design.css)
+   ROYAL BATH HUB DESIGN LAYER  (public/bathhub-design.css)
    Visual design only: colours, type, spacing, themes. No logic, no network.
    Themes: Gold (default dark), Water, Light  ->  <html data-theme="dark|water|light">
    Rules: every button/tab/toggle/nav item is at least 48 x 48 px; body text >= 14 px, labels >= 12 px; icons are inline SVG (no emoji).
    Link this file LAST in <head> so it wins over a page's own <style>.
    ========================================================================== */
 
-/* ---- 1. TOKENS (from the Bath Hub design system) ---- */
+/* ---- 1. TOKENS (from the Royal Bath Hub design system) ---- */
 :root, [data-theme="dark"], [data-theme="gold"] {
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
   --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif;

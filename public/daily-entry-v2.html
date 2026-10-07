@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Sales — Bath Hub</title>
+<title>Daily Sales — Royal Bath Hub</title>
 <!-- 100% OFFLINE: no CDN fonts/images — Georgia / Segoe UI system fallbacks, gradient-only themes -->
 <script src="/js/hyperspace-theme.js"></script>
 <script src="/lib/xlsx.full.min.js"></script>
@@ -750,7 +750,7 @@
 <header>
   <div class="hrow">
     <div class="brandline">Bath <em>Hub</em><span class="dot">·</span><span class="sub">Daily Sales Ledger</span></div>
-    <a class="hbtn" id="cmdBtn" href="/owner" style="display:none">← Bath Hub</a>
+    <a class="hbtn" id="cmdBtn" href="/owner" style="display:none">← Royal Bath Hub</a>
     <div class="datewrap">
       <button id="prevDay" title="Previous day" aria-label="Previous day">‹</button>
       <input type="date" id="datePicker" aria-label="Sheet date">
@@ -1139,7 +1139,7 @@
   <div class="savebar">
     <button id="saveBtn" title="Save now">✓ Save</button>
     <span id="saveStatus" role="status">Loading…</span>
-    <span id="syncDot" class="dim" title="Live sync to Bath Hub">•</span>
+    <span id="syncDot" class="dim" title="Live sync to Royal Bath Hub">•</span>
     <span id="backupStatus">Backup folder: <b>not linked</b> — data is saved inside this browser</span>
     <button class="sbtn" id="linkBtn">Link backup folder</button>
     <button class="sbtn" id="backupNowBtn">Save backup file</button>
@@ -1582,7 +1582,7 @@
     const L = [];
     const dstr = new Date(currentDate+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
     const preparedBy = document.getElementById("preparedBy").value.trim();
-    L.push("BATH HUB — DAILY SALES & EXPENSE REPORT");
+    L.push("ROYAL BATH HUB — DAILY SALES & EXPENSE REPORT");
     L.push("Date," + dstr);
     L.push("Prepared by," + esc(preparedBy || "—"));
     L.push("");
@@ -1656,7 +1656,7 @@
     }catch(e){ return false; }
   }
 
-  /* ---------------- Live sync to Bath Hub — server-first refresh, retry queue ---------------- */
+  /* ---------------- Live sync to Royal Bath Hub — server-first refresh, retry queue ---------------- */
   const SYNC_QUEUE_KEY = "bathco-sync-queue";
   function computeTotals(){
     const t = {sales:0,cash:0,card:0,online:0,cheque:0,credit:0,profit:0};
@@ -1942,7 +1942,7 @@
     if (!dates.length){ el.style.display = "none"; el.className = "syncbanner"; el.innerHTML = ""; return; }
     el.className = "syncbanner warn";
     el.innerHTML = "<span>⚠ " + dates.length + " " + (dates.length===1?"entry":"entries") +
-      " not synced to Bath Hub (" + dates.join(", ") + ") — reports covering " +
+      " not synced to Royal Bath Hub (" + dates.join(", ") + ") — reports covering " +
       (dates.length===1?"this date":"these dates") + " may be missing this data until it syncs.</span>" +
       '<button type="button" class="retrybtn" id="unsyncedRetryBtn">Retry now</button>';
     el.style.display = "flex";
@@ -2000,7 +2000,7 @@
     }
     if (isQueued(currentDate)){
       banner.style.display = "";
-      banner.innerHTML = "⚠ Saved on this device, but the last sync to Bath Hub failed. It will keep retrying automatically. " +
+      banner.innerHTML = "⚠ Saved on this device, but the last sync to Royal Bath Hub failed. It will keep retrying automatically. " +
         '<button id="saveErrorRetryBtn" type="button">Retry now</button>';
       document.getElementById("saveErrorRetryBtn").addEventListener("click", ()=> save(true));
       return;
@@ -2262,7 +2262,7 @@
     const UI = '"Segoe UI",sans-serif';
     x.fillStyle = "#0C1412"; x.fillRect(0,0,W,H);
     x.fillStyle = "#F6FAF7"; x.font = "600 30px Georgia, serif";
-    x.fillText("Bath Hub", 40, 58);
+    x.fillText("Royal Bath Hub", 40, 58);
     x.fillStyle = "#2FBF8F"; x.font = "italic 500 16px "+UI;
     x.fillText("DAILY SALES REPORT", 40, 84);
     x.fillStyle = "rgba(234,243,238,.7)"; x.font = "500 15px "+UI;
@@ -2412,7 +2412,7 @@
     const dstr = new Date(currentDate+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
     const preparedBy = document.getElementById("preparedBy").value.trim();
     document.getElementById("printHeader").innerHTML =
-      `<h1>Bath Hub — Daily Sales &amp; Expense Report</h1>
+      `<h1>Royal Bath Hub — Daily Sales &amp; Expense Report</h1>
        <div class="meta">${AESC(dstr)} &nbsp;·&nbsp; Prepared by: ${AESC(preparedBy || "—")}</div>`;
     const ct = computeTotals();
     document.getElementById("printSummary").innerHTML =
@@ -2434,7 +2434,7 @@
     // won't see this day's data until it syncs. Warn rather than let that
     // go unnoticed, per the 26 Jul salary-miss incident.
     if (isQueued(currentDate)){
-      const proceed = confirm("⚠ This device's changes for " + currentDate + " have not synced to Bath Hub " +
+      const proceed = confirm("⚠ This device's changes for " + currentDate + " have not synced to Royal Bath Hub " +
         "yet (it will keep retrying automatically). This report uses this device's own data, but " +
         "other devices and server-side reports won't see it until it syncs.\n\nContinue anyway?");
       if (!proceed) return;
@@ -3290,7 +3290,7 @@
       <tr><td>Cash book (cash proof)</td><td class="r">${counted==null?"—":varOk?"✓ zero variance":"✗ variance "+fmt.format(variance)}</td></tr>
       <tr><td>Physical cash count</td><td class="r">${counted==null?"☐ not entered":"✓ counted"}</td></tr></table>
       ${allMatch ? banner(true,"ALL RECORDS MATCH") : banner(false,"RECORDS INCOMPLETE — see the notes above before signing.")}
-      <div class="foot">Prepared with Bath Hub Daily Entry — ${new Date().toLocaleString()}. Signature: _______________________  Date: _______________</div>`);
+      <div class="foot">Prepared with Royal Bath Hub Daily Entry — ${new Date().toLocaleString()}. Signature: _______________________  Date: _______________</div>`);
 
     const w = window.open("", "_blank");
     if (!w) return alert("Popup blocked — allow popups for this page.");
@@ -3322,9 +3322,9 @@
       .oneline{ font-size:14.5pt; font-style:italic; margin:2pt 0; }
     </style></head><body>
     <table class="doc"><thead><tr><td><div class="runhead">
-      <h1>BATH HUB</h1>
+      <h1>ROYAL BATH HUB</h1>
       <div class="l2">Daily Audit Report — ${dstr} &nbsp;·&nbsp; LARGE PRINT</div>
-      <div class="l3">Ref: BATHCO-AUD-${currentDate.replace(/-/g,"")}-LP &nbsp;·&nbsp; Bath Hub — Confidential</div>
+      <div class="l3">Ref: BATHCO-AUD-${currentDate.replace(/-/g,"")}-LP &nbsp;·&nbsp; Royal Bath Hub — Confidential</div>
     </div></td></tr></thead>
     <tbody><tr><td>${body}</td></tr></tbody></table>
     <div class="print-trigger" style="margin:14pt 0; text-align:center;">
@@ -4023,7 +4023,7 @@
     const x = c.getContext("2d"); x.scale(scale,scale);
     x.fillStyle = "#0C1412"; x.fillRect(0,0,W,H);
     x.fillStyle = "#F6FAF7"; x.font = "600 24px Georgia, serif";
-    x.fillText("Bath Hub", 30, 46);
+    x.fillText("Royal Bath Hub", 30, 46);
     x.fillStyle = "#2FBF8F"; x.font = "italic 500 14px "+UI;
     x.fillText("CHEQUE REMINDER", 30, 68);
     x.fillStyle = "rgba(234,243,238,.7)"; x.font = "500 13px "+UI;
@@ -4434,7 +4434,7 @@
     if (!dates.length) return true;
     return confirm("⚠ " + dates.length + " date" + (dates.length===1?"":"s") + " in this range (" +
       dates.join(", ") + ") " + (dates.length===1?"has":"have") + " local changes on this device not yet " +
-      "synced to Bath Hub. This report will be missing that data.\n\nContinue anyway?");
+      "synced to Royal Bath Hub. This report will be missing that data.\n\nContinue anyway?");
   }
   function unsyncedDatesInRangeDays(){
     const shown = rangeDays.map(d=>d.date);
@@ -4569,7 +4569,7 @@
     const x = c.getContext("2d"); x.scale(scale,scale);
     x.fillStyle = "#0C1412"; x.fillRect(0,0,W,H);
     x.fillStyle = "#F6FAF7"; x.font = "600 24px Georgia, serif";
-    x.fillText("Bath Hub", 30, 46);
+    x.fillText("Royal Bath Hub", 30, 46);
     x.fillStyle = "#2FBF8F"; x.font = "italic 500 14px "+UI;
     x.fillText("RANGE REPORT", 30, 68);
     x.fillStyle = "rgba(234,243,238,.7)"; x.font = "500 13px "+UI;

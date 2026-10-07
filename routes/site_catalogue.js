@@ -87,14 +87,14 @@ function catalogueHtml(tiles) {
         return '<div class="c"><div class="i"' + (p ? ' style="background-image:url(' + p + ')"' : '') + '></div><div class="n">' + esc(t.name) + '</div><div class="s">'
             + esc([t.size, FINISH_NAME[t.finish] || t.finish, GROUP_NAME[t.group]].filter(Boolean).join(' / ')) + '</div></div>';
     }).join('');
-    return '<!doctype html><html><head><meta charset="utf-8"><title>Bath Hub catalogue</title><style>'
+    return '<!doctype html><html><head><meta charset="utf-8"><title>Royal Bath Hub catalogue</title><style>'
         + '@page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;color:#0B1B3A;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
         + '.h{background:#0B1B3A;color:#F6EFDC;padding:18px 22px;display:flex;align-items:center;gap:18px;border-radius:8px}.h img{width:64px;height:64px}'
         + '.h b{display:block;font-size:30px;letter-spacing:.12em;color:#E8CF8A;font-weight:500}.h span{font-size:15px}'
         + '.g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.c{break-inside:avoid;border:1px solid #d9d3c0;border-radius:8px;overflow:hidden}'
         + '.i{height:120px;background:#e9e2cf center/cover no-repeat}.n{font-size:16px;font-weight:bold;padding:8px 10px 0}.s{font-size:12px;color:#4a4f5e;padding:2px 10px 10px}'
         + '.f{margin-top:18px;font-size:12px;color:#4a4f5e;line-height:1.5}'
-        + '</style></head><body><div class="h">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<div><b>BATH HUB</b><span>Tile catalogue. Thihariya, Kandy Road.</span></div></div>'
+        + '</style></head><body><div class="h">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<div><b>ROYAL BATH HUB</b><span>Tile catalogue. Thihariya, Kandy Road.</span></div></div>'
         + '<div class="g">' + cards + '</div>'
         + '<div class="f">Colours and finishes can look different in your light, so please see the tile in our showroom before you buy. Ask us on WhatsApp: 077 799 9219.</div></body></html>';
 }

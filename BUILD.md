@@ -1,4 +1,4 @@
-# BATH HUB BUILD PLAN (read this one file)
+# ROYAL BATH HUB BUILD PLAN (read this one file)
 
 **OWNER SAID GO on 2026-10-04.** This file replaces "no code changes until Aj says GO". Owner: Ajmal. Repo: `E:\AI Sttuf\BATHCO_TEMPLATE` (GitHub `ajmalkhan6233-eng/BATH-HUB`, branch `master`). App name in pm2: `apex-server` (port 3010). Time zone Asia/Colombo.
 
@@ -19,7 +19,7 @@
 - Free first: no paid AI, no paid WhatsApp API. The WhatsApp Business app is used by hand.
 
 ## 2. What the business needs (so you can decide small things)
-Bath Hub, Kandy Road, Thihariya. Bathroom accessories, fittings, ceramics (commodes, basins). **No tiles for now.** Cash is tight (start about 200,000). Stock comes on vendor credit paid by post-dated cheques (cheques written Saturdays, cleared Monday if another bank). Prices are flexible, owner enters the real sold price, no approval steps.
+Royal Bath Hub, Kandy Road, Thihariya. Bathroom accessories, fittings, ceramics (commodes, basins). **No tiles for now.** Cash is tight (start about 200,000). Stock comes on vendor credit paid by post-dated cheques (cheques written Saturdays, cleared Monday if another bank). Prices are flexible, owner enters the real sold price, no approval steps.
 - Running cost without owner pay: **316,000/month** (~10,500/day). Daily all-in cost target 15,000, hard ceiling 18,000.
 - Pricing: accessories list = cost x 1.8 + 150, red line = cost x 1.3. Ceramics: red line = cost + minimum profit, list = red line x 1.25 (25,000 commode: red line 30,000, list 37,500, safe discount 20%). Tiles: percent of cost (First Choice Bathco gross margin is about 18% of price, about 22% on cost).
 - Commission: percent of profit, default **2%** (owner decision 2026-10-04; editable in settings; First Choice Bathco pays 1% of gross profit). Zero on a bill with no profit.
@@ -45,7 +45,7 @@ Bath Hub, Kandy Road, Thihariya. Bathroom accessories, fittings, ceramics (commo
 
 **Owner's instruction (2026-10-04): bring everything necessary from the nine months of First Choice Bathco work into BATH-HUB.** The earlier scan only wrote reports (`audit/REPOS_SCAN.md`, `audit/repos_reports/`). Nothing was copied yet. Builds 0, 2 and 3 do the copying. The three repos are BATHCO (live shop app), bathco-vault (rulebook), Universal-project- (unrelated, skip). The scan's temporary clones are reused: do **not** re-clone or re-read whole repos.
 **Never copy:** credentials of any kind (API keys, DB passwords, PINs, plain-text logins, `.env`), customer names and phones, staff pay, `DALI/` and `data/` spreadsheets into git. After each copy run a grep for `password|passwd|secret|api[_-]?key|token|PIN` on the new files and abort that item if anything matches.
-**Keep the books separate:** First Choice Bathco is a different business. Its cheques, stock count and sales are used for **study and seeding only**, never loaded into Bath Hub's payables, stock or sales tables.
+**Keep the books separate:** First Choice Bathco is a different business. Its cheques, stock count and sales are used for **study and seeding only**, never loaded into Royal Bath Hub's payables, stock or sales tables.
 
 ### VERIFIED HARVEST MAP (Claude chat opened the three archives the owner uploaded: BATHCO.rar, BATHCO_TEMPLATE.rar, bathco-vault.rar)
 Paths are inside the BATHCO clone (`BATHCO/BATHCO/...`) unless stated. Use the scan's temporary clones; do not re-read whole repos.
@@ -75,7 +75,7 @@ Paths are inside the BATHCO clone (`BATHCO/BATHCO/...`) unless stated. Use the s
 
 ### BUILD 0: HARVEST A (rules, brain, safety; quick)
 1. Write `audit/HARVEST_MAP.md` from the map above (add the paths you confirm).
-2. Write `AI_MEMORY/KNOWLEDGE.md` and `AI_MEMORY/skills/` from the TAKE (knowledge) and TAKE (agents and commands) lists. Do not mount any agent. Keep LAYLA's honesty clause. Note the live shop pays 1% of gross profit as commission; Bath Hub's default is 2% of profit (owner decision) and is editable in settings.
+2. Write `AI_MEMORY/KNOWLEDGE.md` and `AI_MEMORY/skills/` from the TAKE (knowledge) and TAKE (agents and commands) lists. Do not mount any agent. Keep LAYLA's honesty clause. Note the live shop pays 1% of gross profit as commission; Royal Bath Hub's default is 2% of profit (owner decision) and is editable in settings.
 3. **Test guard** in the jest setup: abort unless `DB_NAME` is a test database; tests use a fixed fake date, never the real day (20 July 2026 lesson: tests ran against a real date and wiped a day). Port the cross-tenant leak test from bathco-vault, adapted to `branch_id`.
 4. List in `OPEN_ITEMS.md` every place BATH-HUB shows 0 for a missing figure (rule: PENDING, never 0).
 
@@ -93,7 +93,7 @@ Paths are inside the BATHCO clone (`BATHCO/BATHCO/...`) unless stated. Use the s
 Copy with `git show <branch>:<path> > <dest>`. Each item: own module, own test, behind login, `branch_id`. Do the TAKE (code) list in order 1 to 6. For item 1 start by porting `tests/unit/cheque-register.test.js`.
 
 ### BUILD 3: HARVEST C (data: seed and study)
-1. **Item list:** run `import_product_costs.js --dry-run` against the recovered xlsx, then load into a NEW staging table `item_candidates` (code, name, category, cost, price, source). Keep bathroom fittings, accessories and ceramics (categories: basin tap/mixer, shower, bidet, valves, waste/trap/gully, hose, accessory sets, commode, basin, cabinet); drop tiles, adhesive, grout. "Catalogue review" page: the owner ticks items to move into the real catalogue. Prices there are First Choice Bathco's: re-price with Bath Hub's rules.
+1. **Item list:** run `import_product_costs.js --dry-run` against the recovered xlsx, then load into a NEW staging table `item_candidates` (code, name, category, cost, price, source). Keep bathroom fittings, accessories and ceramics (categories: basin tap/mixer, shower, bidet, valves, waste/trap/gully, hose, accessory sets, commode, basin, cabinet); drop tiles, adhesive, grout. "Catalogue review" page: the owner ticks items to move into the real catalogue. Prices there are First Choice Bathco's: re-price with Royal Bath Hub's rules.
 2. **Vendor list** -> `vendor_directory` (name, business phone, categories, typical cheque size, typical weeks to pay). Business vendors only (not AZMI or any personal payable).
 3. **Credit pattern** from the 249-cheque register per vendor into `vendor_directory`. Do not import the cheques.
 4. **Study only:** daily sales sheets, invoice exports, purchases and the 20 April stock count. Output `audit/DATA_STUDY.md` (max 60 lines, no names or phones): sales and gross profit by weekday, month, week of month; best and worst days; festival and holiday effects; average bill and discount; fast and slow items; cheque timing; 10 lines on what it means for a small accessories shop.

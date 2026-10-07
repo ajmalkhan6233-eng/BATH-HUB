@@ -186,7 +186,7 @@ balances changed.
 
 # PART 1 — Data Range Validation (14 Jun 2026)
 
-New request arrived: build `validate_data.js` to scan `C:\Bath Hub\AI-Data\`
+New request arrived: build `validate_data.js` to scan `C:\Royal Bath Hub\AI-Data\`
 for every date 21 Dec 2025 – 14 Jun 2026 (176 days) and check for 3 source
 types per date: (A) Transactions Excel, (B) handwritten expense photo
 (matched via `ocr_results.json`'s UUID→date mapping), (C) Lasersoft
@@ -197,7 +197,7 @@ detection not attempted — filenames give no independent date to cross-check
 against, would need OCR'ing every file, against the "no LLM file reading"
 rule).
 
-**Honest finding**: `C:\Bath Hub\AI-Data\` does NOT contain a per-date triad of
+**Honest finding**: `C:\Royal Bath Hub\AI-Data\` does NOT contain a per-date triad of
 source files for almost any day — the 176 days of `daily_summary` data in
 the DB came from one-time bulk pipelines (seed_database.py, OCR batch,
 Lasersoft bulk exports), not from per-date files sitting in this folder.
@@ -322,7 +322,7 @@ re-import.
 **Premise check (DATA_INDEX.json)**: `summary.complete = 0` — there are
 NO dates marked "complete". 2026-06-10 itself is marked `status:"missing"`
 (validate_data.js's regex found zero files for it). DATA_INDEX.json is
-built from `C:\Bath Hub\AI-Data` and does not cover
+built from `C:\Royal Bath Hub\AI-Data` and does not cover
 `C:\BATHCO_PHASE1\DALI\DAY SALE\`, which is where the actual June-2026
 daily sales registers live and where `daily_summary` rows with
 `source='import_dali_june'` were evidently loaded from. Substituted dates
@@ -356,7 +356,7 @@ summing to exactly 190,540 — and that is exactly what's in
 register (a `~$10-06-2026.xlsx` Excel lock file sits next to it, though
 a sibling file 06-08 also has a lock file and is complete, so that alone
 isn't conclusive). No Lasersoft profit-report file for June 2026 exists
-anywhere under `C:\Bath Hub` or `C:\BATHCO_PHASE1` (only April ones) — the
+anywhere under `C:\Royal Bath Hub` or `C:\BATHCO_PHASE1` (only April ones) — the
 604,190 figure could not be independently verified against any file in
 these folders.
 
@@ -380,10 +380,10 @@ check against Lasersoft "Profit by Sales" exports, with new columns
 `reconciliation_status` (TEXT) and `lasersoft_total` (NUMERIC(14,2)) on
 daily_summary. No total_sale/gross_profit/net_profit/etc. values were modified.
 
-**Step 1 — locate Lasersoft exports.** Searched all of C:\Bath Hub and
+**Step 1 — locate Lasersoft exports.** Searched all of C:\Royal Bath Hub and
 C:\BATHCO_PHASE1 for Profit-by-Sales-type exports. Found only two files:
-- `C:\Bath Hub\AI-Data\uploads\Profit_Report_01-04-2026.xlsx`
-- `C:\Bath Hub\AI-Data\uploads\New folder\Profit_Report_02-04-2026.xlsx`
+- `C:\Royal Bath Hub\AI-Data\uploads\Profit_Report_01-04-2026.xlsx`
+- `C:\Royal Bath Hub\AI-Data\uploads\New folder\Profit_Report_02-04-2026.xlsx`
 (both effectively the same data). Plus `SAMPLE_lasersoft.xlsx` (a template/
 sample, not a real daily export).
 
@@ -395,7 +395,7 @@ The March 15-26 per-date sheets have a 'TOTAL AMOUNT' column, but its sum is
 ~4-5x the corresponding April SALES figures for equivalent sheet structure —
 i.e. it is NOT the same metric as 'SALES' and is not usable for comparison.
 No Lasersoft export of any kind exists for May or June 2026, or for Dec 2025 -
-Feb 2026, anywhere under C:\Bath Hub or C:\BATHCO_PHASE1.
+Feb 2026, anywhere under C:\Royal Bath Hub or C:\BATHCO_PHASE1.
 
 **Step 2 — coverage.** Of the 176 days in scope (2025-12-21 to 2026-06-14),
 only the 30 days of April 2026 have a usable Lasersoft SALES total. These 30

@@ -1,4 +1,4 @@
-# RECONCILIATION RULES — BATH HUB COMMAND
+# RECONCILIATION RULES — ROYAL BATH HUB COMMAND
 
 Living document. Created 12 Jun 2026. Records data-truth hierarchy, known
 discrepancies and their resolutions, and the quarantine log for bad records.
@@ -45,7 +45,7 @@ by the checker as a Seylan Bank SMS misread.
 | 119 | 2025-01-30 | 158,080 | Looks like real report but predates opening | 760AA948-...0886.JPG |
 | 103 | 2025-02-20 | 0 | OCR captured printer error dialog | 0F2C8A7E-...85AB.JPG |
 | 116 | 2025-03-12 | 2,750 | Single invoice line item | 5fb2aad9-...0f873.JPG |
-| 38 | 2025-05-12 | 2,921,000 | ESKEMA CERAMIC **supplier** invoices (purchases, not Bath Hub sales) | 6792c39b-...1852e.JPG (OCR date 26-05-12) |
+| 38 | 2025-05-12 | 2,921,000 | ESKEMA CERAMIC **supplier** invoices (purchases, not Royal Bath Hub sales) | 6792c39b-...1852e.JPG (OCR date 26-05-12) |
 | 39 | 2025-10-30 | 93,325 | Single cash-sale receipt (Mr. Sumith) | 9d268a5b-...803e35.JPG |
 | 201 | 2025-11-27 | 60,340 | Lasersoft single-invoice report (GP%=82.4%, 1 invoice) misfiled as full day | — |
 | 40 | 2025-12-02 | 13,500 | Customer credit memo / return note CRM#0714 | 50f36fa9-...8dd7.jpg |
@@ -67,7 +67,7 @@ by the checker as a Seylan Bank SMS misread.
 | Cheque #760329 "duplicate" | RESOLVED | Do not flag — CHECKER suppression rule (Task #10, not yet coded). |
 | Tile GP ~18% | Normal | Sri Lanka market reality — do not flag (Task #10, not yet coded). |
 | Staff roster: DB 13 vs v2.0 doc 11 names | UNRESOLVED | Blocked on Ajmal's daily-wage/monthly list (Task #9). |
-| Bath Hub Aromatic — dashboard tabs/pages | PENDING removal (UI only) | **CLARIFIED 12 Jun 2026 by Ajmal:** do NOT touch `shop_config.json` or anything LAYLA uses — that bot must keep working with its perfume catalog intact. ONLY remove any Aromatic tab/page from the Bath Hub COMMAND dashboard UI (`public/dashboard.html`, `server.js` routes). Aromatic data stays as-is until it gets its own system. |
+| Royal Bath Hub Aromatic — dashboard tabs/pages | PENDING removal (UI only) | **CLARIFIED 12 Jun 2026 by Ajmal:** do NOT touch `shop_config.json` or anything LAYLA uses — that bot must keep working with its perfume catalog intact. ONLY remove any Aromatic tab/page from the Royal Bath Hub COMMAND dashboard UI (`public/dashboard.html`, `server.js` routes). Aromatic data stays as-is until it gets its own system. |
 | 46-day gap (Apr 19–May 31 2026) | VERIFIED | All 43 days present via import_dali_fix/may/root. Spot-check list for Ajmal pending (Task #8). |
 | 2026-08-04 future-dated row | QUARANTINED | See §2, row 111. |
 | Pre-21-Dec-2025 rows (18 total) | QUARANTINED | See §2. |
@@ -76,7 +76,7 @@ by the checker as a Seylan Bank SMS misread.
 
 ## 4. CHECKER SUPPRESSION RULES (implemented 12 Jun 2026)
 
-`C:\Bath Hub\AI-Data\run_agents.py` now has a `SUPPRESSED_*` registry + `is_suppressed()`
+`C:\Royal Bath Hub\AI-Data\run_agents.py` now has a `SUPPRESSED_*` registry + `is_suppressed()`
 helper near the top of the file:
 - Never flag item code 1676 (2X2 FLOOR TILE pricing — fixed 31 May 2026)
 - Never flag Cheque #760329 (resolved duplicate)
@@ -139,7 +139,7 @@ Dashboard changes:
 
 Added `invoice_seq_start` / `invoice_seq_end` (VARCHAR) columns to `daily_summary`
 to hold the first/last invoice number issued each day (e.g. `SL000040`,
-`HSL000123` — HSL and SL are separate series). `C:\Bath Hub\AI-Data\run_agents.py`
+`HSL000123` — HSL and SL are separate series). `C:\Royal Bath Hub\AI-Data\run_agents.py`
 now has `check_invoice_sequence_gaps()`, called at the end of `run_checker()`:
 for each series, if the next VERIFIED day's `seq_start` isn't exactly one more
 than the previous day's `seq_end`, it writes a quiet `invoice_gap` alert

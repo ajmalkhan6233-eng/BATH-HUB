@@ -17,7 +17,7 @@
 - 2026-10-04 STEP 6 BLOCKED (depends on step 5): no BUILD.md, so the builds W1-W3 and later were not started.
 - 2026-10-04 12:46 STEP 5 RETRY: still no bathhub-build-pack zip. Downloads newest file is dated 2026-10-02; searched C:\Users\Sony (incl. OneDrive), E:\ and D:\ to depth 4 for *build-pack*: nothing. Nothing run. Waiting for the zip.
 - 2026-10-04 Build 1 (pack): extracted bathhub-pack.md (18 files), apply.ps1 ran (45 new tests green), DB backed up (backups\bathco_owner-2026-10-04_1258.sql + encrypted copy D:\BathHubBackups), migrate_vendor_ledger.js OK. W1 route mounted /api/vendor-ledger, W2 menu "Vendor Ledger" added. W3 (GRN "Create vendor bill" button), W4-W6 NOT done.
-- 2026-10-04 Logo lockup (BH box + "Bath Hub" + small "Thihariya") on login, sidebar, strip on every page via public/bathhub-logo.js; SW cache v11. Merge 7e0852f pushed to master. apex-server restarted, /health ok (port 3100, not 3010). Rollback: git revert -m 1 7e0852f. Full Jest: 2 old-guard tests updated; rest green.
+- 2026-10-04 Logo lockup (BH box + "Royal Bath Hub" + small "Thihariya") on login, sidebar, strip on every page via public/bathhub-logo.js; SW cache v11. Merge 7e0852f pushed to master. apex-server restarted, /health ok (port 3100, not 3010). Rollback: git revert -m 1 7e0852f. Full Jest: 2 old-guard tests updated; rest green.
 # BUILD_LOG (one line per step)
 
 Run by the CLOUD session on 2026-10-04 (no E: drive, no Downloads, no pm2, no live shop here). /usage cannot be run by a tool, so the 5% stop was not measurable.

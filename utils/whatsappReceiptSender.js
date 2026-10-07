@@ -1,5 +1,5 @@
 'use strict';
-// Sends the Bath Hub receipt PICTURE to the customer on WhatsApp, using Meta's OFFICIAL WhatsApp Business Cloud API.
+// Sends the Royal Bath Hub receipt PICTURE to the customer on WhatsApp, using Meta's OFFICIAL WhatsApp Business Cloud API.
 // One isolated module: reads a receipt_queue row + its saved PNG (receipt_images), sends, updates the row, logs.
 //
 // SAFETY (owner's rules):
@@ -15,7 +15,7 @@ const path = require('path');
 const axios = require('axios');
 const receiptImage = require('./receiptImage');
 
-const CAPTION = 'Thank you for shopping at Bath Hub. Your receipt is attached.';
+const CAPTION = 'Thank you for shopping at Royal Bath Hub. Your receipt is attached.';
 const GRAPH = 'https://graph.facebook.com/v20.0';
 const RETRIES = 2;                       // 1 first try + 2 retries
 const RETRY_WAIT_MS = 1500;

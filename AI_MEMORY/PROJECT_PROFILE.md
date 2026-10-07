@@ -1,7 +1,7 @@
 # PROJECT_PROFILE (2026-10-01; from CLAUDE.md, package.json, AGENT_GUIDE, docs/V1_START_HERE.md)
 
 ## Identity
-- Name: bathco_template (Bath Hub / "apex" platform template; folder E:\AI Sttuf\BATHCO_TEMPLATE, CLAUDE.md calls it C:\BATHCO_TEMPLATE)
+- Name: bathco_template (Royal Bath Hub / "apex" platform template; folder E:\AI Sttuf\BATHCO_TEMPLATE, CLAUDE.md calls it C:\BATHCO_TEMPLATE)
 - Purpose: white-label shop system for a tile/bathware shop: sales, stock, POS, GRN, expenses, cheques, reports, LAYLA AI assistant, WhatsApp draft-only replies, public site
 - Stack: Node.js (CommonJS, .nvmrc), Express 5, PostgreSQL (pg), whatsapp-web.js, Jest, plain HTML frontend (public/), Anthropic + OpenAI SDKs
 - Git: branch master, remote github.com/ajmalkhan6233-eng/BATH-HUB. Tree clean at inspection.

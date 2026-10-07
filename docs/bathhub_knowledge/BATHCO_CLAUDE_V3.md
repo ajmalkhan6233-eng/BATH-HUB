@@ -1,18 +1,18 @@
 ---
-title: BATH HUB COMMAND — Claude Code Autonomous Agent Contract
+title: ROYAL BATH HUB COMMAND — Claude Code Autonomous Agent Contract
 version: 3.0
 updated: 2026-06-29
 status: ACTIVE — LOCKED
-project: Bath Hub
+project: Royal Bath Hub
 finans and oparation manager: Ajmal Khan
 environment: C:\BATHCO_PHASE1\
 tags: [claude-code, master-rules, bathco, autonomous-agent]
 ---
 
-# ⚡ BATH HUB COMMAND — Claude Code Autonomous Agent Contract v3.0
+# ⚡ ROYAL BATH HUB COMMAND — Claude Code Autonomous Agent Contract v3.0
 
 > **MANDATORY FIRST ACTION — EVERY SESSION:**
-> Read `C:\Users\DELL\Documents\project 1\BATH HUB\BATHCO_MASTER_INDEX.md` before touching any file.
+> Read `C:\Users\DELL\Documents\project 1\ROYAL BATH HUB\BATHCO_MASTER_INDEX.md` before touching any file.
 > Also read `C:\BATHCO_PHASE1\BATHCO_HISTORICAL_DATA.md` at every session start — it holds historical daily sales/expense figures referenced across reconciliation work.
 > It is the map. Individual files only when the index points to them.
 > Do NOT claim to be "initialized" or "locked" — read the live index each session; state does not persist between Claude Code sessions.
@@ -74,12 +74,12 @@ tags: [claude-code, master-rules, bathco, autonomous-agent]
 
 ### 2.2 Environment Separation (CRITICAL)
 ```
-BATH HUB COMMAND     → C:\BATHCO_PHASE1\          (port 3000)
+ROYAL BATH HUB COMMAND     → C:\BATHCO_PHASE1\          (port 3000)
 NOOR DIGITAL SaaS  → C:\NOOR_DIGITAL_PHASE1\    (own .env, own DB role, own git repo)
 Dubai Imports      → C:\DUBAI_IMPORTS_FLUTTER\  (Flutter app + Express port 3002)
 NOOR Islamic App   → C:\Users\DELL\StudioProjects\noor_app\noor_final\
 ```
-**NOOR DIGITAL shares ZERO code, ZERO schema, ZERO secrets with BATH HUB. Absolute isolation.**
+**NOOR DIGITAL shares ZERO code, ZERO schema, ZERO secrets with ROYAL BATH HUB. Absolute isolation.**
 
 ### 2.3 Role-Based Access Control (RBAC)
 
@@ -114,7 +114,7 @@ NOOR Islamic App   → C:\Users\DELL\StudioProjects\noor_app\noor_final\
 ### 3.1 Locked Formula Chain (IMMUTABLE)
 ```javascript
 // ══════════════════════════════════════════════════════
-// BATH HUB CORE FORMULA CHAIN — DO NOT MODIFY WITHOUT
+// ROYAL BATH HUB CORE FORMULA CHAIN — DO NOT MODIFY WITHOUT
 // EXPLICIT WRITTEN INSTRUCTION FROM AJMAL KHAN
 // ══════════════════════════════════════════════════════
 
@@ -332,7 +332,7 @@ Calculation OK  → display value in white/gold
 
 ## SECTION 8 — AGENT ARCHITECTURE (AI COUNCIL)
 
-### 8.1 Internal BATH HUB Agents
+### 8.1 Internal ROYAL BATH HUB Agents
 
 | Agent | Role | Trigger |
 |-------|------|---------|
@@ -354,7 +354,7 @@ Forbidden  : Never quote exact invoice prices, never commit to stock availabilit
 
 ### 8.3 External AI Council (Roles)
 
-| Agent | Primary Role in BATH HUB |
+| Agent | Primary Role in ROYAL BATH HUB |
 |-------|----------------------|
 | Claude (you) | Chief Builder — architecture, code, logic |
 | Claude Code | Dev Execution — runs on Dell, edits files |
@@ -372,9 +372,9 @@ Forbidden  : Never quote exact invoice prices, never commit to stock availabilit
 
 | Service | Path | Port | Status |
 |---------|------|------|--------|
-| BATH HUB COMMAND backend | `C:\BATHCO_PHASE1\` | 3000 | Running |
+| ROYAL BATH HUB COMMAND backend | `C:\BATHCO_PHASE1\` | 3000 | Running |
 | Dubai Imports backend | — | 3002 | Running |
-| BATH HUB PWA (React/Vite/Tailwind) | `C:\BATHCO_PHASE1\bathco-app\` | 5173 | LAN: 192.168.1.5 |
+| ROYAL BATH HUB PWA (React/Vite/Tailwind) | `C:\BATHCO_PHASE1\bathco-app\` | 5173 | LAN: 192.168.1.5 |
 | Ollama (llama3.2 local LLM) | localhost | 11434 | Running |
 | n8n automation | pm2 managed | — | Running |
 | Drop folder (LAYLA inbox) | `C:\BATHCO_DROP\inbox` | — | Watched |
@@ -385,7 +385,7 @@ Forbidden  : Never quote exact invoice prices, never commit to stock availabilit
 
 | Database | Role |
 |----------|------|
-| `bathco` (PostgreSQL 16) | BATH HUB COMMAND — all financial, inventory, staff |
+| `bathco` (PostgreSQL 16) | ROYAL BATH HUB COMMAND — all financial, inventory, staff |
 | `dubai_imports` (PostgreSQL 16) | Dubai Imports — stock, customers, payments, shipments |
 | NOOR DIGITAL DB | Isolated — separate role, separate schema |
 
@@ -425,14 +425,14 @@ Forbidden  : Never quote exact invoice prices, never commit to stock availabilit
 ## SECTION 11 — NOOR DIGITAL SAAS (TERTIARY PROJECT)
 
 ### 11.1 Business Model
-- White-label version of BATH HUB COMMAND for Sri Lankan retailers
+- White-label version of ROYAL BATH HUB COMMAND for Sri Lankan retailers
 - Target market: 15,000+ retail shops, 87% Android dominance
 - Pricing: Rs. 3,000–8,000/month SaaS OR Rs. 75,000 one-time local installation
 
 ### 11.2 Isolation Rules (HARD)
 ```
 Code       : C:\NOOR_DIGITAL_PHASE1\    ← OWN directory
-Config     : Own .env                   ← NEVER shared with BATH HUB
+Config     : Own .env                   ← NEVER shared with ROYAL BATH HUB
 Database   : Own PostgreSQL role        ← NEVER shares bathco DB
 Git        : Own repository             ← NEVER mixed commits
 ```
@@ -481,7 +481,7 @@ Add these dummy fields now to avoid future migrations:
 - Resolved only by Admin after manual verification.
 - Never auto-close. Never auto-override source data.
 
-### 13.4 BATH HUB Specific Business Rules
+### 13.4 ROYAL BATH HUB Specific Business Rules
 - Supplier: Eskema Ceramic — primary tile supplier, cheque-based payments
 - Business ethics: Halal-only, honest record-keeping, no riba (interest) — core value
 - All financial decisions must be reviewable and traceable to source document
@@ -491,8 +491,8 @@ Add these dummy fields now to avoid future migrations:
 ## SECTION 14 — DEPLOYMENT PIPELINE
 
 ### 14.1 Current State
-- BATH HUB PWA: ✅ Built and running on iPhone over LAN (192.168.1.5:5173)
-- BATH HUB Backend: ⏳ Running locally only (port 3000)
+- ROYAL BATH HUB PWA: ✅ Built and running on iPhone over LAN (192.168.1.5:5173)
+- ROYAL BATH HUB Backend: ⏳ Running locally only (port 3000)
 - Cloud target: Railway.app — **NEXT STEP is deploying backend to Railway**
 
 ### 14.2 Railway Deployment Checklist (When Ready)
@@ -530,7 +530,7 @@ See → [[CLOUD_DEPLOY_GUIDE]] for complete Railway deployment steps.
 | 10 | Missing archival path and zero-deletion policy | Added Section 5.6 |
 | 11 | Missing n8n mention entirely | Added to topology and AI Council |
 | 12 | Missing Railway deployment status and next steps | Added Section 14 |
-| 13 | Missing BATH HUB PWA LAN IP (192.168.1.5:5173) | Added Section 9.1 |
+| 13 | Missing ROYAL BATH HUB PWA LAN IP (192.168.1.5:5173) | Added Section 9.1 |
 | 14 | Missing drop folder path (C:\BATHCO_DROP\inbox) | Added Section 9.1 |
 | 15 | Missing credit customer tracking | Added to field rules table |
 | 16 | Missing cheque alert 7-day rule | Added Section 7.2 |
@@ -577,7 +577,7 @@ See → [[CLOUD_DEPLOY_GUIDE]] for complete Railway deployment steps.
 □ Read BATHCO_MASTER_INDEX.md first
 □ Check PENDING_FROM_AJMAL for any outstanding tasks
 □ Check blockers.log for unresolved items from prior sessions
-□ Confirm which environment (BATH HUB / Dubai Imports / NOOR DIGITAL)
+□ Confirm which environment (ROYAL BATH HUB / Dubai Imports / NOOR DIGITAL)
 □ Confirm task scope — get file paths from index before scanning
 □ State pass/fail criteria before first code change
 □ Never claim to be "initialized" — re-read the index every session
@@ -585,7 +585,7 @@ See → [[CLOUD_DEPLOY_GUIDE]] for complete Railway deployment steps.
 
 ---
 
-## SECTION 17 — BATH HUB NATURE MODULE MAP
+## SECTION 17 — ROYAL BATH HUB NATURE MODULE MAP
 
 `public/BATHCO_NATURE.html` (served at `GET /nature`) is a separate frontend from `public/dashboard.html` — never edit both for the same fix, they are intentionally independent. Nature is organized into labeled modules; **an edit to one module should only touch that module's block** (its `<div class="page" id="page-X">` section plus its matching JS functions, grouped under a `// ═══ MODULE NAME ═══` comment banner in the `<script>`).
 
@@ -663,6 +663,6 @@ him specifically:
 
 ---
 
-*Contract v3.0 — Owner: Ajmal Khan — Bath Hub — Thihariya, Kandy Road, Sri Lanka*
+*Contract v3.0 — Owner: Ajmal Khan — Royal Bath Hub — Thihariya, Kandy Road, Sri Lanka*
 *Operates under Islamic business ethics: halal-only, honest record-keeping, no riba.*
 

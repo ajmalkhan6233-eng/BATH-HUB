@@ -1,6 +1,6 @@
-# BATH HUB knowledge, merged into BATH-HUB (2026-10-04)
+# ROYAL BATH HUB knowledge, merged into BATH-HUB (2026-10-04)
 
-Copied from the older BATH HUB repo (8-9 months of rules, agent prompts and commands). New files only: no existing
+Copied from the older ROYAL BATH HUB repo (8-9 months of rules, agent prompts and commands). New files only: no existing
 BATH-HUB code was edited. Nothing here runs by itself.
 
 ## Where things are
@@ -24,18 +24,18 @@ BATH-HUB code was edited. Nothing here runs by itself.
 ## To check later
 - Commands that call endpoints which may not exist here (compare with server.js).
 - Not copied: HANDOVER.md, SECURITY_LOG.md, scripts/ocr_expense_photos.py (hold credentials), big exports, spreadsheets, mobile app, old Python app.
-- Not yet fetched: BATH HUB branch ledger-fixes-2026-07-25 (unmerged daily-ledger work).
+- Not yet fetched: ROYAL BATH HUB branch ledger-fixes-2026-07-25 (unmerged daily-ledger work).
 
-## Code ported from BATH HUB (2026-10-04)
+## Code ported from ROYAL BATH HUB (2026-10-04)
 - PORTED: daily ledger (branch ledger-fixes-2026-07-25): `public/daily-entry-v2.html`, `routes/daily_entry_sync.js` (save/read/meta/range), vendored `public/lib/` (pdf.js, xlsx), test `tests/integration/daily_entry_sync.test.js`.
-  Changes vs BATH HUB: shared DB pool, impossible dates refused, sits behind the normal login (BATH HUB left it open), backup folder configurable (DAILY_BACKUP_DIR).
+  Changes vs ROYAL BATH HUB: shared DB pool, impossible dates refused, sits behind the normal login (ROYAL BATH HUB left it open), backup folder configurable (DAILY_BACKUP_DIR).
   Open at `/daily-entry-v2.html`. NOT yet checked in a browser with real data.
-- The page's Cheques tab is deliberately cut off from the server (URL points to a dead path, so it keeps cheques in the browser only). BATH HUB's cheque route deletes and rewrites the whole table on every save and uses a different table shape; BATH-HUB's `routes/cheque_register.js` is better built (held/overdue/validation), so it was NOT replaced.
+- The page's Cheques tab is deliberately cut off from the server (URL points to a dead path, so it keeps cheques in the browser only). ROYAL BATH HUB's cheque route deletes and rewrites the whole table on every save and uses a different table shape; BATH-HUB's `routes/cheque_register.js` is better built (held/overdue/validation), so it was NOT replaced.
 - NOT ported because BATH-HUB is already ahead or equal: staff loans maths (same flaw in both, still open), cheque tracking, audit, staff reports, purchasing, offline sync (BATH-HUB `routes/sync.js` is newer).
 - Not found anywhere in the cloud repos: the cheque clearing calculator + bank-holiday list, Lasersoft PDF reader, stock-count and cross-tenant leak test. They are probably only on the laptop (C:\BATHCO_PHASE1).
 
 ## Names and LAYLA (2026-10-04, second pass)
-- Shop name changed to Bath Hub in all text added from BATHCO (folder renamed `docs/bathhub_knowledge`). Left as they are: file names, `C:\BATHCO_PHASE1` paths and code identifiers.
-- `shop_config.json` (what LAYLA's prompt is built from) now holds the real shop: Bath Hub Thihariya, Kandy Road, 9:30 AM, island-wide delivery and installation, owner Ajmal Khan, Standard / Premium / Luxury packages, brands (Kohler, American Standard, Grohe, Duravit, Hansgrohe), and BATHCO's fuller escalation and style rules. The perfume business (Bathco Aromatic) was left out on purpose: separate business, and the rules say never mix it with the showroom.
+- Shop name changed to Royal Bath Hub in all text added from BATHCO (folder renamed `docs/bathhub_knowledge`). Left as they are: file names, `C:\BATHCO_PHASE1` paths and code identifiers.
+- `shop_config.json` (what LAYLA's prompt is built from) now holds the real shop: Royal Bath Hub Thihariya, Kandy Road, 9:30 AM, island-wide delivery and installation, owner Ajmal Khan, Standard / Premium / Luxury packages, brands (Kohler, American Standard, Grohe, Duravit, Hansgrohe), and BATHCO's fuller escalation and style rules. The perfume business (Bathco Aromatic) was left out on purpose: separate business, and the rules say never mix it with the showroom.
 - What BATHCO's LAYLA really contained: personality, rules and the package/brand list. It had NO tile or accessory product knowledge in the repo. BATH-HUB's `layla_v2/` is already ahead (trilingual glossary, answers only from the product database, price guard). The real tile and accessory knowledge is the ~2,600-item product list, which lives on the laptop and in the database.
 - NOT copied (blocked by the safety check, shop data): BATHCO_HISTORICAL_DATA, the GLM exports, MASTER_LEDGER reports, DATA_INDEX.json. They are still in the BATHCO repo. Say the word if you want them copied.

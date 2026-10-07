@@ -1,6 +1,6 @@
 # COMMANDS (all slash commands in .claude/commands, merged from the old BATHCO repo)
 
-Type `/name` in Claude Code. Shop commands (marked *) were adapted to Bath Hub's API; the rest are copied as they were and may need checking against server.js. Never let a command start the live server.
+Type `/name` in Claude Code. Shop commands (marked *) were adapted to Royal Bath Hub's API; the rest are copied as they were and may need checking against server.js. Never let a command start the live server.
 
 | Command | What it does |
 |---|---|
@@ -25,7 +25,7 @@ Type `/name` in Claude Code. Shop commands (marked *) were adapted to Bath Hub's
 | /customer-credit | /customer-credit |
 | /daily-close* | Enter the daily close figures for $ARGUMENTS. |
 | /daraz-list | /daraz-list |
-| /dashboard-refresh* | Refresh the Bath Hub dashboard at localhost:3000 with latest data. |
+| /dashboard-refresh* | Refresh the Royal Bath Hub dashboard at localhost:3000 with latest data. |
 | /db-backup | /db-backup |
 | /db-check | /db-check |
 | /db-query | /db-query |

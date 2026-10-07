@@ -126,7 +126,7 @@ function createRouter(pool) {
         try {
             await ready;
             const r = await pool.query(`SELECT topic, rule_text, version FROM agent_rules WHERE active = TRUE ORDER BY topic, rule_key`);
-            const body = ['BATH HUB AGENT RULEBOOK', 'Rules taught by Aj. Follow them. Draft only; Aj approves.', '']
+            const body = ['ROYAL BATH HUB AGENT RULEBOOK', 'Rules taught by Aj. Follow them. Draft only; Aj approves.', '']
                 .concat(r.rows.map((x, i) => `${i + 1}. [${x.topic}] ${x.rule_text} (v${x.version})`))
                 .join('\n') + '\n';
             res.type('text/plain').send(body);

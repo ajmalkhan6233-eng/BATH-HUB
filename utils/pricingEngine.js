@@ -1,5 +1,5 @@
 'use strict';
-/** Bath Hub pricing rules as pure functions. Rates live in settings; these are the defaults agreed with the owner. */
+/** Royal Bath Hub pricing rules as pure functions. Rates live in settings; these are the defaults agreed with the owner. */
 const roundTo = (n, step = 1) => Math.round(n / step) * step;
 const ceilTo = (n, step = 1) => Math.ceil(n / step - 1e-9) * step;
 const floorTo = (n, step = 1) => Math.floor(n / step + 1e-9) * step;
@@ -38,7 +38,7 @@ function marginInfo(cost, price, floor) {
 
 /**
  * Real shelf markups on cost from First Choice Bathco's item price list (Lasersoft export, 22 April 2026, 1,256 items; no names or prices kept).
- * Median markup on cost, with the 25th and 75th percentile. Starting values only, the owner edits them. Bath Hub and First Choice Bathco are
+ * Median markup on cost, with the 25th and 75th percentile. Starting values only, the owner edits them. Royal Bath Hub and First Choice Bathco are
  * on the same road: keep commodes and basins close to these shelf prices or customers will compare.
  */
 const DEFAULT_CATEGORY_MARKUP = {

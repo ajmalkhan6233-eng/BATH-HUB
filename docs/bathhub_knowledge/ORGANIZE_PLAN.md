@@ -42,8 +42,8 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 
 | Item | → Category | Note |
 |---|---|---|
-| BATH HUB MODULAR CONTROL.md | BATHCO_DOCS | superseded — merged into MODULE_REGISTRY.md 2026-07-04 |
-| BATH HUB SESSION ADDON 04JULY.md | BATHCO_DOCS | |
+| ROYAL BATH HUB MODULAR CONTROL.md | BATHCO_DOCS | superseded — merged into MODULE_REGISTRY.md 2026-07-04 |
+| ROYAL BATH HUB SESSION ADDON 04JULY.md | BATHCO_DOCS | |
 | BATHCO_CYBERPUNK.html | OLD_VERSIONS | old standalone mockup |
 | BATHCO_DASHBOARD_REPORT.txt | BATHCO_DOCS | |
 | BATHCO_GLM_HANDOVER.md | BATHCO_DOCS | |
@@ -51,7 +51,7 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 | BATHCO_STATUS_REPORT.md | BATHCO_DOCS | |
 | BATHCO_UPGRADED.html | OLD_VERSIONS | old standalone mockup |
 | BATHCO_VERSION_1.rar | OLD_VERSIONS | zip snapshot of the (still-active, LEAVE'd) folder, dated Jul 4 |
-| DUBAI_IMPORTS_COMPLETE.html | MISC | different project (Dubai Imports, not Bath Hub) |
+| DUBAI_IMPORTS_COMPLETE.html | MISC | different project (Dubai Imports, not Royal Bath Hub) |
 | Desktop.rar | OLD_VERSIONS | full desktop backup snapshot |
 | FOUND_EXCEL.rar | EXCEL_REPORTS | |
 | KIMI_MERGE_LOG.md | BATHCO_DOCS | |
@@ -61,7 +61,7 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 | NATURE_BUILD.MD | BATHCO_DOCS | identical size to NATURE_BUILD.txt below — likely a duplicate pair |
 | NATURE_BUILD.txt | BATHCO_DOCS | see above |
 | New Text Document.txt / (2) / (3) / (4) / (5) / (6) / (7) / (8) | MISC | most are 0 bytes; scratch files |
-| New folder\ (whole dir) | OLD_VERSIONS | mixed old Bath Hub/Noor/Sidra docs+html+sql, nothing newer than Jun 25 |
+| New folder\ (whole dir) | OLD_VERSIONS | mixed old Royal Bath Hub/Noor/Sidra docs+html+sql, nothing newer than Jun 25 |
 | SESSION_EXPORT.md | BATHCO_DOCS | |
 | STATUS_TODAY.md | BATHCO_DOCS | |
 | _extracted_found_excel\ (whole dir) | EXCEL_REPORTS | |
@@ -86,7 +86,7 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 | Archive\ (whole dir, hundreds of .JPG/.jpg) | PHOTOS_EXPENSES | |
 | Archive (1).zip | PHOTOS_EXPENSES | identical size (722,342,182 bytes) to Archive.zip below — likely a duplicate |
 | Archive.zip | PHOTOS_EXPENSES | see above |
-| BATH HUB DAILY ENTRY FIX.md | BATHCO_DOCS | |
+| ROYAL BATH HUB DAILY ENTRY FIX.md | BATHCO_DOCS | |
 | BATHCO_CLAUDE_v3.md | BATHCO_DOCS | |
 | BATHCO_CLAUDE_v3_1.md | BATHCO_DOCS | near-identical size to v3.md — likely a revision pair |
 | BATHCO_RULES.md | BATHCO_DOCS | duplicate name also on Desktop |
@@ -95,8 +95,8 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 | COMMAND 5 HOME FIX ONLY.md | BATHCO_DOCS | |
 | ChromeSetup.exe / ChromeSetup (1).exe | INSTALLERS | identical size — duplicate |
 | Claude Setup.exe / Claude Setup (1).exe | INSTALLERS | |
-| GLM_BATHCO_APP_MASTER_PROMPT.md | MISC | prompt for external tool (GLM), not a Bath Hub doc proper |
-| GLM_NOOR_PROMPT.txt / GLM_NOOR_PROMPT_1.txt | MISC | Noor project, not Bath Hub |
+| GLM_BATHCO_APP_MASTER_PROMPT.md | MISC | prompt for external tool (GLM), not a Royal Bath Hub doc proper |
+| GLM_NOOR_PROMPT.txt / GLM_NOOR_PROMPT_1.txt | MISC | Noor project, not Royal Bath Hub |
 | Microsoft.Services.Store.winmd | MISC | stray system-type file |
 | Obsidian-1.12.7.exe | INSTALLERS | |
 | Payment_Stop_Request_Letter.pdf | BATHCO_DOCS | business letter |
@@ -110,7 +110,7 @@ StudioProjects, Program Files, Windows, and anything inside an active git repo.
 | council-review.html | MISC | |
 | dashboard.html / dashboard (1).html | OLD_VERSIONS | superseded — BATHCO_NATURE.html is now the one live app per MODULE_REGISTRY.md |
 | flutter_windows_3.44.2-stable.zip | INSTALLERS | |
-| gen_part1.py / generate_noor_app.py / setup_noor.py / setup_noor_fixed.py | MISC | Noor project scripts, not Bath Hub |
+| gen_part1.py / generate_noor_app.py / setup_noor.py / setup_noor_fixed.py | MISC | Noor project scripts, not Royal Bath Hub |
 | gh_2.93.0_windows_amd64.msi | INSTALLERS | |
 | node-v24.16.0-x64.msi | INSTALLERS | |
 | obsidian-vault-notes.zip / obsidian-vault-notes_1.zip | MISC | |

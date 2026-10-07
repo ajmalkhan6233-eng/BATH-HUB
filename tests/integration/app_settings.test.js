@@ -44,15 +44,15 @@ describe('app settings', () => {
     expect((await request(admin).put('/api/app-settings').send([])).status).toBe(400);
     const mixed = await request(admin).put('/api/app-settings').send({ shop_name: 'Good', brand_primary: 'nope' });
     expect(mixed.status).toBe(400);
-    expect((await request(admin).get('/api/app-settings')).body.settings.shop_name).toBe('Bath Hub');
+    expect((await request(admin).get('/api/app-settings')).body.settings.shop_name).toBe('Royal Bath Hub');
   });
   test('admin saves; public subset shows only the safe keys to any user', async () => {
-    const put = await request(admin).put('/api/app-settings').send({ shop_name: 'Bath Hub Test', brand_primary: '#112233', dashboard_sales_target: 150000, shop_phone: '0300', whatsapp_draft_only: false });
+    const put = await request(admin).put('/api/app-settings').send({ shop_name: 'Royal Bath Hub Test', brand_primary: '#112233', dashboard_sales_target: 150000, shop_phone: '0300', whatsapp_draft_only: false });
     expect(put.status).toBe(200);
     expect(put.body.changed).toEqual(expect.arrayContaining(['shop_name', 'dashboard_sales_target']));
     const pub = await request(staff).get('/api/app-settings/public');
     expect(pub.status).toBe(200);
-    expect(pub.body).toEqual({ shop_name: 'Bath Hub Test', tagline: '', brand_primary: '#112233', brand_accent: '#1F2937', opening_hours: '', dashboard_sales_target: 150000 });
+    expect(pub.body).toEqual({ shop_name: 'Royal Bath Hub Test', tagline: '', brand_primary: '#112233', brand_accent: '#1F2937', opening_hours: '', dashboard_sales_target: 150000 });
     expect(pub.body.shop_phone).toBeUndefined();
     expect(pub.body.whatsapp_draft_only).toBeUndefined();
   });
@@ -62,7 +62,7 @@ describe('app settings', () => {
     expect(await S.getBool(pool, 'whatsapp_draft_only', 'TEST_FLAG_X', true)).toBe(false);          // DB (false) beats env (true)
     expect(await S.getBool(pool, 'not_saved_key', 'TEST_FLAG_X', false)).toBe(true);                // env beats default
     expect(await S.getBool(pool, 'not_saved_key', 'TEST_FLAG_UNSET', true)).toBe(true);             // default
-    expect(await S.getSetting(pool, 'shop_name', 'fallback')).toBe('Bath Hub Test');
+    expect(await S.getSetting(pool, 'shop_name', 'fallback')).toBe('Royal Bath Hub Test');
     expect(await S.getSetting(pool, 'zzz', 'fallback')).toBe('fallback');
     delete process.env.TEST_FLAG_X;
   });

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bath Hub receipt</title><style>
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Royal Bath Hub receipt</title><style>
 @font-face{font-family:Cinzel;font-weight:500;src:url(fonts/cinzel-latin-500-normal.woff2)}
 @font-face{font-family:Cinzel;font-weight:600;src:url(fonts/cinzel-latin-600-normal.woff2)}
 @font-face{font-family:Cormorant;font-weight:500;src:url(fonts/cormorant-garamond-latin-500-normal.woff2)}
@@ -52,10 +52,10 @@ td:first-child{width:44%}
 </div></div>
 <script>
 /* ---- DATA: the app sets window.RECEIPT_DATA before load (or calls renderReceipt(data)) ---- */
-const SAMPLE={shopName:"BATH HUB",address:"Thihariya, Kandy Road",phone:"0777 999 219",
+const SAMPLE={shopName:"ROYAL BATH HUB",address:"Thihariya, Kandy Road",phone:"0777 999 219",
  billNo:"0001",date:"02 Oct 2026",customer:"Mr. Sample Name",
  items:[{name:"Wall-hung toilet set",qty:1,price:45000},{name:"Basin mixer tap",qty:2,price:8500},{name:"Shower set, gold finish",qty:1,price:12000}],
- discount:4000,thanks:"Thank you for choosing Bath Hub",tagline:"Every piece, a little more than you paid for."};
+ discount:4000,thanks:"Thank you for choosing Royal Bath Hub",tagline:"Every piece, a little more than you paid for."};
 const n=v=>Number(v).toLocaleString('en-US');
 function renderReceipt(d){
   d=Object.assign({},SAMPLE,d||{});

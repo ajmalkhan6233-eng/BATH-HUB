@@ -8,7 +8,7 @@ const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const str = (max, label) => v => (typeof v === 'string' && v.length <= max) ? null : `${label} must be text of ${max} characters or less`;
 const SCHEMA = {
-    shop_name:             { def: 'Bath Hub', check: v => (typeof v === 'string' && v.trim().length >= 1 && v.length <= 100) ? null : 'shop_name must be 1 to 100 characters' },
+    shop_name:             { def: 'Royal Bath Hub', check: v => (typeof v === 'string' && v.trim().length >= 1 && v.length <= 100) ? null : 'shop_name must be 1 to 100 characters' },
     tagline:               { def: '', check: str(200, 'tagline') },
     shop_phone:            { def: '', check: str(40, 'shop_phone') },
     shop_address:          { def: '', check: str(300, 'shop_address') },

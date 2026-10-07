@@ -1,5 +1,5 @@
 // routes/cheque_register.js
-// CHEQUE REGISTER for Bath Hub Thihariya — the checks YOU write (to suppliers,
+// CHEQUE REGISTER for Royal Bath Hub Thihariya — the checks YOU write (to suppliers,
 // investors, etc.), tracked with due dates, so Sunday's cash can be checked
 // against what clears Saturday. Own Pool, own table, isolated by design.
 //

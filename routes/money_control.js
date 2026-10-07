@@ -1,5 +1,5 @@
 // routes/money_control.js
-// MONEY CONTROL module for Bath Hub Thihariya — backs the owner's daily
+// MONEY CONTROL module for Royal Bath Hub Thihariya — backs the owner's daily
 // "cockpit" page: today's sales by payment mode, the daily reserve for fixed
 // overheads, cheques due per bank account (with hold support), and a general
 // money-allocation ledger (investment in, planned spend, etc.).

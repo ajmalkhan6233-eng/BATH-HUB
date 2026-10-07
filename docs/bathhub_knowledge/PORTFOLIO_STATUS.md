@@ -7,7 +7,7 @@ Full detail in `DECISIONS_LOG.md` ("PART 1 — Data Range Validation" and
 
 ## ✅ PART 1 — Data file coverage check (21 Dec 2025 – 14 Jun 2026, 176 days)
 
-Wrote and ran `validate_data.js`, which scans `C:\Bath Hub\AI-Data` for the
+Wrote and ran `validate_data.js`, which scans `C:\Royal Bath Hub\AI-Data` for the
 3 source files per day (Transactions Excel, expense photo, Lasersoft
 cost/price report) and writes `DATA_INDEX.json`.
 
@@ -21,7 +21,7 @@ direct DB entry). Partial dates: 9/14/19/20 Jan, 20 Feb, 1/2/8/30 Apr,
 generated from this index**, awaiting your go-ahead on what (if anything)
 needs fixing in how AI-Data is organized.
 
-## ✅ PART 2 — BATH HUB COMMAND mobile app — complete rebuild
+## ✅ PART 2 — ROYAL BATH HUB COMMAND mobile app — complete rebuild
 
 Per your "full auto, start PART 2" instruction, rebuilt
 `C:\BATHCO_PHASE1\bathco-mobile` from scratch with a fresh dark

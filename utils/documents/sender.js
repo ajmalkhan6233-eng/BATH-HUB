@@ -14,7 +14,7 @@ const { normalizeSriLankaPhone } = require('../whatsappReceiptSender');
 
 const ROLES = ['owner', 'colleague', 'contact'];
 const PURPOSE_RE = /^[a-z0-9_-]{1,40}$/;
-const CAPTION = 'Document from Bath Hub. Sent by the owner.';
+const CAPTION = 'Document from Royal Bath Hub. Sent by the owner.';
 
 const hint = p => '***' + T.last3(p);
 const parseTypes = s => { try { const a = JSON.parse(s); return Array.isArray(a) ? a.map(String) : []; } catch (e) { return []; } };

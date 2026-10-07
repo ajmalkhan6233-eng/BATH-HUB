@@ -1,5 +1,5 @@
 // routes/invoice_receipts.js
-// WHATSAPP RECEIPTS for Bath Hub Thihariya: send a customer a designed receipt image for a
+// WHATSAPP RECEIPTS for Royal Bath Hub Thihariya: send a customer a designed receipt image for a
 // POS bill (pos_bills / pos_bill_items — the POS Billing screen, where sales are entered)
 // over the existing WhatsApp bridge.
 //
@@ -16,7 +16,7 @@
 //   http://localhost:3001/send) with the image as base64 media + a text caption. This
 //   module never starts the bridge.
 // - Logo: drop public/receipt-logo.png in place and it appears in the empty slot at the
-//   top of the receipt. Shop name comes from SHOP_NAME (default "Bath Hub Thihariya").
+//   top of the receipt. Shop name comes from SHOP_NAME (default "Royal Bath Hub Thihariya").
 
 require('dotenv').config();
 const express = require('express');
@@ -111,7 +111,7 @@ async function findBill({ bill_id, bill_number }) {
 // ─── Receipt rendering ───────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lkr = n => { const v = Number(n || 0); const f = Number.isInteger(v) ? 0 : 2; return 'LKR ' + v.toLocaleString('en-US', { minimumFractionDigits: f, maximumFractionDigits: f }); };
-const shopName = () => process.env.SHOP_NAME || 'Bath Hub Thihariya';
+const shopName = () => process.env.SHOP_NAME || 'Royal Bath Hub Thihariya';
 
 function receiptData(bill, rec) {
     const d = bill.created_at instanceof Date ? bill.created_at : new Date(bill.created_at);

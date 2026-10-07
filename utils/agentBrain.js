@@ -137,7 +137,7 @@ function markApproval(text, reasons) {
     return `[NEEDS AJ APPROVAL: ${reasons.join('; ')}]\n${t}`;
 }
 
-const OVERRIDE_REPLY = "I can only help with questions about Bath Hub's products and the shop. Aj will help you with anything else.";
+const OVERRIDE_REPLY = "I can only help with questions about Royal Bath Hub's products and the shop. Aj will help you with anything else.";
 const INTEREST_REPLY = "We don't offer anything that involves interest. Aj will be happy to talk to you about other ways to pay.";
 const APPROVAL_SENTENCE = "Discounts, special prices and payment arrangements are decided by Aj. I've passed your request to him and he will reply to you.";
 
@@ -145,7 +145,7 @@ const APPROVAL_SENTENCE = "Discounts, special prices and payment arrangements ar
 const INTERNAL_INTENTS = new Set(['net_profit_day', 'net_profit_range', 'net_profit_month', 'credit_balance', 'pending_cheques']);
 
 const SAFE_REFUSAL = "I'm sorry, I can't share that. Aj will be happy to help you directly.";
-const UNKNOWN_REPLY = `Thank you for contacting Bath Hub. ${DONT_KNOW} the answer to that yet, so I won't guess. Aj will reply to you shortly.`;
+const UNKNOWN_REPLY = `Thank you for contacting Royal Bath Hub. ${DONT_KNOW} the answer to that yet, so I won't guess. Aj will reply to you shortly.`;
 
 module.exports = {
     checkReply, markPriceIfNeeded, customerText, hasPrice,

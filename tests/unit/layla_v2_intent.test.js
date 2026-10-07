@@ -105,7 +105,7 @@ describe('LAYLA v2 intent: facts LAYLA does not have, quotes, location, products
         expect(parseName('mage nama Saman')).toBe('Saman');
         expect(classify('my name is Priya').intent).toBe('name');
         expect(cleanProfileName('Nimal Perera')).toBe('Nimal');
-        expect(cleanProfileName('Bath Hub Official 24/7')).toBeNull();
+        expect(cleanProfileName('Royal Bath Hub Official 24/7')).toBeNull();
         expect(cleanProfileName('😎')).toBeNull();
         expect(cleanProfileName('94771234567')).toBeNull();
     });

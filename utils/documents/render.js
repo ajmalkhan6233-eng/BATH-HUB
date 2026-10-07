@@ -25,7 +25,7 @@ function branding(root = ROOT) {
         if (!full.startsWith(path.resolve(pub) + path.sep) || !MIME[path.extname(full).toLowerCase()]) continue;
         try { logo = `data:${MIME[path.extname(full).toLowerCase()]};base64,${fs.readFileSync(full).toString('base64')}`; break; } catch (e) { /* next */ }
     }
-    return { name: cfg.company_name || 'Bath Hub', tagline: cfg.tagline || '', logo };
+    return { name: cfg.company_name || 'Royal Bath Hub', tagline: cfg.tagline || '', logo };
 }
 
 const cell = (type, v) => {

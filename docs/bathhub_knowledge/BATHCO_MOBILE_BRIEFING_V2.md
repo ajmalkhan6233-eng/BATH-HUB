@@ -1,4 +1,4 @@
-# BATH HUB COMMAND Mobile — Redesign Briefing V2 (14 Jun 2026)
+# ROYAL BATH HUB COMMAND Mobile — Redesign Briefing V2 (14 Jun 2026)
 
 Status: `C:\BATHCO_PHASE1\bathco-mobile` does not exist yet — this is a
 from-scratch build (Expo / React Native + TypeScript), read-only against the

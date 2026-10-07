@@ -19,7 +19,7 @@ in the `bathco` database, using the same tier formula as the dashboard
 | **Total** | 197 |
 
 1-20 Dec 2025 (20 days) are MISSING with no source files located anywhere
-under C:/BATHCO_PHASE1/DALI or C:/Bath Hub/AI-Data/uploads - this predates
+under C:/BATHCO_PHASE1/DALI or C:/Royal Bath Hub/AI-Data/uploads - this predates
 the tracked business range (21 Dec 2025 onward, see SOURCE_INVENTORY.md).
 
 Update (15 Jun 2026, Desktop/1122 source review): 2026-06-11..06-15 promoted

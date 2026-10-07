@@ -1,5 +1,5 @@
 'use strict';
-// Receipt picture module on its own: draws the Bath Hub receipt PNG for a 1-item and a 12-item bill, saves it for the queue, sends nothing.
+// Receipt picture module on its own: draws the Royal Bath Hub receipt PNG for a 1-item and a 12-item bill, saves it for the queue, sends nothing.
 jest.mock('pg', () => require('../helpers/pgmock')());
 const fs = require('fs');
 const os = require('os');
@@ -13,7 +13,7 @@ let haveChrome = true;
 try { haveChrome = fs.existsSync(require('puppeteer').executablePath()); } catch (e) { haveChrome = false; }
 const chrome = haveChrome ? test : test.skip;
 
-const one = { shopName: 'BATH HUB', address: 'Thihariya, Kandy Road', phone: '0777 999 219', billNo: 'T-1', date: '02 Oct 2026', customer: 'Test', items: [{ name: 'Wall-hung toilet set', qty: 1, price: 45000 }], discount: 0 };
+const one = { shopName: 'ROYAL BATH HUB', address: 'Thihariya, Kandy Road', phone: '0777 999 219', billNo: 'T-1', date: '02 Oct 2026', customer: 'Test', items: [{ name: 'Wall-hung toilet set', qty: 1, price: 45000 }], discount: 0 };
 const twelve = { ...one, billNo: 'T-12', items: Array.from({ length: 12 }, (_, i) => ({ name: 'Item number ' + (i + 1), qty: (i % 3) + 1, price: 1500 + i * 2750 })), discount: 5000 };
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'receipts-'));
 afterAll(() => { for (const f of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, f)); fs.rmdirSync(dir); });

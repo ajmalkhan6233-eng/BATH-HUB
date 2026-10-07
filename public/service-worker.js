@@ -1,4 +1,4 @@
-// Bath Hub owner app: service worker v5 (offline shell + saved copies of data).
+// Royal Bath Hub owner app: service worker v5 (offline shell + saved copies of data).
 //  - Static files (/owner, every screen, scripts, fonts, icons): precached, network-first, cache fallback.
 //  - /api GET: network-first; when the network is down the LAST good answer is served and marked  X-Saved-Copy: 1
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.

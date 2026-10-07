@@ -1,6 +1,6 @@
 # ONE APP INVENTORY (2026-10-02, tag pre-cleanup-2026-10-02)
 
-Target: `/` = Bath Hub public site, `/owner` = the one owner app. Rule: nothing is deleted while its feature is missing from /owner.
+Target: `/` = Royal Bath Hub public site, `/owner` = the one owner app. Rule: nothing is deleted while its feature is missing from /owner.
 
 | File | Purpose | In /owner? | Duplicate of | Action |
 |---|---|---|---|---|

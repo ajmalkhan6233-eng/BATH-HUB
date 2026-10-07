@@ -1,4 +1,4 @@
-/* Bath Hub logo lockup: BH box on the left, "Bath Hub" to its right, "Thihariya" small underneath.
+/* Royal Bath Hub logo lockup: BH box on the left, "Royal Bath Hub" to its right, "Thihariya" small underneath.
    Adds a slim brand strip at the top of any page that has no lockup yet. */
 (function () {
   var css = '.bh-lockup{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit}'
@@ -12,7 +12,7 @@
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   window.bhLockupHTML = function (sub, large) {
     return '<span class="bh-lockup' + (large ? ' bh-lockup-lg' : '') + '"><img src="/brand/logo-bh-transparent.png" alt="BH">'
-      + '<span><span class="bh-name">Bath Hub</span>' + (sub ? '<span class="bh-sub">Thihariya</span>' : '') + '</span></span>';
+      + '<span><span class="bh-name">Royal Bath Hub</span>' + (sub ? '<span class="bh-sub">Thihariya</span>' : '') + '</span></span>';
   };
   function ready() {
     if (document.querySelector('.bh-lockup, .sidebar-logo, .login-box')) return;

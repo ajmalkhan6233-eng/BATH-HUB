@@ -1,4 +1,4 @@
-Refresh the Bath Hub dashboard at localhost:3000 with latest data.
+Refresh the Royal Bath Hub dashboard at localhost:3000 with latest data.
 
 Steps:
 1. Check if server is running: GET http://localhost:3000/api/home-stats

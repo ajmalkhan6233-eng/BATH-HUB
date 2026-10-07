@@ -56,7 +56,7 @@ describe('the page file', () => {
     const png = fs.readFileSync(path.join(root, 'public/website/og-image.png'));
     expect(png.slice(1, 4).toString()).toBe('PNG'); expect(png.readUInt32BE(16)).toBe(1200); expect(png.readUInt32BE(20)).toBe(630);
     const m = JSON.parse(read('public/website/site.webmanifest'));
-    expect(m.name).toBe('Bath Hub');
+    expect(m.name).toBe('Royal Bath Hub');
     for (const i of m.icons) expect(fs.existsSync(path.join(root, 'public', i.src))).toBe(true);
   });
   test('print stylesheet exists', () => { expect(html).toMatch(/@media print\{/); });

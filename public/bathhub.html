@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bath Hub - Tiles and Bathroom Fittings, Thihariya</title>
-<meta name="description" content="Bath Hub, Kandy Road, Thihariya: floor and wall tiles, bathtubs, taps and showers. Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
+<title>Royal Bath Hub - Tiles and Bathroom Fittings, Thihariya</title>
+<meta name="description" content="Royal Bath Hub, Kandy Road, Thihariya: floor and wall tiles, bathtubs, taps and showers. Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
 <meta name="theme-color" content="#1c2a33">
 <link rel="icon" type="image/png" href="/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Bath Hub - Tiles and Bathroom Fittings, Thihariya">
+<meta property="og:title" content="Royal Bath Hub - Tiles and Bathroom Fittings, Thihariya">
 <meta property="og:description" content="Pick a tile, plan your bathroom, and ask us for a price on WhatsApp.">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeGoodsStore","name":"Bath Hub","description":"Tiles and bathroom fittings","address":{"@type":"PostalAddress","streetAddress":"Kandy Road","addressLocality":"Thihariya","addressCountry":"LK"},"telephone":"+94777999219"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HomeGoodsStore","name":"Royal Bath Hub","description":"Tiles and bathroom fittings","address":{"@type":"PostalAddress","streetAddress":"Kandy Road","addressLocality":"Thihariya","addressCountry":"LK"},"telephone":"+94777999219"}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,7 +113,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:14px;border-top:1px soli
 <body>
 <div class="note" id="sampleNote" hidden></div>
 <header><div class="bar">
-  <div class="logo">Bath Hub<small id="tag"></small></div>
+  <div class="logo">Royal Bath Hub<small id="tag"></small></div>
   <div class="langs" role="group" aria-label="Language">
     <button data-l="en" aria-pressed="true">English</button>
     <button data-l="si" aria-pressed="false">සිංහල</button>
@@ -242,7 +242,7 @@ const T = {
        ["What you see on screen","Phone screens change colours. The room picture is a guide, not a promise. Come and see the real tile, and ask us anything: we will tell you honestly what suits your budget."]],
   cH:"Send us a message", cP:"Tell us what you need. We will call or WhatsApp you, usually the same day.",
   cName:"Your name", cPhone:"Phone or WhatsApp number", cProduct:"Which tile or item? (optional)", cMsg:"Your message (optional)", cSend:"Send", cOk:"Thank you. We will contact you soon.", cBad:"Please enter your name and a phone number.", cFail:"Could not send. Please message us on WhatsApp.", cMap:"Open map", cCall:"Call us", cWa:"WhatsApp us",
-  foot:"Bath Hub, Kandy Road, Thihariya. Prices change with import costs, so we share them when you ask."},
+  foot:"Royal Bath Hub, Kandy Road, Thihariya. Prices change with import costs, so we share them when you ask."},
  si:{tag:"ටයිල් සහ නාන කාමර උපාංග, තිහාරිය", h1:"ඔබේ කාමරයේ ටයිල් එක බලන්න", lead:"පහතින් ටයිල් එකක් තෝරන්න, ඔබේ පොළොව වෙනස් වෙන හැටි බලන්න. මෙය මඟ පෙන්වීමක් පමණි. ඔබේ නිවසේදී වර්ණය සහ දිලිසීම වෙනස් විය හැක, එබැවින් තීරණය කිරීමට පෙර ෂෝරූම් එකට පැමිණෙන්න.",
   living:"සාලය", hall:"ශාලාව", size:"ප්‍රමාණය", finish:"නිමාව", best:"සුදුසු තැන්", ask:"WhatsApp හරහා අසන්න", sampleNote:"සාම්පල දත්ත: පළ කිරීමට පෙර සැබෑ භාණ්ඩ ඇතුළත් කරන්න.", noWa:"WhatsApp අංකය ඇතුළත් කර නැත.",
   glossy:"දිලිසෙන", matt:"මැට්", nano:"නැනෝ පොලිෂ්", floor:"පොළොව", wall:"බිත්තිය", bathroom:"නාන කාමරය", kitchen:"මුළුතැන්ගෙය",
@@ -313,7 +313,7 @@ function renderStrip(){
 }
 function renderSpec(){
   const L=T[lang], t=sel, uses=t.use.map(u=>L[u]).join(", ");
-  const wa=WHATSAPP?`<a class="cta" href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Bath Hub: I am interested in "+t.name)}">${L.ask}</a>`:"";
+  const wa=WHATSAPP?`<a class="cta" href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Royal Bath Hub: I am interested in "+t.name)}">${L.ask}</a>`:"";
   $("spec").innerHTML=`<h3>${esc(t.name)}</h3><dl><dt>${L.size}</dt><dd>${t.w} x ${t.h} cm (${inch(t.w)} x ${inch(t.h)} in${t.nom?", "+esc(t.nom):""})</dd><dt>${L.finish}</dt><dd>${L[t.finish]}</dd><dt>${L.best}</dt><dd>${uses}</dd></dl>${wa}`;
 }
 function calc(){
@@ -343,7 +343,7 @@ function renderContact(){
   const L=T[lang];
   $("cH").textContent=L.cH; $("cP").textContent=L.cP; $("cSend").textContent=L.cSend;
   $("cName").placeholder=L.cName; $("cPhone").placeholder=L.cPhone; $("cProduct").placeholder=L.cProduct; $("cMsg").placeholder=L.cMsg;
-  const maps="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent("Bath Hub Kandy Road Thihariya");
+  const maps="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent("Royal Bath Hub Kandy Road Thihariya");
   $("clinks").innerHTML=(WHATSAPP?`<a href="https://wa.me/${WHATSAPP}">${L.cWa}</a><a href="tel:+${WHATSAPP}">${L.cCall}</a>`:"")+`<a href="${maps}" target="_blank" rel="noopener">${L.cMap}</a>`;
   const f=$("wafab"); if(WHATSAPP){ f.hidden=false; f.href="https://wa.me/"+WHATSAPP; }
 }

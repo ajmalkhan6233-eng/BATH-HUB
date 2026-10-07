@@ -1,5 +1,5 @@
 // routes/item_catalog.js
-// ITEM CATALOG for Bath Hub Thihariya: add items with auto-generated sequential
+// ITEM CATALOG for Royal Bath Hub Thihariya: add items with auto-generated sequential
 // item codes (001, 002, 003...) and an optional photo.
 //
 // - Writes to the existing `products` table (item_code, name, category, stock_level,

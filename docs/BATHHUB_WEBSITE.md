@@ -1,4 +1,4 @@
-# Bath Hub website: how it gets its tiles
+# Royal Bath Hub website: how it gets its tiles
 
 `public/bathhub.html` (served at `/bathhub.html`) loads `/bathhub-feed.js` and asks `GET /api/public/catalogue`
 for the tiles the shop has published.

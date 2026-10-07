@@ -554,7 +554,7 @@ const setupGate = (handler) => async (req, res) => {
     try { if (await setupNeeded()) return res.redirect(302, '/setup.html'); } catch {}
     return handler(req, res);
 };
-// One site: Bath Hub is the front door; the owner's business screens live at /owner (sign-in required for every private API).
+// One site: Royal Bath Hub is the front door; the owner's business screens live at /owner (sign-in required for every private API).
 app.get('/', setupGate((req, res) => res.redirect(302, '/bathhub.html')));
 app.get('/app', setupGate((req, res) => res.redirect(302, '/owner')));
 app.get('/owner', setupGate((req, res) => res.sendFile('public/bathco_complete.html', { root: __dirname })));

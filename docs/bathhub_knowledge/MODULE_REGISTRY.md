@@ -1,13 +1,13 @@
 ---
-title: BATH HUB — Module/Domain Registry
+title: ROYAL BATH HUB — Module/Domain Registry
 purpose: Scope map for change requests. Read this FIRST, then touch ONLY the files listed under the named domain.
 updated: 2026-07-04
 status: built from live directory scan (no prior version existed) — verify a domain's file list before a large change if it's been a while
 ---
 
-## M1–M10 cross-reference (owner's tagging scheme from BATH HUB MODULAR CONTROL.md, merged here 2026-07-04)
+## M1–M10 cross-reference (owner's tagging scheme from ROYAL BATH HUB MODULAR CONTROL.md, merged here 2026-07-04)
 
-This is now the **one master module map** — `BATH HUB MODULAR CONTROL.md`'s M1–M10 scheme is not a separate registry, it's a shorthand layer over the domains below. When the owner says "M2 change," find M2 in this table, then read the matching domain section for the actual file list.
+This is now the **one master module map** — `ROYAL BATH HUB MODULAR CONTROL.md`'s M1–M10 scheme is not a separate registry, it's a shorthand layer over the domains below. When the owner says "M2 change," find M2 in this table, then read the matching domain section for the actual file list.
 
 | M-tag | Name | Maps to domain(s) below | Code tag to use |
 |---|---|---|---|
@@ -62,8 +62,8 @@ If a request doesn't map cleanly to one domain, say so and ask which domain(s) a
 ## 5. Agents & AI Pipeline
 - `layla.js` — LAYLA WhatsApp AI receptionist, Anthropic→OpenRouter→Ollama fallback chain
 - `agents/BATHCO_ASSISTANT_MODE.md`, `agents/BATHCO_MASTER.md`, `agents/bathco-council.md`, `agents/llm-council.md` — agent persona/behavior specs
-- `.claude/commands/*.md` (13 slash commands) — BATH HUB-specific Claude Code commands
-- External (not in this repo): `C:\Bath Hub\AI-Data\run_agents.py`, `generate_reports.py`, `ocr_openrouter.py`, `seed_database.py` — the 5-agent (CHECKER/NOVA/QUINN/VERA/LAYLA) pipeline and OCR
+- `.claude/commands/*.md` (13 slash commands) — ROYAL BATH HUB-specific Claude Code commands
+- External (not in this repo): `C:\Royal Bath Hub\AI-Data\run_agents.py`, `generate_reports.py`, `ocr_openrouter.py`, `seed_database.py` — the 5-agent (CHECKER/NOVA/QUINN/VERA/LAYLA) pipeline and OCR
 
 ## 6. GRN Watcher (LIVE — pm2 `grn-watcher`)
 - `grn-watcher.js` — polls `C:\BATHCO_DROP\inbox\GRN` every 30s, Anthropic vision extraction, writes `grn_records`

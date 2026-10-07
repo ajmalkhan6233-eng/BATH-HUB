@@ -307,8 +307,8 @@ describe('LAYLA v2 languages and human style', () => {
         await say(CUST, 'my name is Nimal');
         expect((await store.getCustomer(CUST)).name).toBe('Nimal');
         expect(all(await say(CUST, 'thanks'))).toContain('Nimal');
-        const r = await say(CUST2, 'hello', { name: 'Bath Hub Fan 24/7' });
-        expect(all(r)).not.toMatch(/Fan|Bath Hub Fan/);
+        const r = await say(CUST2, 'hello', { name: 'Royal Bath Hub Fan 24/7' });
+        expect(all(r)).not.toMatch(/Fan|Royal Bath Hub Fan/);
         expect(all(await say('94773000000', 'hello', { name: 'Kasun Perera' }))).toContain('Kasun');
     });
     test('remembers the last 20 messages and no more are read', async () => {

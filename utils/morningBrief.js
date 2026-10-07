@@ -34,7 +34,7 @@ function buildBrief(d, todayISO) {
 
 function toText(b) {
   const s = b.sections, y = s.yesterday;
-  const L = [`Good morning. Bath Hub brief for ${b.date}`, '',
+  const L = [`Good morning. Royal Bath Hub brief for ${b.date}`, '',
     `Yesterday: sales ${fmt(y.sales)} (${y.salesPct}% of ${fmt(y.targetSales)}). Profit ${fmt(y.grossProfit)} against a daily cost of ${fmt(y.dailyCost)}: ${y.ahead ? 'ahead by' : 'behind by'} ${fmt(Math.abs(y.profitVsCost))}.`, '',
     `Cheques due: today ${fmt(s.cheques.today)}, tomorrow ${fmt(s.cheques.tomorrow)}, ${s.cheques.monday.date || 'Monday'} ${fmt(s.cheques.monday.amount)}.`,
     `Cash on hand ${fmt(s.cash.onHand)}. ${s.cash.gap > 0 ? `SHORT by ${fmt(s.cash.gap)} for the next ${s.cash.days} days.` : 'Cheques for the next days are covered.'}`, '', 'Today:'];

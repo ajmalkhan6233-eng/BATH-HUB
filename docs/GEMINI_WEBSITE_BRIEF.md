@@ -1,4 +1,4 @@
-# Command for Gemini / AI Studio: research and build the Bath Hub website
+# Command for Gemini / AI Studio: research and build the Royal Bath Hub website
 
 Paste everything below the line into Google AI Studio (or Gemini). Send back what it makes and Claude will wire it to the shop app and test it. Do not paste passwords, cost prices or customer data into it.
 
@@ -7,7 +7,7 @@ Paste everything below the line into Google AI Studio (or Gemini). Send back wha
 You are a senior web designer and front-end developer. First do research, then build.
 
 ## The business
-Bath Hub, Kandy Road, Thihariya, Sri Lanka. Sells floor and wall tiles, bathtubs, taps, showers and bathroom fittings. The owner is Aj. Customers are home builders, renovators and contractors in the Gampaha / Colombo / Kandy area. Most come from WhatsApp, TikTok and Facebook on a phone. Languages: English, Sinhala (සිංහල), Tamil (தமிழ்). Prices are NOT shown publicly (they change with import costs); customers ask on WhatsApp.
+Royal Bath Hub, Kandy Road, Thihariya, Sri Lanka. Sells floor and wall tiles, bathtubs, taps, showers and bathroom fittings. The owner is Aj. Customers are home builders, renovators and contractors in the Gampaha / Colombo / Kandy area. Most come from WhatsApp, TikTok and Facebook on a phone. Languages: English, Sinhala (සිංහල), Tamil (தமிழ்). Prices are NOT shown publicly (they change with import costs); customers ask on WhatsApp.
 
 ## Step 1: research (write a short report first, max 1 page)
 1. Look at 8 to 10 good tile and bathroom showroom websites (Sri Lanka, India, UK, Australia). Note what makes them feel professional: layout, photo style, tile filters, "visualise in my room" tools, WhatsApp buttons, trust signs.

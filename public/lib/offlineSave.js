@@ -1,4 +1,4 @@
-/*! Bath Hub offline save. One save button pattern for every page: saves on the device first, syncs when the internet is back.
+/*! Royal Bath Hub offline save. One save button pattern for every page: saves on the device first, syncs when the internet is back.
  *  Browser: OfflineSave.post(url, body) / OfflineSave.bindForm(form, url) / OfflineSave.badge(element).  Node tests use createOutbox().
  *  Rules: every save gets a unique Idempotency-Key (the server ignores repeats); 4xx answers are final (not retried); network errors and 5xx are retried with backoff. */
 (function (root) {
