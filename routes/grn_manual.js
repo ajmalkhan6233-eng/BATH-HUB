@@ -10,6 +10,7 @@
 // - Everything runs in one transaction: if any line is invalid nothing is saved and any
 //   photos written for the request are removed.
 
+const { todayLK } = require('../utils/lkTime');
 const { lineTotal, weightedAvgCost, round2 } = require('../utils/grn_math');
 require('dotenv').config();
 const express = require('express');
@@ -56,7 +57,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         const grn_date = String(payload.grn_date || '').trim();
         if (!supplier_name) throw badRequest('Enter the supplier');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(grn_date) || isNaN(Date.parse(grn_date))) throw badRequest('Enter a valid GRN date');
-        if (grn_date > new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10)) throw badRequest('GRN date cannot be in the future');
+        if (grn_date > todayLK()) throw badRequest('GRN date cannot be in the future');
         const lines = Array.isArray(payload.lines) ? payload.lines : [];
         if (!lines.length) throw badRequest('Add at least one item');
         if (lines.length > MAX_LINES) throw badRequest(`Too many item rows (max ${MAX_LINES})`);

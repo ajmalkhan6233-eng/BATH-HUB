@@ -66,6 +66,8 @@ router.patch('/api/purchase-orders/:id', async (req, res) => {
     const { status, linked_grn_id, total_amount, expected_date, notes } = req.body || {};
     if (total_amount !== undefined && total_amount !== null && !isNonNegative(total_amount)) return res.status(400).json({ error: 'total_amount must be a number, 0 or more' });
     if (expected_date && !isDate(expected_date)) return res.status(400).json({ error: 'expected_date must be a date (YYYY-MM-DD)' });
+    if (linked_grn_id !== undefined && linked_grn_id !== null && !(Number.isInteger(Number(linked_grn_id)) && Number(linked_grn_id) > 0)) return res.status(400).json({ error: 'linked_grn_id must be a whole number' });
+    if (status !== undefined && (typeof status !== 'string' || !status.trim() || status.length > 30)) return res.status(400).json({ error: 'status must be a short text' });
     const sets = [], vals = [];
     if (status !== undefined) { vals.push(status); sets.push(`status=$${vals.length}`); }
     if (linked_grn_id !== undefined) { vals.push(linked_grn_id); sets.push(`linked_grn_id=$${vals.length}`); }
