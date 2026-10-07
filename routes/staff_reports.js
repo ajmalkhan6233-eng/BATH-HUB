@@ -18,6 +18,7 @@
 //   rep_margin_by_product     -> real catalog margin from products.avg_cost/selling_price (not sales-weighted)
 //   rep_top_slow_items        -> BLOCKED, no source data — built=false
 
+const { marginPct } = require('../utils/margin');
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
@@ -401,12 +402,12 @@ router.get('/margin-by-product', async (req, res) => {
     try {
         const r = await pool.query(`
             SELECT item_code, name, category, avg_cost, selling_price,
-                   (selling_price - avg_cost) AS margin_amt,
-                   CASE WHEN selling_price > 0 THEN ROUND(((selling_price - avg_cost) / selling_price) * 100, 2) ELSE NULL END AS margin_pct
+                   (selling_price - avg_cost) AS margin_amt
             FROM products
             WHERE active IS TRUE AND avg_cost > 0 AND selling_price > 0
-            ORDER BY margin_pct DESC
         `);
+        for (const row of r.rows) { row.margin_pct = marginPct(row.avg_cost, row.selling_price); }
+        r.rows.sort((a, b) => (b.margin_pct ?? -Infinity) - (a.margin_pct ?? -Infinity));
         res.json({
             caveat: 'This is a CATALOG margin — current selling_price minus avg_cost per product row — not a sales-volume-weighted realized margin. No line-item sales table exists anywhere in this database to know how many units of each product actually sold, so a true "realized margin by product" cannot be computed. 40 of 85 products have no cost/price data and are excluded.',
             rows: r.rows,

@@ -1,5 +1,6 @@
 'use strict';
 /** Royal Bath Hub pricing rules as pure functions. Rates live in settings; these are the defaults agreed with the owner. */
+const { marginPct } = require('./margin');
 const roundTo = (n, step = 1) => Math.round(n / step) * step;
 const ceilTo = (n, step = 1) => Math.ceil(n / step - 1e-9) * step;
 const floorTo = (n, step = 1) => Math.floor(n / step + 1e-9) * step;
@@ -33,7 +34,7 @@ function tilePrice(cost, { pctOfCost = 22, uplift = 0.25, step = 10 } = {}) {
 function marginInfo(cost, price, floor) {
   const profit = Math.round((price - cost) * 100) / 100;
   const zone = price < cost ? 'RED' : floor !== undefined && price < floor ? 'AMBER' : 'GREEN';
-  return { profit, marginPct: price > 0 ? Math.round((profit / price) * 1000) / 10 : 0, markupPct: Math.round((profit / cost) * 1000) / 10, zone };
+  return { profit, marginPct: marginPct(cost, price), markupPct: cost > 0 ? Math.round((profit / cost) * 1000) / 10 : null, zone };
 }
 
 /**

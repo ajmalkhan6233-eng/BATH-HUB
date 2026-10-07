@@ -39,6 +39,7 @@ th{color:var(--text2);font-weight:600;font-size:12px}td.n,th.n{text-align:right}
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id);
 const N=v=>(v===null||v===undefined||v===''||isNaN(v))?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+const M=v=>(v===null||v===undefined||v===''||isNaN(v))?'-':Number(v).toFixed(2)+'%';
 const P=v=>(v===null||v===undefined||v===''||isNaN(v))?'—':Number(v).toFixed(1)+'%';
 const tod=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const mstart=()=>tod().slice(0,8)+'01';
@@ -110,7 +111,7 @@ const TABS=[
  }},
  {k:'margin',l:'Margin by Product',flag:'rep_margin_by_product',run:async()=>{
    const d=await api('/api/margin-by-product');
-   return '<div class="note">'+E(d.caveat||'')+'</div>'+exportBtn()+'<div class="card">'+table(['Code','Product','Category','Avg cost','Selling price','Margin','Margin %'],(d.rows||[]).map(r=>[r.item_code,r.name,r.category||'—',N(r.avg_cost),N(r.selling_price),N(r.margin_amt),P(r.margin_pct)]),3)+'</div>';
+   return '<div class="note">'+E(d.caveat||'')+'</div>'+exportBtn()+'<div class="card">'+table(['Code','Product','Category','Avg cost','Selling price','Margin','Margin %'],(d.rows||[]).map(r=>[r.item_code,r.name,r.category||'—',N(r.avg_cost),N(r.selling_price),N(r.margin_amt),M(r.margin_pct)]),3)+'</div>';
  }},
  {k:'range',l:'Daily Range',run:async()=>{
    const f=$('rf')?$('rf').value:mstart(),t=$('rt')?$('rt').value:tod();

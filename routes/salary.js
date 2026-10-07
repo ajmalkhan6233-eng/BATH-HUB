@@ -10,6 +10,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const { todayLK } = require('../utils/lkTime');
 const M = require('../utils/salaryMath');
+const { marginFromProfit } = require('../utils/margin');
 
 function ownerOnly(req, res, next) {
     const u = req.session && req.session.user;
@@ -86,7 +87,7 @@ function createRouter(pool, { today = todayLK } = {}) {
 
             // margin: the last 30 days of real figures, else the setting
             const hist = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_sale),0) AS sales FROM daily_summary WHERE report_date >= ($1::date - 30) AND report_date < $1::date AND gross_profit > 0`, [t], [{ gp: 0, sales: 0 }]))[0];
-            const histMargin = num(hist.sales) > 0 ? Math.round(num(hist.gp) / num(hist.sales) * 1000) / 10 : null;
+            const histMargin = marginFromProfit(num(hist.gp), num(hist.sales));
             const margin = histMargin != null ? histMargin : s.margin_pct;
 
             const sales = ds ? num(ds.total_sale) : 0, cash = ds ? num(ds.cash_sale) : 0;
