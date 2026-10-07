@@ -625,6 +625,7 @@ app.use('/api', require('./routes/agent_brain'));           // M9 agent brain: L
 app.use('/api', require('./routes/salary'));              // SALARY module (isolated): daily cost target, monthly profit split, cheque set-aside -> /api/salary* (owner only)
 app.use('/api', require('./routes/document_inbox'));       // Document Inbox: photos of papers (bill / GRN / cheque / sheets), checked by Aj, then filed -> /api/document-inbox*
 app.use('/api', require('./routes/documents'));          // DOCUMENTS & REPORTS (owner only): PDF/CSV reports, allow-listed WhatsApp send (dry run unless live), inbound-file quarantine -> /api/documents*
+app.use('/api', require('./routes/investor_contacts'));   // Aj registers investor WhatsApp numbers for Layla
 app.use('/api', require('./routes/notifications'));       // routes are relative (/notifications etc) -> /api/notifications*
 
 // Hourly check for due-soon cheques/loans -> WhatsApp Business API (no-op,
@@ -814,6 +815,13 @@ app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
         }
 
         console.log(`[WEBHOOK] ${phone} → ${isVoiceNote ? '[Voice Note]' : text}`);
+
+        // A registered investor's number gets only their own investment figures (utils/investorLayla.js), never anything else.
+        const investorReply = await require('./utils/investorLayla').answerInvestor(pool, phone);
+        if (investorReply) {
+            console.log(`[LAYLA-INVESTOR] → ${phone}: answered`);
+            return res.json({ success: true, reply: investorReply, escalated: false });
+        }
 
         // A pending day-sheet-photo draft awaiting YES/NO takes priority over
         // normal LAYLA chat — see /webhook/whatsapp-photo below (audit.md item 3).

@@ -7,6 +7,7 @@
 // Pay-early window: 5 days, matching the Money Control / Cheque Register
 // "act now" alert (owner's Rule #1 — a cheque must never bounce or return).
 
+const { getPendingPapers } = require('../utils/paperNotifications');
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
@@ -78,7 +79,8 @@ async function getDueSoonNotifications() {
 // ═══════════════════════ LIST active (non-dismissed) due-soon notifications ═══════════════════════
 router.get('/notifications', async (req, res) => {
     try {
-        res.json(await getDueSoonNotifications());
+        const [due, papers] = await Promise.all([getDueSoonNotifications(), getPendingPapers(pool)]);
+        res.json([...papers, ...due]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

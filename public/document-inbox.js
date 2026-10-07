@@ -108,3 +108,16 @@ async function diFile(id) {
 }
 async function diReread(id) { diMsg('Reading again...'); const r = await fetch('/api/document-inbox/' + id + '/reread', { method: 'POST' }); if (!r.ok) diMsg((await r.json().catch(() => ({}))).error || 'Could not read'); else diMsg(''); loadDocInbox(); }
 async function diReject(id) { if (!confirm('Reject this paper? It will not be filed.')) return; await fetch('/api/document-inbox/' + id + '/reject', { method: 'POST' }); loadDocInbox(); }
+
+// Red badge on the Document Inbox menu item: how many papers Layla has read that are waiting for Aj.
+async function diBadge() {
+  try {
+    const r = await fetch('/api/notifications', { credentials: 'same-origin' }); if (!r.ok) return;
+    const n = (await r.json()).filter(x => x.category === 'paper').length;
+    const li = document.querySelector('.nav-item[data-page="docinbox"]'); if (!li) return;
+    let b = li.querySelector('.di-badge');
+    if (!b) { b = document.createElement('span'); b.className = 'di-badge'; b.style.cssText = 'background:#c0392b;color:#fff;border-radius:10px;padding:0 7px;margin-left:6px;font-size:12px'; li.appendChild(b); }
+    b.textContent = n; b.style.display = n ? '' : 'none';
+  } catch (_) { /* badge is optional */ }
+}
+diBadge(); setInterval(diBadge, 60000);
