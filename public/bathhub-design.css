@@ -6,6 +6,8 @@
    Link this file LAST in <head> so it wins over a page's own <style>.
    ========================================================================== */
 
+@import url("/design2_tokens.css");   /* Design 2 look in the shop colours (black, ash, gold); remove this line to go back to Design 3 */
+
 /* ---- 1. TOKENS (from the Royal Bath Hub design system) ---- */
 :root, [data-theme="dark"], [data-theme="gold"] {
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;

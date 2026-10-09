@@ -1,0 +1,148 @@
+/* ==========================================================================
+   DESIGN 2 LAYER (public/design2_tokens.css): the "Design 2" look from AI Studio, in the SHOP colours.
+   Black, ash (grey) and gold. Guide layout, fonts, sizes, spacing, radius, shadows kept (reference: design/design2.css).
+   COLOUR ONLY + LOOK ONLY: no logic, no HTML, no ids. Loaded by @import at the top of bathhub-design.css.
+   Applies to the default theme (dark/gold). The Water and Light themes in Settings stay as they were.
+   Every rule starts with `html` so it wins over the older layer whatever the load order.
+   Roll back in one line: git checkout design3-backup
+   ========================================================================== */
+
+/* ---- 1. GUIDE TOKENS, SHOP COLOURS (the guide's blue is replaced; green / amber / red keep their meaning) ---- */
+html:root, html[data-theme="dark"], html[data-theme="gold"] {
+  --color-primary: #0B0B0C;          /* black */
+  --color-primary-hover: #26262A;    /* black hover */
+  --color-primary-light: #F6F0DC;    /* gold tint */
+  --color-accent: #C9A227;           /* shop gold (config/active.branding.json gold_500) */
+  --color-accent-hover: #9A7B14;     /* gold hover */
+  --color-success: #15803d;  --color-success-bg: #f0fdf4;
+  --color-warning: #b45309;  --color-warning-bg: #fffbeb;
+  --color-danger:  #b91c1c;  --color-danger-bg:  #fef2f2;
+  --color-bg-app: #F4F4F2;           /* light ash page */
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-alt: #ECECEA;   /* ash panel */
+  --color-border: #DCDCD8;           /* ash border */
+  --color-border-focus: #C9A227;     /* gold focus */
+  --color-text-main: #0B0B0C;
+  --color-text-muted: #6B6E73;       /* ash text */
+  --color-text-placeholder: #8E9096;
+  --color-text-inverse: #ffffff;
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ---- 2. THE APP'S OWN TOKEN NAMES, pointed at the guide values ---- */
+  --font-sans: var(--font-family-base); --font-mono: var(--font-family-mono);
+  --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem;
+  --shadow-sm: 0 1px 3px rgba(11,11,12,.10), 0 1px 2px rgba(11,11,12,.06);
+  --shadow-md: 0 4px 6px -1px rgba(11,11,12,.10), 0 2px 4px -2px rgba(11,11,12,.05);
+  --shadow-lg: 0 10px 15px -3px rgba(11,11,12,.10), 0 4px 6px -4px rgba(11,11,12,.05);
+  --shadow-gold: 0 1px 3px rgba(11,11,12,.10);
+
+  --bg-canvas: var(--color-bg-app); --bg-surface: var(--color-bg-surface); --bg-surface-elevated: var(--color-bg-surface-alt);
+  --bg-surface-subtle: #F9F9F7; --bg-surface-hover: #ECECEA; --bg-input: #ffffff;
+  --bg-glass: #ffffff; --bg-glass-fallback: #ffffff;
+  --border-subtle: var(--color-border); --border-strong: #C4C4BE; --border-focus: var(--color-border-focus);
+  --text-primary: var(--color-text-main); --text-secondary: #3A3B3F; --text-muted: var(--color-text-muted); --text-on-accent: #0B0B0C;
+  --gold-primary: var(--color-accent); --gold-hover: #B28F1F; --gold-active: var(--color-accent-hover);
+  --gold-text: #7A5C0A; --gold-bg-subtle: var(--color-primary-light); --gold-border-subtle: rgba(201,162,39,.50);
+  --status-success: var(--color-success); --status-success-bg: var(--color-success-bg);
+  --status-danger: var(--color-danger);   --status-danger-bg: var(--color-danger-bg);
+  --status-warning: var(--color-warning); --status-warning-bg: var(--color-warning-bg);
+  --status-info: #3F4148;                 --status-info-bg: #ECECEA;      /* was sky blue: now dark ash */
+  --water-cyan: #6B6E73; --purple: #6B6E73;
+  --radius: var(--radius-lg);
+  color-scheme: light;
+}
+
+/* ---- 3. BASE ---- */
+html body { font-family: var(--font-family-base); background-color: var(--color-bg-app); color: var(--color-text-main); }
+html ::selection { background: var(--color-primary-light); }
+html ::-webkit-scrollbar-thumb { background: #C4C4BE; }
+html :focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+
+/* ---- 4. NAVIGATION (guide: white sidebar, brand in black, active item = gold tint with a gold marker) ---- */
+html .sidebar { background: var(--color-bg-surface); border-right: 1px solid var(--color-border); }
+html .sidebar-logo { border-bottom: 1px solid var(--color-border); }
+html .logo-text { color: var(--color-primary); letter-spacing: -0.025em; }
+html .sidebar .nav-item { color: var(--color-text-muted); font-weight: 500; border-radius: var(--radius-md); transition: all .15s ease-in-out; }
+html .sidebar .nav-item:hover { background: var(--color-bg-surface-alt); color: var(--color-text-main); }
+html .sidebar .nav-item.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; border-color: transparent; box-shadow: inset 3px 0 0 var(--color-accent); }
+html .sidebar .nav-item.active .nav-icon { color: var(--gold-text); }
+html .topbar, html header.topbar { background: var(--color-bg-surface); border-bottom: 1px solid var(--color-border); }
+html #bottom-nav { background: var(--color-bg-surface); border-top: 1px solid var(--color-border); }
+html #bottom-nav button { color: var(--color-text-muted); }
+html #bottom-nav button.active { color: var(--color-primary); box-shadow: inset 0 3px 0 var(--color-accent); }
+html .theme-toggle { color: var(--gold-text); }
+html .logout-btn { background: var(--color-bg-surface); border: 1px solid var(--color-border); color: var(--color-text-main); }
+html .live-clock { background: var(--color-bg-surface-alt); color: var(--color-text-main); border-color: var(--color-border); }
+html .page-title, html #page-title { color: var(--color-text-main); letter-spacing: -0.02em; }
+html body > header:not(.topbar) { background: var(--color-bg-surface); border-bottom: 1px solid var(--color-border); }
+
+/* ---- 5. CARDS, KPI TILES, PANELS ---- */
+html .card, html .panel, html .kpi-card, html .pay-item, html .login-box {
+  background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); color: var(--color-text-main);
+}
+html .welcome-banner { background: var(--color-primary-light); border: 1px solid rgba(201,162,39,.35); }
+html .kpi-label, html .pay-label { color: var(--color-text-muted); }
+html .kpi-value { color: var(--color-text-main); font-variant-numeric: tabular-nums; }
+html .section-title { color: var(--color-text-main); }
+html .prog-wrap { background: var(--color-bg-surface-alt); }
+html .prog-bar { background: linear-gradient(90deg, var(--color-accent), var(--gold-hover)); }
+html .skeleton { background: linear-gradient(90deg, #ECECEA 25%, #F4F4F2 50%, #ECECEA 75%); background-size: 200% 100%; }
+
+/* ---- 6. BUTTONS (guide: primary = black, secondary = white with border, danger/success solid) ---- */
+html .btn-primary, html .btn-p, html .generate-btn { background: var(--color-primary); color: var(--color-text-inverse); border-color: transparent; box-shadow: none; }
+html .btn-primary:hover, html .btn-p:hover, html .generate-btn:hover { background: var(--color-primary-hover); }
+html .btn-secondary, html .btn-s { background: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border); }
+html .btn-secondary:hover, html .btn-s:hover { background: var(--color-bg-surface-alt); border-color: var(--border-strong); }
+html .btn-success { background: var(--color-success); color: var(--color-text-inverse); }
+html .btn-danger, html .btn-d { background: var(--color-danger); color: var(--color-text-inverse); border-color: transparent; }
+html .btn-outline-gold { background: var(--color-primary-light); color: var(--gold-text); border: 1px solid var(--gold-border-subtle); }
+html .rank { background: var(--color-accent); color: #0B0B0C; }
+
+/* ---- 7. FORMS ---- */
+html select, html textarea,
+html input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="file"]) {
+  background-color: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+html select:focus, html textarea:focus, html input:focus { border-color: var(--color-border-focus); box-shadow: 0 0 0 3px rgba(201,162,39,.25); outline: none; }
+html ::placeholder { color: var(--color-text-placeholder); }
+html input[type="checkbox"], html input[type="radio"] { accent-color: var(--color-accent); }
+html label, html .lbl, html .label { color: var(--color-text-main); }
+
+/* ---- 8. TABLES ---- */
+html table th { background: var(--color-bg-surface-alt); color: var(--color-text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; border-bottom: 1px solid var(--color-border); }
+html table td { color: var(--color-text-main); border-bottom: 1px solid var(--color-border); }
+html tbody tr:hover, html tbody tr:hover td { background: var(--color-bg-surface-alt); }
+
+/* ---- 9. BADGES ---- */
+html .badge { background: var(--color-bg-surface-alt); color: var(--color-text-muted); font-weight: 600; }
+html .badge-ok, html .bg { background: var(--color-success-bg); color: var(--color-success); }
+html .badge-warn, html .ba { background: var(--color-warning-bg); color: var(--color-warning); }
+html .badge-bad, html .br { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* ---- 10. DIALOGS ---- */
+html dialog, html .modal, html .modal-box { background: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+html .modal-bg, html .modal-overlay { background: rgba(11,11,12,.55); }
+
+/* ---- 11. (brand text: see section 12) ---- */
+
+/* ---- 12. BRAND TEXT IN CONTEXT (sidebar/top bar = black; the dark brand strip on POS-type pages = black band, gold name) ---- */
+html .sidebar .bh-lockup .bh-name, html .topbar .bh-lockup .bh-name { color: var(--color-primary); }
+html .sidebar .bh-lockup .bh-sub, html .topbar .bh-lockup .bh-sub { color: var(--color-text-muted); opacity: 1; }
+html .bh-strip { background: #0B0B0C; border-bottom: 2px solid var(--color-accent); }
+html .bh-strip .bh-name { color: var(--color-accent); }
+html .bh-strip .bh-sub { color: #ECECEA; }
+html .kpi-card[data-type=cash] { --accent: #0B0B0C; } html .kpi-card[data-type=card] { --accent: #C9A227; } html .kpi-card[data-type=online] { --accent: #6B6E73; }
+html .kpi-card:hover, html .card:hover { border-color: rgba(201,162,39,.45); box-shadow: var(--shadow-md); }
+html .bgold { background: var(--color-primary-light); color: var(--gold-text); }
+html .upload-box:hover { border-color: var(--color-accent); background: var(--color-primary-light); }
+html .nav-item.active { background: var(--color-primary-light); color: var(--color-primary); }
+
+/* ---- 13. VISUAL FIXES FOUND WHILE CHECKING ---- */
+/* Stock table: narrow columns wrapped letter by letter (also in the old look); keep each cell on one line, the wrapper scrolls sideways if needed */
+html #page-stock table td, html #page-stock table th { white-space: nowrap; }
+html #page-stock table td:nth-child(3) { white-space: normal; min-width: 160px; }
+
+/* gold used as TEXT on light surfaces must stay readable: darker gold for text, bright gold stays for fills and markers */
+html [style*="color:var(--gold)"], html [style*="color: var(--gold)"] { color: var(--gold-text) !important; }
+html .report-row.total, html .login-title { color: var(--gold-text); }

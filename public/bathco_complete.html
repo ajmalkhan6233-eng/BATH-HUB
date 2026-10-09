@@ -1693,7 +1693,7 @@ function confetti() {
   cv.style.display = 'block';
   const ctx = cv.getContext('2d');
   cv.width = innerWidth; cv.height = innerHeight;
-  const COLORS = ['#F5A623','#22c55e','#3b82f6','#ef4444','#8b5cf6'];
+  const COLORS = ['#C9A227','#15803d','#0B0B0C','#b91c1c','#6B6E73'];
   const particles = Array.from({length:100}, () => ({
     x: Math.random()*cv.width, y:-10,
     w: Math.random()*10+4, h: Math.random()*6+3,
@@ -1801,8 +1801,8 @@ async function loadDashboard() {
         datasets:[{
           label:'Sales (LKR)',
           data: weekly.map(r=>parseFloat(r.total||0)),
-          borderColor:'#F5A623', backgroundColor:'rgba(245,166,35,0.1)',
-          tension:0.4, fill:true, borderWidth:2, pointRadius:4, pointBackgroundColor:'#F5A623'
+          borderColor:'#C9A227', backgroundColor:'rgba(201,162,39,0.12)',
+          tension:0.4, fill:true, borderWidth:2, pointRadius:4, pointBackgroundColor:'#C9A227'
         }]
       },
       options:{
@@ -1876,7 +1876,7 @@ async function loadSalesDate() {
     const dCtx = document.getElementById('donutChart');
     if (charts.donut) charts.donut.destroy();
     const donutVals = [cash, card, online, credit, cheque];
-    const donutColors = ['#3b82f6','#8b5cf6','#f59e0b','#ef4444','#22c55e'];
+    const donutColors = ['#0B0B0C','#C9A227','#6B6E73','#b91c1c','#15803d'];
     const donutLabels = ['Cash','Card','Online','Credit','Cheque'];
     charts.donut = new Chart(dCtx, {
       type:'doughnut',
