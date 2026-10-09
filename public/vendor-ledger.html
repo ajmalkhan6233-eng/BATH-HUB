@@ -13,7 +13,8 @@ button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;borde
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid var(--line)}
 .bill{border-top:1px solid var(--line);padding:10px 0}.wrap{overflow-x:auto}form.add{display:grid;gap:8px;grid-template-columns:1fr 1fr}form.add .full{grid-column:1/-1}
 details{margin:8px 0}summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
-</style></head><body><main>
+</style><link rel="stylesheet" href="/design2_legacy.css">
+</head><body><main>
 <h1>Vendor ledger</h1>
 <div id="msg" class="sm" role="status"></div><div id="saved" class="sm" role="status"></div>
 <div class="row"><label>Cash on hand <input id="cash" type="number" inputmode="decimal" min="0" placeholder="0"></label><button id="go">Check</button><a class="sm" href="/api/vendor-ledger/export.csv">Download CSV</a></div>

@@ -11,7 +11,8 @@
 iframe{flex:1;width:100%;min-height:0;border:1px solid rgba(232,207,138,.3);border-top:0;border-radius:0 0 10px 10px;background:#fff}
 #note{font-weight:400;font-size:13px;opacity:.8}
 @media(max-width:800px){.split{grid-template-columns:1fr;grid-auto-rows:90vh;height:auto}}
-</style></head><body>
+</style><link rel="stylesheet" href="/design2_legacy.css">
+</head><body>
 <div class="split">
   <div class="col"><div class="bar"><span>POS Billing</span><button type="button" id="two" title="Opens POS on the left half and the Daily Ledger on the right half as two normal windows">Open as 2 windows</button><a href="/pos_billing.html" target="_blank" rel="noopener">Full page</a></div><iframe id="pos" title="POS billing" src="/pos_billing.html"></iframe></div>
   <div class="col"><div class="bar"><span>Daily Ledger <span id="note"></span></span><button type="button" id="rl">Refresh</button><a href="/daily-entry-v2.html" target="_blank" rel="noopener" style="margin-left:0">Full page</a></div><iframe id="led" title="Daily ledger" src="/daily-entry-v2.html"></iframe></div>

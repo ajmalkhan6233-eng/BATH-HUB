@@ -7,6 +7,14 @@ App screens (token layer public/design2_tokens.css, imported by bathhub-design.c
 - Reports: DONE: audit/design/before_reports_390.png -> audit/design/after_reports_390.png
 Other screens:
 - All other owner screens + standalone pages that use the design layer (44 scanned): DONE (auto contrast scan, 0 low-contrast text; 5 eyeballed: audit/design/other_*_390.png)
-- Pages with their own navy palette (vendor-ledger, money-plan, morning-brief, layla-owner, pos-ledger, daily-entry-v2): NOT DONE (not wired to the design layer; need Aj OK, more files)
+- (the six navy pages: see the list below, DONE)
 - Jest for the reskin: DONE: before 1 failed (brain.test.js, old); after 1 failed (same). One full run under load had 3 timeouts (pass alone) + 1 real: SW version test wanted v20, now accepts v20+
 Website (Netlify): NOT DONE (starts after the app screens)
+Approved by Aj: the 5 app screens = YES.
+Step 1, six legacy pages wired to Design 2 (public/design2_legacy.css, one <link> added per page, SW cache v22):
+- vendor-ledger.html: DONE: audit/design/other_vendor-ledger_html_390.png
+- money-plan.html: DONE: audit/design/other_money-plan_html_390.png
+- morning-brief.html: DONE: audit/design/other_morning-brief_html_390.png
+- layla-owner.html: DONE: audit/design/other_layla-owner_html_390.png
+- pos-ledger.html: DONE: audit/design/other_pos-ledger_html_390.png
+- daily-entry-v2.html: DONE (black/gold; cash figures stay green on purpose; its swatch themes are now locked to Design 2): audit/design/other_daily-entry-v2_html_390.png
