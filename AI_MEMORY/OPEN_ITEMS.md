@@ -19,4 +19,4 @@
 
 - Bugs found by the sweep (offline review screen, /api/staff loans, dev schema drift, hyperspace-theme.js missing, vendor apostrophe, barcode menu, npm audit): see AI_MEMORY/BUG_LIST.md, Aj approves fixes
 - Android/Play Store idea: PWA first, decide after the bug sweep. In-app editing agent: skipped for now (Claude Code is always connected)
-- Aj: run /login once in Claude Code so claude-mem can process its queued memory
+- Aj: run /login once in Claude Code so claude-mem can process its queued memory- Aj: Netlify login (npx netlify-cli login), then run preview-site.cmd, look at the link, say "publish site" or not

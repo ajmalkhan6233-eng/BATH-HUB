@@ -1,18 +1,18 @@
-# LATEST_REPORT 2026-10-09: Build Queue 2 (Parts A, B, D, E; C cancelled by Aj)
+# LATEST_REPORT 2026-10-09: Design 2 (black, ash, gold) + Build Queue 2 (earlier report: commit 4b2d878)
 PROBLEMS
-- Playwright + aikido tools timed out on connect this session. I drove a real Chrome at 390px with puppeteer-core instead (local, no site data sent anywhere I can see).
-- My first dev-server start had no DB settings and tried the live DB port 5432. Every login failed (no password), nothing read or written. Stopped at once, restarted on a throwaway DB (port 5433). Live app 3100 untouched.
-- Jest "17 known failures" is stale: integration failures are 0. Only failure now: tests/brain.test.js:26 (old cheque date). Not mine.
-- Part B found 10 bugs (AI_MEMORY/BUG_LIST.md). Top: /pos-ledger "not editable" is very likely the missing /js/hyperspace-theme.js.
-- claude-mem is Connected but its worker says "run /login" (memory queued, not processed). `npx claude-mem repair` had no output after 5+ min: UNVERIFIED.
-- The test bill was saved with the same request POS sends (from the page), not typed into the POS form.
+- Your note said the site source is public/website/index.html. It is not: the Netlify site (title "Bath Hub | Bathroom Accessories...", #0B0B0C, orange #FF6A00) is a React/Tailwind app in E:\AI Sttuf\bathhub-website (own repo ajmalkhan6233-eng/bathhub-website). public/website/index.html is the shop app's /site page (navy, no orange). I restyled BOTH.
+- Netlify preview NOT done: no Netlify login or token on this PC. Deploy method UNVERIFIED (no netlify.toml; dist/ is not in git, so it looks like manual upload or CLI).
+- Daily-entry-v2: its colour swatch themes are now locked to Design 2; cash/card money figures keep their own colours. Settings still names the theme "Gold: Dark with brass" (text left alone).
+- Playwright/aikido tools could not connect; used puppeteer-core with local Chrome.
+- claude-mem: `repair` and `install` both ended "bun install ... spawn EINVAL" (Windows). I ran `bun install` by hand in its folder (exit ok). Needs a /login from Aj to process memory.
 DONE
-- A: routes/daily_sales_live.js (SELECT only) + 1 mount line in server.js + Dashboard/Daily Sales read it. Day sheet wins, voids left out, Colombo dates. VERIFIED: 9 new tests pass; browser 390px: Dashboard LKR 0 -> LKR 19,350 "Open day: from bills". Commit d6cdfdb. Screens: audit/daily_sales_live_*.png
-- Jest before 1 failed/1369 passed (126 suites); after 1 failed/1379 passed (127 suites). No growth.
-- B: AI_MEMORY/BUG_LIST.md (audit only, nothing fixed).
-- D: bun 1.4.2 (new shell). claude-mem Connected; data local in C:\Users\Sony\.claude-mem; worker listens on 127.0.0.1 only, no outside connection seen.
-- E: HANDOFF + OPEN_ITEMS updated (ideas added; old POS-ledger item was already gone).
+- 5 app screens: YES by Aj. Six navy pages wired (design2_legacy.css, SW v22). Shop /site page black+gold.
+- Jest before 1 failed/1379 passed, after 1 failed/1379 passed (127 suites; only tests/brain.test.js, old date).
+- POS re-check 390px + dev bill saved through the POS form: BHT-20261009-0007 (2500).
+- Netlify site restyled: orange elements 37 -> 0; Sinhala + Tamil checked; branch work pushed (eaffcd4). Screens: audit/design/site/*.png
+- Pushed to BATH-HUB work: a6117ab. Progress per screen: AI_MEMORY/PROGRESS.md
 NOT DONE
-- Any bug fix (Aj approves first). Dead-button and 1280px checks. Live bugcheck (45 checks need the scratch-from-live-backup run).
-WATCH aikido/playwright: not called by me; data sent: UNVERIFIED (no log).
-Status: NEEDS YOU. Next: Aj picks bugs to fix and runs /login for claude-mem. Design 2 reskin starts next.
+- Netlify preview link (needs login). Publish to main link (waits for "publish site").
+UNVERIFIED: aikido/playwright data sent (no log).
+Status: NEEDS YOU
+Next: in a terminal run: npx netlify-cli login   then:  "E:\AI Sttuf\bathhub-website\preview-site.cmd"   (prints the preview link). Later, after you say "publish site":  "E:\AI Sttuf\bathhub-website\publish-site.cmd"

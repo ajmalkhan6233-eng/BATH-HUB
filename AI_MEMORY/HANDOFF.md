@@ -6,5 +6,6 @@
 - Dev setup used: throwaway Postgres on port 5433 (db bathco_test, folder in session scratchpad), dev app on port 3199. Never the live DB (5432) or live app (3100).
 - Global CLAUDE.md (not in a repo): 144 lines. 6 plugins; aikido + playwright kept (Aj's decision). BATH-HUB public on purpose.
 - Open (Aj later): rename BATHCO text in code (~121 files) and the GitHub repo.
+- Design 2 live in the app (tokens in public/design2_tokens.css + design2_legacy.css; rollback: git checkout design3-backup). Website: branch work in E:AI Sttufbathhub-website, preview/publish scripts there.
 - Ideas: Android/Play Store: PWA first, decide after bug sweep. In-app editing agent: skipped for now (Claude Code is always connected).
 - Aj next physical action: say which bugs in BUG_LIST to fix; say YES/NO per design screenshot when the Design 2 reskin is ready.
