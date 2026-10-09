@@ -18,3 +18,8 @@ Step 1, six legacy pages wired to Design 2 (public/design2_legacy.css, one <link
 - layla-owner.html: DONE: audit/design/other_layla-owner_html_390.png
 - pos-ledger.html: DONE: audit/design/other_pos-ledger_html_390.png
 - daily-entry-v2.html: DONE (black/gold; cash figures stay green on purpose; its swatch themes are now locked to Design 2): audit/design/other_daily-entry-v2_html_390.png
+Step 2 Jest + POS: DONE: Jest before 1 failed/1379 passed (127 suites), after 1 failed/1379 passed (same: tests/brain.test.js, old date). POS re-check at 390px with a dev test bill saved through the POS form: BHT-20261009-0007 total 2500: audit/design/after_pos_saved_v22_390.png
+Step 3 WEBSITE (Netlify site = E:\AI Sttuf\bathhub-website, its own repo github.com/ajmalkhan6233-eng/bathhub-website branch work; NOT public/website/index.html, which is the shop app's /site page):
+- Netlify site restyled black/ash/gold, orange removed (orange elements 37 -> 0), Sinhala + Tamil checked: DONE: audit/design/site/before_home_390.png -> after_home_390.png, after_shop_390.png, after_planner_390.png, after_quote_390.png, after_sinhala_390.png, after_tamil_390.png (commit eaffcd4 on bathhub-website branch work)
+- App /site page (public/website/index.html, navy -> black/gold): DONE: audit/design/site/appsite_after_390.png
+Step 4 Netlify PREVIEW deploy: NOT DONE (needs Aj: Netlify login). Step 5 publish to main link: NOT DONE (waits for "publish site").
