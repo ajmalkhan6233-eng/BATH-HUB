@@ -128,3 +128,34 @@ describe('payment types (screen side)', () => {
     expect(PosCart.makeHeld({ rows: [] }).pay_extra).toBeNull();
   });
 });
+
+describe('quotation to cart (read only)', () => {
+  const quote = { quote_no: 'Q-0004', customer_name: 'Mr Silva', customer_phone: '0771112222', discount: 1500, total: 13500,
+    items: [{ item_code: '1001', description: 'Marble Ivory Floor Tile 60x60', qty: '2', unit_price: '4500' }, { item_code: '2001', description: 'Basin Mixer Tap Chrome', qty: '1', unit_price: '6000' }] };
+  test('items become cart rows with numbers, customer comes across', () => {
+    const c = PosCart.quotationToCart(quote);
+    expect(c.rows).toEqual([{ item_code: '1001', name: 'Marble Ivory Floor Tile 60x60', qty: 2, unit_price: 4500 }, { item_code: '2001', name: 'Basin Mixer Tap Chrome', qty: 1, unit_price: 6000 }]);
+    expect(c).toMatchObject({ customer_name: 'Mr Silva', customer_phone: '0771112222', quote_no: 'Q-0004' });
+  });
+  test('the money discount becomes a percentage that gives the same bill total', () => {
+    const c = PosCart.quotationToCart(quote);               // subtotal 15000, discount 1500 = 10%
+    expect(c.discount_pct).toBe(10);
+    expect(c.bill_total).toBe(13500);
+    expect(c.matches).toBe(true);
+  });
+  test('an awkward discount (1000 of 15000 = 6.666...%) still gives the exact quote total, and says so when it does not match', () => {
+    const c = PosCart.quotationToCart({ ...quote, discount: 1000, total: 14000 });
+    expect(c.bill_total).toBe(14000); expect(c.matches).toBe(true);
+    const off = PosCart.quotationToCart({ ...quote, total: 99999 });
+    expect(off.matches).toBe(false);
+  });
+  test('no discount, no items, lines without a name', () => {
+    expect(PosCart.quotationToCart({ ...quote, discount: 0 }).discount_pct).toBe(0);
+    expect(PosCart.quotationToCart({ items: [] }).rows).toEqual([]);
+    expect(PosCart.quotationToCart({ items: [{ description: ' ', qty: 1, unit_price: 5 }] }).rows).toEqual([]);
+    expect(PosCart.quotationToCart(null).rows).toEqual([]);
+  });
+  test('the quotation object is not changed', () => {
+    const copy = JSON.parse(JSON.stringify(quote)); PosCart.quotationToCart(quote); expect(quote).toEqual(copy);
+  });
+});

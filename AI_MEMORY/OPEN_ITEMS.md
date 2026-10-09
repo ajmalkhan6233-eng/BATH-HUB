@@ -18,5 +18,9 @@
 - Research items NOT installed (approve one by one if wanted): Agent Skills (agentskills.io, anthropics/skills), awesome list (ComposioHQ, unvetted, reading only), image to code (Figma plugin, needs Figma seat)
 
 - Bugs found by the sweep (offline review screen, /api/staff loans, dev schema drift, hyperspace-theme.js missing, vendor apostrophe, barcode menu, npm audit): see AI_MEMORY/BUG_LIST.md, Aj approves fixes
-- Android/Play Store idea: PWA first, decide after the bug sweep. In-app editing agent: skipped for now (Claude Code is always connected)
 - Aj: run /login once in Claude Code so claude-mem can process its queued memory- Aj: Netlify login (npx netlify-cli login), then run preview-site.cmd, look at the link, say "publish site" or not
+
+- Android/Play Store idea: PWA first, decide after the bug sweep. In-app editing agent: skipped for now (Claude Code is always connected)
+- Aj decide (POS): should a credit bill create a row in Credit & Aging, and a cheque bill a row in Cheques? Paste: YES credit and cheque | YES credit only | NO keep them on the bill only
+- POS small gaps: the end-of-day summary (/api/pos-bills/summary) shows a split bill as one "split" line; the PDF receipt prints "SPLIT" without the lines; a loaded quotation is not marked as billed
+- Aj: try the scan box with the real barcode scanner (keyboard type scanners: it types the code then Enter); tested only by typing

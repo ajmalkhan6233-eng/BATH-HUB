@@ -1,18 +1,17 @@
-# LATEST_REPORT 2026-10-09: Design 2 (black, ash, gold) + Build Queue 2 (earlier report: commit 4b2d878)
+# LATEST_REPORT 2026-10-09: POS build queue (Parts A, B, C, D) on branch work
 PROBLEMS
-- Your note said the site source is public/website/index.html. It is not: the Netlify site (title "Bath Hub | Bathroom Accessories...", #0B0B0C, orange #FF6A00) is a React/Tailwind app in E:\AI Sttuf\bathhub-website (own repo ajmalkhan6233-eng/bathhub-website). public/website/index.html is the shop app's /site page (navy, no orange). I restyled BOTH.
-- Netlify preview NOT done: no Netlify login or token on this PC. Deploy method UNVERIFIED (no netlify.toml; dist/ is not in git, so it looks like manual upload or CLI).
-- Daily-entry-v2: its colour swatch themes are now locked to Design 2; cash/card money figures keep their own colours. Settings still names the theme "Gold: Dark with brass" (text left alone).
-- Playwright/aikido tools could not connect; used puppeteer-core with local Chrome.
-- claude-mem: `repair` and `install` both ended "bun install ... spawn EINVAL" (Windows). I ran `bun install` by hand in its folder (exit ok). Needs a /login from Aj to process memory.
-DONE
-- 5 app screens: YES by Aj. Six navy pages wired (design2_legacy.css, SW v22). Shop /site page black+gold.
-- Jest before 1 failed/1379 passed, after 1 failed/1379 passed (127 suites; only tests/brain.test.js, old date).
-- POS re-check 390px + dev bill saved through the POS form: BHT-20261009-0007 (2500).
-- Netlify site restyled: orange elements 37 -> 0; Sinhala + Tamil checked; branch work pushed (eaffcd4). Screens: audit/design/site/*.png
-- Pushed to BATH-HUB work: a6117ab. Progress per screen: AI_MEMORY/PROGRESS.md
-NOT DONE
-- Netlify preview link (needs login). Publish to main link (waits for "publish site").
-UNVERIFIED: aikido/playwright data sent (no log).
+- Not done on purpose, needs Aj: cheque bills into the Cheques screen and credit bills into Credit & Aging (golden core / credit totals). Question + answer to paste is in OPEN_ITEMS.
+- Small gaps: end-of-day summary shows a split bill as one "split" line; the PDF receipt prints SPLIT without the lines; a loaded quotation is not marked as billed (can be loaded twice).
+- UNVERIFIED: a real barcode scanner (tested by typing the code + Enter, which is what scanners send).
+- Playwright tool not connected this session: used puppeteer-core with local Chrome at 390px.
+- tests/brain.test.js still fails (old date, not mine).
+DONE (all VERIFIED: tests and 390px browser checks really ran, dev DB only, nothing published)
+- A: scan box (adds qty 1, again +1, unknown code = message), Hold/Held (max 10, browser only, 10 refused at 11), Last bill + Find bill (read only), qty +/- (44px, no sideways scroll). 15/15 browser checks. Commit 2387806.
+- B: cheque, credit, split via new table pos_bill_payments (no golden-core change). Payments must equal the total to the cent. Credit is its own bucket, never cash. Void bills left out; discount cap still enforced; bills with payment rows are voided, not edited. 16 server tests + 16/16 browser checks. Commit 35cd52f.
+- C: "Load quotation" fills the cart and customer, discount % worked out to match the quote total; quotation unchanged. 7/7 browser checks (Sinhala/Tamil name kept).
+- Jest: before 1 failed/1396 passed (128 suites, after A); final 1 failed/1424 passed (129 suites). No growth. 17 + 12 cart tests, 16 payment tests.
+- Dev test bills saved from the POS form: BHT-20261009-0008 (A), -0010/-0011/-0012 (cheque/credit/split), -0017 (quotation).
+- Screens: audit/pos/*.png. Progress: AI_MEMORY/PROGRESS.md. Plan: AI_MEMORY/POS_PAYMENTS_PLAN.md
+NOT DONE: nothing skipped. Website and publishing untouched.
 Status: NEEDS YOU
-Next: in a terminal run: npx netlify-cli login   then:  "E:\AI Sttuf\bathhub-website\preview-site.cmd"   (prints the preview link). Later, after you say "publish site":  "E:\AI Sttuf\bathhub-website\publish-site.cmd"
+Next: look at audit/pos on the phone (YES/NO per screen) and answer the Cheques / Credit & Aging question in OPEN_ITEMS.

@@ -152,15 +152,20 @@
     <div class="sub">Royal Bath Hub Thihariya — POS Bill Generator</div>
 
     <div class="pos-tools" id="posTools">
-      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan barcode or type item code, then Enter" autocomplete="off" aria-label="Scan barcode"></div>
+      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan barcode or type code + Enter" autocomplete="off" aria-label="Scan barcode"></div>
       <div class="scan-msg" id="scanMsg" role="status"></div>
       <div class="tool-row">
         <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
         <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
         <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
         <button type="button" id="findBtn" onclick="toggleTool('findPanel')">Find bill</button>
+        <button type="button" id="quoteBtn" onclick="toggleTool('quotePanel')">Load quotation</button>
       </div>
       <div class="tool-panel" id="heldPanel"></div>
+      <div class="tool-panel" id="quotePanel">
+        <div class="find-row"><input type="text" id="quoteBox" placeholder="Filter by quote number or customer" autocomplete="off"></div>
+        <div id="quoteResults"></div>
+      </div>
       <div class="tool-panel" id="findPanel">
         <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 0007 or BHT-20261009-0007" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
         <div id="findResults"></div>
@@ -674,9 +679,47 @@ async function scanCode() {
 document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
 
 function toggleTool(id) {
-  ['heldPanel', 'findPanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });
+  ['heldPanel', 'findPanel', 'quotePanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });
   if (id === 'heldPanel') drawHeld();
+  if (id === 'quotePanel' && document.getElementById('quotePanel').classList.contains('open')) loadQuotes();
 }
+// ───────── LOAD QUOTATION (read only: the quotation is never changed; the bill is saved by the normal button) ─────────
+let _quotes = [];
+async function loadQuotes() {
+  const out = document.getElementById('quoteResults'); out.textContent = 'Loading…';
+  try { const r = await fetch('/api/quotations'); _quotes = r.ok ? await r.json() : []; } catch (e) { _quotes = []; }
+  drawQuotes();
+}
+function drawQuotes() {
+  const out = document.getElementById('quoteResults'), f = document.getElementById('quoteBox').value.trim().toLowerCase(), sym = branding.currency_symbol || 'Rs';
+  out.textContent = '';
+  const list = _quotes.filter(q => !f || String(q.quote_no || '').toLowerCase().includes(f) || String(q.customer_name || '').toLowerCase().includes(f)).slice(0, 15);
+  if (!list.length) { out.textContent = _quotes.length ? 'No quotation matches.' : 'No quotations.'; return; }
+  list.forEach(q => {
+    const row = document.createElement('div'); row.className = 't-row';
+    const info = document.createElement('span');
+    info.textContent = (q.quote_no || 'Q-' + q.id) + ' · ' + (q.customer_name || 'No customer') + ' · ' + sym + ' ' + Number(q.total || 0).toLocaleString() + ' · ' + (q.status || '');
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Load'; go.onclick = () => loadQuote(q.id);
+    row.append(info, go); out.appendChild(row);
+  });
+}
+async function loadQuote(id) {
+  try {
+    const r = await fetch('/api/quotations/' + id);
+    if (!r.ok) { scanMsg('Could not open that quotation.', 'err'); return; }
+    const c = PosCart.quotationToCart(await r.json());
+    if (!c.rows.length) { scanMsg('That quotation has no items.', 'err'); return; }
+    if (cartRows().some(x => x.name) && !confirm('The screen has items. Replace them with quotation ' + c.quote_no + '?')) return;
+    resetForm(true); setCartRows(c.rows);
+    document.getElementById('customerName').value = c.customer_name; document.getElementById('customerPhone').value = c.customer_phone;
+    document.getElementById('discountPct').value = c.discount_pct; updateCapHint();
+    document.getElementById('quotePanel').classList.remove('open');
+    const sym = branding.currency_symbol || 'Rs';
+    scanMsg('Loaded ' + c.quote_no + ': bill total ' + sym + ' ' + c.bill_total.toLocaleString() + (c.matches ? ' (same as the quotation).' : ' (the quotation said ' + sym + ' ' + c.quote_total.toLocaleString() + '. Check the prices.)'), c.matches ? 'ok' : 'err');
+  } catch (e) { scanMsg('Could not load the quotation.', 'err'); }
+}
+document.getElementById('quoteBox').addEventListener('input', drawQuotes);
+
 function drawHeld() {
   const list = PosCart.loadHeld(), panel = document.getElementById('heldPanel');
   document.getElementById('heldBtn').textContent = 'Held bills (' + list.length + ')';

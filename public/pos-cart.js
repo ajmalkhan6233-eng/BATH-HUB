@@ -112,6 +112,19 @@
         return money2(money2(total) - (rows || []).reduce(function (a, r) { return a + money2(r.amount); }, 0));
     }
 
-    return { buildPayments: buildPayments, splitRemaining: splitRemaining, MAX_HELD: MAX_HELD, HELD_KEY: HELD_KEY, money2: money2, cleanCode: cleanCode, findExact: findExact, addScanned: addScanned,
+    // ---- QUOTATION TO CART (read only: the quotation is never changed) ----
+    // A quotation has a money discount; the POS bill has a percentage. The percentage is worked out so the bill total matches the quote total.
+    function quotationToCart(q) {
+        var rows = ((q && q.items) || []).map(function (i) {
+            return { item_code: String(i.item_code || '').trim(), name: String(i.description || i.item_code || '').trim(), qty: Number(i.qty) || 1, unit_price: Number(i.unit_price) || 0 };
+        }).filter(function (r) { return r.name; });
+        var sub = totals(rows, 0).subtotal, disc = Math.max(0, Number(q && q.discount) || 0);
+        var pct = sub > 0 ? Math.min(100, Math.round(disc / sub * 100 * 1e8) / 1e8) : 0;
+        var billTotal = totals(rows, pct).total, quoteTotal = money2(q && q.total);
+        return { rows: rows, customer_name: String((q && q.customer_name) || ''), customer_phone: String((q && q.customer_phone) || ''), discount_pct: pct,
+                 quote_no: String((q && q.quote_no) || ''), quote_total: quoteTotal, bill_total: billTotal, matches: billTotal === quoteTotal };
+    }
+
+    return { quotationToCart: quotationToCart, buildPayments: buildPayments, splitRemaining: splitRemaining, MAX_HELD: MAX_HELD, HELD_KEY: HELD_KEY, money2: money2, cleanCode: cleanCode, findExact: findExact, addScanned: addScanned,
              stepQty: stepQty, totals: totals, makeHeld: makeHeld, holdAdd: holdAdd, holdRemove: holdRemove, holdGet: holdGet, loadHeld: loadHeld, saveHeld: saveHeld };
 }));
