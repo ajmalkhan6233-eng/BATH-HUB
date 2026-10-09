@@ -42,8 +42,8 @@ describe('robots.txt and sitemap.xml (public, no login)', () => {
     process.env.SITE_URL = 'https://shop.example.lk';
     const t = (await request(app).get('/site')).text;
     expect(t).toContain('<link rel="canonical" href="https://shop.example.lk/site"');
-    expect(t).toContain('property="og:image" content="https://shop.example.lk/website/og-image.png"');
-    expect(t).toContain('name="twitter:image" content="https://shop.example.lk/website/og-image.png"');
+    expect(t).toContain('property="og:image" content="https://shop.example.lk/brand/share-1200x630.jpg"');
+    expect(t).toContain('name="twitter:image" content="https://shop.example.lk/brand/share-1200x630.jpg"');
   });
 });
 

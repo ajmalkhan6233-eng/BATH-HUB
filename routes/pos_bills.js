@@ -373,6 +373,10 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         // ── Logo (drawn as vectors — no raster asset needed) ──
         const cx = PAGE_W / 2;
         const logoTop = y;
+        const logoFile = require('path').join(__dirname, '..', 'public', 'brand', 'logo-main-transparent.png');
+        if (require('fs').existsSync(logoFile)) {
+            doc.image(logoFile, cx - 38, logoTop, { height: 44 });     // the RBH logo, 44px tall, width follows (never stretched)
+        } else {
         doc.circle(cx, logoTop + 22, 22).fillAndStroke('#0a4531', '#d4af37');
         doc.save();
         doc.lineWidth(2.2).strokeColor('#e8cf7a')
@@ -382,6 +386,7 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         doc.circle(cx - 12, logoTop + 14, 2).fill('#e8cf7a');
         doc.circle(cx, logoTop + 30, 6).fill('#c9a227');
         doc.restore();
+        }
         y = logoTop + 44 + 8; // logo bottom (44px tall) + gap before the shop name
 
         doc.font('Helvetica-Bold').fontSize(13).fillColor('#0a4531')

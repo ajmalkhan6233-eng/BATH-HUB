@@ -18,7 +18,7 @@ function branding(root = ROOT) {
     const pub = path.join(root, 'public');
     const candidates = [];
     if (cfg.logo_url && String(cfg.logo_url).startsWith('/')) candidates.push(path.join(pub, String(cfg.logo_url).split('?')[0]));
-    candidates.push(path.join(pub, 'brand', 'logo-bh-transparent.png'), path.join(pub, 'vendor', 'logo.svg'));
+    candidates.push(path.join(pub, 'brand', 'logo-main-transparent.png'), path.join(pub, 'vendor', 'logo.svg'));
     let logo = '';
     for (const c of candidates) {
         const full = path.resolve(c);

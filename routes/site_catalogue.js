@@ -81,7 +81,7 @@ function photoData(file) {
 
 function catalogueHtml(tiles) {
     let logo = '';
-    try { logo = 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'public', 'brand', 'icon-192.png')).toString('base64'); } catch (e) { /* no logo file: header text only */ }
+    try { logo = 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'public', 'brand', 'logo-header-400h.png')).toString('base64'); } catch (e) { /* no logo file: header text only */ }
     const cards = tiles.map(t => {
         const p = t.photo ? photoData(t.photo) : null;
         return '<div class="c"><div class="i"' + (p ? ' style="background-image:url(' + p + ')"' : '') + '></div><div class="n">' + esc(t.name) + '</div><div class="s">'
@@ -89,7 +89,7 @@ function catalogueHtml(tiles) {
     }).join('');
     return '<!doctype html><html><head><meta charset="utf-8"><title>Royal Bath Hub catalogue</title><style>'
         + '@page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;color:#0B1B3A;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-        + '.h{background:#0B1B3A;color:#F6EFDC;padding:18px 22px;display:flex;align-items:center;gap:18px;border-radius:8px}.h img{width:64px;height:64px}'
+        + '.h{background:#0B1B3A;color:#F6EFDC;padding:18px 22px;display:flex;align-items:center;gap:18px;border-radius:8px}.h img{height:48px;width:auto}'
         + '.h b{display:block;font-size:30px;letter-spacing:.12em;color:#E8CF8A;font-weight:500}.h span{font-size:15px}'
         + '.g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.c{break-inside:avoid;border:1px solid #d9d3c0;border-radius:8px;overflow:hidden}'
         + '.i{height:120px;background:#e9e2cf center/cover no-repeat}.n{font-size:16px;font-weight:bold;padding:8px 10px 0}.s{font-size:12px;color:#4a4f5e;padding:2px 10px 10px}'

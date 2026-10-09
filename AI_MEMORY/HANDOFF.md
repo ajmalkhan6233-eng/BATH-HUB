@@ -7,3 +7,4 @@
 - Dev setup: throwaway Postgres 5433 (bathco_test) + dev app 3199 from the session scratchpad; never the live DB or app.
 - Backups: branches backup-before-pos-build, backup-before-design2, tag design3-backup.
 - Aj next physical action: look at audit/pos/*.png on the phone (YES/NO per screen); answer the Cheques / Credit & Aging question in OPEN_ITEMS; Netlify login for the site preview.
+- New RBH logo installed in the app and on the website branch (details: LATEST_REPORT). Logo pack: C:\Bathco\Logo. Old logo files kept (public/brand/old-logo for the replaced favicon-32.png). Website publish still waits for Aj.

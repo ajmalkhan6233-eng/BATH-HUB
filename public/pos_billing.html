@@ -79,7 +79,7 @@
     font-family: 'Courier New', monospace; font-size:14px; color:var(--text-primary);
   }
   .receipt .logo-row { text-align: center; margin-bottom: 6px; }
-  .receipt .logo-row svg { width: 64px; height: 64px; }
+  .receipt .logo-row img { height: 56px; width: auto; }
   .receipt .shop-name { text-align: center; font-weight: 700; font-size:15px; color:var(--text-primary); }
   .receipt .shop-tagline { text-align: center; font-size:12px; color:var(--text-muted); margin-bottom: 8px; }
   .receipt hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
@@ -214,14 +214,7 @@
 
   <div class="panel" id="billPanel">
     <div class="receipt" id="receipt">
-      <div class="logo-row">
-        <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="80" cy="80" r="66" fill="#0a4531" stroke="#d4af37" stroke-width="3"/>
-          <path d="M46 54 h34 a8 8 0 0 1 8 8 v14 a8 8 0 0 1 -8 8 h-6" fill="none" stroke="#e8cf7a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="46" cy="54" r="7" fill="#e8cf7a"/>
-          <path d="M74 86 C74 76 88 66 88 66 C88 66 102 76 102 86 C102 94.28 95.28 101 87 101 C78.72 101 74 94.28 74 86 Z" fill="#c9a227"/>
-        </svg>
-      </div>
+      <div class="logo-row"><img src="/brand/logo-main-transparent.png" alt="Royal Bath Hub"></div>
       <div class="shop-name" id="rShopName">Royal Bath Hub Thihariya</div>
       <div class="shop-tagline" id="rTagline">Everything for your bathroom, on Kandy Road</div>
       <hr>
