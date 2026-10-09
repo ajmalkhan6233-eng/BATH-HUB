@@ -34,3 +34,5 @@ POS BUILD QUEUE (Aj said GO). 390px only. Screenshots in audit/pos/. Backup bran
 - Part B NEXT STEP (needs Aj): cheque bills into the Cheques screen and credit bills into Credit & Aging (golden core / changes credit totals): not done on purpose.
 - Part C quotation to bill ("Load quotation", read only): DONE: audit/pos/quote_list_390.png, quote_loaded_390.png, quote_billed_390.png (bill saved by the normal button at the quote total; quotation unchanged; the quotation is NOT marked as billed, so it can be loaded twice)
 - Part D record: DONE (this file, HANDOFF, OPEN_ITEMS, LATEST_REPORT). Nothing published or deployed. Website not touched.
+Website PREVIEW: DONE (draft, main link untouched): https://6ac90e28b65498656433c79b--dapper-dieffenbachia-69d038.netlify.app (Design 2 + new RBH logo, built from bathhub-website branch work). Draft needs Aj's Netlify login to open (401 for others). Main link checked after: still the old orange site (37 orange elements). Netlify site has no git link: deploys are by CLI/upload.
+Publish to main: NOT DONE (waits for "publish site"): "E:\AI Sttuf\bathhub-website\publish-site.cmd"
