@@ -4,9 +4,6 @@
 - Aj: decide small_daily (Rs 3,200 now, default 3,000: small daily shop costs in the daily cost target) -> change in Salary & Costs > Settings, or say "keep"
 - Aj: save ADMIN_PIN + .pg_owner_superpw password in a password manager; laptop Sleep = Never when plugged in
 - Aj: look at the 10 ported screens with real data (Customers, Credit & Aging, Quotations, Purchasing, Accounting, Audit & Accounting, Reports, Staff, Labels, Assistant); say what is missing before the old file is deleted from git
-- Offline edits/voids wait in "needs review" (never auto-applied): there is no review screen yet (API: /api/sync/review); add a small screen
-- /api/staff `outstanding`/`total_loans` count repayments as loans (server.js): fix with Aj's rule; the Staff screen's Advances tab computes it correctly
-- dev schema (scripts/dev/test_schema.sql) misses columns the live code needs (quotations.quote_no is now auto-added at start-up): audit other tables before building another instance from it
 - Platform/tenant/fleet admin (old Platform Admin, PIN only) is not in the new menu: port or drop
 - competitors table holds 13 default rows seeded by routes/competitors.js (not Aj's data): keep or clear
 - Railway go-live (parked): CLAUDE.md task 1; scripts/railway_harden_db.js at unpause; Phase B = docs/SYNC_PHASE_B.md
@@ -19,3 +16,7 @@
 
 - Aj (later): decide renaming BATHCO text in code (~121 files) and the GitHub repo name
 - Research items NOT installed (approve one by one if wanted): Agent Skills (agentskills.io, anthropics/skills), awesome list (ComposioHQ, unvetted, reading only), image to code (Figma plugin, needs Figma seat)
+
+- Bugs found by the sweep (offline review screen, /api/staff loans, dev schema drift, hyperspace-theme.js missing, vendor apostrophe, barcode menu, npm audit): see AI_MEMORY/BUG_LIST.md, Aj approves fixes
+- Android/Play Store idea: PWA first, decide after the bug sweep. In-app editing agent: skipped for now (Claude Code is always connected)
+- Aj: run /login once in Claude Code so claude-mem can process its queued memory

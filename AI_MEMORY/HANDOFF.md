@@ -1,9 +1,10 @@
-# HANDOFF (2026-10-09, final task queue)
-- Branch `work` = Royal Bath Hub output (never master). Latest report: AI_MEMORY/LATEST_REPORT.md.
-- Global CLAUDE.md (not in a repo): 144 lines; backups %TEMP%\CLAUDE.bak, bak2, bak3. Added PUBLIC REPO / BRIDGE / WATCH.
-- SETTLED: aikido + playwright plugins KEPT (Ajmal's decision). BATH-HUB public ON PURPOSE (never raise).
-- 6 plugins installed: document-skills, example-skills, claude-mem, frontend-design, aikido, playwright.
-- Open (Ajmal later): rename BATHCO text in code (~121 files) and the GitHub repo.
-- Research items NOT installed: Agent Skills, awesome list, image to code.
-- Older work: master 50ae2f7 live on apex-server (3100); older open items in OPEN_ITEMS.
-- Ajmal next physical action: none required; optional: BATHCO rename decision.
+# HANDOFF (2026-10-09, Build Queue 2 done)
+- Branch `work` = Royal Bath Hub output (never master). Latest report: AI_MEMORY/LATEST_REPORT.md. Bug list: AI_MEMORY/BUG_LIST.md.
+- Part A DONE+VERIFIED: open days (no day sheet) now show POS bills in Daily Sales + Dashboard (routes/daily_sales_live.js, read-only, 9 tests, 390px check). Day sheet always wins; bills shown as "reference, not added".
+- Part B DONE (audit only): 10 bugs listed, nothing fixed. Part C CANCELLED by Aj (design recovery replaced by Design 2 reskin).
+- Part D: bun 1.4.2 installed; claude-mem Connected (data in C:\Users\Sony\.claude-mem, local). Its worker says "SDK authentication failed, run /login": memory is queued, not processed until Aj logs in.
+- Dev setup used: throwaway Postgres on port 5433 (db bathco_test, folder in session scratchpad), dev app on port 3199. Never the live DB (5432) or live app (3100).
+- Global CLAUDE.md (not in a repo): 144 lines. 6 plugins; aikido + playwright kept (Aj's decision). BATH-HUB public on purpose.
+- Open (Aj later): rename BATHCO text in code (~121 files) and the GitHub repo.
+- Ideas: Android/Play Store: PWA first, decide after bug sweep. In-app editing agent: skipped for now (Claude Code is always connected).
+- Aj next physical action: say which bugs in BUG_LIST to fix; say YES/NO per design screenshot when the Design 2 reskin is ready.
