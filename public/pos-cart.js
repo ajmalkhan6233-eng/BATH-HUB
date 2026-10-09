@@ -60,6 +60,7 @@
             customer_phone: String(cart.customer_phone || ''),
             discount_pct: Number(cart.discount_pct) || 0,
             payment_method: String(cart.payment_method || 'cash'),
+            pay_extra: cart.pay_extra && typeof cart.pay_extra === 'object' ? cart.pay_extra : null,   // cheque reference / split rows typed so far
             rows: (cart.rows || []).map(function (r) { return { item_code: String(r.item_code || ''), name: String(r.name || ''), qty: Number(r.qty) || 1, unit_price: Number(r.unit_price) || 0 }; }),
         };
     }
@@ -86,6 +87,31 @@
         catch (e) { return false; }
     }
 
-    return { MAX_HELD: MAX_HELD, HELD_KEY: HELD_KEY, money2: money2, cleanCode: cleanCode, findExact: findExact, addScanned: addScanned,
+    // ---- PAYMENT TYPES (screen side; the server checks the same rules again) ----
+    // Builds the `payments` list for cheque, credit or split. Returns { payments } or { error }. Cash / card / online singles send no list.
+    function buildPayments(mode, total, opts) {
+        var o = opts || {}, t = money2(total);
+        if (mode === 'cheque') {
+            if (!String(o.chequeRef || '').trim()) return { error: 'Type the cheque number, bank and date.' };
+            return { payments: [{ method: 'cheque', amount: t, reference: String(o.chequeRef).trim() }] };
+        }
+        if (mode === 'credit') return { payments: [{ method: 'credit', amount: t }] };
+        if (mode === 'split') {
+            var rows = (o.split || []).map(function (r) { return { method: String(r.method || 'cash'), amount: money2(r.amount), reference: String(r.reference || '').trim() }; })
+                .filter(function (r) { return r.amount > 0; });
+            if (rows.length < 2) return { error: 'A split bill needs at least two payments.' };
+            var sum = money2(rows.reduce(function (a, r) { return a + r.amount; }, 0));
+            if (sum !== t) return { error: 'The payments add up to ' + sum.toFixed(2) + ' but the bill total is ' + t.toFixed(2) + '.' };
+            for (var i = 0; i < rows.length; i++) if (rows[i].method === 'cheque' && !rows[i].reference) return { error: 'Type the cheque number for the cheque payment.' };
+            return { payments: rows.map(function (r) { var p = { method: r.method, amount: r.amount }; if (r.reference) p.reference = r.reference; return p; }) };
+        }
+        return { payments: null };
+    }
+    // How much of the total is still not covered by the split rows (can be negative when over).
+    function splitRemaining(total, rows) {
+        return money2(money2(total) - (rows || []).reduce(function (a, r) { return a + money2(r.amount); }, 0));
+    }
+
+    return { buildPayments: buildPayments, splitRemaining: splitRemaining, MAX_HELD: MAX_HELD, HELD_KEY: HELD_KEY, money2: money2, cleanCode: cleanCode, findExact: findExact, addScanned: addScanned,
              stepQty: stepQty, totals: totals, makeHeld: makeHeld, holdAdd: holdAdd, holdRemove: holdRemove, holdGet: holdGet, loadHeld: loadHeld, saveHeld: saveHeld };
 }));

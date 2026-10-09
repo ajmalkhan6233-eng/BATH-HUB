@@ -111,6 +111,9 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         const bill = await lockBill(client, req.params.id);
         if (!bill) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }); }
         if (await isVoid(client, bill.id)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'A void bill cannot be edited.' }); }
+        // A bill paid by cheque, credit or split keeps its payment rows: editing could make them disagree with the total.
+        const hasPayRows = await client.query(`SELECT 1 FROM pos_bill_payments WHERE bill_id = $1 LIMIT 1`, [bill.id]).then(r => r.rows.length > 0).catch(() => false);
+        if (hasPayRows) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill was paid by cheque, credit or split payment. Void it and enter it again.', code: 'has_payment_rows' }); }
 
         // Discount above the owner's cap needs the owner's explicit OK, same as creating a bill.
         let override = false;

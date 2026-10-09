@@ -64,6 +64,8 @@ pool.query(`
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
   // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
+  // payment types (cheque, credit, split): NEW table only, no ALTER. Bills without rows here read exactly as before.
+  .then(() => pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_payments (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), method VARCHAR(20) NOT NULL, amount NUMERIC(12,2) NOT NULL, reference TEXT)`))
   .then(() => Promise.all([   // one step (not two) so start-up stays quick
     pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_voids (bill_id INT PRIMARY KEY REFERENCES pos_bills(id), reason TEXT NOT NULL, voided_by VARCHAR(100), voided_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, stock_restored JSONB)`),
     pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_history (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), action VARCHAR(10) NOT NULL, reason TEXT, changed_by VARCHAR(100), changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, old_version JSONB)`),
@@ -96,7 +98,32 @@ async function loadBill(id) {
         [id]
     );
     const v = await pool.query(`SELECT reason, voided_by, voided_at FROM pos_bill_voids WHERE bill_id = $1`, [id]).catch(() => ({ rows: [] }));
-    return { ...bill.rows[0], items: items.rows, voided: v.rows.length > 0, void_reason: v.rows[0] ? v.rows[0].reason : null };
+    const pay = await pool.query(`SELECT method, amount, reference FROM pos_bill_payments WHERE bill_id = $1 ORDER BY id`, [id]).catch(() => ({ rows: [] }));
+    return { ...bill.rows[0], items: items.rows, voided: v.rows.length > 0, void_reason: v.rows[0] ? v.rows[0].reason : null,
+             payments: pay.rows.map(p => ({ method: p.method, amount: Number(p.amount), reference: p.reference })) };
+}
+
+// Payment types. Only used when the request carries `payments`; without it the old payment_method text path is unchanged.
+const PAY_METHODS = ['cash', 'card', 'online', 'cheque', 'credit'];
+function checkPayments(payments, total, customer_name, customer_phone) {
+    if (!Array.isArray(payments) || !payments.length) return { error: 'payments must be a list with at least one payment' };
+    if (payments.length > 5) return { error: 'a bill can have at most 5 payments' };
+    const rows = [];
+    for (const [i, p] of payments.entries()) {
+        const method = String(p && p.method || '').toLowerCase().trim();
+        if (!PAY_METHODS.includes(method)) return { error: `payment ${i + 1}: method must be one of ${PAY_METHODS.join(', ')}` };
+        const amount = money2(p.amount);
+        if (!Number.isFinite(amount) || amount <= 0) return { error: `payment ${i + 1} (${method}): amount must be more than 0` };
+        const reference = String(p.reference || '').trim().slice(0, 120) || null;
+        if (method === 'cheque' && !reference) return { error: `payment ${i + 1}: a cheque needs its cheque number or bank and date` };
+        rows.push({ method, amount, reference });
+    }
+    const sum = money2(rows.reduce((a, r) => a + r.amount, 0));
+    if (sum !== money2(total)) return { error: `the payments add up to ${sum.toFixed(2)} but the bill total is ${money2(total).toFixed(2)}: they must match exactly`, code: 'payments_mismatch' };
+    if (rows.some(r => r.method === 'credit') && !String(customer_name || '').trim() && !String(customer_phone || '').trim()) {
+        return { error: 'a credit bill needs the customer name or phone (who will pay later)', code: 'credit_needs_customer' };
+    }
+    return { rows, payment_method: rows.length === 1 ? rows[0].method : 'split' };
 }
 
 // ═══════════════════════ DISCOUNT CAP ═══════════════════════
@@ -168,6 +195,12 @@ router.post('/pos-bills', async (req, res) => {
             override = true;
         }
 
+        let payInfo = null;
+        if (req.body.payments !== undefined) {
+            payInfo = checkPayments(req.body.payments, total, customer_name, customer_phone);
+            if (payInfo.error) return res.status(400).json({ error: payInfo.error, code: payInfo.code });
+        }
+
         const deductStock = String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
@@ -175,8 +208,13 @@ router.post('/pos-bills', async (req, res) => {
             INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payment_method || 'cash', notes || null, override]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : (payment_method || 'cash'), notes || null, override]);
         const billId = billRes.rows[0].id;
+        if (payInfo) {
+            for (const p of payInfo.rows) {
+                await client.query(`INSERT INTO pos_bill_payments (bill_id, method, amount, reference) VALUES ($1,$2,$3,$4)`, [billId, p.method, p.amount, p.reference]);
+            }
+        }
 
         for (const l of lines) {
             await client.query(`

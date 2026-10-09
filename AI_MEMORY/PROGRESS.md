@@ -30,3 +30,5 @@ POS BUILD QUEUE (Aj said GO). 390px only. Screenshots in audit/pos/. Backup bran
 - Part A2 hold / resume (browser storage, max 10, never a bill in the database): DONE: audit/pos/held_list_390.png
 - Part A3 reprint (Last bill, Find bill, read only): DONE: audit/pos/reprint_last_390.png
 - Part A4 qty +/- buttons, 44px targets, no sideways scroll: DONE: audit/pos/cart_390.png ; dev test bill saved from the POS form (BHT-20261009-0008): audit/pos/saved_bill_390.png
+- Part B payment types: DONE (new table pos_bill_payments, no golden-core change): cheque, credit, split + cash unchanged; daily sales counts them per method; edit of such bills blocked (void and re-enter). Plan: AI_MEMORY/POS_PAYMENTS_PLAN.md. Screens: audit/pos/pay_cheque_390.png, pay_credit_390.png, pay_split_390.png, pay_split_mismatch_390.png, pay_split_receipt_390.png, pay_dailysales_390.png
+- Part B NEXT STEP (needs Aj): cheque bills into the Cheques screen and credit bills into Credit & Aging (golden core / changes credit totals): not done on purpose.

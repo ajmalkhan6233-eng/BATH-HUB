@@ -99,3 +99,32 @@ describe('hold / resume', () => {
     expect(src).not.toMatch(/fetch\(|XMLHttpRequest|\/api\//);
   });
 });
+
+describe('payment types (screen side)', () => {
+  test('cash / card / online singles send no list', () => { expect(PosCart.buildPayments('cash', 1000)).toEqual({ payments: null }); });
+  test('credit = one credit payment for the whole total', () => { expect(PosCart.buildPayments('credit', 1000)).toEqual({ payments: [{ method: 'credit', amount: 1000 }] }); });
+  test('cheque needs its reference', () => {
+    expect(PosCart.buildPayments('cheque', 1000, { chequeRef: '  ' }).error).toMatch(/cheque number/i);
+    expect(PosCart.buildPayments('cheque', 1000, { chequeRef: '004512 Sampath' })).toEqual({ payments: [{ method: 'cheque', amount: 1000, reference: '004512 Sampath' }] });
+  });
+  test('split must add up to the total exactly: over and under are both refused', () => {
+    const ok = PosCart.buildPayments('split', 1000, { split: [{ method: 'cash', amount: '600' }, { method: 'card', amount: '400' }] });
+    expect(ok.payments).toEqual([{ method: 'cash', amount: 600 }, { method: 'card', amount: 400 }]);
+    expect(PosCart.buildPayments('split', 1000, { split: [{ method: 'cash', amount: 600 }, { method: 'card', amount: 399.99 }] }).error).toMatch(/add up/);
+    expect(PosCart.buildPayments('split', 1000, { split: [{ method: 'cash', amount: 600 }, { method: 'card', amount: 400.01 }] }).error).toMatch(/add up/);
+  });
+  test('split needs two real payments; empty rows are ignored; a split cheque needs its number', () => {
+    expect(PosCart.buildPayments('split', 1000, { split: [{ method: 'cash', amount: 1000 }, { method: 'card', amount: 0 }] }).error).toMatch(/at least two/);
+    expect(PosCart.buildPayments('split', 1000, { split: [{ method: 'cash', amount: 500 }, { method: 'cheque', amount: 500 }] }).error).toMatch(/cheque number/);
+  });
+  test('cents: the remaining amount is exact (no 0.1 + 0.2 drift)', () => {
+    expect(PosCart.splitRemaining(0.3, [{ amount: 0.1 }, { amount: 0.2 }])).toBe(0);
+    expect(PosCart.splitRemaining(100.02, [{ amount: 50.01 }])).toBe(50.01);
+    expect(PosCart.splitRemaining(100, [{ amount: 60 }, { amount: 50 }])).toBe(-10);
+  });
+  test('a held cart keeps the cheque reference and split rows', () => {
+    const h = PosCart.makeHeld({ rows: [{ name: 'Tap', qty: 1, unit_price: 100 }], payment_method: 'split', pay_extra: { chequeRef: 'x', split: [{ method: 'cash', amount: 50 }] } });
+    expect(h.pay_extra).toEqual({ chequeRef: 'x', split: [{ method: 'cash', amount: 50 }] });
+    expect(PosCart.makeHeld({ rows: [] }).pay_extra).toBeNull();
+  });
+});

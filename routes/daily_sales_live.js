@@ -27,16 +27,37 @@ const METHODS = ['cash', 'card', 'online', 'credit', 'cheque'];
 const isDay = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) && !isNaN(Date.parse(v));
 const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
+// If the payments table does not exist yet (older database), fall back to the plain bills query.
+const noPayTable = date => async () => pool.query(
+    `SELECT COALESCE(payment_method, 'cash') AS pm, COUNT(*) AS n, SUM(total) AS total
+     FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id
+     WHERE v.bill_id IS NULL AND created_at::date = $1::date GROUP BY COALESCE(payment_method, 'cash')`, [date]);
+
 async function liveDay(date) {
     const sheet = await pool.query(`SELECT 1 FROM daily_summary WHERE report_date = $1::date LIMIT 1`, [date]);
     const bills = await pool.query(
         `SELECT COALESCE(payment_method, 'cash') AS pm, COUNT(*) AS n, SUM(total) AS total
          FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id
-         WHERE v.bill_id IS NULL AND created_at::date = $1::date
-         GROUP BY COALESCE(payment_method, 'cash')`, [date]);
+         LEFT JOIN (SELECT DISTINCT bill_id FROM pos_bill_payments) pp ON pp.bill_id = pos_bills.id
+         WHERE v.bill_id IS NULL AND pp.bill_id IS NULL AND created_at::date = $1::date
+         GROUP BY COALESCE(payment_method, 'cash')`, [date]).catch(noPayTable(date));
+    // Bills paid by cheque, credit or split have their own payment rows: counted from those, per method.
+    const paid = await pool.query(
+        `SELECT p.method AS pm, SUM(p.amount) AS total
+         FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+         WHERE v.bill_id IS NULL AND b.created_at::date = $1::date GROUP BY p.method`, [date]).catch(() => ({ rows: [] }));
+    const paidCount = await pool.query(
+        `SELECT COUNT(DISTINCT p.bill_id) AS n
+         FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+         WHERE v.bill_id IS NULL AND b.created_at::date = $1::date`, [date]).catch(() => ({ rows: [{ n: 0 }] }));
 
     const pay = { cash: 0, card: 0, online: 0, credit: 0, cheque: 0, other: 0 };
-    let count = 0;
+    let count = Number(paidCount.rows[0].n || 0);
+    for (const r of paid.rows) {
+        const pm = String(r.pm).trim().toLowerCase();
+        const key = METHODS.includes(pm) ? pm : 'other';
+        pay[key] = money2(pay[key] + Number(r.total || 0));
+    }
     for (const r of bills.rows) {
         const pm = String(r.pm).trim().toLowerCase();   // 'Cash ' and 'cash' are the same method
         const key = METHODS.includes(pm) ? pm : 'other';

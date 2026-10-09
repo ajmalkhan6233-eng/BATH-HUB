@@ -126,6 +126,11 @@
   .tool-panel .t-row button { min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-weight:600; }
   .tool-panel .t-row button.danger { color:var(--status-danger); border-color:var(--status-danger); }
   .tool-panel .find-row { display:flex; gap:8px; margin-bottom:6px; } .tool-panel .find-row input { flex:1; min-width:0; }
+  .pay-sub { margin-top:8px; }
+  .split-row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; align-items:center; }
+  .split-row select, .split-row input { margin:0; min-width:0; width:100%; }
+  .split-row .s-ref { grid-column: 1 / -1; display:none; }
+  .split-row .s-del { grid-column: 1 / -1; justify-self:end; }
   .qty-step { display:flex; align-items:stretch; gap:4px; }
   .qty-step button { min-width:44px !important; min-height:44px !important; padding:0; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-size:20px; font-weight:700; line-height:1; }
   .qty-step .i-qty { flex:1; min-width:46px; width:100%; text-align:center; }
@@ -183,7 +188,17 @@
       <option value="cash">Cash</option>
       <option value="card">Card</option>
       <option value="online">Online transfer</option>
+      <option value="cheque">Cheque</option>
+      <option value="credit">Credit (pays later)</option>
+      <option value="split">Split (more than one)</option>
     </select>
+    <div id="chequeBox" class="pay-sub" style="display:none"><label for="chequeRef">Cheque number, bank and date</label><input type="text" id="chequeRef" maxlength="120" placeholder="e.g. 004512 Sampath 30/10/2026" autocomplete="off"></div>
+    <div id="creditNote" class="cap-hint pay-sub" style="display:none">Credit: the customer pays later. Type the customer name or phone above. This is only recorded on the bill.</div>
+    <div id="splitBox" class="pay-sub" style="display:none">
+      <div id="splitRows"></div>
+      <button type="button" class="add-btn" onclick="addSplitRow()">+ Add payment</button>
+      <div class="cap-hint" id="splitHint" role="status"></div>
+    </div>
 
     <div class="edit-banner" id="editBanner"></div>
     <div class="err" id="errMsg"></div>
@@ -363,6 +378,15 @@ async function generateBill() {
       discount_pct,
       payment_method: document.getElementById('paymentMethod').value,
     };
+    // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
+    const mode = payload.payment_method;
+    if (['cheque', 'credit', 'split'].includes(mode)) {
+      const total = PosCart.totals(items.map(i => ({ qty: i.qty, unit_price: i.unit_price })), discount_pct).total;
+      const bp = PosCart.buildPayments(mode, total, { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() });
+      if (bp.error) throw new Error(bp.error);
+      payload.payments = bp.payments;
+      if (mode === 'credit' && !payload.customer_name && !payload.customer_phone) throw new Error('A credit bill needs the customer name or phone.');
+    }
     const post = extra => fetch(editingId ? '/api/pos-bills/' + editingId : '/api/pos-bills', { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
     let res = await post();
     let data = await res.json();
@@ -479,7 +503,11 @@ function renderBill(bill) {
     totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
   }
   totalsHtml += `<div class="row grand-total"><span>Total</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
-  totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
+  if (Array.isArray(bill.payments) && bill.payments.length) {
+    totalsHtml += bill.payments.map(p => `<div class="row"><span>Paid by ${escapeHtml(p.method.toUpperCase())}${p.reference ? ' (' + escapeHtml(p.reference) + ')' : ''}${p.method === 'credit' ? ' (pays later)' : ''}</span><span>${sym} ${Number(p.amount).toFixed(2)}</span></div>`).join('');
+  } else {
+    totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
+  }
   document.getElementById('rTotals').innerHTML = totalsHtml;
 
   const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
@@ -559,6 +587,7 @@ async function editBill(id) {
   if (!r.ok) { alert('Could not load that bill'); return; }
   const b = await r.json();
   if (b.voided) { alert('A void bill cannot be edited.'); return; }
+  if (Array.isArray(b.payments) && b.payments.length) { alert('This bill was paid by cheque, credit or split payment. Void it and enter it again.'); return; }
   document.getElementById('itemRows').innerHTML = '';
   b.items.forEach(it => { addItemRow(it.item_name, Number(it.qty), Number(it.unit_price)); if (it.item_code) document.querySelector('#itemRows .item-row:last-child').dataset.itemCode = it.item_code; });
   document.getElementById('customerName').value = b.customer_name || '';
@@ -575,6 +604,46 @@ async function editBill(id) {
   document.getElementById('billPanel').style.display = 'none';
   window.scrollTo(0, 0);
 }
+
+// ───────── PAYMENT TYPES ─────────
+function currentTotal() {
+  return PosCart.totals(cartRows(), document.getElementById('discountPct').value).total;
+}
+function splitRowsData() {
+  return [...document.querySelectorAll('#splitRows .split-row')].map(r => ({ method: r.querySelector('.s-method').value, amount: r.querySelector('.s-amount').value, reference: r.querySelector('.s-ref').value }));
+}
+function splitHintUpdate() {
+  showError('');                       // an old "payments do not add up" message goes away as soon as the rows change
+  const rem = PosCart.splitRemaining(currentTotal(), splitRowsData()), h = document.getElementById('splitHint'), sym = branding.currency_symbol || 'Rs';
+  h.className = 'cap-hint' + (rem === 0 ? '' : ' warn');
+  h.textContent = rem === 0 ? 'Payments add up to the total.' : (rem > 0 ? 'Still to cover: ' + sym + ' ' + rem.toFixed(2) : 'Over the total by ' + sym + ' ' + Math.abs(rem).toFixed(2));
+}
+function addSplitRow(data) {
+  const d = data || {}, row = document.createElement('div'); row.className = 'split-row';
+  const sel = document.createElement('select'); sel.className = 's-method'; sel.setAttribute('aria-label', 'Payment method');
+  [['cash', 'Cash'], ['card', 'Card'], ['online', 'Online'], ['cheque', 'Cheque'], ['credit', 'Credit']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
+  const amt = document.createElement('input'); amt.type = 'number'; amt.className = 's-amount'; amt.min = '0'; amt.step = '0.01'; amt.placeholder = 'Amount'; amt.setAttribute('aria-label', 'Amount');
+  const ref = document.createElement('input'); ref.type = 'text'; ref.className = 's-ref'; ref.placeholder = 'Cheque number, bank, date'; ref.maxLength = 120;
+  const del = document.createElement('button'); del.type = 'button'; del.className = 's-del mini-btn'; del.textContent = 'Remove'; del.onclick = () => { row.remove(); splitHintUpdate(); };
+  sel.value = d.method || 'cash';
+  amt.value = d.amount !== undefined ? d.amount : (() => { const r = PosCart.splitRemaining(currentTotal(), splitRowsData()); return r > 0 ? r : ''; })();
+  ref.value = d.reference || '';
+  const showRef = () => { ref.style.display = sel.value === 'cheque' ? 'block' : 'none'; };
+  sel.addEventListener('change', () => { showRef(); splitHintUpdate(); }); amt.addEventListener('input', splitHintUpdate); showRef();
+  row.append(sel, amt, ref, del);
+  document.getElementById('splitRows').appendChild(row);
+  splitHintUpdate();
+}
+function payModeChanged() {
+  const m = document.getElementById('paymentMethod').value;
+  document.getElementById('chequeBox').style.display = m === 'cheque' ? 'block' : 'none';
+  document.getElementById('creditNote').style.display = m === 'credit' ? 'block' : 'none';
+  document.getElementById('splitBox').style.display = m === 'split' ? 'block' : 'none';
+  if (m === 'split' && !document.querySelector('#splitRows .split-row')) { addSplitRow({ method: 'cash' }); addSplitRow({ method: 'card' }); }
+  if (m === 'split') splitHintUpdate();
+}
+document.getElementById('paymentMethod').addEventListener('change', payModeChanged);
+document.getElementById('discountPct').addEventListener('input', () => { if (document.getElementById('paymentMethod').value === 'split') splitHintUpdate(); });
 
 // ───────── SCAN, HOLD, REPRINT (screen only: nothing here saves a bill) ─────────
 function cartRows() {
@@ -624,7 +693,8 @@ function drawHeld() {
 }
 function holdBill() {
   const cart = { customer_name: document.getElementById('customerName').value, customer_phone: document.getElementById('customerPhone').value,
-    discount_pct: document.getElementById('discountPct').value, payment_method: document.getElementById('paymentMethod').value, rows: cartRows() };
+    discount_pct: document.getElementById('discountPct').value, payment_method: document.getElementById('paymentMethod').value, rows: cartRows(),
+    pay_extra: { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() } };
   const r = PosCart.holdAdd(PosCart.loadHeld(), PosCart.makeHeld(cart));
   if (!r.ok) { scanMsg(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.', 'err'); return; }
   if (!PosCart.saveHeld(undefined, r.list)) { scanMsg('This browser would not keep the held bill. Nothing was held.', 'err'); return; }
@@ -639,6 +709,8 @@ function resumeBill(id) {
   setCartRows(h.rows);
   document.getElementById('customerName').value = h.customer_name; document.getElementById('customerPhone').value = h.customer_phone;
   document.getElementById('discountPct').value = h.discount_pct; document.getElementById('paymentMethod').value = h.payment_method;
+  if (h.pay_extra) { document.getElementById('chequeRef').value = h.pay_extra.chequeRef || ''; document.getElementById('splitRows').innerHTML = ''; (h.pay_extra.split || []).forEach(r => addSplitRow(r)); }
+  payModeChanged();
   PosCart.saveHeld(undefined, PosCart.holdRemove(list, id));
   updateCapHint(); drawHeld(); scanMsg('Held bill resumed.', 'ok');
 }
@@ -691,6 +763,7 @@ function resetForm() {
   document.getElementById('customerName').value = '';
   document.getElementById('customerPhone').value = '';
   document.getElementById('waCheck').textContent = '';
+  document.getElementById('paymentMethod').value = 'cash'; document.getElementById('chequeRef').value = ''; document.getElementById('splitRows').innerHTML = ''; payModeChanged();
   if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
   document.getElementById('discountPct').value = 0;
   updateCapHint();
