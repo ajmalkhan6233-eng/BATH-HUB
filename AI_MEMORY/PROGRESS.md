@@ -23,3 +23,5 @@ Step 3 WEBSITE (Netlify site = E:\AI Sttuf\bathhub-website, its own repo github.
 - Netlify site restyled black/ash/gold, orange removed (orange elements 37 -> 0), Sinhala + Tamil checked: DONE: audit/design/site/before_home_390.png -> after_home_390.png, after_shop_390.png, after_planner_390.png, after_quote_390.png, after_sinhala_390.png, after_tamil_390.png (commit eaffcd4 on bathhub-website branch work)
 - App /site page (public/website/index.html, navy -> black/gold): DONE: audit/design/site/appsite_after_390.png
 Step 4 Netlify PREVIEW deploy: NOT DONE (needs Aj: Netlify login). Step 5 publish to main link: NOT DONE (waits for "publish site").
+Re-check (continue request): six navy pages already DONE and pushed (b3fa11d), nothing left to do there.
+Website PREVIEW: NOT DONE: still no Netlify login or token on this PC (checked NETLIFY_AUTH_TOKEN, %APPDATA%\netlify, ~\.netlify). Not published. Aj steps: 1) npx netlify-cli login  2) "E:\AI Sttuf\bathhub-website\preview-site.cmd" (prints the draft link; main link untouched)
