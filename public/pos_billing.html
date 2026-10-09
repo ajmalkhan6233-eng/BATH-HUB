@@ -112,6 +112,25 @@
     border-radius: 6px; padding: 8px; font-size:14px; cursor: pointer;
   }
 
+  /* POS tools: scan box, quantity steps, hold / held bills, reprint (tap targets 44px or more) */
+  .pos-tools { display:grid; gap:8px; margin: 12px 0 4px; }
+  .pos-tools .scan-row input { width:100%; font-size:16px; }
+  .pos-tools .tool-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .pos-tools .tool-row button { flex:1 1 40%; min-height:44px; padding:8px 10px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; }
+  .scan-msg { min-height:18px; font-size:14px; color:var(--text-secondary); }
+  .scan-msg.ok { color:var(--status-success); } .scan-msg.err { color:var(--status-danger); }
+  .tool-panel { border:1px solid var(--border-subtle); border-radius:8px; padding:8px; background:var(--bg-surface-subtle); display:none; }
+  .tool-panel.open { display:block; }
+  .tool-panel .t-row { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-subtle); font-size:14px; }
+  .tool-panel .t-row:last-child { border-bottom:0; }
+  .tool-panel .t-row button { min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-weight:600; }
+  .tool-panel .t-row button.danger { color:var(--status-danger); border-color:var(--status-danger); }
+  .tool-panel .find-row { display:flex; gap:8px; margin-bottom:6px; } .tool-panel .find-row input { flex:1; min-width:0; }
+  .qty-step { display:flex; align-items:stretch; gap:4px; }
+  .qty-step button { min-width:44px !important; min-height:44px !important; padding:0; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-size:20px; font-weight:700; line-height:1; }
+  .qty-step .i-qty { flex:1; min-width:46px; width:100%; text-align:center; }
+  html body .item-row { grid-template-columns: 1fr 156px 100px 48px !important; }
+  @media (max-width:480px) { html body .item-row { grid-template-columns: 136px minmax(0, 1fr) 44px !important; } .qty-step .i-qty { min-width:40px; } }
   @media print {
     body * { visibility: hidden; }
     .receipt, .receipt * { visibility: visible; }
@@ -126,6 +145,22 @@
   <div class="panel" id="formPanel">
     <h1>Generate Bill</h1>
     <div class="sub">Royal Bath Hub Thihariya — POS Bill Generator</div>
+
+    <div class="pos-tools" id="posTools">
+      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan barcode or type item code, then Enter" autocomplete="off" aria-label="Scan barcode"></div>
+      <div class="scan-msg" id="scanMsg" role="status"></div>
+      <div class="tool-row">
+        <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
+        <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
+        <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
+        <button type="button" id="findBtn" onclick="toggleTool('findPanel')">Find bill</button>
+      </div>
+      <div class="tool-panel" id="heldPanel"></div>
+      <div class="tool-panel" id="findPanel">
+        <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 0007 or BHT-20261009-0007" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
+        <div id="findResults"></div>
+      </div>
+    </div>
 
     <label>Customer name (optional)</label>
     <input type="text" id="customerName" placeholder="Walk-in customer">
@@ -192,6 +227,7 @@
 </div>
 
 <script src="/pos-picker.js"></script>
+<script src="/pos-cart.js"></script>
 <script>
 let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
 
@@ -217,11 +253,19 @@ function addItemRow(name, qty, price) {
       <div class="pick-list"></div>
       <div class="stock-hint"></div>
     </div>
-    <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
+    <div class="qty-step">
+      <button type="button" class="q-minus" aria-label="One less">&minus;</button>
+      <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
+      <button type="button" class="q-plus" aria-label="One more">+</button>
+    </div>
     <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01" onfocus="this.select()">
     <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
   `;
   row.querySelector('.i-name').value = name || '';      // set as a value, never as HTML
+  const qIn = row.querySelector('.i-qty');
+  const bump = d => { qIn.value = PosCart.stepQty(qIn.value, d); qIn.dispatchEvent(new Event('input', { bubbles: true })); };
+  row.querySelector('.q-minus').addEventListener('click', () => bump(-1));
+  row.querySelector('.q-plus').addEventListener('click', () => bump(1));
   document.getElementById('itemRows').appendChild(row);
   attachPicker(row);
 }
@@ -425,6 +469,7 @@ function renderBill(bill) {
     <div class="row"><span>Bill No:</span><span>${bill.bill_number}</span></div>
     <div class="row"><span>Date:</span><span>${new Date(bill.created_at).toLocaleString()}</span></div>
     ${bill.customer_name ? `<div class="row"><span>Customer:</span><span>${escapeHtml(bill.customer_name)}</span></div>` : ''}
+    ${bill.voided ? `<div class="row"><span><b>VOID</b></span><span>${escapeHtml(bill.void_reason || '')}</span></div>` : ''}
   `;
   document.getElementById('rItems').innerHTML = bill.items.map(it => `
     <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
@@ -531,6 +576,110 @@ async function editBill(id) {
   window.scrollTo(0, 0);
 }
 
+// ───────── SCAN, HOLD, REPRINT (screen only: nothing here saves a bill) ─────────
+function cartRows() {
+  return [...document.querySelectorAll('#itemRows .item-row')].map(r => ({
+    item_code: r.dataset.itemCode || '', name: r.querySelector('.i-name').value.trim(),
+    qty: parseFloat(r.querySelector('.i-qty').value) || 1, unit_price: parseFloat(r.querySelector('.i-price').value) || 0 }));
+}
+function setCartRows(rows) {
+  const box = document.getElementById('itemRows'); box.innerHTML = '';
+  (rows.length ? rows : [{}]).forEach(r => { addItemRow(r.name, r.qty, r.unit_price); if (r.item_code) box.lastElementChild.dataset.itemCode = r.item_code; });
+}
+function scanMsg(text, cls) { const el = document.getElementById('scanMsg'); el.textContent = text; el.className = 'scan-msg' + (cls ? ' ' + cls : ''); }
+
+async function scanCode() {
+  const box = document.getElementById('scanBox');
+  const code = PosCart.cleanCode(box.value);
+  box.value = '';
+  if (!code) return;
+  scanMsg('Looking up ' + code + '…');
+  const found = PosCart.findExact(await PosPicker.search(code, undefined, 50), code);
+  if (!found) { scanMsg('Code ' + code + ' not found. Nothing added.', 'err'); box.focus(); return; }
+  const rows = cartRows().filter(r => r.name);                 // the empty starter row is dropped
+  const before = rows.find(r => r.item_code === String(found.item_code));
+  setCartRows(PosCart.addScanned(rows, found));
+  scanMsg('Added ' + found.name + ' (qty ' + ((before ? before.qty : 0) + 1) + ')', 'ok');
+  box.focus();
+}
+document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
+
+function toggleTool(id) {
+  ['heldPanel', 'findPanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });
+  if (id === 'heldPanel') drawHeld();
+}
+function drawHeld() {
+  const list = PosCart.loadHeld(), panel = document.getElementById('heldPanel');
+  document.getElementById('heldBtn').textContent = 'Held bills (' + list.length + ')';
+  panel.textContent = '';
+  if (!list.length) { panel.textContent = 'No held bills.'; return; }
+  list.forEach(h => {
+    const t = PosCart.totals(h.rows, h.discount_pct).total, row = document.createElement('div'); row.className = 't-row';
+    const info = document.createElement('span');
+    info.textContent = new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + (h.customer_name || 'Walk-in') + ' · ' + h.rows.length + ' item(s) · ' + (branding.currency_symbol || 'Rs') + ' ' + t.toLocaleString();
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Resume'; go.onclick = () => resumeBill(h.id);
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'danger'; del.textContent = 'Delete'; del.onclick = () => deleteHeld(h.id);
+    row.append(info, go, del); panel.appendChild(row);
+  });
+}
+function holdBill() {
+  const cart = { customer_name: document.getElementById('customerName').value, customer_phone: document.getElementById('customerPhone').value,
+    discount_pct: document.getElementById('discountPct').value, payment_method: document.getElementById('paymentMethod').value, rows: cartRows() };
+  const r = PosCart.holdAdd(PosCart.loadHeld(), PosCart.makeHeld(cart));
+  if (!r.ok) { scanMsg(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.', 'err'); return; }
+  if (!PosCart.saveHeld(undefined, r.list)) { scanMsg('This browser would not keep the held bill. Nothing was held.', 'err'); return; }
+  resetForm(true);
+  scanMsg('Bill held on this device. It is not saved as a bill.', 'ok'); drawHeld();
+}
+function resumeBill(id) {
+  const list = PosCart.loadHeld(), h = PosCart.holdGet(list, id);
+  if (!h) return;
+  if (cartRows().some(r => r.name) && !confirm('The screen has items. Replace them with this held bill? (Hold the current bill first to keep it.)')) return;
+  resetForm(true);
+  setCartRows(h.rows);
+  document.getElementById('customerName').value = h.customer_name; document.getElementById('customerPhone').value = h.customer_phone;
+  document.getElementById('discountPct').value = h.discount_pct; document.getElementById('paymentMethod').value = h.payment_method;
+  PosCart.saveHeld(undefined, PosCart.holdRemove(list, id));
+  updateCapHint(); drawHeld(); scanMsg('Held bill resumed.', 'ok');
+}
+function deleteHeld(id) {
+  if (!confirm('Delete this held bill? It cannot be brought back.')) return;
+  PosCart.saveHeld(undefined, PosCart.holdRemove(PosCart.loadHeld(), id)); drawHeld();
+}
+
+async function openBillById(id) {
+  const r = await fetch('/api/pos-bills/' + id);
+  if (!r.ok) { scanMsg('Could not open that bill.', 'err'); return; }
+  renderBill(await r.json());
+}
+async function openLastBill() {
+  try {
+    const r = await fetch('/api/pos-bills');
+    const rows = r.ok ? await r.json() : [];
+    if (!rows.length) { scanMsg('No bills yet.', 'err'); return; }
+    await openBillById(rows[0].id);
+  } catch (e) { scanMsg('Could not load the last bill.', 'err'); }
+}
+async function findBills() {
+  const q = document.getElementById('findBox').value.trim(), out = document.getElementById('findResults');
+  out.textContent = '';
+  if (!q) return;
+  try {
+    const r = await fetch('/api/pos-bills?q=' + encodeURIComponent(q));
+    const rows = (r.ok ? await r.json() : []).slice(0, 10);
+    if (!rows.length) { out.textContent = 'No bill found for "' + q + '".'; return; }
+    if (rows.length === 1) { await openBillById(rows[0].id); return; }
+    rows.forEach(b => {
+      const row = document.createElement('div'); row.className = 't-row';
+      const info = document.createElement('span'); info.textContent = b.bill_number + (b.voided ? ' (VOID)' : '') + ' · ' + (branding.currency_symbol || 'Rs') + ' ' + Number(b.total).toLocaleString();
+      const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Open'; go.onclick = () => openBillById(b.id);
+      row.append(info, go); out.appendChild(row);
+    });
+  } catch (e) { out.textContent = 'Could not search bills.'; }
+}
+document.getElementById('findBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); findBills(); } });
+drawHeld();
+
 function resetForm() {
   loadToday();
   editingId = null;
@@ -542,6 +691,7 @@ function resetForm() {
   document.getElementById('customerName').value = '';
   document.getElementById('customerPhone').value = '';
   document.getElementById('waCheck').textContent = '';
+  if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
   document.getElementById('discountPct').value = 0;
   updateCapHint();
   document.getElementById('formPanel').style.display = 'block';

@@ -25,3 +25,8 @@ Step 3 WEBSITE (Netlify site = E:\AI Sttuf\bathhub-website, its own repo github.
 Step 4 Netlify PREVIEW deploy: NOT DONE (needs Aj: Netlify login). Step 5 publish to main link: NOT DONE (waits for "publish site").
 Re-check (continue request): six navy pages already DONE and pushed (b3fa11d), nothing left to do there.
 Website PREVIEW: NOT DONE: still no Netlify login or token on this PC (checked NETLIFY_AUTH_TOKEN, %APPDATA%\netlify, ~\.netlify). Not published. Aj steps: 1) npx netlify-cli login  2) "E:\AI Sttuf\bathhub-website\preview-site.cmd" (prints the draft link; main link untouched)
+POS BUILD QUEUE (Aj said GO). 390px only. Screenshots in audit/pos/. Backup branch: backup-before-pos-build.
+- Part A1 barcode scan box: DONE (scan adds qty 1, again +1, unknown code = message, nothing added): audit/pos/scan_unknown_390.png
+- Part A2 hold / resume (browser storage, max 10, never a bill in the database): DONE: audit/pos/held_list_390.png
+- Part A3 reprint (Last bill, Find bill, read only): DONE: audit/pos/reprint_last_390.png
+- Part A4 qty +/- buttons, 44px targets, no sideways scroll: DONE: audit/pos/cart_390.png ; dev test bill saved from the POS form (BHT-20261009-0008): audit/pos/saved_bill_390.png
