@@ -389,6 +389,7 @@ table tr:last-child td{border-bottom:none}
         <div class="pay-item"><div class="pay-label">Credit</div><div class="pay-val" style="color:var(--red)" id="p-credit">—</div></div>
         <div class="pay-item"><div class="pay-label">Cheque</div><div class="pay-val" style="color:var(--green)" id="p-cheque">—</div></div>
       </div>
+      <div id="live-note" style="display:none;font-size:12px;color:var(--text2);margin-bottom:12px"></div>
       <!-- Mismatch flag -->
       <div id="mismatch-flag" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red)">
         <svg class="bh-icon" aria-hidden="true"><use href="#i-warning"/></svg> Cash+Card+Online+Credit+Cheque does not match Total Sale — check records
@@ -1728,14 +1729,18 @@ async function loadDashboard() {
       <div class="skeleton skel-txt" style="width:80%"></div>
     </div>`).join('');
 
-  const [stats, weekly] = await Promise.all([
+  const [stats, weekly, live] = await Promise.all([
     api('/api/home-stats'),
-    api('/api/weekly-chart')
+    api('/api/weekly-chart'),
+    api('/api/daily-sales-live/today')
   ]);
   if (!stats) return;
 
-  const t = stats.today || {};
+  const t = { ...(stats.today || {}) };
   const m = stats.mtd   || {};
+  // Open day (no day sheet yet): today's sale comes from the POS bills. A saved day sheet always wins.
+  let saleNote = '';
+  if (live && live.mode === 'open_day' && live.bills_count > 0) { t.sale = live.sale; saleNote = live.label; }
 
   // Date display
   document.getElementById('dash-date').textContent = fmtDate(today());
@@ -1763,6 +1768,7 @@ async function loadDashboard() {
     <div class="kpi-card" data-type="${k.type}">
       <div class="kpi-label">${k.icon} ${k.label}</div>
       <div class="kpi-value" id="kv-${k.key}">LKR 0</div>
+      ${k.key==='sale' && saleNote ? `<div id="kv-sale-note" style="font-size:11px;color:var(--text3);margin-top:4px">${saleNote}</div>` : ''}
     </div>`).join('');
 
   kpis.forEach(k => {
@@ -1821,10 +1827,27 @@ async function loadSalesDate() {
   if (!date) return;
 
   // Load summary and invoices in parallel
-  const [summary, invoices] = await Promise.all([
+  let [summary, invoices, live] = await Promise.all([
     api(`/api/daily-summary/${date}`),
-    api(`/api/reports?date=${date}`)
+    api(`/api/reports?date=${date}`),
+    api(`/api/daily-sales-live/${date}`)
   ]);
+
+  // POS bills on a day with no day sheet (open day): show them as the day's sales. A saved day sheet always wins;
+  // its page shows the bills total beside it as a reference only (never added).
+  const liveNote = document.getElementById('live-note');
+  const openDay = !summary && live && live.mode === 'open_day' && live.bills_count > 0;
+  if (openDay) {
+    summary = { report_date: date, total_sale: live.sale, cash_sale: live.pay.cash, card_sale: live.pay.card, online_sale: live.pay.online,
+                credit_sale: live.pay.credit, cheq_payment: live.pay.cheque, gp_status: 'NOT_AVAILABLE', net_profit: null };
+    liveNote.style.display = 'block';
+    liveNote.textContent = `${live.label} (${live.bills_count} bill${live.bills_count===1?'':'s'}, voids left out)`;
+  } else if (summary && live && live.bills_count > 0) {
+    liveNote.style.display = 'block';
+    liveNote.textContent = `${live.label}: ${fmtLKR(live.bills_total)} (${live.bills_count} bill${live.bills_count===1?'':'s'})`;
+  } else {
+    liveNote.style.display = 'none';
+  }
 
   _currentSalesDay = summary;
   _invoices = invoices || [];
@@ -1876,10 +1899,10 @@ async function loadSalesDate() {
     document.getElementById('daily-info-rows').innerHTML = [
       ['Total Sale', fmtLKR(total)],
       ['Gross Profit', s.gp_status === 'NOT_AVAILABLE' ? '<span style="color:var(--text3)">Not available</span>' : fmtLKR(s.gross_profit)],
-      ['Total Expenses', fmtLKR(s.total_expenses)],
+      ['Total Expenses', openDay ? '<span style="color:var(--text3)">—</span>' : fmtLKR(s.total_expenses)],
       ['Net Profit', s.net_profit != null ? fmtLKR(s.net_profit) : '<span style="color:var(--text3)">—</span>'],
-      ['Cash In Hand', fmtLKR(s.cash_in_hand)],
-      ['GP Status', `<span class="badge ${s.gp_status==='ACTUAL'?'bg':s.gp_status==='NOT_AVAILABLE'?'br':'ba'}">${s.gp_status||'—'}</span>`],
+      ['Cash In Hand', openDay ? '<span style="color:var(--text3)">—</span>' : fmtLKR(s.cash_in_hand)],
+      ['GP Status', openDay ? '<span class="badge ba">OPEN DAY</span>' : `<span class="badge ${s.gp_status==='ACTUAL'?'bg':s.gp_status==='NOT_AVAILABLE'?'br':'ba'}">${s.gp_status||'—'}</span>`],
     ].map(([l,v]) => `
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--card-border);font-size:14px">
         <span style="color:var(--text2)">${l}</span><span>${v}</span>
