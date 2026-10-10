@@ -1,16 +1,17 @@
-# LATEST_REPORT 2026-10-09: new RBH logo (gold on black) in the website and the app
-PROBLEMS
-- Website live link NOT updated: the logo is built and pushed on branch work of bathhub-website (d2c8fdc), but nothing is published (no Netlify login; publish waits for "publish site").
-- 4 identical zips in Downloads (RBH-logo-pack.zip, _1, _2, _3: same hash); I used RBH-logo-pack.zip. preview-sheet.png not used anywhere.
-- Same-name file: favicon-32.png (old one saved to public/brand/old-logo/ first, then replaced). Other old logo files untouched.
-- The new logo is gold with no black box, so on the white Design 2 top bar and login card it is gold on white (readable, softer). On the WhatsApp receipt picture it sits on a black plate.
-- Website: header/footer now show only the RBH picture (the old "BATH HUB" word and mark were part of the old logo). og:image uses the Netlify address; change it if a custom domain is added.
-- Left alone (not logos): navy colours inside the WhatsApp receipt picture, manifest theme_color in the website.
-DONE (VERIFIED: pages opened at 390px, every logo loads, none stretched; dev server only)
-- Logo pack unzipped to C:\Bathco\Logo (13 files + preview-sheet).
-- Website (bathhub-website, branch work, d2c8fdc): header, footer, tab icons, home-screen icons (manifest), share image. Build OK. Shots: audit/logo/site_*.png
-- App (this repo, branch work): sidebar, login, top bar, POS strip, POS receipt (screen + print), PDF bill, report PDFs, tile catalogue PDF, WhatsApp receipt picture, favicon, app/home icons, /site page + share image, /bathhub.html. SW cache v24. Shots: audit/logo/app_*.png
-- Jest: only the old brain.test.js fails; site_v4 test updated to the new share image.
-NOT DONE: publishing the website. Real phone/WhatsApp preview check (UNVERIFIED).
-Status: NEEDS YOU
-Next: Netlify login, then preview-site.cmd, look, then say "publish site".
+# LATEST_REPORT 2026-10-10 (queue 4). Branch work.
+HEADS-UP (calm, nothing broken):
+- Full Jest "before" run was killed (machine too slow), so before/after is UNVERIFIED as a pair. After: 125 suites pass, 10 fail; all are Chromium/PDF/receipt-image/browser tests, 3 reference/ suites, brain.test.js (known); same files as the first partial run. I broke one test (pos_picker) and fixed it.
+- daily-entry-v2.html asks for /js/hyperspace-theme.js (404, was already missing). Not fixed, listed.
+- A registered POS cheque stays on the Cheques page if its bill is voided later.
+DONE:
+- Website PUBLISHED (your OK): live link checked: RBH logo yes, tour gone, orange 0, no console errors. Rollback deploy 6ac36cf61280a91d37342917. (VERIFIED)
+- Cleanup: old owner app + themes + navy logos git rm'd (3887350); 3 duplicate logo zips to Recycle Bin; 5 screens open at 390px, no 404 but the known one. (VERIFIED)
+- POS cheque + credit bills on Cheques / Credit & Aging, separate, no merge; Register works once; 7 new tests; 390px shots audit/pos/ (9ff4c18). (VERIFIED)
+- Quotation "Already billed (BHT-...)" + confirm (9ff4c18). API tested; the POS pop-up itself not clicked in a browser (UNVERIFIED).
+- Security gates: egress gate (drafts only), public-data allowlist, untrusted-text wrapper, audit log, 10 new red-team + old 15 pass (0b3b24f). (VERIFIED by tests)
+- Heartbeat rule added (global CLAUDE.md 149 lines, RULES.md, LIVE.md).
+NOT DONE:
+- Merge POS credit into customer credit totals (needs your answer). Owner outbox screen button, OCR/PDF wrapper, receipt gate (NEXT). The 9 bugs (waiting for you).
+WATCH: aikido + playwright MCP failed to connect this session (nothing ran, nothing sent). I used playwright-core locally only.
+Ajmal next: paste KEEP SEPARATE or MERGE POS CREDIT; say MERGE TO LIVE only when ready; run /login for claude-mem.
+STATUS: DONE (all queue parts finished).

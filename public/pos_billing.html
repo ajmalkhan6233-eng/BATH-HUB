@@ -798,8 +798,8 @@ document.getElementById('findBox').addEventListener('keydown', e => { if (e.key 
 drawHeld();
 
 function resetForm() {
-  _quoteId = null;
   loadToday();
+  _quoteId = null;
   editingId = null;
   document.getElementById('editBanner').style.display = 'none';
   document.getElementById('cancelEditBtn').style.display = 'none';
