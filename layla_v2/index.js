@@ -8,6 +8,7 @@ const { handleIncoming } = require('./engine');
 const { createPgStore } = require('./store_pg');
 const { createPgCatalog } = require('./catalog');
 const { selectTransport } = require('./transport');
+const { getDefaultGate } = require('../utils/egressGate');
 const { createStubDocuments, createSimulatedDocuments } = require('./documents_adapter');
 const { createMemoryStore } = require('./store_memory');
 const { createMemoryCatalog } = require('./catalog');
@@ -19,7 +20,8 @@ function createDeps({ pool, env = process.env, documents, answerEngine, model, l
         env,
         store: createPgStore(pool),
         catalog: createPgCatalog(pool),
-        transport: selectTransport(env, { log }),
+        // every outgoing message becomes a DRAFT the owner approves (utils/egressGate.js); nothing leaves by itself
+        transport: getDefaultGate(pool).gateTransport(selectTransport(env, { log }), 'layla_v2'),
         documents: documents || createStubDocuments(),           // after feature/documents is merged: pass the real adapter here
         answerEngine: answerEngine || (async text => {            // owner finance questions: the existing engine, read only, never edited
             const { classifyAndAnswer } = require('../scripts/layla_answer_engine');
