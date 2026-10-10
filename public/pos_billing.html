@@ -376,6 +376,7 @@ async function generateBill() {
       discount_pct,
       payment_method: document.getElementById('paymentMethod').value,
     };
+    if (_quoteId && !editingId) payload.quotation_id = _quoteId;
     // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
     const mode = payload.payment_method;
     if (['cheque', 'credit', 'split'].includes(mode)) {
@@ -397,6 +398,7 @@ async function generateBill() {
     if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
     const wasEdit = !!editingId;
     editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
+    _quoteId = null;   // the marker was saved with the bill
     renderBill(data);
     if (wasEdit) loadToday();
   } catch (e) {
@@ -678,9 +680,12 @@ function toggleTool(id) {
 }
 // ───────── LOAD QUOTATION (read only: the quotation is never changed; the bill is saved by the normal button) ─────────
 let _quotes = [];
+let _billed = {};      // quotation id -> bill number it was already billed as (live bills only)
+let _quoteId = null;   // the quotation the screen was loaded from; sent with the bill so it can be marked
 async function loadQuotes() {
   const out = document.getElementById('quoteResults'); out.textContent = 'Loading…';
   try { const r = await fetch('/api/quotations'); _quotes = r.ok ? await r.json() : []; } catch (e) { _quotes = []; }
+  try { const r = await fetch('/api/pos-ledger/quotation-billed'); _billed = r.ok ? await r.json() : {}; } catch (e) { _billed = {}; }
   drawQuotes();
 }
 function drawQuotes() {
@@ -692,6 +697,7 @@ function drawQuotes() {
     const row = document.createElement('div'); row.className = 't-row';
     const info = document.createElement('span');
     info.textContent = (q.quote_no || 'Q-' + q.id) + ' · ' + (q.customer_name || 'No customer') + ' · ' + sym + ' ' + Number(q.total || 0).toLocaleString() + ' · ' + (q.status || '');
+    if (_billed[q.id]) info.textContent += ' · Already billed (' + _billed[q.id] + ')';
     const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Load'; go.onclick = () => loadQuote(q.id);
     row.append(info, go); out.appendChild(row);
   });
@@ -700,10 +706,13 @@ async function loadQuote(id) {
   try {
     const r = await fetch('/api/quotations/' + id);
     if (!r.ok) { scanMsg('Could not open that quotation.', 'err'); return; }
-    const c = PosCart.quotationToCart(await r.json());
+    const qj = await r.json();
+    if (_billed[id] && !confirm('Quotation ' + (qj.quote_no || id) + ' was already billed as ' + _billed[id] + '. Load it again?')) return;
+    const c = PosCart.quotationToCart(qj);
     if (!c.rows.length) { scanMsg('That quotation has no items.', 'err'); return; }
     if (cartRows().some(x => x.name) && !confirm('The screen has items. Replace them with quotation ' + c.quote_no + '?')) return;
     resetForm(true); setCartRows(c.rows);
+    _quoteId = id;
     document.getElementById('customerName').value = c.customer_name; document.getElementById('customerPhone').value = c.customer_phone;
     document.getElementById('discountPct').value = c.discount_pct; updateCapHint();
     document.getElementById('quotePanel').classList.remove('open');
@@ -789,6 +798,7 @@ document.getElementById('findBox').addEventListener('keydown', e => { if (e.key 
 drawHeld();
 
 function resetForm() {
+  _quoteId = null;
   loadToday();
   editingId = null;
   document.getElementById('editBanner').style.display = 'none';

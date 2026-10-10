@@ -583,6 +583,11 @@ table tr:last-child td{border-bottom:none}
       <div class="card" style="margin-bottom:16px">
         <div class="tbl-wrap"><table><thead><tr><th>Cheque #</th><th>Bank</th><th>Amount</th><th>Due Date</th><th>Customer</th><th>Status</th><th>Action</th></tr></thead><tbody id="cheq-tbody"></tbody></table></div>
       </div>
+      <div class="card" style="margin-bottom:16px" id="pos-cheq-card">
+        <div class="section-title" style="margin-bottom:6px">From POS bills (not in the register yet)</div>
+        <div style="font-size:12px;opacity:.75;margin-bottom:8px">Cheques taken on POS bills. Pick the customer and due date, then register: it is added to the list above once.</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Bill</th><th>Cheque</th><th>Amount</th><th>Customer</th><th>Due date</th><th>Action</th></tr></thead><tbody id="pos-cheq-tbody"></tbody></table></div>
+      </div>
       <div class="card">
         <div class="section-title" style="margin-bottom:10px">Cheque Calendar — Current Month</div>
         <div class="cal-grid" id="cheq-cal"></div>
@@ -2299,6 +2304,7 @@ async function loadCheques() {
   const rows = await api('/api/cheques');
   if (!rows) return;
   _cheques = rows;
+  loadPosCheques();
   renderCheques();
   renderChequeKPIs(rows);
   renderChequeCalendar(rows);
@@ -2329,6 +2335,42 @@ function renderCheques(filter='') {
       <td>${!isClear?`<button class="btn btn-g" style="padding:3px 9px;font-size:12px" onclick="clearCheque(${r.id})">Mark Cleared</button>`:''}</td>
     </tr>`;
   }).join('');
+}
+
+// ── POS cheque bills not yet on this page (read side; "Register" uses the normal cheque create route) ──
+async function loadPosCheques() {
+  const tb = document.getElementById('pos-cheq-tbody'); if (!tb) return;
+  const [list, custs] = await Promise.all([api('/api/pos-ledger/cheques'), api('/api/customers')]);
+  tb.textContent = '';
+  if (!Array.isArray(list) || !list.length) { const tr = tb.insertRow(); const td = tr.insertCell(); td.colSpan = 6; td.className = 'no-data'; td.textContent = 'No POS cheques waiting'; return; }
+  list.forEach(p => {
+    const tr = tb.insertRow();
+    tr.insertCell().textContent = p.bill_number;
+    tr.insertCell().textContent = p.reference || '—';
+    tr.insertCell().textContent = fmtLKR(p.amount);
+    const sel = document.createElement('select'); sel.className = 'fs'; sel.setAttribute('aria-label', 'Customer for ' + p.bill_number);
+    const o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'Choose customer'; sel.appendChild(o0);
+    (custs || []).forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name || c.phone || ('#' + c.id); sel.appendChild(o); });
+    if (p.customer_id) sel.value = String(p.customer_id);
+    tr.insertCell().appendChild(sel);
+    const due = document.createElement('input'); due.type = 'date'; due.className = 'fi'; due.value = p.bill_date; due.setAttribute('aria-label', 'Due date for ' + p.bill_number);
+    tr.insertCell().appendChild(due);
+    const btn = document.createElement('button'); btn.className = 'btn btn-p'; btn.style.cssText = 'padding:3px 9px;font-size:12px'; btn.textContent = 'Register this cheque';
+    btn.onclick = () => registerPosCheque(p, sel.value, due.value, btn);
+    tr.insertCell().appendChild(btn);
+  });
+}
+async function registerPosCheque(p, customerId, dueDate, btn) {
+  if (!customerId) { toast('Choose the customer first', 'warning'); return; }
+  if (!dueDate) { toast('Choose the due date', 'warning'); return; }
+  btn.disabled = true;
+  const claim = await api('/api/pos-ledger/cheques/' + p.payment_id + '/claim', { method: 'POST', body: '{}' });
+  if (!claim) { btn.disabled = false; loadPosCheques(); return; }          // already registered (or error): the list is refreshed
+  const no = (String(p.reference || '').match(/\d{3,}/) || [null])[0];
+  const made = await api('/api/cheques', { method: 'POST', body: JSON.stringify({ customer_id: customerId, amount: p.amount, due_date: dueDate, cheque_no: no, notes: 'From POS bill ' + p.bill_number + (p.reference ? ' · ' + p.reference : '') }) });
+  if (!made) { await api('/api/pos-ledger/cheques/' + p.payment_id + '/release', { method: 'POST', body: '{}' }); btn.disabled = false; return; }
+  await api('/api/pos-ledger/cheques/' + p.payment_id + '/done', { method: 'POST', body: JSON.stringify({ cheque_id: made.id }) });
+  toast('Cheque registered', 'success'); loadCheques();
 }
 
 function filterCheques() { renderCheques(document.getElementById('cheq-search').value.toLowerCase()); }

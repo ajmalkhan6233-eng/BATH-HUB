@@ -69,6 +69,9 @@ pool.query(`
   .then(() => Promise.all([   // one step (not two) so start-up stays quick
     pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_voids (bill_id INT PRIMARY KEY REFERENCES pos_bills(id), reason TEXT NOT NULL, voided_by VARCHAR(100), voided_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, stock_restored JSONB)`),
     pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_history (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), action VARCHAR(10) NOT NULL, reason TEXT, changed_by VARCHAR(100), changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, old_version JSONB)`),
+    // read-side links (routes/pos_ledger_bridge.js): which POS cheque was copied to the Cheques page, and which quotation a bill came from. NEW tables, no ALTER.
+    pool.query(`CREATE TABLE IF NOT EXISTS pos_cheque_registered (payment_id INT PRIMARY KEY REFERENCES pos_bill_payments(id), cheque_id INT, registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`),
+    pool.query(`CREATE TABLE IF NOT EXISTS pos_quotation_billed (bill_id INT PRIMARY KEY REFERENCES pos_bills(id), quotation_id INT NOT NULL)`),
   ]))
   .catch(e => console.error('[pos_bills] migration failed:', e.message));
 
@@ -214,6 +217,11 @@ router.post('/pos-bills', async (req, res) => {
             for (const p of payInfo.rows) {
                 await client.query(`INSERT INTO pos_bill_payments (bill_id, method, amount, reference) VALUES ($1,$2,$3,$4)`, [billId, p.method, p.amount, p.reference]);
             }
+        }
+        // Billed from a quotation: remember which one (read-only marker; the quotation itself is never changed).
+        const quoteId = Number(req.body.quotation_id);
+        if (Number.isInteger(quoteId) && quoteId > 0) {
+            await client.query(`INSERT INTO pos_quotation_billed (bill_id, quotation_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [billId, quoteId]);
         }
 
         for (const l of lines) {

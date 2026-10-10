@@ -594,6 +594,7 @@ app.use('/api', require('./routes/investor_loans'));      // routes are relative
 app.use('/api', require('./routes/sale_commissions'));    // routes are relative (/sale-commissions etc) -> /api/sale-commissions*
 app.use('/api', require('./routes/shop_operations'));     // routes are relative (/discount-* /stock-* /receipt-queue*) -> /api/discount-*, /api/stock-*, /api/receipt-queue*
 app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
+app.use('/api', require('./routes/pos_ledger_bridge'));    // read side: POS cheque/credit bills + quotation-billed marker -> /api/pos-ledger*
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
 app.use('/api', require('./routes/site_editor'));             // website editor: public feed /api/site/public, owner-only edits /api/site/*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
