@@ -16,7 +16,7 @@ const { processInbound } = require('../layla_owner/inbound');
 const { verifySignature, LIMITS } = require('../layla_owner/ownerGate');
 const { parseWebhook } = require('../layla_owner/waCloud');
 
-module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, env = process.env, now = () => new Date() }) {
+module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env = process.env, now = () => new Date() }) {
   const r = express.Router();
   const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error('[layla-owner]', e.message); res.status(500).json({ error: 'Something went wrong' }); });
 
@@ -30,7 +30,7 @@ module.exports = function createRouter({ store, adapters, requireAuth, send, dow
 
   if (requireAuth) r.use(requireAuth);
   r.use(express.json({ limit: '16mb' }));
-  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, now });
+  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, now });
 
   r.post('/message', wrap(async (req, res) => {
     const text = String((req.body && req.body.text) || '').slice(0, LIMITS.maxTextChars);

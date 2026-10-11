@@ -25,6 +25,8 @@ async function processInbound(m, deps) {
       text = t.text.slice(0, LIMITS.maxTextChars); heard = `I heard: "${text}"\n`;
     } else if (m.type === 'image' || m.type === 'document') {
       const media = await deps.download(m.mediaId); const file = await deps.saveMedia(media.buffer, media.mime || m.mime, m.type);
+      const paperKind = deps.paper && m.type === 'image' ? deps.paper.captionKind(m.caption) : null;   // caption "GRN" or "cheque": read into a DRAFT, saved only on "ok"
+      if (paperKind) { const p = await deps.paper.start(paperKind, file); await reply(p.reply); return { status: 'ok', file, intent: 'paper_draft' }; }
       const cap = String(m.caption || '').slice(0, 500); const it = cap ? parseOwnerMessage(cap, now()) : { type: 'UNKNOWN' };
       if (['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) { const r = await handleOwnerMessage({ id: m.id, text: cap }, { store, adapters, now }); await reply(`Saved the ${m.type}. ${r.reply}`); return { status: 'ok', file }; }
       const t = await store.create({ kind: 'PHOTO_REVIEW', title: `Review the ${m.type} you sent${cap ? `: ${cap}` : ''} (${file})`, dueAt: now(), nagEveryMin: 120, maxNags: 1, sourceMsgId: m.id });
@@ -32,6 +34,7 @@ async function processInbound(m, deps) {
       return { status: 'ok', file };
     } else { await reply('I can read text, voice notes and photos.'); return { status: 'unsupported' }; }
   } catch (e) { console.error('[layla-owner] inbound error:', e.message); await reply('Something went wrong on my side. Please try again.'); return { status: 'error' }; }
+  if (deps.paper) { const p = await deps.paper.handleText(text).catch((e) => { console.error('[layla-owner] paper intake:', e.message); return null; }); if (p) { await reply(p.reply); return { status: 'ok', intent: 'paper_reply' }; } }
   const r = await handleOwnerMessage({ id: m.id, text }, { store, adapters, now });
   await reply(heard + r.reply);
   return { status: 'ok', intent: r.intent.type };
