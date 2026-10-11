@@ -9,25 +9,29 @@
   header{background:#0a4531;color:#fff;padding:14px 16px}
   header h1{margin:0;font-size:20px}
   main{padding:12px 16px;max-width:720px;margin:0 auto}
-  .big{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}
+  .big{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0 14px}
   .big div{background:#fff;border-radius:10px;padding:10px 6px;text-align:center;border:1px solid #d9d2c3}
   .big b{display:block;font-size:17px;word-break:break-word}
   .big span{font-size:12px;opacity:.75}
   .c{background:#fff;border:1px solid #d9d2c3;border-radius:10px;padding:10px 12px;margin:8px 0}
   .c .r{display:flex;justify-content:space-between;gap:8px}
   .tag{font-size:11px;padding:2px 8px;border-radius:99px;color:#fff}
-  .owed{background:#b45309}.in_transit{background:#1d4ed8}.cleared{background:#15803d}
+  .owed{background:#b45309}.in_transit{background:#1d4ed8}.cleared{background:#15803d}.bounced{background:#b91c1c}
+  .c.owed{background:#fff7d6}.c.in_transit{background:#e3edff}.c.cleared{background:#e2f5e6}.c.bounced{background:#fde2e2}
+  h2{font-size:16px;margin:16px 0 4px}
+  button.s{background:#fff;color:#0a4531}
   button{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid #0a4531;background:#0a4531;color:#fff;margin-top:6px}
   .m{font-size:12px;opacity:.8}.err{color:#c62828}
 </style>
 </head>
 <body>
-<header><h1>Cheque Clearing</h1><div class="m">Owed, in transit, cleared. Fri deposit clears Mon, Sat/Sun clears Tue.</div></header>
+<header><h1>Cheque Sheet</h1><div class="m">Owed, in transit, cleared. Fri deposit clears Mon, Sat/Sun clears Tue.</div></header>
 <main>
   <div class="big">
     <div><b id="t-owed">–</b><span>Owed</span></div>
     <div><b id="t-transit">–</b><span>In transit</span></div>
     <div><b id="t-cleared">–</b><span>Cleared</span></div>
+    <div><b id="t-bounced">–</b><span>Bounced</span></div>
   </div>
   <div id="msg" class="m"></div>
   <div id="list"></div>
@@ -44,22 +48,28 @@
       document.getElementById('t-owed').textContent = lkr(j.owed);
       document.getElementById('t-transit').textContent = lkr(j.in_transit);
       document.getElementById('t-cleared').textContent = lkr(j.cleared);
-      document.getElementById('list').innerHTML = j.cheques.map(function (c) {
-        return '<div class="c"><div class="r"><b>' + esc(c.payee || 'Cheque ' + c.cheque_no) + '</b><span class="tag ' + esc(c.state) + '">' + esc(c.state.replace('_', ' ')) + '</span></div>' +
-          '<div>' + lkr(c.amount) + ' <span class="m">due ' + esc(c.due_date || '-') + (c.clears_on ? ' | clears ' + esc(c.clears_on) : '') + '</span></div>' +
-          (c.state === 'owed' ? '<button data-id="' + esc(c.id) + '">Deposited today</button>' : '') + '</div>';
-      }).join('') || '<div class="m">No cheques.</div>';
+      document.getElementById('t-bounced').textContent = lkr(j.bounced);
+      var row = function (c) {
+        return '<div class="c ' + esc(c.state) + '"><div class="r"><b>' + esc(c.payee || '-') + '</b><span class="tag ' + esc(c.state) + '">' + esc(c.state.replace('_', ' ')) + '</span></div>' +
+          '<div>' + lkr(c.amount) + '</div><div class="m">' + esc(c.due_date || '-') + ' | no. ' + esc(c.cheque_no || '-') + ' | ' + esc(c.bank || '-') + (c.clears_on ? ' | clears ' + esc(c.clears_on) : '') + '</div>' +
+          (c.state === 'owed' ? '<button data-dep="' + esc(c.id) + '">Deposited today</button> ' : '') +
+          '<button class="s" data-per="' + esc(c.id) + '" data-on="' + (c.personal ? '0' : '1') + '">' + (c.personal ? 'Not personal' : 'Mark personal') + '</button></div>';
+      };
+      var biz = j.cheques.filter(function (c) { return !c.personal; }), per = j.cheques.filter(function (c) { return c.personal; });
+      document.getElementById('list').innerHTML = (biz.map(row).join('') || '<div class="m">No cheques.</div>') + (per.length ? '<h2>Personal</h2>' + per.map(row).join('') : '');
       msg.textContent = ''; msg.className = 'm';
     } catch (e) { msg.textContent = 'Could not load: ' + e.message; msg.className = 'm err'; }
   }
   document.getElementById('list').addEventListener('click', async function (ev) {
-    var id = ev.target.getAttribute && ev.target.getAttribute('data-id');
-    if (!id) return;
+    var dep = ev.target.getAttribute && ev.target.getAttribute('data-dep'), per = ev.target.getAttribute && ev.target.getAttribute('data-per');
+    if (!dep && !per) return;
     ev.target.disabled = true;
     try {
-      var r = await fetch('/api/cheque-clearing/' + encodeURIComponent(id) + '/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      var url = dep ? '/api/cheque-clearing/' + encodeURIComponent(dep) + '/deposit' : '/api/cheque-clearing/' + encodeURIComponent(per) + '/personal';
+      var body = dep ? '{}' : JSON.stringify({ personal: ev.target.getAttribute('data-on') === '1' });
+      var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body });
       var j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
-      msg.textContent = 'Saved. Clears on ' + j.clears_on; load();
+      msg.textContent = dep ? 'Saved. Clears on ' + j.clears_on : 'Saved.'; load();
     } catch (e) { msg.textContent = 'Not saved: ' + e.message; msg.className = 'm err'; ev.target.disabled = false; }
   });
   load();

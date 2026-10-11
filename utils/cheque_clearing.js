@@ -12,7 +12,7 @@ function clearingDate(depositISO, hol = []) {
 }
 function alertDates(clearISO) {
   const c = new Date(clearISO + 'T00:00:00Z');
-  return [{ when: iso(addDays(c, -3)), text: '3 days to clearing' }, { when: iso(addDays(c, -1)), text: 'Tomorrow clears' }, { when: clearISO, text: 'Clears TODAY (morning)' }];
+  return [{ when: iso(addDays(c, -3)), text: '3 days to clearing' }, { when: iso(addDays(c, -2)), text: '2 days to clearing' }, { when: iso(addDays(c, -1)), text: 'Tomorrow clears' }, { when: clearISO, text: 'Clears TODAY (morning)' }];
 }
 // status: owed (not deposited) | in_transit (deposited, before clear date) | cleared
 function status(ch, todayISO, hol = []) {
