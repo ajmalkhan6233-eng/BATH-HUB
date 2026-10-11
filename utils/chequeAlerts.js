@@ -30,11 +30,10 @@ async function ensureTable(pool) {
 }
 const slToday = (now) => new Date(now.getTime() + 5.5 * 3600e3);
 
-/** Safe to call every few minutes. Sends nothing before 07:00 Sri Lanka time and never repeats an alert. */
+/** Safe to call every few minutes. Queues each alert once (rule 11: the owner gets them in the 05:45 morning batch). */
 async function runChequeAlerts({ pool, send, now = new Date() }) {
   await ensureTable(pool);
   const sl = slToday(now), todayISO = sl.toISOString().slice(0, 10);
-  if (sl.getUTCHours() < 7) return { sent: 0, reason: 'before 07:00' };
   const hol = [...new Set([...(await pool.query(`SELECT TO_CHAR(day,'YYYY-MM-DD') d FROM bank_holidays`).catch(() => ({ rows: [] }))).rows.map(r => r.d), ...staticHolidays()])];
   const rows = (await pool.query(`SELECT c.id, c.payee, c.amount::float AS amount, c.status AS reg_status, TO_CHAR(d.deposit_date,'YYYY-MM-DD') deposit_date
       FROM cheque_register c JOIN cheque_deposits d ON d.cheque_id=c.id`)).rows;

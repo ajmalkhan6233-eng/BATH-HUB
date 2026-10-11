@@ -3,7 +3,7 @@
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const createStore = require('./taskStore'); const createAdapters = require('./adapters'); const createRouter = require('../routes/layla_owner');
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
-const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify');
+const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify');
 const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
 const { processInbound } = require('./inbound'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
@@ -16,13 +16,15 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
   const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env });
-  setSender((text) => send(null, text));                                                   // supplier price alerts etc. go to the owner's WhatsApp
+  setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 05:45 morning batch
   let timers = [];
   function start() {
-    timers.push(setInterval(() => tick({ store, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] reminder tick:', e.message)), 60000));
-    setTimeout(() => tick({ store, send: (text) => send(null, text) }).catch(() => {}), 5000);                       // catch up right after the computer starts
-    const chequeTick = () => runChequeAlerts({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] cheque alerts:', e.message));
+    timers.push(setInterval(() => tick({ store, send: (text) => notify.enqueue(pool, text, 'reminder') }).catch((e) => console.error('[layla-owner] reminder tick:', e.message)), 60000));
+    setTimeout(() => tick({ store, send: (text) => notify.enqueue(pool, text, 'reminder') }).catch(() => {}), 5000);                       // catch up right after the computer starts
+    const chequeTick = () => runChequeAlerts({ pool, send: (text) => notify.enqueue(pool, text, 'cheque') }).catch((e) => console.error('[layla-owner] cheque alerts:', e.message));
     timers.push(setInterval(chequeTick, 10 * 60000)); setTimeout(chequeTick, 20000);                                  // 4 cheque alerts to the owner, never repeated
+    const flushTick = () => notify.flush({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] morning batch:', e.message));
+    timers.push(setInterval(flushTick, 5 * 60000)); setTimeout(flushTick, 30000);                                        // sends only 05:45-06:00 Sri Lanka, once a day
     if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, handle: (m) => processInbound(m, { store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
     console.log(`[layla-owner] started (${cfg.live ? 'LIVE' : 'DRY RUN: nothing is sent to WhatsApp'}${env.RELAY_URL ? ', relay on' : ''})`);
   }

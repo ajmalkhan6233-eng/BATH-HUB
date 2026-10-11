@@ -66,3 +66,5 @@ BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/REA
 - (7) Anything Ajmal must copy or paste (commands, links, answers, handoffs, summaries) goes in its own code block so it copies in one tap on his phone. Never put a paste inside a sentence.
 - (8) Whenever chat cannot see something (code, PC, private repo, running app), it asks Claude Code to look; Claude Code reads the real code and reports on GitHub. Chat decides from that report, never from guesses.
 - (9) Never ask Ajmal to open a new window. When context is about 70 percent full, or the system warns, run /compact yourself, keeping: current task and checks, bridge state, AJMAL HARD RULES, file paths, links, UNVERIFIED items. Continue in the same window. Write "compacted at <time>" to LIVE.md.
+
+- (11) NOTIFICATIONS: every notification to Ajmal (WhatsApp, reminders, reports, health check, price/cheque alerts, morning brief) goes ONLY between 05:30 and 06:00 Sri Lanka time, once, as ONE combined message, through the notify module (utils/notify.js). Replies to a message he just typed are not notifications.

@@ -35,7 +35,7 @@ describe('runChequeAlerts (fake database, test mode)', () => {
     if (/INSERT INTO cheque_alerts_sent/.test(sql)) { sentRows.add(`${p[0]}|${p[1]}`); return { rows: [] }; }
     throw new Error('unexpected sql ' + sql);
   } };
-  test('4 messages on 4 mornings, a repeat run the same day sends nothing, nothing before 07:00', async () => {
+  test('4 messages on 4 mornings (queued for the 05:45 batch), a repeat run the same day sends nothing', async () => {
     const msgs = [];
     const send = async t => { msgs.push(t); };
     // Sri Lanka 08:00 = 02:30 UTC
@@ -46,7 +46,5 @@ describe('runChequeAlerts (fake database, test mode)', () => {
     }
     expect(msgs).toHaveLength(4);
     expect(await runChequeAlerts({ pool, send, now: new Date('2026-10-13T02:30:00Z') })).toEqual({ sent: 0 });
-    const early = await runChequeAlerts({ pool, send, now: new Date('2026-10-12T00:30:00Z') }); // 06:00 SL
-    expect(early.sent).toBe(0);
   });
 });
