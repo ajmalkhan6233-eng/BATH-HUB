@@ -594,6 +594,8 @@ app.use('/api', require('./routes/investor_loans'));      // routes are relative
 app.use('/api', require('./routes/sale_commissions'));    // routes are relative (/sale-commissions etc) -> /api/sale-commissions*
 app.use('/api', require('./routes/shop_operations'));     // routes are relative (/discount-* /stock-* /receipt-queue*) -> /api/discount-*, /api/stock-*, /api/receipt-queue*
 app.use('/api', require('./routes/pos_bill_corrections')); // owner-only void/edit of a POS bill: PUT /pos-bills/:id, POST /pos-bills/:id/void
+app.use('/api', require('./routes/agent_outbox'));          // owner approves or rejects what an agent wants to send: /api/agent-outbox*
+app.use('/api', require('./routes/pos_ledger_bridge'));    // read side: POS cheque/credit bills + quotation-billed marker -> /api/pos-ledger*
 app.use('/api', require('./routes/attachments'));           // photo / upload / download for any record: /api/attachments*
 app.use('/api', require('./routes/site_editor'));             // website editor: public feed /api/site/public, owner-only edits /api/site/*
 app.use('/api/corrections', require('./routes/corrections'));   // admin-only edit + void-with-reason, history: /api/corrections/*
@@ -603,6 +605,8 @@ app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (s
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
+app.use('/api', require('./routes/cheque_clearing'));      // owed / in transit / cleared + alert dates -> /api/cheque-clearing* (additive, own tables)
+app.use('/api', require('./routes/items_import'));         // CSV item import (dry run by default) -> /api/items/import-csv
 app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
 const laylaOwner = require('./layla_owner/boot')({ pool: require('./utils/pool') });   // owner assistant (Build 2; router is routes/layla_owner' built inside layla_owner/boot): login enforced by the global /api gate

@@ -9,6 +9,7 @@ const { getContext } = require('./core');
 const { resolveRole, normalizePhone } = require('./roles');
 const { customerTurn } = require('./customer');
 const { staffTurn } = require('./staff');
+const { wrapUntrusted } = require('../utils/untrustedText');
 
 const isTrue = v => String(v || '').toLowerCase() === 'true';
 
@@ -31,7 +32,10 @@ async function handleIncoming(msg, deps = {}) {
             if (String(m.text || '').trim()) await ctx.store.addMessage(from, 'in', String(m.text).slice(0, 2000), null);
             return { handled: true, role: 'customer', paused: true, replies: [], tasks: [] };
         }
-        return await customerTurn(ctx, m);
+        // a customer's words are DATA: instruction-like phrases are found and logged; the rule-based brain never obeys text, and
+        // safe_text (phrases removed) is what any future AI model must be given, never the raw text
+        const w = wrapUntrusted(m.text, 'customer-whatsapp');
+        return await customerTurn(ctx, { ...m, safe_text: w.text, untrusted_flags: w.flagged });
     } catch (e) {
         ctx.log(`[layla-v2] error: ${String(e && e.message || e).slice(0, 200)}`);
         return { handled: false, reason: 'error', error: String(e && e.message || e).slice(0, 200) };

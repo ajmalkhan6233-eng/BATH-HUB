@@ -30,6 +30,7 @@ label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,sel
 <div id="msg"></div>
 <div class="kpis" id="kpis"></div>
 <div class="card wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Invoice</th><th>Invoice date</th><th>Due date</th><th class="n">Amount</th><th class="n">Paid</th><th class="n">Outstanding</th><th>Age</th><th>Bucket</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="card wrap" id="pos-credit" style="margin-top:14px"><h2 style="margin:0 0 4px;font-size:16px">POS credit bills (not yet in customer ledger)</h2><div style="font-size:12px;opacity:.75;margin-bottom:8px">Read only. These are kept apart: they are NOT included in the totals above.</div><div id="pos-credit-total" style="font-weight:700;margin-bottom:6px"></div><table><thead><tr><th>Customer</th><th>Phone</th><th class="n">Bills</th><th class="n">Total</th></tr></thead><tbody id="pos-credit-c"></tbody></table><table style="margin-top:10px"><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th class="n">Credit part</th></tr></thead><tbody id="pos-credit-b"></tbody></table></div>
 <div class="modal" id="m"><div class="box" id="mb"></div></div>
 <script>
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -49,6 +50,17 @@ function prep(r){
   if(out<=0)bucket='settled';else if(age!==null&&age>90)bucket='90+';else if(age!==null&&age>60)bucket='61-90';
   return Object.assign({},r,{age:age,out:out,bucket:bucket});}
 async function load(){try{ROWS=(await api('/api/credit-customers')).map(prep);render();}catch(e){msg(e.message)}}
+async function loadPos(){
+  try{
+    const d=await api('/api/pos-ledger/credit');
+    const row=(tb,cells)=>{const tr=$(tb).insertRow();cells.forEach(([t,n])=>{const td=tr.insertCell();td.textContent=t;if(n)td.className='n';});};
+    $('pos-credit-c').textContent='';$('pos-credit-b').textContent='';
+    $('pos-credit-total').textContent='POS credit total: '+fmt(d.total);
+    if(!d.bills.length){row('pos-credit-b',[['No POS credit bills',0],['',0],['',0],['',1]]);return;}
+    d.customers.forEach(c=>row('pos-credit-c',[[c.customer,0],[c.phone||'—',0],[String(c.bills),1],[fmt(c.total),1]]));
+    d.bills.forEach(b=>row('pos-credit-b',[[b.bill_number,0],[b.bill_date,0],[b.customer_name||b.customer_phone||'—',0],[fmt(b.amount),1]]));
+  }catch(e){$('pos-credit-total').textContent=e.message;}
+}
 function render(){
   let cur=0,b61=0,b90=0;
   ROWS.forEach(r=>{if(r.bucket==='current')cur+=r.out;else if(r.bucket==='61-90')b61+=r.out;else if(r.bucket==='90+')b90+=r.out;});
@@ -68,8 +80,8 @@ async function addForm(){
     if(!(b.amount>0)){$('fe').textContent='Amount must be more than 0';return;}
     try{await api('/api/credit-customers','POST',b);close();msg('Saved',1);load();}catch(e){$('fe').textContent=e.message}};
 }
-$('add').onclick=addForm;$('reload').onclick=load;$('settled').onchange=render;
+$('add').onclick=addForm;$('reload').addEventListener('click',loadPos);$('reload').onclick=load;$('settled').onchange=render;
 $('m').addEventListener('click',e=>{if(e.target.id==='m')close();});
-load();
+load();loadPos();
 </script><script src="/bathhub-logo.js"></script>
 </body></html>
