@@ -307,6 +307,9 @@ app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(3
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
 app.use(require('./routes/site_catalogue'));   // website extras: /robots.txt, /sitemap.xml, /site with absolute links when SITE_URL is set, /api/site/catalogue.pdf (public)
 app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root: __dirname }));
+// The customer front page is the real website (black + gold, RBH logo). The old page public/bathhub.html is no longer shown to anyone.
+const PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || 'https://dapper-dieffenbachia-69d038.netlify.app';
+app.get('/bathhub.html', (req, res) => res.redirect(302, PUBLIC_SITE_URL));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────
@@ -554,8 +557,8 @@ const setupGate = (handler) => async (req, res) => {
     try { if (await setupNeeded()) return res.redirect(302, '/setup.html'); } catch {}
     return handler(req, res);
 };
-// One site: Royal Bath Hub is the front door; the owner's business screens live at /owner (sign-in required for every private API).
-app.get('/', setupGate((req, res) => res.redirect(302, '/bathhub.html')));
+// One site: the Royal Bath Hub website (Netlify) is the front door; the owner's business screens live at /owner (sign-in required for every private API).
+app.get('/', setupGate((req, res) => res.redirect(302, PUBLIC_SITE_URL)));
 app.get('/app', setupGate((req, res) => res.redirect(302, '/owner')));
 app.get('/owner', setupGate((req, res) => res.sendFile('public/bathco_complete.html', { root: __dirname })));
 

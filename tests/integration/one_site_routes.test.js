@@ -12,10 +12,12 @@ pg.__db.public.none(`CREATE TABLE users (id SERIAL PRIMARY KEY, username TEXT, r
 pg.__db.public.none(`INSERT INTO users (username, role) VALUES ('a', 'admin')`);
 const app = require('../../server');
 
-test('the front door is Royal Bath Hub; /app and /nature go to /owner', async () => {
+test('the front door is the real Royal Bath Hub website (never the old page); /app and /nature go to /owner', async () => {
   const gate = r => r.headers.location;
   const root = await request(app).get('/');
-  expect([root.status, gate(root)]).toEqual([302, '/bathhub.html']);
+  expect([root.status, gate(root)]).toEqual([302, 'https://dapper-dieffenbachia-69d038.netlify.app']);
+  const old = await request(app).get('/bathhub.html');   // the old light page must not be reachable any more
+  expect([old.status, gate(old)]).toEqual([302, 'https://dapper-dieffenbachia-69d038.netlify.app']);
   for (const p of ['/app', '/nature']) { const r = await request(app).get(p); expect([r.status, gate(r)]).toEqual([302, '/owner']); }
 });
 
