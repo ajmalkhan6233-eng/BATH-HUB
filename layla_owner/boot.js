@@ -3,7 +3,7 @@
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const createStore = require('./taskStore'); const createAdapters = require('./adapters'); const createRouter = require('../routes/layla_owner');
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
-const { runChequeAlerts } = require('../utils/chequeAlerts');
+const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify');
 const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
 const { processInbound } = require('./inbound'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
@@ -16,6 +16,7 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
   const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env });
+  setSender((text) => send(null, text));                                                   // supplier price alerts etc. go to the owner's WhatsApp
   let timers = [];
   function start() {
     timers.push(setInterval(() => tick({ store, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] reminder tick:', e.message)), 60000));

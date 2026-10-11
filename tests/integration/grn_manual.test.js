@@ -71,3 +71,27 @@ describe('database failure', () => {
     expect(r.status).toBe(500); expect(r.body.error).toMatch(/nothing was saved/); expect(release).toHaveBeenCalled();
   });
 });
+
+describe('supplier price alerts (more than 3 percent from the last cost for the same supplier and item)', () => {
+  const { setSender } = require('../../utils/ownerNotify');
+  const sent = [];
+  beforeAll(() => setSender(async (t) => { sent.push(t); }));
+  afterAll(() => setSender(null));
+  const grn = (supplier, cost) => send({ supplier_name: supplier, grn_date: '2026-10-04', lines: [{ name: 'Alert Test Tap', qty: 5, unit_cost: cost }] });
+  const flush = () => new Promise((r) => setImmediate(r));
+  test('first delivery: no history, no alert. +5 percent: one alert. +1.9 percent: none. Other supplier: none', async () => {
+    expect((await grn('Alert Supplier', 100)).status).toBe(201); await flush();
+    expect(sent).toHaveLength(0);
+    expect((await grn('Alert Supplier', 105)).status).toBe(201); await flush();
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toContain('Alert Test Tap'); expect(sent[0]).toContain('100.00 -> 105.00 (+5%)'); expect(sent[0]).toContain('Alert Supplier');
+    expect((await grn('Alert Supplier', 107)).status).toBe(201); await flush();       // 105 -> 107 = +1.9 percent
+    expect(sent).toHaveLength(1);
+    expect((await grn('Another Supplier', 150)).status).toBe(201); await flush();     // no history with this supplier
+    expect(sent).toHaveLength(1);
+  });
+  test('a price drop of more than 3 percent also alerts', async () => {
+    expect((await grn('Alert Supplier', 90)).status).toBe(201); await flush();
+    expect(sent).toHaveLength(2); expect(sent[1]).toContain('-15.9%');
+  });
+});

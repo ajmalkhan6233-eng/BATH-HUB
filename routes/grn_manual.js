@@ -19,6 +19,8 @@ const path = require('path');
 const multer = require('multer');
 const { Pool } = require('pg');
 const catalog = require('./item_catalog');
+const { priceChange, buildMessage: priceAlertMessage } = require('../utils/supplierPriceAlerts');
+const { notifyOwner } = require('../utils/ownerNotify');
 
 const router = express.Router();
 
@@ -92,6 +94,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         const grn_number = `MG-${grn_date.replace(/-/g, '')}-${String(Number(c.rows[0].n) + 1).padStart(2, '0')}`;
 
         const results = [];
+        const priceChanges = [];   // supplier price alerts: more than 3 percent from the last cost paid to this supplier for this item
         for (const l of clean) {
             const photo_url = l.file ? catalog.savePhoto(l.file.buffer) : null;
             if (photo_url) savedPhotos.push(photo_url);
@@ -113,6 +116,9 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                     avg_cost: l.cost, stock_level: l.qty, photo_url,
                 }, { client });
             }
+            const prev = await client.query(`SELECT unit_cost FROM grn_records WHERE LOWER(supplier_name) = LOWER($1) AND item_description LIKE $2 ORDER BY id DESC LIMIT 1`, [supplier_name, `${item.item_code} - %`]);
+            const pc = prev.rows[0] && priceChange(prev.rows[0].unit_cost, l.cost);
+            if (pc) priceChanges.push({ name: item.name, ...pc });
             await client.query(
                 `INSERT INTO grn_records (grn_number, supplier_id, supplier_name, grn_date, item_description,
                                           quantity, unit_cost, total_amount, source_file_path, status, notes)
@@ -123,6 +129,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
             results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, is_new: isNew });
         }
         await client.query('COMMIT');
+        if (priceChanges.length) notifyOwner(priceAlertMessage(supplier_name, grn_number, priceChanges));
         res.status(201).json({ grn_number, supplier_name, grn_date, total: round2(results.reduce((s, r) => s + lineTotal(r.qty, r.unit_cost), 0)), items: results });
     } catch (e) {
         if (client) await client.query('ROLLBACK').catch(() => {});
