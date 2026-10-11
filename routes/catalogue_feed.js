@@ -1,10 +1,10 @@
 // routes/catalogue_feed.js
 // M5 WEBSITE CATALOGUE FEED: feeds the public website (bathhub.html) from the item catalog.
 //
-// PRIVACY: the public endpoint returns ONLY name, size cm, size inches, finish, use, photo.
-// It never returns price, cost, margin, supplier, stock or item_code. Fields are listed
+// PRIVACY: the public endpoint returns ONLY name, category, in_stock (yes/no, never a number), a short opaque ref,
+// size cm, size inches, finish, use, photo. It never returns price, cost, margin, supplier, a stock number or item_code. Fields are listed
 // explicitly in the SELECT and in the response mapper; nothing is spread from a row.
-// Items are hidden by default: an item appears only after the owner publishes it.
+// Any item (not only tiles) can be published: size is required for tiles only. Items are hidden by default: an item appears only after the owner publishes it.
 //
 // Own table `catalogue_web` (item_code -> size/finish/use/published). `products` is only read.
 //   GET /public/catalogue           no login (added to the auth bypass list in server.js)
@@ -20,6 +20,16 @@ function ownerOnly(req, res, next) {
     if (!u || (u.role !== 'admin' && u.role !== 'owner')) return res.status(403).json({ error: 'Owner only' });
     next();
 }
+const crypto = require('crypto');
+// The shop's free-text product category -> the website's 4 shelves.
+function webCategory(c) {
+    const t = String(c || '').toLowerCase();
+    if (/tile/.test(t)) return 'tiles';
+    if (/tap|mixer|shower|valve|bib|faucet|fitting|waste|coupling/.test(t)) return 'fittings';
+    if (/commode|basin|pedestal|wc|water closet|toilet|sink/.test(t)) return 'commodes_basins';
+    return 'accessories';
+}
+const opaqueRef = code => crypto.createHash('sha1').update('rbh-web|' + String(code)).digest('hex').slice(0, 10);
 const clean = v => String(v == null ? '' : v).trim();
 
 // "60x60" / "30 x 60" / "60x120" -> normalised "60x60"; '' when empty; null when invalid.
@@ -51,11 +61,14 @@ function createRouter(pool) {
     async function publishedItems() {
         await ready;
         const r = await pool.query(
-            `SELECT p.name, p.photo_url, w.size_cm, w.finish, w.use_case
+            `SELECT p.item_code, p.name, p.category, p.stock_level, p.photo_url, w.size_cm, w.finish, w.use_case
              FROM catalogue_web w JOIN products p ON p.item_code = w.item_code
              WHERE w.published = TRUE AND p.active = TRUE ORDER BY p.name`);
         return r.rows.map(x => ({
+            ref: opaqueRef(x.item_code),
             name: x.name,
+            category: webCategory(x.category),
+            in_stock: Number(x.stock_level) > 0,
             size_cm: x.size_cm,
             size_inches: toInches(x.size_cm),
             finish: x.finish,
@@ -113,7 +126,7 @@ function createRouter(pool) {
         try {
             await ready;
             const code = clean(req.params.item_code);
-            const p = await pool.query(`SELECT item_code, photo_url FROM products WHERE item_code = $1 AND active = TRUE`, [code]);
+            const p = await pool.query(`SELECT item_code, category, photo_url FROM products WHERE item_code = $1 AND active = TRUE`, [code]);
             if (!p.rows[0]) return res.status(404).json({ error: 'Item not found' });
             const b = req.body || {};
             const cur = (await pool.query(`SELECT * FROM catalogue_web WHERE item_code = $1`, [code])).rows[0]
@@ -125,7 +138,7 @@ function createRouter(pool) {
             if (finish.length > 80 || use.length > 120) return res.status(400).json({ error: 'finish/use text is too long' });
             const published = b.published !== undefined ? b.published : cur.published;
             if (typeof published !== 'boolean') return res.status(400).json({ error: 'published must be true or false' });
-            if (published && !size) return res.status(400).json({ error: 'Add the size before publishing' });
+            if (published && !size && webCategory(p.rows[0].category) === 'tiles') return res.status(400).json({ error: 'Add the size before publishing a tile' });
             if (published && !p.rows[0].photo_url) return res.status(400).json({ error: 'Add a photo to the item before publishing' });
             await pool.query(
                 `INSERT INTO catalogue_web (item_code, size_cm, finish, use_case, published) VALUES ($1,$2,$3,$4,$5)
@@ -145,3 +158,5 @@ module.exports = function (req, res, next) {
 };
 module.exports.createRouter = createRouter;
 module.exports.toInches = toInches;
+module.exports.webCategory = webCategory;
+module.exports.opaqueRef = opaqueRef;

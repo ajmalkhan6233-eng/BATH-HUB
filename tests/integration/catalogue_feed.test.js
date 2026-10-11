@@ -1,10 +1,10 @@
 'use strict';
 // M5 Catalogue feed: isolated test on in-memory Postgres (pg-mem).
-// Key check: the PUBLIC feed never carries cost, price, margin, supplier, stock or item code.
+// Key check: the PUBLIC feed never carries cost, price, margin, supplier, a stock number or item code (in_stock is yes/no only).
 const express = require('express');
 const request = require('supertest');
 const { newDb } = require('pg-mem');
-const { createRouter, toInches } = require('../../routes/catalogue_feed');
+const { createRouter, toInches, webCategory, opaqueRef } = require('../../routes/catalogue_feed');
 
 async function makeApp(role) {
     const { Pool } = newDb().adapters.createPg();
@@ -24,6 +24,12 @@ async function makeApp(role) {
 }
 
 describe('M5 catalogue feed', () => {
+    test('web category mapping and opaque ref', () => {
+        expect(['Tiles', 'Floor tile 60x60', 'WC / Commode', 'Pedestal basin', 'Basin mixer tap', 'Overhead shower', 'Towel rail', ''].map(webCategory))
+            .toEqual(['tiles', 'tiles', 'commodes_basins', 'commodes_basins', 'fittings', 'fittings', 'accessories', 'accessories']);
+        expect(opaqueRef('001')).toMatch(/^[0-9a-f]{10}$/); expect(opaqueRef('001')).not.toBe(opaqueRef('002'));
+    });
+
     test('inches conversion', () => {
         expect(toInches('60x60')).toBe('24x24');
         expect(toInches('30x60')).toBe('12x24');
@@ -63,12 +69,19 @@ describe('M5 catalogue feed', () => {
 
         const pub = await request(app).get('/api/public/catalogue');
         expect(pub.body.items).toEqual([{
-            name: 'Marble Floor Tile', size_cm: '60x60', size_inches: '24x24', finish: 'Glossy', use: 'Bathroom floor', photo: '/api/item-photos/a.jpg',
+            ref: opaqueRef('001'), name: 'Marble Floor Tile', category: 'tiles', in_stock: true, size_cm: '60x60', size_inches: '24x24', finish: 'Glossy', use: 'Bathroom floor', photo: '/api/item-photos/a.jpg',
         }]);
-        expect(Object.keys(pub.body.items[0]).sort()).toEqual(['finish', 'name', 'photo', 'size_cm', 'size_inches', 'use']);
+        expect(Object.keys(pub.body.items[0]).sort()).toEqual(['category', 'finish', 'in_stock', 'name', 'photo', 'ref', 'size_cm', 'size_inches', 'use']);
         const raw = JSON.stringify(pub.body);
-        for (const secret of ['2999', '4500', '1888', '777', 'avg_cost', 'selling_price', 'cost', 'margin', 'supplier', 'stock', 'item_code', '"001"'])
+        for (const secret of ['2999', '4500', '1888', '777', 'avg_cost', 'selling_price', 'cost', 'margin', 'supplier', 'stock_level', 'item_code', '"001"'])
             expect(raw).not.toContain(secret);
+
+        // an accessory (not a tile) can be published WITHOUT a size, and in_stock is yes/no only
+        await app.__pool.query(`INSERT INTO products VALUES ('010','Chrome Towel Rail','Bathroom accessories',0,1,2500,1200,'/api/item-photos/t.jpg',true)`);
+        await request(app).put('/api/catalogue-web/010').send({ published: true }).expect(200);
+        const acc = (await request(app).get('/api/public/catalogue?q=towel')).body.items[0];
+        expect(acc).toMatchObject({ name: 'Chrome Towel Rail', category: 'accessories', in_stock: false });
+        await request(app).put('/api/catalogue-web/010').send({ published: false }).expect(200);
 
         // hiding removes it again
         await request(app).put('/api/catalogue-web/001').send({ published: false }).expect(200);
@@ -97,6 +110,6 @@ describe('M5 catalogue feed', () => {
         expect(f.body).toEqual({ sizes_cm: ['30x60', '40x40', '60x60'], finishes: ['Glossy', 'Matt'], uses: ['Bathroom', 'Floor', 'Wall'], count: 3 });
         expect(f.headers['access-control-allow-origin']).toBe('*');
         const raw = JSON.stringify((await request(app).get('/api/public/catalogue?q=tile')).body) + JSON.stringify(f.body);
-        for (const secret of ['3000', '4500', '1500', '9000', 'avg_cost', 'selling_price', 'stock']) expect(raw).not.toContain(secret);
+        for (const secret of ['3000', '4500', '1500', '9000', 'avg_cost', 'selling_price', 'stock_level']) expect(raw).not.toContain(secret);
     });
 });
