@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offline edits to review — Royal Bath Hub</title>
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#f6f3ec;color:#1d1d1d}
+  header{background:#0a4531;color:#fff;padding:14px 16px}
+  header h1{margin:0;font-size:20px}
+  main{padding:12px 16px;max-width:720px;margin:0 auto}
+  .help{background:#fff;border:1px solid #d9d2c3;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+  .c{background:#fff7d6;border:1px solid #d9d2c3;border-radius:10px;padding:10px 12px;margin:10px 0}
+  .c .t{font-weight:600;word-break:break-word}
+  .m{font-size:12px;opacity:.8;word-break:break-word}
+  pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #e6e0d2;border-radius:8px;padding:8px;font-size:12px;max-height:160px;overflow:auto}
+  input{font:inherit;width:100%;box-sizing:border-box;padding:8px;border:1px solid #bbb;border-radius:8px;margin-top:6px}
+  button{font:inherit;padding:10px 14px;border-radius:8px;border:1px solid #0a4531;background:#0a4531;color:#fff;margin:8px 8px 0 0}
+  button.s{background:#fff;color:#0a4531}
+  .err{color:#c62828}.ok{color:#15803d}
+</style>
+</head>
+<body>
+<header><h1>Offline edits to review</h1></header>
+<main>
+  <div class="help">When a phone or laptop was offline and someone EDITED or VOIDED a saved record, the change is never applied by itself. It waits here.
+    Look at it, change the record yourself in the normal screen if it is right, then press <b>I applied this</b>. Press <b>Dismiss</b> to ignore it. The server's version always stays until you decide.</div>
+  <div id="msg" class="m">Loading...</div>
+  <div id="list"></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  function el(tag, attrs) {
+    var e = document.createElement(tag), i, c;
+    for (var k in (attrs || {})) { if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    for (i = 2; i < arguments.length; i++) { c = arguments[i]; if (c == null) continue; e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); }
+    return e;
+  }
+  var msg = document.getElementById('msg'), list = document.getElementById('list');
+  function when(s) { try { return new Date(s).toLocaleString('en-LK', { timeZone: 'Asia/Colombo' }); } catch (e) { return String(s || ''); } }
+  function pretty(d) { var t; try { t = JSON.stringify(d, null, 1); } catch (e) { t = String(d); } return t.length > 1500 ? t.slice(0, 1500) + ' ...' : t; }
+
+  async function resolve(id, action, note, card) {
+    var r = await fetch('/api/sync/review/' + encodeURIComponent(id) + '/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action, note: note }) });
+    if (r.ok) { card.remove(); msg.className = 'm ok'; msg.textContent = action === 'applied' ? 'Marked as applied.' : 'Dismissed.'; load(true); }
+    else { var j = await r.json().catch(function () { return {}; }); msg.className = 'm err'; msg.textContent = 'Could not save: ' + (j.error || r.status); }
+  }
+  function card(x) {
+    var note = el('input', { placeholder: 'Note (optional)', maxlength: '500' }), c;
+    c = el('div', { class: 'c' },
+      el('div', { class: 't' }, (x.method || '') + ' ' + (x.path || x.record_type || '')),
+      el('div', { class: 'm' }, 'From device ' + (x.device || '?') + ', saved offline ' + when(x.queued_at) + ', arrived ' + when(x.created_at)),
+      el('pre', {}, pretty(x.detail)),
+      note,
+      el('button', { type: 'button' }, 'I applied this'),
+      el('button', { type: 'button', class: 's' }, 'Dismiss'));
+    var b = c.querySelectorAll('button');
+    b[0].onclick = function () { resolve(x.id, 'applied', note.value, c); };
+    b[1].onclick = function () { resolve(x.id, 'dismissed', note.value, c); };
+    return c;
+  }
+  async function load(keepMsg) {
+    try {
+      var r = await fetch('/api/sync/review');
+      if (r.status === 401 || r.status === 403) { msg.className = 'm err'; msg.textContent = 'Only the owner or an admin can see this page. Please log in.'; return; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var rows = await r.json();
+      list.replaceChildren.apply(list, rows.map(card));
+      if (!keepMsg || !rows.length) { msg.className = 'm'; msg.textContent = rows.length ? rows.length + ' waiting for you.' : 'Nothing waiting. All offline edits are dealt with.'; }
+    } catch (e) { msg.className = 'm err'; msg.textContent = 'Could not load: ' + e.message; }
+  }
+  load(false);
+})();
+</script>
+</body>
+</html>
