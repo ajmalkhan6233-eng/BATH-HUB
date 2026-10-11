@@ -14,7 +14,7 @@ describe('clearingDate', () => {
 });
 
 describe('alertDates + status', () => {
-  test('four alerts: -3 days, -2 days, -1 day, morning of', () => {
+  test('four alerts: -3, -2, -1 days and the morning of', () => {
     expect(alertDates('2026-10-13').map(a => a.when)).toEqual(['2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13']);
   });
   test('owed / in_transit / cleared', () => {
