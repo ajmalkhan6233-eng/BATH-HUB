@@ -64,15 +64,16 @@ function summarise(rows) {
   for (const r of rows) {
     if (r.bill.voided) continue;
     const s = billStatus(r.bill, r.cheques, r.payments, r.credits);
-    const v = byVendor.get(r.bill.vendor_name) || { vendor: r.bill.vendor_name, outstanding: 0, covered: 0, uncovered: 0, bills: 0 };
+    const v = byVendor.get(r.bill.vendor_name) || { vendor: r.bill.vendor_name, outstanding: 0, covered: 0, uncovered: 0, cleared: 0, bills: 0 };
     v.outstanding = round2(v.outstanding + s.outstanding);
     v.covered = round2(v.covered + s.covered);
     v.uncovered = round2(v.uncovered + s.uncovered);
+    v.cleared = round2(v.cleared + s.cleared);   // paid by cheques that have cleared
     if (s.outstanding > EPS) v.bills += 1;
     byVendor.set(r.bill.vendor_name, v);
   }
   const vendors = [...byVendor.values()].sort((a, b) => b.outstanding - a.outstanding);
-  const totals = vendors.reduce((t, v) => ({ outstanding: round2(t.outstanding + v.outstanding), covered: round2(t.covered + v.covered), uncovered: round2(t.uncovered + v.uncovered) }), { outstanding: 0, covered: 0, uncovered: 0 });
+  const totals = vendors.reduce((t, v) => ({ outstanding: round2(t.outstanding + v.outstanding), covered: round2(t.covered + v.covered), uncovered: round2(t.uncovered + v.uncovered), cleared: round2(t.cleared + v.cleared) }), { outstanding: 0, covered: 0, uncovered: 0, cleared: 0 });
   return { vendors, totals };
 }
 

@@ -37,12 +37,12 @@ async function load(){
   try{
     const cash=Number($('cash').value||0);
     const [s,c,g,k,b]=await Promise.all([api('/summary'),api('/calendar'),api(`/cash-gap?cash=${cash}&days=2`),api('/checks'),api('/bills')]);
-    $('tot').replaceChildren(stat('Payable',s.totals.outstanding),stat('Covered by cheque (not cleared)',s.totals.covered),stat('Not covered',s.totals.uncovered,s.totals.uncovered>0?'bad':''),stat(`Cash short, next ${g.days} days`,g.gap,g.gap>0?'bad':'good'));
+    $('tot').replaceChildren(stat('Payable',s.totals.outstanding),stat('Covered by cheque (not cleared)',s.totals.covered),stat('Cleared by cheque',s.totals.cleared),stat('Not covered',s.totals.uncovered,s.totals.uncovered>0?'bad':''),stat(`Cash short, next ${g.days} days`,g.gap,g.gap>0?'bad':'good'));
     $('cal').replaceChildren(stat('Today',c.today),stat('Tomorrow',c.tomorrow),stat('Monday '+c.monday.date,c.monday.amount),stat(`Overdue (${c.overdue.count})`,c.overdue.amount,c.overdue.count?'bad':''),stat('Next 7 days',c.windows[7]),stat('Next 14 days',c.windows[14]),stat('Next 30 days',c.windows[30]));
     $('bulk').textContent=c.bulkDays.length?'Bulk days: '+c.bulkDays.map(d=>d.date+' '+money(d.amount)).join(', '):'';
     const w=[];k.duplicates.sameNumber.forEach(p=>w.push(`Same cheque number on cheques ${p.join(' and ')}`));k.duplicates.likely.forEach(p=>w.push(`Possible duplicate: cheques ${p.join(' and ')}`));k.warnings.forEach(x=>w.push(`Cheque ${x.id}: ${x.flags.join(', ')}`));
     $('warn').replaceChildren(...(w.length?w.map(t=>el('div',{},t)):['None']));
-    $('ven').replaceChildren(el('table',{width:'100%'},...s.vendors.map(v=>el('tr',{},el('td',{},v.vendor),el('td',{style:'text-align:right'},money(v.outstanding)),el('td',{class:'sm',style:'text-align:right'},'not covered '+money(v.uncovered))))));
+    $('ven').replaceChildren(el('table',{width:'100%'},...s.vendors.map(v=>el('tr',{},el('td',{},v.vendor),el('td',{style:'text-align:right'},money(v.outstanding)),el('td',{class:'sm',style:'text-align:right'},'cleared '+money(v.cleared)+' | not covered '+money(v.uncovered))))));
     $('bills').replaceChildren(...b.map(bill=>el('div',{class:'bill'},
       el('div',{class:'row'},el('b',{},bill.vendor_name),el('span',{class:'chip'},bill.state.replace('_',' ')),bill.hasBounced?el('span',{class:'chip bad'},'bounced'):''),
       el('div',{class:'sm'},`${bill.bill_no||''} ${String(bill.bill_date).slice(0,10)} total ${money(bill.total)} owed ${money(bill.outstanding)} covered ${money(bill.covered)}`),

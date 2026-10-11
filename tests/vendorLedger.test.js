@@ -38,8 +38,20 @@ describe('summarise', () => {
       { bill: { vendor_name: 'B', total: 70, voided: true }, cheques: [] },
     ];
     const r = L.summarise(rows);
-    expect(r.totals).toEqual({ outstanding: 150, covered: 100, uncovered: 50 });
+    expect(r.totals).toEqual({ outstanding: 150, covered: 100, uncovered: 50, cleared: 0 });
     expect(r.vendors).toHaveLength(1);
+  });
+  test('per-vendor CLEARED = cheques that have cleared, not cheques only issued; voided bills excluded', () => {
+    const rows = [
+      { bill: { vendor_name: 'A', total: 100 }, cheques: [{ amount: 60, status: 'CLEARED' }, { amount: 40, status: 'ISSUED' }] },
+      { bill: { vendor_name: 'A', total: 50 }, cheques: [{ amount: 50, status: 'CLEARED' }] },
+      { bill: { vendor_name: 'B', total: 200 }, cheques: [{ amount: 30, status: 'BOUNCED' }] },
+      { bill: { vendor_name: 'A', total: 999, voided: true }, cheques: [{ amount: 999, status: 'CLEARED' }] },
+    ];
+    const r = L.summarise(rows);
+    expect(r.vendors.find((v) => v.vendor === 'A')).toMatchObject({ cleared: 110, covered: 40, outstanding: 40 });
+    expect(r.vendors.find((v) => v.vendor === 'B').cleared).toBe(0);
+    expect(r.totals.cleared).toBe(110);
   });
 });
 
@@ -58,7 +70,7 @@ describe('dates and clearing (BATHCO rule)', () => {
     expect(L.nextClearingDate('2026-04-10', { sameBank: false })).toBe('2026-04-15'); // Fri -> Mon 13th is a holiday, Tue 14th too -> Wed 15th
   });
   test('a year without a holiday list returns a warning, never silence', () => {
-    expect(L.nextClearingInfo('2027-03-01', { sameBank: true }).warnedYears).toEqual([2027]);
+    expect(L.nextClearingInfo('2028-03-01', { sameBank: true }).warnedYears).toEqual([2028]);
     expect(L.nextClearingInfo('2026-10-09', { sameBank: true }).warnedYears).toEqual([]);
   });
   test('override holidays and lag', () => {
