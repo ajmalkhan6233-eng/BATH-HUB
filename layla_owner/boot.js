@@ -16,7 +16,7 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
   const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env });
-  setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 05:45 morning batch
+  setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];
   function start() {
     timers.push(setInterval(() => tick({ store, send: (text) => notify.enqueue(pool, text, 'reminder') }).catch((e) => console.error('[layla-owner] reminder tick:', e.message)), 60000));
@@ -26,7 +26,7 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
     const autoTick = () => automations.runDaily({ pool, adapters, enqueue: (text, src) => notify.enqueue(pool, text, src) }).catch((e) => console.error('[layla-owner] automations:', e.message));
     timers.push(setInterval(autoTick, 30 * 60000)); setTimeout(autoTick, 45000);                                           // morning brief, reorder list (Mon), weekly profit (Sun), accountant pack (1st)
     const flushTick = () => notify.flush({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] morning batch:', e.message));
-    timers.push(setInterval(flushTick, 5 * 60000)); setTimeout(flushTick, 30000);                                        // sends only 05:45-06:00 Sri Lanka, once a day
+    timers.push(setInterval(flushTick, 60000)); setTimeout(flushTick, 30000);                                             // sends only at 06:00 (to 06:10) Sri Lanka time, once a day
     if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, handle: (m) => processInbound(m, { store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
     console.log(`[layla-owner] started (${cfg.live ? 'LIVE' : 'DRY RUN: nothing is sent to WhatsApp'}${env.RELAY_URL ? ', relay on' : ''})`);
   }

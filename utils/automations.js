@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Small daily automations for the owner (Task 24.4). Each job builds ONE short text and puts it in the notify queue
- * (utils/notify.js), so it reaches the owner in the single 05:45 morning message (rule 11). Money data goes only to the owner.
+ * (utils/notify.js), so it reaches the owner in the single 06:00 morning message (rule 11). Money data goes only to the owner.
  * Every job runs at most once per Sri Lanka day (table automation_runs). A job that fails is skipped and logged, never blocks the others.
  *
  * Jobs:  1 morning brief (daily)  2 low-stock reorder list (Mondays)  3 weekly profit (Sundays)  4 backup check (inside the brief)

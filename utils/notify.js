@@ -1,13 +1,13 @@
 'use strict';
 /**
- * RULE 11: every notification to the owner goes out ONLY between 05:30 and 06:00 Sri Lanka time, once, as ONE combined message.
+ * RULE 11 (changed 2026-10-11 by the owner): every notification to the owner goes out ONLY at 06:00 Sri Lanka time, once, as ONE combined message.
  * Every sender calls enqueue(); the message waits in the table notify_queue. flush() is called every few minutes by the shop app
- * (layla_owner/boot.js): from 05:45 to 06:00 it sends everything waiting as one message, and never again that day.
+ * (layla_owner/boot.js): from 06:00 (up to 06:10, in case a check ran a minute late) it sends everything waiting as one message, and never again that day.
  * Replies to a message the owner just typed are not notifications and are not queued.
  * A fixed clock can be passed (now) so tests do not depend on real time. A batch missed because the computer was off waits for the next morning.
  */
-const SEND_FROM_MIN = 5 * 60 + 45;   // 05:45 Sri Lanka
-const SEND_UNTIL_MIN = 6 * 60;       // before 06:00
+const SEND_FROM_MIN = 6 * 60;        // 06:00 Sri Lanka
+const SEND_UNTIL_MIN = 6 * 60 + 10;  // the check runs every minute, 10 minutes of slack
 const MAX_CHARS = 3800;              // WhatsApp text limit is about 4000
 
 const sl = (now) => new Date(now.getTime() + 5.5 * 3600e3);
@@ -42,7 +42,7 @@ function combine(rows) {
 
 /** send(text) is the real WhatsApp sender. Returns { sent: n } or { sent: 0, reason }. */
 async function flush({ pool, send, now = new Date() }) {
-  if (!inReleaseTime(now)) return { sent: 0, reason: 'outside 05:45-06:00' };
+  if (!inReleaseTime(now)) return { sent: 0, reason: 'outside 06:00-06:10' };
   await ensure(pool);
   const today = slDay(now);
   const done = await pool.query(`SELECT 1 FROM notify_queue WHERE sent_day = $1 LIMIT 1`, [today]);

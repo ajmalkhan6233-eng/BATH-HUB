@@ -2,7 +2,7 @@
 /**
  * Daily health check of the Royal Bath Hub website (free: plain HTTP, no browser).
  *   node scripts/website_health_check.js            checks the main site and the newest draft, writes AI_BRIDGE/HEALTH.md in the bridge clone,
- *                                                   and, only if something is broken, queues ONE alert for the 05:45 morning batch (rule 11).
+ *                                                   and, only if something is broken, queues ONE alert for the 06:00 morning batch (rule 11).
  * Checks per site: page loads and has the shop title, the site code loads, logo + favicon + share picture load, the WhatsApp button
  * (wa.me link) and the Sinhala / Tamil switch are in the code, the admin login page and its login function answer.
  * A login-protected draft (HTTP 401) is reported as "protected", not as broken.
@@ -60,7 +60,7 @@ async function main() {
     catch (e) { console.error('[health] could not write to the bridge:', String(e.message).split('\n')[0]); }
   }
   if (sites.some((s) => !s.ok)) {
-    // rule 11: a problem waits in the queue and goes out in the 05:45 morning batch (never at another hour)
+    // rule 11: a problem waits in the queue and goes out in the 06:00 morning batch (never at another hour)
     try { const pool = require('../utils/pool'); await require('../utils/notify').enqueue(pool, brokenText(sites), 'website'); await pool.end(); }
     catch (e) { console.error('[health] could not queue the alert:', e.message); }
     process.exitCode = 1;
