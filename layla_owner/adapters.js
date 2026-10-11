@@ -5,10 +5,10 @@
  * Each function must return plain data or null; the brain turns it into words. Cheques and payables use the vendor ledger tables from Build 1 (no ADAPT needed).
  */
 const L = require('../utils/vendorLedger');
-const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
+const defaultToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
 const num = (v) => Number(v) || 0;
 
-module.exports = function createAdapters({ pool }) {
+module.exports = function createAdapters({ pool, today = defaultToday }) {   // today() can be given by a test so dates do not depend on the real clock
   async function ledgerRows() {
     const bills = (await pool.query('SELECT * FROM vendor_bills WHERE voided=FALSE')).rows.map((b) => ({ ...b, total: num(b.total) }));
     const ch = (await pool.query('SELECT * FROM vendor_bill_cheques')).rows.map((c) => ({ ...c, amount: num(c.amount), due_date: String(c.due_date instanceof Date ? c.due_date.toISOString() : c.due_date).slice(0, 10) }));

@@ -127,8 +127,8 @@ test('kill switch LAYLA_V2_DISABLED=true: signed messages are accepted (200) but
 
 test('createDeps: transport is a dry run unless WHATSAPP_LIVE=true and the keys exist', () => {
     const pool = new pg.Pool();
-    expect(L.createDeps({ pool, env: {} }).transport.name).toBe('dry-run');
-    expect(L.createDeps({ pool, env: { WHATSAPP_LIVE: 'true' } }).transport.name).toBe('dry-run');
-    expect(L.createDeps({ pool, env: { WHATSAPP_LIVE: 'true', WHATSAPP_API_TOKEN: 'a', WHATSAPP_PHONE_NUMBER_ID: 'b' } }).transport.name).toBe('cloud-api');
+    expect(L.createDeps({ pool, env: {} }).transport.name).toBe('gated:dry-run');   // the egress gate wraps every transport (SECURITY_GATES.md)
+    expect(L.createDeps({ pool, env: { WHATSAPP_LIVE: 'true' } }).transport.name).toBe('gated:dry-run');   // the egress gate wraps every transport (SECURITY_GATES.md)
+    expect(L.createDeps({ pool, env: { WHATSAPP_LIVE: 'true', WHATSAPP_API_TOKEN: 'a', WHATSAPP_PHONE_NUMBER_ID: 'b' } }).transport.name).toBe('gated:cloud-api');
     expect(() => L.createDeps({})).toThrow();
 });

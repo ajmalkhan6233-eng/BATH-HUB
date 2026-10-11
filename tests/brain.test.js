@@ -6,7 +6,7 @@ const createAdapters = require('../layla_owner/adapters');
 const { handleOwnerMessage } = require('../layla_owner/brain');
 let pool, store, adapters; const now = () => new Date('2026-10-04T04:30:00Z');
 const ask = (t) => handleOwnerMessage({ id: 'w' + Math.random(), text: t }, { store, adapters, now });
-beforeAll(async () => { const { Pool } = newDb().adapters.createPg(); pool = new Pool(); await migrate(pool); await migrateLedger(pool); store = createStore(pool); adapters = createAdapters({ pool });
+beforeAll(async () => { const { Pool } = newDb().adapters.createPg(); pool = new Pool(); await migrate(pool); await migrateLedger(pool); store = createStore(pool); adapters = createAdapters({ pool, today: () => '2026-10-04' });
   await pool.query(`INSERT INTO vendor_bills (vendor_name, bill_date, total) VALUES ('Eskema Ceramic','2026-01-13',213200)`);
   await pool.query(`INSERT INTO vendor_bill_cheques (bill_id, amount, cheque_date, due_date, status) VALUES (1, 213200, '2026-10-04', '2026-10-05', 'ISSUED')`); });
 
