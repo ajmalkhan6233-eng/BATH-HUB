@@ -3,7 +3,7 @@
 const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
 const createStore = require('./taskStore'); const createAdapters = require('./adapters'); const createRouter = require('../routes/layla_owner');
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
-const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify');
+const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify'); const automations = require('../utils/automations');
 const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
 const { processInbound } = require('./inbound'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
@@ -23,6 +23,8 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
     setTimeout(() => tick({ store, send: (text) => notify.enqueue(pool, text, 'reminder') }).catch(() => {}), 5000);                       // catch up right after the computer starts
     const chequeTick = () => runChequeAlerts({ pool, send: (text) => notify.enqueue(pool, text, 'cheque') }).catch((e) => console.error('[layla-owner] cheque alerts:', e.message));
     timers.push(setInterval(chequeTick, 10 * 60000)); setTimeout(chequeTick, 20000);                                  // 4 cheque alerts to the owner, never repeated
+    const autoTick = () => automations.runDaily({ pool, adapters, enqueue: (text, src) => notify.enqueue(pool, text, src) }).catch((e) => console.error('[layla-owner] automations:', e.message));
+    timers.push(setInterval(autoTick, 30 * 60000)); setTimeout(autoTick, 45000);                                           // morning brief, reorder list (Mon), weekly profit (Sun), accountant pack (1st)
     const flushTick = () => notify.flush({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] morning batch:', e.message));
     timers.push(setInterval(flushTick, 5 * 60000)); setTimeout(flushTick, 30000);                                        // sends only 05:45-06:00 Sri Lanka, once a day
     if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, handle: (m) => processInbound(m, { store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
