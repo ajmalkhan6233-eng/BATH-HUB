@@ -1,4 +1,5 @@
 # RULES (Ajmal's own orders, newest first, max 30 lines)
+- **2026-10-10 WEBSITE: HIDE the Room Planner on the Royal Bath Hub site (Ajmal's last answer: HIDE ROOM PLANNER, after first saying KEEP). Not built yet; hide by removing the tab from the menu only, keep the code.**
 - **2026-10-10 WEBSITE: KEEP the Room Planner on the Royal Bath Hub site (Ajmal said KEEP ROOM PLANNER).**
 - **2026-10-09 PUBLIC REPO: BATH-HUB is public on purpose (Ajmal's choice). Never raise it. Never commit secrets.**
 - **2026-10-09 BRIDGE: planning chat (claude.ai) reads branch work of BATH-HUB read-only. Claude Code is the ONLY builder. End of every task run: write AI_MEMORY/LATEST_REPORT.md (max 25 lines: date, tasks done, commit ids, UNVERIFIED, Ajmal's next physical action, one status word), commit and push to work. Ajmal never pastes reports.**
