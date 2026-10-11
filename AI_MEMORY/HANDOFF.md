@@ -8,3 +8,4 @@
 - V1 (2026-10-11 evening): rule 11 notify queue (utils/notify.js) + utils/automations.js (brief, reorder, weekly profit, accountant CSV) wired in layla_owner/boot.js. Tag v1.0. Final handover for Aj: AI_BRIDGE/V1_FINAL.md in the bridge repo. Merge to live + Tailscale + WhatsApp keys were blocked by the classifier: Aj types the lines in V1_FINAL.md.
 - Task 25 (2026-10-11): live master = work head (step A done). utils/automations2.js built (ideas 5,6,7,8,9,10,11,12,13,15,18; fake-DB tests only) at 384da68; tag v1.1.
 - STILL NOT BUILT: idea 14 cut-outs (needs Tesseract/@imgly), Task 19 leftovers, https feed address (needs cloudflared or Tailscale login). Tailscale installed but logged out.
+- v1.1 (2026-10-11 night): live app = d029388 (merged by Aj), Tailscale installed, owner-only tests added. Still open: https feed address (Tailscale Funnel line in bridge V1_FINAL.md), Tesseract, @imgly cut-outs, Sinhala voice test, ideas 5-15 and 18, WhatsApp keys, website publish.
