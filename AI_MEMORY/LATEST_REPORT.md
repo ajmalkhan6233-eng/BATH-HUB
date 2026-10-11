@@ -1,17 +1,9 @@
-# LATEST_REPORT 2026-10-10 (queue 4). Branch work.
-HEADS-UP (calm, nothing broken):
-- Full Jest "before" run was killed (machine too slow), so before/after is UNVERIFIED as a pair. After: 125 suites pass, 10 fail; all are Chromium/PDF/receipt-image/browser tests, 3 reference/ suites, brain.test.js (known); same files as the first partial run. I broke one test (pos_picker) and fixed it.
-- daily-entry-v2.html asks for /js/hyperspace-theme.js (404, was already missing). Not fixed, listed.
-- A registered POS cheque stays on the Cheques page if its bill is voided later.
-DONE:
-- Website PUBLISHED (your OK): live link checked: RBH logo yes, tour gone, orange 0, no console errors. Rollback deploy 6ac36cf61280a91d37342917. (VERIFIED)
-- Cleanup: old owner app + themes + navy logos git rm'd (3887350); 3 duplicate logo zips to Recycle Bin; 5 screens open at 390px, no 404 but the known one. (VERIFIED)
-- POS cheque + credit bills on Cheques / Credit & Aging, separate, no merge; Register works once; 7 new tests; 390px shots audit/pos/ (9ff4c18). (VERIFIED)
-- Quotation "Already billed (BHT-...)" + confirm (9ff4c18). API tested; the POS pop-up itself not clicked in a browser (UNVERIFIED).
-- Security gates: egress gate (drafts only), public-data allowlist, untrusted-text wrapper, audit log, 10 new red-team + old 15 pass (0b3b24f). (VERIFIED by tests)
-- Heartbeat rule added (global CLAUDE.md 149 lines, RULES.md, LIVE.md).
-NOT DONE:
-- Merge POS credit into customer credit totals (needs your answer). Owner outbox screen button, OCR/PDF wrapper, receipt gate (NEXT). The 9 bugs (waiting for you).
-WATCH: aikido + playwright MCP failed to connect this session (nothing ran, nothing sent). I used playwright-core locally only.
-Ajmal next: paste KEEP SEPARATE or MERGE POS CREDIT; say MERGE TO LIVE only when ready; run /login for claude-mem.
-STATUS: DONE (all queue parts finished).
+# LATEST REPORT 2026-10-11 (Tasks 20/21/22, branch work)
+Tasks: 21 header (long RBH lockup) PASS | 22 item 0 shop app PASS (running, port 3100) | 22A cheque alerts PASS | 22B GRN/cheque photo draft PASS (test mode) | 22C items to website PASS | 22D supplier price alerts PASS | 22E health check PARTLY (one blocked run) | leftovers: 4 of 4 done.
+Commits (BATH-HUB work): b1cbf8c 22A, a5923a0 22B, b9d9e42 22C shop, 1d38721 22D, e52b6b7 22E, then leftovers: tests fixed, dynamic SQL ratchet, vendor CLEARED, sync-review screen. Website work: 42e99cc, 5eb5178 (logo), ad382c1 (22C).
+UNVERIFIED: real photo reading (needs OPENROUTER key + live WhatsApp), WhatsApp sends (still DRY RUN until live creds), auto-start after reboot, running shop app does NOT have these changes (it runs old master; "MERGE TO LIVE" needed).
+BLOCKED by classifier: first real run of scripts/website_health_check.js (pushes HEALTH.md). Line for Ajmal is in the bridge LIVE.md.
+Needs Ajmal OK: install Tailscale (iPhone access); install Tesseract; @imgly background removal; https tunnel address for website shopApiUrl.
+Ajmal next physical action: open the Netlify draft on his phone, say "publish" or what to change; say MERGE TO LIVE when ready.
+WATCH: aikido + playwright plugins: I called neither plugin; I used the playwright-core library and local Chrome for screenshots (no data sent out). Their background activity: UNVERIFIED.
+Status: NEEDS YOU

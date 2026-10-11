@@ -1,8 +1,7 @@
-# HANDOFF (2026-10-10, queue 4 done)
-- Branch `work` = Royal Bath Hub output (never master). Latest report: AI_MEMORY/LATEST_REPORT.md. Heartbeat: AI_MEMORY/LIVE.md.
-- Website (E:\AI Sttuf\bathhub-website, branch work) is LIVE on https://dapper-dieffenbachia-69d038.netlify.app (published 2026-10-10 with Aj's OK). Rollback: deploy 6ac36cf61280a91d37342917 (old orange site) in Netlify > Deploys > Publish. publish-site.cmd uses the site NAME and fails; use the site id 63ef83ec-f6f7-4b2d-a06b-77d7246a5c64 (see website PROGRESS.md).
-- POS cheque/credit bills show on the Cheques page and in Credit & Aging (separate, read only). Quotation "Already billed" marker is in. Details: POS_LEDGER_PLAN.md.
-- Agents: nothing leaves by itself. layla_v2 sends become drafts (routes/agent_outbox.js, utils/egressGate.js). Details: SECURITY_GATES.md.
-- Dev setup (my session only): throwaway Postgres 5434 (bathco_q3_test) + dev app 3299, login in .test-login.txt (gitignored). Never the live app (3100) or live DB.
-- Worktree note: branch work-q3 is pushed to origin work (work is checked out in another worktree).
-- Aj next physical action: say "MERGE TO LIVE" only when ready to move branch work to the live app on port 3100. Look at audit/pos/*.png. Answer: KEEP SEPARATE or MERGE POS CREDIT (OPEN_ITEMS).
+# HANDOFF (2026-10-11, tasks 21 + 22 done on branch work)
+- Branch `work` = Royal Bath Hub output (never master). Latest report: AI_MEMORY/LATEST_REPORT.md. I worked on local branch work-tasks and pushed it to origin work (git push origin work-tasks:work).
+- New this round: cheque alerts (utils/chequeAlerts.js, wired in layla_owner/boot.js), GRN/cheque photo draft (layla_owner/paperIntake.js + paperDeps.js), supplier price alerts (utils/supplierPriceAlerts.js, hooked in routes/grn_manual.js), catalogue feed with category + in_stock (routes/catalogue_feed.js), website health check (scripts/website_health_check.js, Windows task RBH_Website_Health 08:30), dynamic SQL ratchet test, vendor CLEARED number, public/sync-review.html.
+- The running shop app (pm2 apex-server, port 3100, runs from E:\AI Sttuf\BATHCO_TEMPLATE on master) does NOT have these changes. MERGE TO LIVE is Aj's call.
+- The scheduled task points into the temporary worktree path; re-point it after merge.
+- Website: E:\AI Sttuf\bathhub-website branch work (5eb5178 logo, ad382c1 live catalogue). shopApiUrl is blank (needs an https address).
+- Aj next physical action: look at the draft link in AI_BRIDGE/LIVE.md, say publish / change; paste the one blocked line from LIVE.md.

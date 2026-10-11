@@ -1,4 +1,4 @@
-# OPEN_ITEMS (2026-10-10)
+# OPEN_ITEMS (2026-10-11)
 - Aj: the 9 listed bugs are WAITING for Aj's OK (not fixed, on purpose).
 - Aj: "MERGE TO LIVE" = move branch work to the live app on port 3100 (nothing merged to live yet).
 - Aj decide: POS credit bills stay separate from Credit & Aging totals (current). Paste: KEEP SEPARATE or MERGE POS CREDIT.
@@ -14,3 +14,8 @@
 - Old PCs files to decide (CLEANUP_LIST.md, ASK AJMAL): bathhub-website-export, bathhub-build-pack, harvest-bundle, design-from-aistudio, tile-photos, .rar files, old zips.
 - Railway go-live (parked): CLAUDE.md task 1. Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/.
 - Netlify old deploys (list only, never deleted): 6ac984b8, 6ac9516d, 6ac90e28 (drafts), 6ac90e1a (error, empty), 6ac36cf6 (old orange, rollback).
+- Aj OK needed: install Tailscale (iPhone reaches shop app), Tesseract (free OCR for photos), @imgly (cut-out photos), an https address for the website's shopApiUrl.
+- 22E: first run of scripts/website_health_check.js was blocked by the classifier; Aj types the line from bridge LIVE.md. Remove task: Unregister-ScheduledTask -TaskName RBH_Website_Health -Confirm:$false
+- Cheque/GRN/price alerts and photo intake only reach WhatsApp when WA_TOKEN + WA_PHONE_NUMBER_ID + LAYLA_OWNER_LIVE=true are set and the shop app runs this code (MERGE TO LIVE).
+- Link public/sync-review.html from an owner menu (page exists, no menu link yet).
+- Website draft for logo: Aj to look and say publish.
