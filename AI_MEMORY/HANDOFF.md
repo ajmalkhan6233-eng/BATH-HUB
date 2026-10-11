@@ -5,3 +5,5 @@
 - The scheduled task points into the temporary worktree path; re-point it after merge.
 - Website: E:\AI Sttuf\bathhub-website branch work (5eb5178 logo, ad382c1 live catalogue). shopApiUrl is blank (needs an https address).
 - Aj next physical action: look at the draft link in AI_BRIDGE/LIVE.md, say publish / change; paste the one blocked line from LIVE.md.
+- V1 (2026-10-11 evening): rule 11 notify queue (utils/notify.js) + utils/automations.js (brief, reorder, weekly profit, accountant CSV) wired in layla_owner/boot.js. Tag v1.0. Final handover for Aj: AI_BRIDGE/V1_FINAL.md in the bridge repo. Merge to live + Tailscale + WhatsApp keys were blocked by the classifier: Aj types the lines in V1_FINAL.md.
+- NOT BUILT: ideas 5-15, 18 of AUTOMATION_IDEAS.md, Task 19 leftovers, Tesseract, https feed address.
