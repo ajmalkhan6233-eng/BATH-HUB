@@ -53,6 +53,7 @@ async function main() {
   const when = new Date(Date.now() + 5.5 * 3600e3).toISOString().replace('T', ' ').slice(0, 16) + ' SL';
   const sites = [await checkSite(MAIN)]; if (DRAFT) sites.push(await checkSite(DRAFT));
   const md = report(sites, when); console.log(md);
+  try { const f = path.join(__dirname, '..', 'uploads', 'health_last.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); const bad = sites.filter((x) => !x.ok); fs.writeFileSync(f, JSON.stringify({ when: when.slice(11, 16), ok: bad.length === 0, problems: bad.flatMap((x) => x.results.filter((r) => !r.ok).map((r) => r.name)) })); } catch (e) { console.error('[health] could not save health_last.json:', e.message); }   // read by the 06:00 message
   const bridge = process.env.AI_BRIDGE_DIR || 'C:\\Users\\Sony\\workplace\\Universal-project-';
   if (fs.existsSync(path.join(bridge, '.git'))) {
     const git = (...a) => execFileSync('git', ['-C', bridge, ...a], { stdio: 'pipe' }).toString();

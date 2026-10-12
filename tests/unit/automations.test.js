@@ -26,7 +26,7 @@ test('morning brief has sales, cheques, low stock, backup and is queued once a d
   const r1 = await A.runDaily({ pool, adapters, enqueue, now: MON_0700, root });
   expect(r1.done).toEqual(['morning_brief', 'reorder_list']);
   const brief = q.find((x) => x[0] === 'brief')[1];
-  expect(brief).toContain('sales Rs 120,000'); expect(brief).toContain('today Rs 50,000'); expect(brief).toContain('OVERDUE 1'); expect(brief).toContain('Low stock: 1 items'); expect(brief).toContain('Backup OK');
+  expect(brief).toContain('YESTERDAY'); expect(brief).toContain('Sales Rs 120,000'); expect(brief).toContain('net profit Rs 25,000'); expect(brief).toContain('today Rs 50,000'); expect(brief).toContain('OVERDUE 1'); expect(brief).toContain('Stock low: 1 items'); expect(brief).toContain('Backup OK'); expect(brief).not.toContain('THIS WEEK');   // Monday: no days yet this week
   expect(q.find((x) => x[0] === 'reorder')[1]).toContain('001 Tap: have 1, order about 9');
   expect((await A.runDaily({ pool, adapters, enqueue, now: MON_0700, root })).done).toEqual([]);      // second run the same day: nothing
 });
@@ -51,4 +51,13 @@ test('monthly accountant pack writes 3 CSV files with escaped cells', async () =
   const files = await A.accountantPack(pool, '2026-09', out);
   expect(files.map((f) => path.basename(f))).toEqual(['2026-09_sales.csv', '2026-09_purchases.csv', '2026-09_cheques.csv']);
   expect(fs.readFileSync(files[2], 'utf8')).toContain('"Smith, ""Bob"""'); expect(fs.readFileSync(files[1], 'utf8')).toBe('no rows\n');
+});
+
+test('06:00 message: three sections, empty parts left out, week totals and health shown', () => {
+  const full = A.morningBrief({ today: '2026-10-14', yesterday: '2026-10-13', y: { days: 1, sales: 100000, gp: 20000, expenses: 30000 }, chqDone: { cleared: { n: 1, amount: 5 }, bounced: { n: 2, amount: 9 } }, grn: { n: 0, total: 0 }, low: [], priceChanges: 0,
+    cheques: { today: 0, tomorrow: 0, next7: 70000 }, billsDue: { n: 1, total: 8000 }, reminders: [], health: { ok: false, when: '05:40', problems: ['admin login page'] }, backupHours: 50, tax: [], week: { days: 2, sales: 300000, gp: 60000, expenses: 40000 }, changed: [] });
+  expect(full).toContain('net profit Rs -10,000 (LOSS)'); expect(full).toContain('Cheques BOUNCED: 2'); expect(full).toContain('Cheques cleared: 1');
+  expect(full).toContain('Supplier bills due today: 1'); expect(full).toContain('Website check: PROBLEM (admin login page)'); expect(full).toContain('BACKUP: last one is 50 hours old');
+  expect(full).toContain('THIS WEEK'); expect(full).toContain('net profit Rs 20,000 (2 days)'); expect(full).toContain('next 7 days: Rs 70,000');
+  expect(full).not.toContain('GRNs entered'); expect(full).not.toContain('Reminders'); expect(full).not.toContain('Stock low');
 });
