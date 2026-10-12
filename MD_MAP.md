@@ -231,3 +231,9 @@ DUP = identical content as another file (or same file name in another place). ST
 | Universal-project- | video_reader/README.md | 837 | 2026-10-10 |  |
 
 Total 226 files. DUP 2, STALE 27.
+
+## Moved to archive (2026-10-12, nothing deleted; originals kept in git history and in branch md-backup-before-tidy)
+- bathhub-website: MORNING-REPORT.md -> archive/MORNING-REPORT.md
+- bathhub-website: PROGRESS.md -> archive/PROGRESS.md
+Candidates NOT moved (still referenced by CLAUDE.md or other files): AGENT_GUIDE/*, AISTUDIO_HANDOFF/*, AUDIT_LAYLA_WHITELABEL.md, SUPPORT_POLICY.md, docs/LAYLA_PRO_SPEC.md, and the duplicate docs/bathhub_knowledge/agents/llm-council.md (same text as .claude/skills/llm-council/SKILL.md; BUILD.md names its path).
+Backup branch md-backup-before-tidy exists on GitHub in all three repos.
