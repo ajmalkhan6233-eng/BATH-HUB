@@ -83,3 +83,6 @@ backups/daily/
 
 # Layla owner assistant: incoming photos and voice notes are private
 uploads/layla-inbox/
+
+# half-hourly backup bookkeeping (scripts/backup_rotate.js)
+backups/.last_hash
