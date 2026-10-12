@@ -173,10 +173,10 @@
     </div>
 
     <label>Customer name (optional)</label>
-    <input type="text" id="customerName" placeholder="Walk-in customer">
+    <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off">
 
     <label>Customer phone (optional, for WhatsApp share)</label>
-    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()">
+    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()" autocomplete="off">
     <div id="waCheck" class="wa-receipt-msg" role="status"></div>
     <label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send the receipt to the customer's WhatsApp when I press Print</label>
 
@@ -240,6 +240,7 @@
 </div>
 
 <script src="/pos-picker.js"></script>
+<script src="/suggest.js"></script>
 <script src="/pos-cart.js"></script>
 <script>
 let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
@@ -400,6 +401,7 @@ async function generateBill() {
     editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
     _quoteId = null;   // the marker was saved with the bill
     renderBill(data);
+    clearCustomer();   // the bill is saved: the next customer starts from an empty name and phone
     if (wasEdit) loadToday();
   } catch (e) {
     showError(e.message);
@@ -806,9 +808,7 @@ function resetForm() {
   document.getElementById('genBtn').textContent = 'Generate Bill';
   document.getElementById('itemRows').innerHTML = '';
   addItemRow();
-  document.getElementById('customerName').value = '';
-  document.getElementById('customerPhone').value = '';
-  document.getElementById('waCheck').textContent = '';
+  clearCustomer();
   document.getElementById('paymentMethod').value = 'cash'; document.getElementById('chequeRef').value = ''; document.getElementById('splitRows').innerHTML = ''; payModeChanged();
   if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
   document.getElementById('discountPct').value = 0;
@@ -816,6 +816,23 @@ function resetForm() {
   document.getElementById('formPanel').style.display = 'block';
   document.getElementById('billPanel').style.display = 'none';
 }
+// ---- customer name / phone: drop-down list, no stale value (Task 30) ----
+let _custId = null;   // set only when a row is TAPPED in the list
+function clearCustomer() {
+  document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = '';
+  _custId = null; const w = document.getElementById('waCheck'); if (w) { w.textContent = ''; w.className = 'wa-receipt-msg'; }
+}
+(function () {
+  const nameBox = document.getElementById('customerName'), phoneBox = document.getElementById('customerPhone');
+  clearCustomer();   // opening the screen starts empty
+  let pickedPhone = '';   // the phone a TAP filled in; if the name is then retyped, that phone is dropped with it
+  const base = { load: () => fetch('/api/customers').then(r => (r.ok ? r.json() : [])), text: c => c.name || c.phone || '', sub: c => c.phone || '', match: c => (c.name || '') + ' ' + (c.phone || ''),
+    onPick: c => { nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
+  const nameOpts = Object.assign({}, base, { onType: () => { if (_custId && phoneBox.value === pickedPhone) { phoneBox.value = ''; waCheckSoon(); } _custId = null; } });
+  const phoneOpts = Object.assign({}, base, { onType: () => { _custId = null; } });
+  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); }
+})();
+
 </script>
 
 <script src="/attach-widget.js"></script>
