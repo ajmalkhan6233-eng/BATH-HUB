@@ -70,3 +70,5 @@ BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/REA
 - (9) Never ask Ajmal to open a new window. When context is about 70 percent full, or the system warns, run /compact yourself, keeping: current task and checks, bridge state, AJMAL HARD RULES, file paths, links, UNVERIFIED items. Continue in the same window. Write "compacted at <time>" to LIVE.md.
 
 - (11) NOTIFICATIONS: every notification to Ajmal (WhatsApp, reminders, reports, health check, price/cheque alerts, morning brief) goes ONLY at 06:00 Sri Lanka time, once, as ONE combined message, through the notify module (utils/notify.js). Replies to a message he just typed are not notifications.
+
+- (12) SYNC: Claude Code writes ONE short line at the top of AI_BRIDGE/LIVE.md and pushes it: (a) whenever a task finishes, (b) every 5 minutes while working, (c) when blocked. Format: time | task | state | next. 3 lines max at the top. Chat pulls it and never edits it.
