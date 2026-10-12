@@ -16,6 +16,8 @@
       + '<span><span class="bh-name">Royal Bath Hub</span>' + (sub ? '<span class="bh-sub">Thihariya</span>' : '') + '</span></span>';
   };
   function ready() {
+    // POS billing (and anything shown inside another page) has no big logo strip: more room for the bill
+    if (/pos_billing/.test(location.pathname) || window.self !== window.top) return;
     if (document.querySelector('.bh-lockup, .sidebar-logo, .login-box')) return;
     var d = document.createElement('div'); d.className = 'bh-strip';
     d.innerHTML = '<img class="bh-full" src="/brand/logo-rbh-full.webp" alt="Royal Bath Hub, tiles and bathroom fittings" width="1037" height="300">';
