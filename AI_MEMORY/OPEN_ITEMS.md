@@ -19,3 +19,4 @@
 - Cheque/GRN/price alerts and photo intake only reach WhatsApp when WA_TOKEN + WA_PHONE_NUMBER_ID + LAYLA_OWNER_LIVE=true are set and the shop app runs this code (MERGE TO LIVE).
 - Link public/sync-review.html from an owner menu (page exists, no menu link yet).
 - Website draft for logo: Aj to look and say publish.
+- LATER (Aj, free time): GRN photo scan on the GRN screen itself + connect Tesseract (installed) to Layla. Preview, then Go / Fix / Cancel. Not urgent.
