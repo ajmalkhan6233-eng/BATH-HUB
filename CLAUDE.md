@@ -72,3 +72,5 @@ BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/REA
 - (11) NOTIFICATIONS: every notification to Ajmal (WhatsApp, reminders, reports, health check, price/cheque alerts, morning brief) goes ONLY at 06:00 Sri Lanka time, once, as ONE combined message, through the notify module (utils/notify.js). Replies to a message he just typed are not notifications.
 
 - (12) SYNC: Claude Code writes ONE short line at the top of AI_BRIDGE/LIVE.md and pushes it: (a) whenever a task finishes, (b) every 5 minutes while working, (c) when blocked. Format: time | task | state | next. 3 lines max at the top. Chat pulls it and never edits it.
+
+RULE 13 (HARD, Ajmal 11:43, strengthened 13:12): Claude CHAT writes ALL code it can do better (features, screens, fixes, tests, scripts) in its cloud workspace and pushes it. Claude Code on the PC only runs it: pull, install, test, build, deploy, merge, restart, schedule. Do NOT write or rewrite feature code. If a run fails, put the exact error in LIVE.md and chat fixes it.
