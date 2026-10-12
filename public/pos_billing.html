@@ -141,6 +141,23 @@
     .receipt, .receipt * { visibility: visible; }
     .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
   }
+
+  /* compact POS (Ajmal 11:47): customer first, tools in a drop-down, less scrolling */
+  body { padding: 10px; }
+  .panel { padding: 12px 14px; }
+  .pos-h1 { font-size:16px; margin:0 0 6px; } .pos-h1-sub { font-size:12px; font-weight:400; color:var(--text-muted); margin-left:6px; }
+  .cust-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cust-row label, .panel > label { margin:6px 0 2px; }
+  .wa-line { display:flex; gap:6px; align-items:center; margin:4px 0 0; font-weight:400; font-size:12px; }
+  .wa-line input { width:auto; }
+  .pos-tools { margin:8px 0 2px; gap:6px; }
+  .scan-row { display:flex; gap:8px; }
+  .scan-row input { flex:1; min-width:0; }
+  .tools-btn { flex:0 0 auto; min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; cursor:pointer; }
+  .pos-tools .tool-menu { display:none; }
+  .pos-tools .tool-menu.open { display:flex; }
+  #waCheck:empty { display:none; min-height:0; margin:0; }
+  @media (max-width:340px){ .cust-row { grid-template-columns:1fr; } }
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 </head>
@@ -148,13 +165,21 @@
 
 <div class="wrap">
   <div class="panel" id="formPanel">
-    <h1>Generate Bill</h1>
-    <div class="sub">Royal Bath Hub Thihariya — POS Bill Generator</div>
+    <h1 class="pos-h1">Generate Bill <span class="pos-h1-sub">Royal Bath Hub Thihariya</span></h1>
+
+    <div class="cust-row" id="custRow">
+      <div><label for="customerName">Customer name</label>
+        <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
+      <div><label for="customerPhone">Phone (WhatsApp)</label>
+        <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
+    </div>
+    <div id="waCheck" class="wa-receipt-msg" role="status"></div>
+    <label class="wa-line"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send receipt to WhatsApp on Print</label>
 
     <div class="pos-tools" id="posTools">
-      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan barcode or type code + Enter" autocomplete="off" aria-label="Scan barcode"></div>
+      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
       <div class="scan-msg" id="scanMsg" role="status"></div>
-      <div class="tool-row">
+      <div class="tool-row tool-menu" id="toolMenu">
         <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
         <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
         <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
@@ -171,14 +196,6 @@
         <div id="findResults"></div>
       </div>
     </div>
-
-    <label>Customer name (optional)</label>
-    <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off">
-
-    <label>Customer phone (optional, for WhatsApp share)</label>
-    <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()" autocomplete="off">
-    <div id="waCheck" class="wa-receipt-msg" role="status"></div>
-    <label style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send the receipt to the customer's WhatsApp when I press Print</label>
 
     <label>Items</label>
     <div id="itemRows"></div>
@@ -833,6 +850,35 @@ function clearCustomer() {
   if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); }
 })();
 
+
+// ---- Compact POS: Bill tools drop-down + Enter moves to the next box (Ajmal 11:47) ----
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var menu = $('toolMenu'), btn = $('toolsBtn');
+  function setMenu(open) { if (!menu) return; menu.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  if (btn) {
+    btn.addEventListener('click', function (e) { e.stopPropagation(); setMenu(!menu.classList.contains('open')); });
+    menu.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') setMenu(false); });
+    document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn) setMenu(false); });
+  }
+  // Enter -> next box. Enter never picks a suggestion (Task 30 rule) and never generates the bill by itself.
+  function next(id, to) {
+    var el = $(id); if (!el) return;
+    el.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      var t = typeof to === 'function' ? to() : $(to);
+      if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') try { t.select(); } catch (x) {} }
+    });
+  }
+  next('customerName', 'customerPhone');
+  next('customerPhone', 'scanBox');
+  next('discountPct', 'paymentMethod');
+  next('paymentMethod', function () { var c = $('chequeRef'); return (c && c.offsetParent) ? c : $('genBtn'); });
+  next('chequeRef', 'genBtn');
+  // Opening the screen: cursor starts in Customer name.
+  try { var cn = $('customerName'); if (cn && !/Mobi|Android/i.test(navigator.userAgent)) cn.focus(); } catch (e) {}
+})();
 </script>
 
 <script src="/attach-widget.js"></script>
