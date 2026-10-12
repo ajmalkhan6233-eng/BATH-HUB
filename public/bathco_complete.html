@@ -220,6 +220,8 @@ table tr:last-child td{border-bottom:none}
 .nav-sep{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 12px 4px}
 @media(max-width:768px){
   body{padding-bottom:62px}
+  /* embedded screens stop above the bottom menu so their last buttons are not hidden (Ajmal 13:06) */
+  #pos-frame, iframe[id^="frame-"]{height:calc(100dvh - 205px)!important;min-height:420px!important}
   #bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg2);border-top:1px solid var(--card-border);padding:4px 0 max(4px,env(safe-area-inset-bottom))}
   #bottom-nav button{flex:1;background:none;border:0;color:var(--text2);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer}
   #bottom-nav button .bi{font-size:20px;line-height:1}
@@ -1003,7 +1005,8 @@ table tr:last-child td{border-bottom:none}
 /* ─────────────────────────────────────────────
    HELPERS
 ───────────────────────────────────────────── */
-let TARGET = 100000; // daily sales target for the gauge: replaced by the Admin Settings value (dashboard_sales_target) after loginfunction _paintTarget() {   // the target figure shown on the dashboard always matches the real target (it used to say 250,000 while the gauge used 100,000)
+let TARGET = 100000; // daily sales target for the gauge: replaced by the Admin Settings value (dashboard_sales_target) after login
+function _paintTarget() {   // the target figure shown on the dashboard always matches the real target (it used to say 250,000 while the gauge used 100,000)
   const tl = document.getElementById('target-label'), tm = document.getElementById('target-max');
   if (tl) tl.textContent = 'LKR ' + TARGET.toLocaleString() + ' target'; if (tm) tm.textContent = 'LKR ' + TARGET.toLocaleString();
 }
