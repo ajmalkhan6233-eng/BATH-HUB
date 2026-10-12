@@ -1,5 +1,7 @@
 # C:\BATHCO_TEMPLATE — agent entry point
 
+> **READ FIRST: `START_HERE.md`** (one screen: owner, rules, status, next steps, links). Then the lines below.
+
 > **Octopus memory:** at session start read `AI_MEMORY/HANDOFF.md` and `AI_MEMORY/OPEN_ITEMS.md`.
 > Universal rules come from the global `~/.claude/CLAUDE.md`. No code changes until Aj says GO.
 
