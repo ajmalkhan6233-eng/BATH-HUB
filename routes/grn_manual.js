@@ -126,7 +126,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                 [grn_number, supplier_id, supplier_name, grn_date, `${item.item_code} - ${item.name}`,
                  l.qty, l.cost, lineTotal(l.qty, l.cost), item.photo_url || null,
                  String(payload.notes || '').trim() || 'Manual GRN entry']);
-            results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, is_new: isNew });
+            results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, selling_price: item.selling_price, is_new: isNew });
         }
         await client.query('COMMIT');
         if (priceChanges.length) notifyOwner(priceAlertMessage(supplier_name, grn_number, priceChanges));
