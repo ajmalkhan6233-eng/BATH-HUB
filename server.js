@@ -609,6 +609,7 @@ app.use('/api', require('./routes/pos_bills'));            // routes are relativ
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/cheque_clearing'));      // owed / in transit / cleared + alert dates -> /api/cheque-clearing* (additive, own tables)
+app.use('/api', require('./routes/payment_planner'));      // vendor cheque schedule -> /api/payment-planner* (additive; writes only cheque_register)
 app.use('/api', require('./routes/items_import'));         // CSV item import (dry run by default) -> /api/items/import-csv
 app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
