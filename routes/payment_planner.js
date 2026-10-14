@@ -3,17 +3,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../utils/pool');
-const { planSchedule, cashWarnings, outstanding } = require('../utils/payment_planner');
+const { planSchedule, weeklySetAside, cashWarnings, outstanding } = require('../utils/payment_planner');
 const todaySL = () => new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10); // Sri Lanka date
 
 function build(b) {
   const plan = planSchedule({ total: b.total, count: Number(b.count), firstDate: b.first_date,
-    everyDays: b.every_days === undefined ? 30 : Number(b.every_days), todayISO: todaySL(), holidays: b.holidays || [] });
+    everyDays: b.every_days === undefined ? 30 : Number(b.every_days),
+    everyMonths: b.every_months === undefined ? 0 : Number(b.every_months), parts: b.parts || null, vendorDueDate: b.vendor_due_date || null, todayISO: todaySL(), holidays: b.holidays || [] });
   if (!plan.ok) return plan;
+  plan.weeklySetAside = weeklySetAside(plan.installments, todaySL());
   plan.warnings = cashWarnings({ openingCash: b.opening_cash || 0, inflows: b.inflows || [], cheques: plan.installments });
   return plan;
 }
-// Preview only: no database writes. Body: vendor, total, count, first_date, every_days?, opening_cash?, inflows?, holidays?
+// Preview only: no database writes. Body: vendor, total, count, first_date, every_days? | every_months?, parts?, vendor_due_date?, opening_cash?, inflows?, holidays?
 router.post('/payment-planner/preview', (req, res) => {
   const plan = build(req.body || {});
   res.status(plan.ok ? 200 : 400).json(plan);
@@ -25,6 +27,7 @@ router.post('/payment-planner/save', async (req, res) => {
     if (!b.vendor) return res.status(400).json({ error: 'vendor is required' });
     const plan = build(b);
     if (!plan.ok) return res.status(400).json(plan);
+    if (b.price_confirmed !== true) return res.status(409).json({ error: 'vendor must confirm the credit price equals the cash price (price_confirmed: true)' });
     if (plan.warnings.length && b.force_short !== true) return res.status(409).json({ error: 'cash will not cover every cheque', warnings: plan.warnings });
     const tag = `PLAN ${b.ref || Date.now()} total ${Number(b.total).toFixed(2)}`;
     const ids = [];

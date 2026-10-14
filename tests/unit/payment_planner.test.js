@@ -28,3 +28,34 @@ describe('outstanding', () => {
     expect(outstanding(100, rows)).toEqual({ paid: 40, owed: 60, open: true });
   });
 });
+
+const { weeklySetAside, moveCheque, addMonths } = require('../../utils/payment_planner');
+describe('terms, custom parts, vendor due date', () => {
+  const b = { total: 680000, count: 4, firstDate: '2026-11-16', everyMonths: 1, todayISO: '2026-10-15' };
+  test('4 monthly equal cheques add up to 680000', () => {
+    const p = planSchedule(b); expect(p.ok).toBe(true);
+    expect(p.installments.map(x => x.amount)).toEqual([170000, 170000, 170000, 170000]); expect(p.sum).toBe(680000);
+  });
+  test('custom parts must add up exactly', () => {
+    expect(planSchedule({ ...b, parts: [100000, 200000, 200000, 180000] }).ok).toBe(true);
+    expect(planSchedule({ ...b, parts: [100000, 200000, 200000, 181000] }).ok).toBe(false);
+  });
+  test('weekend moves BACK when a vendor due date is set, never past it', () => {
+    const p = planSchedule({ total: 1000, count: 1, firstDate: '2026-11-15', vendorDueDate: '2026-11-15', todayISO: '2026-10-15' }); // Sunday
+    expect(p.ok).toBe(true); expect(p.installments[0].date).toBe('2026-11-13');
+  });
+  test('cheque after the vendor due date is refused', () => {
+    expect(planSchedule({ ...b, vendorDueDate: '2026-12-31' }).ok).toBe(false);
+  });
+  test('addMonths clamps month end', () => { expect(addMonths('2026-01-31', 1)).toBe('2026-02-28'); });
+  test('weekly set-aside = total over weeks to the last clearing date', () => {
+    const p = planSchedule({ total: 700000, count: 1, firstDate: '2026-11-12', todayISO: '2026-10-15' }); // clears 11-13 = 29 days
+    expect(weeklySetAside(p.installments, '2026-10-15')).toBe(Math.ceil(700000 / (29 / 7)));
+  });
+  test('moveCheque: honest dates only', () => {
+    const p = planSchedule(b);
+    expect(moveCheque(p.installments, 2, '2026-12-20', '2026-10-15').installments[1].date).toBe('2026-12-21'); // Sunday -> Monday, shown
+    expect(moveCheque(p.installments, 2, '2026-10-01', '2026-10-15').ok).toBe(false);
+    expect(moveCheque(p.installments, 9, '2026-12-20', '2026-10-15').ok).toBe(false);
+  });
+});
