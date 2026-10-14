@@ -86,3 +86,6 @@ uploads/layla-inbox/
 
 # half-hourly backup bookkeeping (scripts/backup_rotate.js)
 backups/.last_hash
+
+# print outputs for the shop (barcode / card samples)
+!public/print/*.pdf
