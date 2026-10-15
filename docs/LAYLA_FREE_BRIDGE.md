@@ -55,3 +55,8 @@ Add `LAYLA_OWNER_LIVE=true` to `.env`, then `pm2 restart apex-server`. Test line
 - A photo or voice note from her gets "I can read text messages only" and nothing is saved.
 - If her messages are ignored and the bridge log says BLOCKED with a long id instead of her number, send Claude the log line (never add it to the owner list).
 - Stop family mode: remove the `FAMILY_WA_NUMBERS` line and restart both.
+
+## ONE LAYLA (owner messages)
+- The owner assistant (reminders, cheque plans, GRN/cheque photo drafts, stock/price/cash questions) answers first.
+- Anything it does not understand, every `TEACH: <fact>`, and every photo without a GRN/cheque/bill caption goes on to the ORIGINAL Layla (`layla.js`, `/webhook/whatsapp` and `/webhook/whatsapp-photo`) exactly as before: chat, permanent taught facts, day-sheet and expense photos.
+- Family members and strangers never reach the original Layla through this door.

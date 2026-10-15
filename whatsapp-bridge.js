@@ -196,6 +196,17 @@ client.on('message', async (msg) => {
             }
             const res = await axios.post(`${MAIN_SERVER_URL}/webhook/layla-owner`, payload, { timeout: 90000, headers: WEBHOOK_HEADERS });
             for (const line of (res.data && res.data.replies) || []) { const out = sanitizeAssistantOutput(line); if (out) await msg.reply(out); }
+            // ONE LAYLA: the owner assistant had no job for this message, so the ORIGINAL Layla handles it exactly as before (chat, TEACH:, day-sheet photos).
+            const st = res.data && res.data.status;
+            if (st === 'fallback' || st === 'fallback_photo') {
+                if (st === 'fallback_photo') {
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, { from: resolved, filePath: payload.filePath }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    const photoReply = sanitizeAssistantOutput(r2.data?.reply); if (photoReply) await msg.reply(photoReply);
+                } else {
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: resolved, message: msg.body }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    const reply2 = sanitizeAssistantOutput(r2.data?.reply); if (reply2) await msg.reply(reply2);
+                }
+            }
         } catch (err) {
             console.error('[WA-BRIDGE] Layla owner route failed:', err.message);
             await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});

@@ -38,18 +38,22 @@ async function processInbound(m, deps) {
       if (!t.ok) { await reply('I could not hear that clearly. Please send it again or type it.'); return { status: 'transcribe_failed' }; }
       text = t.text.slice(0, LIMITS.maxTextChars); heard = `I heard: "${text}"\n`;
     } else if (m.type === 'image' || m.type === 'document') {
-      const media = await deps.download(m.mediaId); const file = await deps.saveMedia(media.buffer, media.mime || m.mime, m.type);
       const paperKind = deps.paper && m.type === 'image' ? deps.paper.captionKind(m.caption) : null;   // caption "GRN" or "cheque": read into a DRAFT, saved only on "ok"
-      if (paperKind) { const p = await deps.paper.start(paperKind, file); await reply(p.reply); return { status: 'ok', file, intent: 'paper_draft' }; }
       const cap = String(m.caption || '').slice(0, 500); const it = cap ? parseOwnerMessage(cap, now()) : { type: 'UNKNOWN' };
+      // ONE LAYLA: a photo this assistant has no job for (no GRN/cheque caption, no bill/cheque/reminder words) goes on to the original Layla's photo pipeline (day and expense sheets).
+      if (deps.fallbackOriginal && m.type === 'image' && !paperKind && !['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) return { status: 'fallback_photo' };
+      const media = await deps.download(m.mediaId); const file = await deps.saveMedia(media.buffer, media.mime || m.mime, m.type);
+      if (paperKind) { const p = await deps.paper.start(paperKind, file); await reply(p.reply); return { status: 'ok', file, intent: 'paper_draft' }; }
       if (['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) { const r = await handleOwnerMessage({ id: m.id, text: cap }, { store, adapters, now }); await reply(`Saved the ${m.type}. ${r.reply}`); return { status: 'ok', file }; }
       const t = await store.create({ kind: 'PHOTO_REVIEW', title: `Review the ${m.type} you sent${cap ? `: ${cap}` : ''} (${file})`, dueAt: now(), nagEveryMin: 120, maxNags: 1, sourceMsgId: m.id });
       await reply(`Saved the ${m.type}. Reading bills from photos is not switched on yet, so I made task #${t.id} to review it. Add a caption like "Eskema bill 213200 pending" and I will remind you.`);
       return { status: 'ok', file };
     } else { await reply('I can read text, voice notes and photos.'); return { status: 'unsupported' }; }
   } catch (e) { console.error('[layla-owner] inbound error:', e.message); await reply('Something went wrong on my side. Please try again.'); return { status: 'error' }; }
+  if (deps.fallbackOriginal && m.type === 'text' && /^\s*teach\s*:/i.test(text)) return { status: 'fallback' };   // ONE LAYLA: "TEACH: <fact>" is the original Layla's permanent-fact command
   if (deps.paper) { const p = await deps.paper.handleText(text).catch((e) => { console.error('[layla-owner] paper intake:', e.message); return null; }); if (p) { await reply(p.reply); return { status: 'ok', intent: 'paper_reply' }; } }
   const r = await handleOwnerMessage({ id: m.id, text }, { store, adapters, now });
+  if (deps.fallbackOriginal && m.type === 'text' && r.intent.type === 'UNKNOWN') return { status: 'fallback' };    // ONE LAYLA: anything this assistant does not understand goes to the original Layla
   await reply(heard + r.reply);
   return { status: 'ok', intent: r.intent.type };
 }

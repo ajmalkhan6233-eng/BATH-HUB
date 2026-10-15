@@ -22,7 +22,9 @@ function createBridgeIn({ deps, inboxRoot, safeInboxPath, readFile = fs.promises
       const st = await stat(safe); if (st.size > LIMITS.maxMediaBytes) throw new Error('media too large');
       return { buffer: await readFile(safe), mime: b.mime };
     };
-    const r = await processInbound(m, { ...deps(), send: async (_to, text) => { replies.push(String(text)); }, download });
+    // fallbackOriginal: "ONE LAYLA". When the owner assistant has no job for a message (unknown text, TEACH:, a photo without a GRN/cheque caption)
+    // it answers status 'fallback' / 'fallback_photo' and says nothing; the bridge then runs the ORIGINAL Layla pipeline exactly as before.
+    const r = await processInbound(m, { ...deps(), fallbackOriginal: true, send: async (_to, text) => { replies.push(String(text)); }, download });
     return { status: r.status, replies };
   };
 }

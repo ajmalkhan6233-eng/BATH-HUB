@@ -55,12 +55,18 @@ test('bridge-in: bad requests rejected', async () => {
   const { bridgeIn } = makeBridgeIn(); expect((await bridgeIn({})).status).toBe('bad_request'); expect((await bridgeIn({ from: '1', type: 'video' })).status).toBe('bad_request'); expect((await bridgeIn(null)).status).toBe('bad_request');
 });
 test('bridge-in: a photo path OUTSIDE the inbox folder is refused (no file read)', async () => {
-  const { bridgeIn } = makeBridgeIn({ deps: { transcribe: async () => ({ ok: false }), saveMedia: async () => 'f', paper: null } });
-  const r = await bridgeIn({ from: '94777999219', type: 'image', filePath: '/etc/passwd', mime: 'image/jpeg', ts: NOW });
+  const paper = { captionKind: () => 'grn', start: async () => ({ reply: 'draft' }), handleText: async () => null };
+  const { bridgeIn } = makeBridgeIn({ deps: { transcribe: async () => ({ ok: false }), saveMedia: async () => 'f', paper } });
+  const r = await bridgeIn({ from: '94777999219', type: 'image', filePath: '/etc/passwd', mime: 'image/jpeg', caption: 'GRN', ts: NOW });
   expect(r.status).toBe('error'); expect(r.replies.join(' ')).toMatch(/Something went wrong/);
 });
-test('bridge-in: a photo inside the inbox folder is accepted and saved for review', async () => {
+test('bridge-in: a captioned photo inside the inbox folder is accepted and handled here', async () => {
   const saved = []; const { bridgeIn, inboxRoot, rows } = makeBridgeIn({ deps: { saveMedia: async (buf, mime, kind) => { saved.push(kind); return 'uploads/f.jpg'; }, paper: null } });
+  const r = await bridgeIn({ from: '94777999219', type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'a.jpg'), mime: 'image/jpeg', caption: 'Eskema bill 213200 pending, remind me tomorrow evening', ts: NOW });
+  expect(r.status).toBe('ok'); expect(saved).toEqual(['image']); expect(rows[0].kind).toBe('BILL_PENDING');
+});
+test('bridge-in: an uncaptioned photo is passed on to the original Layla photo pipeline', async () => {
+  const { bridgeIn, inboxRoot, rows } = makeBridgeIn({ deps: { paper: null } });
   const r = await bridgeIn({ from: '94777999219', type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'a.jpg'), mime: 'image/jpeg', ts: NOW });
-  expect(r.status).toBe('ok'); expect(saved).toEqual(['image']); expect(rows[0].kind).toBe('PHOTO_REVIEW');
+  expect(r.status).toBe('fallback_photo'); expect(rows).toHaveLength(0);
 });
