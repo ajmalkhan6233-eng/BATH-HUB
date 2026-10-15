@@ -6,7 +6,7 @@
 const { normalizeNumber } = require('./ownerGate');
 const { last3 } = require('./settings');
 function createSafeSend({ settings, sendText, log = console.log, fetchFn }) {
-  const cfg = { token: settings.token, phoneId: settings.phoneId, version: settings.version, live: settings.liveAllowed };
+  const cfg = { token: settings.token, phoneId: settings.phoneId, version: settings.version, bridgeUrl: settings.bridgeUrl, live: settings.liveAllowed };
   return async function send(to, text) {
     const dest = normalizeNumber(to || settings.ownerNumber);
     if (!dest) throw new Error('no destination number');

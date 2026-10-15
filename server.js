@@ -615,6 +615,7 @@ app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: requir
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
 const laylaOwner = require('./layla_owner/boot')({ pool: require('./utils/pool') });   // owner assistant (Build 2; router is routes/layla_owner' built inside layla_owner/boot): login enforced by the global /api gate
 app.use('/api/layla-owner', require('./middleware/idempotency')({ pool: require('./utils/pool') }), laylaOwner.router);
+app.post('/webhook/layla-owner', webhookAuth, async (req, res) => { try { res.json(await laylaOwner.bridgeIn(req.body)); } catch (e) { console.error('[layla-owner bridge-in]', e.message); res.status(500).json({ status: 'error', replies: [] }); } });   // free bridge -> Layla, owner only (secret header or loopback)
 app.use('/', require('./routes/daily_entry_sync'));         // daily ledger sync (ported from BATHCO): /api/daily-entry/sync, /meta, /range (behind login)
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
 app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*

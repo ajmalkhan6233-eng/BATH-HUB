@@ -43,6 +43,9 @@ const WHITELIST_NUMBER = WHITELIST_RAW.replace(/\D/g, ''); // digits only, e.g. 
 // WhatsApp ever does expose it (e.g. after a privacy setting change on their end).
 const WHITELIST_KNOWN_LIDS = (process.env.WHATSAPP_TEST_WHITELIST_LIDS || '232985483817135').split(',').map(s=>s.trim()).filter(Boolean);
 function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits); }
+// Free route to Layla's owner brain (see the OWNER -> LAYLA block below). Off unless LAYLA_OWNER_BRIDGE=on.
+const LAYLA_OWNER_BRIDGE = String(process.env.LAYLA_OWNER_BRIDGE || '').toLowerCase() === 'on';
+const OWNER_DIGITS = require('./layla_owner/ownerGate').normalizeNumber(process.env.OWNER_WA_NUMBER || '0777999219');
 
 const app = express();
 app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
@@ -51,7 +54,7 @@ const client = new Client({
     authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
     puppeteer: {
         headless: true,
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     },
 });
@@ -164,6 +167,35 @@ client.on('message', async (msg) => {
         let name = '';
         try { const c = await msg.getContact(); name = c?.pushname || c?.verifiedName || c?.name || ''; } catch (e) {}
         console.log(`[WA-BRIDGE] [BLOCKED-NOT-WHITELISTED] from=${msg.from} resolved=${resolved} name="${name}" body="${(msg.body||'').slice(0,120)}" — logged only, no reply sent, not forwarded to LAYLA.`);
+        return;
+    }
+
+    // ── OWNER -> LAYLA (free bridge) ────────────────────────────────────────
+    // LAYLA_OWNER_BRIDGE=on: the owner's text, voice notes, photos and documents go to Layla's owner brain
+    // (POST /webhook/layla-owner) and her replies come straight back here. Only the owner gets this; the
+    // whitelist above has already dropped everyone else.
+    if (LAYLA_OWNER_BRIDGE && (resolved === OWNER_DIGITS || (TEST_MODE && whitelisted))) {
+        try {
+            const payload = { from: OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
+            if (msg.hasMedia) {
+                const media = await msg.downloadMedia();
+                const mime = (media && media.mimetype) || '';
+                const type = mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'audio' : mime === 'application/pdf' ? 'document' : null;
+                if (!type) { await msg.reply('I can read text, voice notes, photos and PDFs.'); return; }
+                const dir = path.join(INBOX_ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
+                const ext = { 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' }[mime.split(';')[0]] || (type === 'audio' ? 'ogg' : 'jpg');
+                const file = path.join(dir, `${Date.now()}-layla-${type}.${ext}`);
+                fs.writeFileSync(file, Buffer.from(media.data, 'base64'));
+                Object.assign(payload, { type, filePath: file, mime, caption: msg.body || '' });
+            } else {
+                Object.assign(payload, { type: 'text', text: msg.body });
+            }
+            const res = await axios.post(`${MAIN_SERVER_URL}/webhook/layla-owner`, payload, { timeout: 90000, headers: WEBHOOK_HEADERS });
+            for (const line of (res.data && res.data.replies) || []) { const out = sanitizeAssistantOutput(line); if (out) await msg.reply(out); }
+        } catch (err) {
+            console.error('[WA-BRIDGE] Layla owner route failed:', err.message);
+            await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});
+        }
         return;
     }
 
