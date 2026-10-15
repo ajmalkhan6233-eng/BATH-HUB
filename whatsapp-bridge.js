@@ -42,7 +42,9 @@ const WHITELIST_NUMBER = WHITELIST_RAW.replace(/\D/g, ''); // digits only, e.g. 
 // identity for the same whitelisted person, alongside the real number in case
 // WhatsApp ever does expose it (e.g. after a privacy setting change on their end).
 const WHITELIST_KNOWN_LIDS = (process.env.WHATSAPP_TEST_WHITELIST_LIDS || '232985483817135').split(',').map(s=>s.trim()).filter(Boolean);
-function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits); }
+// FAMILY MODE (Layla): extra numbers allowed to use the small reminders-and-notes Layla. Real numbers only; never put a family member's id in WHATSAPP_TEST_WHITELIST_LIDS (those are treated as the owner).
+const FAMILY_DIGITS = String(process.env.FAMILY_WA_NUMBERS || '').split(/[,;\s]+/).map((s) => require('./layla_owner/ownerGate').normalizeNumber(s)).filter(Boolean);
+function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits) || FAMILY_DIGITS.includes(digits); }
 // Free route to Layla's owner brain (see the OWNER -> LAYLA block below). Off unless LAYLA_OWNER_BRIDGE=on.
 const LAYLA_OWNER_BRIDGE = String(process.env.LAYLA_OWNER_BRIDGE || '').toLowerCase() === 'on';
 const OWNER_DIGITS = require('./layla_owner/ownerGate').normalizeNumber(process.env.OWNER_WA_NUMBER || '0777999219');
@@ -174,9 +176,11 @@ client.on('message', async (msg) => {
     // LAYLA_OWNER_BRIDGE=on: the owner's text, voice notes, photos and documents go to Layla's owner brain
     // (POST /webhook/layla-owner) and her replies come straight back here. Only the owner gets this; the
     // whitelist above has already dropped everyone else.
-    if (LAYLA_OWNER_BRIDGE && (resolved === OWNER_DIGITS || (TEST_MODE && whitelisted))) {
+    const isFamilyMsg = FAMILY_DIGITS.includes(resolved) && resolved !== OWNER_DIGITS;     // a family member keeps her OWN number as the sender: she is never treated as the owner
+    if (LAYLA_OWNER_BRIDGE && (isFamilyMsg || resolved === OWNER_DIGITS || (TEST_MODE && whitelisted))) {
         try {
-            const payload = { from: OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
+            const payload = { from: isFamilyMsg ? resolved : OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
+            if (isFamilyMsg && msg.hasMedia) { await msg.reply('I can read text messages only.'); return; }   // family: text only, her files are never downloaded or saved
             if (msg.hasMedia) {
                 const media = await msg.downloadMedia();
                 const mime = (media && media.mimetype) || '';

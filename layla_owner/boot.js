@@ -5,7 +5,7 @@ const createStore = require('./taskStore'); const createAdapters = require('./ad
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
 const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify'); const automations = require('../utils/automations');
 const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
-const { processInbound } = require('./inbound'); const { loadSettings, describe } = require('./settings'); const { createSafeSend } = require('./safeSend'); const { createCustomerHandler } = require('./customerDryRun'); const { bridgeSendText } = require('./bridgeSend'); const { createBridgeIn } = require('./bridgeIn'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
+const { processInbound } = require('./inbound'); const { loadSettings, describe } = require('./settings'); const { createSafeSend } = require('./safeSend'); const { createCustomerHandler } = require('./customerDryRun'); const { bridgeSendText } = require('./bridgeSend'); const { createBridgeIn } = require('./bridgeIn'); const createFamilyNotes = require('./familyStore'); const { createFamily, familyTick } = require('./familyBrain'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
 module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir = path.join(process.cwd(), 'uploads', 'layla-inbox') }) {
   const store = createStore(pool); const adapters = createAdapters({ pool });
@@ -16,9 +16,11 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
   const customer = createCustomerHandler({ onInbound: (m) => notify.enqueue(pool, `Customer ...${String(m.from).slice(-3)} wrote: "${String(m.text).slice(0, 200).replace(/\s+/g, ' ')}" (not answered: Layla does not reply to customers yet)`, 'customer').catch(() => {}) });                                                              // customer chats: dry run, logged, never sent
-  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, env });
+  const family = createFamily({ numbers: S.familyNumbers, store, notes: createFamilyNotes(pool) });      // family mode: reminders + notes only, separate from the shop
+  const familyRateLimit = createRateLimiter(20);
+  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, env });
   const { safeInboxPath } = require('../middleware/webhookAuth');                                  // free bridge: owner messages arrive here from whatsapp-bridge.js
-  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe, saveMedia, paper, customer, rateLimit }) });
+  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe, saveMedia, paper, customer, family, familyRateLimit, rateLimit }) });
   setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];
   function start() {
@@ -30,7 +32,8 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
     timers.push(setInterval(autoTick, 30 * 60000)); setTimeout(autoTick, 45000);                                           // morning brief, reorder list (Mon), weekly profit (Sun), accountant pack (1st)
     const flushTick = () => notify.flush({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] morning batch:', e.message));
     timers.push(setInterval(flushTick, 60000)); setTimeout(flushTick, 30000);                                             // sends only at 06:00 (to 06:10) Sri Lanka time, once a day
-    if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, phoneId: S.phoneId, handle: (m) => processInbound(m, { customer, store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
+    if (family.members().length) timers.push(setInterval(() => familyTick({ store, send }).catch((e) => console.error('[layla-family] reminder tick:', e.message)), 60000));   // each family reminder goes to ITS OWN number at its own time
+    if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, phoneId: S.phoneId, handle: (m) => processInbound(m, { customer, family, familyRateLimit, store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
     console.log(`[layla-owner] started (${cfg.live ? 'LIVE, owner only' : 'DRY RUN: nothing is sent to WhatsApp'}${env.RELAY_URL ? ', relay on' : ''}) ${JSON.stringify(describe(S))}`);
   }
   const stop = () => { timers.forEach(clearInterval); timers = []; };

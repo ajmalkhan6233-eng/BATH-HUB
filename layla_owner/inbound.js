@@ -10,6 +10,16 @@ const { fmtLocal } = require('./timeParse');
  */
 async function processInbound(m, deps) {
   const { store, adapters, send, ownerNumber, now = () => new Date() } = deps;
+  if (!isOwner(m.from, ownerNumber) && deps.family && deps.family.isMember(m.from)) {
+    // FAMILY MODE: reminders and notes only, no shop data. Her words are never written to the shared message log (body stays empty).
+    if (deps.familyRateLimit && !deps.familyRateLimit()) return { status: 'rate_limited' };
+    if (!(await store.remember(m.id, 'in', 'family', ''))) return { status: 'duplicate' };
+    let out;
+    try { out = m.type === 'text' ? await deps.family.handle(m) : 'I can read text messages only.'; }
+    catch (e) { console.error('[layla-family] error:', e.message); out = 'Something went wrong on my side. Please try again.'; }
+    await send(m.from, out);
+    return { status: 'family' };
+  }
   if (!isOwner(m.from, ownerNumber)) {
     await store.remember(m.id, 'in', 'blocked', '');
     const c = deps.customer ? await deps.customer(m).catch(() => null) : null;                    // customer chats: dry run only, nothing is ever sent

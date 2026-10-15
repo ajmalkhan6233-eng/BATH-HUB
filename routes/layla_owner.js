@@ -18,7 +18,7 @@ const { checkWebhook, verifyChallenge } = require('../layla_owner/webhookGate');
 const { loadSettings } = require('../layla_owner/settings');
 const { createRateLimiter } = require('../layla_owner/ownerGate');
 
-module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, env = process.env, now = () => new Date() }) {
+module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, env = process.env, now = () => new Date() }) {
   const r = express.Router();
   const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error('[layla-owner]', e.message); res.status(500).json({ error: 'Something went wrong' }); });
 
@@ -34,7 +34,7 @@ module.exports = function createRouter({ store, adapters, requireAuth, send, dow
 
   if (requireAuth) r.use(requireAuth);
   r.use(express.json({ limit: '16mb' }));
-  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, customer, now });
+  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, customer, family, familyRateLimit, now });
 
   r.post('/message', wrap(async (req, res) => {
     const text = String((req.body && req.body.text) || '').slice(0, LIMITS.maxTextChars);

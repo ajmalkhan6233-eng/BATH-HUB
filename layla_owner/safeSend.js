@@ -11,7 +11,7 @@ function createSafeSend({ settings, sendText, log = console.log, fetchFn }) {
     const dest = normalizeNumber(to || settings.ownerNumber);
     if (!dest) throw new Error('no destination number');
     if (!settings.liveAllowed) return sendText(dest, text, { ...cfg, live: false }, fetchFn);          // dry run: logs, sends nothing
-    if (dest !== settings.ownerNumber) { log(`[layla DRY RUN, blocked: not the owner] to ${last3(dest)}: ${String(text).slice(0, 60).replace(/\n/g, ' ')}`); return { dryRun: true, blocked: true }; }
+    if (dest !== settings.ownerNumber && !(settings.familyNumbers || []).includes(dest)) { log(`[layla DRY RUN, blocked: not the owner or a family member] to ${last3(dest)}: ${String(text).slice(0, 60).replace(/\n/g, ' ')}`); return { dryRun: true, blocked: true }; }
     return sendText(dest, text, cfg, fetchFn);
   };
 }

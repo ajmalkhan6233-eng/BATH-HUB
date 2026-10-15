@@ -44,4 +44,14 @@ Add `LAYLA_OWNER_LIVE=true` to `.env`, then `pm2 restart apex-server`. Test line
 ## If something goes wrong
 - Stop the bridge: `pm2 stop whatsapp-bridge`.
 - Only the owner can ever get a reply: the bridge whitelist and the owner gate both check.
-- Bridge logs BLOCKED for your own number with a long number (a "lid"): copy that long number from `pm2 logs whatsapp-bridge` into `.env` as `WHATSAPP_TEST_WHITELIST_LIDS=thatnumber`, then `pm2 restart whatsapp-bridge`.
+- Bridge logs BLOCKED for your own number with a long number (a "lid"): copy that long number from `pm2 logs whatsapp-bridge` into `.env` as `WHATSAPP_TEST_WHITELIST_LIDS=thatnumber`, then `pm2 restart whatsapp-bridge`. (Only for YOUR number. Never put a family member's number or long id there: that list is treated as the owner.)
+
+## FAMILY MODE (AJ's wife): reminders and notes only, separate from the shop
+- Add ONE line to `.env` (her real number, not in chat, not in git): `FAMILY_WA_NUMBERS=07XXXXXXXX` (several numbers: separate with commas). Then `pm2 restart apex-server ; pm2 restart whatsapp-bridge --update-env`.
+- For her reminders to arrive at the time she sets, `.env` must also have `LAYLA_OWNER_LIVE=true` (it also switches on your own 6 am messages).
+- She messages the shop number from her own phone. She can: `remind me at 12 to call mum`, `what's pending`, `done 3`, `snooze 3 2 hours`, `note: plumber Rahim 077...`, `notes`, `find plumber`, `delete note 2`. English only.
+- She cannot reach anything of the shop: stock, cheques, payables, sales, plans, photos. Her reminders and notes are invisible to you in Layla, and yours to her. Her words are not copied into the shared message log.
+- AJ can still read the database on his PC. Tell her before she starts.
+- A photo or voice note from her gets "I can read text messages only" and nothing is saved.
+- If her messages are ignored and the bridge log says BLOCKED with a long id instead of her number, send Claude the log line (never add it to the owner list).
+- Stop family mode: remove the `FAMILY_WA_NUMBERS` line and restart both.

@@ -24,6 +24,9 @@ function loadSettings(env = process.env) {
     token: env.WA_TOKEN || '', phoneId: env.WA_PHONE_NUMBER_ID || '', appSecret: env.WA_APP_SECRET || '', verifyToken: env.WA_VERIFY_TOKEN || '',
     version: env.WA_API_VERSION || 'v21.0',
   };
+  // FAMILY MODE: extra people who may use the small reminders-and-notes Layla. Never the shop number, the owner, or Layla's own number.
+  const shop = normalizeNumber(SHOP_NUMBER);
+  s.familyNumbers = [...new Set(String(env.FAMILY_WA_NUMBERS || '').split(/[,;\s]+/).map(normalizeNumber).filter((n) => n && n !== shop && n !== s.ownerNumber && n !== s.laylaNumber))];
   s.errors = validate(s);
   s.liveAllowed = s.live && s.errors.length === 0;      // a bad config silently falls back to dry run, never to a wrong send
   return s;
@@ -40,7 +43,7 @@ function validate(s) {
 }
 /** Safe to log: numbers masked, secrets reduced to set / not set. */
 function describe(s) {
-  return { mode: s.liveAllowed ? 'LIVE (owner only)' : 'DRY RUN', transport: s.transport, layla: last3(s.laylaNumber), owner: last3(s.ownerNumber), ownerIsDefault: s.ownerIsDefault, laylaIsShopNumber: !!s.laylaNumber && s.laylaNumber === normalizeNumber(SHOP_NUMBER), customerReplies: 'DRY RUN always',
+  return { mode: s.liveAllowed ? 'LIVE (owner only)' : 'DRY RUN', transport: s.transport, layla: last3(s.laylaNumber), owner: last3(s.ownerNumber), ownerIsDefault: s.ownerIsDefault, laylaIsShopNumber: !!s.laylaNumber && s.laylaNumber === normalizeNumber(SHOP_NUMBER), customerReplies: 'DRY RUN always', family: s.familyNumbers.map(last3),
     token: s.token ? 'set' : 'not set', phoneId: s.phoneId ? 'set' : 'not set', appSecret: s.appSecret ? 'set' : 'not set', verifyToken: s.verifyToken ? 'set' : 'not set', errors: s.errors };
 }
 module.exports = { loadSettings, validate, describe, last3, SHOP_NUMBER, DEFAULT_OWNER };
