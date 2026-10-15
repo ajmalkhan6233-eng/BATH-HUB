@@ -12,7 +12,8 @@ function memStore() {
 test('parses the two commands', () => {
   expect(parsePlanCommand('plan 680000 Metro 4 months', now)).toEqual({ type: 'PLAN', total: 680000, vendor: 'Metro', n: 4, unit: 'months', count: 4 });
   expect(parsePlanCommand('Plan 100000 Eskema 6 weeks 3 cheques', now)).toMatchObject({ unit: 'weeks', n: 6, count: 3 });
-  expect(parsePlanCommand('move cheque 2 to 20th', now)).toEqual({ type: 'MOVE_CHEQUE', no: 2, date: '2026-10-20' });
+  expect(parsePlanCommand('move cheque 2 to 20th', now)).toEqual({ type: 'MOVE_CHEQUE', no: 2, day: 20, date: null });
+  expect(parsePlanCommand('move cheque 2 to 20 dec', now)).toEqual({ type: 'MOVE_CHEQUE', no: 2, date: '2026-12-20' });
   expect(parsePlanCommand('stock of angle valve', now)).toBeNull();
 });
 test('intent parser routes them first', () => { expect(parseOwnerMessage('plan 680000 Metro 4 months', now).type).toBe('PLAN'); });
@@ -29,7 +30,12 @@ test('move cheque 2 changes only cheque 2', async () => {
   const store = memStore(); await handleOwnerMessage('plan 680000 Metro 4 months', { store, adapters: {}, now: () => now });
   const r = await handleOwnerMessage('move cheque 2 to 20th', { store, adapters: {}, now: () => now });
   const open = store.rows.filter(x => x.status === 'OPEN');
-  expect(open).toHaveLength(4); expect(open.find(x => x.meta.no === 2).meta.date).toBe('2026-10-20'); expect(r.reply).toMatch(/now dated 2026-10-20/);
+  expect(open).toHaveLength(4); expect(open.find(x => x.meta.no === 2).meta.date).toBe('2026-12-21'); expect(r.reply).toMatch(/now dated 2026-12-21 \(2026-12-20 is a weekend/);   // "20th" = 20 Dec (cheque 2's own month); Sunday moves to Monday
+});
+test('a move past the vendor-agreed date is refused', async () => {
+  const store = memStore(); await handleOwnerMessage('plan 680000 Metro 4 months', { store, adapters: {}, now: () => now });
+  const r = await handleOwnerMessage('move cheque 2 to 20 mar', { store, adapters: {}, now: () => now });
+  expect(r.reply).toMatch(/after the date the vendor agreed/); expect(store.rows.find(x => x.meta.no === 2 && x.status === 'OPEN').meta.date).toBe('2026-12-15');
 });
 test('move with no plan is polite', async () => {
   const r = await handleOwnerMessage('move cheque 1 to 20th', { store: memStore(), adapters: {}, now: () => now });

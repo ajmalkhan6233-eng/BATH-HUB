@@ -26,6 +26,8 @@ function parsePlanCommand(raw, now = new Date()) {
   const text = clean(raw), t = text.toLowerCase().replace(/^(layla[, ]*)/, '');
   let m;
   if ((m = t.match(/^move\s+cheque\s*#?(\d+)\s+(?:to|on)\s+(.+)$/))) {
+    const od = m[2].match(/^\s*(\d{1,2})(?:st|nd|rd|th)\s*$/);                       // "20th" alone = the 20th of that cheque's own month (worked out in planHandler)
+    if (od && +od[1] >= 1 && +od[1] <= 31) return { type: 'MOVE_CHEQUE', no: +m[1], day: +od[1], date: null };
     const date = parseDay(m[2], now);
     return date ? { type: 'MOVE_CHEQUE', no: +m[1], date } : { type: 'MOVE_CHEQUE', no: +m[1], date: null };
   }
