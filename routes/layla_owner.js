@@ -14,18 +14,22 @@ const fs = require('fs'); const path = require('path'); const crypto = require('
 const { handleOwnerMessage } = require('../layla_owner/brain');
 const { processInbound } = require('../layla_owner/inbound');
 const { verifySignature, LIMITS } = require('../layla_owner/ownerGate');
-const { parseWebhook } = require('../layla_owner/waCloud');
+const { checkWebhook, verifyChallenge } = require('../layla_owner/webhookGate');
+const { loadSettings } = require('../layla_owner/settings');
+const { createRateLimiter } = require('../layla_owner/ownerGate');
 
 module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env = process.env, now = () => new Date() }) {
   const r = express.Router();
   const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error('[layla-owner]', e.message); res.status(500).json({ error: 'Something went wrong' }); });
 
   // Meta webhook: raw body needed for the signature. Registered BEFORE login (Meta cannot log in) but protected by the signature.
-  r.get('/wa', (req, res) => (req.query['hub.mode'] === 'subscribe' && env.WA_VERIFY_TOKEN && req.query['hub.verify_token'] === env.WA_VERIFY_TOKEN ? res.send(String(req.query['hub.challenge'])) : res.sendStatus(403)));
+  const settings = loadSettings(env); const webhookLimiter = createRateLimiter(120);
+  r.get('/wa', (req, res) => { const c = verifyChallenge(req.query, settings); return c === null ? res.sendStatus(403) : res.send(c); });
   r.post('/wa', express.raw({ type: '*/*', limit: '1mb' }), wrap(async (req, res) => {
-    if (!verifySignature(req.body, req.get('X-Hub-Signature-256'), env.WA_APP_SECRET)) return res.sendStatus(403);
+    const g = checkWebhook({ raw: req.body, signature: req.get('X-Hub-Signature-256'), settings, limiter: webhookLimiter });
+    if (!g.ok) return res.sendStatus(g.status);
     res.sendStatus(200);                                   // answer Meta first, work after
-    for (const m of parseWebhook(JSON.parse(req.body.toString('utf8')))) processInbound(m, inboundDeps()).catch((e) => console.error('[layla-owner]', e.message));
+    for (const m of g.messages) processInbound(m, inboundDeps()).catch((e) => console.error('[layla-owner]', e.message));
   }));
 
   if (requireAuth) r.use(requireAuth);
