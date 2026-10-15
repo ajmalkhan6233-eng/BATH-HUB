@@ -5,7 +5,7 @@ const createStore = require('./taskStore'); const createAdapters = require('./ad
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
 const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify'); const automations = require('../utils/automations');
 const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
-const { processInbound } = require('./inbound'); const { loadSettings, describe } = require('./settings'); const { createSafeSend } = require('./safeSend'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
+const { processInbound } = require('./inbound'); const { loadSettings, describe } = require('./settings'); const { createSafeSend } = require('./safeSend'); const { createCustomerHandler } = require('./customerDryRun'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
 module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir = path.join(process.cwd(), 'uploads', 'layla-inbox') }) {
   const store = createStore(pool); const adapters = createAdapters({ pool });
@@ -15,7 +15,8 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const saveMedia = async (buffer, mime, kind) => { fs.mkdirSync(inboxDir, { recursive: true }); const ext = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' }[String(mime).split(';')[0]] || '.bin'; const f = path.join(inboxDir, `${kind}-${crypto.randomBytes(8).toString('hex')}${ext}`); fs.writeFileSync(f, buffer); return path.relative(process.cwd(), f).replace(/\\/g, '/'); };
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
-  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env });
+  const customer = createCustomerHandler();                                                              // customer chats: dry run, logged, never sent
+  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, env });
   setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];
   function start() {
@@ -27,7 +28,7 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
     timers.push(setInterval(autoTick, 30 * 60000)); setTimeout(autoTick, 45000);                                           // morning brief, reorder list (Mon), weekly profit (Sun), accountant pack (1st)
     const flushTick = () => notify.flush({ pool, send: (text) => send(null, text) }).catch((e) => console.error('[layla-owner] morning batch:', e.message));
     timers.push(setInterval(flushTick, 60000)); setTimeout(flushTick, 30000);                                             // sends only at 06:00 (to 06:10) Sri Lanka time, once a day
-    if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, phoneId: S.phoneId, handle: (m) => processInbound(m, { store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
+    if (env.RELAY_URL && env.RELAY_SECRET) timers.push(setInterval(() => pollOnce({ url: env.RELAY_URL, secret: env.RELAY_SECRET, phoneId: S.phoneId, handle: (m) => processInbound(m, { customer, store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, rateLimit }) }).catch((e) => console.error('[layla-owner] relay:', e.message)), 20000));
     console.log(`[layla-owner] started (${cfg.live ? 'LIVE, owner only' : 'DRY RUN: nothing is sent to WhatsApp'}${env.RELAY_URL ? ', relay on' : ''}) ${JSON.stringify(describe(S))}`);
   }
   const stop = () => { timers.forEach(clearInterval); timers = []; };

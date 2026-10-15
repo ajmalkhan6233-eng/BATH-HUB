@@ -10,7 +10,11 @@ const { fmtLocal } = require('./timeParse');
  */
 async function processInbound(m, deps) {
   const { store, adapters, send, ownerNumber, now = () => new Date() } = deps;
-  if (!isOwner(m.from, ownerNumber)) { await store.remember(m.id, 'in', 'blocked', ''); return { status: 'ignored' }; }
+  if (!isOwner(m.from, ownerNumber)) {
+    await store.remember(m.id, 'in', 'blocked', '');
+    const c = deps.customer ? await deps.customer(m).catch(() => null) : null;                    // customer chats: dry run only, nothing is ever sent
+    return c ? { status: 'ignored', customer: c } : { status: 'ignored' };
+  }
   if (deps.rateLimit && !deps.rateLimit()) return { status: 'rate_limited' };
   const fresh = await store.remember(m.id, 'in', m.type, m.text || m.caption || '');
   if (!fresh) return { status: 'duplicate' };
