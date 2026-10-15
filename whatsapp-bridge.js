@@ -200,10 +200,10 @@ client.on('message', async (msg) => {
             const st = res.data && res.data.status;
             if (st === 'fallback' || st === 'fallback_photo') {
                 if (st === 'fallback_photo') {
-                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, { from: resolved, filePath: payload.filePath }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, { from: payload.from, filePath: payload.filePath }, { timeout: 60000, headers: WEBHOOK_HEADERS });
                     const photoReply = sanitizeAssistantOutput(r2.data?.reply); if (photoReply) await msg.reply(photoReply);
                 } else {
-                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: resolved, message: msg.body }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: payload.from, message: msg.body }, { timeout: 60000, headers: WEBHOOK_HEADERS });
                     const reply2 = sanitizeAssistantOutput(r2.data?.reply); if (reply2) await msg.reply(reply2);
                 }
             }
