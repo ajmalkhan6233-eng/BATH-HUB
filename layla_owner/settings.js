@@ -16,6 +16,7 @@ function loadSettings(env = process.env) {
     laylaNumber: normalizeNumber(env.LAYLA_WA_NUMBER),
     ownerNumber: normalizeNumber(env.OWNER_WA_NUMBER || DEFAULT_OWNER),
     ownerIsDefault: !env.OWNER_WA_NUMBER,
+    shopNumberAccepted: String(env.LAYLA_SHOP_NUMBER_OK || '').toLowerCase() === 'yes',   // AJ's own switch, in .env on the PC
     live: env.LAYLA_OWNER_LIVE === 'true',               // default OFF: dry run
     customerLive: false,                                 // customer replies are DRY RUN in code; there is no setting to turn them on
     token: env.WA_TOKEN || '', phoneId: env.WA_PHONE_NUMBER_ID || '', appSecret: env.WA_APP_SECRET || '', verifyToken: env.WA_VERIFY_TOKEN || '',
@@ -27,7 +28,7 @@ function loadSettings(env = process.env) {
 }
 function validate(s) {
   const e = [], shop = normalizeNumber(SHOP_NUMBER);
-  if (s.laylaNumber && s.laylaNumber === shop) e.push('LAYLA_WA_NUMBER is the SHOP number: refused. Use the separate Layla number.');
+  if (s.laylaNumber && s.laylaNumber === shop && !s.shopNumberAccepted) e.push('LAYLA_WA_NUMBER is the SHOP number: refused. AJ must add LAYLA_SHOP_NUMBER_OK=yes to .env to accept the risk.');
   if (s.ownerNumber === shop) e.push('OWNER_WA_NUMBER is the SHOP number: refused.');
   if (s.laylaNumber && s.laylaNumber === s.ownerNumber) e.push('LAYLA_WA_NUMBER and OWNER_WA_NUMBER are the same number.');
   if (s.live) {
@@ -37,7 +38,7 @@ function validate(s) {
 }
 /** Safe to log: numbers masked, secrets reduced to set / not set. */
 function describe(s) {
-  return { mode: s.liveAllowed ? 'LIVE (owner only)' : 'DRY RUN', layla: last3(s.laylaNumber), owner: last3(s.ownerNumber), ownerIsDefault: s.ownerIsDefault, customerReplies: 'DRY RUN always',
+  return { mode: s.liveAllowed ? 'LIVE (owner only)' : 'DRY RUN', layla: last3(s.laylaNumber), owner: last3(s.ownerNumber), ownerIsDefault: s.ownerIsDefault, laylaIsShopNumber: !!s.laylaNumber && s.laylaNumber === normalizeNumber(SHOP_NUMBER), customerReplies: 'DRY RUN always',
     token: s.token ? 'set' : 'not set', phoneId: s.phoneId ? 'set' : 'not set', appSecret: s.appSecret ? 'set' : 'not set', verifyToken: s.verifyToken ? 'set' : 'not set', errors: s.errors };
 }
 module.exports = { loadSettings, validate, describe, last3, SHOP_NUMBER, DEFAULT_OWNER };

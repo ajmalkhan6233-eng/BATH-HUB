@@ -8,9 +8,10 @@ const { last3 } = require('./settings');
 const WINDOW_MS = 24 * 3600 * 1000;
 const inWindow = (lastInboundMs, nowMs) => Number.isFinite(lastInboundMs) && lastInboundMs > 0 && nowMs - lastInboundMs >= 0 && nowMs - lastInboundMs <= WINDOW_MS;
 const GREETING = 'Welcome to Royal Bath Hub, No. 173/1, Kandy Road, Thihariya. Are you building a new bathroom or renovating one? We have tiles, taps, showers and accessories, the latest designs, honest prices and free advice.';
-function createCustomerHandler({ compose = () => GREETING, log = console.log, now = () => Date.now(), onWouldReply } = {}) {
+function createCustomerHandler({ compose = () => GREETING, log = console.log, now = () => Date.now(), onWouldReply, onInbound } = {}) {
   return async function customer(m) {
     if (!m || m.type !== 'text' || !String(m.text || '').trim()) return { status: 'customer_skipped', sent: false };
+    if (onInbound) await onInbound(m);                                   // every customer text reaches the owner's 6 am digest, so no enquiry is lost
     const lastMs = (Number(m.ts) || 0) * 1000;
     if (!inWindow(lastMs, now())) { log(`[layla CUSTOMER DRY RUN] ${last3(m.from)}: outside the 24-hour window, no reply`); return { status: 'customer_dry_run', sent: false, inWindow: false, wouldReply: null }; }
     const wouldReply = String(await compose(m)).slice(0, 1000);

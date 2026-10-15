@@ -21,7 +21,7 @@ test('live: a customer number is blocked, never sent', async () => {
   const r = await send('0712223344', 'hello customer'); expect(r).toMatchObject({ dryRun: true, blocked: true }); expect(f.calls).toHaveLength(0);
   expect(logs.join(' ')).toContain('***344'); expect(logs.join(' ')).not.toContain('712223344');
 });
-test('shop number as Layla number: config error, falls back to dry run, nothing sent', async () => {
+test('shop number as Layla number WITHOUT the accept switch: config error, falls back to dry run, nothing sent', async () => {
   const S = loadSettings({ ...base, LAYLA_OWNER_LIVE: 'true', LAYLA_WA_NUMBER: '0740355536' }); const f = mockFetch();
   await createSafeSend({ settings: S, sendText, fetchFn: f })('0777999219', 'x'); expect(S.liveAllowed).toBe(false); expect(f.calls).toHaveLength(0);
 });

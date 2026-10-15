@@ -15,7 +15,7 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const saveMedia = async (buffer, mime, kind) => { fs.mkdirSync(inboxDir, { recursive: true }); const ext = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' }[String(mime).split(';')[0]] || '.bin'; const f = path.join(inboxDir, `${kind}-${crypto.randomBytes(8).toString('hex')}${ext}`); fs.writeFileSync(f, buffer); return path.relative(process.cwd(), f).replace(/\\/g, '/'); };
   const rateLimit = createRateLimiter();
   const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
-  const customer = createCustomerHandler();                                                              // customer chats: dry run, logged, never sent
+  const customer = createCustomerHandler({ onInbound: (m) => notify.enqueue(pool, `Customer ...${String(m.from).slice(-3)} wrote: "${String(m.text).slice(0, 200).replace(/\s+/g, ' ')}" (not answered: Layla does not reply to customers yet)`, 'customer').catch(() => {}) });                                                              // customer chats: dry run, logged, never sent
   const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, env });
   setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];

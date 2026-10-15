@@ -13,6 +13,11 @@ test('SHOP number is refused as Layla number or owner', () => {
   expect(loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys, LAYLA_WA_NUMBER: '074 035 5536' }).liveAllowed).toBe(false);
   expect(loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys, OWNER_WA_NUMBER: '0740355536' }).liveAllowed).toBe(false);
 });
+test('shop number is allowed ONLY when AJ sets LAYLA_SHOP_NUMBER_OK=yes (his accepted risk)', () => {
+  const S = loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys, LAYLA_WA_NUMBER: '074 035 5536', LAYLA_SHOP_NUMBER_OK: 'yes' });
+  expect(S.liveAllowed).toBe(true); expect(describe(S).laylaIsShopNumber).toBe(true);
+  expect(loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys, OWNER_WA_NUMBER: '0740355536', LAYLA_SHOP_NUMBER_OK: 'yes' }).liveAllowed).toBe(false);   // owner can never be the shop number
+});
 test('Layla number must differ from owner', () => { expect(loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys, OWNER_WA_NUMBER: '0771112233' }).liveAllowed).toBe(false); });
 test('describe never shows full numbers or secrets', () => {
   const out = JSON.stringify(describe(loadSettings({ LAYLA_OWNER_LIVE: 'true', ...keys })));

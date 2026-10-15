@@ -27,3 +27,9 @@ test('owner plan command through processInbound', async () => {
   await processInbound({ id: 'o2', from: '94777999219', type: 'text', text: 'plan 680000 Metro 4 months', ts: NOW / 1000 }, { store, adapters: {}, send: async (to, t) => sent.push(t), ownerNumber: '0777999219' });
   expect(rows.filter((r) => r.kind === 'PLAN_CHEQUE')).toHaveLength(4); expect(sent[0]).toMatch(/Plan: Metro/);
 });
+
+test('every customer text is passed to the owner digest hook, even outside the window', async () => {
+  const seen = []; const h = createCustomerHandler({ log() {}, now: () => NOW, onInbound: async (m) => seen.push(m.text) });
+  await h(msg({ text: 'price of mixer tap?' })); await h(msg({ text: 'old one', ts: NOW / 1000 - 90000 })); await h(msg({ type: 'image' }));
+  expect(seen).toEqual(['price of mixer tap?', 'old one']);
+});
