@@ -6,7 +6,8 @@
 2. Choose the strongest model, output length maximum.
 3. Paste this one message:
    `Read AI_STUDIO_START_HERE.md completely, then read every file it tells you to read, then do everything in PART B. One attempt, complete files.`
-4. Download the files Gemini produces and give them to Claude Code. Claude Code installs and tests them.
+4. When Gemini finishes, tell it: `Now save everything to GitHub: repo BATH-HUB, NEW branch ai-studio-build (never main, never work), with a commit message "AI Studio redesign v1".` (AI Studio: Save/Commit to GitHub → create new branch.)
+5. Tell Claude Code: `Pull branch ai-studio-build, test it, report in LIVE.md.` Claude Code installs and tests. You do nothing else.
 
 ════════════════════════════════════════════
 ## PART B — INSTRUCTIONS FOR GEMINI (read every word; you get ONE attempt)
@@ -35,6 +36,7 @@ Build a **NEW APP SHELL** with a classic ERP layout, plus a small number of **na
 
 ### B4. TECH RULES (strict)
 - **Plain static files: HTML + CSS + vanilla JavaScript (ES modules). No React, no Vite, no npm, no build step, no CDN, no external fonts or images.** The files must run when simply copied into the shop's /public folder. (If the AI Studio template forces React, still output plain static files as asked here.)
+- **Put every new file inside a NEW folder `app_v2/`** (e.g. `app_v2/app.html`, `app_v2/css/shell.css`, `app_v2/js/core.js`). Do NOT edit, move or delete any existing file in the repo. The old app keeps running untouched; Claude Code copies `app_v2/` into place after testing. All paths below are relative to `app_v2/`, and inside the files use relative links only (`css/shell.css`, `js/core.js`) so the folder works anywhere.
 - Output exactly these files, each COMPLETE (never truncated, never "…rest unchanged"):
   1. `app.html` — the shell: menu bar, tabs, status bar, frame host, login gate, mock switch.
   2. `css/shell.css` — all styling, CSS variables, light/dark, responsive.
@@ -43,7 +45,7 @@ Build a **NEW APP SHELL** with a classic ERP layout, plus a small number of **na
   5. `js/mock.js` — fake-data layer (spec in B9) used ONLY in preview.
   6. `js/mod-dashboard.js`, `js/mod-grn.js`, `js/mod-stock.js`, `js/mod-vendors.js` — the four native modules (spec in B8).
   7. `js/legacy.js` — the Legacy Bridge table (copy B6 exactly).
-  8. `README_INSTALL.md` — 10 lines: where each file goes (`/public/app.html`, `/public/css/`, `/public/js/`), and how to test.
+  8. `README_INSTALL.md` — 10 lines: copy the whole `app_v2/` folder to `/public/app_v2/` on the shop server, open `/app_v2/app.html`, and how to test (also `?mock=1` for sample data).
 - **If you are running out of output space:** finish the file you are writing completely, then add at the very end a section `NOT BUILT YET:` listing the files left. Never cut a file in half. Build in this priority order: core.js → shell.css → app.html → legacy.js → grid.js → mock.js → mod-grn.js → mod-dashboard.js → mod-stock.js → mod-vendors.js → README_INSTALL.md.
 - Backend contract: call the SAME endpoints with the SAME request/response shapes already used in the repo code and listed in B10. **Do not invent endpoints.** If you need data and no endpoint exists, show a clear "Not available yet" state.
 - Login is session-cookie based: `GET /api/me` returns the user (role: admin | owner | manager | staff | investor); `POST /api/login` {username,password}. Use `fetch(..., {credentials:'same-origin'})`. If `/api/me` is not ok → show a clean login card. `investor` = read-only (no buttons that write).
@@ -569,9 +571,12 @@ PUT    /api/quotations/:id/status
 - Keep each module isolated: one module's bug must not break another (wrap init in try/catch and show an error card inside that tab only).
 - Tests in your head before you answer: (1) every screen in B6 is reachable from at least one menu; (2) every menu item opens something; (3) phone width works; (4) the preview works with mock data; (5) no file is cut off; (6) no endpoint outside B10 is called.
 
+### B11b. BUILD AND PUSH (you do this yourself)
+After the files are complete: (1) run the app in the preview in mock mode and fix any console error; (2) walk the 6 tests in B11 and fix every FAIL; (3) commit ALL files under `app_v2/` to GitHub on a NEW branch named `ai-studio-build` with message "AI Studio redesign v1" using AI Studio's GitHub save/commit feature; (4) never commit to `main` or `work`, never touch files outside `app_v2/`, never commit secrets; (5) if pushing is not possible, say so plainly and list the exact files so the owner can download them.
+
 ### B12. HOW TO ANSWER
 1. First, in ≤ 15 lines, restate the plan and list the files you will output.
 2. Then output each file as a fenced block preceded by its exact path, e.g. `### FILE: js/core.js`.
-3. Finish with `CHECKLIST` (the 6 tests above, each PASS/FAIL honestly) and `NOT BUILT YET` (if any).
+3. After the files, push as in B11b and say the branch name and commit. Finish with `CHECKLIST` (the 6 tests above, each PASS/FAIL honestly) and `NOT BUILT YET` (if any).
 Be exact, not creative with the backend; be excellent with the design.
 
