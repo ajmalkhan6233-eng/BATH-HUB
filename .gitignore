@@ -83,3 +83,4 @@ backups/daily/
 
 # Layla owner assistant: incoming photos and voice notes are private
 uploads/layla-inbox/
+dist/
