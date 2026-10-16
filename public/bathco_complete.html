@@ -511,6 +511,14 @@ table tr:last-child td{border-bottom:none}
           <div class="fg"><label class="fl" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mg-paid-now"> Paid in cash on delivery (nothing owed)</label></div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin:6px 0 10px">Each new item gets the next item code automatically. An item whose name already exists is restocked instead of duplicated.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+          <button class="btn btn-s" type="button" onclick="document.getElementById('mg-file').click()">📄 Fill from file</button>
+          <button class="btn btn-s" type="button" onclick="document.getElementById('mg-photo-read').click()">📷 Read photo (AI)</button>
+          <span style="font-size:12px;color:var(--text2)">Fills the boxes below. Nothing is saved until you press Save GRN.</span>
+          <input type="file" id="mg-file" accept=".json,.csv,.xlsx,.xls" style="display:none" onchange="mgFillFromFile(this)">
+          <input type="file" id="mg-photo-read" accept="image/jpeg,image/png" style="display:none" onchange="mgReadPhoto(this)">
+        </div>
+        <div id="mg-review" style="display:none"></div>
         <div id="mg-rows"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
           <button class="btn btn-s" onclick="mgAddRow()">+ Add item row</button>
@@ -2078,6 +2086,55 @@ function mgAddRow() {
     <button class="btn btn-s" type="button" title="Remove this row" onclick="mgRemoveRow(this)">✕</button>`;
   wrap.appendChild(row);
 }
+// ═══ GRN IMPORT (Fill from file / Read photo) — fills the form for review, never saves ═══
+function mgApplyImport(r, label) {
+  const wrap = document.getElementById('mg-rows'); wrap.innerHTML = '';
+  (r.lines.length ? r.lines : [{}]).forEach(l => {
+    mgAddRow();
+    const row = wrap.lastElementChild;
+    row.querySelector('.mg-name').value = l.name || '';
+    row.querySelector('.mg-qty').value = l.qty != null ? l.qty : '';
+    row.querySelector('.mg-cost').value = l.cost != null ? l.cost : '';
+    if (l.price != null) row.querySelector('.mg-price').value = l.price;
+  });
+  if (r.supplier) document.getElementById('mg-supplier').value = r.supplier;
+  if (r.date) document.getElementById('mg-date').value = r.date;
+  if (r.ref) document.getElementById('mg-notes').value = 'Invoice ' + r.ref;
+  if (r.credit_days != null) document.getElementById('mg-credit-days').value = r.credit_days;
+  mgRecalc();
+  const box = document.getElementById('mg-review');
+  const warns = r.warnings || [];
+  box.style.display = 'block';
+  box.innerHTML = '<div class="card" style="border:1px solid ' + (warns.length ? '#d9a300' : '#2e9d5b') + ';padding:10px;margin-bottom:10px">'
+    + '<b>' + mgEsc(label) + ': ' + r.lines.length + ' lines, lines add up to ' + fmtLKR(r.lines_total) + (r.paper_total != null ? ' (paper total ' + fmtLKR(r.paper_total) + ')' : '') + '</b>'
+    + (warns.length ? '<ul style="margin:6px 0 0 18px">' + warns.map(w => '<li>' + mgEsc(w) + '</li>').join('') + '</ul>' : '<div>No problems found. Still check it against the paper.</div>')
+    + '<div style="margin-top:6px;font-size:12px">Credit days: type the days this vendor really allows. Then press Save GRN.</div></div>';
+}
+async function mgFillFromFile(inp) {
+  const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+  try {
+    let r;
+    if (/\.xlsx?$/i.test(f.name)) {
+      if (!window.XLSX) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/lib/xlsx.full.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      r = GrnImport.build(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }));
+    } else {
+      r = GrnImport.fromText(await f.text(), f.name);
+    }
+    mgApplyImport(r, 'From file ' + f.name);
+  } catch (e) { toast('Could not read that file: ' + e.message, 'error'); }
+}
+async function mgReadPhoto(inp) {
+  const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+  toast('AI is reading the photo… up to 1 minute', 'info');
+  try {
+    const fd = new FormData(); fd.append('file', f);
+    const res = await fetch('/api/grn-read-photo', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(j.error || 'Could not read the photo', 'error'); return; }
+    mgApplyImport(j, 'AI read photo');
+  } catch (e) { toast('Could not read the photo: ' + e.message, 'error'); }
+}
 function mgRemoveRow(btn) {
   if (document.querySelectorAll('#mg-rows .mg-row').length <= 1) { toast('A GRN needs at least one item row', 'warning'); return; }
   btn.closest('.mg-row').remove();
@@ -2701,5 +2758,6 @@ async function initApp() {
 <script src="/salary.js"></script>
 <script src="/lib/menuPrefs.js"></script>
 <script src="/bathhub-logo.js"></script>
+<script src="/lib/grn_import.js"></script>
 </body>
 </html>
