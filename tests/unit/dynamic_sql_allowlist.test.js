@@ -21,6 +21,7 @@ const ALLOWED = {
   'routes/document_inbox.js': [1, "fixed ' FOR UPDATE' or nothing"],
   'routes/investor_loans.js': [5, "LOAN_SELECT is a constant; fixed 'WHERE l.status = $1'"],
   'routes/item_catalog.js': [2, 'ITEM_COLS is a constant; limit is a clamped number'],
+  'layla_owner/taskStore.js': [2, "done/snooze: fixed 'source=$n' or fixed 'NOT LIKE family' fragment chosen by a yes/no; values are $n"],
   'routes/money_control.js': [2, "fixed 'WHERE status = $1'"],
   'routes/purchasing_accounting.js': [5, 'SET lists from fixed field names; notVoided() and CASH_OUT_EXPR are internal constants'],
   'routes/sale_commissions.js': [2, 'clauses are fixed fragments with $n; notVoided() is internal'],
@@ -63,7 +64,7 @@ describe('dynamic SQL ratchet', () => {
     const stale = Object.keys(ALLOWED).filter((f) => !found[f] || found[f] < ALLOWED[f][0]);
     expect(stale).toEqual([]);
   });
-  test('42 reviewed spots in total', () => {
-    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(42);
+  test('44 reviewed spots in total', () => {
+    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(44);
   });
 });
