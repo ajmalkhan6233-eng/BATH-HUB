@@ -54,7 +54,7 @@ test('credit note reduces payable, bounced cheque restores it', async () => {
   const bill = (await post('/api/vendor-ledger/bills', { vendor_name: 'RK Trading', bill_date: '2025-12-17', total: 100000 })).body;
   await post(`/api/vendor-ledger/bills/${bill.id}/credit-notes`, { amount: 25000, note_no: 'M1-6032' });
   const ch = (await post(`/api/vendor-ledger/bills/${bill.id}/cheques`, { amount: 75000, cheque_date: day(1) })).body;
-  await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`);
+  await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`, { reason: 'bank returned: no funds' });
   const b = (await request(app).get('/api/vendor-ledger/bills?vendor=RK%20Trading')).body[0];
   expect(b).toMatchObject({ outstanding: 75000, covered: 0, hasBounced: true, state: 'UNPAID' });
 });
@@ -71,4 +71,17 @@ test('calendar, cash gap, checks, csv', async () => {
   expect(chk.duplicates.sameNumber.length).toBeGreaterThanOrEqual(1);
   const csv = await request(app).get('/api/vendor-ledger/export.csv');
   expect(csv.text.split('\n')[0]).toContain('outstanding');
+});
+
+test('AUDIT: bounce, cancel and void need a reason, and every change is logged with who, old and new', async () => {
+  const bill = (await post('/api/vendor-ledger/bills', { vendor_name: 'Audit Co', bill_date: '2026-10-01', total: 50000 })).body;
+  const ch = (await post(`/api/vendor-ledger/bills/${bill.id}/cheques`, { amount: 50000, cheque_date: day(1) })).body;
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`)).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/cancel`, { reason: 'x' })).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/bills/${bill.id}/void`)).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`, { reason: 'returned by bank' })).status).toBe(200);
+  expect((await post(`/api/vendor-ledger/bills/${bill.id}/void`, { reason: 'entered twice' })).status).toBe(200);
+  const log = (await request(app).get('/api/vendor-ledger/audit-log')).body;
+  expect(log.map((x) => x.action)).toEqual(expect.arrayContaining(['cheque_bounced', 'bill_void']));
+  expect(log.find((x) => x.action === 'bill_void')).toMatchObject({ reason: 'entered twice', old_value: 'active', new_value: 'voided' });
 });

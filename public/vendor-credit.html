@@ -41,6 +41,10 @@ a.back{display:inline-block;min-height:44px;line-height:44px;color:var(--ink)}
       tot.appendChild(stat('Written, not cleared', t.writtenNotClear));
       tot.appendChild(stat('Past the vendor\'s date', t.pastDue, t.pastDue > 0 ? 'bad' : 'good'));
       [1, 2, 3].forEach(function (m) { tot.appendChild(stat('Still owed after ' + m + (m === 1 ? ' month' : ' months'), t.after[m])); });
+      if (d.planner && d.planner.count) {
+        tot.appendChild(stat('Planner cheques, not on a bill (' + d.planner.count + ')', d.planner.total, 'bad'));
+        [1, 2, 3].forEach(function (m) { tot.appendChild(stat('Planner cheques due within ' + m + (m === 1 ? ' month' : ' months'), d.planner.dueBy[m])); });
+      }
       var lg = document.getElementById('long'); lg.textContent = '';
       if (d.longDated.length) {
         var a = el('div', 'alert'); a.appendChild(el('strong', 'bad', 'Heads-up: cheques that clear after more than 3 months'));

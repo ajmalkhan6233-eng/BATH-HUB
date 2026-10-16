@@ -7,6 +7,7 @@
  */
 const express = require('express');
 const L = require('../utils/vendorLedger');
+const audit = require('../utils/moneyAudit');
 
 const isNum = (v) => v !== '' && v !== null && v !== undefined && Number.isFinite(Number(v));
 const bad = (res, msg) => res.status(400).json({ error: msg });
@@ -86,11 +87,15 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
   async function setStatus(req, res, status) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || !STATUSES.includes(status)) return bad(res, 'bad request');
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner can change a cheque status' });
+    const reason = String((req.body && req.body.reason) || '').trim();
+    if (status !== 'CLEARED' && !audit.reasonOk(reason)) return bad(res, 'Give a reason (at least 3 letters) for a bounced or cancelled cheque');
     const cur = (await pool.query('SELECT * FROM vendor_bill_cheques WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
     if (!cur) return res.status(404).json({ error: 'cheque not found' });
     if (cur.status === status) return res.json(cur); // idempotent: clearing twice changes nothing
     if (cur.status === 'CLEARED' && status !== 'CLEARED') return bad(res, 'a cleared cheque cannot be changed');
     const { rows } = await pool.query(`UPDATE vendor_bill_cheques SET status=$1, cleared_at=${status === 'CLEARED' ? 'NOW()' : 'NULL'} WHERE id=$2 RETURNING *`, [status, id]);
+    await audit.log(pool, { who: userOf(req), action: 'cheque_' + status.toLowerCase(), table: 'vendor_bill_cheques', id, oldValue: cur.status, newValue: status, reason: reason || null }).catch((e) => console.error('[vendor-ledger] audit:', e.message));
     res.json(rows[0]);
   }
   r.post('/cheques/:id/clear', wrap((req, res) => setStatus(req, res, 'CLEARED')));
@@ -122,9 +127,20 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
   r.post('/bills/:id/void', wrap(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return bad(res, 'bad bill id');
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner can void a bill' });
+    const reason = String((req.body && req.body.reason) || '').trim();
+    if (!audit.reasonOk(reason)) return bad(res, 'Give a reason (at least 3 letters) for voiding a bill');
     const { rows } = await pool.query('UPDATE vendor_bills SET voided=TRUE WHERE id=$1 AND branch_id=$2 RETURNING *', [id, branchOf(req)]);
     if (!rows[0]) return res.status(404).json({ error: 'bill not found' });
+    await audit.log(pool, { who: userOf(req), action: 'bill_void', table: 'vendor_bills', id, oldValue: 'active', newValue: 'voided', reason }).catch((e) => console.error('[vendor-ledger] audit:', e.message));
     res.json(rows[0]);
+  }));
+
+  // Owner only: the trail of voids and cheque changes, newest first.
+  r.get('/audit-log', wrap(async (req, res) => {
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Owner only' });
+    await audit.ensure(pool);
+    res.json((await pool.query('SELECT * FROM money_audit_log ORDER BY id DESC LIMIT 100')).rows);
   }));
 
   r.get('/calendar', wrap(async (req, res) => {

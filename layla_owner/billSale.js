@@ -2,7 +2,7 @@
 /**
  * Photo of a MANUAL customer bill, sent by the OWNER with the caption "bill" -> read -> sale saved -> text receipt to the customer.
  * Caption words: bill [077xxxxxxx] [credit|card|online|cheque] [customer name]. Nothing said = cash.
- * If the reading is clean (lines add up to the paper total, prices present) the sale is saved at once. Otherwise a DRAFT waits for "ok".
+ * Audit rule: the photo is only read into a DRAFT. The sale is made and the receipt sent only when the owner replies "ok" (the number is shown back first).
  * Commands: ok | cancel | fix line 2 qty 3 | fix line 2 price 4500 | fix phone 077... | fix pay card | fix ref 123456 | fix name X
  *           phone 077...  = wrong or missing number: fixes it on the last bill and sends the receipt again.   receipts = list receipts that did not go.
  * deps: { pool, readPaper(file,'grn'), createBill(payload)->{ok,bill,message}, sendCustomer(to,text), receiptsLive()->bool, normalizePhone(raw)->'+94..'|null, now() }
@@ -68,7 +68,7 @@ function summary(id, d, checks, saved) {
   d.lines.slice(0, 25).forEach((l) => o.push(`${l.line_no}. ${l.name} x${l.qty} @ ${l.unit_price != null ? rs(l.unit_price) : '?'}`));
   o.push(`Items add up: ${rs(checks.sum)} | Paper total: ${d.total != null ? rs(d.total) : '?'}`);
   o.push(checks.warnings.length ? 'CHECKS:\n! ' + checks.warnings.join('\n! ') : 'CHECKS: all OK');
-  if (!saved) o.push('Reply: ok = make the sale | fix line 2 qty 3 | fix phone 077... | fix pay card | cancel');
+  if (!saved) o.push(d.phone ? `Receipt will go to ${String(d.phone).replace(/(\d{3})(\d{3})(\d+)/, '$1 $2 $3')}${d.name ? ' (' + d.name + ')' : ''}. Is that the customer's number?` : 'No customer number: the sale is made, no receipt.', 'Reply: ok = make the sale + send receipt | fix phone 077... | fix line 2 qty 3 | fix pay card | cancel');
   return o.join('\n');
 }
 
@@ -137,11 +137,6 @@ module.exports = function createBillSale({ pool, readPaper, createBill, sendCust
     await pool.query(`UPDATE bill_drafts SET status='cancelled' WHERE status='draft'`);
     const ins = await pool.query(`INSERT INTO bill_drafts (draft, source_file) VALUES ($1,$2) RETURNING id`, [JSON.stringify(d), file || null]);
     const id = ins.rows[0].id;
-    if (!checks.warnings.length) {                     // clean reading: the sale is made at once
-      const s = await makeSale(d);
-      if (s.ok) { await pool.query(`UPDATE bill_drafts SET status='saved' WHERE id=$1`, [id]); return { reply: summary(id, d, checks, true) + '\n' + s.reply, id }; }
-      return { reply: summary(id, d, { ...checks, warnings: [s.message] }, false) + `\nCould not save: ${s.message}`, id };
-    }
     return { reply: summary(id, d, checks, false), id };
   }
 

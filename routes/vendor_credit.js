@@ -6,8 +6,8 @@
  * Writes nothing. Login is enforced by the app's global /api gate (same as the vendor ledger).
  */
 const express = require('express');
-const { creditView, oneLine } = require('../utils/vendorCredit');
-const { loadVendorRows } = require('../utils/vendorCreditDb');
+const { creditView, oneLine, plannerView } = require('../utils/vendorCredit');
+const { loadVendorRows, loadPlannerRows } = require('../utils/vendorCreditDb');
 
 const todaySL = () => new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10);
 function parseMonths(q) {
@@ -25,7 +25,8 @@ module.exports = function createVendorCreditRouter({ pool, requireAuth, branchOf
     if (!months.length) return res.status(400).json({ error: 'months must be whole numbers from 1 to 24, like 1,2,3' });
     const rows = await loadVendorRows(pool, { branch: branchOf(req) });
     const view = creditView(rows, todaySL(), { months });
-    res.json({ ...view, lines: view.vendors.map(oneLine) });
+    const pl = await loadPlannerRows(pool);
+    res.json({ ...view, planner: plannerView(pl.planner, pl.ledgerNos, todaySL(), { months }), lines: view.vendors.map(oneLine) });
   }));
 
   r.get('/vendor', wrap(async (req, res) => {

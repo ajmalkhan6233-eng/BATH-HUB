@@ -23,7 +23,7 @@ beforeAll(async () => {
 });
 
 const send = (p) => request(app).post('/api/grn-manual').field('payload', JSON.stringify(p));
-const base = (o = {}) => ({ supplier_name: 'Metro', grn_date: '2026-10-16', lines: [{ name: 'Basin ' + Math.random().toString(36).slice(2, 7), qty: 20, unit_cost: 34000 }], ...o });
+const base = (o = {}) => ({ credit_days: 0, supplier_name: 'Metro', grn_date: '2026-10-16', lines: [{ name: 'Basin ' + Math.random().toString(36).slice(2, 7), qty: 20, unit_cost: 34000 }], ...o });
 
 test('new GRN with no cheque yet: payment pending, stock shown, vendor owed', async () => {
   const r = await send(base());
@@ -97,4 +97,11 @@ test('planner preview route uses the Sri Lankan holiday list when the caller sen
   const r = await request(a2).post('/api/payment-planner/preview').send({ total: 1000, count: 1, first_date: '2026-11-24' });
   expect(r.status).toBe(200);
   expect(r.body.installments[0].date).toBe('2026-11-25');
+});
+
+test('AUDIT: a GRN with no credit days and not paid in cash is refused; nothing saved', async () => {
+  const before = db.many(`SELECT * FROM grn_records`).length;
+  const r = await send({ supplier_name: 'Metro', grn_date: '2026-10-16', lines: [{ name: 'Tap ' + Math.random().toString(36).slice(2, 6), qty: 1, unit_cost: 100 }] });
+  expect(r.status).toBe(400); expect(r.body.error).toMatch(/credit days/i);
+  expect(db.many(`SELECT * FROM grn_records`).length).toBe(before);
 });

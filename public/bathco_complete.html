@@ -507,7 +507,7 @@ table tr:last-child td{border-bottom:none}
           <div class="fg"><label class="fl">Supplier *</label><input class="fi" id="mg-supplier" list="mg-supplier-list" placeholder="Pick or type a supplier"><datalist id="mg-supplier-list"></datalist></div>
           <div class="fg"><label class="fl">Date *</label><input type="date" class="fi" id="mg-date"></div>
           <div class="fg"><label class="fl">Notes</label><input class="fi" id="mg-notes" placeholder="Optional (delivery note no., etc.)"></div>
-          <div class="fg"><label class="fl">Credit days the vendor allows</label><input class="fi" id="mg-credit-days" type="number" inputmode="numeric" min="0" max="1095" placeholder="Blank = decide later (cheque not written yet)"></div>
+          <div class="fg"><label class="fl">Credit days the vendor allows</label><input class="fi" id="mg-credit-days" type="number" inputmode="numeric" min="0" max="1095" placeholder="Required. 0 = pay now, 30 = 30 days"></div>
           <div class="fg"><label class="fl" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mg-paid-now"> Paid in cash on delivery (nothing owed)</label></div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin:6px 0 10px">Each new item gets the next item code automatically. An item whose name already exists is restocked instead of duplicated.</div>
@@ -2146,6 +2146,7 @@ async function saveManualGRN() {
     const f = r.querySelector('.mg-photo').files[0];
     if (f) fd.append('photo_' + i, f);
   }
+  if (String(document.getElementById('mg-credit-days').value).trim() === '' && !document.getElementById('mg-paid-now').checked) { toast('Enter the credit days (0 = pay now) or tick Paid in cash', 'warning'); return; }
   const sup = _mgSuppliers.find(s => String(s.name).toLowerCase() === supplier_name.toLowerCase());
   fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, credit_days: document.getElementById('mg-credit-days').value, paid_now: document.getElementById('mg-paid-now').checked, lines }));
   const btn = document.getElementById('mg-save');

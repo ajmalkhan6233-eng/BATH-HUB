@@ -28,6 +28,7 @@ const ALLOWED = {
   'routes/shop_operations.js': [1, "fixed 'WHERE status = $1'"],
   'routes/site_editor.js': [1, 'SET list from the keys readTile() builds: name, size, finish, grp, photo_file, visible only'],
   'routes/staff_reports.js': [4, 'fixed WHERE / AND fragments with $n placeholders'],
+  'utils/vendorCreditDb.js': [2, "fixed AND fragment, internal table names from a fixed list and a list of $n placeholders"],
   'routes/vendor_ledger.js': [3, "fixed AND fragments, internal table names, a list of $n placeholders, fixed 'NOW()' or 'NULL'"],
   'utils/documents/reports.js': [4, 'internal column lists and constants (CASH_IN_EXPR, CASH_OUT_EXPR, notVoided)'],
   'utils/egressGate.js': [1, "fixed 'WHERE status = $1' or nothing"],
@@ -64,7 +65,7 @@ describe('dynamic SQL ratchet', () => {
     const stale = Object.keys(ALLOWED).filter((f) => !found[f] || found[f] < ALLOWED[f][0]);
     expect(stale).toEqual([]);
   });
-  test('44 reviewed spots in total', () => {
-    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(44);
+  test('46 reviewed spots in total', () => {
+    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(46);
   });
 });

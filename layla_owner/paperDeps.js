@@ -46,10 +46,10 @@ function createPaperDeps({ lazy = require } = {}) {
 
   async function saveGrn(d) {
     const router = lazy('../routes/grn_manual');
-    const payload = { supplier_name: d.supplier, grn_date: d.date, notes: `GRN from WhatsApp photo${d.invoice_no ? ' ' + d.invoice_no : ''}`, lines: d.lines.map((l) => ({ name: l.name, qty: l.qty, unit_cost: l.unit_cost })) };
+    const payload = { source: 'whatsapp', supplier_name: d.supplier, grn_date: d.date, notes: `GRN from WhatsApp photo${d.invoice_no ? ' ' + d.invoice_no : ''}`, lines: d.lines.map((l) => ({ name: l.name, qty: l.qty, unit_cost: l.unit_cost })) };
     const r = await callRouter(router, 'POST', '/grn-manual', { payload: JSON.stringify(payload) });
     if (r.status >= 300) return { ok: false, message: (r.body && r.body.error) || `error ${r.status}` };
-    return { ok: true, message: `GRN ${r.body.grn_number} saved: ${r.body.items.length} items, total ${r.body.total}.` };
+    return { ok: true, message: `GRN ${r.body.grn_number} saved: ${r.body.items.length} items, total ${r.body.total}. Credit days NOT set: add them in the GRN screen so the vendor due date is right.` };
   }
 
   async function saveCheque(d) {

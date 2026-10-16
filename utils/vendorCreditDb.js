@@ -20,4 +20,12 @@ async function loadVendorRows(pool, { branch = 1, vendor = null } = {}) {
     credits: by(cn, b.id).map((n) => fix(n, ['note_date'], ['amount'])),
   }));
 }
-module.exports = { loadVendorRows };
+/** Pending cheques of the planner list + every cheque number already in the ledger. Missing table = nothing to add. */
+async function loadPlannerRows(pool) {
+  try {
+    const planner = (await pool.query(`SELECT cheque_no, payee, amount, due_date, status FROM cheque_register WHERE status = 'pending'`)).rows.map((r) => fix(r, ['due_date'], ['amount']));
+    const nos = (await pool.query(`SELECT cheque_no FROM vendor_bill_cheques WHERE cheque_no IS NOT NULL`)).rows.map((r) => r.cheque_no);
+    return { planner, ledgerNos: nos };
+  } catch (e) { return { planner: [], ledgerNos: [] }; }
+}
+module.exports = { loadVendorRows, loadPlannerRows };

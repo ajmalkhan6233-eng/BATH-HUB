@@ -81,6 +81,22 @@ function creditView(rows, todayISO, { months = [1, 2, 3], onlyVendor = null } = 
   return { today: todayISO, horizons, vendors, totals, longDated: longDatedAll.sort((a, b) => b.days_ahead - a.days_ahead) };
 }
 
+/**
+ * Cheques on the PLANNER list (cheque_register, status pending) that are NOT in the vendor ledger. They are money going out too,
+ * so they are shown beside the ledger view instead of being forgotten. A planner cheque whose number is already in the ledger is skipped (no double count).
+ * rows: [{ cheque_no, payee, amount, due_date, status }]; ledgerNos: cheque numbers already in the ledger.
+ */
+function plannerView(rows, ledgerNos, todayISO, { months = [1, 2, 3] } = {}) {
+  const known = new Set((ledgerNos || []).map((x) => String(x || '').trim()).filter(Boolean));
+  const items = (rows || []).filter((r) => String(r.status || 'pending').toLowerCase() === 'pending' && !(r.cheque_no && known.has(String(r.cheque_no).trim())))
+    .map((r) => ({ payee: r.payee, cheque_no: r.cheque_no || null, amount: round2(r.amount), due_date: String(r.due_date).slice(0, 10) }))
+    .sort((a, b) => a.due_date.localeCompare(b.due_date));
+  const horizons = months.map((m) => ({ m, date: addMonths(todayISO, m) }));
+  const out = { count: items.length, total: round2(items.reduce((a, i) => a + i.amount, 0)), dueBy: {}, items: items.slice(0, 30), note: 'On the cheque planner list but not linked to a vendor bill. They are NOT taken off what a vendor is owed above.' };
+  for (const h of horizons) out.dueBy[h.m] = round2(items.filter((i) => i.due_date <= h.date).reduce((a, i) => a + i.amount, 0));
+  return out;
+}
+
 /** One short plain sentence per vendor for WhatsApp or a toast. */
 function oneLine(v) {
   const n = (x) => Number(x).toLocaleString('en-LK', { maximumFractionDigits: 0 });
@@ -89,4 +105,4 @@ function oneLine(v) {
     (a[1] !== undefined ? ` After 1 month Rs ${n(a[1])}, 2 months Rs ${n(a[2])}, 3 months Rs ${n(a[3])}.` : '');
 }
 
-module.exports = { creditView, owedBy, stateText, oneLine, LONG_DATED_DAYS };
+module.exports = { plannerView, creditView, owedBy, stateText, oneLine, LONG_DATED_DAYS };

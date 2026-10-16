@@ -71,3 +71,16 @@ test('filter by vendor name, text helpers', () => {
   expect(oneLine(creditView(rows, TODAY, { onlyVendor: 'Metro' }).vendors[0])).toMatch(/owe Rs 680,000/);
   expect(owedBy(bill(), [], [], [], '2027-01-01')).toBe(680000);
 });
+
+test('AUDIT: planner cheques not on a bill are shown, a planner cheque already in the ledger is not counted twice', () => {
+  const { plannerView } = require('../../utils/vendorCredit');
+  const rows = [
+    { cheque_no: '111', payee: 'Metro', amount: 100000, due_date: '2026-11-10', status: 'pending' },
+    { cheque_no: '222', payee: 'Eskema', amount: 50000, due_date: '2027-02-10', status: 'pending' },
+    { cheque_no: '333', payee: 'Eskema', amount: 70000, due_date: '2026-11-12', status: 'cleared' },
+    { cheque_no: '444', payee: 'Metro', amount: 20000, due_date: '2026-11-15', status: 'pending' },
+  ];
+  const v = plannerView(rows, ['444'], '2026-10-16', { months: [1, 2, 3] });
+  expect(v.count).toBe(2); expect(v.total).toBe(150000);
+  expect(v.dueBy[1]).toBe(100000); expect(v.dueBy[3]).toBe(100000);
+});

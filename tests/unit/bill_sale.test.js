@@ -23,16 +23,18 @@ test('caption: phone, payment word, name; nothing said = cash', () => {
   expect(parseCaption('Bill +94 77 123 4567 card').phone).toBe('+94771234567');
 });
 
-test('clean reading + phone: sale made as CASH and text receipt sent on the spot', async () => {
+test('clean reading + phone: draft shows the number back; "ok" makes the CASH sale and sends the text receipt', async () => {
   const { api, sent, made } = setup();
-  const r = await api.start('bill', 'x.jpg', 'bill 0771234567');
+  const d = await api.start('bill', 'x.jpg', 'bill 0771234567');
+  expect(made).toHaveLength(0); expect(sent).toHaveLength(0); expect(d.reply).toMatch(/Receipt will go to 077 123 4567[\s\S]*Reply: ok/);
+  const r = await api.handleText('ok');
   expect(made).toHaveLength(1); expect(made[0].payments).toEqual([{ method: 'cash', amount: 12500, reference: undefined }]);
   expect(sent).toHaveLength(1); expect(sent[0].to).toBe('94771234567'); expect(sent[0].text).toMatch(/Basin[\s\S]*TOTAL: Rs\. 12,500\.00/);
   expect(r.reply).toMatch(/Sale B1 saved[\s\S]*Receipt sent/);
 });
 test('credit is taken when the caption says so', async () => {
   const { api, made } = setup();
-  await api.start('bill', 'x.jpg', 'bill 0771234567 credit Nimal');
+  await api.start('bill', 'x.jpg', 'bill 0771234567 credit Nimal'); await api.handleText('ok');
   expect(made[0].payments[0].method).toBe('credit'); expect(made[0].customer_name).toBe('Nimal');
 });
 test('lines do not add up: nothing saved, draft waits for ok', async () => {
@@ -47,7 +49,7 @@ test('no number: sale saved, no receipt; "phone" then sends it and fixes the num
   await pool.query('CREATE TABLE pos_bill_items (id SERIAL PRIMARY KEY, bill_id INT, item_name TEXT, qty NUMERIC, unit_price NUMERIC, line_total NUMERIC)');
   await pool.query("INSERT INTO pos_bills (bill_number, total, payment_method, discount_amount) VALUES ('B1', 12500, 'cash', 0)");
   await pool.query("INSERT INTO pos_bill_items (bill_id, item_name, qty, unit_price, line_total) VALUES (1,'Basin',2,5000,10000)");
-  const r = await api.start('bill', 'x.jpg', 'bill');
+  await api.start('bill', 'x.jpg', 'bill'); const r = await api.handleText('ok');
   expect(r.reply).toMatch(/No customer number/); expect(sent).toHaveLength(0);
   expect((await api.handleText('receipts')).reply).toMatch(/B1: no phone/);
   const f = await api.handleText('phone 0771234567'); expect(f.reply).toMatch(/Receipt sent/); expect(sent).toHaveLength(1);
@@ -59,17 +61,17 @@ test('delivery fails: owner told, number can be corrected', async () => {
   await pool.query('CREATE TABLE pos_bills (id SERIAL PRIMARY KEY, bill_number TEXT, customer_phone TEXT, total NUMERIC, payment_method TEXT, discount_amount NUMERIC, created_at TIMESTAMP DEFAULT NOW(), customer_name TEXT)');
   await pool.query('CREATE TABLE pos_bill_items (id SERIAL PRIMARY KEY, bill_id INT, item_name TEXT, qty NUMERIC, unit_price NUMERIC, line_total NUMERIC)');
   await pool.query("INSERT INTO pos_bills (bill_number, total, payment_method, discount_amount) VALUES ('B1', 12500, 'cash', 0)");
-  const r = await api.start('bill', 'x.jpg', 'bill 0771234567');
+  await api.start('bill', 'x.jpg', 'bill 0771234567'); const r = await api.handleText('ok');
   expect(r.reply).toMatch(/NOT delivered[\s\S]*Wrong number/);
 });
 test('sending switched off: sale saved, owner told receipt not sent', async () => {
   const { api, sent } = setup({ live: false });
-  const r = await api.start('bill', 'x.jpg', 'bill 0771234567');
+  await api.start('bill', 'x.jpg', 'bill 0771234567'); const r = await api.handleText('ok');
   expect(sent).toHaveLength(0); expect(r.reply).toMatch(/Sale B1 saved[\s\S]*switched off/);
 });
 test('a non-Sri-Lanka number is refused, never guessed', async () => {
   const { api, sent } = setup();
-  const r = await api.start('bill', 'x.jpg', 'bill 0112345678');
+  await api.start('bill', 'x.jpg', 'bill 0112345678'); const r = await api.handleText('ok');
   expect(sent).toHaveLength(0); expect(r.reply).toMatch(/NOT delivered|No customer number|not a Sri Lanka/);
 });
 test('receipt text has no cost or profit words', () => {

@@ -23,7 +23,7 @@ const make = () => {
 };
 test('cash sale through the real POS route; receipt text carries the real bill number', async () => {
   const { api, sent } = make();
-  const r = await api.start('bill', 'x.jpg', 'bill 0771234567');
+  await api.start('bill', 'x.jpg', 'bill 0771234567'); const r = await api.handleText('ok');
   expect(r.reply).toMatch(/Sale .* saved: Rs\. 10,000\.00 \(CASH\)/);
   const row = db.many('SELECT * FROM pos_bills ORDER BY id DESC LIMIT 1')[0];
   expect(row.payment_method).toBe('cash'); expect(Number(row.total)).toBe(10000); expect(row.customer_phone).toBe('0771234567');
@@ -33,6 +33,6 @@ test('credit sale without any customer is refused by the POS and nothing is sent
   const { api, sent } = make();
   const before = Number(db.many('SELECT COUNT(*) AS n FROM pos_bills')[0].n);
   const r = await api.start('bill', 'x.jpg', 'bill credit');
-  expect(r.reply).toMatch(/credit sale needs/i);
+  expect(r.reply).toMatch(/credit sale needs/i); expect((await api.handleText('ok')).reply).toMatch(/cannot make the sale/);
   expect(Number(db.many('SELECT COUNT(*) AS n FROM pos_bills')[0].n)).toBe(before); expect(sent).toHaveLength(0);
 });

@@ -14,6 +14,8 @@ function readTerms(payload = {}, grnDate) {
     const n = Number(raw);
     if (!Number.isInteger(n) || n < 0 || n > 1095) { out.error = 'Credit days must be a whole number from 0 to 1095 (or leave it blank)'; return out; }
     out.creditDays = n; out.dueDate = addDays(grnDate, n);
+  } else if (!out.paidNow && payload.source !== 'whatsapp') {
+    out.error = 'Enter the credit days the vendor allows (0 = pay now), or tick Paid in cash';   // audit: a bill with no due date hides what is owed
   }
   return out;
 }
