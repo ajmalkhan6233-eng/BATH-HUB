@@ -208,7 +208,7 @@ client.on('message', async (msg) => {
                 }
             }
         } catch (err) {
-            console.error('[WA-BRIDGE] Layla owner route failed:', err.message);
+            console.error('[WA-BRIDGE] Layla owner route failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400), '| stack:', String(err.stack || '').split('\n').slice(0, 4).join(' <- '));
             await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});
         }
         return;
@@ -240,7 +240,7 @@ client.on('message', async (msg) => {
             const photoReply = sanitizeAssistantOutput(res.data?.reply);
             if (photoReply) await msg.reply(photoReply);
         } catch (err) {
-            console.error('[WA-BRIDGE] Photo pipeline failed:', err.message);
+            console.error('[WA-BRIDGE] Photo pipeline failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400));
             await msg.reply(`Something went wrong reading that photo. Please try resending it.`).catch(()=>{});
         }
         return;
@@ -274,8 +274,9 @@ app.post('/send', async (req, res) => {
         if (message && !clean && !media) return res.status(400).json({ error: 'message was empty after output sanitization' });
         if (media) {
             const { MessageMedia } = require('whatsapp-web.js');
-            const file = new MessageMedia(media.mimetype, media.data, media.filename || undefined);
-            await client.sendMessage(chatId, file, clean ? { caption: clean } : {});
+            const { sendMediaWithFallback } = require('./utils/waMediaSend');
+            const sent = await sendMediaWithFallback((f, o) => client.sendMessage(chatId, f, o), MessageMedia, media, clean);   // image first; if WhatsApp Web refuses it, same file as a document
+            return res.json({ success: true, to, message: clean, media: true, sentAs: sent.sentAs });
         } else {
             await client.sendMessage(chatId, clean);
         }
