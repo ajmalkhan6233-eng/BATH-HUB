@@ -8,6 +8,21 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // don't
 const { client } = require('../openrouter.config');
 
 const VISION_MODEL = process.env.OCR_VISION_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
+// Free vision models come and go on OpenRouter ("404 No endpoints found"). Try the configured
+// one first, then ask OpenRouter which free image-reading models exist right now.
+let _freeCache = { at: 0, ids: [] };
+async function discoverFreeVisionModels(fetchFn = globalThis.fetch) {
+    if (Date.now() - _freeCache.at < 3600e3 && _freeCache.ids.length) return _freeCache.ids;
+    try {
+        const r = await fetchFn('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(10000) });
+        const d = (await r.json()).data || [];
+        const ids = d.filter(m => m.pricing && String(m.pricing.prompt) === '0' && String(m.pricing.completion) === '0'
+            && ((m.architecture || {}).input_modalities || []).includes('image') && ((m.architecture || {}).output_modalities || ['text']).includes('text'))
+            .sort((a, b) => (b.context_length || 0) - (a.context_length || 0)).map(m => m.id);
+        if (ids.length) _freeCache = { at: Date.now(), ids };
+        return ids;
+    } catch (e) { return _freeCache.ids; }
+}
 const OCR_TIMEOUT_MS = 45000; // free vision models can be slow/flaky - fail fast rather than hang the caller (e.g. LAYLA)
 
 // document_type classification added 2026-07-04 (Item 3B) so cheque notes and
@@ -54,23 +69,32 @@ async function ocrPhoto(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
     const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
 
-    const response = await client.chat.completions.create({
-        model: VISION_MODEL,
-        messages: [{
-            role: 'user',
-            content: [
-                { type: 'text', text: PROMPT },
-                { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
-            ],
-        }],
+    const body = model => ({
+        model,
+        messages: [{ role: 'user', content: [
+            { type: 'text', text: PROMPT },
+            { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
+        ] }],
         max_tokens: 1800,          // a manual bill or GRN lists every item
-    }, { timeout: OCR_TIMEOUT_MS });
-
+    });
+    let response, usedModel = VISION_MODEL, lastErr;
+    const tried = [VISION_MODEL];
+    for (let i = 0; i < 4; i++) {
+        try { response = await client.chat.completions.create(body(usedModel), { timeout: OCR_TIMEOUT_MS }); lastErr = null; break; }
+        catch (e) {
+            lastErr = e;
+            if (![404, 429, 502, 503, 400].includes(e.status) && !/No endpoints|timed out|timeout/i.test(e.message || '')) break;
+            const next = (await discoverFreeVisionModels()).find(id => !tried.includes(id));
+            if (!next) break;
+            tried.push(next); usedModel = next;
+        }
+    }
+    if (lastErr) throw lastErr;
     const raw = response.choices?.[0]?.message?.content || '';
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error(`OCR returned no parseable JSON. Raw: ${raw.slice(0, 200)}`);
     const parsed = JSON.parse(jsonMatch[0]);
-    return { ...parsed, _raw: raw, _model: VISION_MODEL, _file: filePath };
+    return { ...parsed, _raw: raw, _model: usedModel, _file: filePath };
 }
 
-module.exports = { ocrPhoto, PROMPT };
+module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels };
