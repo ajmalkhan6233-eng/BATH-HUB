@@ -507,6 +507,8 @@ table tr:last-child td{border-bottom:none}
           <div class="fg"><label class="fl">Supplier *</label><input class="fi" id="mg-supplier" list="mg-supplier-list" placeholder="Pick or type a supplier"><datalist id="mg-supplier-list"></datalist></div>
           <div class="fg"><label class="fl">Date *</label><input type="date" class="fi" id="mg-date"></div>
           <div class="fg"><label class="fl">Notes</label><input class="fi" id="mg-notes" placeholder="Optional (delivery note no., etc.)"></div>
+          <div class="fg"><label class="fl">Credit days the vendor allows</label><input class="fi" id="mg-credit-days" type="number" inputmode="numeric" min="0" max="1095" placeholder="Blank = decide later (cheque not written yet)"></div>
+          <div class="fg"><label class="fl" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mg-paid-now"> Paid in cash on delivery (nothing owed)</label></div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin:6px 0 10px">Each new item gets the next item code automatically. An item whose name already exists is restocked instead of duplicated.</div>
         <div id="mg-rows"></div>
@@ -1559,6 +1561,7 @@ const EXTRA_FRAMES = [
   { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
   { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
   { key: 'vendorledger', label: 'Vendor Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-ledger.html', sub: 'Supplier bills, cheques, payable', after: 'chequereg' },
+  { key: 'vendorcredit', label: 'Vendor Credit', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-credit.html', sub: 'Owed now and after 1, 2, 3 months', after: 'vendorledger' },
   { key: 'moneyplan', label: 'Money Plan', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/money-plan.html', sub: 'Profit waterfall, commission, split', after: 'vendorledger' },
   { key: 'morningbrief', label: 'Morning Brief', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/morning-brief.html', sub: 'Yesterday, cheques due and what to do today', after: 'moneyplan' },
   { key: 'layla', label: 'Layla', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/layla-owner.html', sub: 'Chat, voice, reminders, cheque notes', after: 'morningbrief' },
@@ -2144,7 +2147,7 @@ async function saveManualGRN() {
     if (f) fd.append('photo_' + i, f);
   }
   const sup = _mgSuppliers.find(s => String(s.name).toLowerCase() === supplier_name.toLowerCase());
-  fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, lines }));
+  fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, credit_days: document.getElementById('mg-credit-days').value, paid_now: document.getElementById('mg-paid-now').checked, lines }));
   const btn = document.getElementById('mg-save');
   btn.disabled = true;
   try {
@@ -2156,11 +2159,13 @@ async function saveManualGRN() {
     toast(`GRN ${d.grn_number} saved`, 'success');
     document.getElementById('mg-result').innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);font-size:14px">
       <strong>${mgEsc(d.grn_number)}</strong> — ${mgEsc(d.supplier_name)}, ${mgEsc(d.grn_date)} — ${fmtLKR(d.total)}<br>` +
-      d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span>`).join('<br>') + '</div>';
+      d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span> in stock now: <strong>${Number(i.stock_now)}</strong>`).join('<br>') + '</div>' + mgCreditBlock(d);
     _mgLastItems = d.items;
     document.getElementById('mg-result').insertAdjacentHTML('beforeend', `<div style="margin-top:10px"><button class="btn btn-p" type="button" onclick="mgPrintBarcodes('sticker')">Print barcode</button> <button class="btn btn-s" type="button" onclick="mgPrintBarcodes('a4')">Print barcode (A4 sheet)</button></div>`);
     document.getElementById('mg-rows').innerHTML = '';
     document.getElementById('mg-notes').value = '';
+    document.getElementById('mg-credit-days').value = '';
+    document.getElementById('mg-paid-now').checked = false;
     mgAddRow(); mgRecalc();
     loadManualGRNList();
     loadStock();
@@ -2169,6 +2174,23 @@ async function saveManualGRN() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// What the owner sees under a saved GRN: payment status, who is owed, written/not written, owed after 1-3 months.
+function mgCreditBlock(d) {
+  const c = d && d.credit; if (!c) return '';
+  const box = (inner) => `<div style="margin-top:10px;padding:12px;border-radius:8px;background:rgba(201,162,75,0.12);font-size:14px;line-height:1.6">${inner}</div>`;
+  if (c.bill && c.bill.skipped) return box(`Saved. The vendor payable was not created yet: ${mgEsc(c.bill.skipped)}`);
+  const t = c.this_bill; if (!t) return c.note ? box(mgEsc(c.note)) : '';
+  const v = c.vendor, a = v ? v.after : {};
+  let h = `<strong>${mgEsc(t.status_text)}</strong> — ${fmtLKR(t.total)}` + (t.due_date ? ` — vendor wants payment by ${mgEsc(t.due_date)}` : '');
+  if (v) {
+    h += `<br>${mgEsc(d.supplier_name)} total owed: <strong>${fmtLKR(v.owed)}</strong>` +
+         `<br>Cheque not written: ${fmtLKR(v.notWritten)} &middot; Written, not cleared: ${fmtLKR(v.writtenNotClear)}` +
+         `<br>Still owed after 1 month: ${fmtLKR(a[1])} &middot; 2 months: ${fmtLKR(a[2])} &middot; 3 months: ${fmtLKR(a[3])}`;
+  }
+  if (c.long_dated && c.long_dated.length) h += `<br><span style="color:#b3261e">Heads-up: ${c.long_dated.length} written cheque(s) clear after more than 3 months.</span>`;
+  return box(h);
 }
 
 async function toggleItemForm() {

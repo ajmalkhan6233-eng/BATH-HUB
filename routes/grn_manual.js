@@ -21,6 +21,9 @@ const { Pool } = require('pg');
 const catalog = require('./item_catalog');
 const { priceChange, buildMessage: priceAlertMessage } = require('../utils/supplierPriceAlerts');
 const { notifyOwner } = require('../utils/ownerNotify');
+const { createBillForGrn, readTerms } = require('../utils/grnBill');       // GRN -> vendor payable (payment pending)
+const { creditView, oneLine } = require('../utils/vendorCredit');
+const { loadVendorRows } = require('../utils/vendorCreditDb');
 
 const router = express.Router();
 
@@ -60,6 +63,8 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
         if (!supplier_name) throw badRequest('Enter the supplier');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(grn_date) || isNaN(Date.parse(grn_date))) throw badRequest('Enter a valid GRN date');
         if (grn_date > todayLK()) throw badRequest('GRN date cannot be in the future');
+        const terms = readTerms(payload, grn_date);   // credit days / paid now (both optional)
+        if (terms.error) throw badRequest(terms.error);
         const lines = Array.isArray(payload.lines) ? payload.lines : [];
         if (!lines.length) throw badRequest('Add at least one item');
         if (lines.length > MAX_LINES) throw badRequest(`Too many item rows (max ${MAX_LINES})`);
@@ -126,11 +131,23 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                 [grn_number, supplier_id, supplier_name, grn_date, `${item.item_code} - ${item.name}`,
                  l.qty, l.cost, lineTotal(l.qty, l.cost), item.photo_url || null,
                  String(payload.notes || '').trim() || 'Manual GRN entry']);
-            results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, selling_price: item.selling_price, is_new: isNew });
+            results.push({ item_code: item.item_code, name: item.name, qty: l.qty, unit_cost: l.cost, selling_price: item.selling_price, is_new: isNew, stock_now: Number(item.stock_level) });
         }
+        const grnTotal = round2(results.reduce((sum, r) => sum + lineTotal(r.qty, r.unit_cost), 0));
+        const bill = await createBillForGrn(client, { vendor_name: supplier_name, grn_number, grn_date, total: grnTotal, terms, user: (req.session && req.session.user && req.session.user.username) || null });
         await client.query('COMMIT');
         if (priceChanges.length) notifyOwner(priceAlertMessage(supplier_name, grn_number, priceChanges));
-        res.status(201).json({ grn_number, supplier_name, grn_date, total: round2(results.reduce((s, r) => s + lineTotal(r.qty, r.unit_cost), 0)), items: results });
+        // What the owner sees right after saving: is the stock available, who is owed, is a cheque written. Read only; never fails the GRN.
+        let credit = { bill: bill.skipped ? { skipped: bill.skipped } : { bill_id: bill.bill_id || bill.exists }, terms: { credit_days: terms.creditDays, due_date: terms.dueDate, paid_now: terms.paidNow } };
+        try {
+            if (bill.bill_id || bill.exists) {
+                const rows = await loadVendorRows(pool, { vendor: supplier_name });
+                const view = creditView(rows, todayLK(), { months: [1, 2, 3], onlyVendor: supplier_name });
+                const mine = view.vendors[0] && view.vendors[0].bills.find(b => b.id === (bill.bill_id || bill.exists));
+                credit = { ...credit, this_bill: mine || { state: 'PAID', status_text: 'Paid' }, vendor: view.vendors[0] || null, line: view.vendors[0] ? oneLine(view.vendors[0]) : null, long_dated: view.longDated };
+            }
+        } catch (e) { credit.note = 'Saved, but the credit summary could not be read: ' + e.message; }
+        res.status(201).json({ grn_number, supplier_name, grn_date, total: grnTotal, items: results, credit });
     } catch (e) {
         if (client) await client.query('ROLLBACK').catch(() => {});
         savedPhotos.forEach(u => fs.unlink(path.join(PHOTO_DIR, path.basename(u)), () => {}));

@@ -4,12 +4,13 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../utils/pool');
 const { planSchedule, weeklySetAside, cashWarnings, outstanding } = require('../utils/payment_planner');
+const SLH = require('../utils/slBankHolidays');   // Sri Lankan bank holidays + poya days: used unless the caller sends its own list
 const todaySL = () => new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10); // Sri Lanka date
 
 function build(b) {
   const plan = planSchedule({ total: b.total, count: Number(b.count), firstDate: b.first_date,
     everyDays: b.every_days === undefined ? 30 : Number(b.every_days),
-    everyMonths: b.every_months === undefined ? 0 : Number(b.every_months), parts: b.parts || null, vendorDueDate: b.vendor_due_date || null, todayISO: todaySL(), holidays: b.holidays || [] });
+    everyMonths: b.every_months === undefined ? 0 : Number(b.every_months), parts: b.parts || null, vendorDueDate: b.vendor_due_date || null, todayISO: todaySL(), holidays: (Array.isArray(b.holidays) && b.holidays.length) ? b.holidays : SLH.all() });
   if (!plan.ok) return plan;
   plan.weeklySetAside = weeklySetAside(plan.installments, todaySL());
   plan.warnings = cashWarnings({ openingCash: b.opening_cash || 0, inflows: b.inflows || [], cheques: plan.installments });
