@@ -43,7 +43,7 @@ async function processInbound(m, deps) {
       // ONE LAYLA: a photo this assistant has no job for (no GRN/cheque caption, no bill/cheque/reminder words) goes on to the original Layla's photo pipeline (day and expense sheets).
       if (deps.fallbackOriginal && m.type === 'image' && !paperKind && !['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) return { status: 'fallback_photo' };
       const media = await deps.download(m.mediaId); const file = await deps.saveMedia(media.buffer, media.mime || m.mime, m.type);
-      if (paperKind) { const p = await deps.paper.start(paperKind, file); await reply(p.reply); return { status: 'ok', file, intent: 'paper_draft' }; }
+      if (paperKind) { const p = await deps.paper.start(paperKind, file, cap); await reply(p.reply); return { status: 'ok', file, intent: 'paper_draft' }; }
       if (['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) { const r = await handleOwnerMessage({ id: m.id, text: cap }, { store, adapters, now }); await reply(`Saved the ${m.type}. ${r.reply}`); return { status: 'ok', file }; }
       const t = await store.create({ kind: 'PHOTO_REVIEW', title: `Review the ${m.type} you sent${cap ? `: ${cap}` : ''} (${file})`, dueAt: now(), nagEveryMin: 120, maxNags: 1, sourceMsgId: m.id });
       await reply(`Saved the ${m.type}. Reading bills from photos is not switched on yet, so I made task #${t.id} to review it. Add a caption like "Eskema bill 213200 pending" and I will remind you.`);

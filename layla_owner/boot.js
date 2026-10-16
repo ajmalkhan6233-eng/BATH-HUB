@@ -4,7 +4,7 @@ const fs = require('fs'); const path = require('path'); const crypto = require('
 const createStore = require('./taskStore'); const createAdapters = require('./adapters'); const createRouter = require('../routes/layla_owner');
 const W = require('./waCloud'); const { transcribe } = require('./transcribe'); const { tick } = require('./reminderEngine'); const { pollOnce } = require('./relayPoller');
 const { runChequeAlerts } = require('../utils/chequeAlerts'); const { setSender } = require('../utils/ownerNotify'); const notify = require('../utils/notify'); const automations = require('../utils/automations');
-const createPaperIntake = require('./paperIntake'); const { createPaperDeps } = require('./paperDeps');
+const createPaperIntake = require('./paperIntake'); const { createPaperDeps, callRouter } = require('./paperDeps'); const createBillSale = require('./billSale');
 const { processInbound } = require('./inbound'); const { loadSettings, describe } = require('./settings'); const { createSafeSend } = require('./safeSend'); const { createCustomerHandler } = require('./customerDryRun'); const { bridgeSendText } = require('./bridgeSend'); const { createBridgeIn } = require('./bridgeIn'); const createFamilyNotes = require('./familyStore'); const { createFamily, familyTick } = require('./familyBrain'); const { createRateLimiter, LIMITS, normalizeNumber } = require('./ownerGate');
 
 module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir = path.join(process.cwd(), 'uploads', 'layla-inbox') }) {
@@ -14,7 +14,12 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const download = (mediaId) => W.downloadMedia(mediaId, cfg, LIMITS.maxMediaBytes);
   const saveMedia = async (buffer, mime, kind) => { fs.mkdirSync(inboxDir, { recursive: true }); const ext = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' }[String(mime).split(';')[0]] || '.bin'; const f = path.join(inboxDir, `${kind}-${crypto.randomBytes(8).toString('hex')}${ext}`); fs.writeFileSync(f, buffer); return path.relative(process.cwd(), f).replace(/\\/g, '/'); };
   const rateLimit = createRateLimiter();
-  const paper = createPaperIntake({ pool, ...createPaperDeps() });                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
+  const paperDeps = createPaperDeps();
+  const billSale = createBillSale({ pool, readPaper: paperDeps.readPaper, normalizePhone: require('../utils/whatsappReceiptSender').normalizeSriLankaPhone,
+    receiptsLive: () => String(env.RECEIPT_WA_SEND || '').toLowerCase() === 'true' && S.liveAllowed,                                   // customer receipts: OFF until RECEIPT_WA_SEND=true (and Layla live)
+    sendCustomer: (to, text) => bridgeSendText(to, text, { live: true, bridgeUrl: S.bridgeUrl }),                                      // text receipt to the number on the bill only
+    createBill: async (payload) => { const r = await callRouter(require('../routes/pos_bills'), 'POST', '/pos-bills', payload); return r.status >= 300 ? { ok: false, message: (r.body && r.body.error) || `error ${r.status}` } : { ok: true, bill: r.body }; } });
+  const paper = createBillSale.combine(createPaperIntake({ pool, ...paperDeps }), billSale, pool);                         // photo captioned GRN / cheque -> draft -> saved only on "ok"
   const customer = createCustomerHandler({ onInbound: (m) => notify.enqueue(pool, `Customer ...${String(m.from).slice(-3)} wrote: "${String(m.text).slice(0, 200).replace(/\s+/g, ' ')}" (not answered: Layla does not reply to customers yet)`, 'customer').catch(() => {}) });                                                              // customer chats: dry run, logged, never sent
   const family = createFamily({ numbers: S.familyNumbers, store, notes: createFamilyNotes(pool) });      // family mode: reminders + notes only, separate from the shop
   const familyRateLimit = createRateLimiter(20);
