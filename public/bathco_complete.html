@@ -239,10 +239,13 @@ table tr:last-child td{border-bottom:none}
   .main-content,.page{min-width:0;max-width:100vw}
   .page table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
+/* embed mode: the new shell shows a screen inside a frame, without this page's own menu and header */
+.embed .sidebar,.embed .topbar{display:none!important}.embed .main-content{margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
 <canvas id="confetti-canvas"></canvas>
 <div id="toasts"></div>
 <nav id="bottom-nav" aria-label="Main menu">

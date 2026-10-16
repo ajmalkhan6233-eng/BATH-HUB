@@ -1,392 +1,578 @@
-# ROYAL BATH HUB — REDESIGN PACK FOR GEMINI (AI Studio)
+# GOOGLE AI STUDIO PACK — ROYAL BATH HUB (ERP + POS) REDESIGN
 
-PASTE THIS WHOLE FILE INTO GEMINI. Then say: "Do PART 1 and PART 2. Give me the full new frontend files."
+════════════════════════════════════════════
+## PART A — FOR AJ (owner). 4 steps, then you are done.
+════════════════════════════════════════════
+1. Open https://aistudio.google.com → **Build** (or "Create new" → new app).
+2. Choose the strongest model. Turn the output length to the maximum.
+3. Paste THIS WHOLE FILE as the first message. (If it is too long to paste, upload it as a file and write: "Read the attached file fully and do everything in PART B.")
+4. When Gemini finishes, download the files it made and give them to Claude Code. Claude Code puts them in the shop app and tests them. Do not run anything on the shop PC yourself.
 
-## WHO / WHAT
-Owner: Ajmal Khan, Royal Bath Hub, Kandy Road, Thihariya, Sri Lanka. A tile and bathroom-fittings shop opened 15 Oct 2026. Staff: owner, 1 manager, a few salespeople. The owner works mostly from a Windows PC browser and an iPhone. Halal-only business, honest records, no interest.
-The current app is a Node/Express + PostgreSQL web app. The frontend is plain HTML/CSS/JS (no framework). It works, but the menu is a flat list of 27 items and is confusing. 
+════════════════════════════════════════════
+## PART B — INSTRUCTIONS FOR GEMINI (read every word; you get ONE attempt)
+════════════════════════════════════════════
 
-## THE PROBLEM (owner's words)
-"Dashboard, POS billing, daily ledger, POS + ledger, daily sales, stock, barcode labels, GRN... this is not convenient. Laser Soft style ERP and accounting audit is not accessible. Layla (the WhatsApp assistant) is at the bottom. I want the classic format: File, Edit, View menus at the top, and Excel-like sheets where I control a lot of things. Re-arrange the complete software like a proper standard ERP + POS system, so it is convenient."
+### B1. WHO YOU ARE WORKING FOR
+You are the senior ERP/POS UX architect and front-end engineer for **Royal Bath Hub**, a real tile and bathroom-fittings shop on Kandy Road, Thihariya, Sri Lanka (opened 15 Oct 2026). The owner, Ajmal Khan, runs it from a Windows PC browser and an iPhone. Staff: owner, one manager, a few sales people. It is a halal business with honest records. The software is live and holds real money data, so **correctness and safety beat novelty**.
 
-## PART 1 — REARRANGE (most important)
-Design a classic desktop-ERP layout (think Lasersoft / Tally / SAP Business One / Odoo):
-1. Top MENU BAR: File | Edit | View | Sell | Buy | Stock | Money | Reports | Layla | Tools | Help.
-   - File: New (bill / GRN / expense), Open recent, Import file, Export (Excel/PDF/CSV), Print, Sign out.
-   - Edit: Undo, Find, Settings, Users.
-   - View: Dashboard, full screen, language (English / Sinhala / Tamil), light/dark.
-2. Group EVERY existing screen (list in "CURRENT SCREENS" below) under ONE of these menus. Nothing may be dropped. Do not leave a flat list.
-   Suggested groups: SELL (POS billing, quotations, customer credit, receipts, enquiries/replies) | BUY (GRN, vendors, vendor credit, cheques to pay, purchase orders) | STOCK (items, stock take, barcode labels, shortage/min stock) | MONEY (daily ledger, daily sales, expenses, cash in hand, cheques, loans, salary, commissions, money control, audit) | REPORTS (all reports, profit, GP, credit aging, vendor ageing) | LAYLA (WhatsApp assistant, owner chat, document inbox) | TOOLS (website/catalog, content, settings, branches, users, backup).
-3. Keep a slim LEFT PANEL only for the current group's screens, plus tabs (open several screens at once like Excel sheets / browser tabs, with a close X on each).
-4. Every list/table = an EXCEL-STYLE GRID: sortable columns, filter row, column show/hide, sticky header, inline edit where safe, keyboard arrows/Tab/Enter to move, Ctrl+F find, copy/paste cells, totals row at the bottom, export button.
-5. DASHBOARD = 6 big numbers max (today's sales, cash in hand, cheques due this week, vendor payable, low stock count, profit today) + "what needs me" list. Everything clickable to its sheet.
-6. Layla gets a permanent chat button top-right, not buried at the bottom.
-7. Make it work on iPhone: the menu bar collapses to a bottom tab bar (Sell / Buy / Stock / Money / More).
-8. Very short plain words. No jargon. Large touch targets. Keep the existing gold/black look (colors are CSS variables in the file) unless you have a clearly better idea.
+### B2. WHAT EXISTS TODAY
+A Node/Express + PostgreSQL web app. The front end is plain HTML/CSS/JS (no framework, no build step), served as static files from /public. The main file is `bathco_complete.html` (a single-page app with a flat sidebar of 27 items), plus ~60 standalone pages. You are given the real source of the main file and four helpers at the end of this pack, and the full list of 300+ backend routes.
+The owner's complaint, in his words: *"Dashboard, POS billing, daily ledger, daily sales, stock, barcode labels, GRN… it is not convenient. Lasersoft-style ERP and accounting audit are not reachable. Layla is at the bottom. I want the classic format — File, Edit, View — and Excel-sheet style where I can control a lot of things. Rearrange the whole software like a proper standard ERP and POS system. Polished, pro level."*
 
-## PART 2 — UPLOAD / DOWNLOAD / DELETE EVERYWHERE
-Wherever there is an Upload (photo or file) there must ALSO be, side by side: Download, and Remove (cancel/delete the uploaded file), each with a confirm. The shared widget public/attach-widget.js already does Upload + Download + Remove (included below). Reuse it on every screen: <div data-attach="TYPE" data-attach-id="ID"></div>. TYPE must be one of: daily_sales, stock, grn, expense, cheque, vendor, pos_bill, money_control, loan, salary, document_inbox, general.
-GRN screen must keep: "Fill from file" (JSON/CSV/Excel) and "Read photo (AI)" buttons that FILL the rows for review and never auto-save; credit days required; duplicate item-name warning.
+### B3. YOUR JOB (one deliverable)
+Build a **NEW APP SHELL** with a classic ERP layout, plus a small number of **native, polished modules**, and a **Legacy Bridge** so that EVERY existing screen is still reachable from the new menus on day one. Nothing may be lost. Do not rewrite money logic. Do not change the backend.
 
-## HARD RULES (do not break)
-- Do NOT change any backend URL, request body, or response shape. Only the frontend changes. The route list is below. Call the same endpoints.
-- Keep login: POST /api/login, GET /api/me (session cookie). Roles: admin (owner), manager, staff, investor (read-only). Hide/disable what a role may not use, but the server decides.
-- Never show invented numbers. If data is missing show PENDING (amber). Money is LKR, no decimals unless needed.
-- Money rules (do not touch): cash_out = expenses + supplier payments; net_profit = gross_profit - expenses; supplier payments are NOT expenses; payable drops only when a cheque CLEARS.
-- Never auto-save from an AI/photo/file import. Review first, then Save.
-- Deleting money records is never allowed in the UI (only void with a reason). Uploaded files are "Removed" (hidden), not erased.
-- No external CDNs except what the current file already uses. No secrets in the frontend. Keep it one folder of static files that the Express server can serve from /public.
-- Output FULL files (not snippets): index.html (shell + menu), one JS file per module (sell.js, buy.js, stock.js, money.js, reports.js, layla.js, tools.js), shared grid.js, shared.css. Say which old file each replaces.
+**Why this scope:** the existing screens work and carry real money logic. A full rewrite in one go would break them. So: new shell + 4 rebuilt modules + every other screen opened inside the shell through iframes (the Legacy Bridge). Later versions replace the iframes one by one.
 
-## CURRENT SCREENS (data-page key = label)
-- dashboard = 
-- daily-sales = 
-- stock = 
-- pos = 
-- grn = 
-- expenses = 
-- cheques = 
-- vendors = 
-- salary = 
-- docinbox = 
-- loans = 
-- moneycontrol = 
-- commissions = 
-- enquiries = 
-- replies = 
-- webcat = 
-- website = 
-- tilegallery = 
-- policy = 
-- branches = 
-- settings = 
-- shoptools = 
-- content = 
-- competitors = 
-- agentreview = 
-- agent-rules = 
-- reports = 
+### B4. TECH RULES (strict)
+- **Plain static files: HTML + CSS + vanilla JavaScript (ES modules). No React, no Vite, no npm, no build step, no CDN, no external fonts or images.** The files must run when simply copied into the shop's /public folder. (If the AI Studio template forces React, still output plain static files as asked here.)
+- Output exactly these files, each COMPLETE (never truncated, never "…rest unchanged"):
+  1. `app.html` — the shell: menu bar, tabs, status bar, frame host, login gate, mock switch.
+  2. `css/shell.css` — all styling, CSS variables, light/dark, responsive.
+  3. `js/core.js` — router, tab manager, menu tree, keyboard shortcuts, role handling, toast, confirm, api(), mock switch.
+  4. `js/grid.js` — the reusable Excel-style grid component (spec in B7).
+  5. `js/mock.js` — fake-data layer (spec in B9) used ONLY in preview.
+  6. `js/mod-dashboard.js`, `js/mod-grn.js`, `js/mod-stock.js`, `js/mod-vendors.js` — the four native modules (spec in B8).
+  7. `js/legacy.js` — the Legacy Bridge table (copy B6 exactly).
+  8. `README_INSTALL.md` — 10 lines: where each file goes (`/public/app.html`, `/public/css/`, `/public/js/`), and how to test.
+- **If you are running out of output space:** finish the file you are writing completely, then add at the very end a section `NOT BUILT YET:` listing the files left. Never cut a file in half. Build in this priority order: core.js → shell.css → app.html → legacy.js → grid.js → mock.js → mod-grn.js → mod-dashboard.js → mod-stock.js → mod-vendors.js → README_INSTALL.md.
+- Backend contract: call the SAME endpoints with the SAME request/response shapes already used in the source below and listed in B10. **Do not invent endpoints.** If you need data and no endpoint exists, show a clear "Not available yet" state.
+- Login is session-cookie based: `GET /api/me` returns the user (role: admin | owner | manager | staff | investor); `POST /api/login` {username,password}. Use `fetch(..., {credentials:'same-origin'})`. If `/api/me` is not ok → show a clean login card. `investor` = read-only (no buttons that write).
+- All text in plain, short English words (no jargon). Add a language switch placeholder (English / සිංහල / தமிழ்) in View menu that only stores the choice for now.
+- Currency: LKR. Format `LKR 1,234,567` (no decimals unless the value has them).
+- Accessibility: keyboard reachable, visible focus, buttons ≥ 44 px on touch, contrast AA.
 
-Other standalone pages in /public: pos_billing.html, vendor-ledger.html, vendor-credit.html, cheque_register.html, quotations.html, money-control.html, staff.html, investor_loans.html, audit_accounting.html, accounting.html, reports_analytics.html, credit_aging.html, sale_commissions.html, labels.html, documents.html, assistant.html (Layla chat), admin_settings.html, admin_users.html, admin_corrections.html, admin_system.html, daily-entry-v2.html.
+### B5. THE NEW LAYOUT (build exactly this)
+**Top menu bar** (desktop): `File | Edit | View | Sell | Buy | Stock | Money | Reports | Layla | Tools | Help`. Opens dropdowns on click and with Alt+letter. On phones (<820 px) the menu bar becomes a **bottom tab bar**: Sell · Buy · Stock · Money · More; "More" opens a sheet with the rest.
+**Document tabs** under the menu bar: every opened screen is a tab (like Excel sheets / browser tabs), with a close ✕, middle-click to close, drag to reorder, right-click → Close others. Remember open tabs in `sessionStorage` (wrap in try/catch). The tab strip scrolls horizontally on phones.
+**Left panel** (collapsible): shows ONLY the screens of the currently selected menu group, as a plain list, with a search box ("Find a screen… Ctrl+K" command palette that searches every screen in every group).
+**Status bar** (bottom): shop name · user + role · online/offline dot · today's date.
+**Top-right**: a permanent round **Layla** chat button (opens the Layla chat screen in a right-hand slide-over using the frame `/assistant.html`), theme toggle, user menu (Sign out = existing logout route).
 
-## BACKEND ROUTES (keep exactly; all under /api, session login required)
+**Menu tree — assign every screen below to exactly ONE group; nothing dropped:**
+- **File**: New Bill (opens POS Billing) · New GRN · New Expense · Import file (opens GRN → Fill from file) · Export current sheet (Excel/CSV/Print via grid) · Print · Sign out.
+- **Edit**: Find (Ctrl+F in the current grid) · Settings · Users · Edit & Void.
+- **View**: Dashboard · Full screen · Close all tabs · Theme (Light/Dark/Auto) · Language · Left panel on/off.
+- **Sell**: POS Billing · Daily Sales · Quotations · Customers · Credit & Aging · Enquiries · Reply Drafts · Sale Commissions.
+- **Buy**: GRN (native) · Purchasing · Vendors (native, with cheques) · Vendor Credit · Vendor Ledger · Document Inbox.
+- **Stock**: Stock (native sheet) · Barcode Labels · Tile Gallery.
+- **Money**: Daily Entry (day sheet) · Expenses · Cheques · Cheque Register · Money Control · Friend & Investor Loans · Salary & Costs · Staff · Accounting · Audit & Accounting · Audit Log.
+- **Reports**: Reports · Reports & Analytics · Documents.
+- **Layla**: Layla chat · Agent Review · Agent Rules.
+- **Tools**: Website · Website Catalogue · Content · Competitors · Policy Watch · Branches · Shop Tools · Settings · Admin Settings · System & Backups · Users · Edit & Void.
+- **Help**: Keyboard shortcuts · How to use (short) · About.
+(Some screens, e.g. Settings/Users/Edit & Void, appear in two menus on purpose; they open the same tab.)
+Role rules: staff sees Sell, Stock (view), Help only. manager adds Buy, Money (not salary, not loans, not cost structures), Reports. investor sees Reports and Dashboard read-only. admin/owner sees all. The server still decides — this only hides.
+
+**Look and feel:** professional ERP, calm and dense but clean. Keep the brand: gold `#F5A623` on near-black `#0D0D0D` (dark) and a clean light theme `#f4f5f7`; copy the CSS variables from the source file's `:root` so colours stay identical. Subtle borders, 8-px spacing grid, 14 px base font, tabular numbers for money (right-aligned, `font-variant-numeric: tabular-nums`). No heavy animation; 150 ms transitions only. Empty states with one clear action. Skeleton loading rows. Errors in plain words with a retry button.
+
+### B6. LEGACY BRIDGE (js/legacy.js — copy exactly; add each as a tab that hosts an iframe)
+Each screen below opens inside the shell as an `<iframe src=... style="width:100%;height:100%;border:0">` filling the tab. Lazy-load on first open; keep it alive when the tab is hidden. If the page is not on the shop server (preview in AI Studio), show a friendly placeholder card "This screen runs on the shop server" with the URL.
+| Screen | Open it in a frame with this exact URL |
+|---|---|
+| Daily Sales | /bathco_complete.html?embed=1#/daily-sales |
+| Stock | /bathco_complete.html?embed=1#/stock |
+| GRN | /bathco_complete.html?embed=1#/grn |
+| Expenses | /bathco_complete.html?embed=1#/expenses |
+| Cheques | /bathco_complete.html?embed=1#/cheques |
+| Vendors | /bathco_complete.html?embed=1#/vendors |
+| Salary & Costs | /bathco_complete.html?embed=1#/salary |
+| Document Inbox | /bathco_complete.html?embed=1#/docinbox |
+| Friend & Investor Loans | /bathco_complete.html?embed=1#/loans |
+| Money Control | /bathco_complete.html?embed=1#/moneycontrol |
+| Sale Commissions | /bathco_complete.html?embed=1#/commissions |
+| Enquiries | /bathco_complete.html?embed=1#/enquiries |
+| Reply Drafts | /bathco_complete.html?embed=1#/replies |
+| Website Catalogue | /bathco_complete.html?embed=1#/webcat |
+| Website | /bathco_complete.html?embed=1#/website |
+| Tile Gallery | /bathco_complete.html?embed=1#/tilegallery |
+| Policy Watch | /bathco_complete.html?embed=1#/policy |
+| Branches | /bathco_complete.html?embed=1#/branches |
+| Settings | /bathco_complete.html?embed=1#/settings |
+| Shop Tools | /bathco_complete.html?embed=1#/shoptools |
+| Content | /bathco_complete.html?embed=1#/content |
+| Competitors | /bathco_complete.html?embed=1#/competitors |
+| Agent Review | /bathco_complete.html?embed=1#/agentreview |
+| Agent Rules | /bathco_complete.html?embed=1#/agent-rules |
+| Reports | /bathco_complete.html?embed=1#/reports |
+| POS Billing | /pos_billing.html |
+| Barcode Labels | /labels.html |
+| Customers | /customers.html |
+| Credit & Aging | /credit_aging.html |
+| Quotations | /quotations.html |
+| Purchasing | /purchasing.html |
+| Accounting | /accounting.html |
+| Audit & Accounting | /audit_accounting.html |
+| Staff | /staff.html |
+| Reports & Analytics | /reports_analytics.html |
+| Documents | /documents.html |
+| Layla chat | /assistant.html |
+| Vendor Ledger (cheques per bill) | /vendor-ledger.html |
+| Vendor Credit (who we owe, forecast) | /vendor-credit.html |
+| Cheque Register (planner) | /cheque_register.html |
+| Money Control | /money-control.html |
+| Investor & Friend Loans | /investor_loans.html |
+| Sale Commissions | /sale_commissions.html |
+| Daily Entry (day sheet) | /daily-entry-v2.html |
+| System & Backups | /admin_system.html |
+| Users | /admin_users.html |
+| Audit Log | /admin_audit.html |
+| Admin Settings | /admin_settings.html |
+| Edit & Void | /admin_corrections.html |
+
+Native modules REPLACE these keys: dashboard, grn, stock, vendors (B8). Everything else uses the bridge.
+
+### B7. THE EXCEL-STYLE GRID (js/grid.js) — used by Stock, Vendors, GRN lines
+A reusable `class SheetGrid` with: sticky header; click header to sort (asc/desc/none); filter row under the header (text contains / number ≥ ≤); column show/hide menu; column resize by drag; frozen first column; row selection (click, Shift-click, Ctrl-click); keyboard: arrows, Tab/Shift-Tab, Enter (edit/commit), Esc (cancel), F2 (edit), Ctrl+C / Ctrl+V of cell ranges (tab/newline text), Ctrl+F opens find bar, Home/End, PageUp/Down; inline edit only on columns marked `editable` and only when the user's role allows; **totals row** pinned at the bottom (sum for number columns, count otherwise); virtual scrolling for 5,000+ rows; zebra rows; sticky "row count · selected · filtered" footer; toolbar with **Export** (CSV, Excel-compatible `.xls` HTML table, Print) and **Columns**. Number columns right-aligned. Negative numbers red. Cells with status values show coloured chips (OK green, PENDING amber, OVERDUE red). Config: `new SheetGrid(el,{columns:[{key,label,type:'text|number|money|date|status',editable,width}],rows,onEdit,readOnly,totals:true})`.
+
+### B8. THE FOUR NATIVE MODULES — read the real code in the source below and reproduce its behaviour exactly
+1. **Dashboard** (`mod-dashboard.js`): read `loadDashboard()` in the source for the exact endpoints and field names (`/api/home-stats`, `/api/weekly-chart`, `/api/daily-summary?latest=1`, `/api/daily-sales-live/today`, plus `/api/vendor-credit/summary`). Show at most **6 big numbers**: Today's sales · Cash in hand · Cheques due in 7 days · Vendor payable · Low-stock items · Profit today (show `PENDING` in amber when the source number is missing; never invent). Below: a 7-day sales bar chart (pure SVG you write) and a **"Needs you"** list (cheques due, bills without a phone number, low stock, vendor cheques not written). Every number/row is clickable and opens the matching screen tab.
+2. **GRN** (`mod-grn.js`): reproduce `page-grn` and the `mg*` functions: supplier (pick or type, from `/api/suppliers`), date, notes, **credit days REQUIRED** (0 = pay now; or tick "Paid in cash on delivery"), item rows (name, qty, unit cost, selling price, optional photo), live total, Save → `POST /api/grn-manual` as `FormData` with a `payload` JSON string exactly as `saveManualGRN()` does (read it!). Two helper buttons above the rows: **Fill from file** (JSON/CSV/Excel via `js/lib` equivalents: use the provided `grn_import.js` logic, re-implemented inside your module; for Excel read with a tiny built-in parser or ask the user to save as CSV) and **Read photo (AI)** (`POST /api/grn-read-photo`, multipart field `file`, JPG/PNG only; returns `{supplier,date,ref,lines:[{name,qty,cost,price}],warnings,lines_total,paper_total}`). Both only FILL the rows and show a **review box** (line count, lines total vs paper total, warnings such as "Same item twice", "no quantity"). **Never auto-save.** The attach widget (`<div data-attach="grn" data-attach-id="@today">` + `attach-widget.js`) sits at the top with Upload · Download · **Remove**. After a successful save show: stock now, vendor credit/payable "cheque not written — payment pending", due date. Recent GRNs list below as a SheetGrid.
+3. **Stock** (`mod-stock.js`): read `loadStock()` and `page-stock`. Items as a SheetGrid: code, name, category, qty, unit cost, selling price, min stock, status chip (OK / LOW / OUT), photo thumbnail. Editable cells only where the source lets the owner edit. Filters: category, low only, out only. Buttons: Export, Print labels (opens Barcode Labels tab), Add item (use the existing add flow from the source).
+4. **Vendors** (`mod-vendors.js`): read `loadVendors()`, `loadCheques()` and `/vendor-credit.html` + `/vendor-ledger.html`. One screen with a left list of vendors (name, owed, next cheque date) and a right pane with 3 tabs: Bills · Cheques (ISSUED / CLEARED / BOUNCED / CANCELLED chips) · Forecast (owed after 1, 2, 3 months; cheques dated > 3 months out in amber). A cheque status change to BOUNCED or CANCELLED must ask for a reason (≥ 3 characters) and send it, exactly as `vendor-ledger.html` does. Payable only drops when a cheque is CLEARED. Voiding anything asks for a reason. No delete buttons for money records anywhere.
+
+### B9. MOCK MODE (so it works in AI Studio's preview)
+`js/mock.js` exports `installMock()`; `core.js` calls it automatically when `location.hostname` is not the shop's (anything except `localhost`, `127.0.0.1`, or an IP in 192.168.*) or when the URL has `?mock=1`. It replaces `window.fetch` for URLs starting with `/api/` and returns realistic Sri Lankan sample data in the SAME shapes the source expects (create the data by reading what each load function uses). Include: a user `{username:'ajmal',role:'admin',name:'Ajmal Khan'}`, 40 stock items (tiles, commodes, taps, showers, basins; LKR prices), 6 vendors (e.g. Metro Enterprises, Eskema Ceramic), 12 cheques in different statuses, 7 days of sales, 15 recent GRNs, plus 3 low-stock items. `POST/PUT/DELETE` just succeed in memory. A small orange banner "PREVIEW — sample data" shows while mock is on.
+
+### B10. BACKEND ROUTES YOU MAY CALL (all under /api; session login). Do not call anything else.
 ```
-GET    /api/users   (admin_core.js)
-POST   /api/users   (admin_core.js)
-PATCH  /api/users/:id   (admin_core.js)
-POST   /api/users/:id/disable   (admin_core.js)
-POST   /api/users/:id/enable   (admin_core.js)
-POST   /api/users/:id/reset-password   (admin_core.js)
-POST   /api/users/:id/force-logout   (admin_core.js)
-GET    /api/users/:id/login-history   (admin_core.js)
-GET    /api/audit   (admin_core.js)
-GET    /api/audit/export.csv   (admin_core.js)
-POST   /api/agent-brain/draft   (agent_brain.js)
-GET    /api/agent-brain/reviews   (agent_brain.js)
-GET    /api/agent-brain/drafts/:id/checks   (agent_brain.js)
-PUT    /api/agent-brain/drafts/:id   (agent_brain.js)
-POST   /api/agent-brain/drafts/:id/approve   (agent_brain.js)
-POST   /api/agent-brain/drafts/:id/reject   (agent_brain.js)
-GET    /api/agent-outbox   (agent_outbox.js)
-POST   /api/agent-outbox/:id/approve   (agent_outbox.js)
-POST   /api/agent-outbox/:id/reject   (agent_outbox.js)
-GET    /api/agent/rules   (agent_rulebook.js)
-GET    /api/agent/rules/:id/history   (agent_rulebook.js)
-POST   /api/agent/rules   (agent_rulebook.js)
-PUT    /api/agent/rules/:id   (agent_rulebook.js)
-POST   /api/agent/rules/:id/deactivate   (agent_rulebook.js)
-GET    /api/agent/rulebook   (agent_rulebook.js)
-POST   /api/api/apex/payments   (apex_admin.js)
-GET    /api/api/apex/payments/:tenantId   (apex_admin.js)
-POST   /api/api/apex/trial-clients   (apex_admin.js)
-GET    /api/api/apex/tenants   (apex_admin.js)
-PATCH  /api/api/apex/tenants/:id   (apex_admin.js)
-GET    /api/api/apex/packages   (apex_admin.js)
-PATCH  /api/api/apex/packages/:id   (apex_admin.js)
-GET    /api/api/apex/fleet   (apex_admin.js)
-POST   /api/api/apex/fleet   (apex_admin.js)
-PATCH  /api/api/apex/fleet/:id   (apex_admin.js)
-POST   /api/api/apex/fleet/:id/ping   (apex_admin.js)
-POST   /api/api/apex/fleet/:id/control   (apex_admin.js)
-GET    /api/app-settings   (app_settings.js)
-GET    /api/app-settings/public   (app_settings.js)
-PUT    /api/app-settings   (app_settings.js)
-POST   /api/app-settings/flag-audit   (app_settings.js)
-GET    /api/menu-config   (app_settings.js)
-PUT    /api/menu-config   (app_settings.js)
-POST   /api/menu-config/reset   (app_settings.js)
-POST   /api/attachments   (attachments.js)
-GET    /api/attachments   (attachments.js)
-GET    /api/attachments/zip   (attachments.js)
-GET    /api/attachments/:id/download   (attachments.js)
-DELETE /api/attachments/:id   (attachments.js)
-GET    /api/api/audit/daily-detail   (audit.js)
-GET    /api/api/audit/summary   (audit.js)
-GET    /api/api/audit/flags   (audit.js)
-GET    /api/api/audit/workbook   (audit.js)
-GET    /api/api/audit/full-report   (audit.js)
-GET    /api/api/audit/full-report/pdf   (audit.js)
-GET    /api/backups   (backup_status.js)
-POST   /api/backups   (backup_status.js)
-GET    /api/backups/:name/download   (backup_status.js)
-POST   /api/restore   (backup_status.js)
-GET    /api/status   (backup_status.js)
-GET    /api/branches   (branches.js)
-POST   /api/branches   (branches.js)
-PUT    /api/branches/:id   (branches.js)
-GET    /api/branches/:id/can   (branches.js)
-GET    /api/cash-position-forecast   (business_intelligence.js)
-GET    /api/non-moving-stock   (business_intelligence.js)
-GET    /api/public/catalogue   (catalogue_feed.js)
-GET    /api/public/catalogue/facets   (catalogue_feed.js)
-GET    /api/catalogue-web   (catalogue_feed.js)
-PUT    /api/catalogue-web/:item_code   (catalogue_feed.js)
-GET    /api/cheque-clearing   (cheque_clearing.js)
-GET    /api/cheque-clearing/alerts   (cheque_clearing.js)
-POST   /api/cheque-clearing/:id/deposit   (cheque_clearing.js)
-POST   /api/cheque-clearing/:id/personal   (cheque_clearing.js)
-POST   /api/cheque-clearing/holidays   (cheque_clearing.js)
-GET    /api/cheque-register   (cheque_register.js)
-GET    /api/cheque-register/due-soon   (cheque_register.js)
-GET    /api/cheque-register/overdue   (cheque_register.js)
-POST   /api/cheque-register   (cheque_register.js)
-PUT    /api/cheque-register/:id   (cheque_register.js)
-GET    /api/competitors   (competitors.js)
-POST   /api/competitors   (competitors.js)
-PUT    /api/competitors/:id   (competitors.js)
-DELETE /api/competitors/:id   (competitors.js)
-POST   /api/competitors/:id/checks   (competitors.js)
-GET    /api/competitors/due-check   (competitors.js)
-GET    /api/competitors/checklist   (competitors.js)
-GET    /api/content-posts   (content_calendar.js)
-POST   /api/content-posts   (content_calendar.js)
-PUT    /api/content-posts/:id   (content_calendar.js)
-DELETE /api/content-posts/:id   (content_calendar.js)
-POST   /api/content-posts/plan-week   (content_calendar.js)
-GET    /api/modules   (corrections.js)
-GET    /api/:m   (corrections.js)
-GET    /api/:m/:id/history   (corrections.js)
-PUT    /api/:m/:id   (corrections.js)
-POST   /api/:m/:id/void   (corrections.js)
-POST   /api/api/daily-entry/sync   (daily_entry_sync.js)
-GET    /api/api/daily-entry/sync/:date   (daily_entry_sync.js)
-GET    /api/api/daily-entry/meta/:date   (daily_entry_sync.js)
-GET    /api/api/daily-entry/range   (daily_entry_sync.js)
-GET    /api/daily-sales-live/today   (daily_sales_live.js)
-GET    /api/daily-sales-live/:date   (daily_sales_live.js)
-POST   /api/document-inbox/upload   (document_inbox.js)
-GET    /api/document-inbox   (document_inbox.js)
-GET    /api/document-inbox/:id/photo   (document_inbox.js)
-PUT    /api/document-inbox/:id   (document_inbox.js)
-POST   /api/document-inbox/:id/reread   (document_inbox.js)
-POST   /api/document-inbox/:id/reject   (document_inbox.js)
-POST   /api/document-inbox/:id/file   (document_inbox.js)
-GET    /api/documents/reports   (documents.js)
-POST   /api/documents/generate   (documents.js)
-GET    /api/documents   (documents.js)
-GET    /api/documents/recipients   (documents.js)
-POST   /api/documents/recipients   (documents.js)
-PUT    /api/documents/recipients/:id   (documents.js)
-DELETE /api/documents/recipients/:id   (documents.js)
-GET    /api/documents/sends   (documents.js)
-POST   /api/documents/inbox/upload   (documents.js)
-GET    /api/documents/inbox   (documents.js)
-GET    /api/documents/inbox/:id/file   (documents.js)
-POST   /api/documents/inbox/:id/confirm   (documents.js)
-POST   /api/documents/inbox/:id/reject   (documents.js)
-GET    /api/documents/:id/download   (documents.js)
-DELETE /api/documents/:id   (documents.js)
-POST   /api/documents/:id/send   (documents.js)
-POST   /api/public/enquiry   (enquiries.js)
-GET    /api/enquiries   (enquiries.js)
-POST   /api/enquiries   (enquiries.js)
-PUT    /api/enquiries/:id/status   (enquiries.js)
-GET    /api/enquiries/summary   (enquiries.js)
-GET    /api/enquiries/weekly   (enquiries.js)
-POST   /api/grn-barcodes   (grn_barcodes.js)
-POST   /api/grn-manual   (grn_manual.js)
-POST   /api/grn-read-photo   (grn_read.js)
-GET    /api/investor-contacts   (investor_contacts.js)
-POST   /api/investor-contacts   (investor_contacts.js)
-DELETE /api/investor-contacts/:id   (investor_contacts.js)
-PUT    /api/investor-loans/:id/qr-balance   (investor_loans.js)
-GET    /api/investor-loans   (investor_loans.js)
-GET    /api/investor-loans/summary   (investor_loans.js)
-GET    /api/investor-loans/:id   (investor_loans.js)
-POST   /api/investor-loans   (investor_loans.js)
-PUT    /api/investor-loans/:id   (investor_loans.js)
-POST   /api/investor-loans/:id/payments   (investor_loans.js)
-POST   /api/investor-loans/:id/documents   (investor_loans.js)
-GET    /api/investor-loans/:id/documents   (investor_loans.js)
-GET    /api/investor-loans/documents/:docId/download   (investor_loans.js)
-DELETE /api/investor-loans/documents/:docId   (investor_loans.js)
-GET    /api/investor-loans/:id/report/pdf   (investor_loans.js)
-POST   /api/invoice-receipts/link   (invoice_receipts.js)
-GET    /api/invoice-receipts   (invoice_receipts.js)
-GET    /api/invoice-receipts/check-number   (invoice_receipts.js)
-GET    /api/invoice-receipts/preview   (invoice_receipts.js)
-POST   /api/invoice-receipts/send   (invoice_receipts.js)
-GET    /api/items/next-code   (item_catalog.js)
-GET    /api/items   (item_catalog.js)
-GET    /api/items/reorder   (item_catalog.js)
-GET    /api/items/export.csv   (item_catalog.js)
-GET    /api/items/:code   (item_catalog.js)
-POST   /api/items   (item_catalog.js)
-POST   /api/items/import-csv   (items_import.js)
-GET    /api/bank-accounts   (money_control.js)
-POST   /api/bank-accounts   (money_control.js)
-PUT    /api/bank-accounts/:id/balance   (money_control.js)
-POST   /api/cheque-register/:id/hold   (money_control.js)
-POST   /api/payment-breakdown   (money_control.js)
-GET    /api/payment-breakdown   (money_control.js)
-GET    /api/fixed-overheads   (money_control.js)
-POST   /api/fixed-overheads   (money_control.js)
-GET    /api/daily-reserve   (money_control.js)
-GET    /api/money-allocations   (money_control.js)
-POST   /api/money-allocations   (money_control.js)
-PUT    /api/money-allocations/:id   (money_control.js)
-POST   /api/viewer-requests   (money_control.js)
-GET    /api/viewer-requests   (money_control.js)
-POST   /api/viewer-requests/:id/approve   (money_control.js)
-POST   /api/viewer-requests/:id/deny   (money_control.js)
-GET    /api/viewer-dashboard   (money_control.js)
-POST   /api/daily-cash-plan   (money_control.js)
-GET    /api/daily-cash-plan   (money_control.js)
-GET    /api/dashboard   (money_control.js)
-GET    /api/notifications   (notifications.js)
-POST   /api/notifications/dismiss   (notifications.js)
-POST   /api/payment-planner/preview   (payment_planner.js)
-POST   /api/payment-planner/save   (payment_planner.js)
-GET    /api/payment-planner/outstanding   (payment_planner.js)
-GET    /api/policy-notes   (policy_notes.js)
-GET    /api/policy-notes/alerts   (policy_notes.js)
-POST   /api/policy-notes   (policy_notes.js)
-PUT    /api/policy-notes/:id   (policy_notes.js)
-DELETE /api/policy-notes/:id   (policy_notes.js)
-POST   /api/pos-bills/:id/void   (pos_bill_corrections.js)
-PUT    /api/pos-bills/:id   (pos_bill_corrections.js)
-GET    /api/pos-bills/:id/history   (pos_bill_corrections.js)
-GET    /api/pos-bills/discount-cap   (pos_bills.js)
-POST   /api/pos-bills   (pos_bills.js)
-GET    /api/pos-bills/today   (pos_bills.js)
-GET    /api/pos-bills/summary   (pos_bills.js)
-GET    /api/pos-bills/top-items   (pos_bills.js)
-GET    /api/pos-bills   (pos_bills.js)
-GET    /api/pos-bills/:id   (pos_bills.js)
-GET    /api/pos-bills/:id/pdf   (pos_bills.js)
-GET    /api/pos-ledger/cheques   (pos_ledger_bridge.js)
-POST   /api/pos-ledger/cheques/:id/claim   (pos_ledger_bridge.js)
-POST   /api/pos-ledger/cheques/:id/done   (pos_ledger_bridge.js)
-POST   /api/pos-ledger/cheques/:id/release   (pos_ledger_bridge.js)
-GET    /api/pos-ledger/credit   (pos_ledger_bridge.js)
-GET    /api/pos-ledger/quotation-billed   (pos_ledger_bridge.js)
-GET    /api/api/purchase-orders   (purchasing_accounting.js)
-POST   /api/api/purchase-orders   (purchasing_accounting.js)
-PATCH  /api/api/purchase-orders/:id   (purchasing_accounting.js)
-GET    /api/api/po-grn-matches   (purchasing_accounting.js)
-GET    /api/api/supplier-prices   (purchasing_accounting.js)
-POST   /api/api/supplier-prices   (purchasing_accounting.js)
-GET    /api/api/supplier-prices/best   (purchasing_accounting.js)
-GET    /api/api/supplier-aging   (purchasing_accounting.js)
-GET    /api/api/landed-costs   (purchasing_accounting.js)
-POST   /api/api/landed-costs   (purchasing_accounting.js)
-GET    /api/api/shipments   (purchasing_accounting.js)
-POST   /api/api/shipments   (purchasing_accounting.js)
-PATCH  /api/api/shipments/:id   (purchasing_accounting.js)
-GET    /api/api/chart-of-accounts   (purchasing_accounting.js)
-POST   /api/api/chart-of-accounts   (purchasing_accounting.js)
-PATCH  /api/api/chart-of-accounts/:code   (purchasing_accounting.js)
-GET    /api/api/journal-entries   (purchasing_accounting.js)
-POST   /api/api/journal-entries   (purchasing_accounting.js)
-GET    /api/api/ledger/:account_code   (purchasing_accounting.js)
-GET    /api/api/trial-balance   (purchasing_accounting.js)
-GET    /api/api/pnl   (purchasing_accounting.js)
-GET    /api/api/balance-sheet   (purchasing_accounting.js)
-GET    /api/api/vat-report   (purchasing_accounting.js)
-GET    /api/api/bank-transactions   (purchasing_accounting.js)
-POST   /api/api/bank-transactions   (purchasing_accounting.js)
-PATCH  /api/api/bank-transactions/:id/match   (purchasing_accounting.js)
-GET    /api/api/cheque-calendar   (purchasing_accounting.js)
-GET    /api/api/petty-cash   (purchasing_accounting.js)
-POST   /api/api/petty-cash   (purchasing_accounting.js)
-GET    /api/api/expense-budgets   (purchasing_accounting.js)
-POST   /api/api/expense-budgets   (purchasing_accounting.js)
-GET    /api/api/year-end-closings   (purchasing_accounting.js)
-POST   /api/api/year-end-closings   (purchasing_accounting.js)
-GET    /api/reply-drafts   (reply_drafts.js)
-POST   /api/reply-drafts   (reply_drafts.js)
-PUT    /api/reply-drafts/:id   (reply_drafts.js)
-POST   /api/reply-drafts/:id/approve   (reply_drafts.js)
-POST   /api/reply-drafts/:id/reject   (reply_drafts.js)
-POST   /api/reply-drafts/:id/mark-sent   (reply_drafts.js)
-GET    /api/salary/settings   (salary.js)
-PUT    /api/salary/settings   (salary.js)
-GET    /api/salary/today   (salary.js)
-POST   /api/salary/cheque-cover/:id   (salary.js)
-GET    /api/salary/month   (salary.js)
-POST   /api/salary/month/:ym/close   (salary.js)
-GET    /api/salary/price-check   (salary.js)
-GET    /api/salary/overview   (salary.js)
-POST   /api/sale-commissions   (sale_commissions.js)
-POST   /api/sale-commissions/:id/return   (sale_commissions.js)
-GET    /api/sale-commissions   (sale_commissions.js)
-GET    /api/sale-commissions/weekly-summary   (sale_commissions.js)
-GET    /api/credit-limits   (shop_operations.js)
-POST   /api/credit-limits   (shop_operations.js)
-GET    /api/credit-limits/:customer_name   (shop_operations.js)
-GET    /api/discount-rules   (shop_operations.js)
-POST   /api/discount-rules   (shop_operations.js)
-POST   /api/discount-check   (shop_operations.js)
-GET    /api/stock-items   (shop_operations.js)
-GET    /api/stock-items/low-stock   (shop_operations.js)
-POST   /api/stock-items   (shop_operations.js)
-POST   /api/stock-items/:id/adjust   (shop_operations.js)
-POST   /api/receipt-queue   (shop_operations.js)
-GET    /api/receipt-queue   (shop_operations.js)
-POST   /api/receipt-queue/:id/image   (shop_operations.js)
-GET    /api/receipt-queue/:id/image   (shop_operations.js)
-POST   /api/receipt-queue/:id/send   (shop_operations.js)
-GET    /api/robots.txt   (site_catalogue.js)
-GET    /api/sitemap.xml   (site_catalogue.js)
-GET    /api/site   (site_catalogue.js)
-GET    /api/api/site/catalogue.pdf   (site_catalogue.js)
-GET    /api/site/public   (site_editor.js)
-GET    /api/site/photo/:file   (site_editor.js)
-GET    /api/site/tiles   (site_editor.js)
-POST   /api/site/tiles   (site_editor.js)
-PUT    /api/site/tiles/:id   (site_editor.js)
-DELETE /api/site/tiles/:id   (site_editor.js)
-POST   /api/site/tiles/:id/photo   (site_editor.js)
-DELETE /api/site/tiles/:id/photo   (site_editor.js)
-GET    /api/site/text   (site_editor.js)
-PUT    /api/site/text   (site_editor.js)
-GET    /api/attendance   (staff_reports.js)
-POST   /api/attendance   (staff_reports.js)
-GET    /api/leave   (staff_reports.js)
-POST   /api/leave   (staff_reports.js)
-PATCH  /api/leave/:id   (staff_reports.js)
-GET    /api/advances   (staff_reports.js)
-POST   /api/advances   (staff_reports.js)
-GET    /api/payroll-export   (staff_reports.js)
-GET    /api/commission-autocalc   (staff_reports.js)
-GET    /api/monthly-trends   (staff_reports.js)
-GET    /api/daily-digest   (staff_reports.js)
-GET    /api/cashflow-forecast   (staff_reports.js)
-GET    /api/customer-ltv   (staff_reports.js)
-GET    /api/heatmap   (staff_reports.js)
-GET    /api/margin-by-product   (staff_reports.js)
-GET    /api/top-slow-items   (staff_reports.js)
-GET    /api/sync/status   (sync.js)
-POST   /api/sync/needs-review   (sync.js)
-GET    /api/sync/review   (sync.js)
-POST   /api/sync/review/:id/resolve   (sync.js)
-POST   /api/tools/tile-estimate   (tile_tools.js)
-POST   /api/tools/price-per-sqm   (tile_tools.js)
+GET    /api/users
+POST   /api/users
+PATCH  /api/users/:id
+POST   /api/users/:id/disable
+POST   /api/users/:id/enable
+POST   /api/users/:id/reset-password
+POST   /api/users/:id/force-logout
+GET    /api/users/:id/login-history
+GET    /api/audit
+GET    /api/audit/export.csv
+POST   /api/agent-brain/draft
+GET    /api/agent-brain/reviews
+GET    /api/agent-brain/drafts/:id/checks
+PUT    /api/agent-brain/drafts/:id
+POST   /api/agent-brain/drafts/:id/approve
+POST   /api/agent-brain/drafts/:id/reject
+GET    /api/agent-outbox
+POST   /api/agent-outbox/:id/approve
+POST   /api/agent-outbox/:id/reject
+GET    /api/agent/rules
+GET    /api/agent/rules/:id/history
+POST   /api/agent/rules
+PUT    /api/agent/rules/:id
+POST   /api/agent/rules/:id/deactivate
+GET    /api/agent/rulebook
+POST   /api/api/apex/payments
+GET    /api/api/apex/payments/:tenantId
+POST   /api/api/apex/trial-clients
+GET    /api/api/apex/tenants
+PATCH  /api/api/apex/tenants/:id
+GET    /api/api/apex/packages
+PATCH  /api/api/apex/packages/:id
+GET    /api/api/apex/fleet
+POST   /api/api/apex/fleet
+PATCH  /api/api/apex/fleet/:id
+POST   /api/api/apex/fleet/:id/ping
+POST   /api/api/apex/fleet/:id/control
+GET    /api/app-settings
+GET    /api/app-settings/public
+PUT    /api/app-settings
+POST   /api/app-settings/flag-audit
+GET    /api/menu-config
+PUT    /api/menu-config
+POST   /api/menu-config/reset
+POST   /api/attachments
+GET    /api/attachments
+GET    /api/attachments/zip
+GET    /api/attachments/:id/download
+DELETE /api/attachments/:id
+GET    /api/api/audit/daily-detail
+GET    /api/api/audit/summary
+GET    /api/api/audit/flags
+GET    /api/api/audit/workbook
+GET    /api/api/audit/full-report
+GET    /api/api/audit/full-report/pdf
+GET    /api/backups
+POST   /api/backups
+GET    /api/backups/:name/download
+POST   /api/restore
+GET    /api/status
+GET    /api/branches
+POST   /api/branches
+PUT    /api/branches/:id
+GET    /api/branches/:id/can
+GET    /api/cash-position-forecast
+GET    /api/non-moving-stock
+GET    /api/public/catalogue
+GET    /api/public/catalogue/facets
+GET    /api/catalogue-web
+PUT    /api/catalogue-web/:item_code
+GET    /api/cheque-clearing
+GET    /api/cheque-clearing/alerts
+POST   /api/cheque-clearing/:id/deposit
+POST   /api/cheque-clearing/:id/personal
+POST   /api/cheque-clearing/holidays
+GET    /api/cheque-register
+GET    /api/cheque-register/due-soon
+GET    /api/cheque-register/overdue
+POST   /api/cheque-register
+PUT    /api/cheque-register/:id
+GET    /api/competitors
+POST   /api/competitors
+PUT    /api/competitors/:id
+DELETE /api/competitors/:id
+POST   /api/competitors/:id/checks
+GET    /api/competitors/due-check
+GET    /api/competitors/checklist
+GET    /api/content-posts
+POST   /api/content-posts
+PUT    /api/content-posts/:id
+DELETE /api/content-posts/:id
+POST   /api/content-posts/plan-week
+GET    /api/modules
+GET    /api/:m
+GET    /api/:m/:id/history
+PUT    /api/:m/:id
+POST   /api/:m/:id/void
+POST   /api/api/daily-entry/sync
+GET    /api/api/daily-entry/sync/:date
+GET    /api/api/daily-entry/meta/:date
+GET    /api/api/daily-entry/range
+GET    /api/daily-sales-live/today
+GET    /api/daily-sales-live/:date
+POST   /api/document-inbox/upload
+GET    /api/document-inbox
+GET    /api/document-inbox/:id/photo
+PUT    /api/document-inbox/:id
+POST   /api/document-inbox/:id/reread
+POST   /api/document-inbox/:id/reject
+POST   /api/document-inbox/:id/file
+GET    /api/documents/reports
+POST   /api/documents/generate
+GET    /api/documents
+GET    /api/documents/recipients
+POST   /api/documents/recipients
+PUT    /api/documents/recipients/:id
+DELETE /api/documents/recipients/:id
+GET    /api/documents/sends
+POST   /api/documents/inbox/upload
+GET    /api/documents/inbox
+GET    /api/documents/inbox/:id/file
+POST   /api/documents/inbox/:id/confirm
+POST   /api/documents/inbox/:id/reject
+GET    /api/documents/:id/download
+DELETE /api/documents/:id
+POST   /api/documents/:id/send
+POST   /api/public/enquiry
+GET    /api/enquiries
+POST   /api/enquiries
+PUT    /api/enquiries/:id/status
+GET    /api/enquiries/summary
+GET    /api/enquiries/weekly
+POST   /api/grn-barcodes
+POST   /api/grn-manual
+POST   /api/grn-read-photo
+GET    /api/investor-contacts
+POST   /api/investor-contacts
+DELETE /api/investor-contacts/:id
+PUT    /api/investor-loans/:id/qr-balance
+GET    /api/investor-loans
+GET    /api/investor-loans/summary
+GET    /api/investor-loans/:id
+POST   /api/investor-loans
+PUT    /api/investor-loans/:id
+POST   /api/investor-loans/:id/payments
+POST   /api/investor-loans/:id/documents
+GET    /api/investor-loans/:id/documents
+GET    /api/investor-loans/documents/:docId/download
+DELETE /api/investor-loans/documents/:docId
+GET    /api/investor-loans/:id/report/pdf
+POST   /api/invoice-receipts/link
+GET    /api/invoice-receipts
+GET    /api/invoice-receipts/check-number
+GET    /api/invoice-receipts/preview
+POST   /api/invoice-receipts/send
+GET    /api/items/next-code
+GET    /api/items
+GET    /api/items/reorder
+GET    /api/items/export.csv
+GET    /api/items/:code
+POST   /api/items
+POST   /api/items/import-csv
+GET    /api/bank-accounts
+POST   /api/bank-accounts
+PUT    /api/bank-accounts/:id/balance
+POST   /api/cheque-register/:id/hold
+POST   /api/payment-breakdown
+GET    /api/payment-breakdown
+GET    /api/fixed-overheads
+POST   /api/fixed-overheads
+GET    /api/daily-reserve
+GET    /api/money-allocations
+POST   /api/money-allocations
+PUT    /api/money-allocations/:id
+POST   /api/viewer-requests
+GET    /api/viewer-requests
+POST   /api/viewer-requests/:id/approve
+POST   /api/viewer-requests/:id/deny
+GET    /api/viewer-dashboard
+POST   /api/daily-cash-plan
+GET    /api/daily-cash-plan
+GET    /api/dashboard
+GET    /api/notifications
+POST   /api/notifications/dismiss
+POST   /api/payment-planner/preview
+POST   /api/payment-planner/save
+GET    /api/payment-planner/outstanding
+GET    /api/policy-notes
+GET    /api/policy-notes/alerts
+POST   /api/policy-notes
+PUT    /api/policy-notes/:id
+DELETE /api/policy-notes/:id
+POST   /api/pos-bills/:id/void
+PUT    /api/pos-bills/:id
+GET    /api/pos-bills/:id/history
+GET    /api/pos-bills/discount-cap
+POST   /api/pos-bills
+GET    /api/pos-bills/today
+GET    /api/pos-bills/summary
+GET    /api/pos-bills/top-items
+GET    /api/pos-bills
+GET    /api/pos-bills/:id
+GET    /api/pos-bills/:id/pdf
+GET    /api/pos-ledger/cheques
+POST   /api/pos-ledger/cheques/:id/claim
+POST   /api/pos-ledger/cheques/:id/done
+POST   /api/pos-ledger/cheques/:id/release
+GET    /api/pos-ledger/credit
+GET    /api/pos-ledger/quotation-billed
+GET    /api/api/purchase-orders
+POST   /api/api/purchase-orders
+PATCH  /api/api/purchase-orders/:id
+GET    /api/api/po-grn-matches
+GET    /api/api/supplier-prices
+POST   /api/api/supplier-prices
+GET    /api/api/supplier-prices/best
+GET    /api/api/supplier-aging
+GET    /api/api/landed-costs
+POST   /api/api/landed-costs
+GET    /api/api/shipments
+POST   /api/api/shipments
+PATCH  /api/api/shipments/:id
+GET    /api/api/chart-of-accounts
+POST   /api/api/chart-of-accounts
+PATCH  /api/api/chart-of-accounts/:code
+GET    /api/api/journal-entries
+POST   /api/api/journal-entries
+GET    /api/api/ledger/:account_code
+GET    /api/api/trial-balance
+GET    /api/api/pnl
+GET    /api/api/balance-sheet
+GET    /api/api/vat-report
+GET    /api/api/bank-transactions
+POST   /api/api/bank-transactions
+PATCH  /api/api/bank-transactions/:id/match
+GET    /api/api/cheque-calendar
+GET    /api/api/petty-cash
+POST   /api/api/petty-cash
+GET    /api/api/expense-budgets
+POST   /api/api/expense-budgets
+GET    /api/api/year-end-closings
+POST   /api/api/year-end-closings
+GET    /api/reply-drafts
+POST   /api/reply-drafts
+PUT    /api/reply-drafts/:id
+POST   /api/reply-drafts/:id/approve
+POST   /api/reply-drafts/:id/reject
+POST   /api/reply-drafts/:id/mark-sent
+GET    /api/salary/settings
+PUT    /api/salary/settings
+GET    /api/salary/today
+POST   /api/salary/cheque-cover/:id
+GET    /api/salary/month
+POST   /api/salary/month/:ym/close
+GET    /api/salary/price-check
+GET    /api/salary/overview
+POST   /api/sale-commissions
+POST   /api/sale-commissions/:id/return
+GET    /api/sale-commissions
+GET    /api/sale-commissions/weekly-summary
+GET    /api/credit-limits
+POST   /api/credit-limits
+GET    /api/credit-limits/:customer_name
+GET    /api/discount-rules
+POST   /api/discount-rules
+POST   /api/discount-check
+GET    /api/stock-items
+GET    /api/stock-items/low-stock
+POST   /api/stock-items
+POST   /api/stock-items/:id/adjust
+POST   /api/receipt-queue
+GET    /api/receipt-queue
+POST   /api/receipt-queue/:id/image
+GET    /api/receipt-queue/:id/image
+POST   /api/receipt-queue/:id/send
+GET    /api/robots.txt
+GET    /api/sitemap.xml
+GET    /api/site
+GET    /api/api/site/catalogue.pdf
+GET    /api/site/public
+GET    /api/site/photo/:file
+GET    /api/site/tiles
+POST   /api/site/tiles
+PUT    /api/site/tiles/:id
+DELETE /api/site/tiles/:id
+POST   /api/site/tiles/:id/photo
+DELETE /api/site/tiles/:id/photo
+GET    /api/site/text
+PUT    /api/site/text
+GET    /api/attendance
+POST   /api/attendance
+GET    /api/leave
+POST   /api/leave
+PATCH  /api/leave/:id
+GET    /api/advances
+POST   /api/advances
+GET    /api/payroll-export
+GET    /api/commission-autocalc
+GET    /api/monthly-trends
+GET    /api/daily-digest
+GET    /api/cashflow-forecast
+GET    /api/customer-ltv
+GET    /api/heatmap
+GET    /api/margin-by-product
+GET    /api/top-slow-items
+GET    /api/sync/status
+POST   /api/sync/needs-review
+GET    /api/sync/review
+POST   /api/sync/review/:id/resolve
+POST   /api/tools/tile-estimate
+POST   /api/tools/price-per-sqm
+# --- core routes defined in server.js ---
+DELETE /api/daily-summary/:date/files/:filename
+DELETE /api/grn/:id
+GET    /api/admin/files
+GET    /api/admin/files/:filename/download
+GET    /api/agent-status
+GET    /api/alerts
+GET    /api/all-monthly-chart
+GET    /api/all-time-stats
+GET    /api/audit-log
+GET    /api/auth/totp-setup
+GET    /api/auth/totp-status
+GET    /api/branding
+GET    /api/calendar
+GET    /api/cheques
+GET    /api/conversations/:phone
+GET    /api/credit-customers
+GET    /api/credit-list
+GET    /api/customers
+GET    /api/customers/:phone
+GET    /api/daily-summary
+GET    /api/daily-summary/:date
+GET    /api/daily-summary/:date/files
+GET    /api/daily-summary/:date/files/:filename/download
+GET    /api/error-log
+GET    /api/expenses-detail
+GET    /api/feature-flags
+GET    /api/file-ledger
+GET    /api/financial-health
+GET    /api/grn
+GET    /api/home-stats
+GET    /api/layla-summary
+GET    /api/leads
+GET    /api/me
+GET    /api/monthly-chart
+GET    /api/monthly-detail
+GET    /api/nova-weekly
+GET    /api/packages
+GET    /api/pay-period-summary
+GET    /api/products
+GET    /api/purchases-today
+GET    /api/query
+GET    /api/quinn-gp
+GET    /api/quotations
+GET    /api/quotations/:id
+GET    /api/reorder-alerts
+GET    /api/report-download
+GET    /api/report-download-range
+GET    /api/reports
+GET    /api/setup/status
+GET    /api/staff
+GET    /api/staff/:id/loans
+GET    /api/staff/:id/salary
+GET    /api/stats
+GET    /api/suppliers
+GET    /api/suppliers/:id/payments
+GET    /api/users
+GET    /api/vera-alerts
+GET    /api/weekly-chart
+GET    /api/weekly-detail
+PATCH  /api/alerts/:id/read
+PATCH  /api/cheques/:id/status
+PATCH  /api/daily-summary/:date/field
+PATCH  /api/feature-flags/:key
+PATCH  /api/grn/:id
+PATCH  /api/leads/:id/status
+PATCH  /api/users/:id
+POST   /api/admin/blend-gp-retroactive
+POST   /api/admin/rescan-uploads
+POST   /api/admin/upload
+POST   /api/admin/verify
+POST   /api/agent-status
+POST   /api/alerts/:id/set-amount
+POST   /api/auth/change-password
+POST   /api/auth/totp-disable
+POST   /api/auth/totp-setup
+POST   /api/auth/verify-totp
+POST   /api/checker-run
+POST   /api/cheques
+POST   /api/credit-customers
+POST   /api/customers
+POST   /api/daily-close
+POST   /api/daily-summary
+POST   /api/daily-summary/:date/files
+POST   /api/dashboard-assistant/chat
+POST   /api/grn
+POST   /api/inbox-upload
+POST   /api/login
+POST   /api/logout
+POST   /api/nl-query
+POST   /api/process-inbox
+POST   /api/quotations
+POST   /api/recon-check
+POST   /api/reports
+POST   /api/setup/complete
+POST   /api/staff
+POST   /api/staff/:id/salary
+POST   /api/suppliers
+POST   /api/users
+PUT    /api/customers/:id
+PUT    /api/quotations/:id/status
 ```
+
+### B11. HARD RULES — do not break any
+- Do NOT change any URL, request body or response shape. Front end only.
+- No invented numbers. Missing data → `PENDING` (amber). Errors → plain sentence + Retry.
+- Money rules (display only; never recompute differently): cash out = expenses + supplier payments; net profit = gross profit − expenses; supplier payments are NOT expenses; vendor payable falls only when a cheque CLEARS.
+- AI/photo/file imports **never auto-save**; review first, then the owner presses Save.
+- No delete for money records (void with a reason only). Uploaded files are **Removed** (hidden), never erased; always show Upload + Download + Remove together via the attach widget (`<div data-attach="TYPE" data-attach-id="ID">`; TYPE one of daily_sales, stock, grn, expense, cheque, vendor, pos_bill, money_control, loan, salary, document_inbox, general).
+- Never hard-code secrets, keys, phone numbers or real customer data.
+- Keep each module isolated: one module's bug must not break another (wrap init in try/catch and show an error card inside that tab only).
+- Tests in your head before you answer: (1) every screen in B6 is reachable from at least one menu; (2) every menu item opens something; (3) phone width works; (4) the preview works with mock data; (5) no file is cut off; (6) no endpoint outside B10 is called.
+
+### B12. HOW TO ANSWER
+1. First, in ≤ 15 lines, restate the plan and list the files you will output.
+2. Then output each file as a fenced block preceded by its exact path, e.g. `### FILE: js/core.js`.
+3. Finish with `CHECKLIST` (the 6 tests above, each PASS/FAIL honestly) and `NOT BUILT YET` (if any).
+Be exact, not creative with the backend; be excellent with the design.
+
+════════════════════════════════════════════
+## PART C — REAL SOURCE CODE (read it; reproduce behaviour; do not output it back)
+════════════════════════════════════════════
 
 
 ---
-## SOURCE FILE: public/attach-widget.js
+### SOURCE FILE: public/attach-widget.js
 ```js
 /* attach-widget.js: ONE shared widget: [Take photo] [Upload file] [Download] for any record.
    Use:  <div data-attach="stock" data-attach-id="general"></div>   (auto-mounted)   or   AttachWidget.mount(el, { type, id })
@@ -500,7 +686,7 @@ POST   /api/tools/price-per-sqm   (tile_tools.js)
 
 
 ---
-## SOURCE FILE: public/lib/grn_import.js
+### SOURCE FILE: public/lib/grn_import.js
 ```js
 /* GRN import helper: turns a typed invoice (JSON / CSV rows / sheet rows) or an
  * OCR result into GRN screen rows. Pure functions, no DOM. Never saves anything. */
@@ -630,7 +816,7 @@ POST   /api/tools/price-per-sqm   (tile_tools.js)
 
 
 ---
-## SOURCE FILE: public/vendor-ledger.html
+### SOURCE FILE: public/vendor-ledger.html
 ```html
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -698,901 +884,89 @@ load();
 
 
 ---
-## SOURCE FILE: public/pos_billing.html
+### SOURCE FILE: public/vendor-credit.html
 ```html
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
-<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
-<script>if (window.top === window.self) location.replace('/owner#/pos');   // one app: opened on its own -> open it inside /owner</script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generate Bill — Royal Bath Hub Thihariya</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vendor credit | Royal Bath Hub</title>
 <style>
-  :root {
-    --emerald-900:#062e21; --emerald-800:#0a4531; --emerald-700:#0f5132;
-    --earth-800:#3d2b1f; --earth-700:#5c4033; --earth-500:#8b6f47;
-    --gold-500:#c9a227; --gold-400:#d4af37; --gold-300:#e8cf7a;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, Segoe UI, Arial, sans-serif;
-    margin: 0; padding: 24px; background:var(--bg-canvas); color:var(--text-primary);
-  }
-  .wrap { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
-  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
-
-  .panel { background:var(--bg-surface); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  h1 { font-size:20px; color:var(--text-primary); margin: 0 0 4px; }
-  .sub { color:var(--text-muted); font-size:14px; margin-bottom: 18px; }
-
-  label { display: block; font-size:12px; font-weight: 600; color:var(--text-secondary); margin: 10px 0 4px; }
-  input, select { width: 100%; padding: 8px 10px; border:1px solid var(--border-subtle); border-radius: 6px; font-size:14px; }
-
-  .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
-  .item-row input { margin: 0; }
-  .remove-btn { background: none; border: none; color:var(--status-danger); font-size:18px; cursor: pointer; padding: 4px; }
-  .cap-hint { font-size:12px; margin-top: 4px; color:var(--text-muted); }
-  .cap-hint.warn { color:var(--status-danger); font-weight: 700; }
-  .today { margin-top: 18px; }
-  .today h2 { font-size:15px; color:var(--text-primary); margin: 0 0 6px; }
-  .today table { width: 100%; border-collapse: collapse; font-size:14px; }
-  .today th, .today td { text-align: left; padding: 5px 4px; border-bottom:1px solid var(--border-subtle); }
-  .today td.num, .today th.num { text-align: right; }
-  .today .flag { color:var(--status-warning); font-size:12px; }
-  .today tr.void td { color:var(--text-muted); text-decoration: line-through; background:var(--bg-surface-elevated); }
-  .today tr.void td:last-child, .today tr.void td .void-tag { text-decoration: none; }
-  .void-tag { display: inline-block; background:var(--status-danger); color: #fff; font-size:12px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
-  .today .mini-btn { font-size:12px; padding: 2px 8px; margin-left: 4px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius: 6px; cursor: pointer; }
-  .today .mini-btn.danger { color:var(--status-danger); border-color:var(--status-danger); }
-  .edit-banner { background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size:14px; display: none; }
-  /* item picker */
-  .pick-wrap { position: relative; }
-  .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background:var(--bg-surface); border:1px solid var(--border-strong); border-radius: 6px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.15); max-height: 260px; overflow-y: auto; }
-  .pick-list.open { display: block; }
-  .pick-opt { padding: 8px 10px; cursor: pointer; border-bottom:1px solid var(--border-subtle); }
-  .pick-opt:last-child { border-bottom: none; }
-  .pick-opt.active, .pick-opt:hover { background:var(--bg-surface-elevated); }
-  .pick-opt b { display: block; font-size:14px; color:var(--text-primary); }
-  .pick-opt span { font-size:12px; color:var(--text-muted); }
-  .stock-hint { font-size:12px; margin-top: 3px; min-height: 0; }
-  .stock-hint.ok { color:var(--status-success); } .stock-hint.low { color:var(--status-warning); } .stock-hint.out, .stock-hint.over { color:var(--status-danger); font-weight: 700; }
-  .add-btn {
-    background:var(--gold-primary); color:var(--text-on-accent); border: none; border-radius: 6px;
-    padding: 8px 14px; font-size:14px; cursor: pointer; margin-top: 4px;
-  }
-  .add-btn:hover { background:var(--gold-primary); }
-
-  .generate-btn {
-    width: 100%; margin-top: 18px; background:var(--gold-primary); color:var(--text-on-accent);
-    border: none; border-radius: 8px; padding: 12px; font-size:15px; font-weight: 700; cursor: pointer;
-  }
-  .generate-btn:hover { background:var(--gold-primary); }
-  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .err { color:var(--status-danger); font-size:14px; margin-top: 8px; display: none; }
-
-  /* Bill preview (receipt style) */
-  #billPanel { display: none; }
-  .receipt {
-    background:var(--bg-surface); border:1px dashed var(--border-strong); border-radius: 8px; padding: 18px;
-    font-family: 'Courier New', monospace; font-size:14px; color:var(--text-primary);
-  }
-  .receipt .logo-row { text-align: center; margin-bottom: 6px; }
-  .receipt .logo-row img { height: 56px; width: auto; }
-  .receipt .shop-name { text-align: center; font-weight: 700; font-size:15px; color:var(--text-primary); }
-  .receipt .shop-tagline { text-align: center; font-size:12px; color:var(--text-muted); margin-bottom: 8px; }
-  .receipt hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
-  .receipt .row { display: flex; justify-content: space-between; }
-  .receipt .items .row { margin-bottom: 2px; }
-  .receipt .totals .row { margin-top: 2px; }
-  .receipt .discount-line { color:var(--text-muted); }
-  .receipt .grand-total { font-weight: 700; font-size:14px; color:var(--text-primary); }
-  .receipt .footer { text-align: center; margin-top: 10px; font-size:12px; color:var(--text-muted); }
-
-  .share-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
-  .share-btn {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px; border-radius: 6px; border: none; font-size:14px; font-weight: 600; cursor: pointer;
-    text-decoration: none; color: #fff;
-  }
-  .share-btn.whatsapp { background: #25D366; }
-  .share-btn.email { background: #4a5a6a; }
-  .share-btn.download { background:var(--gold-primary); }
-  .share-btn.print { background: var(--earth-700); }
-  .share-btn:hover { filter: brightness(0.95); }
-  .share-btn.wa-receipt { grid-column: 1 / -1; background: #128C7E; }
-  .share-btn:disabled { opacity: .6; cursor: default; }
-  .wa-receipt-msg { margin-top: 8px; font-size:14px; min-height: 16px; color:var(--text-secondary); }
-  .wa-receipt-msg.err { color: #b42318; }
-  .wa-receipt-msg.ok { color: #067647; }
-
-  .new-bill-btn {
-    width: 100%; margin-top: 10px; background: none; border:1px solid var(--border-strong); color:var(--text-secondary);
-    border-radius: 6px; padding: 8px; font-size:14px; cursor: pointer;
-  }
-
-  /* POS tools: scan box, quantity steps, hold / held bills, reprint (tap targets 44px or more) */
-  .pos-tools { display:grid; gap:8px; margin: 12px 0 4px; }
-  .pos-tools .scan-row input { width:100%; font-size:16px; }
-  .pos-tools .tool-row { display:flex; flex-wrap:wrap; gap:8px; }
-  .pos-tools .tool-row button { flex:1 1 40%; min-height:44px; padding:8px 10px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; }
-  .scan-msg { min-height:18px; font-size:14px; color:var(--text-secondary); }
-  .scan-msg.ok { color:var(--status-success); } .scan-msg.err { color:var(--status-danger); }
-  .tool-panel { border:1px solid var(--border-subtle); border-radius:8px; padding:8px; background:var(--bg-surface-subtle); display:none; }
-  .tool-panel.open { display:block; }
-  .tool-panel .t-row { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-subtle); font-size:14px; }
-  .tool-panel .t-row:last-child { border-bottom:0; }
-  .tool-panel .t-row button { min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-weight:600; }
-  .tool-panel .t-row button.danger { color:var(--status-danger); border-color:var(--status-danger); }
-  .tool-panel .find-row { display:flex; gap:8px; margin-bottom:6px; } .tool-panel .find-row input { flex:1; min-width:0; }
-  .pay-sub { margin-top:8px; }
-  .split-row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; align-items:center; }
-  .split-row select, .split-row input { margin:0; min-width:0; width:100%; }
-  .split-row .s-ref { grid-column: 1 / -1; display:none; }
-  .split-row .s-del { grid-column: 1 / -1; justify-self:end; }
-  .qty-step { display:flex; align-items:stretch; gap:4px; }
-  .qty-step button { min-width:44px !important; min-height:44px !important; padding:0; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-size:20px; font-weight:700; line-height:1; }
-  .qty-step .i-qty { flex:1; min-width:46px; width:100%; text-align:center; }
-  html body .item-row { grid-template-columns: 1fr 156px 100px 48px !important; }
-  @media (max-width:480px) { html body .item-row { grid-template-columns: 136px minmax(0, 1fr) 44px !important; } .qty-step .i-qty { min-width:40px; } }
-  @media print {
-    body * { visibility: hidden; }
-    .receipt, .receipt * { visibility: visible; }
-    .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
-  }
-
-  /* compact POS (Ajmal 11:47): customer first, tools in a drop-down, less scrolling */
-  body { padding: 10px; }
-  .panel { padding: 12px 14px; }
-  .pos-h1 { font-size:16px; margin:0 0 6px; } .pos-h1-sub { font-size:12px; font-weight:400; color:var(--text-muted); margin-left:6px; }
-  .cust-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .cust-row label, .panel > label { margin:6px 0 2px; }
-  .wa-line { display:flex; gap:6px; align-items:center; margin:4px 0 0; font-weight:400; font-size:12px; }
-  .wa-line input { width:auto; }
-  .pos-tools { margin:8px 0 2px; gap:6px; }
-  .scan-row { display:flex; gap:8px; }
-  .scan-row input { flex:1; min-width:0; }
-  .tools-btn { flex:0 0 auto; min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; cursor:pointer; }
-  .pos-tools .tool-menu { display:none; }
-  .pos-tools .tool-menu.open { display:flex; }
-  #waCheck:empty { display:none; min-height:0; margin:0; }
-  @media (max-width:340px){ .cust-row { grid-template-columns:1fr; } }
-</style>
-<link rel="stylesheet" href="/bathhub-design.css">
-</head>
-<body>
-
-<div class="wrap">
-  <div class="panel" id="formPanel">
-    <h1 class="pos-h1">Generate Bill <span class="pos-h1-sub">Royal Bath Hub Thihariya</span></h1>
-
-    <div class="cust-row" id="custRow">
-      <div><label for="customerName">Customer name</label>
-        <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
-      <div><label for="customerPhone">Phone (WhatsApp)</label>
-        <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
-    </div>
-    <div id="waCheck" class="wa-receipt-msg" role="status"></div>
-    <label class="wa-line"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send receipt to WhatsApp on Print</label>
-
-    <div class="pos-tools" id="posTools">
-      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
-      <div class="scan-msg" id="scanMsg" role="status"></div>
-      <div class="tool-row tool-menu" id="toolMenu">
-        <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
-        <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
-        <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
-        <button type="button" id="findBtn" onclick="toggleTool('findPanel')">Find bill</button>
-        <button type="button" id="quoteBtn" onclick="toggleTool('quotePanel')">Load quotation</button>
-      </div>
-      <div class="tool-panel" id="heldPanel"></div>
-      <div class="tool-panel" id="quotePanel">
-        <div class="find-row"><input type="text" id="quoteBox" placeholder="Filter by quote number or customer" autocomplete="off"></div>
-        <div id="quoteResults"></div>
-      </div>
-      <div class="tool-panel" id="findPanel">
-        <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 0007 or BHT-20261009-0007" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
-        <div id="findResults"></div>
-      </div>
-    </div>
-
-    <label>Items</label>
-    <div id="itemRows"></div>
-    <button type="button" class="add-btn" onclick="addItemRow()">+ Add item</button>
-
-    <label>Discount %</label>
-    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()">
-    <div class="cap-hint" id="capHint"></div>
-
-    <label>Payment method</label>
-    <select id="paymentMethod">
-      <option value="cash">Cash</option>
-      <option value="card">Card</option>
-      <option value="online">Online transfer</option>
-      <option value="cheque">Cheque</option>
-      <option value="credit">Credit (pays later)</option>
-      <option value="split">Split (more than one)</option>
-    </select>
-    <div id="chequeBox" class="pay-sub" style="display:none"><label for="chequeRef">Cheque number, bank and date</label><input type="text" id="chequeRef" maxlength="120" placeholder="e.g. 004512 Sampath 30/10/2026" autocomplete="off"></div>
-    <div id="creditNote" class="cap-hint pay-sub" style="display:none">Credit: the customer pays later. Type the customer name or phone above. This is only recorded on the bill.</div>
-    <div id="splitBox" class="pay-sub" style="display:none">
-      <div id="splitRows"></div>
-      <button type="button" class="add-btn" onclick="addSplitRow()">+ Add payment</button>
-      <div class="cap-hint" id="splitHint" role="status"></div>
-    </div>
-
-    <div class="edit-banner" id="editBanner"></div>
-    <div class="err" id="errMsg"></div>
-    <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
-    <button type="button" class="mini-btn" id="cancelEditBtn" style="display:none;margin-top:8px" onclick="resetForm()">Cancel edit</button>
-    <div class="today" id="todayBox"></div>
-  </div>
-
-  <div class="panel" id="billPanel">
-    <div class="receipt" id="receipt">
-      <div class="logo-row"><img src="/brand/logo-main-transparent.png" alt="Royal Bath Hub"></div>
-      <div class="shop-name" id="rShopName">Royal Bath Hub Thihariya</div>
-      <div class="shop-tagline" id="rTagline">Everything for your bathroom, on Kandy Road</div>
-      <hr>
-      <div id="rMeta"></div>
-      <hr>
-      <div class="items" id="rItems"></div>
-      <hr>
-      <div class="totals" id="rTotals"></div>
-      <div class="footer">Thank you for shopping with us!</div>
-    </div>
-
-    <div class="share-buttons">
-      <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
-      <a class="share-btn email" id="emailBtn" href="#">Email</a>
-      <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
-      <button class="share-btn print" onclick="printBill()">Print</button>
-      <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
-    </div>
-    <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
-    <div id="billAttach" style="margin-top:8px"></div>
-    <button class="new-bill-btn" onclick="resetForm()">+ New bill</button>
-  </div>
-</div>
-
-<script src="/pos-picker.js"></script>
-<script src="/suggest.js"></script>
-<script src="/pos-cart.js"></script>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:720px;margin:0 auto;padding:14px}h1{font-size:22px;margin:6px 0 4px}h2{font-size:17px;margin:20px 0 8px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.big{font-size:22px;font-weight:700}.sm{color:var(--muted);font-size:14px}.bad{color:var(--red)}.good{color:var(--green)}
+a.back{display:inline-block;min-height:44px;line-height:44px;color:var(--ink)}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid var(--line)}
+.vendor{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.bill{border-top:1px solid var(--line);padding:8px 0;font-size:15px}
+.alert{border:1px solid var(--red);border-radius:12px;padding:10px;margin:10px 0}
+</style></head><body><main>
+<a class="back" href="/bathco_complete.html">&larr; Back</a>
+<h1>Vendor credit</h1>
+<div class="sm">What we owe each vendor, and what is left after 1, 2 and 3 months if nothing more is paid. Cheques only count when they clear.</div>
+<div id="msg" class="sm" role="status">Loading...</div>
+<h2>All vendors</h2><div class="grid" id="tot"></div>
+<div id="long"></div>
+<h2>By vendor</h2><div id="ven"></div>
 <script>
-let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
-
-fetch('/api/discount-rules').catch(() => {}); // warm connection, ignore result
-
-function loadBranding() {
-  return fetch('/api/branding').then(r => r.ok ? r.json() : null).then(cfg => {
-    if (cfg) {
-      branding = cfg;
-      document.getElementById('rShopName').textContent = cfg.company_name || branding.company_name;
-      document.getElementById('rTagline').textContent = cfg.tagline || '';
-    }
-  }).catch(() => {});
-}
-loadBranding();
-
-function addItemRow(name, qty, price) {
-  const row = document.createElement('div');
-  row.className = 'item-row';
-  row.innerHTML = `
-    <div class="pick-wrap">
-      <input type="text" placeholder="Item name or code" class="i-name" autocomplete="off">
-      <div class="pick-list"></div>
-      <div class="stock-hint"></div>
-    </div>
-    <div class="qty-step">
-      <button type="button" class="q-minus" aria-label="One less">&minus;</button>
-      <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
-      <button type="button" class="q-plus" aria-label="One more">+</button>
-    </div>
-    <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01" onfocus="this.select()">
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
-  `;
-  row.querySelector('.i-name').value = name || '';      // set as a value, never as HTML
-  const qIn = row.querySelector('.i-qty');
-  const bump = d => { qIn.value = PosCart.stepQty(qIn.value, d); qIn.dispatchEvent(new Event('input', { bubbles: true })); };
-  row.querySelector('.q-minus').addEventListener('click', () => bump(-1));
-  row.querySelector('.q-plus').addEventListener('click', () => bump(1));
-  document.getElementById('itemRows').appendChild(row);
-  attachPicker(row);
-}
-
-// Item picker: type a name or code, choose from the catalogue, name + selling price fill in (both stay editable).
-// Free-typed items still work. Stock is shown, and a warning appears if the quantity is more than what is in stock.
-function attachPicker(row) {
-  const nameEl = row.querySelector('.i-name'), listEl = row.querySelector('.pick-list'), hintEl = row.querySelector('.stock-hint');
-  const qtyEl = row.querySelector('.i-qty'), priceEl = row.querySelector('.i-price');
-  let timer = null, results = [], active = -1, chosen = null, seq = 0;
-
-  const close = () => { listEl.classList.remove('open'); listEl.textContent = ''; results = []; active = -1; };
-  const showHint = () => {
-    if (!chosen) { hintEl.textContent = ''; hintEl.className = 'stock-hint'; return; }
-    const s = PosPicker.stockStatus(chosen, qtyEl.value);
-    hintEl.textContent = s.text; hintEl.className = 'stock-hint ' + s.level;
-  };
-  const choose = item => {
-    const f = PosPicker.fill(item);
-    chosen = item; nameEl.value = f.name; priceEl.value = f.price; row.dataset.itemCode = item.item_code || '';
-    close(); showHint(); qtyEl.focus(); qtyEl.select();
-  };
-  const draw = () => {
-    listEl.textContent = '';
-    results.forEach((item, i) => {
-      const o = PosPicker.optionLabel(item), div = document.createElement('div');
-      div.className = 'pick-opt' + (i === active ? ' active' : '');
-      const b = document.createElement('b'); b.textContent = o.title;
-      const s = document.createElement('span'); s.textContent = o.detail;
-      div.append(b, s);
-      div.addEventListener('mousedown', e => { e.preventDefault(); choose(item); });      // before the field loses focus
-      listEl.appendChild(div);
-    });
-    listEl.classList.toggle('open', results.length > 0);
-  };
-
-  nameEl.addEventListener('input', () => {
-    if (chosen && nameEl.value !== chosen.name) { chosen = null; delete row.dataset.itemCode; showHint(); }   // edited by hand: no longer "that item"
-    clearTimeout(timer);
-    const q = nameEl.value, mine = ++seq;
-    if (!q.trim()) { close(); return; }
-    timer = setTimeout(async () => {
-      const found = await PosPicker.search(q);
-      if (mine !== seq) return;                                                           // a newer search is running
-      results = found; active = -1; draw();
-    }, 200);
-  });
-  nameEl.addEventListener('keydown', e => {
-    if (!results.length) return;
-    if (e.key === 'ArrowDown') { active = (active + 1) % results.length; draw(); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { active = (active - 1 + results.length) % results.length; draw(); e.preventDefault(); }
-    else if (e.key === 'Enter' && active >= 0) { choose(results[active]); e.preventDefault(); }
-    else if (e.key === 'Escape') close();
-  });
-  nameEl.addEventListener('blur', () => setTimeout(close, 120));
-  qtyEl.addEventListener('input', showHint);
-}
-addItemRow();
-loadToday();
-
-function showError(msg) {
-  const el = document.getElementById('errMsg');
-  el.textContent = msg;
-  el.style.display = msg ? 'block' : 'none';
-}
-
-async function generateBill() {
-  showError('');
-  const rows = [...document.querySelectorAll('.item-row')];
-  const items = rows.map(r => ({
-    item_name: r.querySelector('.i-name').value.trim(),
-    item_code: r.dataset.itemCode || undefined,           // set when the item was picked from the catalogue
-    qty: parseFloat(r.querySelector('.i-qty').value),
-    unit_price: parseFloat(r.querySelector('.i-price').value),
-  }));
-  if (!items.length || items.some(it => !it.item_name || !(it.qty > 0) || !(it.unit_price >= 0))) {
-    showError('Add at least one item with a name, quantity, and unit price.');
-    return;
-  }
-  const discount_pct = parseFloat(document.getElementById('discountPct').value) || 0;
-  if (discount_pct < 0 || discount_pct > 100) {
-    showError('Discount % must be between 0 and 100.');
-    return;
-  }
-
-  const genBtn = document.getElementById('genBtn');
-  genBtn.disabled = true;
-  genBtn.textContent = editingId ? 'Saving…' : 'Generating…';
-
-  try {
-    const payload = {
-      customer_name: document.getElementById('customerName').value.trim() || null,
-      customer_phone: document.getElementById('customerPhone').value.trim() || null,
-      items,
-      discount_pct,
-      payment_method: document.getElementById('paymentMethod').value,
-    };
-    if (_quoteId && !editingId) payload.quotation_id = _quoteId;
-    // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
-    const mode = payload.payment_method;
-    if (['cheque', 'credit', 'split'].includes(mode)) {
-      const total = PosCart.totals(items.map(i => ({ qty: i.qty, unit_price: i.unit_price })), discount_pct).total;
-      const bp = PosCart.buildPayments(mode, total, { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() });
-      if (bp.error) throw new Error(bp.error);
-      payload.payments = bp.payments;
-      if (mode === 'credit' && !payload.customer_name && !payload.customer_phone) throw new Error('A credit bill needs the customer name or phone.');
-    }
-    const post = extra => fetch(editingId ? '/api/pos-bills/' + editingId : '/api/pos-bills', { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
-    let res = await post();
-    let data = await res.json();
-    // Over the discount cap: only the owner can approve it (the server checks), and it is recorded on the bill.
-    if (res.status === 409 && data.code === 'discount_over_cap' && data.can_override) {
-      if (!confirm(`${discount_pct}% is more than the allowed ${data.max_allowed}%.\n\nApprove this discount as the owner?`)) throw new Error('Not approved. Lower the discount or approve it.');
-      res = await post({ override: true });
-      data = await res.json();
-    }
-    if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
-    const wasEdit = !!editingId;
-    editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
-    _quoteId = null;   // the marker was saved with the bill
-    renderBill(data);
-    clearCustomer();   // the bill is saved: the next customer starts from an empty name and phone
-    if (wasEdit) loadToday();
-  } catch (e) {
-    showError(e.message);
-  } finally {
-    genBtn.disabled = false;
-    genBtn.textContent = editingId ? 'Save changes' : 'Generate Bill';
-  }
-}
-
-let currentBill = null;
-let editingId = null;                 // set while an existing bill is being edited (owner only)
-let isOwner = false;
-fetch('/api/me').then(r => r.ok ? r.json() : null).then(u => { if (u && u.role === 'admin') { isOwner = true; loadToday(); } }).catch(() => {});
-
-// Is the typed number on WhatsApp? Asked while the cashier types (after a short pause). Sends nothing.
-let _waTimer = null, _waSeq = 0;
-function waCheckSoon() {
-  const out = document.getElementById('waCheck');
-  clearTimeout(_waTimer);
-  const phone = document.getElementById('customerPhone').value.trim();
-  if (phone.replace(/\D/g, '').length < 9) { out.textContent = ''; out.className = 'wa-receipt-msg'; return; }
-  out.textContent = 'Checking WhatsApp…'; out.className = 'wa-receipt-msg';
-  const mine = ++_waSeq;
-  _waTimer = setTimeout(async () => {
-    try {
-      const r = await fetch('/api/invoice-receipts/check-number?phone=' + encodeURIComponent(phone));
-      const d = await r.json().catch(() => ({}));
-      if (mine !== _waSeq) return;
-      if (!r.ok) { out.textContent = d.error || 'Check the number'; out.className = 'wa-receipt-msg err'; }
-      else if (d.registered === true) { out.textContent = '✓ This number is on WhatsApp'; out.className = 'wa-receipt-msg ok'; }
-      else if (d.registered === false) { out.textContent = '✗ This number is NOT on WhatsApp. Check it, or hand over the printed bill.'; out.className = 'wa-receipt-msg err'; }
-      else { out.textContent = 'Could not check WhatsApp right now (it will still try when you print).'; out.className = 'wa-receipt-msg'; }
-    } catch (e) { if (mine === _waSeq) { out.textContent = ''; } }
-  }, 700);
-}
-try { if (localStorage.getItem('pos_auto_wa') === '0') document.getElementById('autoWa').checked = false; } catch (e) {}
-
-// Print the bill and, if the box is ticked and the bill has a phone, send the receipt to the customer's WhatsApp.
-async function printBill() {
-  window.print();
-  if (!currentBill || !document.getElementById('autoWa').checked || !currentBill.customer_phone) return;
-  await sendWhatsAppReceipt(true);
-}
-
-// Sends the designed receipt image for the bill on screen through the WhatsApp bridge.
-// auto = called by Print: never asks questions, never sends twice, and says plainly what happened.
-async function sendWhatsAppReceipt(auto) {
-  const msg = document.getElementById('waReceiptMsg');
-  const btn = document.getElementById('waReceiptBtn');
-  const setMsg = (t, cls) => { msg.textContent = t; msg.className = 'wa-receipt-msg' + (cls ? ' ' + cls : ''); };
-  if (!currentBill) return;
-  let phone = currentBill.customer_phone;
-  if (!phone && auto) return;
-  if (!phone) {
-    phone = prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):');
-    if (!phone) return;
-  }
-  btn.disabled = true;
-  setMsg('Building and sending the receipt…');
-  try {
-    let res = await fetch('/api/invoice-receipts/send', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim() }),
-    });
-    let d = await res.json().catch(() => ({}));
-    if (res.status === 409 && d.code === 'already_sent') {
-      if (auto) { setMsg('Receipt was already sent to this customer.', 'ok'); return; }
-      // Sent before: only send again if the cashier confirms.
-      if (!confirm(d.error)) { setMsg('Not sent again.', ''); return; }
-      res = await fetch('/api/invoice-receipts/send', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim(), resend: true }),
+(function () {
+  var rs = function (n) { return 'Rs ' + Number(n || 0).toLocaleString('en-LK', { maximumFractionDigits: 0 }); };
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function stat(label, value, cls) { var c = el('div', 'card'); c.appendChild(el('div', 'sm', label)); c.appendChild(el('div', 'big' + (cls ? ' ' + cls : ''), rs(value))); return c; }
+  function load() {
+    fetch('/api/vendor-credit/summary?months=1,2,3', { credentials: 'include' }).then(function (r) {
+      if (r.status === 401) { location.href = '/bathco_complete.html'; return null; }
+      return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+    }).then(function (x) {
+      if (!x) return;
+      var msg = document.getElementById('msg');
+      if (!x.ok) { msg.textContent = (x.d && x.d.error) || 'Could not load'; return; }
+      var d = x.d, t = d.totals; msg.textContent = d.vendors.length ? 'Up to date for ' + d.today : 'Nothing owed to any vendor.';
+      var tot = document.getElementById('tot'); tot.textContent = '';
+      tot.appendChild(stat('Total owed', t.owed));
+      tot.appendChild(stat('Cheque not written', t.notWritten, t.notWritten > 0 ? 'bad' : 'good'));
+      tot.appendChild(stat('Written, not cleared', t.writtenNotClear));
+      tot.appendChild(stat('Past the vendor\'s date', t.pastDue, t.pastDue > 0 ? 'bad' : 'good'));
+      [1, 2, 3].forEach(function (m) { tot.appendChild(stat('Still owed after ' + m + (m === 1 ? ' month' : ' months'), t.after[m])); });
+      if (d.planner && d.planner.count) {
+        tot.appendChild(stat('Planner cheques, not on a bill (' + d.planner.count + ')', d.planner.total, 'bad'));
+        [1, 2, 3].forEach(function (m) { tot.appendChild(stat('Planner cheques due within ' + m + (m === 1 ? ' month' : ' months'), d.planner.dueBy[m])); });
+      }
+      var lg = document.getElementById('long'); lg.textContent = '';
+      if (d.longDated.length) {
+        var a = el('div', 'alert'); a.appendChild(el('strong', 'bad', 'Heads-up: cheques that clear after more than 3 months'));
+        d.longDated.forEach(function (c) { a.appendChild(el('div', 'sm', c.vendor + ' — ' + rs(c.amount) + ' — clears ' + c.clears_on + ' (' + c.days_ahead + ' days away)')); });
+        lg.appendChild(a);
+      }
+      var ven = document.getElementById('ven'); ven.textContent = '';
+      d.vendors.forEach(function (v) {
+        var box = el('div', 'vendor');
+        box.appendChild(el('strong', '', v.vendor));
+        box.appendChild(el('div', 'big', rs(v.owed)));
+        box.appendChild(el('div', 'sm', 'Cheque not written ' + rs(v.notWritten) + ' · Written, not cleared ' + rs(v.writtenNotClear)));
+        box.appendChild(el('div', 'sm', 'After 1 month ' + rs(v.after[1]) + ' · 2 months ' + rs(v.after[2]) + ' · 3 months ' + rs(v.after[3])));
+        v.bills.forEach(function (b) {
+          var row = el('div', 'bill');
+          row.appendChild(el('span', '', (b.bill_no || 'Bill') + ' — ' + rs(b.owed) + ' owed '));
+          row.appendChild(el('span', 'chip', b.status_text));
+          if (b.due_date) row.appendChild(el('div', 'sm' + (b.overdue ? ' bad' : ''), (b.overdue ? 'Vendor date passed: ' : 'Vendor wants payment by ') + b.due_date + (b.notCoveredAtDue > 0 && !b.overdue ? ' — not covered by written cheques: ' + rs(b.notCoveredAtDue) : '')));
+          box.appendChild(row);
+        });
+        ven.appendChild(box);
       });
-      d = await res.json().catch(() => ({}));
-    }
-    if (!res.ok) throw new Error(d.error || 'the server answered ' + res.status);
-    currentBill.customer_phone = phone.trim();
-    setMsg(`Receipt sent to ${d.to}.`, 'ok');
-  } catch (e) {
-    setMsg(`Receipt not sent: ${e.message}`, 'err');
-  } finally {
-    btn.disabled = false;
+    }).catch(function (e) { document.getElementById('msg').textContent = 'Could not reach the server: ' + e.message; });
   }
-}
-
-function renderBill(bill) {
-  currentBill = bill;
-  document.getElementById('waReceiptMsg').textContent = '';
-  const sym = branding.currency_symbol || 'Rs';
-  document.getElementById('rMeta').innerHTML = `
-    <div class="row"><span>Bill No:</span><span>${bill.bill_number}</span></div>
-    <div class="row"><span>Date:</span><span>${new Date(bill.created_at).toLocaleString()}</span></div>
-    ${bill.customer_name ? `<div class="row"><span>Customer:</span><span>${escapeHtml(bill.customer_name)}</span></div>` : ''}
-    ${bill.voided ? `<div class="row"><span><b>VOID</b></span><span>${escapeHtml(bill.void_reason || '')}</span></div>` : ''}
-  `;
-  document.getElementById('rItems').innerHTML = bill.items.map(it => `
-    <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
-  `).join('');
-  let totalsHtml = `<div class="row"><span>Subtotal</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
-  if (Number(bill.discount_amount) > 0) {
-    totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
-  }
-  totalsHtml += `<div class="row grand-total"><span>Total</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
-  if (Array.isArray(bill.payments) && bill.payments.length) {
-    totalsHtml += bill.payments.map(p => `<div class="row"><span>Paid by ${escapeHtml(p.method.toUpperCase())}${p.reference ? ' (' + escapeHtml(p.reference) + ')' : ''}${p.method === 'credit' ? ' (pays later)' : ''}</span><span>${sym} ${Number(p.amount).toFixed(2)}</span></div>`).join('');
-  } else {
-    totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
-  }
-  document.getElementById('rTotals').innerHTML = totalsHtml;
-
-  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
-  document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
-  document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
-  document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
-
-  document.getElementById('formPanel').style.display = 'none';
-  document.getElementById('billPanel').style.display = 'block';
-  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Attach a photo or file to this bill</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
-}
-
-// wa.me needs the full international number, no leading 0 and no '+'.
-// Sri Lankan local numbers are entered as 0XXXXXXXXX; assume LK (94) unless
-// the number already carries a country code (11+ digits or already starts with 94).
-function toWhatsAppNumber(raw) {
-  let digits = (raw || '').replace(/[^0-9]/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('94')) return digits;
-  if (digits.startsWith('0')) return '94' + digits.slice(1);
-  return digits;
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-// Discount cap hint (from the owner's discount rule). A warning only: the server enforces it.
-let discountCap = { max_allowed: null, can_override: false };
-fetch('/api/pos-bills/discount-cap').then(r => r.ok ? r.json() : null).then(c => { if (c) { discountCap = c; updateCapHint(); } }).catch(() => {});
-function updateCapHint() {
-  const el = document.getElementById('capHint');
-  if (discountCap.max_allowed === null) { el.textContent = ''; el.className = 'cap-hint'; return; }
-  const pct = parseFloat(document.getElementById('discountPct').value) || 0, over = pct > discountCap.max_allowed;
-  el.className = 'cap-hint' + (over ? ' warn' : '');
-  el.textContent = over
-    ? `Over the ${discountCap.max_allowed}% limit. ` + (discountCap.can_override ? 'You will be asked to approve it.' : 'The owner must approve this.')
-    : `Maximum discount: ${discountCap.max_allowed}%`;
-}
-
-// Today's bills (Sri Lanka date), with the day's total.
-async function loadToday() {
-  const box = document.getElementById('todayBox');
-  try {
-    const r = await fetch('/api/pos-bills/today');
-    if (!r.ok) { box.textContent = ''; return; }
-    const d = await r.json(), sym = branding.currency_symbol || 'Rs';
-    const esc = escapeHtml;
-    box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}${d.bills.some(b => b.voided) ? ' <span class="sub">(void bills not counted)</span>' : ''}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
-      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a> <button type="button" class="mini-btn" title="Photos and files" onclick="toggleBillFiles(${b.id}, this)"><svg class="bh-icon" aria-hidden="true"><use href="#i-paperclip"/></svg></button>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
-  } catch (e) { box.textContent = ''; }
-}
-
-function toggleBillFiles(id, btn) {
-  const tr = btn.closest('tr'), next = tr.nextElementSibling;
-  if (next && next.classList.contains('files-row')) { next.remove(); return; }
-  const row = document.createElement('tr'); row.className = 'files-row';
-  row.innerHTML = '<td colspan="4"></td>'; tr.after(row);
-  const w = document.createElement('div'); row.firstChild.appendChild(w);
-  if (window.AttachWidget) AttachWidget.mount(w, { type: 'pos_bill', id });
-}
-
-async function voidBill(id, number) {
-  const reason = prompt('Void bill ' + number + '?\nThe bill is kept, marked VOID and left out of today\'s totals. Stock is given back.\n\nReason (required):');
-  if (reason === null) return;
-  if (reason.trim().length < 3) { alert('A reason is required to void a bill.'); return; }
-  const r = await fetch('/api/pos-bills/' + id + '/void', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) { alert(d.error || 'Could not void the bill'); return; }
-  loadToday();
-}
-
-async function editBill(id) {
-  const r = await fetch('/api/pos-bills/' + id);
-  if (!r.ok) { alert('Could not load that bill'); return; }
-  const b = await r.json();
-  if (b.voided) { alert('A void bill cannot be edited.'); return; }
-  if (Array.isArray(b.payments) && b.payments.length) { alert('This bill was paid by cheque, credit or split payment. Void it and enter it again.'); return; }
-  document.getElementById('itemRows').innerHTML = '';
-  b.items.forEach(it => { addItemRow(it.item_name, Number(it.qty), Number(it.unit_price)); if (it.item_code) document.querySelector('#itemRows .item-row:last-child').dataset.itemCode = it.item_code; });
-  document.getElementById('customerName').value = b.customer_name || '';
-  document.getElementById('customerPhone').value = b.customer_phone || '';
-  document.getElementById('discountPct').value = Number(b.discount_pct) || 0;
-  document.getElementById('paymentMethod').value = b.payment_method || 'cash';
-  editingId = id;
-  const ban = document.getElementById('editBanner');
-  ban.textContent = 'Editing bill ' + b.bill_number + '. The old version is saved in the bill history.'; ban.style.display = 'block';
-  document.getElementById('genBtn').textContent = 'Save changes';
-  document.getElementById('cancelEditBtn').style.display = 'inline-block';
-  updateCapHint();
-  document.getElementById('formPanel').style.display = 'block';
-  document.getElementById('billPanel').style.display = 'none';
-  window.scrollTo(0, 0);
-}
-
-// ───────── PAYMENT TYPES ─────────
-function currentTotal() {
-  return PosCart.totals(cartRows(), document.getElementById('discountPct').value).total;
-}
-function splitRowsData() {
-  return [...document.querySelectorAll('#splitRows .split-row')].map(r => ({ method: r.querySelector('.s-method').value, amount: r.querySelector('.s-amount').value, reference: r.querySelector('.s-ref').value }));
-}
-function splitHintUpdate() {
-  showError('');                       // an old "payments do not add up" message goes away as soon as the rows change
-  const rem = PosCart.splitRemaining(currentTotal(), splitRowsData()), h = document.getElementById('splitHint'), sym = branding.currency_symbol || 'Rs';
-  h.className = 'cap-hint' + (rem === 0 ? '' : ' warn');
-  h.textContent = rem === 0 ? 'Payments add up to the total.' : (rem > 0 ? 'Still to cover: ' + sym + ' ' + rem.toFixed(2) : 'Over the total by ' + sym + ' ' + Math.abs(rem).toFixed(2));
-}
-function addSplitRow(data) {
-  const d = data || {}, row = document.createElement('div'); row.className = 'split-row';
-  const sel = document.createElement('select'); sel.className = 's-method'; sel.setAttribute('aria-label', 'Payment method');
-  [['cash', 'Cash'], ['card', 'Card'], ['online', 'Online'], ['cheque', 'Cheque'], ['credit', 'Credit']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
-  const amt = document.createElement('input'); amt.type = 'number'; amt.className = 's-amount'; amt.min = '0'; amt.step = '0.01'; amt.placeholder = 'Amount'; amt.setAttribute('aria-label', 'Amount');
-  const ref = document.createElement('input'); ref.type = 'text'; ref.className = 's-ref'; ref.placeholder = 'Cheque number, bank, date'; ref.maxLength = 120;
-  const del = document.createElement('button'); del.type = 'button'; del.className = 's-del mini-btn'; del.textContent = 'Remove'; del.onclick = () => { row.remove(); splitHintUpdate(); };
-  sel.value = d.method || 'cash';
-  amt.value = d.amount !== undefined ? d.amount : (() => { const r = PosCart.splitRemaining(currentTotal(), splitRowsData()); return r > 0 ? r : ''; })();
-  ref.value = d.reference || '';
-  const showRef = () => { ref.style.display = sel.value === 'cheque' ? 'block' : 'none'; };
-  sel.addEventListener('change', () => { showRef(); splitHintUpdate(); }); amt.addEventListener('input', splitHintUpdate); showRef();
-  row.append(sel, amt, ref, del);
-  document.getElementById('splitRows').appendChild(row);
-  splitHintUpdate();
-}
-function payModeChanged() {
-  const m = document.getElementById('paymentMethod').value;
-  document.getElementById('chequeBox').style.display = m === 'cheque' ? 'block' : 'none';
-  document.getElementById('creditNote').style.display = m === 'credit' ? 'block' : 'none';
-  document.getElementById('splitBox').style.display = m === 'split' ? 'block' : 'none';
-  if (m === 'split' && !document.querySelector('#splitRows .split-row')) { addSplitRow({ method: 'cash' }); addSplitRow({ method: 'card' }); }
-  if (m === 'split') splitHintUpdate();
-}
-document.getElementById('paymentMethod').addEventListener('change', payModeChanged);
-document.getElementById('discountPct').addEventListener('input', () => { if (document.getElementById('paymentMethod').value === 'split') splitHintUpdate(); });
-
-// ───────── SCAN, HOLD, REPRINT (screen only: nothing here saves a bill) ─────────
-function cartRows() {
-  return [...document.querySelectorAll('#itemRows .item-row')].map(r => ({
-    item_code: r.dataset.itemCode || '', name: r.querySelector('.i-name').value.trim(),
-    qty: parseFloat(r.querySelector('.i-qty').value) || 1, unit_price: parseFloat(r.querySelector('.i-price').value) || 0 }));
-}
-function setCartRows(rows) {
-  const box = document.getElementById('itemRows'); box.innerHTML = '';
-  (rows.length ? rows : [{}]).forEach(r => { addItemRow(r.name, r.qty, r.unit_price); if (r.item_code) box.lastElementChild.dataset.itemCode = r.item_code; });
-}
-function scanMsg(text, cls) { const el = document.getElementById('scanMsg'); el.textContent = text; el.className = 'scan-msg' + (cls ? ' ' + cls : ''); }
-
-async function scanCode() {
-  const box = document.getElementById('scanBox');
-  const code = PosCart.cleanCode(box.value);
-  box.value = '';
-  if (!code) return;
-  scanMsg('Looking up ' + code + '…');
-  const found = PosCart.findExact(await PosPicker.search(code, undefined, 50), code);
-  if (!found) { scanMsg('Code ' + code + ' not found. Nothing added.', 'err'); box.focus(); return; }
-  const rows = cartRows().filter(r => r.name);                 // the empty starter row is dropped
-  const before = rows.find(r => r.item_code === String(found.item_code));
-  setCartRows(PosCart.addScanned(rows, found));
-  scanMsg('Added ' + found.name + ' (qty ' + ((before ? before.qty : 0) + 1) + ')', 'ok');
-  box.focus();
-}
-document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
-
-function toggleTool(id) {
-  ['heldPanel', 'findPanel', 'quotePanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });
-  if (id === 'heldPanel') drawHeld();
-  if (id === 'quotePanel' && document.getElementById('quotePanel').classList.contains('open')) loadQuotes();
-}
-// ───────── LOAD QUOTATION (read only: the quotation is never changed; the bill is saved by the normal button) ─────────
-let _quotes = [];
-let _billed = {};      // quotation id -> bill number it was already billed as (live bills only)
-let _quoteId = null;   // the quotation the screen was loaded from; sent with the bill so it can be marked
-async function loadQuotes() {
-  const out = document.getElementById('quoteResults'); out.textContent = 'Loading…';
-  try { const r = await fetch('/api/quotations'); _quotes = r.ok ? await r.json() : []; } catch (e) { _quotes = []; }
-  try { const r = await fetch('/api/pos-ledger/quotation-billed'); _billed = r.ok ? await r.json() : {}; } catch (e) { _billed = {}; }
-  drawQuotes();
-}
-function drawQuotes() {
-  const out = document.getElementById('quoteResults'), f = document.getElementById('quoteBox').value.trim().toLowerCase(), sym = branding.currency_symbol || 'Rs';
-  out.textContent = '';
-  const list = _quotes.filter(q => !f || String(q.quote_no || '').toLowerCase().includes(f) || String(q.customer_name || '').toLowerCase().includes(f)).slice(0, 15);
-  if (!list.length) { out.textContent = _quotes.length ? 'No quotation matches.' : 'No quotations.'; return; }
-  list.forEach(q => {
-    const row = document.createElement('div'); row.className = 't-row';
-    const info = document.createElement('span');
-    info.textContent = (q.quote_no || 'Q-' + q.id) + ' · ' + (q.customer_name || 'No customer') + ' · ' + sym + ' ' + Number(q.total || 0).toLocaleString() + ' · ' + (q.status || '');
-    if (_billed[q.id]) info.textContent += ' · Already billed (' + _billed[q.id] + ')';
-    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Load'; go.onclick = () => loadQuote(q.id);
-    row.append(info, go); out.appendChild(row);
-  });
-}
-async function loadQuote(id) {
-  try {
-    const r = await fetch('/api/quotations/' + id);
-    if (!r.ok) { scanMsg('Could not open that quotation.', 'err'); return; }
-    const qj = await r.json();
-    if (_billed[id] && !confirm('Quotation ' + (qj.quote_no || id) + ' was already billed as ' + _billed[id] + '. Load it again?')) return;
-    const c = PosCart.quotationToCart(qj);
-    if (!c.rows.length) { scanMsg('That quotation has no items.', 'err'); return; }
-    if (cartRows().some(x => x.name) && !confirm('The screen has items. Replace them with quotation ' + c.quote_no + '?')) return;
-    resetForm(true); setCartRows(c.rows);
-    _quoteId = id;
-    document.getElementById('customerName').value = c.customer_name; document.getElementById('customerPhone').value = c.customer_phone;
-    document.getElementById('discountPct').value = c.discount_pct; updateCapHint();
-    document.getElementById('quotePanel').classList.remove('open');
-    const sym = branding.currency_symbol || 'Rs';
-    scanMsg('Loaded ' + c.quote_no + ': bill total ' + sym + ' ' + c.bill_total.toLocaleString() + (c.matches ? ' (same as the quotation).' : ' (the quotation said ' + sym + ' ' + c.quote_total.toLocaleString() + '. Check the prices.)'), c.matches ? 'ok' : 'err');
-  } catch (e) { scanMsg('Could not load the quotation.', 'err'); }
-}
-document.getElementById('quoteBox').addEventListener('input', drawQuotes);
-
-function drawHeld() {
-  const list = PosCart.loadHeld(), panel = document.getElementById('heldPanel');
-  document.getElementById('heldBtn').textContent = 'Held bills (' + list.length + ')';
-  panel.textContent = '';
-  if (!list.length) { panel.textContent = 'No held bills.'; return; }
-  list.forEach(h => {
-    const t = PosCart.totals(h.rows, h.discount_pct).total, row = document.createElement('div'); row.className = 't-row';
-    const info = document.createElement('span');
-    info.textContent = new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + (h.customer_name || 'Walk-in') + ' · ' + h.rows.length + ' item(s) · ' + (branding.currency_symbol || 'Rs') + ' ' + t.toLocaleString();
-    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Resume'; go.onclick = () => resumeBill(h.id);
-    const del = document.createElement('button'); del.type = 'button'; del.className = 'danger'; del.textContent = 'Delete'; del.onclick = () => deleteHeld(h.id);
-    row.append(info, go, del); panel.appendChild(row);
-  });
-}
-function holdBill() {
-  const cart = { customer_name: document.getElementById('customerName').value, customer_phone: document.getElementById('customerPhone').value,
-    discount_pct: document.getElementById('discountPct').value, payment_method: document.getElementById('paymentMethod').value, rows: cartRows(),
-    pay_extra: { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() } };
-  const r = PosCart.holdAdd(PosCart.loadHeld(), PosCart.makeHeld(cart));
-  if (!r.ok) { scanMsg(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.', 'err'); return; }
-  if (!PosCart.saveHeld(undefined, r.list)) { scanMsg('This browser would not keep the held bill. Nothing was held.', 'err'); return; }
-  resetForm(true);
-  scanMsg('Bill held on this device. It is not saved as a bill.', 'ok'); drawHeld();
-}
-function resumeBill(id) {
-  const list = PosCart.loadHeld(), h = PosCart.holdGet(list, id);
-  if (!h) return;
-  if (cartRows().some(r => r.name) && !confirm('The screen has items. Replace them with this held bill? (Hold the current bill first to keep it.)')) return;
-  resetForm(true);
-  setCartRows(h.rows);
-  document.getElementById('customerName').value = h.customer_name; document.getElementById('customerPhone').value = h.customer_phone;
-  document.getElementById('discountPct').value = h.discount_pct; document.getElementById('paymentMethod').value = h.payment_method;
-  if (h.pay_extra) { document.getElementById('chequeRef').value = h.pay_extra.chequeRef || ''; document.getElementById('splitRows').innerHTML = ''; (h.pay_extra.split || []).forEach(r => addSplitRow(r)); }
-  payModeChanged();
-  PosCart.saveHeld(undefined, PosCart.holdRemove(list, id));
-  updateCapHint(); drawHeld(); scanMsg('Held bill resumed.', 'ok');
-}
-function deleteHeld(id) {
-  if (!confirm('Delete this held bill? It cannot be brought back.')) return;
-  PosCart.saveHeld(undefined, PosCart.holdRemove(PosCart.loadHeld(), id)); drawHeld();
-}
-
-async function openBillById(id) {
-  const r = await fetch('/api/pos-bills/' + id);
-  if (!r.ok) { scanMsg('Could not open that bill.', 'err'); return; }
-  renderBill(await r.json());
-}
-async function openLastBill() {
-  try {
-    const r = await fetch('/api/pos-bills');
-    const rows = r.ok ? await r.json() : [];
-    if (!rows.length) { scanMsg('No bills yet.', 'err'); return; }
-    await openBillById(rows[0].id);
-  } catch (e) { scanMsg('Could not load the last bill.', 'err'); }
-}
-async function findBills() {
-  const q = document.getElementById('findBox').value.trim(), out = document.getElementById('findResults');
-  out.textContent = '';
-  if (!q) return;
-  try {
-    const r = await fetch('/api/pos-bills?q=' + encodeURIComponent(q));
-    const rows = (r.ok ? await r.json() : []).slice(0, 10);
-    if (!rows.length) { out.textContent = 'No bill found for "' + q + '".'; return; }
-    if (rows.length === 1) { await openBillById(rows[0].id); return; }
-    rows.forEach(b => {
-      const row = document.createElement('div'); row.className = 't-row';
-      const info = document.createElement('span'); info.textContent = b.bill_number + (b.voided ? ' (VOID)' : '') + ' · ' + (branding.currency_symbol || 'Rs') + ' ' + Number(b.total).toLocaleString();
-      const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Open'; go.onclick = () => openBillById(b.id);
-      row.append(info, go); out.appendChild(row);
-    });
-  } catch (e) { out.textContent = 'Could not search bills.'; }
-}
-document.getElementById('findBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); findBills(); } });
-drawHeld();
-
-function resetForm() {
-  loadToday();
-  _quoteId = null;
-  editingId = null;
-  document.getElementById('editBanner').style.display = 'none';
-  document.getElementById('cancelEditBtn').style.display = 'none';
-  document.getElementById('genBtn').textContent = 'Generate Bill';
-  document.getElementById('itemRows').innerHTML = '';
-  addItemRow();
-  clearCustomer();
-  document.getElementById('paymentMethod').value = 'cash'; document.getElementById('chequeRef').value = ''; document.getElementById('splitRows').innerHTML = ''; payModeChanged();
-  if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
-  document.getElementById('discountPct').value = 0;
-  updateCapHint();
-  document.getElementById('formPanel').style.display = 'block';
-  document.getElementById('billPanel').style.display = 'none';
-}
-// ---- customer name / phone: drop-down list, no stale value (Task 30) ----
-let _custId = null;   // set only when a row is TAPPED in the list
-function clearCustomer() {
-  document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = '';
-  _custId = null; const w = document.getElementById('waCheck'); if (w) { w.textContent = ''; w.className = 'wa-receipt-msg'; }
-}
-(function () {
-  const nameBox = document.getElementById('customerName'), phoneBox = document.getElementById('customerPhone');
-  clearCustomer();   // opening the screen starts empty
-  let pickedPhone = '';   // the phone a TAP filled in; if the name is then retyped, that phone is dropped with it
-  const base = { load: () => fetch('/api/customers').then(r => (r.ok ? r.json() : [])), text: c => c.name || c.phone || '', sub: c => c.phone || '', match: c => (c.name || '') + ' ' + (c.phone || ''),
-    onPick: c => { nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
-  const nameOpts = Object.assign({}, base, { onType: () => { if (_custId && phoneBox.value === pickedPhone) { phoneBox.value = ''; waCheckSoon(); } _custId = null; } });
-  const phoneOpts = Object.assign({}, base, { onType: () => { _custId = null; } });
-  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); }
-})();
-
-
-// ---- Compact POS: Bill tools drop-down + Enter moves to the next box (Ajmal 11:47) ----
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  var menu = $('toolMenu'), btn = $('toolsBtn');
-  function setMenu(open) { if (!menu) return; menu.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
-  if (btn) {
-    btn.addEventListener('click', function (e) { e.stopPropagation(); setMenu(!menu.classList.contains('open')); });
-    menu.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') setMenu(false); });
-    document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn) setMenu(false); });
-  }
-  // Enter -> next box. Enter never picks a suggestion (Task 30 rule) and never generates the bill by itself.
-  function next(id, to) {
-    var el = $(id); if (!el) return;
-    el.addEventListener('keydown', function (e) {
-      if (e.key !== 'Enter' || e.isComposing) return;
-      e.preventDefault();
-      var t = typeof to === 'function' ? to() : $(to);
-      if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') try { t.select(); } catch (x) {} }
-    });
-  }
-  next('customerName', 'customerPhone');
-  next('customerPhone', 'scanBox');
-  next('discountPct', 'paymentMethod');
-  next('paymentMethod', function () { var c = $('chequeRef'); return (c && c.offsetParent) ? c : $('genBtn'); });
-  next('chequeRef', 'genBtn');
-  // Opening the screen: cursor starts in Customer name.
-  try { var cn = $('customerName'); if (cn && !/Mobi|Android/i.test(navigator.userAgent)) cn.focus(); } catch (e) {}
+  load();
 })();
 </script>
-
-<script src="/attach-widget.js"></script>
-<script src="/bathhub-logo.js"></script>
-</body>
-</html>
+</main></body></html>
 
 ```
 
 
 ---
-## SOURCE FILE: public/bathco_complete.html
+### SOURCE FILE: public/bathco_complete.html
 ```html
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -1835,10 +1209,13 @@ table tr:last-child td{border-bottom:none}
   .main-content,.page{min-width:0;max-width:100vw}
   .page table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
+/* embed mode: the new shell shows a screen inside a frame, without this page's own menu and header */
+.embed .sidebar,.embed .topbar{display:none!important}.embed .main-content{margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 </head>
 <body>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
 <canvas id="confetti-canvas"></canvas>
 <div id="toasts"></div>
 <nav id="bottom-nav" aria-label="Main menu">
