@@ -63,6 +63,17 @@
           '<li><span></span><a href="/api/attachments/zip?record_type=' + encodeURIComponent(state.type) + '&record_id=' + encodeURIComponent(state.id) + '">Download all as .zip</a></li>'
         : '<li><span>No files attached here yet.</span></li>';
     }
+    list.addEventListener('click', async function (ev) {
+      var a = ev.target.closest && ev.target.closest('[data-rm]'); if (!a) return;
+      ev.preventDefault();
+      if (!confirm('Remove this file from here? It is hidden, not erased, and the removal is logged.')) return;
+      try {
+        var r = await fetch('/api/attachments/' + encodeURIComponent(a.getAttribute('data-rm')), { method: 'DELETE', credentials: 'same-origin' });
+        var j = await r.json().catch(function () { return {}; });
+        if (!r.ok) throw new Error(j.error || 'Could not remove');
+        say('Removed.'); await refresh();
+      } catch (e) { say(e.message, true); }
+    });
     async function send(file) {
       if (!file) return;
       if (file.size > MAX) return say('That file is bigger than 10 MB.', true);

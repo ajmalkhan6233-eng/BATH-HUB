@@ -28,7 +28,7 @@ function createRouter({ ocr } = {}) {
       res.json(GrnImport.fromOcr(doc));
     } catch (e) {
       console.error('[grn-read-photo]', e.message);
-      res.status(502).json({ error: 'The free AI reader is busy or failed. Try again in a minute, or use Fill from file.' });
+      res.status(502).json({ error: 'AI reader failed: ' + String(e.message || e).slice(0, 140) + ' (use Fill from file meanwhile)' });
     } finally { try { fs.unlinkSync(tmp); } catch (_) {} }
   });
   return router;

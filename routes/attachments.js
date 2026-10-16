@@ -3,6 +3,7 @@
 //   POST /api/attachments                      multipart: file, record_type, record_id [, client_uuid]   (admin only)
 //   GET  /api/attachments?record_type=&record_id=                                                          list
 //   GET  /api/attachments/:id/download                                                                     one file
+//   DELETE /api/attachments/:id                                                                            Remove (hidden, file kept, logged; admin only)
 //   GET  /api/attachments/zip?record_type=&record_id=                                                      all of one record as .zip
 // Login is required (server.js gate). New table only (attachments); nothing existing is altered. Files live in uploads/attachments.
 // client_uuid is the idempotency key for the offline queue: the same key sent twice returns the first result, never a duplicate.
@@ -40,6 +41,8 @@ pool.query(`
         stored_name VARCHAR(80)  NOT NULL,
         client_uuid VARCHAR(64)
     )`)
+  .then(() => pool.query(`ALTER TABLE attachments ADD COLUMN IF NOT EXISTS removed_at TIMESTAMPTZ`))
+  .then(() => pool.query(`ALTER TABLE attachments ADD COLUMN IF NOT EXISTS removed_by VARCHAR(100)`))
   .then(() => pool.query(`CREATE INDEX IF NOT EXISTS attachments_record_idx ON attachments (record_type, record_id)`))
   .then(() => pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS attachments_client_uuid_idx ON attachments (client_uuid) WHERE client_uuid IS NOT NULL`))
   .catch(e => console.error('[attachments] migration failed:', e.message));
@@ -103,7 +106,7 @@ router.get('/attachments', async (req, res) => {
     try {
         const { record_type, record_id } = req.query;
         if (!RECORD_TYPES.has(record_type) || !isRecordId(record_id)) return res.status(400).json({ error: 'record_type and record_id are required.' });
-        const r = await pool.query(`SELECT * FROM attachments WHERE record_type = $1 AND record_id = $2 ORDER BY id DESC`, [record_type, String(record_id)]);
+        const r = await pool.query(`SELECT * FROM attachments WHERE record_type = $1 AND record_id = $2 AND removed_at IS NULL ORDER BY id DESC`, [record_type, String(record_id)]);
         res.json(r.rows.map(shape));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -114,7 +117,7 @@ router.get('/attachments/zip', async (req, res) => {
         if (!archiver) return res.status(501).json({ error: 'Zip download is not available on this server.' });
         const { record_type, record_id } = req.query;
         if (!RECORD_TYPES.has(record_type) || !isRecordId(record_id)) return res.status(400).json({ error: 'record_type and record_id are required.' });
-        const r = await pool.query(`SELECT * FROM attachments WHERE record_type = $1 AND record_id = $2 ORDER BY id`, [record_type, String(record_id)]);
+        const r = await pool.query(`SELECT * FROM attachments WHERE record_type = $1 AND record_id = $2 AND removed_at IS NULL ORDER BY id`, [record_type, String(record_id)]);
         if (!r.rows.length) return res.status(404).json({ error: 'No files attached here yet.' });
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${cleanName(record_type + '-' + record_id)}.zip"`);
@@ -137,13 +140,24 @@ router.get('/attachments/zip', async (req, res) => {
 router.get('/attachments/:id/download', async (req, res) => {
     try {
         if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'not found' });
-        const r = await pool.query(`SELECT filename, mime, stored_name FROM attachments WHERE id = $1`, [req.params.id]);
+        const r = await pool.query(`SELECT filename, mime, stored_name FROM attachments WHERE id = $1 AND removed_at IS NULL`, [req.params.id]);
         if (!r.rows.length) return res.status(404).json({ error: 'not found' });
         const p = path.join(DIR, r.rows[0].stored_name);
         if (!fs.existsSync(p)) return res.status(404).json({ error: 'The file is missing on disk.' });
         res.setHeader('X-Content-Type-Options', 'nosniff');
         res.type(r.rows[0].mime);
         res.download(r.rows[0].stored_name, r.rows[0].filename, { root: DIR });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// REMOVE: hides the file from every list and download. The file itself is KEPT on disk (zero-deletion rule) and the removal is logged.
+router.delete('/attachments/:id', adminOnly, async (req, res) => {
+    try {
+        if (!/^\d+$/.test(req.params.id)) return res.status(404).json({ error: 'not found' });
+        const r = await pool.query(`UPDATE attachments SET removed_at = NOW(), removed_by = $2 WHERE id = $1 AND removed_at IS NULL RETURNING id, filename, record_type, record_id`, [req.params.id, whoOf(req)]);
+        if (!r.rows.length) return res.status(404).json({ error: 'not found' });
+        try { await require('../utils/moneyAudit').log(pool, { who: whoOf(req), action: 'attachment_removed', table: 'attachments', id: r.rows[0].id, oldValue: r.rows[0].filename, newValue: 'removed', reason: `${r.rows[0].record_type} ${r.rows[0].record_id}` }); } catch (_) {}
+        res.json({ ok: true, id: r.rows[0].id });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
