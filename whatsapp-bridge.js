@@ -182,7 +182,12 @@ client.on('message', async (msg) => {
             const payload = { from: isFamilyMsg ? resolved : OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
             if (isFamilyMsg && msg.hasMedia) { await msg.reply('I can read text messages only.'); return; }   // family: text only, her files are never downloaded or saved
             if (msg.hasMedia) {
-                const media = await msg.downloadMedia();
+                let media = null;   // WhatsApp Web sometimes fails the first download: retry up to 3 times, log the FULL error each time
+                for (let attempt = 1; attempt <= 3 && !media; attempt++) {
+                    try { media = await msg.downloadMedia(); } catch (e) { console.error(`[WA-BRIDGE] downloadMedia attempt ${attempt}/3 failed:`, e && e.message, '|', String((e && e.stack) || e)); }
+                    if (!media && attempt < 3) await new Promise((r) => setTimeout(r, 2000 * attempt));
+                }
+                if (!media) throw new Error('downloadMedia failed after 3 tries (see the log lines above)');
                 const mime = (media && media.mimetype) || '';
                 const type = mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'audio' : mime === 'application/pdf' ? 'document' : null;
                 if (!type) { await msg.reply('I can read text, voice notes, photos and PDFs.'); return; }
@@ -208,7 +213,7 @@ client.on('message', async (msg) => {
                 }
             }
         } catch (err) {
-            console.error('[WA-BRIDGE] Layla owner route failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400), '| stack:', String(err.stack || '').split('\n').slice(0, 4).join(' <- '));
+            console.error('[WA-BRIDGE] Layla owner route failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400), '| stack:', String(err.stack || '').split('\n').slice(0, 25).join(' <- '));
             await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});
         }
         return;
