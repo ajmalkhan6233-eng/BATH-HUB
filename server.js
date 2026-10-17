@@ -623,6 +623,7 @@ app.use('/api/money-control', require('./routes/money_control')); // Money contr
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
+app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)
 app.use('/api', require('./routes/grn_barcodes'));   // routes are relative (/grn-barcodes) -> /api/grn-barcodes: sticker PDF for the GRN screen
 app.use('/api', require('./routes/invoice_receipts'));   // routes are relative (/invoice-receipts*) -> /api/invoice-receipts*
 app.use('/api', require('./routes/agent_rulebook'));       // M1 agent rulebook (owner-only) -> /api/agent/rules*, /api/agent/rulebook

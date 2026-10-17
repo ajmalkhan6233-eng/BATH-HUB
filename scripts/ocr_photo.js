@@ -64,6 +64,42 @@ For document_type "unknown", output:
 
 Rules: never guess a number, date, or name you cannot actually read - use null instead. If a field is genuinely illegible, set confidence to "low" and say why in notes. Do not invent a document_type just to fill in fields - if genuinely unsure between two types, pick the closer one and lower confidence rather than fabricate.`;
 
+
+// ── Gemini (Google AI Studio free key) is tried FIRST when GEMINI_API_KEY is in .env: far steadier than the free OpenRouter models.
+// Model: GEMINI_VISION_MODEL, else the newest "flash" model the key can use (looked up live, so a retired name never breaks it).
+let _gemModels = { at: 0, ids: [] };
+async function geminiModels(key, fetchFn = globalThis.fetch) {
+    if (Date.now() - _gemModels.at < 3600e3 && _gemModels.ids.length) return _gemModels.ids;
+    const r = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}&pageSize=200`, { signal: AbortSignal.timeout(10000) });
+    const d = (await r.json()).models || [];
+    const ids = d.filter(m => /flash/i.test(m.name) && !/image|tts|live|audio|embedding|thinking-exp/i.test(m.name) && (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, '')).sort((a, b) => /lite/i.test(a) - /lite/i.test(b) || b.localeCompare(a, undefined, { numeric: true }));
+    if (ids.length) _gemModels = { at: Date.now(), ids };
+    return ids;
+}
+async function geminiOcr({ key, base64, mime, fetchFn = globalThis.fetch, model = process.env.GEMINI_VISION_MODEL }) {
+    const tried = []; let lastErr;
+    const order = model ? [model] : [];
+    for (let i = 0; i < 4; i++) {
+        let m = order[i];
+        if (!m) { const ids = await geminiModels(key, fetchFn).catch(() => []); m = ids.find(x => !tried.includes(x)); if (!m) break; }
+        tried.push(m);
+        try {
+            const r = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(OCR_TIMEOUT_MS),
+                body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime, data: base64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json' } }),
+            });
+            const j = await r.json();
+            if (!r.ok) { const e = new Error(`gemini ${r.status}: ${(j.error && j.error.message) || ''}`.slice(0, 200)); e.status = r.status; throw e; }
+            const raw = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+            const text = raw.map(x => x.text || '').join('');
+            const mm = text.match(/\{[\s\S]*\}/); if (!mm) throw new Error('gemini returned no JSON');
+            return { parsed: JSON.parse(mm[0]), raw: text, model: 'gemini:' + m };
+        } catch (e) { lastErr = e; if (![400, 404, 429, 500, 503].includes(e.status) && !/timeout|aborted/i.test(e.message)) break; }
+    }
+    throw lastErr || new Error('no Gemini model available');
+}
+
 // Standing rule: never guess - flag uncertain fields, don't fabricate.
 async function ocrPhoto(filePath) {
     const imageBuffer = fs.readFileSync(filePath);
@@ -71,6 +107,10 @@ async function ocrPhoto(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
     const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
 
+    if (process.env.GEMINI_API_KEY) {
+        try { const g = await geminiOcr({ key: process.env.GEMINI_API_KEY, base64, mime }); return { ...g.parsed, _raw: g.raw, _model: g.model, _file: filePath }; }
+        catch (e) { console.error('[ocr] Gemini failed, trying OpenRouter:', e.message); }
+    }
     const body = model => ({
         model,
         messages: [{ role: 'user', content: [
@@ -99,4 +139,4 @@ async function ocrPhoto(filePath) {
     return { ...parsed, _raw: raw, _model: usedModel, _file: filePath };
 }
 
-module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels };
+module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels, geminiOcr, _resetGeminiCache: () => { _gemModels = { at: 0, ids: [] }; } };
