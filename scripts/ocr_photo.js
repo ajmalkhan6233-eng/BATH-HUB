@@ -10,6 +10,8 @@ const { client } = require('../openrouter.config');
 const VISION_MODEL = process.env.OCR_VISION_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
 // Free vision models come and go on OpenRouter ("404 No endpoints found"). Try the configured
 // one first, then ask OpenRouter which free image-reading models exist right now.
+// real vision models first; some free models are restricted to "agentic harnesses" (403) and are tried last
+const PREFERRED = /gemma|qwen.*vl|llama.*(vision|4)|pixtral|mistral.*(small|3)|nemotron.*vl|molmo|internvl|glm.*v/i;
 let _freeCache = { at: 0, ids: [] };
 async function discoverFreeVisionModels(fetchFn = globalThis.fetch) {
     if (Date.now() - _freeCache.at < 3600e3 && _freeCache.ids.length) return _freeCache.ids;
@@ -18,7 +20,7 @@ async function discoverFreeVisionModels(fetchFn = globalThis.fetch) {
         const d = (await r.json()).data || [];
         const ids = d.filter(m => m.pricing && String(m.pricing.prompt) === '0' && String(m.pricing.completion) === '0'
             && ((m.architecture || {}).input_modalities || []).includes('image') && ((m.architecture || {}).output_modalities || ['text']).includes('text'))
-            .sort((a, b) => (b.context_length || 0) - (a.context_length || 0)).map(m => m.id);
+            .sort((a, b) => (PREFERRED.test(b.id) - PREFERRED.test(a.id)) || ((b.context_length || 0) - (a.context_length || 0))).map(m => m.id);
         if (ids.length) _freeCache = { at: Date.now(), ids };
         return ids;
     } catch (e) { return _freeCache.ids; }
@@ -79,11 +81,11 @@ async function ocrPhoto(filePath) {
     });
     let response, usedModel = VISION_MODEL, lastErr;
     const tried = [VISION_MODEL];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 8; i++) {
         try { response = await client.chat.completions.create(body(usedModel), { timeout: OCR_TIMEOUT_MS }); lastErr = null; break; }
         catch (e) {
             lastErr = e;
-            if (![404, 429, 502, 503, 400].includes(e.status) && !/No endpoints|timed out|timeout/i.test(e.message || '')) break;
+            if (![404, 429, 502, 503, 400, 403, 408].includes(e.status) && !/No endpoints|timed out|timeout/i.test(e.message || '')) break;
             const next = (await discoverFreeVisionModels()).find(id => !tried.includes(id));
             if (!next) break;
             tried.push(next); usedModel = next;
