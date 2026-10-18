@@ -1,5 +1,5 @@
 'use strict';
-// node scripts/audit/audit_user.js make     creates a TEMPORARY owner login "audit_bot" with a random password (TEST_MODE only)
+// node scripts/audit/audit_user.js make     creates a TEMPORARY admin login "audit_bot" with a random password (TEST_MODE only)
 // node scripts/audit/audit_user.js remove   deletes it again
 // The password is written to audit_out/.cred (never printed, never committed) and read by crawl.js / money_flow.js.
 require('dotenv').config();
@@ -11,7 +11,7 @@ const OUT = path.join(__dirname, '..', '..', 'audit_out'); const CRED = path.joi
   if (cmd === 'make') {
     const pass = crypto.randomBytes(12).toString('base64url'); const hash = await bcrypt.hash(pass, 10);
     await pool.query(`DELETE FROM users WHERE username = 'audit_bot'`);
-    await pool.query(`INSERT INTO users (username, name, password_hash, role, active) VALUES ('audit_bot','Audit robot',$1,'owner',TRUE)`, [hash]);
+    await pool.query(`INSERT INTO users (username, name, password_hash, role, active) VALUES ('audit_bot','Audit robot',$1,'admin',TRUE)`, [hash]);
     fs.mkdirSync(OUT, { recursive: true }); fs.writeFileSync(CRED, JSON.stringify({ user: 'audit_bot', pass }), { mode: 0o600 });
     console.log('audit_bot created (password saved to audit_out/.cred, not shown).');
   } else if (cmd === 'remove') {

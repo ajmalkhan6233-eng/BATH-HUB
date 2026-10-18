@@ -24,8 +24,26 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
   const t = await (await ctx.request.get(BASE + '/api/test-mode')).json().catch(() => ({}));
   if (!t.test) { console.error('REFUSED: the shop is not in TEST_MODE. Nothing was opened.'); process.exit(3); }
 
-  const report = [];
+  // RESUME: pages already finished in audit_out/crawl.json are kept; delete that file (or set AUDIT_FRESH=1) to start over.
+  let report = [];
+  const JSON_PATH = path.join(OUT, 'crawl.json');
+  if (!process.env.AUDIT_FRESH) { try { report = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (_) { report = []; } }
+  const done = new Set(report.map((r) => r.page));
+  const cap = (arr, n) => { const seen = new Set(); const out = []; for (const x of arr) { const k = JSON.stringify(x).replace(/click "[^"]*"/g, ''); if (seen.has(k)) continue; seen.add(k); out.push(x); if (out.length >= n) break; } return out; };
+  const writeReport = () => {
+    fs.writeFileSync(JSON_PATH, JSON.stringify(report, null, 1));
+    const bad = report.filter((r) => r.load !== 200 || r.consoleErrors.length || r.pageErrors.length || r.badApi.length || r.clickFindings.length);
+    const lines = [`# Crawl ${new Date().toISOString().slice(0, 16)}: ${report.length} of ${pages.length} pages done, ${report.reduce((a, r) => a + r.clicked, 0)} buttons clicked, ${bad.length} pages with findings`];
+    for (const r of bad) {
+      lines.push(`- ${r.page} (load ${r.load}, clicked ${r.clicked})`);
+      [...r.pageErrors.map((x) => 'CRASH ' + x), ...r.consoleErrors.map((x) => 'console ' + x), ...r.badApi.map((x) => 'api ' + x), ...r.clickFindings.map((x) => `${x.at}: ${x.crash || x.console || x.api}`)].slice(0, 8).forEach((x) => lines.push('    ' + x));
+    }
+    fs.writeFileSync(path.join(OUT, 'crawl.md'), lines.join('\n') + '\n');
+    return lines[0];
+  };
+  const PAGE_BUDGET_MS = Number(process.env.AUDIT_PAGE_MS || 90000);
   for (const file of pages) {
+    if (done.has(file)) { process.stdout.write(`${file}: already done, skipped\n`); continue; }
     const page = await ctx.newPage(); const rec = { page: file, load: 0, consoleErrors: [], pageErrors: [], badApi: [], clicked: 0, skipped: 0, clickFindings: [] };
     let phase = 'load';
     page.on('dialog', (d) => d.dismiss().catch(() => {}));
@@ -37,7 +55,8 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
       await page.waitForTimeout(600);
       const sel = 'button, [role=tab], [role=button], .tab, .nav-item, input[type=button], a.btn';
       const total = await page.locator(sel).count();
-      for (let i = 0; i < Math.min(total, MAX_CLICKS * 3) && rec.clicked < MAX_CLICKS; i++) {
+      const started = Date.now();
+      for (let i = 0; i < Math.min(total, MAX_CLICKS * 3) && rec.clicked < MAX_CLICKS && Date.now() - started < PAGE_BUDGET_MS; i++) {
         const el = page.locator(sel).nth(i);
         if (!(await el.isVisible().catch(() => false)) || !(await el.isEnabled().catch(() => false))) continue;
         const label = ((await el.innerText().catch(() => '')) || (await el.getAttribute('aria-label').catch(() => '')) || (await el.getAttribute('title').catch(() => '')) || (await el.getAttribute('onclick').catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 40);
@@ -49,17 +68,10 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
         phase = 'idle';
       }
     } catch (e) { rec.pageErrors.push('could not open: ' + e.message.slice(0, 120)); }
-    await page.close(); report.push(rec);
+    rec.clickFindings = cap(rec.clickFindings, 15); rec.consoleErrors = cap(rec.consoleErrors, 8); rec.badApi = cap(rec.badApi, 8); rec.pageErrors = cap(rec.pageErrors, 8);
+    await page.close().catch(() => {}); report.push(rec); writeReport();
     process.stdout.write(`${file}: load ${rec.load}, clicked ${rec.clicked}, findings ${rec.consoleErrors.length + rec.pageErrors.length + rec.badApi.length + rec.clickFindings.length}\n`);
   }
-  await browser.close();
-  fs.writeFileSync(path.join(OUT, 'crawl.json'), JSON.stringify(report, null, 1));
-  const bad = report.filter((r) => r.load !== 200 || r.consoleErrors.length || r.pageErrors.length || r.badApi.length || r.clickFindings.length);
-  const lines = [`# Crawl ${new Date().toISOString().slice(0, 16)}: ${report.length} pages, ${report.reduce((a, r) => a + r.clicked, 0)} buttons clicked, ${bad.length} pages with findings`];
-  for (const r of bad) {
-    lines.push(`- ${r.page} (load ${r.load}, clicked ${r.clicked})`);
-    [...r.pageErrors.map((x) => 'CRASH ' + x), ...r.consoleErrors.map((x) => 'console ' + x), ...r.badApi.map((x) => 'api ' + x), ...r.clickFindings.map((x) => `${x.at}: ${x.crash || x.console || x.api}`)].slice(0, 8).forEach((x) => lines.push('    ' + x));
-  }
-  fs.writeFileSync(path.join(OUT, 'crawl.md'), lines.join('\n') + '\n');
-  console.log(lines[0] + '\nFull list: audit_out/crawl.md');
+  await browser.close().catch(() => {});
+  console.log(writeReport() + '\nFull list: audit_out/crawl.md');
 })().catch((e) => { console.error('audit crashed:', e.message); process.exit(1); });
