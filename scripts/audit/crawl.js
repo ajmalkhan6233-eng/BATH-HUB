@@ -1,6 +1,6 @@
 'use strict';
 // BUTTON-BY-BUTTON AUDIT (run on the shop PC by Claude Code, TEST_MODE only).
-//   AUDIT_USER=... AUDIT_PASS=... node scripts/audit/crawl.js [baseUrl]      (default http://127.0.0.1:3100)
+//   node scripts/audit/audit_user.js make   (once)  then  node scripts/audit/crawl.js [baseUrl]      (default http://127.0.0.1:3100)
 // For every page in public/*.html: opens it, records console errors, page crashes and failed /api calls (4xx/5xx),
 // then clicks every visible button / tab / link-button that is not destructive and records what each click broke.
 // REFUSES to run unless /api/test-mode says the shop is in TEST_MODE. Never clicks delete / void / reject / wipe / logout / send.
@@ -13,14 +13,16 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
 
 (async () => {
   let pw; try { pw = require('playwright'); } catch (e) { console.error('Playwright is not installed. Run: npm i --no-save playwright'); process.exit(2); }
-  const t = await fetch(BASE + '/api/test-mode').then((r) => r.json()).catch(() => ({}));
-  if (!t.test) { console.error('REFUSED: the shop is not in TEST_MODE. Nothing was opened.'); process.exit(3); }
   fs.mkdirSync(OUT, { recursive: true });
   const pages = fs.readdirSync(path.join(__dirname, '..', '..', 'public')).filter((f) => f.endsWith('.html')).sort();
   let browser; try { browser = await pw.chromium.launch({ channel: 'chrome', headless: true }); } catch (e) { browser = await pw.chromium.launch({ headless: true }); }
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
-  const login = await ctx.request.post(BASE + '/api/login', { data: { username: process.env.AUDIT_USER, password: process.env.AUDIT_PASS } });
-  if (!login.ok()) { console.error('Login failed (' + login.status() + '). Set AUDIT_USER / AUDIT_PASS.'); process.exit(4); }
+  let cred = { user: process.env.AUDIT_USER, pass: process.env.AUDIT_PASS };
+  try { if (!cred.user) cred = JSON.parse(fs.readFileSync(path.join(OUT, '.cred'), 'utf8')); } catch (_) { /* none */ }
+  const login = await ctx.request.post(BASE + '/api/login', { data: { username: cred.user, password: cred.pass } });
+  if (!login.ok()) { console.error('Login failed (' + login.status() + '). Run: node scripts/audit/audit_user.js make'); process.exit(4); }
+  const t = await (await ctx.request.get(BASE + '/api/test-mode')).json().catch(() => ({}));
+  if (!t.test) { console.error('REFUSED: the shop is not in TEST_MODE. Nothing was opened.'); process.exit(3); }
 
   const report = [];
   for (const file of pages) {
