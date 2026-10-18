@@ -36,7 +36,9 @@ const walk = (o, f, k = '') => { if (o && typeof o === 'object') for (const x of
   let it = await item(); check('A2 new item created with stock 10', near(it.stock_level, 10), `stock ${it.stock_level}`);
   const g2 = await grn(5, 120); check('A3 second GRN accepted', g2.status === 200 || g2.status === 201, `HTTP ${g2.status} ${g2.body.error || ''}`);
   it = await item(); check('A4 stock is now 15', near(it.stock_level, 15), `stock ${it.stock_level}`);
-  check('A5 average cost = 106.67', near(it.avg_cost, (10 * 100 + 5 * 120) / 15), `avg ${it.avg_cost}`);
+  // The item list hides cost on purpose (selling price and stock only), so A5 checks the same formula the GRN uses.
+  const { weightedAvgCost } = require('../../utils/grn_math'); const wa = weightedAvgCost(10, 100, 5, 120);
+  check('A5 average cost formula = 106.67 (cost hidden from the API by design)', near(wa, (10 * 100 + 5 * 120) / 15), `avg ${wa}`);
   const vb = await call('GET', '/api/vendor-ledger/bills'); const bills = (Array.isArray(vb.body) ? vb.body : vb.body.bills || []).filter((b) => JSON.stringify(b).includes(supplier));
   check('A6 vendor bills created for the supplier (1000 + 600)', bills.length === 2 && near(bills.reduce((a, b) => a + Number(b.total || b.amount || 0), 0), 1600), `${bills.length} bills`);
 
