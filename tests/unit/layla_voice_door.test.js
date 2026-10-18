@@ -197,3 +197,38 @@ describe('layla-door.js: what the screen says', () => {
     expect(door.describe('', 500, {}).ok).toBe(false);
   });
 });
+
+describe('the bridge inbox folder: voice notes and PDFs are allowed for Layla chat only', () => {
+  const { safeInboxPath, safeInboxMediaPath } = require('../../middleware/webhookAuth');
+  const root = path.join(os.tmpdir(), 'inbox-root-x');
+  test('the exact file the bridge saved for a voice note is accepted (this was the 17:30 failure)', () => {
+    expect(safeInboxMediaPath(path.join(root, '2026-10-18', '1792324828724-layla-audio.ogg'), root)).toBeTruthy();
+    for (const e of ['opus', 'm4a', 'mp3', 'wav', 'pdf', 'jpg', 'png']) expect(safeInboxMediaPath(path.join(root, `a.${e}`), root)).toBeTruthy();
+  });
+  test('still refuses anything outside the folder, odd types and tricks', () => {
+    expect(safeInboxMediaPath(path.resolve('.env'), root)).toBeNull();
+    expect(safeInboxMediaPath(path.join(root, '..', 'evil', 'a.ogg'), root)).toBeNull();
+    expect(safeInboxMediaPath(path.join(root, '..', '..', 'a.ogg'), root)).toBeNull();
+    expect(safeInboxMediaPath(path.join(root, 'a.exe'), root)).toBeNull();
+    expect(safeInboxMediaPath(path.join(root, 'a.ogg\0.txt'), root)).toBeNull();
+    expect(safeInboxMediaPath('', root)).toBeNull(); expect(safeInboxMediaPath(null, root)).toBeNull();
+  });
+  test('the PHOTO webhook still refuses audio and PDFs (they must never reach the photo reader)', () => {
+    expect(safeInboxPath(path.join(root, 'a.ogg'), root)).toBeNull(); expect(safeInboxPath(path.join(root, 'a.pdf'), root)).toBeNull();
+    expect(safeInboxPath(path.join(root, 'a.jpg'), root)).toBeTruthy();
+  });
+  test('end to end: a bridge voice note reaches the voice draft instead of "media path not allowed"', async () => {
+    const { createBridgeIn } = require('../../layla_owner/bridgeIn');
+    const { newDb } = require('pg-mem'); const { migrate } = require('../../scripts/migrate_layla_owner');
+    const createStore = require('../../layla_owner/taskStore'); const createAdapters = require('../../layla_owner/adapters');
+    const { Pool } = newDb().adapters.createPg(); const pool = new Pool(); await migrate(pool);
+    const file = path.join(root, '2026-10-18', 'v.ogg'); const drafts = [];
+    const bridgeIn = createBridgeIn({ inboxRoot: root, safeInboxPath: safeInboxMediaPath, readFile: async () => Buffer.from('x'), stat: async () => ({ size: 10 }),
+      deps: () => ({ store: createStore(pool), adapters: createAdapters({ pool }), ownerNumber: '0777999219',
+        transcribe: async () => ({ ok: true, text: 'tea 200 petrol 1500', original: 'tea 200 petrol 1500', entry: { kind: 'expense_list', total_expenses: 1700, items: [] } }),
+        voiceDraft: async a => { drafts.push(a); return { id: 3, extracted: { date: '2026-10-18' } }; }, saveMedia: async () => file }) });
+    const r = await bridgeIn({ from: '94777999219', id: 'bv1', type: 'audio', filePath: file, mime: 'audio/ogg; codecs=opus' });
+    expect(r.status).toBe('ok'); expect(drafts).toHaveLength(1); expect(r.replies.join('\n')).toContain('draft #3');
+    expect(r.replies.join('\n')).not.toContain('Something went wrong');
+  });
+});

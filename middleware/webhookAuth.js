@@ -33,13 +33,18 @@ function webhookAuth(req, res, next) {
 
 // A photo path is only accepted if it is an image inside the bridge's inbox folder.
 // Returns the resolved path, or null.
-function safeInboxPath(filePath, inboxRoot) {
+function checkedInboxPath(filePath, inboxRoot, extRe) {
     if (typeof filePath !== 'string' || !filePath || filePath.includes('\0')) return null;
     const root = path.resolve(inboxRoot);
     const full = path.resolve(filePath);
     if (full !== root && !full.startsWith(root + path.sep)) return null;
-    if (!/\.(jpe?g|png)$/i.test(full)) return null;
+    if (!extRe.test(full)) return null;
     return full;
 }
+function safeInboxPath(filePath, inboxRoot) { return checkedInboxPath(filePath, inboxRoot, /\.(jpe?g|png)$/i); }   // photos only: used by the day-sheet photo webhook, which runs OCR
 
-module.exports = { webhookAuth, safeInboxPath, isLoopback };
+// The OWNER's Layla chat (free bridge) also receives voice notes and PDFs from the bridge's inbox folder. Same folder check, wider file types.
+// Photos-only callers keep using safeInboxPath above, so an audio file can never be pushed into the photo reader.
+function safeInboxMediaPath(filePath, inboxRoot) { return checkedInboxPath(filePath, inboxRoot, /\.(jpe?g|png|webp|pdf|ogg|opus|oga|mp3|m4a|aac|wav)$/i); }
+
+module.exports = { webhookAuth, safeInboxPath, safeInboxMediaPath, isLoopback };
