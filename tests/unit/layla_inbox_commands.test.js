@@ -144,3 +144,12 @@ describe('voice: "create customer" is understood', () => {
     expect(cleanVoice({ text: 'x', entries: [{ kind: 'customer_create', amount: 5 }] }).entries).toHaveLength(0);
   });
 });
+
+describe('payment reminders (to the owner only)', () => {
+  test('lists late customers with a ready text, sends nothing to them', async () => {
+    const c = (await rows(`SELECT id FROM customers WHERE name='Sam Perera'`))[0].id;
+    await pool.query(`INSERT INTO credit_customers (customer_id, invoice_date, invoice_no, amount, paid, due_date) VALUES (${c}, '2026-08-01', 'OLD-1', 4000, 1000, '2026-09-01')`);
+    await say('reminders');
+    expect(sent).toHaveLength(1); expect(sent[0]).toMatch(/Sam Perera: Rs 3,000 since 1 Sep/); expect(sent[0]).toMatch(/Text to forward: "Dear Sam Perera, a friendly reminder from Royal Bath Hub/);
+  });
+});

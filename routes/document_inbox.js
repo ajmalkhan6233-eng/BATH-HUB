@@ -443,6 +443,17 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
         const low = r => String(r.name || '').trim().toLowerCase();
         return { exact: all.filter(r => low(r) === want), similar: want.length >= 3 ? all.filter(r => low(r) !== want && low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r)))) : [] };
     };
+    router.owing = async () => {   // who owes on credit and is past their date (reads only)
+        let r = []; try { r = (await pool.query(`SELECT cc.customer_id, c.name, c.phone, cc.amount, cc.paid, cc.due_date, cc.invoice_date, cc.quarantined FROM credit_customers cc JOIN customers c ON c.id = cc.customer_id`)).rows; } catch (e) { return []; }
+        const by = new Map(); const today = todayLK(); const iso = d => (d instanceof Date ? d.toISOString() : String(d || '')).slice(0, 10);
+        for (const x of r) {
+            const left = Number(x.amount || 0) - Number(x.paid || 0); if (!(left > 0) || x.quarantined) continue;
+            const inv = iso(x.invoice_date); const due = iso(x.due_date) || (inv ? new Date(Date.parse(inv) + 30 * 864e5).toISOString().slice(0, 10) : '');
+            if (!due || due >= today) continue;
+            const e = by.get(x.customer_id) || { name: x.name, phone: x.phone, owed: 0, since: due }; e.owed += left; if (due < e.since) e.since = due; by.set(x.customer_id, e);
+        }
+        return [...by.values()].sort((a, b) => b.owed - a.owed).slice(0, 8);
+    };
     router.list = async (status = 'to_check') => (await pool.query(`SELECT * FROM document_inbox WHERE status = $1 ORDER BY id DESC LIMIT 50`, [status])).rows.map(present);
     router.recordText = async ({ type, fields, from = '', note = '' }) => {
         await ready;

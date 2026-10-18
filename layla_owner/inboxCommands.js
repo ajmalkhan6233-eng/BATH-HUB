@@ -80,6 +80,7 @@ function parse(text) {
     return { cmd: 'create', name: rest.replace(/^(?:called|named)\s+/i, ''), amount, phone };
   }
   const tk = tokens(t); const first = (tk[0] || '').toLowerCase(); const rest = tk.slice(1);
+  if (/^(reminders?|overdue|who owes|dues|payment reminders?)$/i.test(t.replace(/[,.!?]+/g, ' ').trim())) return { cmd: 'owing' };
   if (/^(drafts|pending drafts|show drafts|list drafts|pending)$/i.test(t.replace(/[,.!?]+/g, ' ').trim())) return { cmd: 'list' };
   if (OK_WORDS.has(first)) {
     const sel = rest.join(' ');
@@ -169,6 +170,11 @@ function createInboxCommands({ inbox }) {
       const d = await box().recordText({ type: 'customer_create', fields: { customer_name: c.name, amount: c.amount, phone: c.phone, date: todayLK() }, from, note: `Typed: "${String(text).slice(0, 120)}"` });
       const sim = like.similar.length ? `\n! Similar already there: ${like.similar.slice(0, 3).map((x) => x.name).join(', ')}. If it is the same person, reply "cancel".` : '';
       return { reply: `Draft: ${label(d)}. NOTHING is made yet.${sim}\nReply "ok" to make it, or "cancel".` };
+    }
+    if (c.cmd === 'owing') {   // a reply to HIS request: who is late, with a ready text he can forward. Nothing is ever sent to customers.
+      const list = await box().owing().catch(() => []);
+      if (!list.length) return { reply: 'Nobody is past their payment date.' };
+      return { reply: list.slice(0, 5).map((x) => `${x.name}: ${rs(x.owed)} since ${dshort(x.since)}${x.phone && !/^NOPHONE/.test(x.phone) ? ' (' + x.phone + ')' : ''}\nText to forward: "Dear ${x.name}, a friendly reminder from Royal Bath Hub, Thihariya: ${rs(x.owed)} is outstanding on your account. Please settle at your convenience. Thank you."`).join('\n\n') + (list.length > 5 ? `\n\n+ ${list.length - 5} more.` : '') };
     }
     if (c.cmd === 'list') {
       const rows = recent(await openDrafts());

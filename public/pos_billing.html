@@ -136,7 +136,11 @@
   .qty-step .i-qty { flex:1; min-width:46px; width:100%; text-align:center; }
   html body .item-row { grid-template-columns: 1fr 156px 100px 48px !important; }
   @media (max-width:480px) { html body .item-row { grid-template-columns: 136px minmax(0, 1fr) 44px !important; } .qty-step .i-qty { min-width:40px; } }
+  /* receipt printer (80 mm roll, USB on the PC): print this page, choose the receipt printer, paper size 80mm */
+  @page { size: 80mm auto; margin: 2mm; }
   @media print {
+    .receipt { font-size: 12px; line-height: 1.25; max-width: 76mm; color: #000; background: #fff; }
+    .receipt .logo-row img { height: 40px; }
     body * { visibility: hidden; }
     .receipt, .receipt * { visibility: visible; }
     .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
