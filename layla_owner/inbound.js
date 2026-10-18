@@ -38,16 +38,23 @@ async function processInbound(m, deps) {
       if (!t.ok) { await reply('I could not hear that clearly. Please send it again or type it.'); return { status: 'transcribe_failed' }; }
       text = t.text.slice(0, LIMITS.maxTextChars); heard = t.original && t.original !== t.text ? `I heard: "${t.original.slice(0, 600)}"\n(in English: "${text}")\n` : `I heard: "${text}"\n`;
       // A dictated day's expenses or sales -> a Document Inbox DRAFT. Never filed here: the owner checks it in the app and presses Confirm.
-      if (deps.voiceDraft && t.entry && ['expense_list', 'day_sheet', 'credit_given', 'credit_paid'].includes(t.entry.kind)) {
-        const d = await deps.voiceDraft({ entry: t.entry, buffer: media.buffer, mime: media.mime || m.mime, original: t.original || t.text, english: t.text, warnings: t.warnings, confidence: t.confidence, from: m.from, engine: t.engine });
-        const k = t.entry.kind;
-        const total = k === 'expense_list' ? t.entry.total_expenses : k === 'day_sheet' ? t.entry.total_sale : t.entry.amount;
-        const what = { expense_list: 'Expenses', day_sheet: 'Sales', credit_given: `Credit to ${t.entry.party}`, credit_paid: `${t.entry.party} paid` }[k];
-        const lines = [heard.trim(), `${what} draft #${d.id} saved in the Document Inbox: Rs ${Number(total).toLocaleString('en-LK')} for ${d.extracted.date}. NOTHING is filed yet.`];
+      const KINDS = ['expense_list', 'day_sheet', 'credit_given', 'credit_paid'];
+      const found = (t.entries && t.entries.length ? t.entries : (t.entry ? [t.entry] : [])).filter((e) => e && KINDS.includes(e.kind));
+      if (deps.voiceDraft && found.length) {
+        const lines = [heard.trim()]; let firstId = null;
+        for (const entry of found) {   // one voice note can hold expenses AND a loan: one draft each
+          const d = await deps.voiceDraft({ entry, buffer: media.buffer, mime: media.mime || m.mime, original: t.original || t.text, english: t.text, warnings: t.warnings, confidence: t.confidence, from: m.from, engine: t.engine });
+          if (firstId == null) firstId = d.id;
+          const k = entry.kind;
+          const total = k === 'expense_list' ? entry.total_expenses : k === 'day_sheet' ? entry.total_sale : entry.amount;
+          const what = { expense_list: 'Expenses', day_sheet: 'Sales', credit_given: `Credit to ${entry.party}`, credit_paid: `${entry.party} paid` }[k];
+          lines.push(`${what} draft #${d.id}: Rs ${Number(total).toLocaleString('en-LK')} for ${d.extracted.date}.`);
+        }
+        lines.push('NOTHING is filed yet.');
         if (t.warnings && t.warnings.length) lines.push('! ' + t.warnings.join(' '));
-        if (t.confidence === 'low') lines.push('! I was not sure about some numbers: check them carefully.');
-        lines.push('Open the app > Document Inbox, check the figures, then press Confirm.');
-        await reply(lines.join('\n')); return { status: 'ok', intent: 'voice_draft', draftId: d.id };
+        if (t.confidence && t.confidence !== 'high') lines.push('! I am not fully sure I heard it right. If a name or number is wrong, Reject that draft in the Document Inbox and send the note again, or type it.');
+        lines.push('Open the app > Document Inbox, check, then press Confirm.');
+        await reply(lines.join('\n')); return { status: 'ok', intent: 'voice_draft', draftId: firstId };
       }
     } else if (m.type === 'image' || m.type === 'document') {
       const paperKind = deps.paper && m.type === 'image' ? deps.paper.captionKind(m.caption) : null;   // caption "GRN" or "cheque": read into a DRAFT, saved only on "ok"

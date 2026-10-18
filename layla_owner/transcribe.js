@@ -8,11 +8,12 @@ const { geminiVoice } = require('../utils/geminiVoice');
  * Returns { ok, text, language, english?, entry?, warnings?, engine }. `text` is what the existing English intent parser reads:
  * the English version when there is one, with the original wording kept in `original`.
  */
-async function transcribe(buffer, mime, { key = process.env.GEMINI_API_KEY, geminiFn = geminiVoice, python = process.env.PYTHON || 'python', script = path.join(__dirname, '..', 'scripts', 'transcribe.py'), timeoutMs = 90000, spawnFn = spawn } = {}) {
+async function transcribe(buffer, mime, { key = process.env.GEMINI_API_KEY, hintsFn = null, geminiFn = geminiVoice, python = process.env.PYTHON || 'python', script = path.join(__dirname, '..', 'scripts', 'transcribe.py'), timeoutMs = 90000, spawnFn = spawn } = {}) {
   if (key) {
-    const g = await geminiFn({ key, buffer, mime }).catch((e) => ({ ok: false, reason: e.message }));
+    const hints = typeof hintsFn === 'function' ? await Promise.resolve(hintsFn()).catch(() => null) : null;
+    const g = await geminiFn({ key, buffer, mime, hints }).catch((e) => ({ ok: false, reason: e.message }));
     if (g && g.ok) { console.log('[transcribe] heard via', g.model, '|', String(g.english || g.text).slice(0, 120)); }
-    if (g && g.ok) return { ok: true, text: g.english || g.text, original: g.text, language: g.language, entry: g.entry, warnings: g.warnings, confidence: g.confidence, engine: g.model };
+    if (g && g.ok) return { ok: true, text: g.english || g.text, original: g.text, language: g.language, entry: g.entry, entries: g.entries, warnings: g.warnings, confidence: g.confidence, engine: g.model };
     console.error('[transcribe] Gemini failed, trying the local reader:', g && g.reason);
     timeoutMs = Math.min(timeoutMs, 20000); // the chat bridge gives up at 90s: Gemini (<=55s) + this must fit
   }

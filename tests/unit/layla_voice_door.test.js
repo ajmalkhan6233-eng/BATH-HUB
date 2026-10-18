@@ -112,10 +112,18 @@ describe('inbound: a dictated day becomes a DRAFT, never a filing', () => {
     expect(drafts).toHaveLength(1);
     expect(sent[0]).toContain('I heard: "තේ 200 පෙට්‍රල් 1500"'); expect(sent[0]).toContain('draft #7'); expect(sent[0]).toContain('NOTHING is filed yet'); expect(sent[0]).toContain('Rs 1,700');
   });
+  test('one note with expenses AND a loan makes TWO drafts', async () => {
+    let n = 7; deps.voiceDraft = async a => { drafts.push(a); return { id: n++, extracted: { date: '2026-10-18' } }; };
+    deps.transcribe = async () => ({ ok: true, text: 'tea 200 petrol 1500 gave Saman 1500 loan', original: 'x', entries: [{ kind: 'expense_list', total_expenses: 1700, items: [] }, { kind: 'credit_given', party: 'Saman', amount: 1500 }], warnings: [], confidence: 'high', engine: 'g' });
+    const r = await processInbound({ id: 'v9', from: '94777999219', type: 'audio', mediaId: 'm' }, deps);
+    expect(r).toMatchObject({ status: 'ok', intent: 'voice_draft', draftId: 7 });
+    expect(drafts.map(d => d.entry.kind)).toEqual(['expense_list', 'credit_given']);
+    expect(sent[0]).toContain('Expenses draft #7: Rs 1,700'); expect(sent[0]).toContain('Credit to Saman draft #8: Rs 1,500'); expect(sent[0]).not.toContain('not fully sure');
+  });
   test('a low-confidence number is called out', async () => {
     deps.transcribe = async () => ({ ok: true, text: 'x', entry: { kind: 'day_sheet', total_sale: 90000 }, warnings: ['check both'], confidence: 'low' });
     await processInbound({ id: 'v2', from: '94777999219', type: 'audio', mediaId: 'm' }, deps);
-    expect(sent[0]).toContain('not sure about some numbers'); expect(sent[0]).toContain('check both'); expect(sent[0]).toContain('Sales draft');
+    expect(sent[0]).toContain('not fully sure I heard it right'); expect(sent[0]).toContain('check both'); expect(sent[0]).toContain('Sales draft');
   });
   test('an ordinary voice note (a reminder) still goes the old way and makes no draft', async () => {
     deps.transcribe = async () => ({ ok: true, text: 'remind me to call Pioneer at 4pm', entry: { kind: 'none' } });
@@ -239,12 +247,47 @@ describe('geminiVoice under overload (503)', () => {
   test('retries the next model after a 503 and waits between tries', async () => {
     const calls = []; const waits = [];
     const fetchFn = async (url) => { calls.push(url); return calls.length < 3 ? { ok: false, status: 503, json: async () => ({ error: { message: 'high demand' } }) } : ok; };
-    const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['m1', 'm2', 'm3', 'm4'], sleep: async ms => waits.push(ms) });
+    const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['m1', 'm2', 'm3', 'm4'], listPro: async () => [], sleep: async ms => waits.push(ms) });
     expect(r.ok).toBe(true); expect(calls.length).toBe(3); expect(waits.length).toBe(2); expect(r.model).toBe('gemini:m3');
   });
   test('gives up inside its time budget instead of hanging', async () => {
     const fetchFn = async () => ({ ok: false, status: 503, json: async () => ({ error: { message: 'high demand' } }) });
     const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['m1', 'm2'], sleep: async () => {}, budgetMs: 3000 });
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('voice clarity: several entries, shop names, second opinion', () => {
+  const { geminiVoice, cleanVoice, buildPrompt } = require('../../utils/geminiVoice');
+  const reply = o => ({ ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(o) }] } }] }) });
+  const both = { text: 'Tea 200, petrol 1500. I gave Mr. Saman 1500 loan.', english: 'x', language: 'en', confidence: 'high', entries: [
+    { kind: 'expense_list', items: [{ name: 'tea', amount: 200 }, { name: 'petrol', amount: 1500 }] }, { kind: 'credit_given', party: 'Saman', amount: 1500, note: 'loan' }] };
+  test('expenses plus a loan make TWO entries; the loan is not added to expenses', () => {
+    const c = cleanVoice(both);
+    expect(c.entries.map(e => e.kind)).toEqual(['expense_list', 'credit_given']);
+    expect(c.entries[0].total_expenses).toBe(1700); expect(c.entries[1].party).toBe('Saman'); expect(c.entries[1].amount).toBe(1500);
+    expect(c.entry.kind).toBe('expense_list');
+  });
+  test('old single-entry answers still work', () => {
+    const c = cleanVoice({ text: 'a', entry: { kind: 'credit_paid', party: 'Sam', amount: 1000 } });
+    expect(c.entries.length).toBe(1); expect(c.entry.kind).toBe('credit_paid');
+  });
+  test('the prompt carries the shop customer names and the two-entry example', () => {
+    const p = buildPrompt({ customers: ['Saman Perera', 'Nimal'], vendors: ['Metro'] });
+    expect(p).toMatch(/Saman Perera, Nimal/); expect(p).toMatch(/Metro/); expect(p).toMatch(/TWO entries/); expect(p).toMatch(/never "532"|never "532"/);
+  });
+  test('a doubtful first answer gets a Pro second opinion and the better one wins', async () => {
+    const urls = [];
+    const fetchFn = async (url) => { urls.push(url); return url.includes('/pro-x:') ? reply(both) : reply({ text: '532 Saman', english: '532 Saman', confidence: 'low', entries: [] }); };
+    const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['flash-x'], listPro: async () => ['pro-x'], sleep: async () => {} });
+    expect(r.ok).toBe(true); expect(r.entries.length).toBe(2); expect(r.model).toMatch(/pro-x.*2nd opinion/);
+  });
+  test('a confident answer is not sent to Pro; a Pro failure keeps the first answer', async () => {
+    let n = 0; const ok1 = async () => { n++; return reply(both); };
+    const r1 = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn: ok1, listModels: async () => ['flash-x'], listPro: async () => ['pro-x'], sleep: async () => {} });
+    expect(n).toBe(1); expect(r1.entries.length).toBe(2);
+    const f2 = async (url) => url.includes('/pro-x:') ? { ok: false, status: 429, json: async () => ({ error: { message: 'quota' } }) } : reply({ text: '532 Saman', confidence: 'low', entries: [] });
+    const r2 = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn: f2, listModels: async () => ['flash-x'], listPro: async () => ['pro-x'], sleep: async () => {} });
+    expect(r2.ok).toBe(true); expect(r2.model).toBe('gemini:flash-x');
   });
 });

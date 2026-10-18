@@ -115,7 +115,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     };
     const ROOT = path.resolve(inboxRoot || path.join(process.env.DROP_ROOT || path.join(__dirname, '..', 'data', 'drop'), 'inbox'));
     const reader = ocr || (async (p) => require('../scripts/ocr_photo').ocrPhoto(p));
-    const listenVoice = voice || (async (buffer, mime) => require('../utils/geminiVoice').geminiVoice({ key: process.env.GEMINI_API_KEY, buffer, mime }));
+    const listenVoice = voice || (async (buffer, mime) => { let hints = null; try { hints = { customers: (await pool.query(`SELECT name FROM customers ORDER BY id DESC LIMIT 80`)).rows.map(r => r.name) }; } catch (e) { /* no customers table: no hints */ } return require('../utils/geminiVoice').geminiVoice({ key: process.env.GEMINI_API_KEY, buffer, mime, hints }); });
 
     const ready = pool.query(`CREATE TABLE IF NOT EXISTS document_inbox (
         id SERIAL PRIMARY KEY,
@@ -211,10 +211,17 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             if (isAudioExt(ext)) {
                 // a voice note: listen (Sinhala / Tamil / English), and when a day's expenses or sales were dictated, fill the figures. A draft only.
                 const v = await Promise.resolve(listenVoice(req.file.buffer, AUDIO_MIME[ext])).catch(e => ({ ok: false, reason: e.message }));
-                if (v && v.ok && v.entry && v.entry.kind !== 'none') {
+                const vEntries = v && v.ok ? (v.entries && v.entries.length ? v.entries : (v.entry ? [v.entry] : [])).filter(e => e && e.kind !== 'none') : [];
+                if (vEntries.length) {
                     fs.unlinkSync(file);
-                    const row = await recordVoice({ entry: v.entry, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: String((req.session.user && req.session.user.username) || ''), engine: v.model });
-                    return res.status(201).json(await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [row.id])).rows[0]));
+                    const who = String((req.session.user && req.session.user.username) || '');
+                    let first = null, extra = 0;
+                    for (const en of vEntries) {   // one voice note can hold expenses AND a loan: one draft each
+                        const row = await recordVoice({ entry: en, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: who, engine: v.model });
+                        if (!first) first = row; else extra++;
+                    }
+                    const out = await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [first.id])).rows[0]);
+                    return res.status(201).json(extra ? { ...out, also_made: extra, reader_note: `${out.reader_note || ''} The same note had ${extra} more entry(ies): drafts were made for them too.`.trim() } : out);
                 }
                 const said = v && v.ok ? `Heard: "${String(v.text).slice(0, 300)}"${v.english && v.english !== v.text ? ` (English: "${String(v.english).slice(0, 300)}")` : ''}. It was not a list of the day's expenses or sales, so nothing was filled in. Choose the type and type the details in.` : `Could not listen to the voice note (${String((v && v.reason) || 'unknown').slice(0, 120)}). Choose the type and type the details in.`;
                 read = { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: said };
