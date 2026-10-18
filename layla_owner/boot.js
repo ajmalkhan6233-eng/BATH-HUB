@@ -24,12 +24,13 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const family = createFamily({ numbers: S.familyNumbers, store, notes: createFamilyNotes(pool) });      // family mode: reminders + notes only, separate from the shop
   const familyRateLimit = createRateLimiter(20);
   // A dictated day's expenses/sales becomes a Document Inbox DRAFT (same screen as the photos). Nothing is filed until the owner presses Confirm there.
+  const inboxCmd = require('./inboxCommands').createInboxCommands({ inbox: () => require('../routes/document_inbox').getInbox() });
   const voiceDraft = async (args) => require('../routes/document_inbox').getInbox().recordVoice(args);
   const hintsFn = async () => { try { return { customers: (await pool.query('SELECT name FROM customers ORDER BY id DESC LIMIT 80')).rows.map((r) => r.name) }; } catch (_) { return null; } };
   const transcribeHeard = (buffer, mime) => transcribe(buffer, mime, { hintsFn });
-  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe: transcribeHeard, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, voiceDraft, env });
+  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe: transcribeHeard, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, voiceDraft, inboxCmd, env });
   const { safeInboxMediaPath: safeInboxPath } = require('../middleware/webhookAuth');                                  // free bridge: owner messages arrive here from whatsapp-bridge.js
-  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe: transcribeHeard, saveMedia, paper, customer, family, familyRateLimit, voiceDraft, rateLimit }) });
+  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe: transcribeHeard, saveMedia, paper, customer, family, familyRateLimit, voiceDraft, inboxCmd, rateLimit }) });
   setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];
   function start() {

@@ -48,7 +48,7 @@ const AUDIO_MIME = { ogg: 'audio/ogg', m4a: 'audio/mp4', mp3: 'audio/mpeg', wav:
 const parse = r => ({ ...r, extracted: (() => { try { return JSON.parse(r.extracted); } catch (e) { return {}; } })() });
 const present = r => {
     const p = parse(r), meta = F.DOC_TYPES[p.doc_type] || F.DOC_TYPES.unknown;
-    return { ...p, type_label: meta.label, files_to: meta.files_to, fileable: !!meta.files_to, has_photo: true };
+    return { ...p, type_label: meta.label, files_to: meta.files_to, fileable: !!meta.files_to, has_photo: !!p.file_path };
 };
 // GRN: which supplier is this, and which catalogue item is each line? Items are created in the catalogue first, so a
 // line is matched by its item code (exact), else by its exact name. Reads only; a missing table just means "no match".
@@ -168,15 +168,15 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     // It is a DRAFT like every other paper: nothing is filed until Confirm, and the daily-summary merge still refuses to overwrite figures already there.
     async function recordVoice({ entry, buffer, mime = 'audio/ogg', original = '', english = '', warnings = [], confidence = '', from = '', engine = '' }) {
         await ready;
-        if (!entry || !['expense_list', 'day_sheet', 'credit_given', 'credit_paid'].includes(entry.kind)) throw bad(400, 'Not an expense list, a day sheet or a credit entry');
+        if (!entry || !['expense_list', 'day_sheet', 'credit_given', 'credit_paid', 'customer_create'].includes(entry.kind)) throw bad(400, 'Not an expense list, a day sheet, a credit entry or a new customer');
         const ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /mpeg|mp3/.test(mime) ? 'mp3' : /webm/.test(mime) ? 'webm' : /wav/.test(mime) ? 'wav' : 'ogg';
         const dir = path.join(ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
         const file = path.join(dir, `${Date.now()}-voice-${crypto.randomBytes(3).toString('hex')}.${ext}`);
         fs.writeFileSync(file, buffer);
         const type = entry.kind === 'expense_list' ? 'expense_sheet' : entry.kind;
         const usedToday = !entry.date;
-        const isCredit = entry.kind === 'credit_given' || entry.kind === 'credit_paid';
-        const ex = isCredit ? F.normalize(type, { customer_name: entry.party, amount: entry.amount, date: entry.date || todayLK(), notes: entry.note }) : F.normalize(type, {
+        const isCredit = entry.kind === 'credit_given' || entry.kind === 'credit_paid' || entry.kind === 'customer_create';
+        const ex = isCredit ? F.normalize(type, { customer_name: entry.party, phone: entry.phone, amount: entry.amount, date: entry.date || todayLK(), notes: entry.note }) : F.normalize(type, {
             date: entry.date || todayLK(), total_expenses: entry.total_expenses, total_sale: entry.total_sale, cash_sale: entry.cash_sale,
             card_sale: entry.card_sale, online_sale: entry.online_sale, credit_sale: entry.credit_sale,
             expense_items: (entry.items || []).map(i => `${i.name} ${i.amount}`).join('; '),
@@ -266,7 +266,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     }
 
     // Aj changes the type and/or the fields.
-    router.put('/document-inbox/:id', ownerOnly, async (req, res) => {
+    const putHandler = async (req, res) => {
         try {
             await ready;
             const row = await load(req.params.id);
@@ -279,7 +279,8 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             const u = await pool.query(`UPDATE document_inbox SET doc_type = $1, extracted = $2 WHERE id = $3 RETURNING *`, [type, JSON.stringify(ex), row.id]);
             res.json(await view(u.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
-    });
+    };
+    router.put('/document-inbox/:id', ownerOnly, putHandler);
 
     // Read the photo again (e.g. the reader was down the first time).
     router.post('/document-inbox/:id/reread', ownerOnly, async (req, res) => {
@@ -296,7 +297,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
-    router.post('/document-inbox/:id/reject', ownerOnly, async (req, res) => {
+    const rejectHandler = async (req, res) => {
         try {
             await ready;
             const row = await load(req.params.id);
@@ -305,10 +306,11 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             const u = await pool.query(`UPDATE document_inbox SET status = 'rejected', filed_at = NOW() WHERE id = $1 RETURNING *`, [row.id]);
             res.json(await view(u.rows[0]));
         } catch (e) { res.status(500).json({ error: e.message }); }
-    });
+    };
+    router.post('/document-inbox/:id/reject', ownerOnly, rejectHandler);
 
     // ── confirm and file ────────────────────────────────────────────────────
-    router.post('/document-inbox/:id/file', ownerOnly, async (req, res) => {
+    const fileHandler = async (req, res) => {
         let client;
         try {
             await ready;
@@ -392,6 +394,21 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                     filed_to = 'credit_customers'; filed_id = a.applied.map(x => x.id).join(',');
                     note = `${cust.name} paid ${F.money2(ex.amount)}: settled ${a.applied.map(x => `${x.invoice_no || '#' + x.id} (${x.apply}${x.left > 0 ? ', ' + x.left + ' still owed' : ''})`).join(', ')}. Cash received is NOT added to the day's sales: enter it on the day sheet.`;
                 }
+            } else if (type === 'customer_create') {
+                const want = ex.customer_name.trim().toLowerCase();
+                const all = (await client.query(`SELECT id, name, phone FROM customers`)).rows;
+                const same = all.filter(r => String(r.name || '').trim().toLowerCase() === want);
+                if (same.length) throw bad(409, `A customer called "${same[0].name}" already exists (id ${same[0].id}). Nothing was made. To add credit for them, use "credit" instead.`);
+                const like = all.filter(r => { const n = String(r.name || '').trim().toLowerCase(); return n.length >= 3 && want.length >= 3 && (n.includes(want) || want.includes(n)); });
+                if (like.length && (req.body || {}).accept_warnings !== true) throw Object.assign(bad(409, `Similar customer already there: ${like.slice(0, 3).map(r => r.name).join(', ')}. Make a new one anyway?`), { code: 'needs_confirmation', warnings: [`Similar customer: ${like.slice(0, 3).map(r => r.name).join(', ')}`] });
+                if (ex.phone && all.some(r => String(r.phone || '').replace(/\D/g, '') === ex.phone.replace(/\D/g, ''))) throw bad(409, 'That phone number already belongs to another customer.');
+                const phone = ex.phone || `NOPHONE-${row.id}`;   // the Customers table needs a unique phone: a clear placeholder until the real one is added
+                const ins = await client.query(`INSERT INTO customers (name, phone, notes) VALUES ($1,$2,$3) RETURNING id`, [ex.customer_name, phone, `Made from ${row.source === 'voice' ? 'a voice note' : 'a message'} (document #${row.id}).${ex.phone ? '' : ' Phone not given yet.'} ${ex.notes}`.trim()]);
+                filed_to = 'customers'; filed_id = String(ins.rows[0].id); note = `Customer ${ex.customer_name} made${ex.phone ? '' : ' (no phone yet: add it in Customers)'}`;
+                if (ex.amount > 0) {
+                    await client.query(`INSERT INTO credit_customers (customer_id, invoice_date, invoice_no, amount, paid, due_date, notes) VALUES ($1,$2,$3,$4,0,NULL,$5)`, [ins.rows[0].id, ex.date, `OPENING-${row.id}`, F.money2(ex.amount), `Opening credit balance (document #${row.id}). ${ex.notes}`.trim()]);
+                    note += `, opening credit Rs ${F.money2(ex.amount)}`;
+                }
             } else if (type === 'day_sheet' || type === 'expense_sheet') {
                 if (!fileDaySheet) throw bad(501, 'Filing daily sheets is not available here');
                 const out = await fileDaySheet(ex);
@@ -404,11 +421,36 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             res.json({ ...present(done.rows[0]), warnings: v.warnings });
         } catch (e) {
             if (client) await client.query('ROLLBACK').catch(() => {});
-            res.status(e.status || 500).json({ error: e.status ? e.message : `Could not file it (nothing was saved): ${e.message}` });
+            res.status(e.status || 500).json({ error: e.status ? e.message : `Could not file it (nothing was saved): ${e.message}`, ...(e.code === 'needs_confirmation' ? { code: e.code, warnings: e.warnings } : {}) });
         } finally {
             if (client) client.release();
         }
-    });
+    };
+    router.post('/document-inbox/:id/file', ownerOnly, fileHandler);
+
+    // The WhatsApp owner chat runs the SAME handlers (same checks, same filing code) without a browser session. The caller has already checked it is the owner.
+    router.act = async (action, id, body = {}) => {
+        const handler = { edit: putHandler, reject: rejectHandler, file: fileHandler }[action];
+        if (!handler) throw new Error('unknown action');
+        const out = { status: 200, body: null };
+        const res = { status(c) { out.status = c; return this; }, json(b) { out.body = b; return this; } };
+        await handler({ params: { id: String(id) }, body, query: {}, session: { user: { username: 'whatsapp-owner', role: 'owner' } } }, res);
+        return out;
+    };
+    router.customerLike = async (name) => {   // exact and similar customers for a new-customer draft. Reads only.
+        const want = String(name || '').trim().toLowerCase();
+        let all = []; try { all = (await pool.query(`SELECT id, name FROM customers`)).rows; } catch (e) { return { exact: [], similar: [] }; }
+        const low = r => String(r.name || '').trim().toLowerCase();
+        return { exact: all.filter(r => low(r) === want), similar: want.length >= 3 ? all.filter(r => low(r) !== want && low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r)))) : [] };
+    };
+    router.list = async (status = 'to_check') => (await pool.query(`SELECT * FROM document_inbox WHERE status = $1 ORDER BY id DESC LIMIT 50`, [status])).rows.map(present);
+    router.recordText = async ({ type, fields, from = '', note = '' }) => {
+        await ready;
+        if (!F.DOC_TYPES[type]) throw bad(400, 'Unknown paper type');
+        const r = await pool.query(`INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('whatsapp',$1,'typed message','',$2,$3,'',$4) RETURNING *`,
+            [String(from), type, JSON.stringify(F.normalize(type, fields)), String(note).slice(0, 400)]);
+        return present(r.rows[0]);
+    };
 
     return router;
 }

@@ -14,6 +14,7 @@ const DOC_TYPES = {
     expense_sheet:  { label: 'Expense list',         files_to: 'daily_summary' },
     credit_given:   { label: 'Credit given to a customer', files_to: 'credit_customers' },
     credit_paid:    { label: 'Customer paid on credit',    files_to: 'credit_customers' },
+    customer_create:{ label: 'New customer (with opening credit)', files_to: 'customers' },
     salary_note:    { label: 'Salary list',          files_to: null },
     invoice:        { label: 'Supplier invoice',     files_to: null },
     customer_photo: { label: 'Customer photo',       files_to: null },
@@ -72,6 +73,8 @@ function normalize(docType, raw) {
         case 'credit_given':
         case 'credit_paid':
             return { customer_name: str(r.customer_name || r.party, 150), amount: num(r.amount), date: day(r.date), due_date: day(r.due_date), notes: str(r.notes || r.note, 300) };
+        case 'customer_create':
+            return { customer_name: str(r.customer_name || r.party || r.name, 100), phone: str(r.phone, 20), amount: num(r.amount), date: day(r.date), notes: str(r.notes || r.note, 300) };
         case 'salary_note':
             return {
                 date: day(r.date), total: num(r.total), notes: str(r.notes, 500),
@@ -143,6 +146,11 @@ function validateForFiling(docType, ex) {
         if (!(ex.amount > 0)) errors.push('Enter the amount (more than 0).');
         if (!ex.date) errors.push('Enter the date (YYYY-MM-DD).');
         if (docType === 'credit_given' && ex.due_date && ex.date && ex.due_date < ex.date) errors.push('The due date cannot be before the date.');
+    } else if (docType === 'customer_create') {
+        if (!ex.customer_name) errors.push('Enter the customer name.');
+        if (ex.amount != null && !(ex.amount >= 0)) errors.push('The opening credit cannot be negative.');
+        if (!ex.date) errors.push('Enter the date (YYYY-MM-DD).');
+        if (ex.phone && !/^[0-9+][0-9 -]{6,18}$/.test(ex.phone)) errors.push('The phone number does not look right.');
     } else if (docType === 'cheque') {
         if (!ex.payee) errors.push('Enter who the cheque is for (payee).');
         if (!(ex.amount > 0)) errors.push('Enter the cheque amount (more than 0).');

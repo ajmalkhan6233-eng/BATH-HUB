@@ -1,13 +1,14 @@
 const diEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* Document Inbox: photos of papers, read, checked by Aj, then filed. Nothing is filed before Confirm. */
 let _diStatus = 'to_check';
-const DI_TYPES = [['credit_given','Credit given to a customer'],['credit_paid','Customer paid on credit'],['salary_note','Salary list'],['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
+const DI_TYPES = [['customer_create','New customer (with opening credit)'],['credit_given','Credit given to a customer'],['credit_paid','Customer paid on credit'],['salary_note','Salary list'],['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
 const DI_FIELDS = {
   manual_bill: [['bill_number','Bill no.'],['date','Date (YYYY-MM-DD)'],['customer_name','Customer'],['customer_phone','Phone'],['discount','Discount (amount)'],['total','Total written on paper']],
   grn: [['grn_number','GRN no.'],['date','Date (YYYY-MM-DD)'],['supplier_name','Supplier'],['total','Total written on paper']],
   cheque: [['cheque_number','Cheque no.'],['bank','Bank'],['payee','Payee (who it is for)'],['amount','Amount'],['due_date','Cheque date (YYYY-MM-DD)'],['direction','Given or received']],
   day_sheet: [['date','Date (YYYY-MM-DD)'],['total_sale','Total sale'],['cash_sale','Cash'],['card_sale','Card'],['online_sale','Online'],['credit_sale','Credit'],['total_expenses','Total expenses'],['expense_items','Expense items'],['petty_cash','Petty cash'],['payouts','Payouts'],['cash_in','Cash in'],['cash_out','Cash out'],['cash_in_hand','Cash in hand'],['cash_banked','Cash banked']],
   expense_sheet: [['date','Date (YYYY-MM-DD)'],['total_expenses','Total expenses'],['expense_items','Expense items'],['total_sale','Total sale (if written)']],
+  customer_create: [['customer_name','New customer name'],['amount','Opening credit (owed to you)'],['phone','Phone (optional)'],['date','Date (YYYY-MM-DD)'],['notes','Note']],
   credit_given: [['customer_name','Customer (as in Customers)'],['amount','Credit amount'],['date','Date (YYYY-MM-DD)'],['due_date','Due date (optional)'],['notes','What it was for']],
   credit_paid: [['customer_name','Customer (as in Customers)'],['amount','Amount paid'],['date','Date (YYYY-MM-DD)'],['notes','Note']],
 };
@@ -52,6 +53,12 @@ function diForm(x) {
   }
   return `<div class="grid-3">${fields}${pay}</div>${items}${match}`;
 }
+function diEdit(id) {   // Edit: jump to the boxes of this draft; change them, then press Save changes (Confirm files what is saved)
+  const card = document.getElementById('di-card-' + id); if (!card) return;
+  const first = card.querySelector('input.fi, select.fs.fi'); card.style.outline = '2px solid var(--gold,#b8892b)';
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (first) first.focus();
+  diMsg('Change the boxes of draft #' + id + ', then press Save changes. Confirm and file uses what is saved.');
+}
 function diCollect(id, type) {
   const card = document.getElementById('di-card-' + id), ex = {};
   (DI_FIELDS[type] || []).forEach(([k]) => { const el = card.querySelector('.di-f-' + k); if (el) ex[k] = el.value; });
@@ -67,10 +74,10 @@ async function loadDocInbox() {
   document.getElementById('di-list').innerHTML = rows.map(x => {
     const toCheck = x.status === 'to_check';
     const isPdf = /\.pdf$/i.test(x.file_path), isAudio = /\.(ogg|opus|m4a|mp3|wav|webm)$/i.test(x.file_path);
-    const photo = isAudio ? `<audio controls preload="none" src="/api/document-inbox/${x.id}/photo" style="max-width:100%"></audio> <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>` : isPdf ? `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener">Open the PDF</a>` : `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener"><img src="/api/document-inbox/${x.id}/photo" alt="paper" style="max-width:100%;max-height:340px;border-radius:6px;border:1px solid var(--border,#444)"></a>` + ` <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>`;
+    const photo = !x.file_path ? `<div style="font-size:13px;color:var(--text2)">Typed in WhatsApp: ${diEsc(x.reader_note || '')}</div>` : isAudio ? `<audio controls preload="none" src="/api/document-inbox/${x.id}/photo" style="max-width:100%"></audio> <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>` : isPdf ? `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener">Open the PDF</a>` : `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener"><img src="/api/document-inbox/${x.id}/photo" alt="paper" style="max-width:100%;max-height:340px;border-radius:6px;border:1px solid var(--border,#444)"></a>` + ` <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>`;
     const typeSel = toCheck ? `<select class="fs" style="width:auto" onchange="diRetype(${x.id}, this.value)">${DI_TYPES.map(([k, l]) => `<option value="${k}" ${k === x.doc_type ? 'selected' : ''}>${diEsc(l)}</option>`).join('')}</select>` : `<b>${diEsc(x.type_label)}</b>`;
     const actions = toCheck ? `<button class="btn btn-p" ${x.fileable ? '' : 'disabled'} onclick="diFile(${x.id})">Confirm and file</button>
-        <button class="btn btn-s" onclick="diSave(${x.id})">Save changes</button><button class="btn btn-s" onclick="diReread(${x.id})">Read again</button><button class="btn btn-s" onclick="diReject(${x.id})">Reject</button>`
+        <button class="btn btn-s" onclick="diEdit(${x.id})">Edit</button><button class="btn btn-s" onclick="diSave(${x.id})">Save changes</button><button class="btn btn-s" onclick="diReread(${x.id})">Read again</button><button class="btn btn-s" onclick="diReject(${x.id})">Reject</button>`
       : (x.status === 'filed' ? `<span style="color:var(--green,#2e7d32)">Filed to <b>${diEsc(x.filed_to)}</b>: ${diEsc(x.filed_note || '')}</span>` : '<span style="color:var(--text2)">Rejected</span>');
     return `<div class="card" id="di-card-${x.id}" style="margin-bottom:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><b>#${x.id}</b> ${typeSel}

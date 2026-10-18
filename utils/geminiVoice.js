@@ -9,9 +9,9 @@ const MODEL_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const TIMEOUT_MS = 60000;
 
 const PROMPT_BASE = `You are listening to a voice note from the owner of Royal Bath Hub, a bathroom accessories and tile shop on Kandy Road, Thihariya, Sri Lanka. He speaks Sri Lankan Sinhala, Tamil, English, or a mix (Sinhala or Tamil words with English numbers, names and item names). The clip may be very short (2-5 seconds) and noisy. Listen carefully and Output ONLY valid JSON, no markdown:
-{"text":"exactly what was said, word for word, in the language spoken (Sinhala in Sinhala letters)","english":"a plain English version of the same words","language":"si|ta|en|mixed","entries":[{"kind":"expense_list|day_sheet|credit_given|credit_paid","party":"customer name or null","amount":number or null,"note":"what it was for or null","date":"YYYY-MM-DD or null","items":[{"name":"string","amount":number}],"total_expenses":number or null,"total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null}],"confidence":"high|medium|low","notes":"anything unclear"}
+{"text":"exactly what was said, word for word, in the language spoken (Sinhala in Sinhala letters)","english":"a plain English version of the same words","language":"si|ta|en|mixed","entries":[{"kind":"expense_list|day_sheet|credit_given|credit_paid|customer_create","party":"customer name or null","amount":number or null,"note":"what it was for or null","date":"YYYY-MM-DD or null","items":[{"name":"string","amount":number}],"total_expenses":number or null,"total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null}],"confidence":"high|medium|low","notes":"anything unclear"}
 ONE voice note can hold SEVERAL things: put each in its own object in "entries". Example: "tea 200, petrol 1500, and I gave Saman 1500 loan" = TWO entries: an expense_list (tea 200, petrol 1500) AND a credit_given (party Saman, amount 1500). Never fold a loan or credit to a person into the expense list, and never add it to the expenses total.
-kind "expense_list" ONLY for money spent today (tea 200, petrol 1500). kind "day_sheet" ONLY for the day's sales figures. kind "credit_given" ONLY when he gave goods or money ON CREDIT or as a LOAN to a named customer ("give credit 1500 to Saman", "I gave Mr Saman 1500 loan"): party = the name as spoken, amount = the credit. kind "credit_paid" ONLY when a named customer PAID BACK something owed ("Saman paid 1000", "Saman gave me 1000 back"). Never use a credit kind without BOTH a name and an amount. If nothing is a money entry (question, reminder, bill, cheque, chat) return "entries":[].
+kind "expense_list" ONLY for money spent today (tea 200, petrol 1500). kind "day_sheet" ONLY for the day's sales figures. kind "credit_given" ONLY when he gave goods or money ON CREDIT or as a LOAN to a named customer ("give credit 1500 to Saman", "I gave Mr Saman 1500 loan"): party = the name as spoken, amount = the credit. kind "credit_paid" ONLY when a named customer PAID BACK something owed ("Saman paid 1000", "Saman gave me 1000 back"). Never use a credit kind without BOTH a name and an amount. kind "customer_create" ONLY when he asks to create/add/open a NEW customer ("create customer Saman 8500"): party = the name, amount = the opening credit balance owed (null or 0 if none said), phone only if digits were said. If nothing is a money entry (question, reminder, bill, cheque, chat) return "entries":[].
 Numbers: amounts are rupees as plain numbers, no commas. Sinhala: "දහස" = thousand, "සීයයි"/"සීයක්" = hundred, "ලක්ෂය" = 100000, "පන්සීයයි" = 500, "දෙදහස" = 2000. Tamil: "ஆயிரம்" = thousand, "நூறு" = hundred. English "fifteen hundred" = 1500, "two fifty" = 250. Do NOT turn a spoken name into a number (the name "Saman" is never "532"): if a word could be a name, treat it as a name. If you are not sure of a number or a name, set confidence to "low", say so in notes, and NEVER guess a figure. Dates are day/month/year in Sri Lanka; "today" or no date = null.`;
 
 /** The prompt, with the shop's own names added so a name heard badly is matched to a real one. */
@@ -35,7 +35,7 @@ const day = v => { const s = String(v == null ? '' : v).trim().slice(0, 10); ret
 
 function cleanEntry(e, warnings) {
     e = e && typeof e === 'object' ? e : {};
-    const kind = ['expense_list', 'day_sheet', 'credit_given', 'credit_paid'].includes(e.kind) ? e.kind : 'none';
+    const kind = ['expense_list', 'day_sheet', 'credit_given', 'credit_paid', 'customer_create'].includes(e.kind) ? e.kind : 'none';
     const items = (Array.isArray(e.items) ? e.items : []).slice(0, 60)
         .map(i => ({ name: String((i && i.name) || '').trim().slice(0, 120), amount: num(i && i.amount) }))
         .filter(i => i.name && i.amount != null);
@@ -44,7 +44,7 @@ function cleanEntry(e, warnings) {
         kind, date: day(e.date), items,
         total_expenses: num(e.total_expenses), total_sale: num(e.total_sale), cash_sale: num(e.cash_sale),
         card_sale: num(e.card_sale), online_sale: num(e.online_sale), credit_sale: num(e.credit_sale),
-        party: String(e.party || '').trim().slice(0, 150), amount: num(e.amount), note: String(e.note || '').trim().slice(0, 300),
+        party: String(e.party || '').trim().slice(0, 150), amount: num(e.amount), phone: String(e.phone || '').replace(/[^0-9+]/g, '').slice(0, 20), note: String(e.note || '').trim().slice(0, 300),
     };
     // an expense list with no stated total: the total is the sum of the lines he said
     if (kind === 'expense_list' && entry.total_expenses == null && items.length) entry.total_expenses = itemSum;
@@ -56,6 +56,7 @@ function cleanEntry(e, warnings) {
     if (kind === 'day_sheet' && entry.total_sale == null) entry.kind = 'none';
     // a credit entry needs BOTH a name and a positive amount: otherwise it is not an entry at all (nothing is guessed)
     if ((kind === 'credit_given' || kind === 'credit_paid') && (!entry.party || !(entry.amount > 0))) entry.kind = 'none';
+    if (kind === 'customer_create' && !entry.party) entry.kind = 'none';
     return entry;
 }
 
