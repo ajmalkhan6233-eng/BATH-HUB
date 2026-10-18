@@ -96,13 +96,13 @@ describe('upload', () => {
     reading = { document_type: 'manual_bill', items: [] };
   });
 
-  test('a PDF is saved, not read', async () => {
+  test('a PDF is now read like a photo (Gemini reads PDFs directly)', async () => {
     ocr.mockClear();
     const r = await up(owner, Buffer.from('%PDF-1.4 some pdf bytes here'), 'grn', 'g.pdf');
     expect(r.status).toBe(201);
-    expect(ocr).not.toHaveBeenCalled();
+    expect(ocr).toHaveBeenCalledTimes(1);
     expect(r.body.doc_type).toBe('grn');
-    expect(r.body.reader_note).toMatch(/PDF/);
+    expect(r.body.status).toBe('to_check');
   });
 });
 
