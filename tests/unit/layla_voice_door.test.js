@@ -103,27 +103,27 @@ describe('inbound: a dictated day becomes a DRAFT, never a filing', () => {
     sent = []; drafts = [];
     deps.send = async (to, t) => sent.push(t);
     deps.download = async () => ({ buffer: Buffer.from('x'), mime: 'audio/ogg' });
-    deps.voiceDraft = async a => { drafts.push(a); return { id: 7, extracted: { date: '2026-10-18' } }; };
+    let nid = 7; deps.inboxCmd = { label: require('../../layla_owner/inboxCommands').label, handle: async () => null };
+    deps.voiceDraft = async a => { drafts.push(a); const e = a.entry; return { id: nid++, doc_type: { expense_list: 'expense_sheet' }[e.kind] || e.kind, extracted: { date: '2026-10-18', customer_name: e.party, amount: e.amount, total_expenses: e.total_expenses, total_sale: e.total_sale } }; };
   });
   test('expenses spoken in Sinhala: one draft, reply says nothing is filed, original wording shown', async () => {
     deps.transcribe = async () => ({ ok: true, text: 'tea 200 petrol 1500', original: 'තේ 200 පෙට්‍රල් 1500', entry: { kind: 'expense_list', total_expenses: 1700, items: [] }, warnings: [], confidence: 'high', engine: 'gemini:x' });
     const r = await processInbound({ id: 'v1', from: '94777999219', type: 'audio', mediaId: 'm' }, deps);
     expect(r).toMatchObject({ status: 'ok', intent: 'voice_draft', draftId: 7 });
     expect(drafts).toHaveLength(1);
-    expect(sent[0]).toContain('I heard: "තේ 200 පෙට්‍රල් 1500"'); expect(sent[0]).toContain('draft #7'); expect(sent[0]).toContain('NOTHING is filed yet'); expect(sent[0]).toContain('Rs 1,700');
+    expect(sent[0]).toContain('I heard: "තේ 200 පෙට්‍රල් 1500"'); expect(sent[0]).toContain('Draft: Expenses Rs 1,700, 18 Oct'); expect(sent[0]).toContain('NOTHING is filed yet'); expect(sent[0]).not.toMatch(/#\d/);
   });
   test('one note with expenses AND a loan makes TWO drafts', async () => {
-    let n = 7; deps.voiceDraft = async a => { drafts.push(a); return { id: n++, extracted: { date: '2026-10-18' } }; };
     deps.transcribe = async () => ({ ok: true, text: 'tea 200 petrol 1500 gave Saman 1500 loan', original: 'x', entries: [{ kind: 'expense_list', total_expenses: 1700, items: [] }, { kind: 'credit_given', party: 'Saman', amount: 1500 }], warnings: [], confidence: 'high', engine: 'g' });
     const r = await processInbound({ id: 'v9', from: '94777999219', type: 'audio', mediaId: 'm' }, deps);
     expect(r).toMatchObject({ status: 'ok', intent: 'voice_draft', draftId: 7 });
     expect(drafts.map(d => d.entry.kind)).toEqual(['expense_list', 'credit_given']);
-    expect(sent[0]).toContain('Expenses draft #7: Rs 1,700'); expect(sent[0]).toContain('Credit to Saman draft #8: Rs 1,500'); expect(sent[0]).not.toContain('not fully sure');
+    expect(sent[0]).toContain('Draft: Expenses Rs 1,700, 18 Oct'); expect(sent[0]).toContain('Draft: Saman credit Rs 1,500, 18 Oct'); expect(sent[0]).toContain('ok all'); expect(sent[0]).not.toContain('not fully sure');
   });
   test('a low-confidence number is called out', async () => {
     deps.transcribe = async () => ({ ok: true, text: 'x', entry: { kind: 'day_sheet', total_sale: 90000 }, warnings: ['check both'], confidence: 'low' });
     await processInbound({ id: 'v2', from: '94777999219', type: 'audio', mediaId: 'm' }, deps);
-    expect(sent[0]).toContain('not fully sure I heard it right'); expect(sent[0]).toContain('check both'); expect(sent[0]).toContain('Sales draft');
+    expect(sent[0]).toContain('not fully sure I heard it right'); expect(sent[0]).toContain('check both'); expect(sent[0]).toContain('Draft: Sales Rs 90,000');
   });
   test('an ordinary voice note (a reminder) still goes the old way and makes no draft', async () => {
     deps.transcribe = async () => ({ ok: true, text: 'remind me to call Pioneer at 4pm', entry: { kind: 'none' } });
@@ -236,7 +236,7 @@ describe('the bridge inbox folder: voice notes and PDFs are allowed for Layla ch
         transcribe: async () => ({ ok: true, text: 'tea 200 petrol 1500', original: 'tea 200 petrol 1500', entry: { kind: 'expense_list', total_expenses: 1700, items: [] } }),
         voiceDraft: async a => { drafts.push(a); return { id: 3, extracted: { date: '2026-10-18' } }; }, saveMedia: async () => file }) });
     const r = await bridgeIn({ from: '94777999219', id: 'bv1', type: 'audio', filePath: file, mime: 'audio/ogg; codecs=opus' });
-    expect(r.status).toBe('ok'); expect(drafts).toHaveLength(1); expect(r.replies.join('\n')).toContain('draft #3');
+    expect(r.status).toBe('ok'); expect(drafts).toHaveLength(1); expect(r.replies.join('\n')).toContain('Draft:');
     expect(r.replies.join('\n')).not.toContain('Something went wrong');
   });
 });

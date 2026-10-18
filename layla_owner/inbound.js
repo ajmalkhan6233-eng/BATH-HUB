@@ -45,16 +45,13 @@ async function processInbound(m, deps) {
         for (const entry of found) {   // one voice note can hold expenses AND a loan: one draft each
           const d = await deps.voiceDraft({ entry, buffer: media.buffer, mime: media.mime || m.mime, original: t.original || t.text, english: t.text, warnings: t.warnings, confidence: t.confidence, from: m.from, engine: t.engine });
           if (firstId == null) firstId = d.id; drafted.push(d);
-          const k = entry.kind;
-          const total = k === 'expense_list' ? entry.total_expenses : k === 'day_sheet' ? entry.total_sale : (entry.amount || 0);
-          const what = { expense_list: 'Expenses', day_sheet: 'Sales', credit_given: `Credit to ${entry.party}`, credit_paid: `${entry.party} paid`, customer_create: `New customer ${entry.party}, opening credit` }[k];
-          lines.push(`${what} draft #${d.id}: Rs ${Number(total).toLocaleString('en-LK')} for ${d.extracted.date}.`);
+          const lab = deps.inboxCmd ? deps.inboxCmd.label(d) : `${entry.kind} ${entry.party || ''} Rs ${Number(entry.total_expenses || entry.total_sale || entry.amount || 0).toLocaleString('en-LK')}`;
+          lines.push(`Draft: ${lab}.`);
         }
         lines.push('NOTHING is filed yet.');
         if (t.warnings && t.warnings.length) lines.push('! ' + t.warnings.join(' '));
-        if (t.confidence && t.confidence !== 'high') lines.push('! I am not fully sure I heard it right. If a name or number is wrong, Reject that draft in the Document Inbox and send the note again, or type it.');
-        const ids = drafted.map((d) => d.id);
-        lines.push(`Reply "ok ${ids[0]}"${ids.length > 1 ? ' (or "ok all")' : ''} to file, "cancel ${ids[0]}", or "edit ${ids[0]} amount 1800". Or use the Document Inbox in the app.`);
+        if (t.confidence && t.confidence !== 'high') lines.push('! I am not fully sure I heard it right. If a name or number is wrong, reply "cancel" and say it again, or "edit amount 600".');
+        lines.push(drafted.length > 1 ? 'Reply "ok all" to file all, or say a name: "ok saman", "ok expenses". "cancel" drops the latest, "edit amount 600" changes it. Or use the Document Inbox in the app.' : 'Reply "ok" to file it, "cancel" to drop it, or "edit amount 600". Or use the Document Inbox in the app.');
         await reply(lines.join('\n')); return { status: 'ok', intent: 'voice_draft', draftId: firstId };
       }
     } else if (m.type === 'image' || m.type === 'document') {
@@ -71,7 +68,7 @@ async function processInbound(m, deps) {
     } else { await reply('I can read text, voice notes and photos.'); return { status: 'unsupported' }; }
   } catch (e) { console.error('[layla-owner] inbound error:', e.message); await reply('Something went wrong on my side. Please try again.'); return { status: 'error' }; }
   if (deps.fallbackOriginal && m.type === 'text' && /^\s*teach\s*:/i.test(text)) return { status: 'fallback' };   // ONE LAYLA: "TEACH: <fact>" is the original Layla's permanent-fact command
-  if (deps.inboxCmd && (m.type === 'text' || m.type === 'audio')) {   // reply to a draft from WhatsApp: ok / cancel / edit / create customer (owner only: we are past the owner check)
+  if (deps.inboxCmd && deps.inboxCmd.handle && (m.type === 'text' || m.type === 'audio')) {   // reply to a draft from WhatsApp: ok / cancel / edit / create customer (owner only: we are past the owner check)
     const c = await deps.inboxCmd.handle(text, { from: m.from, paperPending: deps.paper ? await deps.paper.hasPending().catch(() => false) : false }).catch((e) => { console.error('[layla-owner] inbox command:', e.message); return null; });
     if (c) { await reply(heard + c.reply); return { status: 'ok', intent: 'inbox_cmd' }; }
   }
