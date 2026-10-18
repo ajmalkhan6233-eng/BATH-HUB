@@ -34,7 +34,11 @@ const FIELD = {
 };
 const NUMERIC = new Set(['amount', 'total_expenses', 'total_sale', 'total']);
 const FIELD_WORDS = new Set(Object.values(FIELD).flatMap((m) => Object.keys(m)));
-const FILLER = new Set(['the', 'a', 'an', 'draft', 'drafts', 'last', 'latest', 'it', 'this', 'that', 'please', 'pls', 'now', 'one', 'my', 'for', 'to']);
+const FILLER = new Set(['the', 'a', 'an', 'draft', 'drafts', 'last', 'latest', 'it', 'this', 'that', 'please', 'pls', 'now', 'one', 'my', 'for', 'to', 'is', 'are', 'test', 'thanks', 'thank', 'you', 'sir', 'file', 'ok', 'okay']);
+// The FIRST word is the command; trailing words ("cancel, this is a test", "ok please") are chatter. Sinhala / Tamil words too.
+const OK_WORDS = new Set(['ok', 'okay', 'yes', 'confirm', 'file', 'sure', 'yep', 'ඔව්', 'හරි', 'ஆம்', 'சரி']);
+const CANCEL_WORDS = new Set(['cancel', 'reject', 'drop', 'delete', 'එපා', 'අවලංගු', 'ரத்து']);
+const tokens = (t) => String(t || '').trim().split(/[\s,.:;!?]+/).filter(Boolean);
 
 /** The draft named in words, no number: "Saman credit Rs 1,500, 18 Oct". */
 function label(r) {
@@ -75,18 +79,20 @@ function parse(text) {
     if (am) { amount = Number(am[1].replace(/,/g, '')); rest = rest.slice(0, am.index).trim(); }
     return { cmd: 'create', name: rest.replace(/^(?:called|named)\s+/i, ''), amount, phone };
   }
-  if (/^(drafts|pending drafts|show drafts|list drafts|pending)$/i.test(t)) return { cmd: 'list' };
-  if ((m = t.match(/^(?:ok|okay|confirm|file|yes)(?:\s+(.+))?$/i))) {
-    const sel = (m[1] || '').trim();
-    return { cmd: 'ok', all: /^all$/i.test(sel), id: /^#?\d+$/.test(sel) ? Number(sel.replace('#', '')) : null, sel: /^all$/i.test(sel) || /^#?\d+$/.test(sel) ? '' : sel };
+  const tk = tokens(t); const first = (tk[0] || '').toLowerCase(); const rest = tk.slice(1);
+  if (/^(drafts|pending drafts|show drafts|list drafts|pending)$/i.test(t.replace(/[,.!?]+/g, ' ').trim())) return { cmd: 'list' };
+  if (OK_WORDS.has(first)) {
+    const sel = rest.join(' ');
+    const idm = rest.length === 1 && rest[0].match(/^#?(\d+)$/);
+    return { cmd: 'ok', all: rest.length === 1 && rest[0].toLowerCase() === 'all', id: idm ? Number(idm[1]) : null, sel: idm || (rest.length === 1 && rest[0].toLowerCase() === 'all') ? '' : sel };
   }
-  if ((m = t.match(/^(?:cancel|reject|drop|delete)(?:\s+(.+))?$/i))) {
-    const sel = (m[1] || '').trim();
-    return { cmd: 'cancel', id: /^#?\d+$/.test(sel) ? Number(sel.replace('#', '')) : null, sel: /^#?\d+$/.test(sel) ? '' : sel };
+  if (CANCEL_WORDS.has(first)) {
+    const idm = rest.length === 1 && rest[0].match(/^#?(\d+)$/);
+    return { cmd: 'cancel', id: idm ? Number(idm[1]) : null, sel: idm ? '' : rest.join(' ') };
   }
-  if ((m = t.match(/^force(?:\s+(.+))?$/i))) return { cmd: 'force', sel: (m[1] || '').trim() };
-  if ((m = t.match(/^edit\s+(.+)$/i))) {
-    let rest = m[1].trim(); let id = null; const im = rest.match(/^#?(\d+)\s+(.+)$/); if (im) { id = Number(im[1]); rest = im[2]; }
+  if (first === 'force') return { cmd: 'force', sel: rest.join(' ') };
+  if (first === 'edit' || first === 'change') {
+    let rest = t.replace(/^\S+\s*/, '').replace(/[;!?]+/g, ' ').replace(/,(?=\s|$)/g, '').trim(); let id = null; const im = rest.match(/^#?(\d+)\s+(.+)$/); if (im) { id = Number(im[1]); rest = im[2]; }
     const toks = rest.split(/\s+/); const at = toks.findIndex((w) => FIELD_WORDS.has(w.toLowerCase()));
     if (at < 0 || at === toks.length - 1) return { cmd: 'edit', bad: true, id, sel: '' };
     return { cmd: 'edit', id, sel: toks.slice(0, at).join(' '), field: toks[at].toLowerCase(), value: toks.slice(at + 1).join(' ') };
@@ -107,7 +113,12 @@ function createInboxCommands({ inbox }) {
     if (id != null) { const r = all.find((x) => x.id === id); return r ? { row: r } : { none: 'That draft is not waiting any more.' }; }
     if (!sel) { const r = recent(all).pop(); return r ? { row: r } : { none: null }; }
     const hits = matches(all, sel);
-    if (!hits.length) return { none: `Nothing waiting matches "${sel}". Say "drafts" to see what is waiting.` };
+    if (!hits.length) {
+      const latest = recent(all).pop();
+      if (action === 'cancel' && latest) return { row: latest };                  // "cancel, this is a test": the extra words are chatter
+      if (action === 'ok' && words(sel).length > 2) return { none: null, chat: true };   // a long sentence is just talk, not a command
+      return { none: `Nothing waiting matches "${sel}".${latest ? ` The latest is: ${label(latest)}. Reply "ok" to file that.` : ''}` };
+    }
     if (hits.length === 1) return { row: hits[0] };
     const opts = hits.slice(-4);
     choices.set(from, { action, ids: opts.map((r) => r.id), payload, at: Date.now() });
@@ -128,7 +139,7 @@ function createInboxCommands({ inbox }) {
     const f = (FIELD[r.doc_type] || {})[field];
     if (!f) return `For "${label(r)}" you can edit: ${FIELD[r.doc_type] ? [...new Set(Object.keys(FIELD[r.doc_type]))].join(', ') : 'nothing here, use the app'}.`;
     let v = value;
-    if (NUMERIC.has(f)) { const n = Number(String(v).replace(/^(rs\.?|lkr)\s*/i, '').replace(/,/g, '')); if (!Number.isFinite(n) || n < 0) return `"${v}" is not an amount. Example: edit amount 1800`; v = n; }
+    if (NUMERIC.has(f)) { const nm = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?/); const n = nm ? Number(nm[0]) : NaN; if (!Number.isFinite(n) || n < 0) return `"${v}" is not an amount. Example: edit amount 1800`; v = n; }
     if (f === 'date' || f === 'due_date') { if (/^today$/i.test(v)) v = todayLK(); else if (/^yesterday$/i.test(v)) v = lk(Date.now() - 864e5); else if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return 'Dates: today, yesterday, or 2026-10-18.'; }
     const out = await box().act('edit', r.id, { doc_type: r.doc_type, extracted: { ...r.extracted, [f]: v } });
     if (out.status !== 200) return `Not changed: ${(out.body && out.body.error) || 'error'}`;
@@ -174,7 +185,7 @@ function createInboxCommands({ inbox }) {
       if (c.cmd === 'ok' && !c.sel && c.id == null && !(recent(await openDrafts())).length) return null;   // nothing waiting: just an ordinary "ok"
       const p = await pick(c, { from, action: c.cmd });
       if (p.ask) return { reply: p.ask };
-      if (p.none !== undefined) return p.none ? { reply: p.none } : (c.cmd === 'ok' ? null : { reply: 'No drafts waiting.' });
+      if (p.none !== undefined) return p.none ? { reply: p.none } : (c.cmd === 'ok' || p.chat ? null : { reply: 'No drafts waiting.' });
       return { reply: c.cmd === 'cancel' ? await cancelRow(p.row) : await fileRow(p.row, c.cmd === 'force') };
     }
     if (c.cmd === 'edit') {

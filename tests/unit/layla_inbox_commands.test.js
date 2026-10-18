@@ -41,8 +41,35 @@ beforeAll(async () => {
 beforeEach(async () => { await inbox.list('to_check').catch(() => {}); await pool.query(`UPDATE document_inbox SET status='rejected' WHERE status='to_check'`).catch(() => {}); sent = []; deps = { store: { remember: async () => true, create: async () => ({}) }, adapters: {}, send: async (to, t) => sent.push(t), ownerNumber: '94777999219', inboxCmd: cmd, paper: { hasPending: async () => false, handleText: async () => null } }; });
 const say = (text, id = 'm' + Math.random()) => processInbound({ id, from: '94777999219', type: 'text', text }, deps);
 
+
 const mkVoice = (party, amount, kind = 'credit_given') => inbox.recordVoice({ entry: { kind, party, amount, date: new Date().toISOString().slice(0, 10) }, buffer: Buffer.from('x'), from: '94777999219' });
 const rows = async (q) => (await pool.query(q)).rows;
+
+describe('the FIRST word is the command; extra words are chatter; Sinhala and Tamil words', () => {
+  test('parse', () => {
+    expect(parse('cancel, this is a test')).toMatchObject({ cmd: 'cancel' });
+    expect(parse('Ok please')).toMatchObject({ cmd: 'ok' });
+    expect(parse('ඔව්')).toMatchObject({ cmd: 'ok', sel: '' });
+    expect(parse('හරි')).toMatchObject({ cmd: 'ok' });
+    expect(parse('එපා')).toMatchObject({ cmd: 'cancel' });
+    expect(parse('அவலங்கு')).toBeNull();
+    expect(parse('edit amount rs 1,800 please')).toMatchObject({ field: 'amount', value: 'rs 1,800 please' });
+  });
+  test('cancel with extra words drops the latest; ok please files it; edit with trailing words; long sentences are not commands', async () => {
+    await mkVoice('Sam Perera', 77);
+    await say('Cancel, this is a test'); expect(sent[0]).toMatch(/^Cancelled: Sam Perera credit Rs 77/);
+    await mkVoice('Sam Perera', 88);
+    await say('edit amount 99 please'); expect(sent[1]).toMatch(/Now: Sam Perera credit Rs 99/);
+    await say('Yes, please'); expect(sent[2]).toMatch(/^FILED: Sam Perera credit Rs 99/);
+    await mkVoice('Nimal Silva', 5);
+    await say('ok'); await say('ඔව්');   // nothing left after the first ok: the second is an ordinary message
+    await mkVoice('Nimal Silva', 6);
+    await say('ඔව්'); expect(sent[sent.length - 1]).toMatch(/^FILED: Nimal Silva credit Rs 6/);
+    await mkVoice('Nimal Silva', 7);
+    await say('ok that sounds good to me'); expect(sent[sent.length - 1]).toMatch(/did not get that|^$/);   // talk, not a command
+    await say('ok nimalx'); expect(sent[sent.length - 1]).toMatch(/Nothing waiting matches "nimalx"\. The latest is: Nimal Silva credit Rs 7/);
+  });
+});
 
 describe('create customer by message', () => {
   test('draft first, nothing made; a bare ok makes the customer and the opening credit', async () => {
@@ -66,11 +93,11 @@ describe('create customer by message', () => {
 
 describe('answer drafts without any number', () => {
   test('edit amount changes the latest draft; the reply names it', async () => {
-    await mkVoice('Sam Perera', 1500);
+    const d1 = await mkVoice('Sam Perera', 1500);
     await say('edit amount 1800'); expect(sent[0]).toMatch(/Changed\. Now: Sam Perera credit Rs 1,800/);
     await say('edit bank xyz'); expect(sent[1]).toMatch(/you can edit: amount, name/);
     await say('cancel'); expect(sent[2]).toMatch(/Cancelled: Sam Perera credit Rs 1,800/);
-    expect(await rows(`SELECT * FROM credit_customers WHERE invoice_no LIKE 'VOICE-%'`)).toHaveLength(0);
+    expect(await rows(`SELECT * FROM credit_customers WHERE invoice_no = 'VOICE-${d1.id}'`)).toHaveLength(0);
     await say('ok'); expect(sent[3]).toMatch(/did not get that/);   // nothing waiting: an ordinary ok, not handled here
   });
   test('bare ok files the LATEST draft; "ok sam" picks by name; the reply names what was filed', async () => {
