@@ -37,7 +37,7 @@
     "qrcode-terminal": "^0.12.0",
     "speakeasy": "^2.0.0",
     "three": "^0.185.1",
-    "whatsapp-web.js": "^1.34.7",
+    "whatsapp-web.js": "https://github.com/pedroslopez/whatsapp-web.js/archive/refs/heads/main.tar.gz",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
