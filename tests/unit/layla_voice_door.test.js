@@ -232,3 +232,19 @@ describe('the bridge inbox folder: voice notes and PDFs are allowed for Layla ch
     expect(r.replies.join('\n')).not.toContain('Something went wrong');
   });
 });
+
+describe('geminiVoice under overload (503)', () => {
+  const { geminiVoice } = require('../../utils/geminiVoice');
+  const ok = { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ text: 'tea 200', english: 'tea 200', language: 'en', entry: { kind: 'none' }, confidence: 'high' }) }] } }] }) };
+  test('retries the next model after a 503 and waits between tries', async () => {
+    const calls = []; const waits = [];
+    const fetchFn = async (url) => { calls.push(url); return calls.length < 3 ? { ok: false, status: 503, json: async () => ({ error: { message: 'high demand' } }) } : ok; };
+    const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['m1', 'm2', 'm3', 'm4'], sleep: async ms => waits.push(ms) });
+    expect(r.ok).toBe(true); expect(calls.length).toBe(3); expect(waits.length).toBe(2); expect(r.model).toBe('gemini:m3');
+  });
+  test('gives up inside its time budget instead of hanging', async () => {
+    const fetchFn = async () => ({ ok: false, status: 503, json: async () => ({ error: { message: 'high demand' } }) });
+    const r = await geminiVoice({ key: 'k', buffer: Buffer.from('a'), mime: 'audio/ogg', fetchFn, listModels: async () => ['m1', 'm2'], sleep: async () => {}, budgetMs: 3000 });
+    expect(r.ok).toBe(false);
+  });
+});

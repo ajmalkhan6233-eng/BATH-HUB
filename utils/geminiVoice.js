@@ -56,19 +56,22 @@ function cleanVoice(raw) {
 }
 
 /** Voice bytes -> { ok, text, english, language, entry, warnings, confidence, model } via the Gemini free key. */
-async function geminiVoice({ key, buffer, mime, fetchFn = globalThis.fetch, model = process.env.GEMINI_VISION_MODEL, listModels }) {
+async function geminiVoice({ key, buffer, mime, fetchFn = globalThis.fetch, model = process.env.GEMINI_VISION_MODEL, listModels, budgetMs = 55000, sleep = ms => new Promise(r => setTimeout(r, ms)) }) {
+    const t0 = Date.now();
     if (!key) return { ok: false, reason: 'no Gemini key' };
     if (!buffer || !buffer.length) return { ok: false, reason: 'empty audio' };
     const m0 = String(mime || 'audio/ogg').split(';')[0] || 'audio/ogg';
     const tried = []; let lastErr = 'no model';
     const order = model ? [model] : [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
+        const left = budgetMs - (Date.now() - t0);
+        if (left < 4000) { lastErr = lastErr === 'no model' ? 'out of time' : lastErr; break; }
         let m = order[i];
         if (!m) { const ids = await (listModels || (() => require('../scripts/ocr_photo').geminiModels(key, fetchFn)))().catch(() => []); m = ids.find(x => !tried.includes(x)); if (!m) break; }
         tried.push(m);
         try {
             const r = await fetchFn(`${MODEL_URL}/${m}:generateContent?key=${encodeURIComponent(key)}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(TIMEOUT_MS),
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(Math.min(TIMEOUT_MS, left)),
                 body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: m0, data: Buffer.from(buffer).toString('base64') } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json' } }),
             });
             const j = await r.json();
@@ -78,7 +81,7 @@ async function geminiVoice({ key, buffer, mime, fetchFn = globalThis.fetch, mode
             const c = cleanVoice(JSON.parse(mm[0]));
             if (!c.text) return { ok: false, reason: 'no speech found' };
             return { ok: true, ...c, model: 'gemini:' + m };
-        } catch (e) { lastErr = e.message; if (![400, 404, 429, 500, 503].includes(e.status) && !/timeout|aborted/i.test(e.message)) break; }
+        } catch (e) { lastErr = e.message; if (![400, 404, 429, 500, 503].includes(e.status) && !/timeout|aborted/i.test(e.message)) break; if ([429, 503].includes(e.status)) await sleep(Math.min(1500 * (i + 1), 4000)); }
     }
     return { ok: false, reason: String(lastErr).slice(0, 160) };
 }

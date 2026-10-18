@@ -11,8 +11,10 @@ const { geminiVoice } = require('../utils/geminiVoice');
 async function transcribe(buffer, mime, { key = process.env.GEMINI_API_KEY, geminiFn = geminiVoice, python = process.env.PYTHON || 'python', script = path.join(__dirname, '..', 'scripts', 'transcribe.py'), timeoutMs = 90000, spawnFn = spawn } = {}) {
   if (key) {
     const g = await geminiFn({ key, buffer, mime }).catch((e) => ({ ok: false, reason: e.message }));
+    if (g && g.ok) { console.log('[transcribe] heard via', g.model, '|', String(g.english || g.text).slice(0, 120)); }
     if (g && g.ok) return { ok: true, text: g.english || g.text, original: g.text, language: g.language, entry: g.entry, warnings: g.warnings, confidence: g.confidence, engine: g.model };
     console.error('[transcribe] Gemini failed, trying the local reader:', g && g.reason);
+    timeoutMs = Math.min(timeoutMs, 20000); // the chat bridge gives up at 90s: Gemini (<=55s) + this must fit
   }
   const ext = /ogg|opus/.test(mime || '') ? '.ogg' : /mp4|m4a|aac/.test(mime || '') ? '.m4a' : /mpeg|mp3/.test(mime || '') ? '.mp3' : '.audio';
   const tmp = path.join(os.tmpdir(), `layla-${crypto.randomBytes(8).toString('hex')}${ext}`);
