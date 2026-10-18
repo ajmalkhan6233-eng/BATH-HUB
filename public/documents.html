@@ -76,10 +76,8 @@
     <div class="card"><h2>Files that arrived (waiting in quarantine)</h2>
       <div class="sub">Nothing here goes into your books by itself. Confirm sends it to the Document Inbox, where you still check the details before filing.</div>
       <div id="inbox"></div></div>
-    <div class="card"><h2>Add a test file</h2><div class="sub">Photo (JPG, PNG) or PDF, up to 10 MB.</div>
-      <label for="u-file">File</label><input type="file" id="u-file" accept="image/jpeg,image/png,application/pdf">
-      <label for="u-cap">Note (optional, helps the suggestion, e.g. "GRN from ABC")</label><input id="u-cap" maxlength="300">
-      <div style="margin-top:10px"><button class="btn main" id="u-go">Add file</button></div></div>
+    <div class="card"><h2>Send a paper to Layla</h2><div class="sub">Bill, GRN, supplier invoice, cheque, the day's expense paper, a PDF or a voice note, up to 10 MB. Layla reads it into a draft; nothing is filed until you check it and press Confirm.</div>
+      <div data-layla-door></div></div>
   </section>
 </main>
 <script>
@@ -206,16 +204,11 @@
       loadInbox();
     } catch (e) { say(e.message, true); }
   };
-  $('u-go').onclick = async () => {
-    const f = $('u-file').files[0]; if (!f) return say('Choose a file first.', true);
-    const fd = new FormData(); fd.append('file', f); fd.append('caption', $('u-cap').value);
-    try { await api('/api/documents/inbox/upload', { method: 'POST', body: fd }); $('u-file').value = ''; $('u-cap').value = ''; say('File is in quarantine, waiting for you.'); loadInbox(); }
-    catch (e) { say(e.message, true); }
-  };
 
   init();
 })();
 </script>
+<script src="/layla-door.js"></script>
 <script src="/bathhub-logo.js"></script>
 </body>
 </html>

@@ -56,8 +56,8 @@ async function loadDocInbox() {
   const rows = await r.json();
   document.getElementById('di-list').innerHTML = rows.map(x => {
     const toCheck = x.status === 'to_check';
-    const isPdf = /\.pdf$/i.test(x.file_path);
-    const photo = isPdf ? `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener">Open the PDF</a>` : `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener"><img src="/api/document-inbox/${x.id}/photo" alt="paper" style="max-width:100%;max-height:340px;border-radius:6px;border:1px solid var(--border,#444)"></a>` + ` <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>`;
+    const isPdf = /\.pdf$/i.test(x.file_path), isAudio = /\.(ogg|opus|m4a|mp3|wav|webm)$/i.test(x.file_path);
+    const photo = isAudio ? `<audio controls preload="none" src="/api/document-inbox/${x.id}/photo" style="max-width:100%"></audio> <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>` : isPdf ? `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener">Open the PDF</a>` : `<a href="/api/document-inbox/${x.id}/photo" target="_blank" rel="noopener"><img src="/api/document-inbox/${x.id}/photo" alt="paper" style="max-width:100%;max-height:340px;border-radius:6px;border:1px solid var(--border,#444)"></a>` + ` <div style="margin-top:4px"><a class="btn btn-s" style="text-decoration:none" href="/api/document-inbox/${x.id}/photo?download=1" download><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</a></div>`;
     const typeSel = toCheck ? `<select class="fs" style="width:auto" onchange="diRetype(${x.id}, this.value)">${DI_TYPES.map(([k, l]) => `<option value="${k}" ${k === x.doc_type ? 'selected' : ''}>${diEsc(l)}</option>`).join('')}</select>` : `<b>${diEsc(x.type_label)}</b>`;
     const actions = toCheck ? `<button class="btn btn-p" ${x.fileable ? '' : 'disabled'} onclick="diFile(${x.id})">Confirm and file</button>
         <button class="btn btn-s" onclick="diSave(${x.id})">Save changes</button><button class="btn btn-s" onclick="diReread(${x.id})">Read again</button><button class="btn btn-s" onclick="diReject(${x.id})">Reject</button>`
@@ -73,7 +73,7 @@ async function loadDocInbox() {
 }
 async function diUpload() {
   const f = document.getElementById('di-file').files[0];
-  if (!f) { diMsg('Choose or take a photo first'); return; }
+  if (!f) { diMsg('Choose a photo, PDF or voice note first'); return; }
   diMsg('Uploading and reading... this can take up to a minute.');
   const fd = new FormData(); fd.append('photo', f); fd.append('doc_type', document.getElementById('di-type').value);
   const r = await fetch('/api/document-inbox/upload', { method: 'POST', body: fd });

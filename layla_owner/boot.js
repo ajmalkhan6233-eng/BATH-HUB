@@ -23,9 +23,11 @@ module.exports = function boot({ pool, requireAuth, env = process.env, inboxDir 
   const customer = createCustomerHandler({ onInbound: (m) => notify.enqueue(pool, `Customer ...${String(m.from).slice(-3)} wrote: "${String(m.text).slice(0, 200).replace(/\s+/g, ' ')}" (not answered: Layla does not reply to customers yet)`, 'customer').catch(() => {}) });                                                              // customer chats: dry run, logged, never sent
   const family = createFamily({ numbers: S.familyNumbers, store, notes: createFamilyNotes(pool) });      // family mode: reminders + notes only, separate from the shop
   const familyRateLimit = createRateLimiter(20);
-  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, env });
+  // A dictated day's expenses/sales becomes a Document Inbox DRAFT (same screen as the photos). Nothing is filed until the owner presses Confirm there.
+  const voiceDraft = async (args) => require('../routes/document_inbox').getInbox().recordVoice(args);
+  const router = createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, voiceDraft, env });
   const { safeInboxPath } = require('../middleware/webhookAuth');                                  // free bridge: owner messages arrive here from whatsapp-bridge.js
-  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe, saveMedia, paper, customer, family, familyRateLimit, rateLimit }) });
+  const bridgeIn = createBridgeIn({ inboxRoot: path.join(process.env.DROP_ROOT || path.join(process.cwd(), 'data', 'drop'), 'inbox'), safeInboxPath, deps: () => ({ store, adapters, ownerNumber, transcribe, saveMedia, paper, customer, family, familyRateLimit, voiceDraft, rateLimit }) });
   setSender((text) => notify.enqueue(pool, text, 'alert'));                                  // RULE 11: every notification waits for the 06:00 morning message
   let timers = [];
   function start() {

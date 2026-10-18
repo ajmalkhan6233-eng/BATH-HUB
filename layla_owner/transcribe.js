@@ -1,7 +1,19 @@
 'use strict';
 const { spawn } = require('child_process'); const fs = require('fs'); const os = require('os'); const path = require('path'); const crypto = require('crypto');
-/** Voice note bytes -> text via the local Python script. Never throws: returns { ok:false } so the chat can ask the owner to type it. */
-async function transcribe(buffer, mime, { python = process.env.PYTHON || 'python', script = path.join(__dirname, '..', 'scripts', 'transcribe.py'), timeoutMs = 90000, spawnFn = spawn } = {}) {
+const { geminiVoice } = require('../utils/geminiVoice');
+/**
+ * Voice note bytes -> text. Gemini first when GEMINI_API_KEY is set (it understands Sinhala, Tamil and mixed Sinhala-English, and also
+ * returns an English version and, for a dictated day's expenses/sales, the figures). If Gemini is not set or fails, the local Python
+ * script is used (English only in practice). Never throws: returns { ok:false } so the chat can ask the owner to type it.
+ * Returns { ok, text, language, english?, entry?, warnings?, engine }. `text` is what the existing English intent parser reads:
+ * the English version when there is one, with the original wording kept in `original`.
+ */
+async function transcribe(buffer, mime, { key = process.env.GEMINI_API_KEY, geminiFn = geminiVoice, python = process.env.PYTHON || 'python', script = path.join(__dirname, '..', 'scripts', 'transcribe.py'), timeoutMs = 90000, spawnFn = spawn } = {}) {
+  if (key) {
+    const g = await geminiFn({ key, buffer, mime }).catch((e) => ({ ok: false, reason: e.message }));
+    if (g && g.ok) return { ok: true, text: g.english || g.text, original: g.text, language: g.language, entry: g.entry, warnings: g.warnings, confidence: g.confidence, engine: g.model };
+    console.error('[transcribe] Gemini failed, trying the local reader:', g && g.reason);
+  }
   const ext = /ogg|opus/.test(mime || '') ? '.ogg' : /mp4|m4a|aac/.test(mime || '') ? '.m4a' : /mpeg|mp3/.test(mime || '') ? '.mp3' : '.audio';
   const tmp = path.join(os.tmpdir(), `layla-${crypto.randomBytes(8).toString('hex')}${ext}`);
   fs.writeFileSync(tmp, buffer);

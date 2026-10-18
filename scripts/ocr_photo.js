@@ -105,12 +105,13 @@ async function ocrPhoto(filePath) {
     const imageBuffer = fs.readFileSync(filePath);
     const base64 = imageBuffer.toString('base64');
     const ext = filePath.split('.').pop().toLowerCase();
-    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    const mime = ext === 'png' ? 'image/png' : ext === 'pdf' ? 'application/pdf' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
 
     if (process.env.GEMINI_API_KEY) {
         try { const g = await geminiOcr({ key: process.env.GEMINI_API_KEY, base64, mime }); return { ...g.parsed, _raw: g.raw, _model: g.model, _file: filePath }; }
         catch (e) { console.error('[ocr] Gemini failed, trying OpenRouter:', e.message); }
     }
+    if (mime === 'application/pdf') throw new Error('PDF reading needs the Gemini key (GEMINI_API_KEY in .env)');
     const body = model => ({
         model,
         messages: [{ role: 'user', content: [
@@ -139,4 +140,4 @@ async function ocrPhoto(filePath) {
     return { ...parsed, _raw: raw, _model: usedModel, _file: filePath };
 }
 
-module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels, geminiOcr, _resetGeminiCache: () => { _gemModels = { at: 0, ids: [] }; } };
+module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels, geminiOcr, geminiModels, _resetGeminiCache: () => { _gemModels = { at: 0, ids: [] }; } };

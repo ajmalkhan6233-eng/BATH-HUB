@@ -36,7 +36,17 @@ async function processInbound(m, deps) {
       const media = await deps.download(m.mediaId);
       const t = await deps.transcribe(media.buffer, media.mime || m.mime);
       if (!t.ok) { await reply('I could not hear that clearly. Please send it again or type it.'); return { status: 'transcribe_failed' }; }
-      text = t.text.slice(0, LIMITS.maxTextChars); heard = `I heard: "${text}"\n`;
+      text = t.text.slice(0, LIMITS.maxTextChars); heard = t.original && t.original !== t.text ? `I heard: "${t.original.slice(0, 600)}"\n(in English: "${text}")\n` : `I heard: "${text}"\n`;
+      // A dictated day's expenses or sales -> a Document Inbox DRAFT. Never filed here: the owner checks it in the app and presses Confirm.
+      if (deps.voiceDraft && t.entry && (t.entry.kind === 'expense_list' || t.entry.kind === 'day_sheet')) {
+        const d = await deps.voiceDraft({ entry: t.entry, buffer: media.buffer, mime: media.mime || m.mime, original: t.original || t.text, english: t.text, warnings: t.warnings, confidence: t.confidence, from: m.from, engine: t.engine });
+        const total = t.entry.kind === 'expense_list' ? t.entry.total_expenses : t.entry.total_sale;
+        const lines = [heard.trim(), `${t.entry.kind === 'expense_list' ? 'Expenses' : 'Sales'} draft #${d.id} saved in the Document Inbox: Rs ${Number(total).toLocaleString('en-LK')} for ${d.extracted.date}. NOTHING is filed yet.`];
+        if (t.warnings && t.warnings.length) lines.push('! ' + t.warnings.join(' '));
+        if (t.confidence === 'low') lines.push('! I was not sure about some numbers: check them carefully.');
+        lines.push('Open the app > Document Inbox, check the figures, then press Confirm.');
+        await reply(lines.join('\n')); return { status: 'ok', intent: 'voice_draft', draftId: d.id };
+      }
     } else if (m.type === 'image' || m.type === 'document') {
       const paperKind = deps.paper && m.type === 'image' ? deps.paper.captionKind(m.caption) : null;   // caption "GRN" or "cheque": read into a DRAFT, saved only on "ok"
       const cap = String(m.caption || '').slice(0, 500); const it = cap ? parseOwnerMessage(cap, now()) : { type: 'UNKNOWN' };

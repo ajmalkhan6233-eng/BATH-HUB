@@ -853,10 +853,10 @@ table tr:last-child td{border-bottom:none}
         <div class="grid-3">
           <div class="fg"><label class="fl">What is it?</label>
             <select class="fs" id="di-type"><option value="auto">Let the app decide (from the heading)</option><option value="manual_bill">Manual bill</option><option value="grn">GRN (goods received)</option><option value="cheque">Cheque</option><option value="day_sheet">Daily sales sheet</option><option value="expense_sheet">Expense list</option></select></div>
-          <div class="fg" style="grid-column:span 2"><label class="fl">Photo (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf" capture="environment"></div>
+          <div class="fg" style="grid-column:span 2"><label class="fl">Photo, PDF or voice note (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf,audio/*,.ogg,.opus,.m4a,.mp3,.wav"></div>
         </div>
         <button class="btn btn-p" onclick="diUpload()">Upload and read</button>
-        <div style="font-size:12px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos, PDFs and voice notes sent to LAYLA on WhatsApp land here too (a spoken list of the day's expenses becomes a draft). Nothing is filed until you check it and press Confirm.</div>
         <div id="di-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="di-tabs"></div>
@@ -2754,6 +2754,7 @@ async function initApp() {
   document.getElementById('page-sub').textContent = fmtDate(today()) + ' — Connected to database';
 }
 </script>
+<script src="/layla-door.js"></script>
 <script src="/document-inbox.js"></script>
 <script src="/website-editor.js"></script>
 <script src="/tile-gallery.js"></script>

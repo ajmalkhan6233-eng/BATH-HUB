@@ -34,9 +34,17 @@ function sniff(buf) {
     if (buf.length > 12 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'jpg';
     if (buf.length > 8 && buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return 'png';
     if (buf.length > 5 && buf.slice(0, 5).toString() === '%PDF-') return 'pdf';
+    // voice notes (WhatsApp .ogg/.opus, phone recorder .m4a/.mp3/.wav, browser recorder .webm)
+    if (buf.length > 12 && buf.slice(0, 4).toString() === 'OggS') return 'ogg';
+    if (buf.length > 12 && buf.slice(4, 8).toString() === 'ftyp') return 'm4a';
+    if (buf.length > 12 && (buf.slice(0, 3).toString() === 'ID3' || (buf[0] === 0xFF && (buf[1] & 0xE0) === 0xE0))) return 'mp3';
+    if (buf.length > 12 && buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE') return 'wav';
+    if (buf.length > 12 && buf[0] === 0x1A && buf[1] === 0x45 && buf[2] === 0xDF && buf[3] === 0xA3) return 'webm';
     return null;
 }
 
+const isAudioExt = e => ['ogg', 'm4a', 'mp3', 'wav', 'webm'].includes(e);
+const AUDIO_MIME = { ogg: 'audio/ogg', m4a: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav', webm: 'audio/webm' };
 const parse = r => ({ ...r, extracted: (() => { try { return JSON.parse(r.extracted); } catch (e) { return {}; } })() });
 const present = r => {
     const p = parse(r), meta = F.DOC_TYPES[p.doc_type] || F.DOC_TYPES.unknown;
@@ -68,7 +76,7 @@ async function matchGrn(db, ex) {
 }
 const bad = (status, msg) => { const e = new Error(msg); e.status = status; return e; };
 
-function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
+function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     const router = express.Router();
     // what the screen gets: the row, plus (for a GRN waiting to be checked) which supplier / items were recognised
     const view = async row => {
@@ -78,6 +86,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     };
     const ROOT = path.resolve(inboxRoot || path.join(process.env.DROP_ROOT || path.join(__dirname, '..', 'data', 'drop'), 'inbox'));
     const reader = ocr || (async (p) => require('../scripts/ocr_photo').ocrPhoto(p));
+    const listenVoice = voice || (async (buffer, mime) => require('../utils/geminiVoice').geminiVoice({ key: process.env.GEMINI_API_KEY, buffer, mime }));
 
     const ready = pool.query(`CREATE TABLE IF NOT EXISTS document_inbox (
         id SERIAL PRIMARY KEY,
@@ -126,6 +135,30 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     }
     router.record = record;
 
+    // A voice note (the owner dictated a day's expenses or sales) -> ONE inbox row, with the audio kept beside it so it can be played back.
+    // It is a DRAFT like every other paper: nothing is filed until Confirm, and the daily-summary merge still refuses to overwrite figures already there.
+    async function recordVoice({ entry, buffer, mime = 'audio/ogg', original = '', english = '', warnings = [], confidence = '', from = '', engine = '' }) {
+        await ready;
+        if (!entry || !['expense_list', 'day_sheet'].includes(entry.kind)) throw bad(400, 'Not an expense list or a day sheet');
+        const ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /mpeg|mp3/.test(mime) ? 'mp3' : /webm/.test(mime) ? 'webm' : /wav/.test(mime) ? 'wav' : 'ogg';
+        const dir = path.join(ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
+        const file = path.join(dir, `${Date.now()}-voice-${crypto.randomBytes(3).toString('hex')}.${ext}`);
+        fs.writeFileSync(file, buffer);
+        const type = entry.kind === 'expense_list' ? 'expense_sheet' : 'day_sheet';
+        const usedToday = !entry.date;
+        const ex = F.normalize(type, {
+            date: entry.date || todayLK(), total_expenses: entry.total_expenses, total_sale: entry.total_sale, cash_sale: entry.cash_sale,
+            card_sale: entry.card_sale, online_sale: entry.online_sale, credit_sale: entry.credit_sale,
+            expense_items: (entry.items || []).map(i => `${i.name} ${i.amount}`).join('; '),
+        });
+        const note = [`Voice note${engine ? ' (' + engine + ')' : ''}. Said: "${String(original).slice(0, 300)}"`, english && english !== original ? `English: "${String(english).slice(0, 300)}"` : '', usedToday ? 'No date was said: today was used.' : '', ...(warnings || [])].filter(Boolean).join(' ').slice(0, 500);
+        const r = await pool.query(
+            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('voice',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+            [String(from), 'voice note', file, type, JSON.stringify(ex), String(confidence || ''), note]);
+        return present(r.rows[0]);
+    }
+    router.recordVoice = recordVoice;
+
     // ── intake: direct upload ───────────────────────────────────────────────
     const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_BYTES, files: 1 } });
     router.post('/document-inbox/upload', ownerOnly, (req, res, next) => upload.single('photo')(req, res, err => {
@@ -136,7 +169,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             await ready;
             if (!req.file) return res.status(400).json({ error: 'Choose a photo to upload' });
             const ext = sniff(req.file.buffer);
-            if (!ext) return res.status(400).json({ error: 'That file is not a photo (JPG or PNG) or a PDF' });
+            if (!ext) return res.status(400).json({ error: 'That file is not a photo (JPG or PNG), a PDF or a voice note' });
             const hint = String(req.body && req.body.doc_type || '').trim();
             if (hint && hint !== 'auto' && !F.DOC_TYPES[hint]) return res.status(400).json({ error: 'Unknown paper type' });
             const dir = path.join(ROOT, todayLK());
@@ -144,9 +177,22 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const file = path.join(dir, `${Date.now()}-upload-${crypto.randomBytes(3).toString('hex')}.${ext}`);
             fs.writeFileSync(file, req.file.buffer);
             const hintType = hint && hint !== 'auto' ? hint : null;
-            const read = ext === 'pdf'
-                ? { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: 'PDFs are saved but not read. Choose the type and type the details in, or send a photo.' }
-                : await readPhoto(file, hintType);
+            let read;
+            if (isAudioExt(ext)) {
+                // a voice note: listen (Sinhala / Tamil / English), and when a day's expenses or sales were dictated, fill the figures. A draft only.
+                const v = await Promise.resolve(listenVoice(req.file.buffer, AUDIO_MIME[ext])).catch(e => ({ ok: false, reason: e.message }));
+                if (v && v.ok && v.entry && v.entry.kind !== 'none') {
+                    fs.unlinkSync(file);
+                    const row = await recordVoice({ entry: v.entry, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: String((req.session.user && req.session.user.username) || ''), engine: v.model });
+                    return res.status(201).json(await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [row.id])).rows[0]));
+                }
+                const said = v && v.ok ? `Heard: "${String(v.text).slice(0, 300)}"${v.english && v.english !== v.text ? ` (English: "${String(v.english).slice(0, 300)}")` : ''}. It was not a list of the day's expenses or sales, so nothing was filled in. Choose the type and type the details in.` : `Could not listen to the voice note (${String((v && v.reason) || 'unknown').slice(0, 120)}). Choose the type and type the details in.`;
+                read = { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: said };
+            } else if (ext === 'pdf' && !process.env.GEMINI_API_KEY && !ocr) {
+                read = { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: 'PDFs can only be read when the Gemini key is set. It is saved: choose the type and type the details in, or send a photo.' };
+            } else {
+                read = await readPhoto(file, hintType);   // photos, and PDFs (Gemini reads a PDF directly)
+            }
             const row = await pool.query(
                 `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
                 [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note]);

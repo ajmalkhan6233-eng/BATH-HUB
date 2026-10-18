@@ -34,4 +34,5 @@ $('go').onclick=load;
 $('sf').onsubmit=async e=>{e.preventDefault();const b={};new FormData(e.target).forEach((v,k)=>b[k]=v);try{await api('/api/money/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});$('msg').textContent='Saved';load()}catch(x){$('msg').textContent=x.message}};
 load();
 </script><script src="/bathhub-logo.js"></script>
-</main></body></html>
+</main><script src="/layla-door.js"></script>
+</body></html>
