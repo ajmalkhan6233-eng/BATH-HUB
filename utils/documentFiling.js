@@ -12,6 +12,8 @@ const DOC_TYPES = {
     cheque:         { label: 'Cheque',               files_to: 'cheque_register' },
     day_sheet:      { label: 'Daily sales sheet',    files_to: 'daily_summary' },
     expense_sheet:  { label: 'Expense list',         files_to: 'daily_summary' },
+    credit_given:   { label: 'Credit given to a customer', files_to: 'credit_customers' },
+    credit_paid:    { label: 'Customer paid on credit',    files_to: 'credit_customers' },
     salary_note:    { label: 'Salary list',          files_to: null },
     invoice:        { label: 'Supplier invoice',     files_to: null },
     customer_photo: { label: 'Customer photo',       files_to: null },
@@ -67,6 +69,9 @@ function normalize(docType, raw) {
                 petty_cash: num(r.petty_cash), payouts: str(r.payouts, 1000), total_payouts: num(r.total_payouts), cash_in: num(r.cash_in), cash_out: num(r.cash_out),
                 cash_in_hand: num(r.cash_in_hand), cash_banked: num(r.cash_banked),
             };
+        case 'credit_given':
+        case 'credit_paid':
+            return { customer_name: str(r.customer_name || r.party, 150), amount: num(r.amount), date: day(r.date), due_date: day(r.due_date), notes: str(r.notes || r.note, 300) };
         case 'salary_note':
             return {
                 date: day(r.date), total: num(r.total), notes: str(r.notes, 500),
@@ -133,6 +138,11 @@ function validateForFiling(docType, ex) {
             const sum = grnRows(ex).reduce((a, r) => a + r.total_amount, 0);
             if (Math.abs(sum - ex.total) > 0.5) warnings.push(`The total written on the paper (${money2(ex.total)}) is not what the items add up to (${money2(sum)}). The items are used.`);
         }
+    } else if (docType === 'credit_given' || docType === 'credit_paid') {
+        if (!ex.customer_name) errors.push('Enter the customer name.');
+        if (!(ex.amount > 0)) errors.push('Enter the amount (more than 0).');
+        if (!ex.date) errors.push('Enter the date (YYYY-MM-DD).');
+        if (docType === 'credit_given' && ex.due_date && ex.date && ex.due_date < ex.date) errors.push('The due date cannot be before the date.');
     } else if (docType === 'cheque') {
         if (!ex.payee) errors.push('Enter who the cheque is for (payee).');
         if (!(ex.amount > 0)) errors.push('Enter the cheque amount (more than 0).');
@@ -161,4 +171,21 @@ function grnRows(ex) {
     });
 }
 
-module.exports = { DOC_TYPES, typeFromOcr, normalize, billTotals, validateForFiling, grnRows, money2 };
+// A customer paid on credit: settle the OLDEST open invoices first. Pure. invoices = [{ id, invoice_no, invoice_date, amount, paid }].
+// Returns { applied: [{ id, invoice_no, apply, left }], remaining } where remaining > 0 means the customer paid more than they owe (never filed).
+// invoice_date may arrive as a JS Date (the pg driver) or a 'YYYY-MM-DD' string: compare as time, never as text.
+const when = d => { const t = d instanceof Date ? d.getTime() : Date.parse(d); return Number.isFinite(t) ? t : Infinity; };
+function allocatePayment(invoices, amount) {
+    let left = money2(amount); const applied = [];
+    const open = (invoices || []).map(i => ({ ...i, owed: money2(Number(i.amount) - Number(i.paid || 0)) })).filter(i => i.owed > 0)
+        .sort((a, b) => when(a.invoice_date) - when(b.invoice_date) || Number(a.id) - Number(b.id));
+    for (const i of open) {
+        if (left <= 0) break;
+        const apply = money2(Math.min(left, i.owed));
+        applied.push({ id: i.id, invoice_no: i.invoice_no || '', apply, left: money2(i.owed - apply) });
+        left = money2(left - apply);
+    }
+    return { applied, remaining: left, outstanding: money2(open.reduce((a, i) => a + i.owed, 0)) };
+}
+
+module.exports = { DOC_TYPES, typeFromOcr, normalize, billTotals, validateForFiling, grnRows, money2, allocatePayment };

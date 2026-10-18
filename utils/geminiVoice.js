@@ -9,8 +9,8 @@ const MODEL_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const TIMEOUT_MS = 60000;
 
 const PROMPT = `You are listening to a voice note from the owner of a small tile and bathroom shop in Sri Lanka. He speaks Sinhala, Tamil, English, or a mix (Sinhala words with English numbers and item names). Output ONLY valid JSON, no markdown:
-{"text":"exactly what was said, in the language spoken (Sinhala in Sinhala letters)","english":"a plain English version of the same words","language":"si|ta|en|mixed","entry":{"kind":"expense_list|day_sheet|none","date":"YYYY-MM-DD or null","items":[{"name":"string","amount":number}],"total_expenses":number or null,"total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null},"confidence":"high|medium|low","notes":"anything unclear"}
-Use kind "expense_list" ONLY when he is listing money spent today (tea 200, petrol 1500). Use kind "day_sheet" ONLY when he is giving the day's sales figures. Use kind "none" for everything else (questions, reminders, bills, cheques, chat): then leave the other entry fields null and items empty.
+{"text":"exactly what was said, in the language spoken (Sinhala in Sinhala letters)","english":"a plain English version of the same words","language":"si|ta|en|mixed","entry":{"kind":"expense_list|day_sheet|credit_given|credit_paid|none","party":"customer name or null","amount":number or null,"note":"what it was for or null","date":"YYYY-MM-DD or null","items":[{"name":"string","amount":number}],"total_expenses":number or null,"total_sale":number or null,"cash_sale":number or null,"card_sale":number or null,"online_sale":number or null,"credit_sale":number or null},"confidence":"high|medium|low","notes":"anything unclear"}
+Use kind "expense_list" ONLY when he is listing money spent today (tea 200, petrol 1500). Use kind "day_sheet" ONLY when he is giving the day's sales figures. Use kind "credit_given" ONLY when he says he gave goods or money ON CREDIT to a named customer ("give credit 1500 to Sam for tiles"): party = the customer name as spoken, amount = the credit. Use kind "credit_paid" ONLY when a named customer PAID BACK something they owed ("Sam paid 1000"): party and amount the same way. Never use credit kinds without both a name and an amount. Use kind "none" for everything else (questions, reminders, bills, cheques, chat): then leave the other entry fields null and items empty.
 Amounts are rupees as plain numbers (no commas). "දහස" = thousand, "සීයයි" / "සීයක්" = hundred, "ලක්ෂය" = 100000. Say "two thousand five hundred" as 2500. If you are not sure of a number, set confidence to "low" and explain in notes: NEVER guess a figure. Dates are day/month/year in Sri Lanka; if he says "today" or gives no date, use null.`;
 
 const num = v => {
@@ -24,7 +24,7 @@ const day = v => { const s = String(v == null ? '' : v).trim().slice(0, 10); ret
 function cleanVoice(raw) {
     const r = raw && typeof raw === 'object' ? raw : {};
     const e = r.entry && typeof r.entry === 'object' ? r.entry : {};
-    const kind = ['expense_list', 'day_sheet'].includes(e.kind) ? e.kind : 'none';
+    const kind = ['expense_list', 'day_sheet', 'credit_given', 'credit_paid'].includes(e.kind) ? e.kind : 'none';
     const items = (Array.isArray(e.items) ? e.items : []).slice(0, 60)
         .map(i => ({ name: String((i && i.name) || '').trim().slice(0, 120), amount: num(i && i.amount) }))
         .filter(i => i.name && i.amount != null);
@@ -33,6 +33,7 @@ function cleanVoice(raw) {
         kind, date: day(e.date), items,
         total_expenses: num(e.total_expenses), total_sale: num(e.total_sale), cash_sale: num(e.cash_sale),
         card_sale: num(e.card_sale), online_sale: num(e.online_sale), credit_sale: num(e.credit_sale),
+        party: String(e.party || '').trim().slice(0, 150), amount: num(e.amount), note: String(e.note || '').trim().slice(0, 300),
     };
     // an expense list with no stated total: the total is the sum of the lines he said
     if (kind === 'expense_list' && entry.total_expenses == null && items.length) entry.total_expenses = itemSum;
@@ -43,6 +44,8 @@ function cleanVoice(raw) {
     }
     if (kind === 'expense_list' && !entry.total_expenses) entry.kind = 'none';
     if (kind === 'day_sheet' && entry.total_sale == null) entry.kind = 'none';
+    // a credit entry needs BOTH a name and a positive amount: otherwise it is not an entry at all (nothing is guessed)
+    if ((kind === 'credit_given' || kind === 'credit_paid') && (!entry.party || !(entry.amount > 0))) entry.kind = 'none';
     const text = String(r.text || '').trim().slice(0, 2000);
     return {
         text, english: String(r.english || '').trim().slice(0, 2000) || text,

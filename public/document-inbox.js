@@ -1,13 +1,15 @@
 const diEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* Document Inbox: photos of papers, read, checked by Aj, then filed. Nothing is filed before Confirm. */
 let _diStatus = 'to_check';
-const DI_TYPES = [['salary_note','Salary list'],['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
+const DI_TYPES = [['credit_given','Credit given to a customer'],['credit_paid','Customer paid on credit'],['salary_note','Salary list'],['manual_bill','Manual bill'],['grn','GRN (goods received)'],['cheque','Cheque'],['day_sheet','Daily sales sheet'],['expense_sheet','Expense list'],['invoice','Supplier invoice'],['customer_photo','Customer photo'],['unknown','Not recognised']];
 const DI_FIELDS = {
   manual_bill: [['bill_number','Bill no.'],['date','Date (YYYY-MM-DD)'],['customer_name','Customer'],['customer_phone','Phone'],['discount','Discount (amount)'],['total','Total written on paper']],
   grn: [['grn_number','GRN no.'],['date','Date (YYYY-MM-DD)'],['supplier_name','Supplier'],['total','Total written on paper']],
   cheque: [['cheque_number','Cheque no.'],['bank','Bank'],['payee','Payee (who it is for)'],['amount','Amount'],['due_date','Cheque date (YYYY-MM-DD)'],['direction','Given or received']],
   day_sheet: [['date','Date (YYYY-MM-DD)'],['total_sale','Total sale'],['cash_sale','Cash'],['card_sale','Card'],['online_sale','Online'],['credit_sale','Credit'],['total_expenses','Total expenses'],['expense_items','Expense items'],['petty_cash','Petty cash'],['payouts','Payouts'],['cash_in','Cash in'],['cash_out','Cash out'],['cash_in_hand','Cash in hand'],['cash_banked','Cash banked']],
   expense_sheet: [['date','Date (YYYY-MM-DD)'],['total_expenses','Total expenses'],['expense_items','Expense items'],['total_sale','Total sale (if written)']],
+  credit_given: [['customer_name','Customer (as in Customers)'],['amount','Credit amount'],['date','Date (YYYY-MM-DD)'],['due_date','Due date (optional)'],['notes','What it was for']],
+  credit_paid: [['customer_name','Customer (as in Customers)'],['amount','Amount paid'],['date','Date (YYYY-MM-DD)'],['notes','Note']],
 };
 const DI_ITEMS = { manual_bill: [['name','Item'],['qty','Qty'],['unit_price','Unit price'],['amount','Amount']], grn: [['item_code','Item code'],['description','Item'],['qty','Qty'],['unit_cost','Unit cost'],['amount','Amount']] };
 function diMsg(t) { document.getElementById('di-msg').textContent = t || ''; }
@@ -39,6 +41,14 @@ function diForm(x) {
     const sup = x.match.supplier ? `<span style="color:var(--green,#2e7d32)">✓ Supplier: ${diEsc(x.match.supplier.name)}</span>` : `<span style="color:var(--amber)">Supplier not found in Suppliers</span>`;
     const lines = (x.match.items || []).map((m, n) => m.matched ? `<div style="font-size:12px;color:var(--green,#2e7d32)">✓ line ${n + 1}: ${diEsc(m.matched.item_code)} ${diEsc(m.matched.name)}</div>` : `<div style="font-size:12px;color:var(--amber)">line ${n + 1}: ${m.item_code ? 'code ' + diEsc(m.item_code) + ' not in the catalogue' : 'no item code'}</div>`).join('');
     match = `<div style="margin:6px 0">${sup}${lines}</div>`;
+  }
+  if ((x.doc_type === 'credit_given' || x.doc_type === 'credit_paid') && x.match) {
+    const m = x.match, c = m.customers && m.customers[0];
+    const who = m.found === 'one' ? `<span style="color:var(--green,#2e7d32)">✓ Customer: ${diEsc(c.name)}${c.phone ? ' (' + diEsc(c.phone) + ')' : ''}${m.outstanding != null ? ' · owes now Rs ' + Number(m.outstanding).toLocaleString('en-LK') : ''}</span>`
+      : m.found === 'many' ? `<span style="color:var(--amber)">More than one customer matches: ${m.customers.map(k => diEsc(k.name)).join(', ')}. Type the full name.</span>`
+      : `<span style="color:var(--amber)">Customer not found in Customers. Add them first, or correct the name.</span>`;
+    const plan = x.doc_type === 'credit_paid' && m.applied && m.applied.length ? `<div style="font-size:12px;margin-top:4px">This payment would settle: ${m.applied.map(a => diEsc(a.invoice_no || '#' + a.id) + ' (Rs ' + Number(a.apply).toLocaleString('en-LK') + (a.left > 0 ? ', Rs ' + Number(a.left).toLocaleString('en-LK') + ' still owed' : ', fully paid') + ')').join(', ')}${m.remaining > 0 ? ` <b style="color:var(--amber)">· Rs ${Number(m.remaining).toLocaleString('en-LK')} is MORE than they owe</b>` : ''}</div>` : '';
+    match = `<div style="margin:6px 0">${who}${plan}</div>`;
   }
   return `<div class="grid-3">${fields}${pay}</div>${items}${match}`;
 }

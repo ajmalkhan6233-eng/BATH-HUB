@@ -74,6 +74,23 @@ async function matchGrn(db, ex) {
     }
     return out;
 }
+// Credit entries: which customer is this? Exact name first, else a name that contains / is contained (min 3 letters). Reads only.
+async function matchCustomer(db, name) {
+    const want = String(name || '').trim().toLowerCase();
+    if (!want) return { found: 'none', customers: [] };
+    let all = [];
+    try { all = (await db.query(`SELECT id, name, phone FROM customers`)).rows; } catch (e) { return { found: 'none', customers: [] }; }
+    const low = r => String(r.name || '').trim().toLowerCase();
+    let hits = all.filter(r => low(r) === want);
+    if (!hits.length && want.length >= 3) hits = all.filter(r => low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r))));
+    return { found: hits.length === 1 ? 'one' : hits.length ? 'many' : 'none', customers: hits.slice(0, 5).map(r => ({ id: r.id, name: r.name, phone: r.phone })) };
+}
+async function openInvoices(db, customerId, lock) {
+    const sql = lock
+        ? 'SELECT id, invoice_no, invoice_date, amount, paid FROM credit_customers WHERE customer_id = $1 AND quarantined IS NOT TRUE ORDER BY invoice_date, id FOR UPDATE'
+        : 'SELECT id, invoice_no, invoice_date, amount, paid FROM credit_customers WHERE customer_id = $1 AND quarantined IS NOT TRUE ORDER BY invoice_date, id';
+    return (await db.query(sql, [customerId])).rows;
+}
 const bad = (status, msg) => { const e = new Error(msg); e.status = status; return e; };
 
 function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
@@ -82,6 +99,18 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     const view = async row => {
         const p = present(row);
         if (p.doc_type === 'grn' && p.status === 'to_check') p.match = await matchGrn(pool, p.extracted);
+        if ((p.doc_type === 'credit_given' || p.doc_type === 'credit_paid') && p.status === 'to_check') {
+            const c = await matchCustomer(pool, p.extracted.customer_name);
+            p.match = { ...c };
+            if (c.found === 'one') {
+                try {
+                    const inv = await openInvoices(pool, c.customers[0].id);
+                    const a = F.allocatePayment(inv, p.doc_type === 'credit_paid' ? (p.extracted.amount || 0) : 0);
+                    p.match.outstanding = a.outstanding;
+                    if (p.doc_type === 'credit_paid') { p.match.applied = a.applied; p.match.remaining = a.remaining; }
+                } catch (e) { /* no credit table: no preview */ }
+            }
+        }
         return p;
     };
     const ROOT = path.resolve(inboxRoot || path.join(process.env.DROP_ROOT || path.join(__dirname, '..', 'data', 'drop'), 'inbox'));
@@ -139,14 +168,15 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     // It is a DRAFT like every other paper: nothing is filed until Confirm, and the daily-summary merge still refuses to overwrite figures already there.
     async function recordVoice({ entry, buffer, mime = 'audio/ogg', original = '', english = '', warnings = [], confidence = '', from = '', engine = '' }) {
         await ready;
-        if (!entry || !['expense_list', 'day_sheet'].includes(entry.kind)) throw bad(400, 'Not an expense list or a day sheet');
+        if (!entry || !['expense_list', 'day_sheet', 'credit_given', 'credit_paid'].includes(entry.kind)) throw bad(400, 'Not an expense list, a day sheet or a credit entry');
         const ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /mpeg|mp3/.test(mime) ? 'mp3' : /webm/.test(mime) ? 'webm' : /wav/.test(mime) ? 'wav' : 'ogg';
         const dir = path.join(ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
         const file = path.join(dir, `${Date.now()}-voice-${crypto.randomBytes(3).toString('hex')}.${ext}`);
         fs.writeFileSync(file, buffer);
-        const type = entry.kind === 'expense_list' ? 'expense_sheet' : 'day_sheet';
+        const type = entry.kind === 'expense_list' ? 'expense_sheet' : entry.kind;
         const usedToday = !entry.date;
-        const ex = F.normalize(type, {
+        const isCredit = entry.kind === 'credit_given' || entry.kind === 'credit_paid';
+        const ex = isCredit ? F.normalize(type, { customer_name: entry.party, amount: entry.amount, date: entry.date || todayLK(), notes: entry.note }) : F.normalize(type, {
             date: entry.date || todayLK(), total_expenses: entry.total_expenses, total_sale: entry.total_sale, cash_sale: entry.cash_sale,
             card_sale: entry.card_sale, online_sale: entry.online_sale, credit_sale: entry.credit_sale,
             expense_items: (entry.items || []).map(i => `${i.name} ${i.amount}`).join('; '),
@@ -337,6 +367,24 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                     `INSERT INTO cheque_register (cheque_no, bank, payee, amount, due_date, notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
                     [ex.cheque_number || null, ex.bank || null, ex.payee, F.money2(ex.amount), ex.due_date, `From paper (document #${row.id})${ex.direction ? ', ' + ex.direction : ''}. ${ex.notes}`.trim()]);
                 filed_to = 'cheque_register'; filed_id = String(ins.rows[0].id); note = `Cheque to ${ex.payee}, ${F.money2(ex.amount)}, due ${ex.due_date}`;
+            } else if (type === 'credit_given' || type === 'credit_paid') {
+                const c = await matchCustomer(pool, ex.customer_name);
+                if (c.found === 'none') throw bad(400, `Customer "${ex.customer_name}" is not in your Customers list. Add them in Customers first, or correct the name.`);
+                if (c.found === 'many') throw bad(400, `More than one customer matches "${ex.customer_name}" (${c.customers.map(x => x.name).join(', ')}). Type the full name exactly as in Customers.`);
+                const cust = c.customers[0];
+                if (type === 'credit_given') {
+                    const ins = await client.query(
+                        `INSERT INTO credit_customers (customer_id, invoice_date, invoice_no, amount, paid, due_date, notes) VALUES ($1,$2,$3,$4,0,$5,$6) RETURNING id`,
+                        [cust.id, ex.date, `VOICE-${row.id}`, F.money2(ex.amount), ex.due_date || null, `From ${row.source === 'voice' ? 'a voice note' : 'a paper'} (document #${row.id}). ${ex.notes}`.trim()]);
+                    filed_to = 'credit_customers'; filed_id = String(ins.rows[0].id); note = `Credit of ${F.money2(ex.amount)} to ${cust.name} (invoice VOICE-${row.id})`;
+                } else {
+                    const a = F.allocatePayment(await openInvoices(client, cust.id, true), ex.amount);
+                    if (!a.applied.length) throw bad(400, `${cust.name} owes nothing on credit, so there is nothing to settle.`);
+                    if (a.remaining > 0) throw bad(400, `${cust.name} owes only ${a.outstanding}, but ${F.money2(ex.amount)} was paid. Check the amount.`);
+                    for (const x of a.applied) await client.query(`UPDATE credit_customers SET paid = COALESCE(paid, 0) + $1 WHERE id = $2`, [x.apply, x.id]);
+                    filed_to = 'credit_customers'; filed_id = a.applied.map(x => x.id).join(',');
+                    note = `${cust.name} paid ${F.money2(ex.amount)}: settled ${a.applied.map(x => `${x.invoice_no || '#' + x.id} (${x.apply}${x.left > 0 ? ', ' + x.left + ' still owed' : ''})`).join(', ')}. Cash received is NOT added to the day's sales: enter it on the day sheet.`;
+                }
             } else if (type === 'day_sheet' || type === 'expense_sheet') {
                 if (!fileDaySheet) throw bad(501, 'Filing daily sheets is not available here');
                 const out = await fileDaySheet(ex);
