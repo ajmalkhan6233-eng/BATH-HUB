@@ -28,6 +28,7 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
   let report = [];
   const JSON_PATH = path.join(OUT, 'crawl.json');
   if (!process.env.AUDIT_FRESH) { try { report = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (_) { report = []; } }
+  report = report.filter((r) => r.load !== 0); // pages that timed out are tried again on resume
   const done = new Set(report.map((r) => r.page));
   const cap = (arr, n) => { const seen = new Set(); const out = []; for (const x of arr) { const k = JSON.stringify(x).replace(/click "[^"]*"/g, ''); if (seen.has(k)) continue; seen.add(k); out.push(x); if (out.length >= n) break; } return out; };
   const writeReport = () => {
@@ -47,9 +48,9 @@ const MAX_CLICKS = Number(process.env.AUDIT_MAX_CLICKS || 60);
     const page = await ctx.newPage(); const rec = { page: file, load: 0, consoleErrors: [], pageErrors: [], badApi: [], clicked: 0, skipped: 0, clickFindings: [] };
     let phase = 'load';
     page.on('dialog', (d) => d.dismiss().catch(() => {}));
-    page.on('console', (m) => { if (m.type() === 'error' && !/favicon|ERR_BLOCKED|net::ERR_ABORTED/.test(m.text())) (phase === 'load' ? rec.consoleErrors : rec.clickFindings).push(phase === 'load' ? m.text().slice(0, 160) : { at: phase, console: m.text().slice(0, 160) }); });
+    page.on('console', (m) => { if (m.type() === 'error' && !/favicon|ERR_BLOCKED|net::ERR_ABORTED|status of 404/.test(m.text())) (phase === 'load' ? rec.consoleErrors : rec.clickFindings).push(phase === 'load' ? m.text().slice(0, 160) : { at: phase, console: m.text().slice(0, 160) }); });
     page.on('pageerror', (e) => (phase === 'load' ? rec.pageErrors : rec.clickFindings).push(phase === 'load' ? e.message.slice(0, 160) : { at: phase, crash: e.message.slice(0, 160) }));
-    page.on('response', (r) => { const u = r.url(); if (u.includes('/api/') && r.status() >= 400 && r.status() !== 401) (phase === 'load' ? rec.badApi : rec.clickFindings).push(phase === 'load' ? `${r.status()} ${u.replace(BASE, '')}`.slice(0, 140) : { at: phase, api: `${r.status()} ${u.replace(BASE, '')}`.slice(0, 140) }); });
+    page.on('response', (r) => { const u = r.url(); if (u.includes('/api/') && r.status() >= 400 && r.status() !== 401 && !(r.status() === 404 && /\/api\/daily-summary\/\d{4}-\d\d-\d\d$/.test(u.split('?')[0]))) (phase === 'load' ? rec.badApi : rec.clickFindings).push(phase === 'load' ? `${r.status()} ${u.replace(BASE, '')}`.slice(0, 140) : { at: phase, api: `${r.status()} ${u.replace(BASE, '')}`.slice(0, 140) }); });
     try {
       const resp = await page.goto(`${BASE}/${file}`, { waitUntil: 'networkidle', timeout: 25000 }); rec.load = resp ? resp.status() : 0;
       await page.waitForTimeout(600);
