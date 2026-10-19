@@ -54,7 +54,7 @@ function dayNumber(dateStr) { const [y, m, d] = String(dateStr).split('-').map(N
 function dueList({ today, windowDays = 7, cheques = [], rentDay = 0, salaryDay = 0, rentAmount = 0, salaryAmount = 0 }) {
   const t = dayNumber(today); const out = [];
   for (const c of cheques) {
-    if (String(c.status || 'pending') !== 'pending') continue;
+    if (!['pending', 'held'].includes(String(c.status || 'pending'))) continue;   // a held cheque is still to be paid, on its new date
     const left = dayNumber(String(c.due_date).slice(0, 10)) - t;
     if (left <= windowDays) out.push({ kind: 'cheque', label: `Cheque to ${c.payee}`, amount: round2(c.amount), due_date: String(c.due_date).slice(0, 10), days_left: left });
   }

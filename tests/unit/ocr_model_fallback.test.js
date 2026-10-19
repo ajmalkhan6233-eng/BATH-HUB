@@ -42,7 +42,9 @@ test('an EMPTY answer from a model tries the next free model instead of failing'
 test('when every reader gives nothing the error is in plain words (no "retake the photo")', async () => {
   client.chat.completions.create.mockReset();
   client.chat.completions.create.mockResolvedValue({ choices: [{ message: { content: '' } }] });
-  await expect(ocr.ocrPhoto(img)).rejects.toMatchObject({ readerDown: true, message: expect.stringMatching(/photo reader gave no answer/) });
+  const savedKey = process.env.GEMINI_API_KEY; delete process.env.GEMINI_API_KEY; ocr._resetGeminiCache();   // no real Gemini call, whatever .env holds
+  try { await expect(ocr.ocrPhoto(img)).rejects.toMatchObject({ readerDown: true, message: expect.stringMatching(/photo reader gave no answer/) }); }
+  finally { if (savedKey !== undefined) process.env.GEMINI_API_KEY = savedKey; ocr._resetGeminiCache(); }
 });
 test('Gemini 429 then empty backup: the message says the free quota is used up', async () => {
   client.chat.completions.create.mockReset();

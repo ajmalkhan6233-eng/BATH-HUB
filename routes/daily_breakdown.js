@@ -57,8 +57,11 @@ router.put('/settings', async (req, res) => {
     if (b.commission_rate !== undefined) { const n = nonNeg(b.commission_rate); if (n === null || n > 100) return res.status(400).json({ error: 'commission_rate must be 0 to 100' }); cols.commission_rate = n; }
     for (const k of ['rent_day', 'salary_day']) if (b[k] !== undefined) { const n = Math.floor(Number(b[k])); if (!(n >= 0 && n <= 31)) return res.status(400).json({ error: `${k} must be 0 (not set) or 1 to 31` }); cols[k] = n; }
     if (b.cheque_window_days !== undefined) { const n = Math.floor(Number(b.cheque_window_days)); if (!(n >= 1 && n <= 60)) return res.status(400).json({ error: 'cheque_window_days must be 1 to 60' }); cols.cheque_window_days = n; }
-    const keys = Object.keys(cols);
-    if (keys.length) await pool.query(`UPDATE daily_breakdown_settings SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = 1`, keys.map((k) => cols[k]));
+    const f = ['rent_monthly', 'salary_monthly', 'other_monthly', 'commission_rate', 'rent_day', 'salary_day', 'cheque_window_days'].map((k) => (cols[k] === undefined ? null : cols[k]));
+    if (Object.keys(cols).length) await pool.query(   // fixed SQL: a missing field keeps its old value
+      `UPDATE daily_breakdown_settings SET rent_monthly = COALESCE($1, rent_monthly), salary_monthly = COALESCE($2, salary_monthly), other_monthly = COALESCE($3, other_monthly),
+         commission_rate = COALESCE($4, commission_rate), rent_day = COALESCE($5, rent_day), salary_day = COALESCE($6, salary_day), cheque_window_days = COALESCE($7, cheque_window_days),
+         updated_at = CURRENT_TIMESTAMP WHERE id = 1`, f);
     res.json(await getSettings());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -113,10 +116,10 @@ router.get('/', async (req, res) => {
        FROM market_purchases m WHERE m.purchase_date = $1::date AND NOT m.voided ORDER BY m.id`, [date])).rows;
     const onBillCount = mk.filter((m) => m.on_bill).length;   // a market line on a bill has no catalogue cost; its cost is the market purchase
     const day = computeBreakdown({ date, posSales: Number(sales.rows[0].total), stockCost: Number(cost.rows[0].cost), noCostLines: Number(cost.rows[0].nocost) - onBillCount, market: mk, settings });
-    const cheques = (await pool.query(`SELECT id, payee, amount, TO_CHAR(due_date,'YYYY-MM-DD') AS due_date, status FROM cheque_register WHERE status = 'pending' AND due_date <= ($1::date + $2::int) ORDER BY due_date`, [todayLK(), settings.cheque_window_days]).catch(() => ({ rows: [] }))).rows;
+    const cheques = (await pool.query(`SELECT id, payee, amount, TO_CHAR(due_date,'YYYY-MM-DD') AS due_date, status FROM cheque_register WHERE status IN ('pending','held') AND due_date <= ($1::date + $2::int) ORDER BY due_date`, [todayLK(), settings.cheque_window_days]).catch(() => ({ rows: [] }))).rows;
     const due = dueList({ today: todayLK(), windowDays: settings.cheque_window_days, cheques, rentDay: settings.rent_day, salaryDay: settings.salary_day,
       rentAmount: Number(settings.rent_monthly), salaryAmount: Number(settings.salary_monthly) });
-    res.json({ ...day, bills_count: Number(sales.rows[0].n), market, settings, due, due_total: Math.round(due.reduce((a, d) => a + d.amount, 0) * 100) / 100 });
+    res.json({ ...day, bills_count: Number(sales.rows[0].n), market: mk, settings, due, due_total: Math.round(due.reduce((a, d) => a + d.amount, 0) * 100) / 100 });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

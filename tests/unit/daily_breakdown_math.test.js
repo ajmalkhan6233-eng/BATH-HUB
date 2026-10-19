@@ -70,3 +70,8 @@ describe('dueList', () => {
     expect(dueList({ today: '2026-10-19', windowDays: 7, rentDay: 5, rentAmount: 70000 })).toHaveLength(0);
   });
 });
+
+test('a held cheque still counts as to-pay', () => {
+  const out = dueList({ today: '2026-10-19', windowDays: 7, cheques: [{ payee: 'H', amount: 700, due_date: '2026-10-21', status: 'held' }] });
+  expect(out).toHaveLength(1);
+});
