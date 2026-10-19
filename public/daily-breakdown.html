@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Breakdown — Royal Bath Hub</title>
+<style>
+  :root{--bg:#111;--card:#1c1c1c;--ash:#2a2a2a;--line:#3a3a3a;--text:#f2efe6;--mute:#a8a49a;--gold:#c9a227;--gold2:#e8cf7a;--red:#e0645c;--green:#6cc08b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.45;padding-bottom:48px}
+  header{padding:16px;border-bottom:2px solid var(--gold)}
+  header h1{margin:0;font-size:1.15rem;color:var(--gold2)}
+  header small{color:var(--mute)}
+  main{padding:12px 16px;max-width:560px;margin:0 auto}
+  .bar{display:flex;gap:8px;align-items:center;margin:8px 0 12px}
+  input,button{font:inherit;color:var(--text);background:var(--ash);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:44px}
+  input{width:100%}
+  button{cursor:pointer;background:var(--gold);color:#111;font-weight:600;border:0}
+  button.ghost{background:var(--ash);color:var(--text);border:1px solid var(--line)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+  .card h2{margin:0 0 8px;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+  .big{font-size:1.7rem;font-weight:700}
+  .gold{color:var(--gold2)} .neg{color:var(--red)} .pos{color:var(--green)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
+  .row:first-of-type{border-top:0}
+  .row span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .note{color:var(--mute);font-size:.85rem;margin-top:6px}
+  .warn{color:var(--gold2);font-size:.85rem;margin-top:6px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  label{display:block;font-size:.8rem;color:var(--mute);margin:8px 0 2px}
+  .msg{min-height:1.2em;font-size:.9rem;margin-top:6px}
+  .x{background:none;color:var(--red);border:0;min-height:0;padding:0 4px;font-weight:700}
+  details summary{cursor:pointer;color:var(--gold2);padding:6px 0}
+</style>
+</head>
+<body>
+<header><h1>Daily Breakdown</h1><small>Royal Bath Hub — where today's sales go</small></header>
+<main>
+  <div class="bar"><input type="date" id="date" aria-label="Day"><button class="ghost" id="today">Today</button></div>
+  <div id="warn" class="warn"></div>
+
+  <div class="card"><h2>Sales today</h2><div class="big" id="sales">—</div><div class="note" id="salesNote"></div></div>
+
+  <div class="card"><h2>Keep aside</h2><div class="big gold" id="keep">—</div>
+    <div id="keepRows"></div>
+    <div class="note">Cheques are paid out of the cost of goods, so they are listed under "To pay", not added again here.</div></div>
+
+  <div class="card"><h2>Yours (net profit)</h2><div class="big" id="net">—</div>
+    <div id="netRows"></div></div>
+
+  <div class="card"><h2>To pay</h2><div id="dueRows"><div class="note">Nothing due soon.</div></div><div class="note" id="dueTotal"></div></div>
+
+  <div class="card"><h2>Market purchase</h2>
+    <div class="note">Bought from another shop for one customer. Does not touch stock. Only the profit counts.</div>
+    <div id="mkList"></div>
+    <label>Item</label><input id="mkItem" placeholder="e.g. 1 tile">
+    <div class="grid2"><div><label>Bought for</label><input id="mkBuy" type="number" inputmode="decimal" min="0"></div><div><label>Sold for</label><input id="mkSell" type="number" inputmode="decimal" min="0"></div></div>
+    <div class="grid2"><div><label>Customer (optional)</label><input id="mkCust"></div><div><label>Bill no. (if on POS)</label><input id="mkBill"></div></div>
+    <div style="margin-top:10px"><button id="mkAdd">Add</button></div><div class="msg" id="mkMsg"></div></div>
+
+  <div class="card"><details><summary>Settings (rent, salary, commission)</summary>
+    <label>Rent per month</label><input id="sRent" type="number" inputmode="decimal" min="0">
+    <label>Salary per month</label><input id="sSal" type="number" inputmode="decimal" min="0">
+    <label>Other costs per month</label><input id="sOth" type="number" inputmode="decimal" min="0">
+    <label>Commission % of gross profit</label><input id="sCom" type="number" inputmode="decimal" min="0" max="100">
+    <div class="grid2"><div><label>Rent due day (1-31, 0 = off)</label><input id="sRDay" type="number" min="0" max="31"></div><div><label>Salary due day (1-31, 0 = off)</label><input id="sSDay" type="number" min="0" max="31"></div></div>
+    <label>Look ahead for cheques (days)</label><input id="sWin" type="number" min="1" max="60">
+    <div style="margin-top:10px"><button id="sSave">Save settings</button></div><div class="msg" id="sMsg"></div>
+  </details></div>
+</main>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return 'Rs ' + Number(n || 0).toLocaleString('en-LK', {minimumFractionDigits: 0, maximumFractionDigits: 2}); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var row = function(a, b, cls){ return '<div class="row"><span>' + esc(a) + '</span><span' + (cls ? ' class="' + cls + '"' : '') + '>' + b + '</span></div>'; };
+  function colomboToday(){ return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10); }
+  function api(path, opt){
+    opt = opt || {}; opt.credentials = 'same-origin';
+    if (opt.body && typeof opt.body !== 'string') { opt.body = JSON.stringify(opt.body); opt.headers = { 'Content-Type': 'application/json' }; }
+    return fetch('/api/daily-breakdown' + path, opt).then(function(r){ return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || ('Error ' + r.status)); return j; }); });
+  }
+  var settingsLoaded = false;
+  function load(){
+    var d = $('date').value;
+    api('?date=' + encodeURIComponent(d)).then(function(b){
+      $('sales').textContent = fmt(b.sales);
+      $('salesNote').textContent = b.bills_count + ' bill' + (b.bills_count === 1 ? '' : 's') + (b.market_extra_sales ? ' + ' + fmt(b.market_extra_sales) + ' market sales' : '');
+      $('keep').textContent = fmt(b.keep_aside);
+      $('keepRows').innerHTML = row('Cost of goods', fmt(b.cost)) + row('Rent (today\'s part)', fmt(b.rent)) + row('Salary (today\'s part)', fmt(b.salary)) +
+        (b.other ? row('Other costs', fmt(b.other)) : '') + row('Commission' + (b.commission_rate ? ' (' + b.commission_rate + '%)' : ''), fmt(b.commission));
+      var n = $('net'); n.textContent = fmt(b.net_profit); n.className = 'big ' + (b.net_profit < 0 ? 'neg' : 'pos');
+      $('netRows').innerHTML = row('Gross profit', fmt(b.gross_profit)) + (b.market_profit ? row('of which market purchases', fmt(b.market_profit)) : '') + row('Minus keep-aside costs', '− ' + fmt(b.overhead + b.commission));
+      $('warn').textContent = b.no_cost_lines ? b.no_cost_lines + ' item line' + (b.no_cost_lines === 1 ? ' has' : 's have') + ' no cost on file, so profit looks higher than it is. Add the cost or log it as a market purchase.' : '';
+      $('dueRows').innerHTML = b.due.length ? b.due.map(function(x){
+        var when = x.days_left < 0 ? Math.abs(x.days_left) + ' day(s) overdue' : x.days_left === 0 ? 'today' : 'in ' + x.days_left + ' day(s)';
+        return row(x.label + ' — ' + when, fmt(x.amount), x.days_left < 0 ? 'neg' : '');
+      }).join('') : '<div class="note">Nothing due soon.</div>';
+      $('dueTotal').textContent = b.due.length ? 'Total due soon: ' + fmt(b.due_total) : '';
+      $('mkList').innerHTML = b.market.map(function(m){
+        return row(m.item + (m.customer ? ' (' + m.customer + ')' : '') + (m.bill_number ? ' · bill ' + m.bill_number : ''), fmt(m.sell_price - m.buy_cost) + ' <button class="x" data-void="' + m.id + '" aria-label="Remove">×</button>', 'pos');
+      }).join('');
+      if (!settingsLoaded) { var s = b.settings; $('sRent').value = s.rent_monthly; $('sSal').value = s.salary_monthly; $('sOth').value = s.other_monthly; $('sCom').value = s.commission_rate; $('sRDay').value = s.rent_day; $('sSDay').value = s.salary_day; $('sWin').value = s.cheque_window_days; settingsLoaded = true; }
+    }).catch(function(e){ $('warn').textContent = 'Could not load: ' + e.message; });
+  }
+  $('date').value = colomboToday();
+  $('date').addEventListener('change', load);
+  $('today').addEventListener('click', function(){ $('date').value = colomboToday(); load(); });
+  $('mkList').addEventListener('click', function(ev){
+    var id = ev.target && ev.target.getAttribute('data-void'); if (!id) return;
+    if (!confirm('Remove this market purchase from the day?')) return;
+    api('/market-purchases/' + id + '/void', { method: 'POST' }).then(load).catch(function(e){ $('mkMsg').textContent = e.message; });
+  });
+  $('mkAdd').addEventListener('click', function(){
+    var m = $('mkMsg'); m.className = 'msg'; m.textContent = '';
+    api('/market-purchases', { method: 'POST', body: { purchase_date: $('date').value, item: $('mkItem').value, buy_cost: $('mkBuy').value, sell_price: $('mkSell').value, customer: $('mkCust').value, bill_number: $('mkBill').value } })
+      .then(function(r){ m.className = 'msg pos'; m.textContent = 'Saved. Profit ' + fmt(r.profit) + '.'; ['mkItem','mkBuy','mkSell','mkCust','mkBill'].forEach(function(i){ $(i).value = ''; }); load(); })
+      .catch(function(e){ m.className = 'msg neg'; m.textContent = e.message; });
+  });
+  $('sSave').addEventListener('click', function(){
+    var m = $('sMsg'); m.className = 'msg'; m.textContent = '';
+    api('/settings', { method: 'PUT', body: { rent_monthly: $('sRent').value, salary_monthly: $('sSal').value, other_monthly: $('sOth').value, commission_rate: $('sCom').value, rent_day: $('sRDay').value, salary_day: $('sSDay').value, cheque_window_days: $('sWin').value } })
+      .then(function(){ m.className = 'msg pos'; m.textContent = 'Saved.'; load(); })
+      .catch(function(e){ m.className = 'msg neg'; m.textContent = e.message; });
+  });
+  load();
+  setInterval(function(){ if (!document.hidden) load(); }, 30000);   // fills itself as POS bills come in
+})();
+</script>
+</body>
+</html>

@@ -620,6 +620,7 @@ app.post('/webhook/layla-owner', require('./middleware/webhookAuth').webhookAuth
 app.use('/', require('./routes/daily_entry_sync'));         // daily ledger sync (ported from BATHCO): /api/daily-entry/sync, /meta, /range (behind login)
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
 app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*
+app.use('/api/daily-breakdown', require('./routes/daily_breakdown')); // Daily Breakdown: sales split into keep-aside / net profit / to-pay, /api/daily-breakdown/*
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
