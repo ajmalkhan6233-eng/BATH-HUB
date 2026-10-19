@@ -405,6 +405,14 @@
             }).then(function () { lastError = null; failures = 0; return refresh(); }).then(function () { return replay(); });
         }
 
+        // Remove ONE refused item (never a waiting one) after the owner has read why it was refused. Used by the SYNC ERROR panel.
+        function discardRejected(seq) {
+            return adapter.all().then(function (items) {
+                var it = items.filter(function (i) { return i.seq === seq && i.state === 'rejected'; })[0];
+                return it ? adapter.remove(it.seq) : null;
+            }).then(function () { return refresh(); });
+        }
+
         var ready = refresh().then(function () {
             return adapter.all().then(function (items) {      // crash recovery on start-up
                 return Promise.all(items.filter(function (i) { return i.state === 'sending'; }).map(function (i) { i.state = 'waiting'; return adapter.update(i); }));
@@ -421,7 +429,7 @@
 
         return {
             deviceId: deviceId, adapter: adapter, ready: ready,
-            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected,
+            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected, discardRejected: discardRejected,
             status: status, on: on, list: function () { return adapter.all(); }, results: function () { return adapter.results(); },
             refresh: refresh, refreshServerCounts: refreshServerCounts, backoffMs: backoffMs,
             isQueueable: function (u) { var p = pathOf(u); return !!p && !NEVER_QUEUE.test(p) && isQueueable(p); }
@@ -454,6 +462,10 @@
                     var row = doc.createElement('div'); row.style.cssText = 'border-top:1px solid #eee;padding:6px 0';
                     row.appendChild(txt('div', i.method + ' ' + i.url, 'font-weight:600;word-break:break-all'));
                     row.appendChild(txt('div', i.error || 'Refused', 'color:#b00020'));
+                    var del = txt('button', 'Discard', 'margin-top:4px;padding:3px 10px;border:1px solid #b00020;border-radius:6px;background:#fff;color:#b00020;cursor:pointer');
+                    del.type = 'button';
+                    del.onclick = function () { if (doc.defaultView.confirm('Discard this refused item? It will be removed from this device.')) inst.discardRejected(i.seq).then(renderPanel); };
+                    row.appendChild(del);
                     panel.appendChild(row);
                 });
                 if (!rej.length) panel.appendChild(txt('div', 'Nothing refused.', 'color:#666'));
@@ -514,6 +526,7 @@
     OfflineQueue.list = function () { return inst().list(); };
     OfflineQueue.results = function () { return inst().results(); };
     OfflineQueue.retryRejected = function () { return inst().retryRejected(); };
+    OfflineQueue.discardRejected = function (seq) { return inst().discardRejected(seq); };
     OfflineQueue.mountChip = function (el) { return mountChip(inst(), el); };
 
     root.OfflineQueue = OfflineQueue;
