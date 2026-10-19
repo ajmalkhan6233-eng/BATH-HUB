@@ -124,6 +124,20 @@ describe('inbound routing (owner only, caption decides)', () => {
     const r2 = await processInbound({ id: 'm2', from: '94771234567', type: 'text', text: 'ok' }, deps);
     expect(r2.intent).toBe('paper_reply'); expect(saved.grn).toHaveLength(1);
   });
+  test('photo with NO caption is held; the next text "GRN" makes the draft from that photo', async () => {
+    const { deps, out, saved } = mk(); require('../../layla_owner/inbound')._resetHeldPhoto();
+    const r = await processInbound({ id: 'h1', from: '94771234567', type: 'image', mediaId: 'a', caption: '' }, deps);
+    expect(r.intent).toBe('photo_held'); expect(out[0]).toContain('Reply GRN or CHEQUE'); expect(saved.grn).toHaveLength(0);
+    const r2 = await processInbound({ id: 'h2', from: '94771234567', type: 'text', text: 'Grn' }, deps);
+    expect(r2.intent).toBe('paper_draft'); expect(out[1]).toContain('GRN DRAFT #1');
+    const r3 = await processInbound({ id: 'h3', from: '94771234567', type: 'text', text: 'ok' }, deps);
+    expect(r3.intent).toBe('paper_reply'); expect(saved.grn).toHaveLength(1);
+  });
+  test('a later "GRN" with no photo held does not invent a draft', async () => {
+    const { deps, saved } = mk(); require('../../layla_owner/inbound')._resetHeldPhoto();
+    await processInbound({ id: 'h4', from: '94771234567', type: 'text', text: 'Grn' }, deps);
+    expect(saved.grn).toHaveLength(0);
+  });
   test('the same photo from a stranger is ignored and nothing is read or saved', async () => {
     const { deps, out, saved } = mk();
     const r = await processInbound({ id: 'm3', from: '94770000000', type: 'image', mediaId: 'a', caption: 'GRN' }, deps);

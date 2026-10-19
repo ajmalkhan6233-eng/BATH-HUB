@@ -8,6 +8,8 @@ const { fmtLocal } = require('./timeParse');
  * One inbound WhatsApp message from anyone. Strangers are ignored silently (nothing is revealed).
  * deps: { store, adapters, send(to,text), ownerNumber, download(mediaId)->{buffer,mime}, transcribe(buffer,mime)->{ok,text}, saveMedia(buffer,mime,kind)->string, rateLimit()->bool, now() }
  */
+// A photo sent with NO caption is held for 10 minutes. The next text "GRN" or "cheque" turns it into a draft (WhatsApp shows photo and text as two messages).
+const HOLD_MS = 10 * 60 * 1000; let heldPhoto = null;
 async function processInbound(m, deps) {
   const { store, adapters, send, ownerNumber, now = () => new Date() } = deps;
   if (!isOwner(m.from, ownerNumber) && deps.family && deps.family.isMember(m.from)) {
@@ -57,6 +59,12 @@ async function processInbound(m, deps) {
     } else if (m.type === 'image' || m.type === 'document') {
       const paperKind = deps.paper && m.type === 'image' ? deps.paper.captionKind(m.caption) : null;   // caption "GRN" or "cheque": read into a DRAFT, saved only on "ok"
       const cap = String(m.caption || '').slice(0, 500); const it = cap ? parseOwnerMessage(cap, now()) : { type: 'UNKNOWN' };
+      if (deps.paper && m.type === 'image' && !cap && !paperKind) {   // no caption at all: keep the photo and ask what it is
+        const media0 = await deps.download(m.mediaId); const file0 = await deps.saveMedia(media0.buffer, media0.mime || m.mime, m.type);
+        heldPhoto = { file: file0, at: Date.now() };
+        await reply('Got the photo. What is it? Reply GRN or CHEQUE within 10 minutes (or send it again with the word under it).');
+        return { status: 'ok', file: file0, intent: 'photo_held' };
+      }
       // ONE LAYLA: a photo this assistant has no job for (no GRN/cheque caption, no bill/cheque/reminder words) goes on to the original Layla's photo pipeline (day and expense sheets).
       if (deps.fallbackOriginal && m.type === 'image' && !paperKind && !['PENDING_BILL', 'CHEQUE_NOTE', 'REMIND'].includes(it.type)) return { status: 'fallback_photo' };
       const media = await deps.download(m.mediaId); const file = await deps.saveMedia(media.buffer, media.mime || m.mime, m.type);
@@ -67,6 +75,15 @@ async function processInbound(m, deps) {
       return { status: 'ok', file };
     } else { await reply('I can read text, voice notes and photos.'); return { status: 'unsupported' }; }
   } catch (e) { console.error('[layla-owner] inbound error:', e.message); await reply('Something went wrong on my side. Please try again.'); return { status: 'error' }; }
+  if (heldPhoto && m.type === 'text' && deps.paper) {   // the word that follows a captionless photo
+    const kind = deps.paper.captionKind(text);
+    if (kind && Date.now() - heldPhoto.at <= HOLD_MS) {
+      const h = heldPhoto; heldPhoto = null;
+      try { const p = await deps.paper.start(kind, h.file, text); await reply(p.reply); return { status: 'ok', file: h.file, intent: 'paper_draft' }; }
+      catch (e) { console.error('[layla-owner] held photo:', e.message); await reply('Something went wrong reading that photo. Please send it again with GRN under it.'); return { status: 'error' }; }
+    }
+    if (Date.now() - heldPhoto.at > HOLD_MS) heldPhoto = null;
+  }
   if (deps.fallbackOriginal && m.type === 'text' && /^\s*teach\s*:/i.test(text)) return { status: 'fallback' };   // ONE LAYLA: "TEACH: <fact>" is the original Layla's permanent-fact command
   if (deps.inboxCmd && deps.inboxCmd.handle && (m.type === 'text' || m.type === 'audio')) {   // reply to a draft from WhatsApp: ok / cancel / edit / create customer (owner only: we are past the owner check)
     const c = await deps.inboxCmd.handle(text, { from: m.from, paperPending: deps.paper ? await deps.paper.hasPending().catch(() => false) : false }).catch((e) => { console.error('[layla-owner] inbox command:', e.message); return null; });
@@ -78,4 +95,4 @@ async function processInbound(m, deps) {
   await reply(heard + r.reply);
   return { status: 'ok', intent: r.intent.type };
 }
-module.exports = { processInbound };
+module.exports = { processInbound, _resetHeldPhoto: () => { heldPhoto = null; } };
