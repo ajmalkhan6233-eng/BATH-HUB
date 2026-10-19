@@ -62,7 +62,7 @@ async function processInbound(m, deps) {
       if (deps.paper && m.type === 'image' && !cap && !paperKind) {   // no caption at all: keep the photo and ask what it is
         const media0 = await deps.download(m.mediaId); const file0 = await deps.saveMedia(media0.buffer, media0.mime || m.mime, m.type);
         heldPhoto = { file: file0, at: Date.now() };
-        await reply('Got the photo. What is it? Reply GRN or CHEQUE within 10 minutes (or send it again with the word under it).');
+        await reply('Got the photo. What is it? Reply GRN or CHEQUE within 10 minutes. (For a day or expense sheet, send it again with the word sheet under it.)');
         return { status: 'ok', file: file0, intent: 'photo_held' };
       }
       // ONE LAYLA: a photo this assistant has no job for (no GRN/cheque caption, no bill/cheque/reminder words) goes on to the original Layla's photo pipeline (day and expense sheets).

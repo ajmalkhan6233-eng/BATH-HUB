@@ -30,10 +30,15 @@ test('ONE LAYLA: TEACH: goes to the original Layla, any letter case', async () =
   for (const t of ['TEACH: showroom opens at 9', 'teach: showroom opens at 9', '  Teach : we sell tiles']) { const r = await bridgeIn(owner({ type: 'text', text: t })); expect(r.status).toBe('fallback'); expect(r.replies).toHaveLength(0); }
   expect(rows).toHaveLength(0);                                                           // nothing created by the assistant
 });
-test('ONE LAYLA: a photo with no GRN/cheque caption goes to the original photo pipeline, nothing downloaded or saved here', async () => {
+test('ONE LAYLA: a photo with a caption that is not GRN/cheque (e.g. "sheet") goes to the original photo pipeline, nothing downloaded or saved here', async () => {
   const { bridgeIn, calls, rows } = make();
-  const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'a.jpg'), mime: 'image/jpeg', caption: '' }));
+  const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'a.jpg'), mime: 'image/jpeg', caption: 'sheet' }));
   expect(r.status).toBe('fallback_photo'); expect(r.replies).toHaveLength(0); expect(calls.download).toBe(0); expect(calls.saveMedia).toBe(0); expect(rows).toHaveLength(0);
+});
+test('a photo with NO caption is held and Layla asks what it is (GRN or cheque)', async () => {
+  const { bridgeIn } = make();
+  const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'c.jpg'), mime: 'image/jpeg', caption: '' }));
+  expect(r.status).toBe('ok'); expect(r.replies[0]).toMatch(/Reply GRN or CHEQUE/);
 });
 test('a photo captioned GRN is still handled by the assistant (draft, saved only on ok)', async () => {
   const { bridgeIn } = make(); const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'b.jpg'), mime: 'image/jpeg', caption: 'GRN Eskema' }));
