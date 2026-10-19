@@ -107,10 +107,13 @@ async function ocrPhoto(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
     const mime = ext === 'png' ? 'image/png' : ext === 'pdf' ? 'application/pdf' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
 
+    let geminiQuota = false;
     if (process.env.GEMINI_API_KEY) {
         try { const g = await geminiOcr({ key: process.env.GEMINI_API_KEY, base64, mime }); return { ...g.parsed, _raw: g.raw, _model: g.model, _file: filePath }; }
-        catch (e) { console.error('[ocr] Gemini failed, trying OpenRouter:', e.message); }
+        catch (e) { geminiQuota = e.status === 429 || /quota/i.test(e.message || ''); console.error('[ocr] Gemini failed, trying OpenRouter:', e.message); }
     }
+    // Plain words for Aj when every reader is out of reach (a real photo problem looks different).
+    const readerDown = () => { const e = new Error(geminiQuota ? 'The photo reader has used up its free quota for now (Google limit). Please try again in a few minutes, or type the GRN in the app.' : 'The photo reader gave no answer. Please try again in a minute, or type the GRN in the app.'); e.readerDown = true; return e; };
     if (mime === 'application/pdf') throw new Error('PDF reading needs the Gemini key (GEMINI_API_KEY in .env)');
     const body = model => ({
         model,
@@ -120,22 +123,25 @@ async function ocrPhoto(filePath) {
         ] }],
         max_tokens: 1800,          // a manual bill or GRN lists every item
     });
-    let response, usedModel = VISION_MODEL, lastErr;
+    let response, usedModel = VISION_MODEL, lastErr, raw = '', jsonMatch = null;
     const tried = [VISION_MODEL];
     for (let i = 0; i < 8; i++) {
-        try { response = await client.chat.completions.create(body(usedModel), { timeout: OCR_TIMEOUT_MS }); lastErr = null; break; }
-        catch (e) {
+        let failed = null;
+        try {
+            response = await client.chat.completions.create(body(usedModel), { timeout: OCR_TIMEOUT_MS }); lastErr = null;
+            raw = response.choices?.[0]?.message?.content || ''; jsonMatch = raw.match(/\{[\s\S]*\}/);
+            if (jsonMatch) break;
+            failed = new Error(`OCR returned no parseable JSON. Raw: ${raw.slice(0, 200)}`);   // an EMPTY answer is a failed model: try the next one
+        } catch (e) {
             lastErr = e;
             if (![404, 429, 502, 503, 400, 403, 408].includes(e.status) && !/No endpoints|timed out|timeout/i.test(e.message || '')) break;
-            const next = (await discoverFreeVisionModels()).find(id => !tried.includes(id));
-            if (!next) break;
-            tried.push(next); usedModel = next;
         }
+        if (failed) lastErr = failed;
+        const next = (await discoverFreeVisionModels().catch(() => [])).find(id => !tried.includes(id));
+        if (!next) break;
+        tried.push(next); usedModel = next;
     }
-    if (lastErr) throw lastErr;
-    const raw = response.choices?.[0]?.message?.content || '';
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error(`OCR returned no parseable JSON. Raw: ${raw.slice(0, 200)}`);
+    if (!jsonMatch) { console.error('[ocr] OpenRouter gave nothing:', lastErr && lastErr.message); throw readerDown(); }
     const parsed = JSON.parse(jsonMatch[0]);
     return { ...parsed, _raw: raw, _model: usedModel, _file: filePath };
 }

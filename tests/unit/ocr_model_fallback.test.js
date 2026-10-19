@@ -31,3 +31,24 @@ test('falls back when the first model has no endpoints', async () => {
   expect(r._model).toBe('b/vis:free');
   expect(client.chat.completions.create).toHaveBeenCalledTimes(2);
 });
+test('an EMPTY answer from a model tries the next free model instead of failing', async () => {
+  client.chat.completions.create.mockReset();
+  client.chat.completions.create
+    .mockResolvedValueOnce({ choices: [{ message: { content: '' } }] })
+    .mockResolvedValueOnce({ choices: [{ message: { content: '{"document_type":"grn","items":[]}' } }] });
+  const r = await ocr.ocrPhoto(img);
+  expect(r._model).toBe('b/vis:free');
+});
+test('when every reader gives nothing the error is in plain words (no "retake the photo")', async () => {
+  client.chat.completions.create.mockReset();
+  client.chat.completions.create.mockResolvedValue({ choices: [{ message: { content: '' } }] });
+  await expect(ocr.ocrPhoto(img)).rejects.toMatchObject({ readerDown: true, message: expect.stringMatching(/photo reader gave no answer/) });
+});
+test('Gemini 429 then empty backup: the message says the free quota is used up', async () => {
+  client.chat.completions.create.mockReset();
+  client.chat.completions.create.mockResolvedValue({ choices: [{ message: { content: '' } }] });
+  process.env.GEMINI_API_KEY = 'x'; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u) => (String(u).includes('/models?') ? { json: async () => ({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }] }) } : { ok: false, status: 429, json: async () => ({ error: { message: 'You exceeded your current quota' } }) });
+  try { await expect(ocr.ocrPhoto(img)).rejects.toMatchObject({ readerDown: true, message: expect.stringMatching(/used up its free quota/) }); }
+  finally { globalThis.fetch = realFetch; delete process.env.GEMINI_API_KEY; ocr._resetGeminiCache(); }
+});

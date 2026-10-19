@@ -41,7 +41,7 @@ function createPaperDeps({ lazy = require } = {}) {
       const m = (r.choices?.[0]?.message?.content || '').match(/\{[\s\S]*\}/);
       if (!m) return { ok: false };
       return { ok: true, doc: JSON.parse(m[0]), engine: `free vision model ${model}` };
-    } catch (e) { console.error('[paper-intake] read failed:', e.message); return { ok: false }; }
+    } catch (e) { console.error('[paper-intake] read failed:', e.message); return { ok: false, message: e.readerDown ? e.message : undefined }; }
   }
 
   async function saveGrn(d) {

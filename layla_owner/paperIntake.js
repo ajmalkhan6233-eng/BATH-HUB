@@ -87,7 +87,7 @@ module.exports = function createPaperIntake({ pool, readPaper, saveGrn, saveCheq
   async function start(kind, file) {
     await ensure();
     const r = await readPaper(file, kind);
-    if (!r || !r.ok) return { reply: 'I could not read that paper clearly. Please send a straighter, brighter photo, or add the GRN in the app.' };
+    if (!r || !r.ok) return { reply: (r && r.message) || 'I could not read that paper clearly. Please send a straighter, brighter photo, or add the GRN in the app.' };
     const d = toDraft(kind, r.doc, now()); const checks = runChecks(d);
     await pool.query(`UPDATE paper_drafts SET status='cancelled' WHERE status='draft'`);
     const ins = await pool.query(`INSERT INTO paper_drafts (kind, draft, engine, source_file) VALUES ($1,$2,$3,$4) RETURNING id`, [kind, JSON.stringify(d), r.engine || null, file || null]);
