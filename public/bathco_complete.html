@@ -293,6 +293,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="docinbox"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">Document Inbox</span></li>
       <li class="nav-item" data-page="loans"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg></span><span class="nav-label">Friend &amp; Investor Loans</span></li>
       <li class="nav-item" data-page="moneycontrol"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="nav-label">Money Control</span></li>
+      <li class="nav-item" data-page="dailybreakdown"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="nav-label">Daily Breakdown</span></li>
       <li class="nav-item" data-page="commissions"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg></span><span class="nav-label">Sale Commissions</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone-call"/></svg></span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chat"/></svg></span><span class="nav-label">Reply Drafts</span></li>
@@ -968,6 +969,9 @@ table tr:last-child td{border-bottom:none}
     <section class="page" id="page-moneycontrol">
       <iframe id="frame-moneycontrol" title="Money Control" data-src="/money-control.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
+    <section class="page" id="page-dailybreakdown">
+      <iframe id="frame-dailybreakdown" title="Daily Breakdown" data-src="/daily-breakdown.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
+    </section>
     <section class="page" id="page-commissions">
       <iframe id="frame-commissions" title="Sale Commissions" data-src="/sale_commissions.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
@@ -1143,6 +1147,7 @@ const PAGE_META = {
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
   loans:       ['Friend & Investor Loans','Money lent to the business: record loans and repayments (halal, no interest)'],
   moneycontrol:['Money Control','Where the money goes: allocations and viewer access'],
+  dailybreakdown:['Daily Breakdown','Where today\'s sales go: keep aside, yours, and what to pay'],
   commissions: ['Sale Commissions','Commission on sales and exchanges'],
   settings:    ['Settings','Shop, branding and options'],
   salary:      ['Salary & Costs', 'Daily cost target, monthly profit split, cheque set-aside'],

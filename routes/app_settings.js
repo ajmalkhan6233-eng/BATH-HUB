@@ -18,7 +18,7 @@ const pool = require('../utils/pool');
 
 // The owner-app menu items. dashboard and settings can never be hidden.
 const MENU_ITEMS = ['dashboard', 'daily-sales', 'stock', 'pos', 'grn', 'expenses', 'cheques', 'vendors', 'barcode', 'salary', 'docinbox', 'loans',
-    'moneycontrol', 'commissions', 'enquiries', 'replies', 'webcat', 'policy', 'branches', 'settings', 'shoptools', 'content', 'competitors',
+    'moneycontrol', 'dailybreakdown', 'commissions', 'enquiries', 'replies', 'webcat', 'policy', 'branches', 'settings', 'shoptools', 'content', 'competitors',
     'agentreview', 'agent-rules', 'reports'];
 const ALWAYS_VISIBLE = ['dashboard', 'settings'];
 
