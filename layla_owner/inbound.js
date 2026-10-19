@@ -62,7 +62,7 @@ async function processInbound(m, deps) {
       if (deps.paper && m.type === 'image' && !cap && !paperKind) {   // no caption at all: keep the photo and ask what it is
         const media0 = await deps.download(m.mediaId); const file0 = await deps.saveMedia(media0.buffer, media0.mime || m.mime, m.type);
         heldPhoto = { file: file0, at: Date.now() };
-        await reply('Got the photo. What is it? Reply GRN or CHEQUE within 10 minutes. (For a day or expense sheet, send it again with the word sheet under it.)');
+        await reply('Got the photo. What is it? Reply 1 = GRN or 2 = CHEQUE (or type the word) within 10 minutes. (For a day or expense sheet, send it again with the word sheet under it.)');
         return { status: 'ok', file: file0, intent: 'photo_held' };
       }
       // ONE LAYLA: a photo this assistant has no job for (no GRN/cheque caption, no bill/cheque/reminder words) goes on to the original Layla's photo pipeline (day and expense sheets).
@@ -76,7 +76,7 @@ async function processInbound(m, deps) {
     } else { await reply('I can read text, voice notes and photos.'); return { status: 'unsupported' }; }
   } catch (e) { console.error('[layla-owner] inbound error:', e.message); await reply('Something went wrong on my side. Please try again.'); return { status: 'error' }; }
   if (heldPhoto && m.type === 'text' && deps.paper) {   // the word that follows a captionless photo
-    const kind = deps.paper.captionKind(text);
+    const pick = String(text || '').trim(); const kind = deps.paper.captionKind(pick === '1' ? 'GRN' : pick === '2' ? 'cheque' : text);   // 1 = GRN, 2 = cheque, or the word itself
     if (kind && Date.now() - heldPhoto.at <= HOLD_MS) {
       const h = heldPhoto; heldPhoto = null;
       try { const p = await deps.paper.start(kind, h.file, text); await reply(p.reply); return { status: 'ok', file: h.file, intent: 'paper_draft' }; }

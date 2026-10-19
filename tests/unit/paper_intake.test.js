@@ -127,7 +127,7 @@ describe('inbound routing (owner only, caption decides)', () => {
   test('photo with NO caption is held; the next text "GRN" makes the draft from that photo', async () => {
     const { deps, out, saved } = mk(); require('../../layla_owner/inbound')._resetHeldPhoto();
     const r = await processInbound({ id: 'h1', from: '94771234567', type: 'image', mediaId: 'a', caption: '' }, deps);
-    expect(r.intent).toBe('photo_held'); expect(out[0]).toContain('Reply GRN or CHEQUE'); expect(saved.grn).toHaveLength(0);
+    expect(r.intent).toBe('photo_held'); expect(out[0]).toContain('Reply 1 = GRN or 2 = CHEQUE'); expect(saved.grn).toHaveLength(0);
     const r2 = await processInbound({ id: 'h2', from: '94771234567', type: 'text', text: 'Grn' }, deps);
     expect(r2.intent).toBe('paper_draft'); expect(out[1]).toContain('GRN DRAFT #1');
     const r3 = await processInbound({ id: 'h3', from: '94771234567', type: 'text', text: 'ok' }, deps);

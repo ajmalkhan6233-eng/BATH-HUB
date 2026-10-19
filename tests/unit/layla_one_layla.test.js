@@ -38,7 +38,17 @@ test('ONE LAYLA: a photo with a caption that is not GRN/cheque (e.g. "sheet") go
 test('a photo with NO caption is held and Layla asks what it is (GRN or cheque)', async () => {
   const { bridgeIn } = make();
   const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'c.jpg'), mime: 'image/jpeg', caption: '' }));
-  expect(r.status).toBe('ok'); expect(r.replies[0]).toMatch(/Reply GRN or CHEQUE/);
+  expect(r.status).toBe('ok'); expect(r.replies[0]).toMatch(/Reply 1 = GRN or 2 = CHEQUE/);
+});
+test('after a captionless photo, replying 1 makes a GRN draft and 2 makes a cheque draft; 7 is not an answer', async () => {
+  for (const [ans, re] of [['1', /Draft GRN/], ['2', /Draft/]]) {
+    const { bridgeIn } = make();
+    await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'd.jpg'), mime: 'image/jpeg', caption: '' }));
+    const r = await bridgeIn(owner({ type: 'text', text: ans })); expect(r.replies.join(' ')).toMatch(re);
+  }
+  const { bridgeIn } = make();
+  await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'e.jpg'), mime: 'image/jpeg', caption: '' }));
+  const r = await bridgeIn(owner({ type: 'text', text: '7' })); expect(r.replies.join(' ')).not.toMatch(/Draft GRN/);
 });
 test('a photo captioned GRN is still handled by the assistant (draft, saved only on ok)', async () => {
   const { bridgeIn } = make(); const r = await bridgeIn(owner({ type: 'image', filePath: path.join(inboxRoot, '2026-10-16', 'b.jpg'), mime: 'image/jpeg', caption: 'GRN Eskema' }));
