@@ -90,3 +90,6 @@ backups/.last_hash
 # print outputs for the shop (barcode / card samples)
 !public/print/*.pdf
 audit_out/
+
+# watchdog and wipe logs (plain text, per PC)
+logs/
