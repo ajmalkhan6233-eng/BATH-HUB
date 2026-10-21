@@ -48,7 +48,7 @@ const pool = new pg.Pool();
 
 test('rehearsal counts what would go and changes nothing', async () => {
   seed();
-  const p = await F.plan(pool);
+  const p = await F.plan(pool, { scope: 'all' });
   const byName = Object.fromEntries(p.rows.map(r => [r.table, r.rows]));
   expect(byName).toMatchObject({ customers: 2, leads: 1, pos_bills: 2, pos_bill_items: 3, grn_records: 2, cheque_register: 1, vendor_bills: 1, document_inbox: 3, notify_queue: 1 });
   expect(p.total).toBe(2 + 1 + 2 + 3 + 2 + 1 + 1 + 3 + 1);
@@ -59,7 +59,7 @@ test('rehearsal counts what would go and changes nothing', async () => {
 
 test('clears the records, zeroes stock, keeps products, suppliers, users and the daily figures', async () => {
   seed();
-  const done = await F.execute(pool);
+  const done = await F.execute(pool, { scope: 'all' });
   for (const t of ['customers', 'leads', 'pos_bills', 'pos_bill_items', 'grn_records', 'cheque_register', 'vendor_bills', 'document_inbox', 'notify_queue']) expect(count(t)).toBe(0);
   expect(done.zeroed).toMatchObject({ products: 2, stock_items: 1 });
   const prods = db.many(`SELECT name, price, stock_level FROM products ORDER BY id`);
@@ -71,7 +71,7 @@ test('clears the records, zeroes stock, keeps products, suppliers, users and the
 
 test('--also daily,expenses clears those too, only when asked', async () => {
   seed();
-  await F.execute(pool, { also: ['daily', 'expenses'] });
+  await F.execute(pool, { also: ['daily', 'expenses'], scope: 'all' });
   expect(count('daily_summary')).toBe(0); expect(count('expenses_detail')).toBe(0);
   expect(count('suppliers')).toBe(1);
 });
@@ -82,7 +82,19 @@ test('an unknown --also group is refused', () => {
 
 test('table names come from the fixed lists only', () => {
   for (const t of F.tablesFor(['daily', 'expenses'])) expect(t).toMatch(/^[a-z][a-z0-9_]*$/);
-  expect(F.BASE).not.toEqual(expect.arrayContaining(['products', 'users', 'suppliers', 'app_settings', 'investor_loans', 'staff']));
+  expect(F.SCOPES.all).not.toEqual(expect.arrayContaining(['products', 'users', 'suppliers', 'app_settings', 'investor_loans', 'staff']));
+});
+
+test('scope clean clears only the junk and keeps customers, bills, GRNs and stock', async () => {
+  seed();
+  await F.execute(pool);   // default scope is clean
+  for (const t of ['leads', 'document_inbox', 'notify_queue']) expect(count(t)).toBe(0);
+  expect(count('customers')).toBe(2); expect(count('pos_bills')).toBe(2); expect(count('grn_records')).toBe(2); expect(count('vendor_bills')).toBe(1);
+  expect(db.many(`SELECT stock_level FROM products ORDER BY id`).map(r => Number(r.stock_level))).not.toEqual([0, 0]);
+});
+
+test('an unknown scope is refused', () => {
+  expect(() => F.tablesFor([], 'everything')).toThrow(/unknown scope/);
 });
 
 describe('backup gate', () => {

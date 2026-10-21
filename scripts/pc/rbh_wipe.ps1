@@ -1,13 +1,15 @@
 # FRESH START (Aj's order 2026-10-21). Makes a backup, copies it to E:, then clears the opening/test records. See utils\freshStart.js.
 # Without -Execute it is a REHEARSAL: backup is skipped and nothing is changed, it only shows what would be cleared.
 #   scripts\pc\rbh_wipe.ps1                      rehearsal
-#   scripts\pc\rbh_wipe.ps1 -Execute             backup, then clear (one transaction, all or nothing)
+#   scripts\pc\rbh_wipe.ps1 -Execute             backup, then clear the JUNK only (-Scope clean, the default)
+#   scripts\pc\rbh_wipe.ps1 -Execute -Scope all  ALSO clears customers, bills, cheques, GRNs, stock (only on Aj's word 'play 78')
 #   scripts\pc\rbh_wipe.ps1 -Execute -Also daily,expenses     also clear the daily figures and expenses
-param([switch]$Execute, [string]$Also = '')
+param([switch]$Execute, [string]$Also = '', [ValidateSet('clean','all')][string]$Scope = 'clean')
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Push-Location $root
 try {
     $alsoArg = @(); if ($Also) { $alsoArg = @("--also=$Also") }
+    $alsoArg += "--scope=$Scope"
     if (-not $Execute) { node scripts\wipe_fresh_start.js @alsoArg; exit $LASTEXITCODE }
 
     # the backup script covers the database bathco_owner only, so the wipe must be aimed at that same database

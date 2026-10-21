@@ -47,7 +47,7 @@ d('fresh start on a real PostgreSQL', () => {
 
   test('clears in the right order (real links between bills and customers), keeps the setup, numbering restarts at 1', async () => {
     await build();
-    await F.execute(pool);
+    await F.execute(pool, { scope: 'all' });
     for (const t of ['customers', 'leads', 'pos_bills', 'pos_bill_items', 'grn_records', 'cheque_register', 'document_inbox']) expect(await n(t)).toBe(0);
     expect(await n('products')).toBe(1); expect(await n('suppliers')).toBe(1); expect(await n('users')).toBe(1);
     expect(Number((await pool.query('SELECT stock_level FROM products')).rows[0].stock_level)).toBe(0);
@@ -60,7 +60,7 @@ d('fresh start on a real PostgreSQL', () => {
     await build();
     await pool.query(`CREATE TABLE kept_child (id SERIAL PRIMARY KEY, customer_id INT REFERENCES customers(id))`);   // a kept table still pointing at a customer
     await pool.query(`INSERT INTO kept_child (customer_id) VALUES (1)`);
-    await expect(F.execute(pool)).rejects.toThrow(/rolled back, nothing was changed \(stopped at /);
+    await expect(F.execute(pool, { scope: 'all' })).rejects.toThrow(/rolled back, nothing was changed \(stopped at /);
     expect(await n('customers')).toBe(2); expect(await n('pos_bills')).toBe(2); expect(await n('pos_bill_items')).toBe(2);
     expect(await n('grn_records')).toBe(2); expect(await n('cheque_register')).toBe(1); expect(await n('document_inbox')).toBe(2);
     expect(Number((await pool.query('SELECT stock_level FROM products')).rows[0].stock_level)).toBe(12);   // stock not zeroed either
@@ -75,12 +75,12 @@ d('fresh start on a real PostgreSQL', () => {
     });
     test('rehearsal changes nothing; clearing without a backup is refused; with a fresh backup it clears', async () => {
       await build();
-      const r1 = run();
+      const r1 = run('--scope=all');
       expect(r1.stdout).toMatch(/REHEARSAL/); expect(await n('customers')).toBe(2);
-      const r2 = run('--yes');
+      const r2 = run('--yes', '--scope=all');
       expect(r2.stdout).toMatch(/STOPPED: no backup file given/); expect(r2.status).toBe(3); expect(await n('customers')).toBe(2);
       const bk = path.join(os.tmpdir(), `bk-${Date.now()}.sql`); fs.writeFileSync(bk, 'x'.repeat(5000));
-      const r3 = run('--yes', `--backup=${bk}`);
+      const r3 = run('--yes', '--scope=all', `--backup=${bk}`);
       expect(r3.stdout).toMatch(/CLEARED\. Rows left in those tables: 0/); expect(r3.status).toBe(0);
       expect(await n('customers')).toBe(0); expect(await n('products')).toBe(1);
     });
