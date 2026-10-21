@@ -10,6 +10,7 @@ Push-Location $root
 try {
     $alsoArg = @(); if ($Also) { $alsoArg = @("--also=$Also") }
     $alsoArg += "--scope=$Scope"
+    $alsoArg += "--db=bathco_owner"   # refuses if the connection is to any other database
     if (-not $Execute) { node scripts\wipe_fresh_start.js @alsoArg; exit $LASTEXITCODE }
 
     # the backup script covers the database bathco_owner only, so the wipe must be aimed at that same database

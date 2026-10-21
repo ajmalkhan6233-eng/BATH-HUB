@@ -5,6 +5,8 @@
 // scope clean = inbox, queues, chats, leads. scope all = ALSO customers, bills, cheques, GRNs, stock (the real opening stock too).
 // Refuses: no fresh backup file (real, > 1 KB, made in the last 60 minutes) / the live shop database / any error rolls back.
 // See utils/freshStart.js for exactly what is cleared and what is kept. Writes logs/wipe_<time>.txt (counts only, no names or numbers).
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';
+require('dotenv').config();   // load .env FIRST, so the database name below is the real one (it used to show a default label)
 const fs = require('fs');
 const path = require('path');
 const { assertTemplateSafeDb } = require('../utils/dbGuard');
@@ -24,6 +26,12 @@ const inboxRoot = path.resolve(process.env.DROP_ROOT || path.join(__dirname, '..
     const log = [];
     const say = s => { console.log(s); log.push(s); };
     try {
+        // ask the database itself which one we are connected to (the only name that counts)
+        const real = (await pool.query('SELECT current_database() AS d')).rows[0].d;
+        if (real !== dbName) { say(`STOPPED: .env says "${dbName}" but the connection is to "${real}". Nothing was changed.`); process.exitCode = 6; return; }
+        const want = arg('db');
+        if (yes && want && want !== real) { say(`STOPPED: you asked for database "${want}" but this is "${real}". Nothing was changed.`); process.exitCode = 6; return; }
+        if (yes && !want) { say('STOPPED: add --db=<database name> (the one the backup was taken from). Nothing was changed.'); process.exitCode = 6; return; }
         say(`Database: ${dbName}   Scope: ${scope}   Mode: ${yes ? 'CLEAR' : 'REHEARSAL (nothing changes)'}`);
         const p = await F.plan(pool, { also, scope });
         const files = F.inboxFiles(inboxRoot);
