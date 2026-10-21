@@ -16,6 +16,12 @@ $a2 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "
 $t2 = New-ScheduledTaskTrigger -Daily -At '03:30'
 Register-ScheduledTask -TaskName 'RBH_LogTidy' -Action $a2 -Trigger $t2 -Settings $settings -Description 'Royal Bath Hub: keeps the apex-server logs small' -Force | Out-Null
 
+# bridge watcher: every 15 min, plain code; starts Claude Code only when AJ has "played" a task (so a phone "play" is enough)
+$settings3 = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3)
+$a3 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "{1}"' -f $vbs, (Join-Path $root 'scripts\pc\bridge_watcher.js')) -WorkingDirectory $root
+$t3 = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2) -RepetitionInterval (New-TimeSpan -Minutes 15)
+Register-ScheduledTask -TaskName 'RBH_BridgeWatcher' -Action $a3 -Trigger $t3 -Settings $settings3 -Description 'Royal Bath Hub: every 15 min checks the bridge; starts Claude Code only when a task is PLAYED (max 3 starts a day)' -Force | Out-Null
+
 # desktop shortcut
 $ws = New-Object -ComObject WScript.Shell
 $lnkPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Start Royal Bath Hub.lnk'
@@ -28,5 +34,5 @@ $lnk.Save()
 
 if ($NoSleep) { powercfg /change standby-timeout-ac 0; powercfg /change hibernate-timeout-ac 0 }   # plugged in: never sleep
 
-Get-ScheduledTask -TaskName 'RBH_Watchdog', 'RBH_LogTidy' | ForEach-Object { '{0}: {1}' -f $_.TaskName, $_.State }
+Get-ScheduledTask -TaskName 'RBH_Watchdog', 'RBH_LogTidy', 'RBH_BridgeWatcher' | ForEach-Object { '{0}: {1}' -f $_.TaskName, $_.State }
 "Shortcut: $lnkPath"
