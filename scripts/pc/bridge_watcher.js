@@ -20,8 +20,12 @@ const say = s => { try { fs.mkdirSync(logDir, { recursive: true }); fs.appendFil
     try {
         // one run at a time; a lock older than 3 hours is stale
         try { const age = Date.now() - fs.statSync(lockFile).mtimeMs; if (age < 3 * 3600e3) return; } catch (e) { /* no lock */ }
-        const pull = spawnSync('git', ['-C', bridgeDir, 'pull', '--ff-only', '-q'], { encoding: 'utf8', timeout: 60000 });
-        if (pull.status !== 0) { say(`could not update bridge folder ${bridgeDir}: ${String(pull.stderr || pull.error || '').trim().slice(0, 120)}`); return; }
+        // fast-forward first; if the local copy is behind AND ahead (Claude Code's own LIVE.md commits), rebase instead of giving up
+        let pull = spawnSync('git', ['-C', bridgeDir, 'pull', '--ff-only', '-q'], { encoding: 'utf8', timeout: 60000 });
+        if (pull.status !== 0) pull = spawnSync('git', ['-C', bridgeDir, 'pull', '--rebase', '--autostash', '-q'], { encoding: 'utf8', timeout: 60000 });
+        if (pull.status !== 0) { say(`could not update bridge folder ${bridgeDir}: ${String(pull.stderr || pull.error || '').trim().slice(0, 160)}`); return; }
+        // a heartbeat line about once an hour, so the log proves the watcher is alive
+        try { const hb = path.join(logDir, 'bridge_watcher.alive'); if (!fs.existsSync(hb) || Date.now() - fs.statSync(hb).mtimeMs > 3600e3) { fs.mkdirSync(logDir, { recursive: true }); fs.writeFileSync(hb, stamp()); say(`alive; bridge folder ${bridgeDir}; project ${projectDir}`); } } catch (e) { /* bonus */ }
         const md = fs.readFileSync(path.join(bridgeDir, 'AI_BRIDGE', 'BRIDGE.md'), 'utf8');
         let state = {}; try { state = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch (e) { /* first run */ }
         const today = stamp().slice(0, 10);
@@ -31,7 +35,7 @@ const say = s => { try { fs.mkdirSync(logDir, { recursive: true }); fs.appendFil
         fs.writeFileSync(stateFile, JSON.stringify(d.state)); fs.writeFileSync(lockFile, stamp());
         say(`starting Claude Code: ${d.why}`);
         const child = spawn('claude', ['-p', 'check bridge'], { cwd: projectDir, shell: true, windowsHide: true, stdio: 'ignore' });
-        child.on('exit', code => { say(`Claude Code finished (code ${code})`); try { fs.unlinkSync(lockFile); } catch (e) { /* ok */ } });
+        child.on('exit', code => { say(`Claude Code finished (code ${code})`); if (code === 0) { try { fs.writeFileSync(stateFile, JSON.stringify(W.markHandled(d.state, d.fresh))); } catch (e) { /* retry next time */ } } try { fs.unlinkSync(lockFile); } catch (e) { /* ok */ } });
         child.on('error', e => { say(`could not start Claude Code: ${e.message}`); try { fs.unlinkSync(lockFile); } catch (e2) { /* ok */ } });
     } catch (e) { say(`watcher error: ${String(e.message).slice(0, 150)}`); }
 })();
