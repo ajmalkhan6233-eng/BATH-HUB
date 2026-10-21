@@ -35,7 +35,8 @@ const say = s => { try { fs.mkdirSync(logDir, { recursive: true }); fs.appendFil
         fs.writeFileSync(stateFile, JSON.stringify(d.state)); fs.writeFileSync(lockFile, stamp());
         say(`starting Claude Code: ${d.why}`);
         const out = fs.openSync(path.join(logDir, 'bridge_watcher_claude.log'), 'a'); fs.writeSync(out, '\n=== ' + stamp() + ' ===\n');   // keep Claude's own output so a failure can be read
-        const child = spawn('claude', ['-p', 'check bridge'], { cwd: projectDir, shell: true, windowsHide: true, stdio: ['ignore', out, out] });
+        const env = Object.assign({}, process.env); delete env.ANTHROPIC_MODEL;   // a Windows user variable ANTHROPIC_MODEL=auto makes 'claude -p' exit 1 (log 16:11 21 Oct)
+        const child = spawn('claude', ['-p', 'check bridge', '--model', 'sonnet'], { cwd: projectDir, env, shell: true, windowsHide: true, stdio: ['ignore', out, out] });
         child.on('exit', code => { say(`Claude Code finished (code ${code})`); if (code === 0) { try { fs.writeFileSync(stateFile, JSON.stringify(W.markHandled(d.state, d.fresh))); } catch (e) { /* retry next time */ } } try { fs.unlinkSync(lockFile); } catch (e) { /* ok */ } });
         child.on('error', e => { say(`could not start Claude Code: ${e.message}`); try { fs.unlinkSync(lockFile); } catch (e2) { /* ok */ } });
     } catch (e) { say(`watcher error: ${String(e.message).slice(0, 150)}`); }
