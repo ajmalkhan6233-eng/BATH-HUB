@@ -39,7 +39,9 @@ function appAs(role) {
   return app;
 }
 const owner = appAs('owner');
-const up = (app, buf = JPG, type, name = 'paper.jpg') => { const r = request(app).post('/api/document-inbox/upload').attach('photo', buf, name); return type ? r.field('doc_type', type) : r; };
+let fresh_n = 0;   // every upload gets different bytes, because the same photo twice is now refused on purpose (see the duplicate test)
+const fresh = () => Buffer.concat([JPG, Buffer.from(String(++fresh_n))]);
+const up = (app, buf = fresh(), type, name = 'paper.jpg') => { const r = request(app).post('/api/document-inbox/upload').attach('photo', buf, name); return type ? r.field('doc_type', type) : r; };
 const count = t => Number(db.many(`SELECT COUNT(*) AS n FROM ${t}`)[0].n);
 
 afterAll(() => fs.rmSync(ROOT, { recursive: true, force: true }));
@@ -253,5 +255,29 @@ describe('review actions', () => {
     const id = db.many(`SELECT MAX(id) AS id FROM document_inbox`)[0].id;
     expect((await request(owner).get(`/api/document-inbox/${id}/photo`)).status).toBe(404);
     fs.rmSync(outside, { force: true });
+  });
+});
+
+describe('same photo twice', () => {
+  const owner = appAs('owner');
+  test('the second copy is not saved; the first row is returned and flagged', async () => {
+    const buf = fresh();
+    const a = await up(owner, buf);
+    expect(a.status).toBe(201);
+    const b = await up(owner, buf);
+    expect(b.status).toBe(200);
+    expect(b.body.duplicate).toBe(true);
+    expect(b.body.id).toBe(a.body.id);
+    const row = db.many(`SELECT sha256 FROM document_inbox WHERE id = ${a.body.id}`)[0];
+    expect(String(row.sha256)).toHaveLength(64);
+    expect(db.many(`SELECT id FROM document_inbox WHERE sha256 = '${row.sha256}'`)).toHaveLength(1);   // only one row for that photo
+  });
+  test('after Reject the same photo may be sent again on purpose', async () => {
+    const buf = fresh();
+    const a = await up(owner, buf);
+    await request(owner).post(`/api/document-inbox/${a.body.id}/reject`);
+    const again = await up(owner, buf);
+    expect(again.status).toBe(201);
+    expect(again.body.id).not.toBe(a.body.id);
   });
 });

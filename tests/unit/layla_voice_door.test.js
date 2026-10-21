@@ -182,7 +182,7 @@ describe('Document Inbox route: voice notes and PDFs', () => {
   });
   test('a voice note that cannot be heard is still kept, with the reason', async () => {
     voiceAnswer = { ok: false, reason: 'quota' };
-    const r = await request(owner).post('/api/document-inbox/upload').attach('photo', OGG, 'v.ogg');
+    const r = await request(owner).post('/api/document-inbox/upload').attach('photo', Buffer.concat([OGG, Buffer.from('quota')]), 'v.ogg');
     expect(r.status).toBe(201); expect(r.body.reader_note).toContain('Could not listen');
   });
   test('a PDF is now READ (it used to be saved unread) when a reader is available', async () => {

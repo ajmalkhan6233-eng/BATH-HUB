@@ -132,7 +132,19 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
         filed_id TEXT,
         filed_note TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        filed_at TIMESTAMPTZ)`).catch(e => console.error('[document_inbox] init failed:', e.message));
+        filed_at TIMESTAMPTZ)`)
+        // file fingerprint: the same photo cannot be saved twice (added 2026-10-21; old rows simply have none)
+        .then(() => pool.query(`ALTER TABLE document_inbox ADD COLUMN IF NOT EXISTS sha256 VARCHAR(64)`))
+        .then(() => pool.query(`CREATE INDEX IF NOT EXISTS idx_document_inbox_sha256 ON document_inbox (sha256)`))
+        .catch(e => console.error('[document_inbox] init failed:', e.message));
+
+    // The same file (same bytes) already waiting or already filed? Rejected ones may be sent again on purpose.
+    const sha256Of = buf => crypto.createHash('sha256').update(buf).digest('hex');
+    async function findSame(sha) {
+        if (!sha) return null;
+        try { return (await pool.query(`SELECT * FROM document_inbox WHERE sha256 = $1 AND status IN ('to_check','filed') ORDER BY id DESC LIMIT 1`, [sha])).rows[0] || null; }
+        catch (e) { return null; }   // a lookup problem must never block saving a paper
+    }
 
     // Reads a saved photo and returns the row fields to store. Never throws: a failed read keeps the photo for manual entry.
     async function readPhoto(filePath, hintType) {
@@ -149,6 +161,10 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     // Used by the WhatsApp webhook and the upload route: one inbox row per photo.
     async function record({ source, from_ref = '', original_name = '', file_path, ocr_result = null, doc_type = null, reader_note = '' }) {
         await ready;
+        let sha = null;
+        try { if (file_path && fs.existsSync(file_path)) sha = sha256Of(fs.readFileSync(file_path)); } catch (e) { sha = null; }
+        const same = await findSame(sha);
+        if (same) return { ...present(same), duplicate: true };   // the same photo again (WhatsApp resend): keep the first row only
         let type = doc_type, ex = {}, conf = '', note = reader_note;
         if (ocr_result) {
             type = type || F.typeFromOcr(ocr_result);
@@ -158,8 +174,8 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             ex = F.normalize(type, {});
         }
         const r = await pool.query(
-            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-            [source, String(from_ref), String(original_name).slice(0, 200), file_path, type, JSON.stringify(ex), conf, note]);
+            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note, sha256) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+            [source, String(from_ref), String(original_name).slice(0, 200), file_path, type, JSON.stringify(ex), conf, note, sha]);
         return present(r.rows[0]);
     }
     router.record = record;
@@ -202,6 +218,9 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             if (!ext) return res.status(400).json({ error: 'That file is not a photo (JPG or PNG), a PDF or a voice note' });
             const hint = String(req.body && req.body.doc_type || '').trim();
             if (hint && hint !== 'auto' && !F.DOC_TYPES[hint]) return res.status(400).json({ error: 'Unknown paper type' });
+            const sha = sha256Of(req.file.buffer);
+            const same = await findSame(sha);
+            if (same) return res.status(200).json({ ...(await view(same)), duplicate: true, reader_note: `Same file as inbox item #${same.id} (${same.status === 'filed' ? 'already filed' : 'waiting to be checked'}). Not saved again.` });
             const dir = path.join(ROOT, todayLK());
             fs.mkdirSync(dir, { recursive: true });
             const file = path.join(dir, `${Date.now()}-upload-${crypto.randomBytes(3).toString('hex')}.${ext}`);
@@ -218,6 +237,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                     let first = null, extra = 0;
                     for (const en of vEntries) {   // one voice note can hold expenses AND a loan: one draft each
                         const row = await recordVoice({ entry: en, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: who, engine: v.model });
+                        await pool.query(`UPDATE document_inbox SET sha256 = $1 WHERE id = $2`, [sha, row.id]).catch(() => {});   // fingerprint (a voice note may make several drafts; all carry it)
                         if (!first) first = row; else extra++;
                     }
                     const out = await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [first.id])).rows[0]);
@@ -231,8 +251,8 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                 read = await readPhoto(file, hintType);   // photos, and PDFs (Gemini reads a PDF directly)
             }
             const row = await pool.query(
-                `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-                [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note]);
+                `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note, sha256) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+                [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note, sha]);
             res.status(201).json(await view(row.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
