@@ -1,6 +1,7 @@
 // Shared Postgres pool for the apex platform modules (utils/, middleware/,
 // routes/apex_admin.js). Same connection rules as layla.js: DATABASE_URL wins
 // (hosted deploys), otherwise the discrete DB_* vars from .env.
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';   // no "injected env" noise at start-up; real errors still show
 require('dotenv').config();
 const { Pool } = require('pg');
 const { assertTemplateSafeDb } = require('./dbGuard');

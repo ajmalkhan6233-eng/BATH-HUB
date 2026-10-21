@@ -1,3 +1,4 @@
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';   // no "injected env" noise at start-up; real errors still show
 require('dotenv').config();
 require('./utils/timezone');   // Sri Lanka time for JS dates and Postgres sessions
 require('./utils/startupChecks').run();   // prints warnings for PETTY_CASH_FLOAT / backup-copy settings that are missing
