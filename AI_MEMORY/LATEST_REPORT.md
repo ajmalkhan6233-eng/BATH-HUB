@@ -1,13 +1,13 @@
-# LATEST REPORT - 2026-10-16 (PC Claude Code)
-- Merged claude/trusting-dijkstra-lgkkbl (16 commits, tip 7099060) into work by fast-forward. No conflicts. AJ approved.
-- Secret scan of the diff: nothing found. No .env or key files in the diff.
-- Unit tests on merged code: 667 pass, 2 FAIL (UNVERIFIED fix): tests/unit/dynamic_sql_allowlist.test.js.
-  Cause: layla_owner/taskStore.js done() and snooze() add a fixed SQL fragment (2 spots, values still parameterised, judged safe). Ratchet expects 42, sees 44. Passed on old work (a76f4dc). Needs allowlist entry taskStore.js:2 and total 44 (cloud chat to write, rule 13).
-- Pushed to work anyway (AJ said so). Red test is known and recorded here.
-- OPEN: photo failure. Bridge log cuts the error at "owner route failed: r". Full text still unknown. UNVERIFIED.
-- OPEN: PC database has no leads table (500 on webhook at 17:39). No migration in repo. Needs AJ go + backup.
-- Asked cloud session to fix the test and add a leads script; PC could not confirm it received the second message.
-- Assistant name is Lila (not Layla) in anything AJ sees.
-- Plugins aikido and playwright: no scans or browser runs by me this session; data sent out: none known (UNVERIFIED, tools timed out on connect).
-- AJ next physical action: send a photo with caption GRN to the shop number so the real error can be read from the apex-server log.
-STATUS: UNVERIFIED
+﻿# LATEST REPORT 2026-10-21 12:45 (Task 77, partial)
+HEADS-UP: wipe (step 4) and watchdog drill (step 5) were DENIED by the auto-mode classifier. Nothing was wiped. apex-server was never stopped.
+DONE (VERIFIED):
+- backup-live-21oct created, 52 files committed (1dd3c88), pushed. Secret scan clean.
+- bathco_owner backup: 324 KB, 119 tables, dump-complete marker; encrypted copy on D:.
+- Main folder now on work (de5adc3, 8 ahead of origin/work, NOT pushed). apex-server restarted alone, /health 200.
+- rbh_install_tasks.ps1 -NoSleep: RBH_Watchdog, RBH_LogTidy, RBH_BridgeWatcher Ready; desktop shortcut made.
+- Start-up log after restart: only "[Royal Bath Hub] app ready"; no banner/injected-env lines.
+- reference/ suites: ignore override is NOT the cause. Lifted, 3 of 4 fail Cannot find module ../../layla; 1 passes.
+NOT DONE: step 4 rehearsal + clean wipe, step 5 drill, step 7 inbox (needs owner login), step 8 plugins (needs AJ OK), push of work.
+PLUGIN/WATCH: aikido and playwright did not connect this session (timeouts); no data sent known: UNVERIFIED.
+STATUS: NEEDS YOU
+AJ next: run in PowerShell: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\pc\rbh_wipe.ps1
