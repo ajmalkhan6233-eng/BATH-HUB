@@ -214,7 +214,7 @@ async function buildFullReport(from, to) {
     // ── COVER ──
     const sourcesUsed = [...new Set(days.rows.flatMap(d => [d.sales_source, d.expenses_source].filter(Boolean)))];
     const cover = {
-        company: 'Your Business Name (Pvt) Ltd', location: 'Your City',
+        company: 'Royal Bath Hub', location: 'Kandy Road, Thihariya',
         period: { from, to }, generated_at: new Date().toISOString(),
         data_sources: sourcesUsed.length ? sourcesUsed : ['no data in range'],
     };

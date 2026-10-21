@@ -140,6 +140,8 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
 
     // The same file (same bytes) already waiting or already filed? Rejected ones may be sent again on purpose.
     const sha256Of = buf => crypto.createHash('sha256').update(buf).digest('hex');
+    // store the fingerprint AFTER the row is saved: if this ever fails (old database, rights), saving a paper still works
+    const tagSha = (id, sha) => (sha && id ? pool.query(`UPDATE document_inbox SET sha256 = $1 WHERE id = $2`, [sha, id]).catch(() => {}) : null);
     async function findSame(sha) {
         if (!sha) return null;
         try { return (await pool.query(`SELECT * FROM document_inbox WHERE sha256 = $1 AND status IN ('to_check','filed') ORDER BY id DESC LIMIT 1`, [sha])).rows[0] || null; }
@@ -174,8 +176,9 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
             ex = F.normalize(type, {});
         }
         const r = await pool.query(
-            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note, sha256) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-            [source, String(from_ref), String(original_name).slice(0, 200), file_path, type, JSON.stringify(ex), conf, note, sha]);
+            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+            [source, String(from_ref), String(original_name).slice(0, 200), file_path, type, JSON.stringify(ex), conf, note]);
+        await tagSha(r.rows[0].id, sha);
         return present(r.rows[0]);
     }
     router.record = record;
@@ -237,7 +240,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                     let first = null, extra = 0;
                     for (const en of vEntries) {   // one voice note can hold expenses AND a loan: one draft each
                         const row = await recordVoice({ entry: en, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: who, engine: v.model });
-                        await pool.query(`UPDATE document_inbox SET sha256 = $1 WHERE id = $2`, [sha, row.id]).catch(() => {});   // fingerprint (a voice note may make several drafts; all carry it)
+                        await tagSha(row.id, sha);   // fingerprint (a voice note may make several drafts; all carry it)
                         if (!first) first = row; else extra++;
                     }
                     const out = await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [first.id])).rows[0]);
@@ -251,8 +254,9 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
                 read = await readPhoto(file, hintType);   // photos, and PDFs (Gemini reads a PDF directly)
             }
             const row = await pool.query(
-                `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note, sha256) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-                [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note, sha]);
+                `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+                [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note]);
+            await tagSha(row.rows[0].id, sha);
             res.status(201).json(await view(row.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });

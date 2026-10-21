@@ -1,5 +1,9 @@
 # C:\BATHCO_TEMPLATE — agent entry point
 
+## RULE 1 (TOP, Ajmal 2026-10-21): GIVE AJ THE LEAST WORK
+Find the free, easiest, fastest way. Read and change only the lines that need it. Build all tasks of a request in one go, then tell Aj only what HE must do (one paste at most). Do what you can yourself first. When a new repo, connection or tool appears, find and attach it yourself; never ask Aj to remember it. Save usage: cheapest method first, no long unguided jobs, never re-read what you already know.
+VIDEO RULES (same day): ALWAYS say the monthly cost, show it first, keep it private, say where the data is, make it work on his phone, one screen at a time, say how to put it online, keep a version to go back to, write the steps down, say if a developer is needed. NEVER words he must Google, surprise paid tools, the terminal, "just run npm install". Every site/app passes `docs/SHIP_CHECK.md` before "done".
+
 > **READ FIRST: `START_HERE.md`** (one screen: owner, rules, status, next steps, links). Then the lines below.
 
 > **Octopus memory:** at session start read `AI_MEMORY/HANDOFF.md` and `AI_MEMORY/OPEN_ITEMS.md`.

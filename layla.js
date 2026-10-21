@@ -489,7 +489,7 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
             console.error('[LAYLA] All AI fallbacks failed:', openRouterErr.message);
             await alertOwner(phone, 'AI error — needs manual reply', incomingMessage);
             return {
-                message: "Thanks for reaching out to Your Business Name. I'm having a technical hiccup right now, please resend your message in a moment. We're open daily from 9:30 AM.",
+                message: "Thanks for reaching out to Royal Bath Hub, Kandy Road, Thihariya. I'm having a technical hiccup right now, please resend your message in a moment. We're open daily from 9:30 AM.",
                 escalate: true,
             };
         }
