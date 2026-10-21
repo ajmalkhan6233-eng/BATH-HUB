@@ -10,7 +10,7 @@ const W = require('../../utils/bridgeWatcher');
 
 const home = process.env.USERPROFILE || process.env.HOME || '.';
 const bridgeDir = process.env.RBH_BRIDGE_DIR || [path.join(home, 'ai-bridge'), 'C:\\Universal-project-'].find(d => fs.existsSync(path.join(d, 'AI_BRIDGE', 'BRIDGE.md'))) || path.join(home, 'ai-bridge');
-const projectDir = process.env.RBH_PROJECT_DIR || 'C:\\BATHCO_TEMPLATE';
+const projectDir = process.env.RBH_PROJECT_DIR || path.resolve(__dirname, '..', '..');   // the folder this script lives in
 const logDir = path.join(projectDir, 'logs'); const logFile = path.join(logDir, 'bridge_watcher.log');
 const stateFile = path.join(logDir, 'bridge_watcher_state.json'); const lockFile = path.join(logDir, 'bridge_watcher.lock');
 const stamp = () => new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Colombo' }).slice(0, 16);
