@@ -10,7 +10,7 @@ const W = require('../../utils/bridgeWatcher');
 
 const home = process.env.USERPROFILE || process.env.HOME || '.';
 const bridgeDir = process.env.RBH_BRIDGE_DIR || [path.join(home, 'ai-bridge'), 'C:\\Universal-project-'].find(d => fs.existsSync(path.join(d, 'AI_BRIDGE', 'BRIDGE.md'))) || path.join(home, 'ai-bridge');
-const projectDir = process.env.RBH_PROJECT_DIR || 'C:\\BATHCO_TEMPLATE';
+const projectDir = process.env.RBH_PROJECT_DIR || path.resolve(__dirname, '..', '..');   // the folder this script lives in
 const logDir = path.join(projectDir, 'logs'); const logFile = path.join(logDir, 'bridge_watcher.log');
 const stateFile = path.join(logDir, 'bridge_watcher_state.json'); const lockFile = path.join(logDir, 'bridge_watcher.lock');
 const stamp = () => new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Colombo' }).slice(0, 16);
@@ -31,7 +31,7 @@ const say = s => { try { fs.mkdirSync(logDir, { recursive: true }); fs.appendFil
         fs.writeFileSync(stateFile, JSON.stringify(d.state)); fs.writeFileSync(lockFile, stamp());
         say(`starting Claude Code: ${d.why}`);
         const child = spawn('claude', ['-p', 'check bridge'], { cwd: projectDir, shell: true, windowsHide: true, stdio: 'ignore' });
-        child.on('exit', code => { say(`Claude Code finished (code ${code})`); try { fs.unlinkSync(lockFile); } catch (e) { /* ok */ } });
+        child.on('exit', code => { say(`Claude Code finished (code ${code})`); if (code === 0) { try { fs.writeFileSync(stateFile, JSON.stringify(W.markHandled(d.state, d.fresh))); } catch (e) { /* retry next time */ } } try { fs.unlinkSync(lockFile); } catch (e) { /* ok */ } });
         child.on('error', e => { say(`could not start Claude Code: ${e.message}`); try { fs.unlinkSync(lockFile); } catch (e2) { /* ok */ } });
     } catch (e) { say(`watcher error: ${String(e.message).slice(0, 150)}`); }
 })();

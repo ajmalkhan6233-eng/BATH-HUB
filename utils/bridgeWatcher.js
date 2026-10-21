@@ -22,7 +22,9 @@ function decide(md, state, today) {
     const fresh = playedTasks(md).filter(n => !st.handled.includes(n));
     if (!fresh.length) return { run: false, why: 'nothing new', state: st, fresh };
     if (st.startsToday >= MAX_PER_DAY) return { run: false, why: `daily limit of ${MAX_PER_DAY} starts reached`, state: st, fresh };
-    return { run: true, why: `new played task(s): ${fresh.join(', ')}`, state: { ...st, handled: [...st.handled, ...fresh], startsToday: st.startsToday + 1 }, fresh };
+    return { run: true, why: `new played task(s): ${fresh.join(', ')}`, state: { ...st, startsToday: st.startsToday + 1 }, fresh };   // tasks are marked handled only after Claude Code finishes OK (markHandled)
 }
 
-module.exports = { playedTasks, decide, MAX_PER_DAY };
+const markHandled = (state, nums) => ({ ...state, handled: [...new Set([...(state.handled || []), ...nums])] });
+
+module.exports = { playedTasks, decide, markHandled, MAX_PER_DAY };
