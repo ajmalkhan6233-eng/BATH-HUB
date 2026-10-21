@@ -35,7 +35,7 @@ const deps = {
     pm2Start: () => pm2(['start', `"${localConfig}"`, '--only', W.APP]),
     hasLocalConfig: async () => fs.existsSync(localConfig),
     readTail: async (file, n) => { try { return fs.readFileSync(file, 'utf8').split(/\r?\n/).slice(-n).join('\n'); } catch (e) { return ''; } },
-    readLog: async () => { try { return fs.readFileSync(logFile, 'utf8'); } catch (e) { return ''; } },
+    readLog: async () => { if (process.env.RBH_MANUAL) return ''; try { return fs.readFileSync(logFile, 'utf8'); } catch (e) { return ''; } },   // RBH_MANUAL=1 (the desktop shortcut): Aj asked, so no crash-loop block
     appendLog: async line => {
         fs.mkdirSync(logDir, { recursive: true });
         let cur = ''; try { cur = fs.readFileSync(logFile, 'utf8'); } catch (e) { /* first line */ }

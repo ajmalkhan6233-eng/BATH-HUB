@@ -3445,20 +3445,7 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
         laylaOwner.start();   // reminders every minute; WhatsApp relay only if RELAY_URL is set; DRY RUN unless LAYLA_OWNER_LIVE=true
-        console.log(`
-╔══════════════════════════════════════════╗
-║   BATHCO COMMAND — PHASE 1 ACTIVE       ║
-║   Your Business Name (Pvt) Ltd           ║
-║   Your City                  ║
-║                                          ║
-║   LAYLA is ready to receive messages    ║
-║   Server : http://localhost:${PORT}         ║
-║   Webhook: POST /webhook/whatsapp       ║
-║   Test   : POST /simulate               ║
-║                                          ║
-║   Bismillah — InshAllah                 ║
-╚══════════════════════════════════════════╝
-        `);
+        console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);   // one clean line (the old banner still said "Your Business Name")
     });
 }
 
