@@ -77,10 +77,12 @@ d('fresh start on a real PostgreSQL', () => {
       await build();
       const r1 = run('--scope=all');
       expect(r1.stdout).toMatch(/REHEARSAL/); expect(await n('customers')).toBe(2);
-      const r2 = run('--yes', '--scope=all');
+      const r2 = run('--yes', '--scope=all', '--db=rbh_wipe_test');
       expect(r2.stdout).toMatch(/STOPPED: no backup file given/); expect(r2.status).toBe(3); expect(await n('customers')).toBe(2);
       const bk = path.join(os.tmpdir(), `bk-${Date.now()}.sql`); fs.writeFileSync(bk, 'x'.repeat(5000));
-      const r3 = run('--yes', '--scope=all', `--backup=${bk}`);
+      const rBad = run('--yes', '--scope=all', '--db=bathco_owner', `--backup=${bk}`);
+      expect(rBad.stdout).toMatch(/STOPPED: you asked for database "bathco_owner"/); expect(rBad.status).toBe(6); expect(await n('customers')).toBe(2);   // wrong database name: refused
+      const r3 = run('--yes', '--scope=all', '--db=rbh_wipe_test', `--backup=${bk}`);
       expect(r3.stdout).toMatch(/CLEARED\. Rows left in those tables: 0/); expect(r3.status).toBe(0);
       expect(await n('customers')).toBe(0); expect(await n('products')).toBe(1);
     });
