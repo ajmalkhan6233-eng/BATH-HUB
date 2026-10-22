@@ -11,6 +11,7 @@ SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-
 - Tell him in one line when a chat gets long. "wrap up" = handoff. Same window always: /compact yourself at about 50%.
 
 ## 2. Work method
+- HARD RULE 15 (Aj 22 Oct, business day): EASIEST, CHEAPEST, FASTEST, FREE WAY ONLY. Chat does the whole job itself in the cloud first (draw the PDF, image, file or code and SEND IT to Aj); a PC task only when the live database or the PC is truly needed. Aj never merges, pastes long text or opens windows. If a PC step is needed, ONE short paste line, once. Replies: max 8 short lines, plain words, status word last.
 - RULE 1: least work for Aj. Do it yourself first. RULE 1b: you choose the method; ask only if something can be lost, costs money, sends data out, or installs third-party tools; tell him in one line.
 - Chat plans and WRITES ALL CODE (Rule 13); Claude Code only runs it. A failed run: exact error in LIVE.md, chat fixes.
 - Chat cannot see the PC, private repos or the running app: ask Claude Code to look and report (Rule 8). Never guess.
