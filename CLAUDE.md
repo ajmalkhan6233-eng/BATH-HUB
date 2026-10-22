@@ -40,6 +40,7 @@ Very short, plain, answer first, call him AJ. HEADS-UP block first (never the wo
 1 Read the task, not the repo. 2 Grep first, then Read only the lines you need. 3 Never cat big files or logs: tail 20. 4 Run only the tests for what changed; the full suite only before a merge. 5 Batch independent commands into one call. 6 No subagents unless AJ asks. 7 No long waits or polling loops: run in background, check once. 8 No screenshots unless the task needs one. 9 First failure: report the exact error and stop; at most 2 retries. 10 No refactoring or "improving" outside the task. 11 Push facts to LIVE.md in one line instead of explaining in prose. 12 Never re-read this file or anything you already know.
 
 ## 6. WHERE THINGS ARE (read only when a task needs it)
+docs/AJ_RULES.md = ALL of AJ's rules in one place (read it if unsure; it wins over any older file).
 START_HERE.md (one screen state) | AGENT_GUIDE/README.md then 01 file map, 15 pre-edit checklist | docs/LAYLA_PRO_SPEC.md before any LAYLA work | docs/bathhub_knowledge/README.md before alerts, reconciliation or tests | docs/SHIP_CHECK.md before saying a site or screen is done | docs/PAPERS.md (cheques, bank slips, receipts) | AI_MEMORY/RULES.md (AJ's orders, newest first), OPEN_ITEMS.md | MD_MAP.md (every .md file).
 Website: separate repo bathhub-website (E:\AI Sttuf\bathhub-website). Never publish it except on AJ's word.
 SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
