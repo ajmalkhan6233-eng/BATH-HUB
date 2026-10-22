@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f2ee;color:#1a1a1a;padding:12px}
+h1{font-size:20px}.sub{font-size:13px;color:#666;margin:2px 0 10px}
+.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input{font-size:16px;padding:9px;border:1px solid #bbb;border-radius:8px;background:#fff;max-width:100%}select{min-width:240px}
+button{font-size:14px;font-weight:700;padding:10px 14px;border-radius:10px;border:1px solid #1a1a1a;background:#fff;cursor:pointer;min-height:44px}button.go{background:#1a1a1a;color:#d4af37}button:disabled{opacity:.4}
+.wrap{max-height:62vh;overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px 5px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#faf8f3}
+td.r,th.r{text-align:right}#note{font-size:12px;color:#6b5a1d;margin-top:8px}#msg{font-size:13px;color:#b00020;margin-top:6px}
+@media print{body{background:#fff;padding:0}.noprint{display:none!important}.wrap{max-height:none;overflow:visible}}
+</style></head><body>
+<h1>Reports</h1><div class="sub">Pick a report from the list, look at it, then download it or print it. Owner only.</div>
+<div class="box noprint"><div class="row">
+ <select id="rep">
+  <optgroup label="Vendors and goods">
+   <option value="vsum">Vendors: bought, paid, pending</option>
+   <option value="vbills">Vendor bills: every bill</option>
+   <option value="vone">One vendor: all bills</option>
+   <option value="grn">GRN history: every goods-in line</option>
+  </optgroup>
+  <optgroup label="Sales and profit">
+   <option value="sday">Sales and profit by day</option>
+   <option value="sweek">Sales and profit by week</option>
+   <option value="smonth">Sales and profit by month</option>
+  </optgroup>
+  <optgroup label="Items">
+   <option value="items">Items: cost, price, profit</option>
+   <option value="noprice">Items with no price</option>
+   <option value="lowstock">Items with low stock (5 or less)</option>
+  </optgroup>
+ </select>
+ <select id="vsel" style="display:none"></select>
+ <span id="rng" style="display:none"><input type="date" id="from"> to <input type="date" id="to"></span>
+ <button class="go" id="run">Show</button><button id="dl" disabled>Download CSV</button><button id="pr" disabled>Print</button>
+</div><div id="msg"></div><div id="note"></div></div>
+<div class="box wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},cur={head:[],rows:[],name:'report'},VB=null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function n(v){return Number(v||0)}function fm(v){return n(v).toLocaleString('en-US',{maximumFractionDigits:0})}
+var LABEL={PAID:'Paid',CHEQUE_ISSUED:'Cheque given',PART_COVERED:'Part cheque',UNPAID:'Not paid'};
+function J(u){return fetch(u,{credentials:'include'}).then(function(r){if(!r.ok)throw new Error(r.status===403?'Owner only':'Could not load ('+r.status+')');return r.json()})}
+function bills(){return VB?Promise.resolve(VB):J('/api/vendor-ledger/bills').then(function(d){VB=(Array.isArray(d)?d:[]).filter(function(b){return !b.voided});return VB})}
+function billRow(b){var settled=n(b.cleared)+n(b.paid)+n(b.credited);return [b.vendor_name,String(b.bill_date).slice(0,10),b.bill_no||'',n(b.total),settled,n(b.covered),n(b.outstanding),LABEL[b.state]||b.state]}
+var BH=['Vendor','Arrived (invoice date)','Bill no','Total','Paid','Cheque given not cleared','Pending','Status'];
+function today(d){return new Date(Date.now()+5.5*3600*1000-(d||0)*864e5).toISOString().slice(0,10)}
+var R={
+ vsum:function(){return bills().then(function(bs){var g={};bs.forEach(function(b){var v=g[b.vendor_name]=g[b.vendor_name]||[b.vendor_name,0,0,0,0,0];v[1]+=1;v[2]+=n(b.total);v[3]+=n(b.cleared)+n(b.paid)+n(b.credited);v[4]+=n(b.covered);v[5]+=n(b.outstanding)});var rows=Object.keys(g).map(function(k){return g[k]});var t=rows.reduce(function(a,r){return [ 'TOTAL',a[1]+r[1],a[2]+r[2],a[3]+r[3],a[4]+r[4],a[5]+r[5]]},['TOTAL',0,0,0,0,0]);return{name:'vendors-summary',head:['Vendor','Bills','Bought','Paid','Cheque given not cleared','Pending'],rows:rows.concat([t])}})},
+ vbills:function(){return bills().then(function(bs){return{name:'vendor-bills',head:BH,rows:bs.slice().sort(function(a,b){return String(b.bill_date)<String(a.bill_date)?-1:1}).map(billRow)}})},
+ vone:function(){var v=$('vsel').value;return bills().then(function(bs){return{name:'vendor-'+v.replace(/[^A-Za-z0-9]+/g,'_'),head:BH,rows:bs.filter(function(b){return b.vendor_name===v}).sort(function(a,b){return String(b.bill_date)<String(a.bill_date)?-1:1}).map(billRow)}})},
+ grn:function(){return J('/api/report-data/grn').then(function(d){return{name:'grn-history',head:['GRN','Date','Vendor','Item','Qty','Unit cost','Total'],rows:d.map(function(r){return [r.grn_number,String(r.grn_date||'').slice(0,10),r.supplier_name,r.item_description,n(r.quantity),n(r.unit_cost),n(r.total_amount)]})}})},
+ sales:function(g){return J('/api/report-data/sales?group='+g+'&from='+$('from').value+'&to='+$('to').value).then(function(d){var t=d.rows.reduce(function(a,r){return ['TOTAL',a[1]+r.bills,a[2]+r.sales,a[3]+r.discount,a[4]+r.profit_est]},['TOTAL',0,0,0,0]);return{name:'sales-by-'+g,note:'Profit is an estimate: sales minus what the items cost today. Voided bills are left out.',head:[g==='day'?'Day':g==='week'?'Week starting':'Month','Bills','Sales','Discount given','Profit (estimate)'],rows:d.rows.map(function(r){return [r.period,r.bills,r.sales,r.discount,r.profit_est]}).concat(d.rows.length?[t]:[])}})},
+ items:function(){return J('/api/item-prices').then(function(d){return{name:'items-cost-price',head:['Code','Name','Category','Stock','Cost','Price','Profit %'],rows:d.map(function(r){var p=n(r.selling_price),c=n(r.avg_cost);return [r.item_code,r.name,r.category||'',n(r.stock_level),c,p||'',p&&c?Math.round((p-c)/p*100):'']})}})},
+ noprice:function(){return R.items().then(function(x){x.name='items-no-price';x.rows=x.rows.filter(function(r){return r[5]===''});return x})},
+ lowstock:function(){return R.items().then(function(x){x.name='items-low-stock';x.rows=x.rows.filter(function(r){return r[3]<=5}).sort(function(a,b){return a[3]-b[3]});return x})}
+};
+function draw(x){cur=x;$('th').innerHTML='<tr>'+x.head.map(function(h,i){return '<th'+(i>1&&typeof x.rows[0]!=='undefined'&&typeof x.rows[0][i]==='number'?' class="r"':'')+'>'+esc(h)+'</th>'}).join('')+'</tr>';
+ $('tb').innerHTML=x.rows.length?x.rows.map(function(r){return '<tr>'+r.map(function(c){return '<td'+(typeof c==='number'?' class="r"':'')+'>'+(typeof c==='number'?fm(c):esc(c))+'</td>'}).join('')+'</tr>'}).join(''):'<tr><td colspan="'+x.head.length+'">Nothing to show yet.</td></tr>';
+ $('note').textContent=x.note||'';$('dl').disabled=$('pr').disabled=!x.rows.length}
+function csv(x){var all=[x.head].concat(x.rows);var t=all.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\r\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=x.name+'-'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
+function sync(){var v=$('rep').value;$('vsel').style.display=v==='vone'?'':'none';$('rng').style.display=/^s(day|week|month)$/.test(v)?'':'none';
+ if(v==='vone'&&!$('vsel').options.length)bills().then(function(bs){var s={};bs.forEach(function(b){s[b.vendor_name]=1});$('vsel').innerHTML=Object.keys(s).sort().map(function(k){return '<option>'+esc(k)+'</option>'}).join('')})}
+$('rep').onchange=sync;
+$('run').onclick=function(){$('msg').textContent='';var v=$('rep').value,p=/^s(day|week|month)$/.test(v)?R.sales({sday:'day',sweek:'week',smonth:'month'}[v]):R[v]();$('run').disabled=true;p.then(draw).catch(function(e){$('msg').textContent=e.message}).then(function(){$('run').disabled=false})};
+$('dl').onclick=function(){csv(cur)};$('pr').onclick=function(){window.print()};
+$('from').value=today(30);$('to').value=today();sync();
+})();
+</script></body></html>

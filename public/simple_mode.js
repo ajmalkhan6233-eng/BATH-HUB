@@ -5,14 +5,15 @@
   var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers'];
   var GROUPS = [
     ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
-    ['Stock and buying', ['stock', 'prices', 'stickers', 'grn', 'vendors']],
-    ['Money', ['expenses', 'cheques', 'loans', 'moneycontrol', 'commissions', 'salary']],
+    ['Goods', ['stock', 'prices', 'stickers', 'grn', 'vendorsum']],
+    ['Accounting', ['vendors', 'cheques', 'expenses', 'loans', 'commissions', 'salary']],
+    ['Cash', ['moneycontrol']],
+    ['Reports', ['reportshub', 'reports', 'competitors']],
     ['Papers', ['docinbox', 'documents', 'policy']],
     ['Customers and web', ['enquiries', 'replies', 'website', 'webcat', 'tilegallery', 'branches']],
-    ['Reports', ['reports', 'competitors']],
     ['Settings and admin', ['settings', 'shoptools', 'adminusers', 'adminaudit', 'adminsystem', 'adminsettings', 'agentreview', 'agent-rules', 'content']]
   ];
-  var OPEN_DEFAULT = { 'Daily work': 1, 'Stock and buying': 1 };
+  var OPEN_DEFAULT = { 'Daily work': 1, 'Goods': 1 };
   var busy = false;
   function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (_) { /* not remembered */ } }
@@ -75,6 +76,9 @@
       if (!me || (me.role !== 'admin' && me.role !== 'owner')) return;
       addFramePage({ key: 'prices', label: 'Prices', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
       addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
+      addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
+      addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
+      var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';
       organise();
     }).catch(function () { /* menu stays as it is */ });
   }

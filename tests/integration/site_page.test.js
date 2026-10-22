@@ -162,7 +162,7 @@ web('the public website in a phone-size browser', () => {
   test('a bad saved number is ignored: the built-in number stays', async () => {
     const o = twelve(); o.text.whatsapp = 'call me';
     const { page } = await open(json(o));
-    expect(await page.evaluate(() => WA)).toBe('94777999219'); await page.close();
+    expect(await page.evaluate(() => WA)).toBe('94740355536'); await page.close();
   }, 60000);
 
   test('API down: 10 samples, built-in number, no sideways scroll, list and calculator still work', async () => {
@@ -170,7 +170,7 @@ web('the public website in a phone-size browser', () => {
     expect(await cards(page)).toBe(10);
     expect(await noSideways(page)).toBe(true);
     expect(Number((await page.$eval('#cN', e => e.textContent)).replace(/,/g, ''))).toBeGreaterThan(0);
-    expect(await page.$eval('#cWa', e => e.href)).toContain('wa.me/94777999219');
+    expect(await page.$eval('#cWa', e => e.href)).toContain('wa.me/94740355536');
     await page.click('#cAdd'); expect(await page.$eval('#bkN', e => e.textContent)).toBe('1');
     expect(errors).toEqual([]); await page.close();
   }, 60000);

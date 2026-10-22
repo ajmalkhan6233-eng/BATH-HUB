@@ -7,6 +7,21 @@ const DEFAULT_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
 const WIDTH = 1122, HEIGHT = 200, SCALE = 1.5;   // short viewport: the picture is as tall as the receipt, no empty black
 // Draws the receipt as a PNG. QR = the shop WhatsApp chat (never a personal number).
 const MAX_ITEMS = 200;
+const WA_LINK = 'https://wa.me/94740355536';
+const MARK = 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, '..', 'public', 'brand', 'rbh-mark-plate.png')).toString('base64');
+function brandedQr(url) {
+  const qr = require('qrcode').create(url, { errorCorrectionLevel: 'H' });
+  const n = qr.modules.size, get = (r, c) => qr.modules.data[r * n + c] ? 1 : 0, q = 2, T = n + q * 2;
+  const inEye = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+  const pw = n * 0.30, ph = pw * 400 / 740 + 0.8, px = q + (n - pw) / 2, py = q + (n - ph) / 2;   // logo plate, about 30% wide
+  const inPlate = (r, c) => c + q + 1 > px - 0.35 && c + q < px + pw + 0.35 && r + q + 1 > py - 0.35 && r + q < py + ph + 0.35;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (get(r, c) && !inEye(r, c) && !inPlate(r, c)) d += `<rect x="${c + q + 0.06}" y="${r + q + 0.06}" width="0.88" height="0.88" rx="0.36" fill="#0b0b0c"/>`;
+  const eye = (r, c) => `<rect x="${c + q + 0.5}" y="${r + q + 0.5}" width="6" height="6" rx="1.7" fill="none" stroke="#0b0b0c" stroke-width="1"/><rect x="${c + q + 2}" y="${r + q + 2}" width="3" height="3" rx="0.8" fill="#8a6a1c"/>`;
+  const plate = `<rect x="${px - 0.35}" y="${py - 0.35}" width="${pw + 0.7}" height="${ph + 0.7}" rx="0.9" fill="#0b0b0c" stroke="#c9a24b" stroke-width="0.28"/><image href="${MARK}" x="${px + 0.2}" y="${py + 0.2}" width="${pw - 0.4}" height="${ph - 0.4}" preserveAspectRatio="xMidYMid meet"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${T} ${T}"><rect width="${T}" height="${T}" fill="#fff"/>${d}${eye(0, 0)}${eye(0, n - 7)}${eye(n - 7, 0)}${plate}</svg>`;
+}
+
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const text = (v, max) => String(v == null ? '' : v).slice(0, max);
@@ -53,12 +68,8 @@ function renderReceiptPng(bill, opts = {}) {
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
   const data = cleanBill(bill);
   
-  // Generate REAL QR SVG using 'qrcode' npm package
-  try {
-    data.qrSvg = await require('qrcode').toString('https://wa.me/94740355536', { type: 'svg', margin: 1, width: 110 });
-  } catch (e) {
-    data.qrSvg = '';
-  }
+  // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
+  try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
 
   const puppeteer = require('puppeteer');
   fs.mkdirSync(outDir, { recursive: true });
@@ -78,5 +89,5 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   return { file, bytes: buf.length, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), items: data.items.length };
 }
 
-module.exports = { renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
+module.exports = { brandedQr, WA_LINK, renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
 

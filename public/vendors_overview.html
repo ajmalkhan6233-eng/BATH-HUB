@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vendors</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f2ee;color:#1a1a1a;padding:12px}
+h1{font-size:20px}.sub{font-size:13px;color:#666;margin:2px 0 10px}
+.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:10px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.sum div{background:#f7f5f0;border-radius:10px;padding:8px 10px;font-size:12px;color:#555}.sum b{display:block;font-size:20px;color:#111}
+.sum .pend b{color:#b00020}
+button,a.btn{font-size:14px;font-weight:700;padding:9px 12px;border-radius:10px;border:1px solid #1a1a1a;background:#fff;cursor:pointer;min-height:42px;color:#1a1a1a;text-decoration:none;display:inline-block}
+.vh{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}.vh b{font-size:17px}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;font-size:12px;color:#555}.nums b{display:block;font-size:15px;color:#111}.nums .p b{color:#b00020}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}th,td{padding:6px 4px;border-bottom:1px solid #eee;text-align:left}td.r,th.r{text-align:right}
+.tag{font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;background:#eee}.PAID{background:#d8f0df}.CHEQUE_ISSUED{background:#e3ecff}.PART_COVERED{background:#fff3cd}.UNPAID{background:#fde7e9}
+.hide{display:none}#msg{font-size:13px;color:#b00020;margin:6px 0}
+</style></head><body>
+<h1>Vendors</h1><div class="sub">What you bought from each vendor, what is paid, what is still pending. The invoice date is the day the goods arrived.</div>
+<div class="box"><div class="sum" id="sum"></div>
+ <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button id="dlall">Download all vendors (CSV)</button><a class="btn" href="/bathco_complete.html#/vendors" target="_top">Add cheque or payment</a></div></div>
+<div id="msg"></div><div id="list"></div>
+<script>
+(function(){
+var bills=[],$=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m(n){return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0})}
+var LABEL={PAID:'Paid',CHEQUE_ISSUED:'Cheque given',PART_COVERED:'Part cheque',UNPAID:'Not paid'};
+function csv(rows,name){var t=rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\r\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
+function group(){var g={};bills.forEach(function(b){var v=g[b.vendor_name]=g[b.vendor_name]||{name:b.vendor_name,bills:[],total:0,paid:0,cheque:0,pending:0};v.bills.push(b);v.total+=Number(b.total);v.paid+=Number(b.cleared||0)+Number(b.paid||0)+Number(b.credited||0);v.cheque+=Number(b.covered||0);v.pending+=Number(b.outstanding||0)});return Object.keys(g).map(function(k){return g[k]}).sort(function(a,b){return b.pending-a.pending})}
+function render(){
+ var g=group(),T=g.reduce(function(t,v){t.total+=v.total;t.paid+=v.paid;t.cheque+=v.cheque;t.pending+=v.pending;t.n+=v.bills.length;return t},{total:0,paid:0,cheque:0,pending:0,n:0});
+ $('sum').innerHTML='<div>Vendors<b>'+g.length+'</b></div><div>Goods bought (GRN total)<b>'+m(T.total)+'</b></div><div>Paid<b>'+m(T.paid)+'</b></div><div>Cheques given, not cleared<b>'+m(T.cheque)+'</b></div><div class="pend">Pending to pay<b>'+m(T.pending)+'</b></div>';
+ $('list').innerHTML=g.length?g.map(function(v,i){return '<div class="box"><div class="vh" data-i="'+i+'"><b>'+esc(v.name)+'</b><span style="font-size:12px;color:#666">'+v.bills.length+' bill(s) &#9662;</span></div><div class="nums"><div>Bought<b>'+m(v.total)+'</b></div><div>Paid<b>'+m(v.paid)+'</b></div><div class="p">Pending<b>'+m(v.pending)+'</b></div></div>'
+  +'<div class="hide" id="d'+i+'"><table><thead><tr><th>Arrived</th><th>Bill no</th><th class="r">Total</th><th class="r">Pending</th><th>Status</th></tr></thead><tbody>'+v.bills.slice().sort(function(a,b){return String(b.bill_date)<String(a.bill_date)?-1:1}).map(function(b){return '<tr><td>'+esc(String(b.bill_date).slice(0,10))+'</td><td>'+esc(b.bill_no||'-')+'</td><td class="r">'+m(b.total)+'</td><td class="r">'+m(b.outstanding)+'</td><td><span class="tag '+esc(b.state)+'">'+esc(LABEL[b.state]||b.state)+'</span></td></tr>'}).join('')+'</tbody></table><div style="margin-top:8px"><button data-dl="'+i+'">Download this vendor (CSV)</button></div></div></div>'}).join(''):'<div class="box">No vendor bills yet. They appear here after a GRN is saved.</div>';
+ window.__g=g}
+function rowsFor(vs){var r=[['Vendor','Arrived (invoice date)','Bill no','Total','Paid','Cheque given not cleared','Pending','Status']];vs.forEach(function(v){v.bills.forEach(function(b){r.push([v.name,String(b.bill_date).slice(0,10),b.bill_no||'',b.total,Number(b.cleared||0)+Number(b.paid||0)+Number(b.credited||0),b.covered||0,b.outstanding,LABEL[b.state]||b.state])})});return r}
+$('list').addEventListener('click',function(e){var h=e.target.closest('.vh');if(h){$('d'+h.dataset.i).classList.toggle('hide');return}var d=e.target.closest('button[data-dl]');if(d){var v=window.__g[+d.dataset.dl];csv(rowsFor([v]),'vendor-'+v.name.replace(/[^A-Za-z0-9]+/g,'_')+'.csv')}});
+$('dlall').onclick=function(){if(window.__g)csv(rowsFor(window.__g),'all-vendors.csv')};
+fetch('/api/vendor-ledger/bills',{credentials:'include'}).then(function(r){if(!r.ok)throw new Error('Could not load vendors ('+r.status+')');return r.json()}).then(function(d){bills=(Array.isArray(d)?d:[]).filter(function(b){return !b.voided});render()}).catch(function(e){$('msg').textContent=e.message});
+})();
+</script></body></html>

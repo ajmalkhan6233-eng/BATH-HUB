@@ -206,8 +206,8 @@ router.put('/site/text', ownerOnly, async (req, res) => {
             let v = String(flat[k] == null ? '' : flat[k]).trim();
             if (k === 'whatsapp') {
                 let d = v.replace(/\D/g, '');
-                if (d.length === 10 && d.startsWith('0')) d = '94' + d.slice(1);       // 0777999219 -> 94777999219
-                if (d && !/^\d{9,15}$/.test(d)) return bad(res, 'WhatsApp number is not valid (example: 0777999219).');
+                if (d.length === 10 && d.startsWith('0')) d = '94' + d.slice(1);       // 0740355536 -> 94740355536
+                if (d && !/^\d{9,15}$/.test(d)) return bad(res, 'WhatsApp number is not valid (example: 0740355536).');
                 v = d;
             } else {
                 const max = TEXT_MAX[k] || (k.startsWith('promise_h') ? 120 : 600);

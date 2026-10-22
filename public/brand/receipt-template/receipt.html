@@ -5,198 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Royal Bath Hub Receipt</title>
 <style>
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Arial');
-}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  width: 1122px;
-  margin: 0;
-  background-color: #0b0b0c;
-  color: #111111;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 31px;
-  line-height: 1.35;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-}
-.sheet {
-  background: #ffffff;
-  border-radius: 0;
-  border: none;
-  padding: 52px 64px 56px;
-  position: relative;
-  width: 1122px;
-  box-shadow: none;
-}
-.header {
-  background: #0b0b0c;
-  border-radius: 16px;
-  border: 4px solid #c9a24b;
-  padding: 16px 34px;
-  text-align: center;
-  margin-bottom: 24px;
-  box-shadow: 0 12px 22px rgba(5,12,35,.35);
-}
-.logo-img {
-  max-width: 100%;
-  height: 150px;
-  width: auto;
-  display: block;
-  margin: 0 auto;
-}
-.receipt-bar {
-  background: #c9a24b;
-  color: #0b0b0c;
-  font-weight: 700;
-  font-size: 24px;
-  letter-spacing: 0.1em;
-  text-align: center;
-  padding: 6px 0;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-}
-.meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 16px;
-  font-size: 30px;
-  border-bottom: 3px dashed #b99a4f;
-  padding-bottom: 18px;
-  margin-bottom: 18px;
-}
-.meta-item { display: flex; flex-direction: column; }
-.meta-label { color: #7a5f1f; font-size: 20px; font-weight: 600; text-transform: uppercase; }
-.meta-val { font-weight: 700; color: #111111; word-break: break-word; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-  font-size: 31px;
-}
-th {
-  color: #7a5f1f;
-  font-size: 20px;
-  text-transform: uppercase;
-  border-bottom: 2px solid #c9a24b;
-  padding-bottom: 12px;
-  text-align: left;
-  letter-spacing: .1em;
-}
-th.num, td.num { text-align: right; }
-td {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(17,17,17,0.15);
-  vertical-align: top;
-  font-weight: 600;
-  color: #111111;
-}
-.item-code { font-size: 20px; color: #7a5f1f; font-weight: 600; display: block; }
-.item-name { font-weight: 600; color: #111111; word-break: break-word; }
-
-.totals-wrap {
-  border-top: 2px solid #c9a24b;
-  padding-top: 12px;
-  font-size: 31px;
-}
-.tot-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-weight: 600;
-  color: #111111;
-}
-.tot-row span:first-child { color: #7a5f1f; }
-.tot-row.grand {
-  background: #0b0b0c;
-  color: #c9a24b;
-  font-size: 42px;
-  font-weight: 700;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin: 12px 0;
-  border-top: 2px solid #c9a24b;
-  border-bottom: 2px solid #c9a24b;
-}
-.tot-row.grand span:first-child { color: #c9a24b; }
-.tot-row.grand span:last-child { color: #ffffff; }
-.balance-row {
-  background: #e8cf8a;
-  color: #111111;
-  font-weight: 700;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 26px;
-}
-
-.footer {
-  margin-top: 24px;
-  border-top: 3px dashed #b99a4f;
-  padding-top: 20px;
-  text-align: center;
-}
-.thanks { font-weight: 500; font-style: italic; font-size: 40px; color: #111111; margin-bottom: 8px; }
-.shop-info { font-size: 26px; color: #444444; line-height: 1.35; }
-.qr-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-}
-.qr-container { width: 110px; height: 110px; border: 2px solid #c9a24b; border-radius: 8px; padding: 4px; background: #fff; display: flex; align-items: center; justify-content: center; }
-.qr-container svg { width: 100%; height: 100%; }
-.qr-text { font-size: 20px; color: #7a5f1f; text-align: left; font-weight: 600; }
-.gold-bar { height: 8px; background: #c9a24b; border-radius: 4px; margin-top: 20px; }
+body { width: 1122px; background:#0b0b0c; color:#111; font-family: Arial, Helvetica, sans-serif; font-size: 27px; line-height: 1.3; }
+.sheet { width:1122px; position:relative; overflow:hidden; background:linear-gradient(180deg,#fffdf7 0%,#fbf5e4 100%); padding:0 56px 34px; }
+/* faded luxury background: big faded logo mark + fine gold diamond lattice, kept very light so letters stay clear */
+.sheet::before { content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:
+   url('../rbh-watermark.png') center 58% / 820px auto no-repeat,
+   repeating-linear-gradient(45deg, rgba(201,162,75,.10) 0 1px, transparent 1px 34px),
+   repeating-linear-gradient(-45deg, rgba(201,162,75,.10) 0 1px, transparent 1px 34px);
+  opacity:1; }
+.sheet::after { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; background:rgba(255,253,247,.80); }
+.sheet > * { position:relative; z-index:1; }
+.top { margin:0 -56px; background:#0d1217; border-bottom:5px solid #c9a24b; padding:14px 56px 10px; text-align:center; }
+.logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:118px; width:auto; display:block; margin:0 auto; }
+.addr { color:#e8cf8a; font-size:21px; letter-spacing:.04em; margin-top:6px; }
+.addr b { color:#25D366; font-weight:700; }
+.rbar { display:flex; justify-content:space-between; align-items:center; margin:14px 0 8px; padding-bottom:8px; border-bottom:2px solid #c9a24b; }
+.rbar .rc { font-weight:800; letter-spacing:.22em; color:#8a6a1c; font-size:24px; }
+.rbar .rb { font-weight:800; font-size:26px; }
+.meta-grid { display:grid; grid-template-columns:.8fr 1.4fr 1fr; gap:6px 14px; margin-bottom:10px; }
+.meta-item { display:flex; flex-direction:column; min-width:0; }
+.meta-label { color:#8a6a1c; font-size:16px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+.meta-val { font-weight:700; font-size:24px; word-break:break-word; }
+table { width:100%; border-collapse:collapse; margin-bottom:10px; font-size:26px; }
+th { color:#8a6a1c; font-size:17px; text-transform:uppercase; border-bottom:2px solid #c9a24b; padding-bottom:6px; text-align:left; letter-spacing:.1em; }
+th.num, td.num { text-align:right; }
+td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:top; font-weight:600; }
+.item-code { font-size:17px; color:#8a6a1c; font-weight:700; display:block; }
+.item-name { font-weight:600; word-break:break-word; }
+.totals-wrap { padding-top:4px; font-size:26px; }
+.tot-row { display:flex; justify-content:space-between; padding:4px 0; font-weight:600; }
+.tot-row span:first-child { color:#8a6a1c; }
+.tot-row.grand { background:linear-gradient(90deg,#0b0b0c,#1c1a14); font-size:38px; font-weight:800; padding:10px 20px; border-radius:10px; margin:8px 0; border:2px solid #c9a24b; }
+.tot-row.grand span:first-child { color:#c9a24b; } .tot-row.grand span:last-child { color:#fff; }
+.balance-row { background:#e8cf8a; font-weight:800; padding:8px 16px; border-radius:8px; font-size:26px; }
+.foot { display:flex; align-items:center; gap:26px; margin-top:16px; padding-top:14px; border-top:2px dashed #b99a4f; }
+.qrbox { flex:0 0 auto; width:220px; height:220px; padding:8px; border-radius:20px; background:#fff; border:3px solid #c9a24b; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+.qrbox svg { width:100%; height:100%; display:block; }
+.fr { flex:1; text-align:left; }
+.thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:8px; }
+.wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 20px; border-radius:999px; }
+.shop-info { font-size:21px; color:#444; margin-top:8px; line-height:1.35; }
+.bar { height:10px; margin:18px -56px -34px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
 </style>
 </head>
 <body>
 <div class="sheet" id="sheet">
-  <div class="header">
+  <div class="top">
     <img src="../../receipt-logo.png" alt="RBH" class="logo-img">
+    <div class="addr" id="addr"></div>
   </div>
-
-  <div class="receipt-bar">RECEIPT</div>
-
+  <div class="rbar"><span class="rc">RECEIPT</span><span class="rb" id="rbNo"></span></div>
   <div class="meta-grid" id="metaGrid"></div>
-
   <table>
-    <thead>
-      <tr>
-        <th style="width: 44%;">Item</th>
-        <th class="num" style="width: 12%;">Qty</th>
-        <th class="num" style="width: 22%;">Price</th>
-        <th class="num" style="width: 22%;">Amount</th>
-      </tr>
-    </thead>
+    <thead><tr><th style="width:46%">Item</th><th class="num" style="width:10%">Qty</th><th class="num" style="width:22%">Price</th><th class="num" style="width:22%">Amount</th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
-
   <div class="totals-wrap">
     <div class="tot-row"><span>Subtotal</span><span id="sub"></span></div>
     <div class="tot-row" id="discRow"><span>Discount</span><span id="disc"></span></div>
     <div class="tot-row grand"><span>TOTAL</span><span id="total"></span></div>
     <div class="tot-row" id="payRow" style="display:none;"><span>Paid by</span><span id="payMethod"></span></div>
-    <div class="tot-row balance-row" id="balRow" style="display:none;">
-      <span id="balLabel">Balance Due</span><span id="balVal"></span>
+    <div class="tot-row balance-row" id="balRow" style="display:none;"><span id="balLabel">Balance Due</span><span id="balVal"></span></div>
+  </div>
+  <div class="foot">
+    <div class="qrbox" id="qrContainer"></div>
+    <div class="fr">
+      <div class="thanks" id="thanks"></div>
+      <span class="wa">Scan to chat on WhatsApp</span>
+      <div class="shop-info" id="shopInfo"></div>
     </div>
   </div>
-
-  <div class="footer">
-    <div class="thanks" id="thanks"></div>
-    <div class="shop-info" id="shopInfo"></div>
-    <div class="qr-wrap">
-      <div class="qr-container" id="qrContainer"></div>
-      <div class="qr-text">Scan to Chat<br>074 035 5536</div>
-    </div>
-    <div class="gold-bar"></div>
-  </div>
+  <div class="bar"></div>
 </div>
 
 <script>
@@ -207,12 +88,13 @@ function renderReceipt(d) {
   const $ = id => document.getElementById(id);
 
   const metaData = [
-    ['Bill No.', d.billNo ? '#' + d.billNo : '-'],
     ['Date', d.date || '-'],
     ['Customer', d.customer || '-'],
     ['Phone', d.customerPhone || '-']
   ];
 
+  $('rbNo').textContent = d.billNo ? 'Bill #' + d.billNo : '';
+  $('addr').innerHTML = (d.address || 'No. 173/1, Kandy Road, Thihariya') + ' &nbsp;|&nbsp; WhatsApp <b>' + (d.phone || '074 035 5536') + '</b>';
   const metaGrid = $('metaGrid');
   metaGrid.innerHTML = '';
   metaData.forEach(([label, val]) => {
@@ -303,7 +185,7 @@ function renderReceipt(d) {
 
   $('thanks').textContent = d.thanks || 'Thank you for choosing Royal Bath Hub';
   
-  const shopInfo = (d.address || 'No. 173/1, Kandy Road, Thihariya, Kalagedihena') + '<br>WhatsApp: ' + (d.phone || '074 035 5536');
+  const shopInfo = 'Halal tiles and bathroom fittings<br>Royal Bath Hub, Kandy Road, Thihariya';
   $('shopInfo').innerHTML = shopInfo;
 
   if (d.qrSvg) {

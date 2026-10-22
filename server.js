@@ -626,6 +626,7 @@ app.use('/api/daily-breakdown', require('./routes/daily_breakdown')); // Daily B
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*
 app.use('/api', require('./routes/qr_svg'));            // /api/qr/<code>.svg (sticker QR pictures)
 app.use('/api', require('./routes/item_prices'));       // /api/item-prices (owner Prices screen)
+app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
 app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)
