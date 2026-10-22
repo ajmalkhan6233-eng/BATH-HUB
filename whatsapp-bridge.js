@@ -17,6 +17,17 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 // pipeline (stripReasoning etc.) — this is the belt-and-braces layer on the
 // dispatch side, covering every send path including /send and photo replies.
 const { sanitizeAssistantOutput } = require('./utils/laylaOutput');
+const { startWaiting } = require('./layla_owner/waitNudge');
+// Waiting messages (AJ, 22 Oct 2026): typing sign now, then at most 3 short texts while Layla is slow. See layla_owner/waitNudge.js.
+function waitIO(msg) {
+    let chat = null;
+    const getChat = async () => chat || (chat = await msg.getChat());
+    return {
+        typing: async () => { await (await getChat()).sendStateTyping(); },
+        clearTyping: async () => { await (await getChat()).clearState(); },
+        send: async (text) => { await (await getChat()).sendMessage(text); },
+    };
+}
 
 const PORT = process.env.WHATSAPP_BRIDGE_PORT || 3001;
 // Sent to the main server's /webhook/* routes when WEBHOOK_SECRET is configured (see middleware/webhookAuth.js).
@@ -178,6 +189,7 @@ client.on('message', async (msg) => {
     // whitelist above has already dropped everyone else.
     const isFamilyMsg = FAMILY_DIGITS.includes(resolved) && resolved !== OWNER_DIGITS;     // a family member keeps her OWN number as the sender: she is never treated as the owner
     if (LAYLA_OWNER_BRIDGE && (isFamilyMsg || resolved === OWNER_DIGITS || (TEST_MODE && whitelisted))) {
+        const wait = startWaiting(waitIO(msg));
         try {
             const payload = { from: isFamilyMsg ? resolved : OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
             if (isFamilyMsg && msg.hasMedia) { await msg.reply('I can read text messages only.'); return; }   // family: text only, her files are never downloaded or saved
@@ -200,22 +212,24 @@ client.on('message', async (msg) => {
                 Object.assign(payload, { type: 'text', text: msg.body });
             }
             const res = await axios.post(`${MAIN_SERVER_URL}/webhook/layla-owner`, payload, { timeout: 90000, headers: WEBHOOK_HEADERS });
+            { const st0 = res.data && res.data.status; if (st0 !== 'fallback' && st0 !== 'fallback_photo') wait.stop(); }   // the old Layla (slow AI) still has to answer when the owner brain had no job
             for (const line of (res.data && res.data.replies) || []) { const out = sanitizeAssistantOutput(line); if (out) await msg.reply(out); }
             // ONE LAYLA: the owner assistant had no job for this message, so the ORIGINAL Layla handles it exactly as before (chat, TEACH:, day-sheet photos).
             const st = res.data && res.data.status;
             if (st === 'fallback' || st === 'fallback_photo') {
                 if (st === 'fallback_photo') {
                     const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, { from: payload.from, filePath: payload.filePath }, { timeout: 60000, headers: WEBHOOK_HEADERS });
-                    const photoReply = sanitizeAssistantOutput(r2.data?.reply); if (photoReply) await msg.reply(photoReply);
+                    wait.stop(); const photoReply = sanitizeAssistantOutput(r2.data?.reply); if (photoReply) await msg.reply(photoReply);
                 } else {
                     const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: payload.from, message: msg.body }, { timeout: 60000, headers: WEBHOOK_HEADERS });
-                    const reply2 = sanitizeAssistantOutput(r2.data?.reply); if (reply2) await msg.reply(reply2);
+                    wait.stop(); const reply2 = sanitizeAssistantOutput(r2.data?.reply); if (reply2) await msg.reply(reply2);
                 }
             }
         } catch (err) {
+            wait.stop();
             console.error('[WA-BRIDGE] Layla owner route failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400), '| stack:', String(err.stack || '').split('\n').slice(0, 25).join(' <- '));
             await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});
-        }
+        } finally { wait.stop(); }
         return;
     }
 
@@ -251,18 +265,21 @@ client.on('message', async (msg) => {
         return;
     }
 
+    const waitC = startWaiting(waitIO(msg));
     try {
         const res = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, {
             from: resolved,
             message: msg.body,
         }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+        waitC.stop();
         const reply = sanitizeAssistantOutput(res.data?.reply);
         if (reply) {
             await msg.reply(reply);
         }
     } catch (err) {
+        waitC.stop();
         console.error('[WA-BRIDGE] Failed to forward inbound message or send reply:', err.message);
-    }
+    } finally { waitC.stop(); }
 });
 
 // Outbound: POST { to, message, media? } -> sends via the linked WhatsApp account.
