@@ -1,3 +1,4 @@
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
 # START HERE (read this first, one screen)
 Organised 2026-10-12. No rule or fact was changed; this page only points to the real files.
 
@@ -30,3 +31,4 @@ Ajmal. Non-developer, voice-to-text (read charitably). Plain words, short report
 - Website (E:\AI Sttuf\bathhub-website, branch work): its PROJECT file is in this repo at docs/projects/PROJECT_bathhub-website.md.
 - Bridge (https://github.com/ajmalkhan6233-eng/Universal-project-): AI_BRIDGE/BRIDGE.md (chat writes), LIVE.md (Claude Code reports), V1_FINAL.md. Page: docs/projects/PROJECT_bridge.md.
 - Every .md file listed: MD_MAP.md.
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.

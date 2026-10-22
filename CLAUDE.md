@@ -1,3 +1,4 @@
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
 # C:\BATHCO_TEMPLATE — agent entry point
 
 ## RULE 1 (TOP, Ajmal 2026-10-21): GIVE AJ THE LEAST WORK
@@ -79,3 +80,4 @@ BATH HUB rules, agent prompts and commands merged in: docs/bathhub_knowledge/REA
 - (12) SYNC: Claude Code writes ONE short line at the top of AI_BRIDGE/LIVE.md and pushes it: (a) whenever a task finishes, (b) every 5 minutes while working, (c) when blocked. Format: time | task | state | next. 3 lines max at the top. Chat pulls it and never edits it.
 
 RULE 13 (HARD, Ajmal 11:43, strengthened 13:12): Claude CHAT writes ALL code it can do better (features, screens, fixes, tests, scripts) in its cloud workspace and pushes it. Claude Code on the PC only runs it: pull, install, test, build, deploy, merge, restart, schedule. Do NOT write or rewrite feature code. If a run fails, put the exact error in LIVE.md and chat fixes it.
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.

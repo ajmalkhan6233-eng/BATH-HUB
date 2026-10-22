@@ -1,3 +1,4 @@
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
 # RULES (Ajmal's own orders, newest first, max 30 lines)
 - **RULE 1 (Ajmal, 2026-10-21): GIVE AJ THE LEAST WORK. Find the free, easiest, fastest way first. Read and change only the lines that need it. Build every task of a request in one go, then tell Aj only what HE must do (one paste at most, ideally none). Find and attach any new repo, connection or tool yourself; never ask Aj to remember it. Save usage.**
 **RULE 1b (Ajmal, 2026-10-21, HARD): THE AI DECIDES THE METHOD. Whenever a cheaper, faster or simpler way to do something is found (a script instead of Claude, a plugin-free way, one paste instead of many, doing it in the cloud instead of on the PC), the AI chooses and uses it by itself and writes it here as a new rule, without asking Aj. Aj is only asked when something can be lost, costs money, sends data out, or installs third-party tools (those still need his OK per AGENT SAFETY). Purpose: save Aj's usage and time. Tell him in one line what changed, never a discussion.**
@@ -13,3 +14,4 @@
 - **2026-10-09 BRIDGE: planning chat (claude.ai) reads branch work of BATH-HUB read-only. Claude Code is the ONLY builder. End of every task run: write AI_MEMORY/LATEST_REPORT.md (max 25 lines: date, tasks done, commit ids, UNVERIFIED, Ajmal's next physical action, one status word), commit and push to work. Ajmal never pastes reports.**
 - **2026-10-09 WATCH: plugins aikido and playwright stay installed (Ajmal's decision). Every LATEST_REPORT.md gets one line: what each did/ran since last report and any data sent out; else UNVERIFIED.**
 - **2026-10-09 Royal Bath Hub output only on branch work; after push: git fetch + git log origin/work -1 before saying VERIFIED.**
+SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
