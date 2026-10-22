@@ -44,6 +44,7 @@ Very short, plain, answer first, call him AJ. HEADS-UP block first (never the wo
 docs/AJ_RULES.md = ALL of AJ's rules in one place (read it if unsure; it wins over any older file).
 .claude/skills/rbh-ux/SKILL.md = UX rules: read it (1 minute) before ANY screen, form, POS, receipt or website change. docs/UX_CHECKLIST.md = what to build next and 50 free ideas: read only when planning or auditing.
 .claude/skills/rbh-qa/SKILL.md = QA crawler rules: read before ANY test or audit run. Clicking flows only on a test copy, never the live app.
+.claude/skills/rbh-pos, rbh-erp, rbh-i18n, rbh-fullstack = POS, stock and accounts, language, and code rules: read the one that matches the job (about 1 minute). Cloud test copy in one command: bash scripts/dev/cloud_rig.sh.
 docs/AJ_LEARNED.md = things AJ teaches (new words, ways, pricing); append a line the same day he teaches it, then teach the app.
 START_HERE.md (one screen state) | AGENT_GUIDE/README.md then 01 file map, 15 pre-edit checklist | docs/LAYLA_PRO_SPEC.md before any LAYLA work | docs/bathhub_knowledge/README.md before alerts, reconciliation or tests | docs/SHIP_CHECK.md before saying a site or screen is done | docs/PAPERS.md (cheques, bank slips, receipts) | AI_MEMORY/RULES.md (AJ's orders, newest first), OPEN_ITEMS.md | MD_MAP.md (every .md file).
 Website: separate repo bathhub-website (E:\AI Sttuf\bathhub-website). Never publish it except on AJ's word.
