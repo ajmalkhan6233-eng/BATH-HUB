@@ -70,7 +70,7 @@
   }
 
   function layoutSheets(labels, perSheet) {
-    perSheet = perSheet || 40;
+    perSheet = perSheet || 44;
     var pages = [];
     if (!labels || !labels.length) return pages;
     for (var i = 0; i < labels.length; i += perSheet) {

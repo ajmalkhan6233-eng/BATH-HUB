@@ -7,7 +7,7 @@ const FAKE = [
   ['099', 'ORVEL SQUARE SHELF UNBREAKABLE', 3500], ['100', '3" POP WASTE NIKAL FULL THREAD FULLCAP', 2950], ['106', '6" SANDWICH SHOWER', 3750],
   ['107', 'HALF SQUARE BIDET GREY HOSE ORIN', 4350], ['109', 'MATT KITCHEN SINK TAP', 4850], ['110', 'SQUARE TOWEL BAR HEAVY', 4950],
   ['111', 'SQUARE SINGLE FOLDING TOWELBAR', 4850], ['142', 'BLACK SINGLE FOLDING TOWELBAR', 5550],
-].map((r, i) => ({ id: i + 1, item_code: r[0], name: r[1], selling_price: r[2], stock_level: 3 }));
+].map((r, i) => ({ id: i + 1, item_code: r[0], name: r[1], selling_price: r[2], stock_level: 3, avg_cost: [1600, 900, 1250, 1700, 1300, 1500, 2200, 2200][i] }));
 (async () => {
   const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });

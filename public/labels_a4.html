@@ -31,28 +31,28 @@
       background: #fff;
       margin: 0 auto;
       box-sizing: border-box;
-      padding-left: 9mm;
-      padding-right: 9mm;
-      padding-top: 13.5mm;
-      padding-bottom: 13.5mm;
+      padding-left: 8mm;
+      padding-right: 8mm;
+      padding-top: 8.8mm;
+      padding-bottom: 8.8mm;
       page-break-after: always;
       position: relative;
     }
 
     .label-grid {
       display: grid;
-      grid-template-columns: repeat(4, 48mm);
-      grid-template-rows: repeat(10, 27mm);
-      width: 192mm;
-      height: 270mm;
+      grid-template-columns: repeat(4, 48.5mm);
+      grid-template-rows: repeat(11, 25.4mm);
+      width: 194mm;
+      height: 279.4mm;
     }
 
     .label-card {
-      width: 48mm;
-      height: 27mm;
-      background: #050d10;
-      color: #fff;
-      padding: 1.5mm;
+      width: 48.5mm;
+      height: 25.4mm;
+      background: #ffffff;
+      color: #000000;
+      padding: 1.2mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -61,82 +61,122 @@
       position: relative;
     }
 
-    .label-card.show-cut {
-      outline: 0.1mm solid #9ca3af;
-    }
+    .label-card > * { flex: none; }
 
-    .label-card.light-mode {
-      background: #ffffff !important;
-      color: #000000 !important;
+    .label-card.show-cut {
+      outline: 0.1mm dotted #9ca3af;
     }
 
     .label-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 5mm;
+      height: 4.2mm;
+      background: #a8832d;
+      padding: 0 1.2mm;
+      border-radius: 0.5mm;
     }
-    .label-logo {
-      height: 4.5mm;
-      width: 17mm;
-      object-fit: contain;
-      object-position: left center;
+
+    .label-brand-text {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
     }
+
     .label-code {
-      font-size: 7pt;
-      font-weight: bold;
+      font-size: 6.5pt;
+      font-weight: 800;
       color: #ffffff;
       text-align: right;
     }
-    .light-mode .label-code { color: #000000; }
+
+    .label-card.light-mode .label-top {
+      background: transparent;
+      border-bottom: 1px solid #000000;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .label-card.light-mode .label-brand-text,
+    .label-card.light-mode .label-code {
+      color: #000000;
+    }
 
     .label-name {
-      font-size: 6pt;
-      line-height: 1.1;
-      font-weight: 600;
-      color: #ffffff;
+      font-size: 6.5pt;
+      line-height: 1.15;
+      font-weight: 700;
+      color: #000000;
       text-transform: uppercase;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-height: 5.5mm;
+      height: 5.2mm;
+      max-height: 5.2mm;
+      word-break: break-word;
+      margin: 0.3mm 0;
     }
-    .light-mode .label-name { color: #000000; }
+
+    .label-middle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 5mm;
+      border-bottom: 1.5px solid #a8832d;
+      padding-bottom: 0.5mm;
+    }
+
+    .label-card.light-mode .label-middle-row {
+      border-bottom-color: #000000;
+    }
 
     .label-price {
-      font-size: 13pt;
+      font-size: 11pt;
       font-weight: 900;
-      color: #c9a24b;
-      height: 6.5mm;
-      line-height: 6.5mm;
+      color: #000000;
       white-space: nowrap;
+      line-height: 1;
     }
-    .light-mode .label-price { color: #000000; }
+
+    .label-cost-box {
+      border: 1px solid #000000;
+      border-radius: 0.5mm;
+      padding: 0.2mm 1mm;
+      font-size: 7pt;
+      font-weight: 800;
+      color: #000000;
+      line-height: 1;
+      white-space: nowrap;
+      background: #f8f8f8;
+    }
 
     .label-barcode-box {
       background: #ffffff;
-      border-radius: 1.5mm;
       width: 38mm;
-      height: 7.5mm;
+      height: 6.6mm;
       margin: 0 auto;
-      padding: 0.5mm 2mm 0.2mm 2mm;
+      padding: 0.2mm 1mm;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
     }
+
     .barcode-svg-container {
       width: 100%;
-      height: 4.5mm;
+      height: 4.1mm;
     }
+
     .barcode-text {
-      font-size: 5pt;
+      font-size: 5.5pt;
       color: #000000;
       line-height: 1;
-      font-weight: bold;
+      font-weight: 800;
     }
 
     @media screen {
@@ -151,7 +191,7 @@
 
     @media print {
       body { background: #fff; color: #000; }
-      .screen-controls, .table-container, .screen-wrapper > h2 { display: none !important; }
+      .screen-controls, .table-container, .screen-wrapper > h2, #summary { display: none !important; }
       .print-preview-container { padding: 0; background: transparent; display: block; }
       .phone-scale { transform: none !important; margin-bottom: 0 !important; }
       .a4-page:last-child { page-break-after: auto !important; }
@@ -176,6 +216,11 @@
       <label class="checkbox-label">
         <input type="checkbox" id="chkCut" checked onchange="renderPreview()"> Show cut lines
       </label>
+      <label class="checkbox-label">Code from <input type="text" id="codeFrom" size="5" oninput="renderTable();renderPreview()"></label>
+      <label class="checkbox-label">to <input type="text" id="codeTo" size="5" oninput="renderTable();renderPreview()"></label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="chkBlank" onchange="renderPreview()"> Also print items with no price (blank price line)
+      </label>
       <button class="btn btn-secondary" onclick="generateSample()">Sample sheet</button>
       <button class="btn" onclick="printLayout()">Make A4 sheets</button>
     </div>
@@ -196,10 +241,12 @@
       </table>
     </div>
 
+    <div id="summary" style="padding:12px;background:#1f2937;font-size:14px;line-height:1.5;"></div>
     <h2 style="padding: 12px; font-size: 16px; background: #111827;">A4 Print Preview</h2>
     <div class="print-preview-container" id="previewContainer"></div>
   </div>
 
+  <script src="/costcode.js"></script>
   <script src="/labels_a4_core.js"></script>
   <script>
     var allProducts = [];
@@ -230,11 +277,7 @@
         if (copies < 1) copies = 1;
         if (copies > 500) copies = 500;
         p._calculatedCopies = copies;
-        if (formatted !== "") {
-          selectedCopiesMap[p.id] = { selected: true, copies: copies };
-        } else {
-          selectedCopiesMap[p.id] = { selected: false, copies: copies };
-        }
+        selectedCopiesMap[p.id] = { selected: true, copies: copies };
       });
       renderTable();
       renderPreview();
@@ -336,12 +379,18 @@
         var st = selectedCopiesMap[p.id];
         if (st && st.selected) {
           var priceStr = LabelsA4Core.formatPrice(p.selling_price);
-          if (priceStr !== "") {
+          var includeBlank = document.getElementById('chkBlank').checked;
+          var from = (document.getElementById('codeFrom').value || '').trim();
+          var to = (document.getElementById('codeTo').value || '').trim();
+          var code = String(p.item_code || '');
+          var inRange = (!from || code >= from) && (!to || code <= to);
+          if (inRange && (priceStr !== "" || includeBlank)) {
             selected.push({
               id: p.id,
               item_code: p.item_code,
               name: p.name,
               selling_price: p.selling_price,
+              cost_code: (typeof CostCode !== 'undefined' && p.avg_cost) ? CostCode.costCode(p.avg_cost) : (p.cost_code || ''),
               copies: st.copies
             });
           }
@@ -356,7 +405,19 @@
 
       var selected = getSelectedItems();
       var expanded = LabelsA4Core.expandCopies(selected);
-      var pages = LabelsA4Core.layoutSheets(expanded, 40);
+      var blanks = selected.filter(function(s) { return LabelsA4Core.formatPrice(s.selling_price) === ''; });
+      var unpricedAll = allProducts.filter(function(p) { return LabelsA4Core.formatPrice(p.selling_price) === ''; }).length;
+      var sumEl = document.getElementById('summary');
+      sumEl.textContent = '';
+      var l1 = document.createElement('div');
+      l1.textContent = selected.length + ' items, ' + expanded.length + ' labels, ' + Math.ceil(expanded.length / 44) + ' A4 sheets (44 per sheet).';
+      var l2 = document.createElement('div');
+      l2.style.color = (blanks.length || unpricedAll) ? '#f5b942' : '#9ae6b4';
+      l2.textContent = blanks.length
+        ? 'FLAG: ' + blanks.length + ' of these items have NO PRICE yet (blank price line will print): ' + blanks.slice(0, 12).map(function(b) { return b.item_code; }).join(', ') + (blanks.length > 12 ? ' ...' : '')
+        : (unpricedAll ? 'FLAG: ' + unpricedAll + ' items in the shop have no price yet and are NOT in this print.' : 'All selected items have a price.');
+      sumEl.appendChild(l1); sumEl.appendChild(l2);
+      var pages = LabelsA4Core.layoutSheets(expanded, 44);
 
       var isLight = document.getElementById('chkLight').checked;
       var isCut = document.getElementById('chkCut').checked;
@@ -380,25 +441,42 @@
           var topRow = document.createElement('div');
           topRow.className = 'label-top';
 
-          var img = document.createElement('img');
-          img.src = '/receipt-logo.png';
-          img.className = 'label-logo';
-          img.alt = 'Logo';
+          var brandSpan = document.createElement('span');
+          brandSpan.className = 'label-brand-text';
+          brandSpan.textContent = 'ROYAL BATH HUB';
 
           var codeSpan = document.createElement('span');
           codeSpan.className = 'label-code';
           codeSpan.textContent = String(item.item_code || '');
 
-          topRow.appendChild(img);
+          topRow.appendChild(brandSpan);
           topRow.appendChild(codeSpan);
 
           var nameDiv = document.createElement('div');
           nameDiv.className = 'label-name';
-          nameDiv.textContent = String(item.name || '');
+          var rawName = String(item.name || '');
+          if (rawName.length > 30) {
+            nameDiv.style.fontSize = '6pt';
+          }
+          nameDiv.textContent = rawName;
+
+          var middleRow = document.createElement('div');
+          middleRow.className = 'label-middle-row';
 
           var priceDiv = document.createElement('div');
           priceDiv.className = 'label-price';
-          priceDiv.textContent = LabelsA4Core.formatPrice(item.selling_price);
+          var formattedPrice = LabelsA4Core.formatPrice(item.selling_price);
+          priceDiv.textContent = formattedPrice !== "" ? formattedPrice : 'Rs. ________';
+
+          var costDiv = document.createElement('div');
+          costDiv.className = 'label-cost-box';
+          costDiv.textContent = item.cost_code ? ('C: ' + String(item.cost_code)) : '';
+          if (!item.cost_code) {
+            costDiv.style.display = 'none';
+          }
+
+          middleRow.appendChild(priceDiv);
+          middleRow.appendChild(costDiv);
 
           var barcodeBox = document.createElement('div');
           barcodeBox.className = 'label-barcode-box';
@@ -416,7 +494,7 @@
 
           card.appendChild(topRow);
           card.appendChild(nameDiv);
-          card.appendChild(priceDiv);
+          card.appendChild(middleRow);
           card.appendChild(barcodeBox);
 
           gridDiv.appendChild(card);
@@ -434,7 +512,7 @@
         { id: 's2', item_code: '142', name: 'BASIN MIXER TAP HEAVY', selling_price: 12500 }
       ];
 
-      for (var i = 0; i < 40; i++) {
+      for (var i = 0; i < 44; i++) {
         var src = base[i % base.length];
         sampleItems.push({
           id: 'sample_' + i,

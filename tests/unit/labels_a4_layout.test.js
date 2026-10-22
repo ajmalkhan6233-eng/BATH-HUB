@@ -1,13 +1,13 @@
 const { layoutSheets, expandCopies, formatPrice } = require('../../public/labels_a4_core.js');
 
 describe('A4 Label Core Unit Tests', () => {
-  test('layoutSheets splits labels correctly across 40-item pages', () => {
-    expect(layoutSheets([], 40)).toEqual([]);
+  test('layoutSheets splits labels correctly across 44-item pages', () => {
+    expect(layoutSheets([], 44)).toEqual([]);
     
-    const labels41 = Array.from({ length: 41 }, (_, i) => ({ id: i }));
-    const pages41 = layoutSheets(labels41, 40);
+    const labels41 = Array.from({ length: 45 }, (_, i) => ({ id: i }));
+    const pages41 = layoutSheets(labels41, 44);
     expect(pages41.length).toBe(2);
-    expect(pages41[0].length).toBe(40);
+    expect(pages41[0].length).toBe(44);
     expect(pages41[1].length).toBe(1);
   });
 
