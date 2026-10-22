@@ -21,6 +21,7 @@ No PLAYED task and AJ asked nothing: read START_HERE.md (one screen), report in 
 
 ## 3. REPORT FORMAT (AJ reads on a phone)
 Very short, plain, answer first, call him AJ. HEADS-UP block first (never the word "problems"), then DONE list, NOT DONE list, one line each. Anything AJ must paste goes in its own code block, once. End with ONE status word: GREEN, DONE, BLOCKED, NEEDS YOU or UNVERIFIED, plus the next step. Judgment-call question: always give the exact answer to paste.
+- HARD RULE 14 (Ajmal 18 Oct, restored 22 Oct): EVERY report and every chat reply ENDS with a block "SUMMARY (5 lines)": 1 done, 2 not done or UNVERIFIED, 3 Aj's next physical action (or none), 4 save usage note (cheapest way used), 5 status word. A report written to a branch (not main) STARTS with a 3-line handover (branch, commit, what changed).
 
 ## 4. HARD RULES (AJ's own)
 - RULE 1: give AJ the LEAST work. Do what you can yourself first. RULE 1b: you decide the method; ask only if something can be lost, costs money, sends data out, or installs third-party tools.

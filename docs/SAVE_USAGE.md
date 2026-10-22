@@ -60,3 +60,5 @@ Goal: every step costs as little as possible. Cheapest, shortest, free way first
 48. Prune backups to the kept number; never keep endless copies.
 49. Do not create duplicate tasks; close old ones in BRIDGE.md.
 50. Review these 50 rules on the 1st of each month (with the automation ideas review). Remove what is not helping, add what AJ found.
+
+51. Rule 14: end every report with the 5-line SUMMARY (done, not done, Aj's action, save usage note, status word). Short summaries also save his reading time.
