@@ -52,7 +52,7 @@
       height: 25.4mm;
       background: #ffffff;
       color: #000000;
-      padding: 1.2mm;
+      padding: 1.2mm 1.4mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -60,50 +60,32 @@
       overflow: hidden;
       position: relative;
     }
-
     .label-card > * { flex: none; }
-
-    .label-card.show-cut {
-      outline: 0.1mm dotted #9ca3af;
-    }
+    .label-card.show-cut { outline: 0.1mm dotted #9ca3af; }
 
     .label-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      height: 4.2mm;
-      background: #a8832d;
-      padding: 0 1.2mm;
-      border-radius: 0.5mm;
+      align-items: flex-end;
+      height: 4.3mm;
+      border-bottom: 0.3mm solid #8a6a1f;
+      padding-bottom: 0.3mm;
     }
-
     .label-brand-text {
-      font-size: 6.5pt;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: 0.2px;
-      text-transform: uppercase;
-    }
-
-    .label-code {
-      font-size: 6.5pt;
-      font-weight: 800;
-      color: #ffffff;
-      text-align: right;
-    }
-
-    .label-card.light-mode .label-top {
-      background: transparent;
-      border-bottom: 1px solid #000000;
-      padding: 0;
-      border-radius: 0;
-    }
-
-    .label-card.light-mode .label-brand-text,
-    .label-card.light-mode .label-code {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 6pt;
+      font-weight: 700;
+      letter-spacing: 0.5px;
       color: #000000;
+      text-transform: uppercase;
+      line-height: 1;
     }
-
+    .label-code {
+      font-size: 9.5pt;
+      font-weight: 900;
+      color: #000000;
+      line-height: 1;
+    }
     .label-name {
       font-size: 6.5pt;
       line-height: 1.15;
@@ -116,67 +98,46 @@
       overflow: hidden;
       text-overflow: ellipsis;
       height: 5.2mm;
-      max-height: 5.2mm;
+      margin-top: 0.4mm;
       word-break: break-word;
-      margin: 0.3mm 0;
     }
-
-    .label-middle-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 5mm;
-      border-bottom: 1.5px solid #a8832d;
-      padding-bottom: 0.5mm;
-    }
-
-    .label-card.light-mode .label-middle-row {
-      border-bottom-color: #000000;
-    }
-
     .label-price {
-      font-size: 11pt;
+      font-size: 14pt;
       font-weight: 900;
       color: #000000;
       white-space: nowrap;
       line-height: 1;
+      height: 5.2mm;
     }
-
-    .label-cost-box {
-      border: 1px solid #000000;
-      border-radius: 0.5mm;
-      padding: 0.2mm 1mm;
-      font-size: 7pt;
-      font-weight: 800;
-      color: #000000;
-      line-height: 1;
-      white-space: nowrap;
-      background: #f8f8f8;
+    .label-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 7mm;
     }
-
     .label-barcode-box {
-      background: #ffffff;
-      width: 38mm;
-      height: 6.6mm;
-      margin: 0 auto;
-      padding: 0.2mm 1mm;
+      width: 34mm;
+      height: 7mm;
+      border: 0.3mm solid #000000;
+      border-radius: 0.8mm;
+      padding: 0.4mm 1mm 0.2mm 1mm;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
+      background: #ffffff;
     }
-
-    .barcode-svg-container {
-      width: 100%;
-      height: 4.1mm;
-    }
-
-    .barcode-text {
-      font-size: 5.5pt;
-      color: #000000;
+    .barcode-svg-container { width: 100%; height: 3.8mm; }
+    .barcode-text { font-size: 5.5pt; color: #000000; line-height: 1; font-weight: 800; margin-top: 0.3mm; }
+    .label-cost {
+      font-size: 6.5pt;
+      font-weight: 700;
+      color: #333333;
+      letter-spacing: 0.4px;
       line-height: 1;
-      font-weight: 800;
+      text-align: right;
+      white-space: nowrap;
     }
 
     @media screen {
@@ -210,9 +171,6 @@
     <div class="screen-controls">
       <input type="text" id="searchInput" placeholder="Search name or code..." oninput="renderTable()">
       <button class="btn btn-secondary" onclick="selectPriced()">Select all with price</button>
-      <label class="checkbox-label">
-        <input type="checkbox" id="chkLight" onchange="renderPreview()"> Light sticker (white bg)
-      </label>
       <label class="checkbox-label">
         <input type="checkbox" id="chkCut" checked onchange="renderPreview()"> Show cut lines
       </label>
@@ -419,7 +377,6 @@
       sumEl.appendChild(l1); sumEl.appendChild(l2);
       var pages = LabelsA4Core.layoutSheets(expanded, 44);
 
-      var isLight = document.getElementById('chkLight').checked;
       var isCut = document.getElementById('chkCut').checked;
 
       if (pages.length === 0) {
@@ -436,67 +393,52 @@
 
         pageItems.forEach(function(item) {
           var card = document.createElement('div');
-          card.className = 'label-card' + (isLight ? ' light-mode' : '') + (isCut ? ' show-cut' : '');
+          card.className = 'label-card' + (isCut ? ' show-cut' : '');
 
           var topRow = document.createElement('div');
           topRow.className = 'label-top';
-
           var brandSpan = document.createElement('span');
           brandSpan.className = 'label-brand-text';
-          brandSpan.textContent = 'ROYAL BATH HUB';
-
+          brandSpan.textContent = 'Royal Bath Hub';
           var codeSpan = document.createElement('span');
           codeSpan.className = 'label-code';
           codeSpan.textContent = String(item.item_code || '');
-
           topRow.appendChild(brandSpan);
           topRow.appendChild(codeSpan);
 
           var nameDiv = document.createElement('div');
           nameDiv.className = 'label-name';
           var rawName = String(item.name || '');
-          if (rawName.length > 30) {
-            nameDiv.style.fontSize = '6pt';
-          }
+          if (rawName.length > 30) { nameDiv.style.fontSize = '6pt'; }
           nameDiv.textContent = rawName;
-
-          var middleRow = document.createElement('div');
-          middleRow.className = 'label-middle-row';
 
           var priceDiv = document.createElement('div');
           priceDiv.className = 'label-price';
           var formattedPrice = LabelsA4Core.formatPrice(item.selling_price);
           priceDiv.textContent = formattedPrice !== "" ? formattedPrice : 'Rs. ________';
 
-          var costDiv = document.createElement('div');
-          costDiv.className = 'label-cost-box';
-          costDiv.textContent = item.cost_code ? ('C: ' + String(item.cost_code)) : '';
-          if (!item.cost_code) {
-            costDiv.style.display = 'none';
-          }
-
-          middleRow.appendChild(priceDiv);
-          middleRow.appendChild(costDiv);
-
+          var bottom = document.createElement('div');
+          bottom.className = 'label-bottom';
           var barcodeBox = document.createElement('div');
           barcodeBox.className = 'label-barcode-box';
-
           var svgWrapper = document.createElement('div');
           svgWrapper.className = 'barcode-svg-container';
           svgWrapper.innerHTML = LabelsA4Core.barcodeSVG(item.item_code || '000', 18);
-
           var codeText = document.createElement('div');
           codeText.className = 'barcode-text';
           codeText.textContent = String(item.item_code || '');
-
           barcodeBox.appendChild(svgWrapper);
           barcodeBox.appendChild(codeText);
+          var costDiv = document.createElement('div');
+          costDiv.className = 'label-cost';
+          costDiv.textContent = item.cost_code ? String(item.cost_code) : '';
+          bottom.appendChild(barcodeBox);
+          bottom.appendChild(costDiv);
 
           card.appendChild(topRow);
           card.appendChild(nameDiv);
-          card.appendChild(middleRow);
-          card.appendChild(barcodeBox);
-
+          card.appendChild(priceDiv);
+          card.appendChild(bottom);
           gridDiv.appendChild(card);
         });
 
