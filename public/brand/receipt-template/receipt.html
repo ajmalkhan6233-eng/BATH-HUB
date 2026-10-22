@@ -7,20 +7,12 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { width: 1122px; background:#0b0b0c; color:#111; font-family: Arial, Helvetica, sans-serif; font-size: 27px; line-height: 1.3; }
-.sheet { width:1122px; position:relative; overflow:hidden; background:linear-gradient(180deg,#fffdf7 0%,#fbf5e4 100%); padding:0 56px 34px; }
-/* faded luxury background: big faded logo mark + fine gold diamond lattice, kept very light so letters stay clear */
-.sheet::before { content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
-  background:
-   url('../rbh-watermark.png') center 58% / 820px auto no-repeat,
-   repeating-linear-gradient(45deg, rgba(201,162,75,.10) 0 1px, transparent 1px 34px),
-   repeating-linear-gradient(-45deg, rgba(201,162,75,.10) 0 1px, transparent 1px 34px);
-  opacity:1; }
-.sheet::after { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; background:rgba(255,253,247,.80); }
-.sheet > * { position:relative; z-index:1; }
-.top { margin:0 -56px; background:#0d1217; border-bottom:5px solid #c9a24b; padding:14px 56px 10px; text-align:center; }
-.logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:118px; width:auto; display:block; margin:0 auto; }
-.addr { color:#e8cf8a; font-size:21px; letter-spacing:.04em; margin-top:6px; }
-.addr b { color:#25D366; font-weight:700; }
+.sheet { width:1122px; position:relative; overflow:hidden; background:#fffdf7; padding:0 56px 0; }
+.mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.62),rgba(255,253,247,.62)),url('../receipt-mid.jpg') center/cover no-repeat; }
+.top { margin:0 -56px; height:236px; background:linear-gradient(90deg,#0b0b0c 0%,rgba(11,11,12,.94) 38%,rgba(11,11,12,.55) 58%,rgba(11,11,12,0) 78%),url('../receipt-top.jpg') center/cover no-repeat; border-bottom:5px solid #c9a24b; padding:26px 56px 0; text-align:left; }
+.logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:122px; width:auto; display:block; }
+.addr { color:#e8cf8a; font-size:22px; letter-spacing:.03em; margin-top:14px; line-height:1.45; }
+.addr b { color:#25D366; font-weight:800; }
 .rbar { display:flex; justify-content:space-between; align-items:center; margin:14px 0 8px; padding-bottom:8px; border-bottom:2px solid #c9a24b; }
 .rbar .rc { font-weight:800; letter-spacing:.22em; color:#8a6a1c; font-size:24px; }
 .rbar .rb { font-weight:800; font-size:26px; }
@@ -40,14 +32,14 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .tot-row.grand { background:linear-gradient(90deg,#0b0b0c,#1c1a14); font-size:38px; font-weight:800; padding:10px 20px; border-radius:10px; margin:8px 0; border:2px solid #c9a24b; }
 .tot-row.grand span:first-child { color:#c9a24b; } .tot-row.grand span:last-child { color:#fff; }
 .balance-row { background:#e8cf8a; font-weight:800; padding:8px 16px; border-radius:8px; font-size:26px; }
-.foot { display:flex; align-items:center; gap:26px; margin-top:16px; padding-top:14px; border-top:2px dashed #b99a4f; }
-.qrbox { flex:0 0 auto; width:220px; height:220px; padding:8px; border-radius:20px; background:#fff; border:3px solid #c9a24b; box-shadow:0 4px 14px rgba(0,0,0,.18); }
-.qrbox svg { width:100%; height:100%; display:block; }
-.fr { flex:1; text-align:left; }
-.thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:8px; }
-.wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 20px; border-radius:999px; }
-.shop-info { font-size:21px; color:#444; margin-top:8px; line-height:1.35; }
-.bar { height:10px; margin:18px -56px -34px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
+.foot { display:flex; align-items:center; gap:30px; margin:0 -56px; padding:26px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(11,11,12,0) 0%,rgba(11,11,12,0) 28%,rgba(11,11,12,.88) 52%,rgba(11,11,12,.96) 100%),url('../receipt-foot.jpg') center/cover no-repeat; }
+.qrbox { flex:0 0 auto; width:236px; height:236px; border-radius:30px; background:rgba(255,255,255,.97); box-shadow:0 0 26px 12px rgba(255,255,255,.88); display:flex; align-items:center; justify-content:center; }
+.qrbox svg { width:214px; height:214px; display:block; }
+.fr { flex:1; text-align:right; }
+.thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:10px; color:#fff; }
+.wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 22px; border-radius:999px; }
+.shop-info { font-size:21px; color:#e8cf8a; margin-top:10px; line-height:1.35; }
+.bar { height:12px; margin:0 -56px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
 </style>
 </head>
 <body>
@@ -56,6 +48,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
     <img src="../../receipt-logo.png" alt="RBH" class="logo-img">
     <div class="addr" id="addr"></div>
   </div>
+  <div class="mid">
   <div class="rbar"><span class="rc">RECEIPT</span><span class="rb" id="rbNo"></span></div>
   <div class="meta-grid" id="metaGrid"></div>
   <table>
@@ -68,6 +61,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
     <div class="tot-row grand"><span>TOTAL</span><span id="total"></span></div>
     <div class="tot-row" id="payRow" style="display:none;"><span>Paid by</span><span id="payMethod"></span></div>
     <div class="tot-row balance-row" id="balRow" style="display:none;"><span id="balLabel">Balance Due</span><span id="balVal"></span></div>
+  </div>
   </div>
   <div class="foot">
     <div class="qrbox" id="qrContainer"></div>

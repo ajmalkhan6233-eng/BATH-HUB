@@ -13,7 +13,7 @@ function brandedQr(url) {
   const qr = require('qrcode').create(url, { errorCorrectionLevel: 'H' });
   const n = qr.modules.size, get = (r, c) => qr.modules.data[r * n + c] ? 1 : 0, q = 2, T = n + q * 2;
   const inEye = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
-  const pw = n * 0.30, ph = pw * 400 / 740 + 0.8, px = q + (n - pw) / 2, py = q + (n - ph) / 2;   // logo plate, about 30% wide
+  const pw = n * 0.34, ph = pw * 400 / 740 + 0.8, px = q + (n - pw) / 2, py = q + (n - ph) / 2;   // logo plate, about 30% wide
   const inPlate = (r, c) => c + q + 1 > px - 0.35 && c + q < px + pw + 0.35 && r + q + 1 > py - 0.35 && r + q < py + ph + 0.35;
   let d = '';
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (get(r, c) && !inEye(r, c) && !inPlate(r, c)) d += `<rect x="${c + q + 0.06}" y="${r + q + 0.06}" width="0.88" height="0.88" rx="0.36" fill="#0b0b0c"/>`;
