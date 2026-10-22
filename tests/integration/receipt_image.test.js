@@ -24,7 +24,7 @@ describe('receipt picture', () => {
     const r = await renderReceiptPng(one, { outDir: dir, fileName: 'one.png' });
     expect(isPng(r.file)).toBe(true);
     expect(r.width).toBe(1683);
-    expect(r.height).toBeGreaterThanOrEqual(2103);
+    expect(r.height).toBeGreaterThan(1500);   // v2 receipt: as tall as its content
   }, 90000);
   chrome('a 12-item bill makes a taller PNG, nothing cut off', async () => {
     const a = await renderReceiptPng(one, { outDir: dir, fileName: 'a.png' });
