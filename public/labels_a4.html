@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A4 Sticker Sheet Labels - Royal Bath Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #111827; color: #f3f4f6; }
+    
+    .screen-controls { padding: 12px; background: #1f2937; border-bottom: 1px solid #374151; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .screen-controls input[type="text"] { padding: 6px 10px; background: #111827; border: 1px solid #4b5563; color: #fff; border-radius: 4px; flex: 1; min-width: 160px; }
+    .btn { background: #c9a24b; color: #000; font-weight: bold; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #d4af37; }
+    .btn-secondary { background: #374151; color: #fff; }
+    .btn-secondary:hover { background: #4b5563; }
+    .checkbox-label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #d1d5db; cursor: pointer; }
+
+    .table-container { padding: 12px; overflow-x: auto; max-height: 350px; overflow-y: auto; background: #111827; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th, td { padding: 8px; border-bottom: 1px solid #1f2937; }
+    th { background: #1f2937; position: sticky; top: 0; z-index: 2; }
+    tr.no-price { color: #6b7280; background: #171f2e; }
+    input[type="number"].copy-input { width: 60px; padding: 4px; background: #1f2937; border: 1px solid #4b5563; color: #fff; border-radius: 4px; }
+
+    .print-preview-container { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 20px; background: #000; }
+    
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      background: #fff;
+      margin: 0 auto;
+      box-sizing: border-box;
+      padding-left: 9mm;
+      padding-right: 9mm;
+      padding-top: 13.5mm;
+      padding-bottom: 13.5mm;
+      page-break-after: always;
+      position: relative;
+    }
+
+    .label-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 48mm);
+      grid-template-rows: repeat(10, 27mm);
+      width: 192mm;
+      height: 270mm;
+    }
+
+    .label-card {
+      width: 48mm;
+      height: 27mm;
+      background: #0e1317;
+      color: #fff;
+      padding: 1.5mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .label-card.show-cut {
+      outline: 0.1mm solid #9ca3af;
+    }
+
+    .label-card.light-mode {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    .label-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 5mm;
+    }
+    .label-logo {
+      height: 4.5mm;
+      width: 17mm;
+      object-fit: contain;
+      object-position: left center;
+    }
+    .label-code {
+      font-size: 7pt;
+      font-weight: bold;
+      color: #ffffff;
+      text-align: right;
+    }
+    .light-mode .label-code { color: #000000; }
+
+    .label-name {
+      font-size: 6pt;
+      line-height: 1.1;
+      font-weight: 600;
+      color: #ffffff;
+      text-transform: uppercase;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: 5.5mm;
+    }
+    .light-mode .label-name { color: #000000; }
+
+    .label-price {
+      font-size: 13pt;
+      font-weight: 900;
+      color: #c9a24b;
+      height: 6.5mm;
+      line-height: 6.5mm;
+      white-space: nowrap;
+    }
+    .light-mode .label-price { color: #000000; }
+
+    .label-barcode-box {
+      background: #ffffff;
+      border-radius: 1.5mm;
+      width: 38mm;
+      height: 7.5mm;
+      margin: 0 auto;
+      padding: 0.5mm 2mm 0.2mm 2mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .barcode-svg-container {
+      width: 100%;
+      height: 4.5mm;
+    }
+    .barcode-text {
+      font-size: 5pt;
+      color: #000000;
+      line-height: 1;
+      font-weight: bold;
+    }
+
+    @media screen {
+      .screen-wrapper { max-width: 1000px; margin: 0 auto; }
+      .phone-scale { transform: scale(0.45); transform-origin: top center; margin-bottom: -150mm; }
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      .screen-controls, .table-container, .screen-wrapper > h2 { display: none !important; }
+      .print-preview-container { padding: 0; background: transparent; display: block; }
+      .phone-scale { transform: none !important; margin-bottom: 0 !important; }
+      .a4-page:last-child { page-break-after: auto !important; }
+      .a4-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-wrapper">
+    <div class="screen-controls">
+      <input type="text" id="searchInput" placeholder="Search name or code..." oninput="renderTable()">
+      <button class="btn btn-secondary" onclick="selectPriced()">Select all with price</button>
+      <label class="checkbox-label">
+        <input type="checkbox" id="chkLight" onchange="renderPreview()"> Light sticker (white bg)
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="chkCut" checked onchange="renderPreview()"> Show cut lines
+      </label>
+      <button class="btn btn-secondary" onclick="generateSample()">Sample sheet</button>
+      <button class="btn" onclick="printLayout()">Make A4 sheets</button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="chkAll" onchange="toggleAll(this.checked)"></th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Copies</th>
+          </tr>
+        </thead>
+        <tbody id="productTbody"></tbody>
+      </table>
+    </div>
+
+    <h2 style="padding: 12px; font-size: 16px; background: #111827;">A4 Print Preview</h2>
+    <div class="print-preview-container" id="previewContainer"></div>
+  </div>
+
+  <script src="/labels_a4_core.js"></script>
+  <script>
+    var allProducts = [];
+    var selectedCopiesMap = {};
+
+    function fetchProducts() {
+      fetch('/api/products', { credentials: 'same-origin' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          allProducts = Array.isArray(data) ? data : (data.products || []);
+          initTableData();
+        })
+        .catch(function(err) {
+          console.error("Failed to load products", err);
+          renderTable();
+        });
+    }
+
+    function initTableData() {
+      allProducts.sort(function(a, b) {
+        return String(a.item_code || '').localeCompare(String(b.item_code || ''));
+      });
+      allProducts.forEach(function(p) {
+        var formatted = LabelsA4Core.formatPrice(p.selling_price);
+        var stock = parseInt(p.stock_level, 10);
+        if (isNaN(stock)) stock = 0;
+        var copies = stock + 2;
+        if (copies < 1) copies = 1;
+        if (copies > 500) copies = 500;
+        p._calculatedCopies = copies;
+        if (formatted !== "") {
+          selectedCopiesMap[p.id] = { selected: true, copies: copies };
+        } else {
+          selectedCopiesMap[p.id] = { selected: false, copies: copies };
+        }
+      });
+      renderTable();
+      renderPreview();
+    }
+
+    function renderTable() {
+      var q = (document.getElementById('searchInput').value || '').toLowerCase();
+      var tbody = document.getElementById('productTbody');
+      tbody.innerHTML = '';
+
+      allProducts.forEach(function(p) {
+        var codeStr = String(p.item_code || '');
+        var nameStr = String(p.name || '');
+        if (q && codeStr.toLowerCase().indexOf(q) === -1 && nameStr.toLowerCase().indexOf(q) === -1) {
+          return;
+        }
+
+        var priceStr = LabelsA4Core.formatPrice(p.selling_price);
+        var hasPrice = priceStr !== "";
+        var state = selectedCopiesMap[p.id] || { selected: false, copies: p._calculatedCopies || 1 };
+
+        var tr = document.createElement('tr');
+        if (!hasPrice) tr.className = 'no-price';
+
+        var tdChk = document.createElement('td');
+        var chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = state.selected;
+        chk.onchange = function() {
+          state.selected = chk.checked;
+          renderPreview();
+        };
+        tdChk.appendChild(chk);
+
+        var tdCode = document.createElement('td');
+        tdCode.textContent = codeStr;
+
+        var tdName = document.createElement('td');
+        tdName.textContent = nameStr;
+
+        var tdPrice = document.createElement('td');
+        tdPrice.textContent = hasPrice ? priceStr : 'no price yet';
+
+        var tdStock = document.createElement('td');
+        tdStock.textContent = p.stock_level !== undefined ? p.stock_level : '0';
+
+        var tdCopies = document.createElement('td');
+        var inputCopies = document.createElement('input');
+        inputCopies.type = 'number';
+        inputCopies.min = '1';
+        inputCopies.max = '500';
+        inputCopies.className = 'copy-input';
+        inputCopies.value = state.copies;
+        inputCopies.onchange = function() {
+          var val = parseInt(inputCopies.value, 10);
+          if (isNaN(val) || val < 1) val = 1;
+          if (val > 500) val = 500;
+          state.copies = val;
+          inputCopies.value = val;
+          renderPreview();
+        };
+        tdCopies.appendChild(inputCopies);
+
+        tr.appendChild(tdChk);
+        tr.appendChild(tdCode);
+        tr.appendChild(tdName);
+        tr.appendChild(tdPrice);
+        tr.appendChild(tdStock);
+        tr.appendChild(tdCopies);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectPriced() {
+      allProducts.forEach(function(p) {
+        var hasPrice = LabelsA4Core.formatPrice(p.selling_price) !== "";
+        if (selectedCopiesMap[p.id]) {
+          selectedCopiesMap[p.id].selected = hasPrice;
+        }
+      });
+      renderTable();
+      renderPreview();
+    }
+
+    function toggleAll(checked) {
+      allProducts.forEach(function(p) {
+        if (selectedCopiesMap[p.id]) {
+          selectedCopiesMap[p.id].selected = checked;
+        }
+      });
+      renderTable();
+      renderPreview();
+    }
+
+    function getSelectedItems() {
+      var selected = [];
+      allProducts.forEach(function(p) {
+        var st = selectedCopiesMap[p.id];
+        if (st && st.selected) {
+          var priceStr = LabelsA4Core.formatPrice(p.selling_price);
+          if (priceStr !== "") {
+            selected.push({
+              id: p.id,
+              item_code: p.item_code,
+              name: p.name,
+              selling_price: p.selling_price,
+              copies: st.copies
+            });
+          }
+        }
+      });
+      return selected;
+    }
+
+    function renderPreview() {
+      var container = document.getElementById('previewContainer');
+      container.innerHTML = '';
+
+      var selected = getSelectedItems();
+      var expanded = LabelsA4Core.expandCopies(selected);
+      var pages = LabelsA4Core.layoutSheets(expanded, 40);
+
+      var isLight = document.getElementById('chkLight').checked;
+      var isCut = document.getElementById('chkCut').checked;
+
+      if (pages.length === 0) {
+        container.innerHTML = '<div style="color:#9ca3af;padding:20px;">No products selected or ready for printing.</div>';
+        return;
+      }
+
+      pages.forEach(function(pageItems) {
+        var pageDiv = document.createElement('div');
+        pageDiv.className = 'a4-page phone-scale';
+
+        var gridDiv = document.createElement('div');
+        gridDiv.className = 'label-grid';
+
+        pageItems.forEach(function(item) {
+          var card = document.createElement('div');
+          card.className = 'label-card' + (isLight ? ' light-mode' : '') + (isCut ? ' show-cut' : '');
+
+          var topRow = document.createElement('div');
+          topRow.className = 'label-top';
+
+          var img = document.createElement('img');
+          img.src = '/receipt-logo.png';
+          img.className = 'label-logo';
+          img.alt = 'Logo';
+
+          var codeSpan = document.createElement('span');
+          codeSpan.className = 'label-code';
+          codeSpan.textContent = String(item.item_code || '');
+
+          topRow.appendChild(img);
+          topRow.appendChild(codeSpan);
+
+          var nameDiv = document.createElement('div');
+          nameDiv.className = 'label-name';
+          nameDiv.textContent = String(item.name || '');
+
+          var priceDiv = document.createElement('div');
+          priceDiv.className = 'label-price';
+          priceDiv.textContent = LabelsA4Core.formatPrice(item.selling_price);
+
+          var barcodeBox = document.createElement('div');
+          barcodeBox.className = 'label-barcode-box';
+
+          var svgWrapper = document.createElement('div');
+          svgWrapper.className = 'barcode-svg-container';
+          svgWrapper.innerHTML = LabelsA4Core.barcodeSVG(item.item_code || '000', 18);
+
+          var codeText = document.createElement('div');
+          codeText.className = 'barcode-text';
+          codeText.textContent = String(item.item_code || '');
+
+          barcodeBox.appendChild(svgWrapper);
+          barcodeBox.appendChild(codeText);
+
+          card.appendChild(topRow);
+          card.appendChild(nameDiv);
+          card.appendChild(priceDiv);
+          card.appendChild(barcodeBox);
+
+          gridDiv.appendChild(card);
+        });
+
+        pageDiv.appendChild(gridDiv);
+        container.appendChild(pageDiv);
+      });
+    }
+
+    function generateSample() {
+      var sampleItems = [];
+      var base = allProducts.length > 0 ? allProducts : [
+        { id: 's1', item_code: '099', name: 'RAIN SHOWER HEAD BRASS GOLD', selling_price: 3500 },
+        { id: 's2', item_code: '142', name: 'BASIN MIXER TAP HEAVY', selling_price: 12500 }
+      ];
+
+      for (var i = 0; i < 40; i++) {
+        var src = base[i % base.length];
+        sampleItems.push({
+          id: 'sample_' + i,
+          item_code: src.item_code || ('0' + i),
+          name: src.name || ('SAMPLE ITEM ' + i),
+          selling_price: src.selling_price || 2500,
+          copies: 1
+        });
+      }
+
+      allProducts = sampleItems;
+      selectedCopiesMap = {};
+      initTableData();
+    }
+
+    function printLayout() {
+      window.print();
+    }
+
+    window.onload = fetchProducts;
+  </script>
+</body>
+</html>
