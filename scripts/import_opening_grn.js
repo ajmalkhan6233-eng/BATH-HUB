@@ -21,6 +21,7 @@ const G = {
   G4: { v: 'FAZAAL', ref: 'FH-46223', date: '2026-10-20', total: 197100 },
 };
 const DRY = process.argv.includes('--dry');
+const RETIRE = process.argv.includes('--retire-old'); // hides (active=false) every old product first, inside the same all-or-nothing transaction; nothing is deleted
 
 function parse() {
   const out = {}; let cur = null;
@@ -42,6 +43,7 @@ function parse() {
   const c = await pool.connect(); const needsPrice = []; const review = []; const done = {};
   try {
     await c.query('BEGIN'); await c.query('SELECT pg_advisory_xact_lock($1)', [774412]);
+    if (RETIRE) { const r = await c.query('UPDATE products SET active = false WHERE active = true'); console.log('old products hidden:', r.rowCount); }
     for (const k of Object.keys(V)) {
       const ex = await c.query('SELECT id FROM suppliers WHERE LOWER(name)=LOWER($1)', [V[k].name]);
       V[k].id = ex.rows.length ? ex.rows[0].id : (await c.query('INSERT INTO suppliers (name, phone, active, notes) VALUES ($1,$2,true,$3) RETURNING id', [V[k].name, V[k].phone, V[k].notes])).rows[0].id;
