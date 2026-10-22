@@ -1,0 +1,13 @@
+/* Royal Bath Hub logo lockup CSS, loaded in <head> so the logo is never huge before the page finishes loading. Same rules as bathhub-logo.js. */
+.bh-lockup{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.bh-lockup img{height:36px;width:auto;object-fit:contain;flex-shrink:0}
+.bh-lockup .bh-name{font-weight:800;font-size:17px;line-height:1.1;letter-spacing:.3px;color:#c9a24b}
+.bh-lockup .bh-sub{display:block;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-top:2px}
+.bh-lockup-lg img{height:64px;width:auto}
+.bh-lockup-lg .bh-name{font-size:28px}
+.bh-lockup-lg .bh-sub{font-size:12px}
+.bh-strip{display:flex!important;align-items:center;justify-content:center;padding:6px 10px!important;background:linear-gradient(180deg,#1b1c20,#0d0d0f)!important;border-bottom:2px solid #c9a24b}
+.bh-strip img.bh-full{width:min(100%,420px);height:auto;max-height:96px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(212,175,55,.2))}
+.sidebar.collapsed .bh-name,.sidebar.collapsed .bh-sub{display:none}
+@media print{.bh-strip{display:none}
+}
