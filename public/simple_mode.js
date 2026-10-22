@@ -2,10 +2,10 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock'];
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers'];
   var GROUPS = [
     ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
-    ['Stock and buying', ['stock', 'grn', 'vendors']],
+    ['Stock and buying', ['stock', 'prices', 'stickers', 'grn', 'vendors']],
     ['Money', ['expenses', 'cheques', 'loans', 'moneycontrol', 'commissions', 'salary']],
     ['Papers', ['docinbox', 'documents', 'policy']],
     ['Customers and web', ['enquiries', 'replies', 'website', 'webcat', 'tilegallery', 'branches']],
@@ -69,8 +69,17 @@
     var ul = document.querySelector('.sidebar-nav');
     if (ul && !document.getElementById('sm-bar')) { var bar = document.createElement('div'); bar.id = 'sm-bar'; bar.className = 'sm-bar'; ul.parentNode.insertBefore(bar, ul); mkBtns(bar, null); }
   }
+  function addOwnerPages() {
+    if (typeof addFramePage !== 'function') return;
+    fetch('/api/me', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
+      if (!me || (me.role !== 'admin' && me.role !== 'owner')) return;
+      addFramePage({ key: 'prices', label: 'Prices', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
+      addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
+      organise();
+    }).catch(function () { /* menu stays as it is */ });
+  }
   function start() {
-    addButtons(); organise();
+    addButtons(); organise(); addOwnerPages();
     var ul = document.querySelector('.sidebar-nav'); if (!ul) return;
     var t = null; new MutationObserver(function () { if (busy) return; clearTimeout(t); t = setTimeout(organise, 80); }).observe(ul, { childList: true });
     setTimeout(organise, 600); setTimeout(organise, 2000);

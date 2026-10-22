@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prices</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f2ee;color:#1a1a1a;padding:12px}
+h1{font-size:20px}.sub{font-size:13px;color:#666;margin:2px 0 10px}
+.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input,select{font-size:16px;padding:9px;border:1px solid #bbb;border-radius:8px;background:#fff}
+button{font-size:15px;font-weight:700;padding:10px 14px;border-radius:10px;border:1px solid #1a1a1a;background:#fff;cursor:pointer;min-height:44px}
+button.go{background:#1a1a1a;color:#d4af37}button:disabled{opacity:.4}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.sum div{background:#f7f5f0;border-radius:10px;padding:8px 10px;font-size:12px;color:#555}.sum b{display:block;font-size:20px;color:#111}
+.wrap{max-height:60vh;overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px 5px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap}
+td.n{white-space:normal;min-width:130px}.p{width:92px}.low{background:#fff3cd}.none{background:#fde7e9}.sg{font-size:12px;color:#6b5a1d}
+#msg{font-size:13px;margin-top:8px}.good{color:#176b30}.bad{color:#b00020}
+</style></head><body>
+<h1>Prices</h1><div class="sub">Cost, your price and the profit on each item. Owner only.</div>
+<div class="box"><div class="sum" id="sum"></div></div>
+<div class="box"><div class="row">
+ <input id="q" placeholder="Search name or code" style="flex:1;min-width:150px">
+ <select id="cat"><option value="">All categories</option><option>Accessories</option><option>Fittings</option><option>Bathroom</option><option>Tiles</option></select>
+ <select id="flt"><option value="">All items</option><option value="none">No price</option><option value="low">Low profit</option></select>
+ <label style="font-size:13px">Lowest markup <input id="min" type="number" step="0.1" value="1.8" style="width:70px"></label>
+</div><div class="row" style="margin-top:8px"><button id="fill">Fill empty prices with suggestions</button><button class="go" id="save" disabled>Save changes</button><span id="msg"></span></div></div>
+<div class="box wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Cost</th><th>Your price</th><th>Markup</th><th>Profit %</th><th>Suggest</th><th>Category</th></tr></thead><tbody id="rows"></tbody></table></div>
+<script>
+(function(){
+var items=[],dirty={},$=function(i){return document.getElementById(i)},CATS=['','Accessories','Fittings','Bathroom','Tiles'];
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function money(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
+// Suggestion from AJ's own Metro prices (median markup by cost band), rounded up to the next 50.
+function suggest(cost){if(!(cost>0))return 0;var m=cost<400?2.8:cost<800?4.0:cost<1500?3.3:cost<2500?2.5:2.1;return Math.ceil(cost*m/50)*50}
+function stat(i){var p=i.price,c=i.cost;if(!p)return'none';if(c>0&&p/c<(parseFloat($('min').value)||1.8))return'low';return''}
+function load(){fetch('/api/item-prices',{credentials:'include'}).then(function(r){if(!r.ok)throw new Error(r.status===403?'Owner only':'Could not load ('+r.status+')');return r.json()}).then(function(d){
+ items=d.map(function(p){return{code:String(p.item_code),name:String(p.name),cat:p.category||'',cost:Number(p.avg_cost)||0,price:Number(p.selling_price)>0?Number(p.selling_price):0,stock:Number(p.stock_level)||0}});render()}).catch(function(e){$('msg').innerHTML='<span class="bad">'+esc(e.message)+'</span>'})}
+function render(){
+ var q=$('q').value.trim().toLowerCase(),c=$('cat').value,f=$('flt').value;
+ var list=items.filter(function(i){return(!q||i.code.toLowerCase().indexOf(q)>=0||i.name.toLowerCase().indexOf(q)>=0)&&(!c||i.cat===c)&&(!f||stat(i)===f)});
+ $('rows').innerHTML=list.map(function(i){var s=stat(i),mk=i.price&&i.cost?(i.price/i.cost).toFixed(2)+'x':'-',pf=i.price&&i.cost?Math.round((i.price-i.cost)/i.price*100)+'%':'-',sg=suggest(i.cost);
+  return '<tr class="'+s+'"><td><b>'+esc(i.code)+'</b></td><td class="n">'+esc(i.name)+'</td><td>'+money(i.cost)+'</td><td><input class="p" type="number" inputmode="numeric" data-p="'+esc(i.code)+'" value="'+(i.price||'')+'" placeholder="no price"></td><td>'+mk+'</td><td>'+pf+'</td><td class="sg">'+(sg?'<a href="#" data-s="'+esc(i.code)+'">'+money(sg)+'</a>':'')+'</td><td><select data-c="'+esc(i.code)+'">'+CATS.map(function(k){return'<option'+(k===i.cat?' selected':'')+'>'+k+'</option>'}).join('')+'</select></td></tr>'}).join('');
+ var np=items.filter(function(i){return!i.price}).length,lo=items.filter(function(i){return stat(i)==='low'}).length;
+ $('sum').innerHTML='<div>Items<b>'+items.length+'</b></div><div>No price<b>'+np+'</b></div><div>Low profit<b>'+lo+'</b></div><div>Unsaved changes<b>'+Object.keys(dirty).length+'</b></div>';
+ $('save').disabled=!Object.keys(dirty).length}
+function find(code){return items.filter(function(i){return i.code===code})[0]}
+function setPrice(code,v){var i=find(code);if(!i)return;i.price=v>0?v:0;(dirty[code]=dirty[code]||{}).selling_price=v>0?v:null}
+$('rows').addEventListener('change',function(e){var t=e.target;
+ if(t.dataset.p){var v=parseFloat(t.value);setPrice(t.dataset.p,isFinite(v)?v:0);render()}
+ if(t.dataset.c){var i=find(t.dataset.c);i.cat=t.value;(dirty[i.code]=dirty[i.code]||{}).category=t.value;render()}});
+$('rows').addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[data-s]');if(!a)return;e.preventDefault();var i=find(a.dataset.s);setPrice(i.code,suggest(i.cost));render()});
+$('fill').onclick=function(){items.forEach(function(i){if(!i.price&&i.cost>0)setPrice(i.code,suggest(i.cost))});render()};
+['q','cat','flt','min'].forEach(function(k){$(k).oninput=render});
+$('save').onclick=function(){var ch=Object.keys(dirty).map(function(k){var o={item_code:k};for(var x in dirty[k])o[x]=dirty[k][x];return o});if(!ch.length)return;
+ $('save').disabled=true;$('msg').textContent='Saving...';
+ fetch('/api/item-prices/save',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({changes:ch})}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
+  if(!x.ok)throw new Error(x.j.error||'Not saved');dirty={};render();$('msg').innerHTML='<span class="good">Saved '+x.j.saved+' item(s).</span>'}).catch(function(e){$('msg').innerHTML='<span class="bad">'+esc(e.message)+' Nothing was changed.</span>';$('save').disabled=false})};
+load();
+})();
+</script></body></html>

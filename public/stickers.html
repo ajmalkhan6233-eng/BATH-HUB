@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stickers</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f2ee;color:#1a1a1a;padding:12px}
+h1{font-size:20px;margin-bottom:2px}.sub{font-size:13px;color:#666;margin-bottom:10px}
+.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+label{font-size:13px;font-weight:600}
+input[type=number]{width:84px;padding:9px;font-size:16px;border:1px solid #bbb;border-radius:8px}
+button{font-size:15px;font-weight:700;padding:10px 14px;border-radius:10px;border:1px solid #1a1a1a;background:#fff;cursor:pointer;min-height:44px}
+button.go{background:#1a1a1a;color:#d4af37}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.sum div{background:#f7f5f0;border-radius:10px;padding:8px 10px;font-size:12px;color:#555}.sum b{display:block;font-size:20px;color:#111}
+.warn{background:#fff3cd;border:1px solid #e0c36a;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:8px}
+.ok{background:#e6f4ea;border:1px solid #8cc79b;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px 5px;border-bottom:1px solid #eee;text-align:left}
+td.n{max-width:34vw;overflow:hidden;text-overflow:ellipsis}.np{color:#b00020;font-weight:700}
+.q{width:62px;padding:6px;font-size:15px;border:1px solid #bbb;border-radius:6px}
+.wrap{max-height:52vh;overflow:auto}
+#print-area{display:none}
+@media print{
+ @page{size:210mm 297mm;margin:0}
+ body{background:#fff;padding:0}body>*:not(#print-area){display:none!important}
+ #print-area{display:block}
+ .pg{width:210mm;height:297mm;position:relative;page-break-after:always;overflow:hidden}.pg:last-child{page-break-after:auto}
+ .g{position:absolute;left:12mm;top:10mm;display:grid;grid-template-columns:repeat(4,46mm);grid-auto-rows:29mm;gap:2mm}
+ .l{width:46mm;height:29mm;padding:1.5mm 2mm 1.2mm;display:flex;flex-direction:column;color:#111}
+ .hd{display:flex;align-items:center;gap:1.6mm;height:7.4mm;border-bottom:.25mm solid #9a7b2f;padding-bottom:.7mm}
+ .hd img{height:6.4mm;width:auto;display:block}.sn{font:700 8.4pt/1.05 Georgia,serif;letter-spacing:.3mm;white-space:nowrap}
+ .bd{flex:1;display:flex;justify-content:space-between;padding-top:.9mm;min-height:0}
+ .tx{width:25mm;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+ .code{font:900 12pt Arial;line-height:1}.nm{font:700 6.2pt/1.12 Arial;height:7.2mm;overflow:hidden;text-transform:uppercase}.nm.sm{font-size:5.5pt}
+ .pr{font:900 12.5pt Arial;line-height:1;white-space:nowrap}.rs{font-size:7pt}.blank{display:inline-block;width:14mm;border-bottom:.3mm solid #111;height:3.2mm}
+ .rt{width:16mm;display:flex;flex-direction:column;align-items:flex-end}
+ .fr{width:15.4mm;height:15.4mm;border:.3mm solid #111;border-radius:1.6mm;padding:.9mm}
+ .qr{position:relative;width:13.6mm;height:13.6mm}.qr img{width:13.6mm;height:13.6mm;display:block}
+ .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;font:900 4.4pt Georgia,serif;padding:.35mm .5mm;border:.2mm solid #111;border-radius:.4mm;line-height:1}
+ .ct{font:700 5.6pt Arial;color:#444;letter-spacing:.2mm;margin-top:.3mm;line-height:1}
+ .cutv,.cuth{position:absolute;border:0 dotted #888}.cutv{border-left-width:.2mm;top:6mm;height:285mm}.cuth{border-top-width:.2mm;left:8mm;width:194mm}
+}
+</style></head><body>
+<h1>Stickers</h1><div class="sub">Pick the items, check the numbers, print on A4 sticker paper. 36 per sheet.</div>
+<div class="box"><div class="row">
+ <label>From code <input type="number" id="from" min="1" inputmode="numeric"></label>
+ <label>To code <input type="number" id="to" min="1" inputmode="numeric"></label>
+ <button id="pick">Pick range</button><button id="all">All</button><button id="none">None</button>
+ <label>Spare per item <input type="number" id="spare" value="2" min="0" max="20" inputmode="numeric"></label>
+</div></div>
+<div class="box"><div class="sum" id="sum"></div><div id="msg"></div>
+ <div class="row" style="margin-top:10px"><button class="go" id="print">Print stickers</button><span style="font-size:12px;color:#666">Sticker count = pieces + spare. Change a number in the list if needed.</span></div></div>
+<div class="box wrap"><table><thead><tr><th></th><th>Code</th><th>Name</th><th>Price</th><th>Pieces</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div id="print-area"></div>
+<script src="/costcode.js"></script>
+<script>
+(function(){
+var items=[],$=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function money(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
+function spare(){var v=parseInt($('spare').value,10);return isFinite(v)&&v>=0?v:0}
+function load(){fetch('/api/products',{credentials:'include'}).then(function(r){if(!r.ok)throw new Error('Could not load items ('+r.status+')');return r.json()}).then(function(d){
+ items=d.filter(function(p){return p.active!==false}).sort(function(a,b){return String(a.item_code).localeCompare(String(b.item_code),undefined,{numeric:true})}).map(function(p){
+  var pc=Math.max(0,Math.round(Number(p.stock_level)||0));return{code:String(p.item_code),name:String(p.name),price:Number(p.selling_price)>0?Number(p.selling_price):0,cost:Number(p.avg_cost)||0,stock:pc,qty:pc,sel:false}});
+ var p=new URLSearchParams(location.search);if(p.get('from')&&p.get('to'))pickRange(+p.get('from'),+p.get('to'));render()}).catch(function(e){$('msg').innerHTML='<div class="warn">'+esc(e.message)+'</div>'})}
+function numOf(c){var m=/^\d+$/.test(c)?parseInt(c,10):NaN;return m}
+function pickRange(a,b){items.forEach(function(i){var n=numOf(i.code);i.sel=isFinite(n)&&n>=a&&n<=b})}
+function render(){
+ $('rows').innerHTML=items.map(function(i,x){return '<tr><td><input type="checkbox" data-i="'+x+'"'+(i.sel?' checked':'')+'></td><td><b>'+esc(i.code)+'</b></td><td class="n">'+esc(i.name)+'</td><td>'+(i.price?money(i.price):'<span class="np">NO PRICE</span>')+'</td><td><input class="q" type="number" min="0" inputmode="numeric" data-q="'+x+'" value="'+i.qty+'"></td></tr>'}).join('');
+ summary()}
+function summary(){
+ var s=items.filter(function(i){return i.sel}),pieces=0,stick=0,stock=0,np=[];
+ s.forEach(function(i){pieces+=i.qty;stock+=i.stock;stick+=i.qty+spare();if(!i.price)np.push(i.code)});
+ var sheets=Math.ceil(stick/36);
+ $('sum').innerHTML='<div>Items<b>'+s.length+'</b></div><div>Pieces<b>'+pieces+'</b></div><div>Stickers<b>'+stick+'</b></div><div>A4 sheets<b>'+sheets+'</b></div><div>Pieces in stock now<b>'+stock+'</b></div>';
+ var h='';
+ if(!s.length)h='<div class="warn">Nothing picked yet. Use From / To, or tick items.</div>';
+ else{
+  h+=pieces===stock?'<div class="ok">Check: pieces match the stock in the app ('+stock+').</div>':'<div class="warn">Check: pieces ('+pieces+') are not the same as the stock in the app ('+stock+'). Fine if you changed it on purpose.</div>';
+  if(np.length)h+='<div class="warn">'+np.length+' item(s) have no price and will print a blank line to write on: '+esc(np.join(', '))+'</div>';
+ }
+ $('msg').innerHTML=h;$('print').disabled=!s.length}
+function lab(i){
+ var nm=esc(i.name),sm=i.name.length>28?' sm':'';
+ var pr='<span class="rs">Rs.</span> '+(i.price?money(i.price):'<i class="blank"></i>');
+ var cl=(window.CostCode&&i.cost)?CostCode.costCode(i.cost):'';
+ return '<div class="l"><div class="hd"><img src="/brand/rbh-mono-black.png" alt=""><div class="sn">ROYAL<br>BATH HUB</div></div><div class="bd"><div class="tx"><div class="code">'+esc(i.code)+'</div><div class="nm'+sm+'">'+nm+'</div><div class="pr">'+pr+'</div></div><div class="rt"><div class="fr"><div class="qr"><img src="/api/qr/'+encodeURIComponent(i.code)+'.svg" alt=""><b class="mid">RBH</b></div></div><div class="ct">'+esc(cl)+'</div></div></div></div>'}
+function pages(){
+ var all=[];items.filter(function(i){return i.sel}).forEach(function(i){for(var k=0;k<i.qty+spare();k++)all.push(i)});
+ var out='';for(var p=0;p<all.length;p+=36){var cuts='';for(var c=1;c<4;c++)cuts+='<div class="cutv" style="left:'+(12+c*46+(c-1)*2+1)+'mm"></div>';for(var r=1;r<9;r++)cuts+='<div class="cuth" style="top:'+(10+r*29+(r-1)*2+1)+'mm"></div>';
+  out+='<div class="pg"><div class="g">'+all.slice(p,p+36).map(lab).join('')+'</div>'+cuts+'</div>'}
+ return out}
+$('rows').addEventListener('change',function(e){var t=e.target;if(t.dataset.i!==undefined){items[+t.dataset.i].sel=t.checked;summary()}if(t.dataset.q!==undefined){var v=parseInt(t.value,10);items[+t.dataset.q].qty=isFinite(v)&&v>=0?v:0;summary()}});
+$('pick').onclick=function(){var a=parseInt($('from').value,10),b=parseInt($('to').value,10);if(!isFinite(a)||!isFinite(b)||a>b){$('msg').innerHTML='<div class="warn">Type From and To numbers, for example 1 and 58.</div>';return}pickRange(a,b);render()};
+$('all').onclick=function(){items.forEach(function(i){i.sel=true});render()};
+$('none').onclick=function(){items.forEach(function(i){i.sel=false});render()};
+$('spare').oninput=summary;
+$('print').onclick=function(){
+ var s=items.filter(function(i){return i.sel});if(!s.length)return;
+ var np=s.filter(function(i){return !i.price}).length;
+ if(np&&!confirm(np+' item(s) have no price. They will print a blank line. Print anyway?'))return;
+ var area=$('print-area');area.innerHTML=pages();
+ var imgs=[].slice.call(area.querySelectorAll('img'));
+ Promise.all(imgs.map(function(im){return im.complete?1:new Promise(function(r){im.onload=im.onerror=r})})).then(function(){window.print()})};
+load();
+})();
+</script></body></html>
