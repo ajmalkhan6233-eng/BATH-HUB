@@ -249,6 +249,7 @@
 
     <div class="share-buttons">
       <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="share-btn" id="vcfBtn" href="#" style="display:none">Save contact</a>
       <a class="share-btn email" id="emailBtn" href="#">Email</a>
       <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
       <button class="share-btn print" onclick="printBill()">Print</button>
@@ -537,10 +538,21 @@ function renderBill(bill) {
   document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
   document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
   document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
+  // Save contact: a small contact card (.vcf). One tap on the phone saves the name and number.
+  const vb = document.getElementById('vcfBtn'), vnum = toWhatsAppNumber(bill.customer_phone);
+  if (vb) {
+    if (vnum) {
+      const nm = String(bill.customer_name || 'Customer').replace(/[\r\n;,]/g, ' ').trim();
+      const vcf = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + nm + '\r\nN:' + nm + ';;;;\r\nTEL;TYPE=CELL:+' + vnum + '\r\nORG:Royal Bath Hub customer\r\nEND:VCARD\r\n';
+      vb.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(vcf);
+      vb.download = nm.replace(/[^A-Za-z0-9]+/g, '_') + '.vcf';
+      vb.style.display = '';
+    } else { vb.style.display = 'none'; }
+  }
 
   document.getElementById('formPanel').style.display = 'none';
   document.getElementById('billPanel').style.display = 'block';
-  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Attach a photo or file to this bill</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
+  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Take a photo of the paper bill, or upload it here</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
 }
 
 // wa.me needs the full international number, no leading 0 and no '+'.
