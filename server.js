@@ -305,6 +305,7 @@ const CASH_IN_EXPR  = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
+app.get('/site', require('./utils/siteRedirect').siteRedirect());   // SITE_REDIRECT=netlify in .env sends /site to the real website; off by default
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
 app.use(require('./routes/site_catalogue'));   // website extras: /robots.txt, /sitemap.xml, /site with absolute links when SITE_URL is set, /api/site/catalogue.pdf (public)
 app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root: __dirname }));
