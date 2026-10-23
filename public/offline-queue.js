@@ -389,7 +389,7 @@
                         return adapter.putResult(rec).then(function () { return adapter.remove(item.seq); }).then(function () { return true; });
                     }
                     if (code >= 500 || code === 401 || code === 408 || code === 429 || stillProcessing) {      // try again later; nothing is lost
-                        item.state = 'waiting'; lastError = (code === 401 ? 'Please log in again. ' : '') + errText(body, resp);
+                        item.state = 'waiting'; lastError = (code === 401 ? 'Please log in again. ' : 'Network: server busy or restarting (' + code + '). ') + errText(body, resp);   // 5xx/408/429 = the server is down for a moment: show OFFLINE (amber/grey), not a red SYNC ERROR
                         stopped = true; failures++;
                         return adapter.update(item).then(function () { return false; });
                     }
@@ -504,6 +504,7 @@
             var label, bg, title;
             if (s.state === 'offline') { label = 'OFFLINE'; bg = '#6b7280'; title = 'Saved on this device' + (s.waiting ? ' (' + s.waiting + ' waiting)' : ''); }
             else if (s.state === 'syncing') { label = 'SYNCING (' + s.waiting + ' waiting)'; bg = '#d97706'; title = 'Sending saved items'; }
+            else if (s.state === 'error' && /^Please log in/i.test(String(s.lastError || '')) && !s.rejected) { label = 'LOG IN AGAIN'; bg = '#d97706'; title = 'Your sign-in ended. Log in again and saved items will send.'; }
             else if (s.state === 'error') { label = 'SYNC ERROR'; bg = '#c62828'; title = s.lastError || (s.rejected + ' item(s) refused by the server') + ' - click for details'; }
             else { label = 'ONLINE'; bg = '#2e7d32'; title = 'Connected'; }
             pill.textContent = label; pill.style.background = bg; pill.title = title;
