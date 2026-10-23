@@ -13,3 +13,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 | Cloud test copy | scripts/dev/cloud_rig.sh | DONE | test only, never live |
 | Session record | docs/SESSION_22OCT_RECORD.md | DONE | rules, built, open items |
 | Skipped on purpose | caveman, code-review-graph, Supabase, n8n, Dify, Langflow, LangChain | NOT NEEDED | duplicates what we have |
+| Vendor 360 + Ctrl+K search | branch claude/vendor360 (routes/vendor360.js, public/vendor360.html/.js, public/lib/palette.js) | BUILT, NOT LIVE | read-only, owner only; goes live after Task 111 |

@@ -2,11 +2,11 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum'];
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum', 'vendor360'];
   var GROUPS = [
     ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
     ['Items', ['stock', 'prices', 'stickers']],
-    ['Purchasing', ['grn', 'vendorsum', 'vendors', 'cheques']],
+    ['Purchasing', ['grn', 'vendorsum', 'vendor360', 'vendors', 'cheques']],
     ['Money', ['expenses', 'loans', 'commissions', 'salary', 'moneycontrol']],
     ['Reports', ['reportshub', 'reports', 'competitors']],
     ['Papers', ['docinbox', 'documents', 'policy']],
@@ -80,6 +80,7 @@
       addFramePage({ key: 'prices', label: 'Item catalog', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
       addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
       addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
+      addFramePage({ key: 'vendor360', label: 'Vendor 360', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-truck"/></svg>', url: '/vendor360.html', sub: 'One vendor: bills, payments, cheques, statement', after: 'vendorsum' });
       addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
       var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';
       organise();

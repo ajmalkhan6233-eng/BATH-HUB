@@ -614,6 +614,7 @@ app.use('/api', require('./routes/cheque_clearing'));      // owed / in transit 
 app.use('/api', require('./routes/payment_planner'));      // vendor cheque schedule -> /api/payment-planner* (additive; writes only cheque_register)
 app.use('/api', require('./routes/items_import'));         // CSV item import (dry run by default) -> /api/items/import-csv
 app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
+app.use('/api/vendor360', require('./routes/vendor360')({ pool: require('./utils/pool') })); // Vendor 360 (read-only, owner only)
 app.use('/api/vendor-credit', require('./routes/vendor_credit')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor credit view: owed, cheque not written, written not cleared, owed after 1/2/3 months (read only); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
 const laylaOwner = require('./layla_owner/boot')({ pool: require('./utils/pool') });   // owner assistant (Build 2; router is routes/layla_owner' built inside layla_owner/boot): login enforced by the global /api gate
