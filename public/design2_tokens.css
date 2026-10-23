@@ -147,3 +147,17 @@ html #page-stock table td:nth-child(3) { white-space: normal; min-width: 160px; 
 /* gold used as TEXT on light surfaces must stay readable: darker gold for text, bright gold stays for fills and markers */
 html [style*="color:var(--gold)"], html [style*="color: var(--gold)"] { color: var(--gold-text) !important; }
 html .report-row.total, html .login-title { color: var(--gold-text); }
+
+/* ---- LIGHT and WATER themes: the rules above read --color-* names, but those names are only defined for the default look.
+   Without these aliases the top bar, side menu, login box and every gold button turned see-through (Sign In vanished, cards showed through the header, 23 Oct). ---- */
+html[data-theme="light"], html[data-theme="water"] {
+  --color-primary: var(--gold-primary); --color-primary-hover: var(--gold-hover); --color-primary-light: var(--gold-bg-subtle);
+  --color-accent: var(--gold-primary); --color-accent-hover: var(--gold-active);
+  --color-success: var(--status-success); --color-success-bg: var(--status-success-bg);
+  --color-warning: var(--status-warning); --color-warning-bg: var(--status-warning-bg);
+  --color-danger: var(--status-danger); --color-danger-bg: var(--status-danger-bg);
+  --color-bg-app: var(--bg-canvas); --color-bg-surface: var(--bg-surface); --color-bg-surface-alt: var(--bg-surface-elevated);
+  --color-border: var(--border-subtle); --color-border-focus: var(--border-focus);
+  --color-text-main: var(--text-primary); --color-text-muted: var(--text-muted); --color-text-placeholder: var(--text-muted);
+  --color-text-inverse: var(--text-on-accent);
+}
