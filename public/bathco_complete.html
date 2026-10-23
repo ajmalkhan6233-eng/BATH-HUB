@@ -312,10 +312,6 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="reports"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg></span><span class="nav-label">Reports</span></li>
     </ul>
     <div class="sidebar-footer">
-      <div class="sidebar-toggle" onclick="toggleSidebar()">
-        <span style="font-size:18px"><svg class="bh-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg></span>
-        <span class="nav-label toggle-lbl">Collapse</span>
-      </div>
     </div>
   </nav>
 
@@ -1655,7 +1651,6 @@ async function applyAppSettings() {
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
   s.classList.toggle('collapsed');
-  document.querySelector('.toggle-lbl').textContent = s.classList.contains('collapsed') ? 'Expand' : 'Collapse';
 }
 
 /* ─────────────────────────────────────────────

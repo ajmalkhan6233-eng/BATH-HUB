@@ -427,8 +427,18 @@
             }).catch(function () { /* staff get 403; offline is fine */ });
         }
 
+        // Clear a stuck error message and try again (nothing is removed).
+        function clearError() { lastError = null; failures = 0; emit(); return replay(); }
+        // Remove every refused item. Returns what was removed so the caller can save a copy first.
+        function discardAllRejected() {
+            return adapter.all().then(function (items) {
+                var rej = items.filter(function (i) { return i.state === 'rejected'; });
+                return Promise.all(rej.map(function (i) { return adapter.remove(i.seq); })).then(function () { lastError = null; failures = 0; return rej; });
+            }).then(function (rej) { return refresh().then(function () { return rej; }); });
+        }
+
         return {
-            deviceId: deviceId, adapter: adapter, ready: ready,
+            deviceId: deviceId, adapter: adapter, ready: ready, clearError: clearError, discardAllRejected: discardAllRejected,
             fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected, discardRejected: discardRejected,
             status: status, on: on, list: function () { return adapter.all(); }, results: function () { return adapter.results(); },
             refresh: refresh, refreshServerCounts: refreshServerCounts, backoffMs: backoffMs,
@@ -468,7 +478,22 @@
                     row.appendChild(del);
                     panel.appendChild(row);
                 });
-                if (!rej.length) panel.appendChild(txt('div', 'Nothing refused.', 'color:#666'));
+                if (!rej.length) {
+                    var le = inst.status().lastError;
+                    panel.appendChild(txt('div', le ? 'Nothing refused. Last message: ' + le : 'Nothing refused.', 'color:#666'));
+                    var clr = txt('button', 'Clear and try again', 'margin-top:8px;padding:6px 14px;border:1px solid #2e7d32;border-radius:6px;background:#fff;color:#2e7d32;font-weight:600;cursor:pointer');
+                    clr.type = 'button'; clr.onclick = function () { inst.clearError(); open = false; renderPanel(); };
+                    panel.appendChild(clr);
+                } else {
+                    var all = txt('button', 'Save a copy and discard all', 'margin:8px 8px 0 0;padding:6px 14px;border:1px solid #b00020;border-radius:6px;background:#fff;color:#b00020;font-weight:600;cursor:pointer');
+                    all.type = 'button';
+                    all.onclick = function () {
+                        if (!doc.defaultView.confirm('Save a copy of all ' + rej.length + ' refused items to a file, then remove them from this device?')) return;
+                        try { var a = doc.createElement('a'); a.href = doc.defaultView.URL.createObjectURL(new doc.defaultView.Blob([JSON.stringify(rej, null, 2)], { type: 'application/json' })); a.download = 'refused-items-' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); } catch (e) { /* copy not possible: still ask before removing */ if (!doc.defaultView.confirm('Could not save a copy. Remove anyway?')) return; }
+                        inst.discardAllRejected().then(function () { open = false; renderPanel(); });
+                    };
+                    panel.appendChild(all);
+                }
                 var btn = txt('button', 'Retry', 'margin-top:8px;padding:6px 14px;border:0;border-radius:6px;background:#b00020;color:#fff;font-weight:600;cursor:pointer');
                 btn.type = 'button';
                 btn.onclick = function () { inst.retryRejected(); };
@@ -527,6 +552,8 @@
     OfflineQueue.results = function () { return inst().results(); };
     OfflineQueue.retryRejected = function () { return inst().retryRejected(); };
     OfflineQueue.discardRejected = function (seq) { return inst().discardRejected(seq); };
+    OfflineQueue.discardAllRejected = function () { return inst().discardAllRejected(); };
+    OfflineQueue.clearError = function () { return inst().clearError(); };
     OfflineQueue.mountChip = function (el) { return mountChip(inst(), el); };
 
     root.OfflineQueue = OfflineQueue;

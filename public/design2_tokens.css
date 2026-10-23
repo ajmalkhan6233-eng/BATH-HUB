@@ -8,7 +8,7 @@
    ========================================================================== */
 
 /* ---- 1. GUIDE TOKENS, SHOP COLOURS (the guide's blue is replaced; green / amber / red keep their meaning) ---- */
-html:root, html[data-theme="dark"], html[data-theme="gold"] {
+html:root:not([data-theme="water"]):not([data-theme="light"]), html[data-theme="dark"], html[data-theme="gold"] {   /* default look only: the Water and Light themes must win when chosen */
   --color-primary: #0B0B0C;          /* black */
   --color-primary-hover: #26262A;    /* black hover */
   --color-primary-light: #F6F0DC;    /* gold tint */
@@ -54,7 +54,8 @@ html:root, html[data-theme="dark"], html[data-theme="gold"] {
 }
 
 /* ---- 3. BASE ---- */
-html body { font-family: var(--font-family-base); background-color: var(--color-bg-app); color: var(--color-text-main); }
+html body { font-family: var(--font-family-base); }
+html:not([data-theme="water"]):not([data-theme="light"]) body { background-color: var(--color-bg-app); color: var(--color-text-main); }
 html ::selection { background: var(--color-primary-light); }
 html ::-webkit-scrollbar-thumb { background: #C4C4BE; }
 html :focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }

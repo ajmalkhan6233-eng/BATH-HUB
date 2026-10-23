@@ -2,18 +2,18 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers'];
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum'];
   var GROUPS = [
     ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
-    ['Goods', ['stock', 'prices', 'stickers', 'grn', 'vendorsum']],
-    ['Accounting', ['vendors', 'cheques', 'expenses', 'loans', 'commissions', 'salary']],
-    ['Cash', ['moneycontrol']],
+    ['Items', ['stock', 'prices', 'stickers']],
+    ['Purchasing', ['grn', 'vendorsum', 'vendors', 'cheques']],
+    ['Money', ['expenses', 'loans', 'commissions', 'salary', 'moneycontrol']],
     ['Reports', ['reportshub', 'reports', 'competitors']],
     ['Papers', ['docinbox', 'documents', 'policy']],
     ['Customers and web', ['enquiries', 'replies', 'website', 'webcat', 'tilegallery', 'branches']],
     ['Settings and admin', ['settings', 'shoptools', 'adminusers', 'adminaudit', 'adminsystem', 'adminsettings', 'agentreview', 'agent-rules', 'content']]
   ];
-  var OPEN_DEFAULT = { 'Daily work': 1, 'Goods': 1 };
+  var OPEN_DEFAULT = { 'Daily work': 1, 'Items': 1, 'Purchasing': 1 };
   var busy = false;
   function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (_) { /* not remembered */ } }
@@ -54,10 +54,13 @@
       Array.prototype.forEach.call(document.querySelectorAll('.sm-modebtn'), function (b) { b.textContent = full ? 'Simple' : 'Full menu'; });
     } finally { setTimeout(function () { busy = false; }, 0); }
   }
-  function refresh() {
-    var go = function () { var u = location.pathname + location.search + location.hash; location.reload(); return u; };
-    try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) { navigator.serviceWorker.getRegistration().then(function (r) { return r ? r.update() : null; }).catch(function () {}).then(go); return; } } catch (_) { /* fall through */ }
-    go();
+  function refresh() {   // soft refresh: reload the DATA of this screen only. The page, the login and the menu stay put.
+    var act = document.querySelector('.nav-item.active'), key = act && act.dataset.page;
+    try { if (typeof navigate === 'function' && key) navigate(key); } catch (_) { /* keep going */ }
+    try { if (window.BHDashboardPro) window.BHDashboardPro.reload(); } catch (_) { /* keep going */ }
+    try { var fr = key === 'pos' ? document.getElementById('pos-frame') : document.getElementById('frame-' + key); if (fr && fr.contentWindow) fr.contentWindow.location.reload(); } catch (_) { /* keep going */ }
+    try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () {}); } catch (_) { /* optional */ }
+    try { if (typeof toast === 'function') toast('Refreshed', 'success'); } catch (_) { /* optional */ }
   }
   function mkBtns(host, first) {
     var m = document.createElement('button'); m.className = 'sm-pill sm-modebtn'; m.type = 'button';
