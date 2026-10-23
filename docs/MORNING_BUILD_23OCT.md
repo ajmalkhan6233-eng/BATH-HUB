@@ -7,3 +7,5 @@ Handover: branch claude/rbh-ux-skill. Adds 23 skills (.claude/skills: 6 app skil
 4. Read the top 8 lines of AI_BRIDGE/CHAT_LOG.md (shared notes, see rbh-sync). Push work. Top LIVE line and the 5-line SUMMARY.
 
 After this, chat's next builds (cloud, AJ says "go N"): 1 customer return screen, 2 cash in/out/leftover report, 3 one POS instead of two, 4 hold/recall bills, 5 low-stock warning at POS. Full list: docs/UX_CHECKLIST.md.
+
+Also arrives: docs/INSTALLED.md (the list of everything installed or added). Task 108 updates its states.
