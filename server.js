@@ -627,6 +627,7 @@ app.use('/api', require('./routes/item_catalog'));       // routes are relative 
 app.use('/api', require('./routes/qr_svg'));            // /api/qr/<code>.svg (sticker QR pictures)
 app.use('/api', require('./routes/item_prices'));       // /api/item-prices (owner Prices screen)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
+app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
