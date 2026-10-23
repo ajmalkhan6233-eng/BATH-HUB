@@ -342,12 +342,20 @@ async function callOpenRouter(messages, langNote = '') {
         { role: 'system', content: getSystemPrompt(langNote) },
         ...messages,
     ];
-    const response = await openRouterClient.chat.completions.create({
-        model: DEFAULT_MODEL,
-        max_tokens: 1024,
-        messages: orMessages,
-    });
-    const raw = stripReasoning(response.choices[0].message.content.trim());
+    // The free model sometimes answers with an EMPTY message (content null): that crashed here with null.trim() and the customer got
+    // "technical hiccup". Ask once more; if still empty, throw a clear error so the caller can try its other route.
+    let response, text = '';
+    for (let attempt = 1; attempt <= 2 && !text; attempt++) {
+        response = await openRouterClient.chat.completions.create({
+            model: DEFAULT_MODEL,
+            max_tokens: 1024,
+            messages: orMessages,
+        });
+        text = String((response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content) || '').trim();
+        if (!text) console.warn(`[LAYLA] OpenRouter gave an empty reply (attempt ${attempt}/2)`);
+    }
+    if (!text) throw new Error('OpenRouter returned an empty reply twice');
+    const raw = stripReasoning(text);
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
     console.log('[LAYLA] Using OpenRouter fallback — raw:', cleaned.slice(0, 200));
 
