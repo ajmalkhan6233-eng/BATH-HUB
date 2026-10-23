@@ -799,7 +799,7 @@ function sanitizeText(input, maxLen = 4000) {
 }
 
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
-const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
+const { webhookAuth, safeInboxPath, safeInboxMediaPath } = require('./middleware/webhookAuth');
 const agentWhatsapp = require('./utils/agentWhatsapp');
 agentWhatsapp.watchDbSwitch(pool);   // the Admin Settings switch (app_settings.whatsapp_draft_only) overrides AGENT_DRAFT_ONLY
 const documentInbox = require('./routes/document_inbox');
@@ -830,8 +830,14 @@ app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
 
         const phone = messageObj.from || body.from;
         const msgType = messageObj.type || 'text';
-        const isVoiceNote = msgType === 'audio';
-        const text = sanitizeText(messageObj.text?.body || body.message || '');
+        let isVoiceNote = msgType === 'audio';
+        let text = sanitizeText(messageObj.text?.body || body.message || '');
+        // Voice note + speech-to-text switched on (utils/stt.js): turn it into text and answer it like a typed message.
+        if (isVoiceNote && body.filePath && require('./utils/stt').enabled()) {
+            const f = /\.(ogg|opus|oga|mp3|m4a|aac|wav)$/i.test(String(body.filePath)) ? safeInboxMediaPath(body.filePath, WA_INBOX_ROOT) : null;
+            const heard = f ? await require('./utils/stt').transcribe(f) : null;
+            if (heard) { text = sanitizeText(heard); isVoiceNote = false; console.log('[STT] voice note heard as text'); }
+        }
 
         if (!phone) {
             return res.status(400).json({ error: 'Missing phone number' });

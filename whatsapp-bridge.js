@@ -241,6 +241,17 @@ client.on('message', async (msg) => {
     if (msg.hasMedia) {
         try {
             const media = await msg.downloadMedia();
+            // Customer voice note: save it in the inbox and send it as an audio message; the server turns it into text (utils/stt.js)
+            // when speech-to-text is switched on, else asks the customer to type. The file path never comes from the customer.
+            if (media && media.mimetype?.startsWith('audio/')) {
+                const adir = path.join(INBOX_ROOT, todayLK()); fs.mkdirSync(adir, { recursive: true });
+                const apath = path.join(adir, `${Date.now()}-whatsapp-${resolved}.ogg`);
+                fs.writeFileSync(apath, Buffer.from(media.data, 'base64'));
+                const ar = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: resolved, type: 'audio', filePath: apath, message: '' }, { timeout: 120000, headers: WEBHOOK_HEADERS });
+                const areply = sanitizeAssistantOutput(ar.data?.reply);
+                if (areply) await msg.reply(areply);
+                return;
+            }
             if (!media || !media.mimetype?.startsWith('image/')) {
                 await msg.reply(`I can only read photos of day/expense sheets right now — not documents, video, or audio. Please send a photo.`);
                 return;
