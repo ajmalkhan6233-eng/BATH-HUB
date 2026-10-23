@@ -1,13 +1,14 @@
-# Voice note -> text, free, runs on this PC only (faster-whisper). Usage: python scripts/stt_whisper.py <audio file>
-# Prints the spoken words and nothing else. First run downloads the "small" model once (about 460 MB), after that it is offline.
-import sys
+# Voice note -> plain text for customer chats (utils/stt.js). Thin wrapper: same reader as the owner chat (scripts/transcribe.py).
+import sys, os, json, subprocess
 if len(sys.argv) < 2:
     sys.exit(2)
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
     pass
-from faster_whisper import WhisperModel
-model = WhisperModel("small", device="cpu", compute_type="int8")
-segments, _info = model.transcribe(sys.argv[1], beam_size=5, vad_filter=True)
-print(" ".join(s.text.strip() for s in segments).strip())
+r = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "transcribe.py"), sys.argv[1]],
+                   capture_output=True, text=True, encoding="utf-8")
+try:
+    print(json.loads(r.stdout).get("text", "").strip())
+except Exception:
+    sys.exit(1)
