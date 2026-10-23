@@ -85,7 +85,7 @@
     if (C.n7 > 0) al.push(['', C.n7 + ' cheque(s) due in 7 days: ' + lkr(C.due7)]);
     if (st.out_of_stock > 0) al.push(['', st.out_of_stock + ' item(s) out of stock']);
     if (st.low_stock > 0) al.push(['', st.low_stock + ' item(s) running low']);
-    if (st.no_price > 0) al.push(['', st.no_price + ' item(s) have no selling price yet (Prices screen)']);
+    if (st.no_price > 0) al.push(['', st.no_price + ' item(s) have no selling price yet (Item catalog screen)']);
     if (CU.overdue > 0) al.push(['', 'Customers overdue to pay us: ' + lkr(CU.overdue)]);
     h += '<div class="dp-card" style="margin-bottom:12px"><h3>Needs attention</h3>' + (al.length ? al.map(function (a) { return '<div class="dp-alert ' + a[0] + '">' + esc(a[1]) + '</div>'; }).join('') : '<div class="dp-alert ok">All clear. Nothing urgent.</div>') + '</div>';
     /* 4 trends */
@@ -102,7 +102,7 @@
       + tile('Stock value (cost)', lkr(st.cost_value), n(st.items) + ' items · ' + Math.round(n(st.units)).toLocaleString('en-LK') + ' pieces')
       + tile('Stock value (selling)', lkr(st.retail_value), 'Priced items only')
       + tile('Out of stock', n(st.out_of_stock), 'Low stock: ' + n(st.low_stock))
-      + tile('Items without price', n(st.no_price), 'Set them on the Prices screen')
+      + tile('Items without price', n(st.no_price), 'Set them on the Item catalog screen')
       + '</div>';
     h += '<div class="dp-grid2"><div class="dp-card"><h3>Reorder soon</h3>' + (st.low_list.length ? st.low_list.map(function (x) { return row(esc(x.item_code + ' ' + x.name), n(x.stock_level) <= 0 ? '<span class="down">OUT</span>' : n(x.stock_level) + ' left'); }).join('') : '<div class="dp-note">Nothing low.</div>') + '</div>'
       + '<div class="dp-card"><h3>Stock by category (cost)</h3>' + (st.categories.length ? st.categories.map(function (x) { return row(esc(x.category) + ' (' + x.items + ')', lkr(x.cost_value)); }).join('') : '<div class="dp-note">No items.</div>') + '</div>'
