@@ -57,16 +57,18 @@ router.get('/dashboard-pro', ownerOnly, async (req, res) => {
         AND (stock_level <= 0 OR (reorder_threshold > 0 AND stock_level <= reorder_threshold)) ORDER BY stock_level ASC, name LIMIT 8`)),
     safe('cats', () => q(`SELECT COALESCE(NULLIF(category,''),'No category') AS category, COUNT(*) AS items, COALESCE(SUM(GREATEST(stock_level,0) * avg_cost),0) AS cost_value
         FROM products WHERE active = true GROUP BY 1 ORDER BY 3 DESC LIMIT 6`)),
-    safe('vendors', () => q(`WITH x AS (SELECT b.vendor_name, b.due_date, b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) AS owed FROM vendor_bills b
+    safe('vendors', () => q(`WITH x AS (SELECT b.vendor_name, b.due_date, b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) - COALESCE(k.cleared,0) AS owed FROM vendor_bills b
           LEFT JOIN (SELECT bill_id, SUM(amount) AS paid FROM vendor_payments GROUP BY bill_id) p ON p.bill_id = b.id
-          LEFT JOIN (SELECT bill_id, SUM(amount) AS cn FROM vendor_credit_notes GROUP BY bill_id) n ON n.bill_id = b.id WHERE b.voided = false)
+          LEFT JOIN (SELECT bill_id, SUM(amount) AS cn FROM vendor_credit_notes GROUP BY bill_id) n ON n.bill_id = b.id
+          LEFT JOIN (SELECT bill_id, SUM(amount) AS cleared FROM vendor_bill_cheques WHERE status = 'CLEARED' GROUP BY bill_id) k ON k.bill_id = b.id WHERE b.voided = false)   -- cleared cheques count as paid, same as the vendor ledger (audit 24 Oct)
         SELECT COALESCE(SUM(owed) FILTER (WHERE owed > 0),0) AS owed, COUNT(*) FILTER (WHERE owed > 0) AS bills,
           COALESCE(SUM(owed) FILTER (WHERE owed > 0 AND due_date < CURRENT_DATE),0) AS overdue,
           COALESCE(SUM(owed) FILTER (WHERE owed > 0 AND due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7),0) AS due7,
           COALESCE(SUM(owed) FILTER (WHERE owed > 0 AND due_date IS NULL),0) AS no_due_date FROM x`)),
-    safe('vendorList', () => q(`WITH x AS (SELECT b.vendor_name, b.due_date, b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) AS owed FROM vendor_bills b
+    safe('vendorList', () => q(`WITH x AS (SELECT b.vendor_name, b.due_date, b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) - COALESCE(k.cleared,0) AS owed FROM vendor_bills b
           LEFT JOIN (SELECT bill_id, SUM(amount) AS paid FROM vendor_payments GROUP BY bill_id) p ON p.bill_id = b.id
-          LEFT JOIN (SELECT bill_id, SUM(amount) AS cn FROM vendor_credit_notes GROUP BY bill_id) n ON n.bill_id = b.id WHERE b.voided = false)
+          LEFT JOIN (SELECT bill_id, SUM(amount) AS cn FROM vendor_credit_notes GROUP BY bill_id) n ON n.bill_id = b.id
+          LEFT JOIN (SELECT bill_id, SUM(amount) AS cleared FROM vendor_bill_cheques WHERE status = 'CLEARED' GROUP BY bill_id) k ON k.bill_id = b.id WHERE b.voided = false)   -- cleared cheques count as paid, same as the vendor ledger (audit 24 Oct)
         SELECT vendor_name, SUM(owed) AS owed, MIN(due_date) FILTER (WHERE owed > 0) AS next_due FROM x GROUP BY 1 HAVING SUM(owed) > 0 ORDER BY 2 DESC LIMIT 6`)),
     safe('cheques', () => q(`SELECT COALESCE(SUM(amount),0) AS pending, COUNT(*) AS n,
         COALESCE(SUM(amount) FILTER (WHERE due_date < CURRENT_DATE),0) AS overdue,

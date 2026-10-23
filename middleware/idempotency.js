@@ -5,11 +5,19 @@
  * Mount in front of any router:  app.use('/api/vendor-ledger', idempotency({ pool }), vendorRouter)
  */
 module.exports = function idempotency({ pool, ttlDays = 14 }) {
+  // AUDIT 24 OCT: this table was only created by migrations/layla_owner.sql, so where that file was never run the helper quietly did nothing
+  // (a double tap saved twice). Additive and safe: created here once, the first time a keyed save arrives.
+  let ready = null;
+  const ensure = () => ready || (ready = (async () => {
+    try { await pool.query('SELECT 1 FROM idempotency_keys LIMIT 1'); return; } catch (_) { /* not there yet: create it */ }
+    await pool.query(`CREATE TABLE IF NOT EXISTS idempotency_keys (idem_key TEXT PRIMARY KEY, route TEXT, status INTEGER NOT NULL DEFAULT 0, body TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  })().catch((e) => { ready = null; throw e; }));
   return async function (req, res, next) {
     const key = req.get('Idempotency-Key');
     if (!key || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
     if (!/^[A-Za-z0-9_-]{8,80}$/.test(key)) return res.status(400).json({ error: 'bad Idempotency-Key' });
     try {
+      await ensure();
       const ex = (await pool.query('SELECT status, body FROM idempotency_keys WHERE idem_key=$1', [key])).rows[0];
       if (ex) {
         if (Number(ex.status) === 0) return res.status(409).json({ error: 'this save is still being processed, try again in a moment' });

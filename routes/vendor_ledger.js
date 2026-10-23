@@ -68,6 +68,21 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     res.status(201).json(rows[0]);
   }));
 
+  // AUDIT 24 OCT (bill-chain test): payments, credit notes and cheques above what a bill owes were accepted, and one cheque number could be
+  // written twice. Same maths as the screen (utils/vendorLedger.billStatus): owed = total - cleared cheques - payments - credit notes;
+  // uncovered = owed - cheques still ISSUED. Block-sized on purpose; one SQL read, no writes.
+  const rs = (n) => 'Rs ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  async function owedOn(billId) {
+    const one = async (q) => Number((await pool.query(q, [billId])).rows[0].v || 0);
+    const total = await one(`SELECT total AS v FROM vendor_bills WHERE id = $1`);
+    const cleared = await one(`SELECT SUM(amount) AS v FROM vendor_bill_cheques WHERE bill_id = $1 AND status = 'CLEARED'`);
+    const issued = await one(`SELECT SUM(amount) AS v FROM vendor_bill_cheques WHERE bill_id = $1 AND status = 'ISSUED'`);
+    const paid = await one(`SELECT SUM(amount) AS v FROM vendor_payments WHERE bill_id = $1`);
+    const credited = await one(`SELECT SUM(amount) AS v FROM vendor_credit_notes WHERE bill_id = $1`);
+    const owed = L.round2(total - cleared - paid - credited);
+    return { owed, uncovered: L.round2(owed - issued) };
+  }
+
   r.post('/bills/:id/cheques', wrap(async (req, res) => {
     const id = Number(req.params.id); const c = req.body || {};
     if (!Number.isInteger(id)) return bad(res, 'bad bill id');
@@ -75,8 +90,15 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     if (!L.isIso(c.cheque_date)) return bad(res, 'cheque_date must be YYYY-MM-DD');
     const bill = (await pool.query('SELECT * FROM vendor_bills WHERE id=$1 AND branch_id=$2 AND voided=FALSE', [id, branchOf(req)])).rows[0];
     if (!bill) return res.status(404).json({ error: 'bill not found' });
+    const room = await owedOn(id);
+    if (Number(c.amount) > room.uncovered + 0.005) return res.status(409).json({ error: `This cheque (${rs(c.amount)}) is more than the ${rs(Math.max(0, room.uncovered))} of this bill that no cheque covers yet. Check the amount, or fix the bill total first.`, code: 'cheque_over_bill' });
     const due = c.due_date && L.isIso(c.due_date) ? c.due_date : L.nextClearingDate(c.cheque_date, { sameBank: !!c.same_bank, lagWorkingDays: c.lag_days === undefined ? 1 : Number(c.lag_days) });
-    const warnings = L.validateCheque({ payee: c.payee || bill.vendor_name, amount: c.amount, amountWords: c.amount_words, date: c.cheque_date }, { today: today() });
+    let warnings = L.validateCheque({ payee: c.payee || bill.vendor_name, amount: c.amount, amountWords: c.amount_words, date: c.cheque_date }, { today: today() });
+    // Same cheque number on the same bank: the app's design is to WARN (and flag it on /checks), not to block. Audit 24 Oct: the warning was missing here.
+    if (c.cheque_no && String(c.cheque_no).trim()) {
+      const dup = await pool.query(`SELECT 1 FROM vendor_bill_cheques WHERE LOWER(cheque_no) = LOWER($1) AND LOWER(COALESCE(bank,'')) = LOWER($2) AND status <> 'CANCELLED' LIMIT 1`, [String(c.cheque_no).trim(), String(c.bank || '').trim()]);
+      if (dup.rows.length) warnings = [...warnings, 'CHEQUE_NUMBER_USED'];
+    }
     const { rows } = await pool.query(
       `INSERT INTO vendor_bill_cheques (branch_id, bill_id, cheque_no, bank, payee, amount, cheque_date, due_date, same_bank, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
@@ -109,6 +131,8 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     const paidAt = p.paid_at || today(); if (!L.isIso(paidAt)) return bad(res, 'paid_at must be YYYY-MM-DD');
     const bill = (await pool.query('SELECT id FROM vendor_bills WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
     if (!bill) return res.status(404).json({ error: 'bill not found' });
+    const room = await owedOn(id);
+    if (Number(p.amount) > room.owed + 0.005) return res.status(409).json({ error: `This payment (${rs(p.amount)}) is more than the ${rs(Math.max(0, room.owed))} still owed on this bill.`, code: 'payment_over_owed' });
     const { rows } = await pool.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, Number(p.amount), p.method || 'CASH', paidAt, p.note || null, userOf(req)]);
     res.status(201).json(rows[0]);
   }));
@@ -120,6 +144,8 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     const d = n.note_date || today(); if (!L.isIso(d)) return bad(res, 'note_date must be YYYY-MM-DD');
     const bill = (await pool.query('SELECT id FROM vendor_bills WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
     if (!bill) return res.status(404).json({ error: 'bill not found' });
+    const room = await owedOn(id);
+    if (Number(n.amount) > room.owed + 0.005) return res.status(409).json({ error: `This credit note (${rs(n.amount)}) is more than the ${rs(Math.max(0, room.owed))} still owed on this bill.`, code: 'credit_over_owed' });
     const { rows } = await pool.query('INSERT INTO vendor_credit_notes (branch_id, bill_id, note_no, amount, note_date, reason, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, n.note_no || null, Number(n.amount), d, n.reason || null, userOf(req)]);
     res.status(201).json(rows[0]);
   }));
