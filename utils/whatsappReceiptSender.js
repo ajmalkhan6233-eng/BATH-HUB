@@ -88,13 +88,24 @@ async function sendViaCloudApi({ to, filePath, env = process.env, http = axios }
     return { id: res.data && res.data.messages && res.data.messages[0] && res.data.messages[0].id };
 }
 
+// FREE route: the shop's own linked WhatsApp on this PC (whatsapp-bridge /send). Used when WHATSAPP_VIA=bridge: no Meta keys needed.
+// Same picture, same caption. Throws if the bridge says no, so the caller's retry and "failed" handling work as before.
+async function sendViaBridge({ to, filePath, env = process.env, http = axios }) {
+    const url = env.WHATSAPP_API_URL || 'http://localhost:3001/send';
+    const res = await http.post(url, { to: String(to).replace(/\D/g, ''), message: CAPTION,
+        media: { data: fs.readFileSync(filePath).toString('base64'), mimetype: 'image/png', filename: 'receipt.png' } }, { timeout: 60000 });
+    if (!(res.data && res.data.success)) throw new Error('WhatsApp bridge did not send the receipt');
+    return { id: null };
+}
+const viaBridge = (env = process.env) => String(env.WHATSAPP_VIA || '').toLowerCase() === 'bridge';
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Sends the receipt for one queue row. Returns { status, ... } and NEVER throws.
 // opts: env, send (replaceable sender for tests), retryWaitMs, dir (where the PNGs are)
 async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
     const env = opts.env || process.env;
-    const send = opts.send || sendViaCloudApi;
+    const send = opts.send || (viaBridge(env) ? sendViaBridge : sendViaCloudApi);
     const wait = opts.retryWaitMs == null ? RETRY_WAIT_MS : opts.retryWaitMs;
     const dir = opts.dir || receiptImage.DEFAULT_DIR;
     let row;
@@ -137,7 +148,7 @@ async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
             await logAttempt(pool, row, 'dry_run', `would send receipt picture to ${mask(to)} with caption "${CAPTION}"`);
             return { status: 'dry_run', to: mask(to), caption: CAPTION };
         }
-        if (!haveKeys(env)) {
+        if (!haveKeys(env) && !viaBridge(env)) {
             await logAttempt(pool, row, 'no_keys', 'WHATSAPP_LIVE=true but keys missing in .env');
             return { status: 'no_keys', reason: 'WHATSAPP_API_TOKEN / WHATSAPP_PHONE_NUMBER_ID missing in .env' };
         }
@@ -180,4 +191,4 @@ async function sendAllQueued(pool, opts = {}) {
     return out;
 }
 
-module.exports = { CAPTION, normalizeSriLankaPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };
+module.exports = { sendViaBridge, viaBridge, CAPTION, normalizeSriLankaPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };
