@@ -16,3 +16,5 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 | Vendor 360 + Ctrl+K search | branch claude/vendor360 (routes/vendor360.js, public/vendor360.html/.js, public/lib/palette.js) | INSTALLED (6889ae9) | read-only, owner only; live since Task 111 |
 | Layla speaks Sinhala/Tamil | branch claude/layla-lang (utils/laylaLang.js, layla.js small edit) | BUILT, NOT LIVE | goes live after Task 112; wording needs AJ check |
 | Layla photos + voice notes (code) | branch claude/layla-media (utils/laylaPhoto.js, utils/stt.js, server.js, whatsapp-bridge.js, layla.js) | BUILT, NOT LIVE | photos live after Task 113; voice stays OFF until a free speech-to-text tool is installed with AJ OK |
+| Voice notes to text (free, local) | scripts/stt_whisper.py + utils/stt.js, switch = data/stt_on | BUILT, NOT LIVE | installs with Task 116 |
+| Website Royal Bath Hub rebrand | bathhub-website branch claude/rbh-rebrand | BUILT, draft link only, NOT PUBLISHED | Task 116 makes the draft link |
