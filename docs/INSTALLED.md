@@ -14,3 +14,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 | Session record | docs/SESSION_22OCT_RECORD.md | DONE | rules, built, open items |
 | Skipped on purpose | caveman, code-review-graph, Supabase, n8n, Dify, Langflow, LangChain | NOT NEEDED | duplicates what we have |
 | Vendor 360 + Ctrl+K search | branch claude/vendor360 (routes/vendor360.js, public/vendor360.html/.js, public/lib/palette.js) | INSTALLED (6889ae9) | read-only, owner only; live since Task 111 |
+| Audit machine | branch claude/audit-machine (scripts/audit/*, utils/auditInvariants.js, .claude/skills/rbh-audit, docs/audit/AUDIT_REPORT_24OCT.md) | BUILT, tested on cloud copy | live daily_check UNVERIFIED until run on PC |
