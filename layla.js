@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { todayLK } = require('./utils/lkTime');
+const { handlePhotoRequest } = require('./utils/laylaPhoto');
 const { pickStyle, langNote, needsStrongModel, fallbackLine } = require('./utils/laylaLang');
 const fs = require('fs');
 const path = require('path');
@@ -428,6 +429,12 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
             };
         }
     }
+
+    // "Send me a photo of X": published catalogue items only (utils/laylaPhoto.js). Nothing matched = carry on as normal.
+    try {
+        const photoRes = await handlePhotoRequest({ pool, text: incomingMessage, send: (media, caption) => axios.post(process.env.WHATSAPP_API_URL || 'http://localhost:3001/send', { to: phone, message: caption, media }, { timeout: 30000 }) });
+        if (photoRes) return { message: photoRes.message, escalate: false };
+    } catch (e) { console.error('[LAYLA] photo request error:', e.message); }
 
     // Business-question answer engine — deterministic DB lookups for money/
     // stock figures, bypasses the AI entirely so numbers can't be hallucinated.
