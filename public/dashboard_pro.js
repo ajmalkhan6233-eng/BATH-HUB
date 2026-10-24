@@ -66,7 +66,7 @@
       + ' · updated ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="dp-btn" id="dp-refresh">Refresh</button></div>';
     /* 1 money today */
     h += '<div class="dp-grid">'
-      + tile('Sales today', lkr(S.today), delta(S.today, S.yesterday, 'yesterday') + '<br>' + delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' })))
+      + tile('Sales today', lkr(S.today), (function (x, y) { return x === y ? x : x + '<br>' + y; })(delta(S.today, S.yesterday, 'yesterday'), delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' }))))
       + tile('Bills today', S.bills_today, 'Average bill ' + lkr(S.avg_bill_today) + (S.discount_today > 0 ? '<br>Discount given ' + lkr(S.discount_today) : ''))
       + tile('Profit today (est.)', P.today.margin_pct == null ? '-' : lkr(P.today.gross_profit), P.today.margin_pct == null ? 'No costed items sold yet' : 'Margin ' + pct(P.today.margin_pct) + ' · costs known for ' + pct(P.today.coverage_pct) + ' of sales')
       + tile('Expenses today', lkr(E.today), 'This month ' + lkr(E.month))
