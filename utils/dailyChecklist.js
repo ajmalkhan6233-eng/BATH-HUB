@@ -31,6 +31,9 @@ async function build(pool, day) {
   if (ar && ar[0].n > 0) L.push('🟡 Customers who should pay by now: ' + ar[0].n + ' — call or message them');
   const draft = await q(pool, `SELECT COUNT(*)::int AS n FROM grn_records WHERE status='PENDING_REVIEW'`);
   if (draft && draft[0].n > 0) L.push('🟡 Stock-in lines waiting for your price check: ' + draft[0].n);
+  // Health lines (AJ 24 Oct): the money audit and the backup check, one line each, inside the same 06:00 message.
+  try { const I = require('../scripts/audit/invariants'); const r = await I.run(pool); if (r.every(x => x.skipped)) throw new Error('nothing ran'); const line = I.oneLine(r); L.push((/^AUDIT GREEN/.test(line) ? '✅ ' : '🔴 ') + line); } catch (e) { /* audit not available: skip */ }
+  try { const B = require('../scripts/audit/backup_check'); const r = await B.run(require('path').join(process.cwd(), 'backups'), pool); if (!/no backup file found/.test(r.line) || process.env.BACKUP_EXPECTED) L.push((r.ok ? '✅ ' : '🔴 ') + r.line); } catch (e) { /* skip */ }
   return L;
 }
 async function runDaily({ pool, enqueue, now = new Date() }) {
