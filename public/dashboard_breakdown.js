@@ -15,6 +15,8 @@
   var css = '#dash-pro .bd-on{cursor:pointer;position:relative;transition:border-color .15s,transform .15s}'
     + '#dash-pro .bd-on:hover{border-color:var(--gold)}#dash-pro .bd-on:active{transform:scale(.99)}'
     + '#dash-pro .bd-on:after{content:"See details \\203A";position:absolute;right:12px;top:12px;font-size:11px;color:var(--gold);opacity:.9}'
+    + '#dash-pro .bd-on>:first-child{padding-right:84px}'          /* the card title never runs under "See details" */
+    + '@media(max-width:640px){#dash-pro .bd-on:after{content:"\\203A";font-size:22px;line-height:1;top:8px;right:12px}#dash-pro .bd-on>:first-child{padding-right:24px}}'
     + '#bd-back{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center}'
     + '#bd-box{background:var(--card,#1c1c1e);color:var(--text,#fff);border:1px solid var(--card-border,#333);border-radius:16px 16px 0 0;width:100%;max-width:760px;max-height:88dvh;display:flex;flex-direction:column;font-size:14px}'
     + '@media(min-width:760px){#bd-back{align-items:center}#bd-box{border-radius:16px}}'

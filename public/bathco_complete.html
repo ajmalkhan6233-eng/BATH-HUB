@@ -1775,7 +1775,8 @@ async function loadDashboard() {
   document.getElementById('target-bar').style.width = pct+'%';
   document.getElementById('target-pct').textContent = pct.toFixed(0)+'%';
   document.getElementById('target-achieved').textContent = fmtLKR(sale)+' achieved';
-  if (pct>=100) setTimeout(confetti, 800);
+  // celebrate once per day, and only when there is a real sale (it fired on every refresh before)
+  if (pct>=100 && sale>0) { var cfKey='rbh_confetti_'+today(), cfDone=false; try { cfDone=localStorage.getItem(cfKey)==='1'; if(!cfDone) localStorage.setItem(cfKey,'1'); } catch(e){} if(!cfDone) setTimeout(confetti, 800); }
 
   // KPI definitions
   const kpis = [
