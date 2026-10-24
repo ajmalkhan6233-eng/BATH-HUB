@@ -30,3 +30,5 @@ Honest note: before 24 Oct no ledger existed, so the true number of lost asks is
 | 25 | 23 Oct | Lasersoft screenshots to model screens | OPEN: AJ to send |
 | 26 | 24 Oct | Enquiries page rate-limit error (enquiries.js:29) | OPEN |
 | 27 | 24 Oct | Duplicate apex-server entries in pm2 | OPEN (PC) |
+| 28 | 24 Oct | Oversold item: remember what is owed, pop-up on stock-in, real cost for profit | DONE in cloud (commit 8caee6b); live after Task 124 |
+| 29 | 24 Oct | Daily reminders, checks, stock-taking | DONE in cloud: morning checklist in the 06:00 message; live after Task 124 |
