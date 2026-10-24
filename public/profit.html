@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Profit | Royal Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070;--sel:rgba(201,162,75,.18)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14);--green:#4ade80;--red:#f87171}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14);--green:#4ade80;--red:#f87171}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070;--sel:rgba(201,162,75,.18);--green:#1b7a46;--red:#b3261e}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+h1{font-size:20px;margin:2px 0 8px}.sm{color:var(--muted);font-size:14px}
+input,button{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:6px 10px;max-width:100%}
+button{cursor:pointer}button.go{background:var(--gold);color:#0B1B3A;font-weight:700;border:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:6px 0}.tabs button{background:transparent;border:1px solid transparent;border-radius:10px 10px 0 0;white-space:nowrap;font-weight:500}
+.tabs button[aria-selected=true]{border-color:var(--line);background:var(--sel);font-weight:700}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:8px 0}.bar label{display:block;font-size:13px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}@media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}.kpi b{display:block;font-size:20px}
+.formula{background:var(--sel);border-radius:10px;padding:8px 10px;font-size:14px;margin:8px 0}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}th:first-child,td:first-child{text-align:left}th{font-size:13px;color:var(--muted)}
+tr.total td{font-weight:800;border-top:2px solid var(--line)}.pos{color:var(--green)}.neg{color:var(--red)}.state{padding:24px 8px;text-align:center;color:var(--muted)}
+</style></head><body>
+<h1>Profit</h1>
+<div class="formula"><b>Gross profit</b> = sales &minus; cost of the goods sold.<br><b>Net profit</b> = gross profit &minus; all other costs (shop expenses, salaries, sale commissions). No interest is counted.</div>
+<div class="tabs" role="tablist" id="tabs"></div>
+<div class="bar"><div><label for="from">From</label><input id="from" type="date"></div><div><label for="to">To</label><input id="to" type="date"></div>
+<button class="go" id="run" type="button">Show</button><button id="csv" type="button">Download CSV</button></div>
+<div id="msg" class="sm" role="status"></div>
+<div class="kpis" id="kpis"></div>
+<div class="wrap"><table id="tbl"><thead></thead><tbody><tr><td class="state">Loading...</td></tr></tbody></table></div>
+<p class="sm" id="note"></p>
+<script>
+(function () {
+  'use strict';
+  var TABS = [['daily', 'Daily', 'day'], ['weekly', 'Weekly', 'week'], ['monthly', 'Monthly', 'month'], ['yearly', 'Yearly', 'year'], ['item', 'By item'], ['category', 'By category']];
+  var tab = 'daily', last = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var lkr = function (v) { var n = Number(v) || 0; return (n < 0 ? '-' : '') + 'LKR ' + Math.abs(Math.round(n)).toLocaleString('en-LK'); };
+  var cls = function (v) { return Number(v) < 0 ? 'neg' : 'pos'; };
+  var iso = function (d) { return d.toISOString().slice(0, 10); };
+  function defaults() {
+    var t = new Date(), f = new Date(); var days = { daily: 30, weekly: 84, monthly: 365, yearly: 1825, item: 30, category: 30 }[tab];
+    f.setDate(f.getDate() - days); $('from').value = iso(f); $('to').value = iso(t);
+  }
+  function drawTabs() {
+    $('tabs').innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-t="' + t[0] + '" aria-selected="' + (t[0] === tab) + '">' + t[1] + '</button>'; }).join('');
+  }
+  function setTab(t, keepDates) { tab = t; drawTabs(); if (!keepDates) defaults(); load(); }
+  function msg(t) { $('msg').textContent = t || ''; }
+  function load() {
+    var isItem = tab === 'item' || tab === 'category', q = 'from=' + $('from').value + '&to=' + $('to').value;
+    var url = isItem ? '/api/profit/items?by=' + tab + '&' + q : '/api/profit?group=' + TABS.filter(function (x) { return x[0] === tab; })[0][2] + '&' + q;
+    msg('Loading...');
+    fetch(url, { credentials: 'same-origin' }).then(function (r) { if (r.status === 403) throw new Error('Owner only'); if (!r.ok) throw new Error('Could not load profit'); return r.json(); })
+      .then(function (j) { last = j; msg(''); isItem ? drawItems(j) : drawPeriods(j); })
+      .catch(function (e) { msg(e.message); $('tbl').querySelector('tbody').innerHTML = '<tr><td class="state">' + esc(e.message) + '</td></tr>'; });
+  }
+  function kpi(l, v, c) { return '<div class="kpi"><span class="sm">' + l + '</span><b class="' + (c || '') + '">' + v + '</b></div>'; }
+  function drawPeriods(j) {
+    var t = j.total;
+    $('kpis').innerHTML = kpi('Sales', lkr(t.sales)) + kpi('Cost of goods', lkr(t.cogs)) + kpi('Gross profit', lkr(t.gross), cls(t.gross)) + kpi('Net profit', lkr(t.net), cls(t.net));
+    $('tbl').querySelector('thead').innerHTML = '<tr><th>Period</th><th>Bills</th><th>Sales</th><th>Cost of goods</th><th>Gross</th><th>Expenses</th><th>Salary</th><th>Commission</th><th>Net</th></tr>';
+    var rows = j.rows.concat([Object.assign({ _t: 1 }, t)]);
+    $('tbl').querySelector('tbody').innerHTML = j.rows.length ? rows.map(function (r) {
+      return '<tr class="' + (r._t ? 'total' : '') + '"><td>' + esc(r.period) + '</td><td>' + r.bills + '</td><td>' + lkr(r.sales) + '</td><td>' + lkr(r.cogs) + '</td><td class="' + cls(r.gross) + '">' + lkr(r.gross) + '</td><td>' + lkr(r.expenses) + '</td><td>' + lkr(r.salary) + '</td><td>' + lkr(r.commissions) + '</td><td class="' + cls(r.net) + '">' + lkr(r.net) + '</td></tr>';
+    }).join('') : '<tr><td class="state" colspan="9">Nothing recorded in these dates yet.</td></tr>';
+    $('note').textContent = (j.note || '') + (t.lines_without_cost ? ' ' + t.lines_without_cost + ' sold line(s) have no cost price yet, so their profit looks too high (fix in Item catalog).' : '');
+  }
+  function drawItems(j) {
+    var s = j.rows.reduce(function (a, r) { a.rev += r.revenue; a.cost += r.cost; a.p += r.profit; return a; }, { rev: 0, cost: 0, p: 0 });
+    $('kpis').innerHTML = kpi('Sales', lkr(s.rev)) + kpi('Cost of goods', lkr(s.cost)) + kpi('Gross profit', lkr(s.p), cls(s.p)) + kpi(j.by === 'category' ? 'Categories' : 'Items sold', String(j.rows.length));
+    $('tbl').querySelector('thead').innerHTML = '<tr><th>' + (j.by === 'category' ? 'Category' : 'Item') + '</th><th>Qty</th><th>Sales</th><th>Cost of goods</th><th>Gross profit</th><th>Margin</th></tr>';
+    $('tbl').querySelector('tbody').innerHTML = j.rows.length ? j.rows.map(function (r) {
+      return '<tr><td>' + esc(r.name) + '</td><td>' + r.qty + '</td><td>' + lkr(r.revenue) + '</td><td>' + lkr(r.cost) + '</td><td class="' + cls(r.profit) + '">' + lkr(r.profit) + '</td><td>' + (r.margin_pct == null ? '-' : r.margin_pct + '%') + '</td></tr>';
+    }).join('') : '<tr><td class="state" colspan="6">Nothing sold in these dates yet.</td></tr>';
+    $('note').textContent = 'Cost of goods uses each item\'s average cost today (an estimate). Bill discounts are shared across the lines.';
+  }
+  function csv() {
+    if (!last) return; var rows = [], head;
+    if (last.by) { head = ['name', 'qty', 'sales', 'cost_of_goods', 'gross_profit', 'margin_pct']; rows = last.rows.map(function (r) { return [r.name, r.qty, r.revenue, r.cost, r.profit, r.margin_pct == null ? '' : r.margin_pct]; }); }
+    else { head = ['period', 'bills', 'sales', 'cost_of_goods', 'gross', 'expenses', 'salary', 'commissions', 'net']; rows = last.rows.concat([last.total]).map(function (r) { return [r.period, r.bills, r.sales, r.cogs, r.gross, r.expenses, r.salary, r.commissions, r.net]; }); }
+    var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([[head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\n')], { type: 'text/csv' })); a.download = 'profit-' + tab + '-' + $('from').value + '-to-' + $('to').value + '.csv'; a.click();
+  }
+  $('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (b) setTab(b.dataset.t); });
+  $('run').onclick = load; $('csv').onclick = csv;
+  window.addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.type === 'profit-tab' && TABS.some(function (t) { return t[0] === e.data.tab; })) setTab(e.data.tab); });
+  drawTabs(); defaults(); load();
+})();
+</script></body></html>

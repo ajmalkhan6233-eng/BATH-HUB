@@ -36,11 +36,11 @@ router.get('/dashboard-pro', ownerOnly, async (req, res) => {
           UNION ALL SELECT COALESCE(b.payment_method,'cash'), b.total FROM pos_bills b ${NV} AND b.created_at::date = CURRENT_DATE
             AND NOT EXISTS (SELECT 1 FROM pos_bill_payments p WHERE p.bill_id = b.id)) z GROUP BY method ORDER BY 2 DESC`)),
     safe('profit', () => q(`SELECT
-        COALESCE(SUM(i.line_total) FILTER (WHERE b.created_at::date = CURRENT_DATE),0) AS rev_today,
-        COALESCE(SUM(i.line_total) FILTER (WHERE b.created_at::date = CURRENT_DATE AND p.avg_cost > 0),0) AS rev_cost_today,
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date = CURRENT_DATE),0) AS rev_today,
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date = CURRENT_DATE AND p.avg_cost > 0),0) AS rev_cost_today,
         COALESCE(SUM(i.qty * p.avg_cost) FILTER (WHERE b.created_at::date = CURRENT_DATE AND p.avg_cost > 0),0) AS cost_today,
-        COALESCE(SUM(i.line_total) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date),0) AS rev_month,
-        COALESCE(SUM(i.line_total) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND p.avg_cost > 0),0) AS rev_cost_month,
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date),0) AS rev_month,
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND p.avg_cost > 0),0) AS rev_cost_month,
         COALESCE(SUM(i.qty * p.avg_cost) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND p.avg_cost > 0),0) AS cost_month
       FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code
       JOIN pos_bills b ON b.id = i.bill_id ${NV} AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date`)),
