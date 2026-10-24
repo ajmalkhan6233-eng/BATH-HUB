@@ -23,6 +23,8 @@ async function build(pool, day) {
   if (bills && bills[0].n > 0) L.push('🟡 Vendor bills due within 3 days: ' + bills[0].n);
   const owed = await q(pool, `SELECT COUNT(*)::int AS n FROM oversold_owed WHERE status='OPEN'`);
   if (owed && owed[0].n > 0) L.push('🟡 Items you owe customers (sold past stock): ' + owed[0].n + ' — buy them and sort out in the app');
+  const bw = await q(pool, `SELECT vendor_name, diff_amount, bill_no FROM vendor_bill_watch WHERE status='OPEN' ORDER BY id LIMIT 5`);
+  (bw || []).forEach(w => L.unshift('🔴 BILL MISMATCH — ' + w.vendor_name + (w.bill_no ? ' (' + w.bill_no + ')' : '') + ': Rs ' + Math.round(Math.abs(w.diff_amount)).toLocaleString('en-US') + ' — ask for the corrected bill'));
   const wait = await q(pool, `SELECT COUNT(*)::int AS n FROM vendor_pending_items WHERE status='WAITING'`);
   if (wait && wait[0].n > 0) L.push('📦 Vendor items still not delivered: ' + wait[0].n + ' — ask the vendor, tick Delivered when the box comes');
   const ar = await q(pool, `SELECT COUNT(*)::int AS n FROM credit_customers WHERE COALESCE(due_date, invoice_date) <= $1 AND amount > COALESCE(paid,0)`, [day]);

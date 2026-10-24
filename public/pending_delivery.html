@@ -12,8 +12,9 @@ input,button{font:inherit;font-size:16px;color:inherit;min-height:44px;border-ra
 button{cursor:pointer}button.go{background:var(--gold);color:#0B1B3A;font-weight:700;border:0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.row input{flex:1 1 120px}
-.wait{border-left:5px solid var(--gold)}
+.wait{border-left:5px solid var(--gold)}.alert{border:2px solid #d33;border-left-width:8px;background:var(--card)}.alert b{color:#d33;font-size:18px}
 </style></head><body>
+<div id="watch"></div>
 <h1>Awaiting delivery</h1>
 <div class="sm">Items on a vendor bill that have not arrived yet. When the box comes, tap Delivered and the stock goes up.</div>
 <div class="card"><b>Add items not delivered</b>
@@ -35,5 +36,7 @@ $('addline').onclick=addLine;addLine();addLine();
 $('save').onclick=function(){var lines=[].map.call($('lines').children,function(r){return{name:r.querySelector('.n').value,qty:r.querySelector('.q').value,unit_cost:r.querySelector('.c').value}}).filter(function(l){return l.name});
 api('/api/pending-delivery',{method:'POST',body:JSON.stringify({bill_no:$('bn').value,ref:$('ref').value,vendor_name:$('vn').value,lines:lines})}).then(function(r){if(r.error){$('msg').textContent=r.error;return}$('msg').textContent='Saved';$('lines').innerHTML='';addLine();addLine();load()}).catch(function(){$('msg').textContent='Not saved, try again'})};
 $('list').onclick=function(e){var id=e.target&&e.target.getAttribute('data-id');if(!id)return;e.target.disabled=true;api('/api/pending-delivery/'+id+'/deliver',{method:'POST'}).then(function(){load()})};
-load()})();
+function loadWatch(){api('/api/bill-watch?status=open').then(function(d){var a=d.items||[];$('watch').innerHTML=a.map(function(w){return'<div class="card alert"><b>BILL MISMATCH: Rs '+Math.round(Math.abs(w.diff_amount)).toLocaleString('en-US')+'</b><div>'+esc(w.vendor_name)+(w.bill_no?' · '+esc(w.bill_no):'')+'</div><div class="sm">'+esc(w.note||'')+'</div><button class="go" data-w="'+w.id+'">Corrected bill received</button></div>'}).join('')}).catch(function(){})}
+$('watch').onclick=function(e){var id=e.target&&e.target.getAttribute('data-w');if(!id)return;e.target.disabled=true;api('/api/bill-watch/'+id+'/close',{method:'POST',body:'{}'}).then(loadWatch)};
+loadWatch();load()})();
 </script></body></html>
