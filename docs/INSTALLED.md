@@ -18,3 +18,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 | Layla photos + voice notes (code) | branch claude/layla-media (utils/laylaPhoto.js, utils/stt.js, server.js, whatsapp-bridge.js, layla.js) | INSTALLED (a181797 via 17f36a9) | photos live; voice stays OFF until a free speech-to-text tool is installed with AJ OK |
 | Voice notes to text (free, local) | scripts/stt_whisper.py + utils/stt.js, switch = data/stt_on | INSTALLED (80efdc0) | voice ON (data/stt_on); live since Task 116 |
 | Website Royal Bath Hub rebrand | bathhub-website branch claude/rbh-rebrand | BUILT, draft link only, NOT PUBLISHED | Task 116 makes the draft link |
+- 24 Oct: icm-architect skill (RinDig, MIT, Interpretable Context Methodology; maps a folder or repo so the AI reads only the right files). Reviewed: scripts read local files only. Path .claude/skills/icm-architect. State: INSTALLED, not yet used to map the app.
