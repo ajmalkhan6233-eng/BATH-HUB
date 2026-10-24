@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Awaiting delivery | Royal Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--muted:#5b6070}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:20px;margin:2px 0 8px}.sm{color:var(--muted);font-size:14px}
+input,button{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:6px 10px;max-width:100%}
+button{cursor:pointer}button.go{background:var(--gold);color:#0B1B3A;font-weight:700;border:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.row input{flex:1 1 120px}
+.wait{border-left:5px solid var(--gold)}
+</style></head><body>
+<h1>Awaiting delivery</h1>
+<div class="sm">Items on a vendor bill that have not arrived yet. When the box comes, tap Delivered and the stock goes up.</div>
+<div class="card"><b>Add items not delivered</b>
+<div class="row"><input id="bn" placeholder="Vendor bill number"><input id="ref" placeholder="Their ref (e.g. PR7554)"></div>
+<div class="row"><input id="vn" placeholder="Vendor name"></div>
+<div id="lines"></div>
+<div class="row"><button id="addline" type="button">+ another item</button><button class="go" id="save" type="button">Save</button></div>
+<div id="msg" class="sm" role="status"></div></div>
+<div id="list"></div>
+<script>
+(function(){'use strict';
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function api(u,o){return fetch(u,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},o||{})).then(function(r){return r.json()})}
+function addLine(){var d=document.createElement('div');d.className='row';d.innerHTML='<input class="n" placeholder="Item name"><input class="q" type="number" inputmode="decimal" placeholder="Qty"><input class="c" type="number" inputmode="decimal" placeholder="Cost each (Rs)">';$('lines').appendChild(d)}
+function load(){api('/api/pending-delivery').then(function(d){var a=d.items||[];if(!a.length){$('list').innerHTML='<div class="sm">Nothing waiting.</div>';return}
+$('list').innerHTML=a.map(function(i){var w=i.status==='WAITING';return'<div class="card'+(w?' wait':'')+'"><b>'+esc(i.item_name)+'</b> × '+esc(i.qty)+'<div class="sm">Bill '+esc(i.bill_no)+(i.ref?' · '+esc(i.ref):'')+(i.vendor_name?' · '+esc(i.vendor_name):'')+' · Rs '+Math.round(i.amount).toLocaleString('en-US')+'</div>'+(w?'<button class="go" data-id="'+i.id+'">Delivered</button>':'<div class="sm">✓ Delivered. '+esc(i.note||'')+'</div>')+'</div>'}).join('')}).catch(function(){$('list').innerHTML='<div class="sm">Could not load. Try again.</div>'})}
+$('addline').onclick=addLine;addLine();addLine();
+$('save').onclick=function(){var lines=[].map.call($('lines').children,function(r){return{name:r.querySelector('.n').value,qty:r.querySelector('.q').value,unit_cost:r.querySelector('.c').value}}).filter(function(l){return l.name});
+api('/api/pending-delivery',{method:'POST',body:JSON.stringify({bill_no:$('bn').value,ref:$('ref').value,vendor_name:$('vn').value,lines:lines})}).then(function(r){if(r.error){$('msg').textContent=r.error;return}$('msg').textContent='Saved';$('lines').innerHTML='';addLine();addLine();load()}).catch(function(){$('msg').textContent='Not saved, try again'})};
+$('list').onclick=function(e){var id=e.target&&e.target.getAttribute('data-id');if(!id)return;e.target.disabled=true;api('/api/pending-delivery/'+id+'/deliver',{method:'POST'}).then(function(){load()})};
+load()})();
+</script></body></html>
