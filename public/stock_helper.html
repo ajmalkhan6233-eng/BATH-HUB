@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prices and reorder | Royal Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--muted:#5b6070;--green:#1b7a46}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--green:#4ade80}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--green:#4ade80}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070;--green:#1b7a46}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+h1{font-size:20px;margin:2px 0 8px}h2{font-size:17px;margin:16px 0 6px}.sm{color:var(--muted);font-size:14px}
+input,button{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:6px 10px;max-width:100%}
+button{cursor:pointer}button.go{background:var(--gold);color:#0B1B3A;font-weight:700;border:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row input{width:120px}
+.tabs{display:flex;gap:8px;margin:8px 0}.tabs button.on{background:var(--gold);color:#0B1B3A;font-weight:700}
+pre{white-space:pre-wrap;margin:6px 0;font:14px/1.4 inherit}.ok{color:var(--green);font-weight:700}
+</style></head><body>
+<h1>Prices and reorder</h1>
+<div class="tabs"><button id="t1" class="on" type="button">Prices to set</button><button id="t2" type="button">Reorder by vendor</button></div>
+<div id="p1"></div><div id="p2" hidden></div>
+<script>
+(function(){'use strict';
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function api(u,o){return fetch(u,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},o||{})).then(function(r){return r.json()})}
+function money(n){return 'Rs '+Math.round(n).toLocaleString('en-US')}
+function prices(){api('/api/price-helper').then(function(d){var a=d.items||[];$('p1').innerHTML='<div class="sm">Items with a cost but no selling price. The suggestion follows how you price (about 2x to 4x cost, ending in 50 or 00). Nothing is saved until you tap Set.</div>'+(a.length?a.map(function(i){return'<div class="card"><b>'+esc(i.name)+'</b><div class="sm">'+esc(i.item_code)+' · cost '+money(i.cost)+' · in stock '+esc(i.stock)+(i.multiple?' · suggestion is '+i.multiple+'x':'')+'</div><div class="row"><input type="number" inputmode="decimal" value="'+(i.price||'')+'" data-in="'+esc(i.item_code)+'" aria-label="Selling price"><button class="go" data-set="'+esc(i.item_code)+'" type="button">Set</button></div></div>'}).join(''):'<div class="card ok">Every item with a cost has a selling price.</div>')}).catch(function(){$('p1').innerHTML='<div class="sm">Could not load. Try again.</div>'})}
+function reorder(){api('/api/reorder').then(function(d){var a=d.vendors||[];$('p2').innerHTML='<div class="sm">Items at or under their reorder level, by the vendor you last bought from. Copy the text and send it on WhatsApp yourself.</div>'+(a.length?a.map(function(v,k){return'<div class="card"><b>'+esc(v.vendor)+'</b> <span class="sm">'+v.items.length+' items</span><pre id="tx'+k+'">'+esc(v.text)+'</pre><button type="button" data-copy="tx'+k+'">Copy order text</button></div>'}).join(''):'<div class="card ok">Nothing is low right now.</div>')}).catch(function(){$('p2').innerHTML='<div class="sm">Could not load. Try again.</div>'})}
+$('t1').onclick=function(){$('p1').hidden=false;$('p2').hidden=true;$('t1').className='on';$('t2').className=''};
+$('t2').onclick=function(){$('p2').hidden=false;$('p1').hidden=true;$('t2').className='on';$('t1').className='';reorder()};
+document.body.onclick=function(e){var t=e.target;var c=t.getAttribute&&t.getAttribute('data-set');if(c){var inp=document.querySelector('[data-in="'+c+'"]');t.disabled=true;api('/api/price-helper/apply',{method:'POST',body:JSON.stringify({item_code:c,price:inp.value})}).then(function(r){if(r.error){alert(r.error);t.disabled=false;return}t.textContent=r.below_cost?'Saved (below cost!)':'Saved ✓'}).catch(function(){t.disabled=false;alert('Not saved, try again')})}
+var cp=t.getAttribute&&t.getAttribute('data-copy');if(cp){var txt=$(cp).textContent;(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){t.textContent='Copied ✓'}).catch(function(){var r=document.createRange();r.selectNode($(cp));var s=getSelection();s.removeAllRanges();s.addRange(r);t.textContent='Selected, press copy'})}};
+prices()})();
+</script></body></html>

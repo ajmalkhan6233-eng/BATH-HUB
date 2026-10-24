@@ -17,8 +17,7 @@ async function build(pool, day, opts = {}) {
   const cats = await q(pool, `SELECT DISTINCT category FROM products WHERE active IS NOT FALSE AND category IS NOT NULL`);
   const cat = cats && categoryOfDay(cats.map(r => r.category), day);
   if (cat) L.push('🔢 Count today: ' + cat + ' (check the shelf against the app)');
-  const cheq = await q(pool, `SELECT COUNT(*)::int AS n, COALESCE(SUM(amount),0)::numeric AS amt FROM vendor_bill_cheques WHERE status='ISSUED' AND due_date <= $1`, [addDays(day, 2)]);
-  if (cheq && cheq[0].n > 0) L.push('🔴 Cheques due within 2 days: ' + cheq[0].n + ' (Rs ' + Math.round(cheq[0].amt).toLocaleString('en-US') + ') — keep the money in the bank');
+  try { const CP = require('./chequePlan'); CP.lines(CP.plan(await CP.load(pool)), day).forEach(x => L.push(x)); } catch (e) { /* no cheque table yet */ }
   const bills = await q(pool, `SELECT COUNT(*)::int AS n FROM vendor_bills WHERE due_date IS NOT NULL AND due_date <= $1 AND COALESCE(status,'OPEN') NOT IN ('PAID','CANCELLED','VOID')`, [addDays(day, 3)]);
   if (bills && bills[0].n > 0) L.push('🟡 Vendor bills due within 3 days: ' + bills[0].n);
   const owed = await q(pool, `SELECT COUNT(*)::int AS n FROM oversold_owed WHERE status='OPEN'`);

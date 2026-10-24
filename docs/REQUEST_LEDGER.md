@@ -35,3 +35,10 @@ Honest note: before 24 Oct no ledger existed, so the true number of lost asks is
 | 30 | 24 Oct | Backup restore check, links/bridge check, audit + backup line in the 06:00 message | DONE in cloud; live after Task 127 |
 | 31 | 24 Oct | "Needs attention" strip on the dashboard (red first) | DONE in cloud; live after Task 127 |
 | 32 | 24 Oct | 20 + 30 improvements | PARTLY: 21 built (12 earlier + 9 today). Not padded with filler. Rest = docs/UX_CHECKLIST.md "go N" |
+| 33 | 24 Oct | Weekly commission: 5% of gross profit, Sunday 06:00 message, nothing for sales at/below cost | DONE in cloud (utils/commissionWeekly.js); live after Task 129 |
+| 34 | 24 Oct | Make WhatsApp keep its login across restarts | Built (Task 128); proof needs one PC restart |
+| 35 | 24 Oct | Cheque planner with weekend and holiday logic, Layla live on customer WhatsApp, staff PIN, reorder list by vendor, UPS | OPEN (next builds) |
+| 36 | 24 Oct | Cheque planner (weekends, 2026 holidays, Fri->Mon, Sat/Sun->Tue), in the 06:00 message | DONE in cloud; live after Task 130 |
+| 37 | 24 Oct | Price helper (suggests, AJ taps Set) + reorder by vendor with WhatsApp order text (menu: Stock > Prices and reorder) | DONE in cloud; live after Task 130 |
+| 38 | 24 Oct | 20 small comfort fixes in public/rbh_polish.css | DONE in cloud; live after Task 130. Total improvements so far: 21 + 20 + 3 = 44 of the 50 asked |
+| 39 | 24 Oct | Staff PIN login (staff never see cost/profit); Layla live on customer WhatsApp; bill photo to bill | OPEN (needs login-system work, do as its own task) |
