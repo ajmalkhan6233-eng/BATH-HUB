@@ -64,7 +64,7 @@ const app = express();
 app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
 const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+    authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),   // absolute: the login must not depend on which folder pm2 or a scheduled task started us from
     puppeteer: {
         headless: true,
         executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -367,7 +367,7 @@ app.listen(PORT, () => console.log(`[WA-BRIDGE] HTTP API on http://localhost:${P
 // session folder (path.resolve of the LocalAuth dataPath). It used to match any Chrome
 // with "wwebjs_auth" in its command line, which also killed a second bridge's Chrome
 // (e.g. the live shop's) when two bridges ran on one machine.
-const OWN_SESSION_DIR = path.resolve('./.wwebjs_auth');
+const OWN_SESSION_DIR = path.join(__dirname, '.wwebjs_auth');
 function killOrphanedSessionBrowsers() {
     try {
         const { execSync } = require('child_process');
