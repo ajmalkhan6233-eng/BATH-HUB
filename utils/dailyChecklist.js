@@ -12,7 +12,7 @@ function categoryOfDay(categories, day) {
   const n = Math.floor(Date.parse(day + 'T00:00:00Z') / 864e5);
   return list[((n % list.length) + list.length) % list.length];
 }
-async function build(pool, day) {
+async function build(pool, day, opts = {}) {
   const L = [];
   const cats = await q(pool, `SELECT DISTINCT category FROM products WHERE active IS NOT FALSE AND category IS NOT NULL`);
   const cat = cats && categoryOfDay(cats.map(r => r.category), day);
@@ -33,15 +33,15 @@ async function build(pool, day) {
   if (draft && draft[0].n > 0) L.push('🟡 Stock-in lines waiting for your price check: ' + draft[0].n);
   // Health lines (AJ 24 Oct): the money audit and the backup check, one line each, inside the same 06:00 message.
   try { const I = require('../scripts/audit/invariants'); const r = await I.run(pool); if (r.every(x => x.skipped)) throw new Error('nothing ran'); const line = I.oneLine(r); L.push((/^AUDIT GREEN/.test(line) ? '✅ ' : '🔴 ') + line); } catch (e) { /* audit not available: skip */ }
-  try { const B = require('../scripts/audit/backup_check'); const r = await B.run(require('path').join(process.cwd(), 'backups'), pool); if (!/no backup file found/.test(r.line) || process.env.BACKUP_EXPECTED) L.push((r.ok ? '✅ ' : '🔴 ') + r.line); } catch (e) { /* skip */ }
+  try { const B = require('../scripts/audit/backup_check'); const r = await B.run(opts.backupDir || require('path').join(process.cwd(), 'backups'), pool); if (!/no backup file found/.test(r.line) || process.env.BACKUP_EXPECTED) L.push((r.ok ? '✅ ' : '🔴 ') + r.line); } catch (e) { /* skip */ }
   return L;
 }
-async function runDaily({ pool, enqueue, now = new Date() }) {
+async function runDaily({ pool, enqueue, now = new Date(), backupDir }) {
   const day = slDay(now);
   await pool.query(`CREATE TABLE IF NOT EXISTS automation_runs (job TEXT NOT NULL, day DATE NOT NULL, PRIMARY KEY (job, day))`);
   const first = (await pool.query(`INSERT INTO automation_runs (job, day) VALUES ('morning_checklist',$1) ON CONFLICT DO NOTHING RETURNING job`, [day])).rows.length > 0;
   if (!first) return { done: false };
-  const L = await build(pool, day);
+  const L = await build(pool, day, { backupDir });
   if (!L.length) return { done: true, lines: 0 };
   await enqueue('☀️ TODAY\n' + L.join('\n'), 'checklist');
   return { done: true, lines: L.length };
