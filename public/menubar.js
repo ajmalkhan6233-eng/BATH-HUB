@@ -11,7 +11,7 @@
   'use strict';
   // [group, [[key, label, soon?], ...]]
   var MAP = [
-    ['File', [['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], ['agent-rules', 'Agent Rules'], ['agentreview', 'Agent Review'],
+    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], ['agent-rules', 'Agent Rules'], ['agentreview', 'Agent Review'],
       ['shoptools', 'Shop Tools'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
@@ -29,14 +29,19 @@
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return (k === 'pending' || k === 'helper') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
     var labelOf = function (k, fallback) { var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
     function go(k) {
       closeAll(); closeDrawer();
       if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
       if (k === 'pending') { ensurePending(); }
       if (k === 'helper') { ensureHelper(); }
+      if (k === 'logins') { ensureLogins(); }
       try { win.navigate(k); } catch (e) {}
+    }
+    function ensureLogins() {
+      if (doc.getElementById('page-logins') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'logins', label: 'Staff logins', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/staff_logins.html', sub: 'Cashier logins with a PIN: can only sell', after: 'dashboard' }); } catch (e) {}
     }
     function ensureHelper() {
       if (doc.getElementById('page-helper') || typeof win.addFramePage !== 'function') return;

@@ -282,6 +282,14 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
         return res.status(403).json({ error: 'Forbidden' });
     }
 
+    if (user.role === 'cashier') {   // sells only (utils/cashierGate.js): allow-list, and any cost-like field is removed from what they get back
+        const G = require('./utils/cashierGate');
+        if (!isApi) return next();
+        if (!G.allowed(req.method, req.originalUrl.split('#')[0])) return res.status(403).json({ error: 'Not allowed for a cashier login' });
+        const _json = res.json.bind(res); res.json = (b) => _json(G.strip(b));
+        return next();
+    }
+
     return res.status(403).json({ error: 'Forbidden' });
 });
 
@@ -631,6 +639,7 @@ app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
+app.use('/api', require('./routes/staff_logins'));         // /staff-logins (admin only: create cashier + PIN)
 app.use('/api', require('./routes/stock_helper'));        // /price-helper, /reorder
 app.use('/api', require('./routes/cheque_plan'));          // /cheque-plan
 app.use('/api', require('./routes/attention'));           // /attention (dashboard needs-attention strip)
