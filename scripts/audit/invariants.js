@@ -7,7 +7,7 @@ const EPS = 0.011;
 
 const RULES = [
   { id: 'R01', name: 'No item has negative stock',
-    sql: `SELECT item_code, name, stock_level FROM products WHERE active IS NOT FALSE AND stock_level < 0 LIMIT 50` },
+    sql: `SELECT item_code, name, stock_level FROM products WHERE active IS NOT FALSE AND stock_level < 0 LIMIT 50`, warn: true }, // AJ 24 Oct: selling past stock is ALLOWED, only warn
   { id: 'R02', name: 'Every bill: lines add up to the subtotal',
     sql: `SELECT b.bill_number, b.subtotal, SUM(i.line_total) AS lines FROM pos_bills b JOIN pos_bill_items i ON i.bill_id = b.id
            GROUP BY b.id HAVING ABS(b.subtotal - SUM(i.line_total)) > ${EPS} LIMIT 50` },
@@ -95,7 +95,7 @@ async function stockBaseline(pool, opts) {
 function oneLine(results) {
   const fails = results.filter(r => !r.ok && !r.skipped && !r.warn), warns = results.filter(r => !r.ok && r.warn);
   const ran = results.filter(r => !r.skipped).length;
-  if (!fails.length) return 'AUDIT GREEN: ' + ran + ' rules hold' + (warns.length ? ' (' + warns.length + ' price heads-up)' : '');
+  if (!fails.length) return 'AUDIT GREEN: ' + ran + ' rules hold' + (warns.length ? ' (' + warns.length + ' heads-up: ' + warns.map(w => w.id).join(',') + ')' : '');
   return 'AUDIT RED: ' + fails.length + ' rule(s) broken: ' + fails.map(f => f.id).join(', ');
 }
 module.exports = { RULES, run, oneLine, EPS };
