@@ -29,7 +29,7 @@ const RULES = [
   { id: 'R09', name: 'A WhatsApp receipt was sent only once per bill',
     sql: `SELECT sale_reference, COUNT(*) AS sent FROM receipt_queue WHERE status = 'sent' AND sale_reference IS NOT NULL GROUP BY sale_reference HAVING COUNT(*) > 1 LIMIT 50` },
   { id: 'R10', name: 'Every vendor bill: total = sum of its GRN lines (when linked to a GRN)',
-    sql: `SELECT vb.bill_no, vb.total, g.s AS grn_total FROM vendor_bills vb JOIN (SELECT grn_number, SUM(total_amount) AS s FROM grn_records GROUP BY grn_number) g ON g.grn_number = vb.bill_no
+    sql: `SELECT vb.bill_no, vb.total, g.s AS grn_total FROM vendor_bills vb JOIN (SELECT grn_number, SUM(total_amount) AS s FROM (SELECT grn_number, total_amount FROM grn_records UNION ALL SELECT bill_no, amount FROM vendor_pending_items) u GROUP BY grn_number) g ON g.grn_number = vb.bill_no
            WHERE vb.voided = FALSE AND ABS(vb.total - g.s) > ${EPS} LIMIT 50` },
   { id: 'R11', name: 'No vendor payment or cheque without its bill',
     sql: `SELECT 'payment' AS kind, p.id FROM vendor_payments p LEFT JOIN vendor_bills b ON b.id = p.bill_id WHERE b.id IS NULL
@@ -51,6 +51,7 @@ const RULES = [
 
 async function run(pool, opts = {}) {
   const out = [];
+  try { await require('../../utils/pendingDelivery').ensure(pool); } catch (e) { /* audit goes on; rules that need the table will say so */ }
   for (const r of RULES) {
     if (r.special === 'stock_baseline') { out.push(await stockBaseline(pool, opts)); continue; }
     try {
@@ -72,7 +73,7 @@ async function stockBaseline(pool, opts) {
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS audit_baseline (item_code TEXT PRIMARY KEY, stock NUMERIC, grn_in NUMERIC, sold NUMERIC, taken_at TIMESTAMPTZ DEFAULT NOW())`);
     const now = (await pool.query(`SELECT p.item_code, p.stock_level AS stock,
-        COALESCE((SELECT SUM(g.quantity) FROM grn_records g WHERE g.item_description LIKE p.item_code || ' - %'),0) AS grn_in,
+        COALESCE((SELECT SUM(g.quantity) FROM grn_records g WHERE g.item_description LIKE p.item_code || ' - %'),0) + COALESCE((SELECT SUM(vp.qty) FROM vendor_pending_items vp WHERE vp.status = 'DELIVERED' AND LOWER(vp.item_name) = LOWER(p.name)),0) AS grn_in,
         COALESCE((SELECT SUM(i.qty) FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id WHERE i.item_code = p.item_code AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)),0) AS sold
         FROM products p WHERE p.item_code IS NOT NULL AND p.active IS NOT FALSE`)).rows;
     const saved = new Map((await pool.query(`SELECT * FROM audit_baseline`)).rows.map(r => [r.item_code, r]));
