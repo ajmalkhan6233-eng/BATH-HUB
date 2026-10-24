@@ -1,3 +1,4 @@
+MAP: read AGENTS.md first (one-screen map of where everything is), then open only the row you need.
 SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
 # ROYAL BATH HUB: Claude Code entry point (rebuilt 22 Oct 2026; read all of it, about 1 minute)
 Owner: Ajmal ("AJ"). Not a developer, phone only, voice-to-text (read charitably). Shop: Royal Bath Hub, No. 173/1 Kandy Road, Thihariya (opened 15 Oct 2026). Halal only. Never "small shop".
