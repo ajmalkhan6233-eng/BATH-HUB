@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     const expenses = (await safe(`SELECT report_date::text AS day, amount FROM expenses_detail`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
     const salaries = (await safe(`SELECT pay_date::text AS day, amount FROM staff_salary`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
     const commissions = (await safe(`SELECT sale_date::text AS day, commission_amount AS amount FROM sale_commissions`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
-    res.json(Object.assign({ group, estimate: true, note: 'Cost of goods uses each item\'s average cost today. No interest is counted.' }, P.aggregate({ bills, expenses, salaries, commissions }, group)));
+    res.json(Object.assign({ group, estimate: true, note: 'Cost of goods uses each item\'s average cost today. No interest is counted.' }, P.aggregate({ bills, expenses, salaries, commissions, cogsAdjust: (await require('../utils/oversold').costAdjustments(pool).catch(() => [])).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)) }, group)));
   } catch (e) { res.status(500).json({ error: 'could not build the profit report' }); }
 });
 

@@ -631,6 +631,7 @@ app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
+app.use('/api', require('./routes/oversold'));           // /oversold/open, /oversold/:id/resolve
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
 app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)

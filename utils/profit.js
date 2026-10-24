@@ -13,10 +13,11 @@ function periodOf(day, group) {
 }
 
 // bills: [{day,total,discount,cost,no_cost}]  expenses/salaries/commissions: [{day,amount}]
-function aggregate({ bills = [], expenses = [], salaries = [], commissions = [] }, group = 'day') {
+function aggregate({ bills = [], expenses = [], salaries = [], commissions = [], cogsAdjust = [] }, group = 'day') {
   const by = new Map();
   const row = k => { if (!by.has(k)) by.set(k, { period: k, bills: 0, sales: 0, discount: 0, cogs: 0, expenses: 0, salary: 0, commissions: 0, lines_without_cost: 0 }); return by.get(k); };
   for (const b of bills) { const o = row(periodOf(b.day, group)); o.bills += 1; o.sales += Number(b.total) || 0; o.discount += Number(b.discount) || 0; o.cogs += Number(b.cost) || 0; o.lines_without_cost += Number(b.no_cost) || 0; }
+  for (const a of cogsAdjust) row(periodOf(a.day, group)).cogs += Number(a.amount) || 0;   // oversold items bought elsewhere: real cost vs normal cost
   for (const e of expenses) row(periodOf(e.day, group)).expenses += Number(e.amount) || 0;
   for (const s of salaries) row(periodOf(s.day, group)).salary += Number(s.amount) || 0;
   for (const c of commissions) row(periodOf(c.day, group)).commissions += Number(c.amount) || 0;
