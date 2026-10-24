@@ -231,10 +231,13 @@ router.post('/pos-bills', async (req, res) => {
             `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
             // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
             // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
+            if (l.item_code) { try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); } catch (e) { console.error('[oversold]', e.message); } }
             if (deductStock && l.item_code) {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
             }
         }
+        // Credit part of the bill becomes money the customer owes us, in the SAME transaction (all or nothing).
+        if (payInfo) await require('../utils/posCredit').addReceivable(client, { billNumber, name: customer_name, phone: customer_phone, payments: payInfo.rows });
         await client.query('COMMIT');
 
         // A bill with a phone gets its customer matched/created now (best effort — never fails the sale).

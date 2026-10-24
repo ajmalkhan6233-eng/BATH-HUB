@@ -176,7 +176,7 @@
       <div><label for="customerName">Customer name</label>
         <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
       <div><label for="customerPhone">Phone (WhatsApp)</label>
-        <input type="tel" id="customerPhone" placeholder="+94 77 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
+        <input type="tel" id="customerPhone" placeholder="e.g. 077 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
     </div>
     <div id="waCheck" class="wa-receipt-msg" role="status"></div>
     <label class="wa-line"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send receipt to WhatsApp on Print</label>
@@ -264,6 +264,17 @@
 
 <script src="/pos-picker.js"></script>
 <script src="/suggest.js"></script>
+<script>
+/* 24 Oct: a phone number typed in the NAME box (it ended up as the customer's name, 94777999219 twice in the list) moves to the phone box. */
+(function () {
+  var nm = document.getElementById('customerName'), ph = document.getElementById('customerPhone');
+  if (!nm || !ph) return;
+  nm.addEventListener('blur', function () {
+    var v = nm.value.trim();
+    if (/^\+?[\d\s-]{9,15}$/.test(v) && !ph.value.trim()) { ph.value = v; nm.value = ''; try { ph.dispatchEvent(new Event('input')); } catch (e) {} }
+  });
+})();
+</script>
 <script src="/pos-cart.js"></script>
 <script>
 let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };

@@ -30,9 +30,11 @@
   function n(v) { return Number(v) || 0; }
   function lkr(v) { return 'LKR ' + Math.round(n(v)).toLocaleString('en-LK'); }
   function short(v) { v = n(v); var a = Math.abs(v); return a >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : a >= 1e3 ? (v / 1e3).toFixed(a >= 1e5 ? 0 : 1) + 'k' : String(Math.round(v)); }
+  function pl(c, one, many) { c = n(c); return c + ' ' + (c === 1 ? one : many); }   // 1 bill, 2 bills
   function pct(v) { return v == null ? '-' : n(v).toFixed(0) + '%'; }
   function delta(now, before, label) {
     now = n(now); before = n(before);
+    if (!now) return '<span class="dp-note">no sales yet</span>';
     if (!before) return '<span class="dp-note">' + (now ? 'no sales ' + label : 'no sales yet') + '</span>';
     var d = ((now - before) / before) * 100, up = d >= 0;
     return '<span class="' + (up ? 'up' : 'down') + '">' + (up ? '▲ ' : '▼ ') + Math.abs(d).toFixed(0) + '%</span> <span class="dp-note">vs ' + label + '</span>';
@@ -64,7 +66,7 @@
       + ' · updated ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="dp-btn" id="dp-refresh">Refresh</button></div>';
     /* 1 money today */
     h += '<div class="dp-grid">'
-      + tile('Sales today', lkr(S.today), delta(S.today, S.yesterday, 'yesterday') + '<br>' + delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' })))
+      + tile('Sales today', lkr(S.today), (function (x, y) { return x === y ? x : x + '<br>' + y; })(delta(S.today, S.yesterday, 'yesterday'), delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' }))))
       + tile('Bills today', S.bills_today, 'Average bill ' + lkr(S.avg_bill_today) + (S.discount_today > 0 ? '<br>Discount given ' + lkr(S.discount_today) : ''))
       + tile('Profit today (est.)', P.today.margin_pct == null ? '-' : lkr(P.today.gross_profit), P.today.margin_pct == null ? 'No costed items sold yet' : 'Margin ' + pct(P.today.margin_pct) + ' · costs known for ' + pct(P.today.coverage_pct) + ' of sales')
       + tile('Expenses today', lkr(E.today), 'This month ' + lkr(E.month))
@@ -82,10 +84,10 @@
     if (V.overdue > 0) al.push(['red', 'Vendor bills OVERDUE: ' + lkr(V.overdue)]);
     if (V.due7 > 0) al.push(['', 'Vendor bills due in 7 days: ' + lkr(V.due7)]);
     if (C.overdue > 0) al.push(['red', 'Cheques overdue: ' + lkr(C.overdue)]);
-    if (C.n7 > 0) al.push(['', C.n7 + ' cheque(s) due in 7 days: ' + lkr(C.due7)]);
-    if (st.out_of_stock > 0) al.push(['', st.out_of_stock + ' item(s) out of stock']);
-    if (st.low_stock > 0) al.push(['', st.low_stock + ' item(s) running low']);
-    if (st.no_price > 0) al.push(['', st.no_price + ' item(s) have no selling price yet (Item catalog screen)']);
+    if (C.n7 > 0) al.push(['', pl(C.n7, 'cheque', 'cheques') + ' due in 7 days: ' + lkr(C.due7)]);
+    if (st.out_of_stock > 0) al.push(['', pl(st.out_of_stock, 'item', 'items') + ' out of stock']);
+    if (st.low_stock > 0) al.push(['', pl(st.low_stock, 'item', 'items') + ' running low']);
+    if (st.no_price > 0) al.push(['', pl(st.no_price, 'item has', 'items have') + ' no selling price yet (Item catalog screen)']);
     if (CU.overdue > 0) al.push(['', 'Customers overdue to pay us: ' + lkr(CU.overdue)]);
     h += '<div class="dp-card" style="margin-bottom:12px"><h3>Needs attention</h3>' + (al.length ? al.map(function (a) { return '<div class="dp-alert ' + a[0] + '">' + esc(a[1]) + '</div>'; }).join('') : '<div class="dp-alert ok">All clear. Nothing urgent.</div>') + '</div>';
     /* 4 trends */
@@ -109,9 +111,9 @@
       + '<div class="dp-card"><h3>Top sellers this month</h3>' + (d.top_items_month.length ? d.top_items_month.map(function (x) { return row(esc(x.name) + ' ×' + Math.round(x.qty), lkr(x.revenue)); }).join('') : '<div class="dp-note">No sales yet this month.</div>') + '</div></div>';
     /* 6 money owed */
     h += '<div class="dp-grid">'
-      + tile('We owe vendors', lkr(V.owed), n(V.bills) + ' open bill(s)')
-      + tile('Cheques pending', lkr(C.pending), n(C.n) + ' cheque(s) · due in 7 days ' + lkr(C.due7))
-      + tile('Customers owe us', lkr(CU.owed_to_us), n(CU.n) + ' open invoice(s)')
+      + tile('We owe vendors', lkr(V.owed), pl(V.bills, 'open bill', 'open bills'))
+      + tile('Cheques pending', lkr(C.pending), pl(C.n, 'cheque', 'cheques') + ' · due in 7 days ' + lkr(C.due7))
+      + tile('Customers owe us', lkr(CU.owed_to_us), pl(CU.n, 'open invoice', 'open invoices'))
       + tile('Investor loans owed', lkr((d.investor_loans||{}).outstanding), n((d.investor_loans||{}).n) + ' open · due in 30 days ' + lkr((d.investor_loans||{}).due30))
       + '</div>';
     h += '<div class="dp-grid2"><div class="dp-card"><h3>Vendors we owe</h3>' + (V.list.length ? V.list.map(function (x) { return row(esc(x.vendor_name) + (x.next_due ? ' · due ' + fdate(x.next_due) : ''), lkr(x.owed)); }).join('') : '<div class="dp-note">Nothing owed.</div>') + '</div>'
