@@ -32,3 +32,6 @@ Honest note: before 24 Oct no ledger existed, so the true number of lost asks is
 | 27 | 24 Oct | Duplicate apex-server entries in pm2 | OPEN (PC) |
 | 28 | 24 Oct | Oversold item: remember what is owed, pop-up on stock-in, real cost for profit | DONE in cloud (commit 8caee6b); live after Task 124 |
 | 29 | 24 Oct | Daily reminders, checks, stock-taking | DONE in cloud: morning checklist in the 06:00 message; live after Task 124 |
+| 30 | 24 Oct | Backup restore check, links/bridge check, audit + backup line in the 06:00 message | DONE in cloud; live after Task 127 |
+| 31 | 24 Oct | "Needs attention" strip on the dashboard (red first) | DONE in cloud; live after Task 127 |
+| 32 | 24 Oct | 20 + 30 improvements | PARTLY: 21 built (12 earlier + 9 today). Not padded with filler. Rest = docs/UX_CHECKLIST.md "go N" |
