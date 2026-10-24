@@ -92,6 +92,7 @@ router.post('/pos-bills/:id/void', ownerOnly, async (req, res) => {
             [bill.id, reason, whoOf(req), JSON.stringify(restored)]);
         await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'void',$2,$3,$4)`,
             [bill.id, reason, whoOf(req), JSON.stringify({ bill, items })]);
+        await require('../utils/posCredit').voidReceivable(client, bill.bill_number);   // a void takes back what the customer owed on it
         await client.query('COMMIT');
         res.json({ ok: true, bill_id: bill.id, bill_number: bill.bill_number, status: 'VOID', reason, voided_by: whoOf(req), stock_restored: restored });
     } catch (e) {

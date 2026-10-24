@@ -235,6 +235,8 @@ router.post('/pos-bills', async (req, res) => {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
             }
         }
+        // Credit part of the bill becomes money the customer owes us, in the SAME transaction (all or nothing).
+        if (payInfo) await require('../utils/posCredit').addReceivable(client, { billNumber, name: customer_name, phone: customer_phone, payments: payInfo.rows });
         await client.query('COMMIT');
 
         // A bill with a phone gets its customer matched/created now (best effort — never fails the sale).
