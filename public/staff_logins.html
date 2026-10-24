@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Staff logins | Royal Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--muted:#5b6070;--green:#1b7a46}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--green:#4ade80}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--green:#4ade80}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070;--green:#1b7a46}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:20px;margin:2px 0 8px}.sm{color:var(--muted);font-size:14px}
+input,button{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:6px 10px;max-width:100%}
+button{cursor:pointer}button.go{background:var(--gold);color:#0B1B3A;font-weight:700;border:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.row input{flex:1 1 130px}
+.off{opacity:.55}
+</style></head><body>
+<h1>Staff logins</h1>
+<div class="sm">A cashier login can only make bills. It never sees cost, profit, stock-in, reports or settings, and cannot void or edit a bill. They sign in with the username shown and their PIN.</div>
+<div class="card"><b>Add a cashier</b>
+<div class="row"><input id="nm" placeholder="Name (e.g. Jazeel)"><input id="pn" type="password" inputmode="numeric" placeholder="PIN, 4 to 8 digits" autocomplete="new-password"></div>
+<button class="go" id="add" type="button">Create login</button><div id="msg" class="sm" role="status"></div></div>
+<div id="list"></div>
+<script>
+(function(){'use strict';
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function api(u,o){return fetch(u,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},o||{})).then(function(r){return r.json()})}
+function load(){api('/api/staff-logins').then(function(d){var a=d.items||[];$('list').innerHTML=a.length?a.map(function(u){return'<div class="card'+(u.active?'':' off')+'"><b>'+esc(u.name)+'</b><div class="sm">Username: <b>'+esc(u.username)+'</b> · '+(u.active?'ON':'OFF')+'</div><div class="row"><input type="password" inputmode="numeric" placeholder="New PIN" data-pin="'+u.id+'" autocomplete="new-password"><button data-setpin="'+u.id+'" type="button">Change PIN</button><button data-act="'+u.id+'" data-on="'+(u.active?0:1)+'" type="button">'+(u.active?'Turn off':'Turn on')+'</button></div></div>'}).join(''):'<div class="sm">No cashier logins yet.</div>'}).catch(function(){$('list').innerHTML='<div class="sm">Could not load. Try again.</div>'})}
+$('add').onclick=function(){api('/api/staff-logins',{method:'POST',body:JSON.stringify({name:$('nm').value,pin:$('pn').value})}).then(function(r){if(r.error){$('msg').textContent=r.error;return}$('msg').textContent='Created. Username: '+r.user.username;$('nm').value='';$('pn').value='';load()}).catch(function(){$('msg').textContent='Not saved, try again'})};
+document.body.onclick=function(e){var t=e.target,id=t.getAttribute&&t.getAttribute('data-setpin');if(id){api('/api/staff-logins/'+id+'/pin',{method:'POST',body:JSON.stringify({pin:document.querySelector('[data-pin="'+id+'"]').value})}).then(function(r){alert(r.error||'PIN changed')})}
+var a=t.getAttribute&&t.getAttribute('data-act');if(a){api('/api/staff-logins/'+a+'/active',{method:'POST',body:JSON.stringify({active:t.getAttribute('data-on')==='1'})}).then(load)}};
+load()})();
+</script></body></html>
