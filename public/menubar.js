@@ -16,7 +16,7 @@
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['grn', 'GRN']]],
-    ['Stock', [['stock', 'Stock'], ['pending', 'Awaiting delivery'], ['barcode', 'Barcode'], ['prices', 'Item catalog and prices'], ['stickers', 'Stickers']]],
+    ['Stock', [['stock', 'Stock'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['prices', 'Item catalog and prices'], ['stickers', 'Stickers']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Profit', [['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category']]],
     ['Reports', [['reports', 'Reports'], ['reportshub', 'Download reports']]]
@@ -29,13 +29,18 @@
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return k === 'pending' ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var exists = function (k) { return (k === 'pending' || k === 'helper') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
     var labelOf = function (k, fallback) { var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
     function go(k) {
       closeAll(); closeDrawer();
       if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
       if (k === 'pending') { ensurePending(); }
+      if (k === 'helper') { ensureHelper(); }
       try { win.navigate(k); } catch (e) {}
+    }
+    function ensureHelper() {
+      if (doc.getElementById('page-helper') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'helper', label: 'Prices and reorder', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/stock_helper.html', sub: 'Set missing selling prices, reorder low stock by vendor', after: 'stock' }); } catch (e) {}
     }
     function ensurePending() {
       if (doc.getElementById('page-pending') || typeof win.addFramePage !== 'function') return;

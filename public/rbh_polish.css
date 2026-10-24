@@ -1,0 +1,41 @@
+/* RBH POLISH (24 Oct 2026): 20 small, safe comfort fixes. Low specificity on purpose; each one is a separate rule so any can be removed alone. */
+/* 1 Phone: inputs at 16px so iPhone does not zoom in when you tap a field */
+@media (max-width:640px){ input,select,textarea{font-size:16px} }
+/* 2 Bigger tap targets for small buttons on phone */
+@media (max-width:640px){ button,.btn,[role=button]{min-height:40px} }
+/* 3 Clear gold focus ring for keyboard and switch users */
+:focus-visible{outline:2px solid #C9A24B;outline-offset:2px}
+/* 4 Numbers line up in tables and cards */
+table,td,th,.card,.kpi,.num{font-variant-numeric:tabular-nums}
+/* 5 Table headers stay visible while scrolling long lists */
+thead th{position:sticky;top:0;z-index:1;background:var(--bg-surface,var(--card,#fff))}
+/* 6 Respect "reduce motion" */
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important} }
+/* 7 Keep content clear of the iPhone home bar */
+body{padding-bottom:max(0px,env(safe-area-inset-bottom))}
+/* 8 Headings wrap neatly */
+h1,h2,h3{text-wrap:balance}
+/* 9 Gold text selection */
+::selection{background:rgba(201,162,75,.35)}
+/* 10 Slim scrollbars */
+*{scrollbar-width:thin;scrollbar-color:rgba(201,162,75,.6) transparent}
+/* 11 Printing: hide menus and buttons */
+@media print{ #rbh-menubar,.sidebar,.bottom-nav,header.topbar,button,.no-print{display:none!important} body{background:#fff!important;color:#000!important} }
+/* 12 Small grey helper text is never smaller than 13px */
+.sm,small,.hint,.sub{font-size:max(13px,.85em)}
+/* 13 Disabled buttons look disabled */
+button:disabled,.btn:disabled{opacity:.5;cursor:not-allowed}
+/* 14 Long names wrap instead of pushing the page wide */
+td,th,.card,.item-name,.i-name{overflow-wrap:anywhere}
+/* 15 Pictures never wider than their box */
+img,video,canvas{max-width:100%;height:auto}
+/* 16 No sideways scroll on the page */
+html,body{overflow-x:hidden}
+/* 17 Toasts sit above the bottom bar on phone */
+@media (max-width:640px){ .toast,#toast,.toast-wrap{margin-bottom:76px} }
+/* 18 Links: clear underline offset */
+a{text-underline-offset:3px}
+/* 19 No grey flash when tapping on iPhone */
+*{-webkit-tap-highlight-color:transparent}
+/* 20 Browser autofill does not turn fields yellow */
+input:-webkit-autofill{box-shadow:0 0 0 1000px var(--bg-surface,var(--card,#fff)) inset;-webkit-text-fill-color:currentColor}
