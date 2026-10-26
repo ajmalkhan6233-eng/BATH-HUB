@@ -4,7 +4,7 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v34';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
+const VERSION = 'v35';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
@@ -85,6 +85,7 @@ self.addEventListener('fetch', (event) => {
     } catch (e) {
       const cached = await caches.match(req, { cacheName: STATIC_CACHE, ignoreSearch: true });
       if (cached) return cached;
+      if (req.destination === 'iframe') return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="font-family:sans-serif;padding:24px;text-align:center"><h3>Cannot reach the shop PC right now</h3><p>Check the PC is on, then <a href="" onclick="location.reload();return false">tap to retry</a>.</p></body>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       if (req.mode === 'navigate') { const shell = await caches.match('/owner', { cacheName: STATIC_CACHE }); if (shell) return shell; }
       return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
     }

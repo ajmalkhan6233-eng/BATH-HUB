@@ -9,7 +9,7 @@
     opt = opt || {}; var o = { credentials: 'same-origin', headers: {} };
     if (opt.body !== undefined) { o.method = opt.method || 'POST'; o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(opt.body); } else if (opt.method) o.method = opt.method;
     return fetch(url, o).then(function (r) {
-      if (r.status === 401) { try { (w.top || w).location.href = '/'; } catch (e) {} throw new Error('Please sign in again'); }
+      if (r.status === 401) { if (w.self === w.top) { try { w.location.href = '/owner'; } catch (e) {} } throw new Error('Please sign in again in the main app, then press refresh'); }
       return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error((j && j.error) || ('Error ' + r.status)); e.code = j && j.code; e.status = r.status; e.data = j; throw e; } return j; });
     });
   };

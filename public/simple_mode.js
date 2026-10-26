@@ -2,9 +2,9 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum', 'vendor360'];
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'superdash', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum', 'vendor360'];
   var GROUPS = [
-    ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
+    ['Daily work', ['dashboard', 'superdash', 'pos', 'daily-sales', 'dailybreakdown']],
     ['Items', ['stock', 'prices', 'stickers']],
     ['Purchasing', ['grn', 'vendorsum', 'vendor360', 'vendors', 'cheques']],
     ['Money', ['expenses', 'loans', 'commissions', 'salary', 'moneycontrol']],
