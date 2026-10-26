@@ -9,7 +9,7 @@ const ALLOW = [
   ['POST', /^\/api\/invoice-receipts\/send$/], ['GET', /^\/api\/invoice-receipts\/check-number$/],
   ['GET', /^\/api\/quotations(\/\d+)?$/], ['POST', /^\/api\/quotations$/], ['GET', /^\/api\/pos-ledger\/quotation-billed$/],
 ];
-function allowed(method, path) { const m = String(method).toUpperCase(); return ALLOW.some(([mm, re]) => (mm === m || (mm === 'GET' && m === 'HEAD')) && re.test(path)); }
+function allowed(method, path) { path = String(path).split('?')[0].split('#')[0]; const m = String(method).toUpperCase(); return ALLOW.some(([mm, re]) => (mm === m || (mm === 'GET' && m === 'HEAD')) && re.test(path)); }
 // Belt and braces: if any response still carries a cost-like field, remove it for a cashier.
 const COSTY = /^(avg_cost|cost|cost_price|unit_cost|buying_price|profit|gross_profit|margin|margin_pct|cogs)$/i;
 function strip(v) { if (Array.isArray(v)) return v.map(strip); if (v && typeof v === 'object' && !(v instanceof Date)) { const o = {}; for (const k of Object.keys(v)) if (!COSTY.test(k)) o[k] = strip(v[k]); return o; } return v; }

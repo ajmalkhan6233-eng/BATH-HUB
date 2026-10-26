@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Vendors</title><link rel="stylesheet" href="ui.css"></head><body>
+<div class="page">
+ <h1 class="pt">Vendors</h1>
+ <div class="grid g4" id="kp"></div>
+ <div class="glass card row" style="margin:14px 0"><input class="in grow" id="q" placeholder="Search vendor"><button class="btn sm" id="fo" type="button">Owing only</button></div>
+ <div class="tw"><table><thead><tr><th>Vendor</th><th class="num">Bills</th><th class="num">Billed</th><th class="num">Paid</th><th class="num">Owed</th><th>Alerts</th></tr></thead><tbody id="tb"></tbody></table></div>
+</div>
+<div class="modal" id="mod"><div class="box"><div class="hd"><b id="mt">Supplier credit book</b><div class="row"><a class="btn sm" id="full" target="_top" href="/vendor360.html">Add bill or payment</a><button class="btn sm" id="mx" type="button">Close</button></div></div><div class="bd" id="mb"></div></div></div>
+<script src="ui-core.js"></script>
+<script>
+(function(){'use strict';var $=function(i){return document.getElementById(i)},E=RBH.esc,M=RBH.money;var V=[],owing=false;
+function draw(){var q=$('q').value.trim().toLowerCase(),v=V.filter(function(x){return(!q||x.vendor_name.toLowerCase().indexOf(q)>-1)&&(!owing||x.outstanding_balance>0);});
+ $('kp').innerHTML=[['Vendors',V.length,''],['We owe',M(V.reduce(function(a,x){return a+x.outstanding_balance;},0)),'bad'],['Overdue',M(V.reduce(function(a,x){return a+(x.overdue||0);},0)),'bad'],['Cheques pending',M(V.reduce(function(a,x){return a+(x.cheques_pending||0);},0)),'gold']].map(function(c){return '<div class="glass card"><div class="k">'+c[0]+'</div><div class="v '+c[2]+'">'+c[1]+'</div></div>';}).join('');
+ $('tb').innerHTML=v.length?v.map(function(x,i){return '<tr class="click" data-v="'+E(x.vendor_name)+'"><td><b>'+E(x.vendor_name)+'</b><div class="sub">last bill '+E(RBH.day(x.last_bill_date))+'</div></td><td class="num">'+x.total_bills+'</td><td class="num">'+M(x.total_billed)+'</td><td class="num">'+M(x.total_paid)+'</td><td class="num"><b style="color:'+(x.outstanding_balance>0?'var(--bad)':'var(--ok)')+'">'+M(x.outstanding_balance)+'</b></td><td>'+(x.has_bounced?'<span class="chip c-bad">BOUNCED</span> ':'')+(x.overdue>0?'<span class="chip c-warn">OVERDUE</span>':'')+'</td></tr>';}).join(''):'<tr><td colspan="6" class="empty">No vendors.</td></tr>';}
+function book(name){$('mt').textContent='Supplier credit book: '+name;$('mb').innerHTML='<div class="skel"></div>';$('mod').classList.add('on');
+ RBH.api('/api/vendor360/'+encodeURIComponent(name)+'/statement').then(function(s){var t=s.totals||{},rows=s.rows||[],p=s.pending_cheques||[];
+  $('mb').innerHTML='<div class="grid g4" style="margin-bottom:12px"><div class="glass card"><div class="k">Amount owed</div><div class="v bad">'+M(t.balance)+'</div></div><div class="glass card"><div class="k">Total billed (debit)</div><div class="v">'+M(t.debit)+'</div></div><div class="glass card"><div class="k">Total paid (credit)</div><div class="v ok">'+M(t.credit)+'</div></div></div>'+
+  (p.length?'<div class="sub" style="margin-bottom:8px">Cheques issued, waiting to clear: '+p.map(function(c){return E(c.cheque_no||'')+' '+M(c.amount)+' ('+E(RBH.day(c.due_date))+')';}).join(', ')+'</div>':'')+
+  '<div class="tw"><table><thead><tr><th>Date</th><th>Ref</th><th>Description</th><th class="num">Debit (bill)</th><th class="num">Credit (paid)</th><th class="num">Balance</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td>'+E(RBH.day(r.tx_date))+'</td><td>'+E(r.reference||'')+'</td><td>'+E(r.description||'')+'</td><td class="num" style="color:var(--bad)">'+(r.debit?M(r.debit):'-')+'</td><td class="num" style="color:var(--ok)">'+(r.credit?M(r.credit):'-')+'</td><td class="num"><b>'+M(r.running_balance)+'</b></td></tr>';}).join(''):'<tr><td colspan="6" class="empty">No entries.</td></tr>')+'</tbody></table></div><div class="sub" style="margin-top:8px">Newest first. The balance is worked out on the server, so it always matches the books.</div>';}).catch(function(e){$('mb').innerHTML='<div class="empty">'+E(e.message)+'</div>';});}
+$('tb').onclick=function(e){var r=e.target.closest('[data-v]');if(r)book(r.dataset.v);};$('q').oninput=draw;$('fo').onclick=function(){owing=!owing;this.classList.toggle('pri',owing);draw();};$('mx').onclick=function(){$('mod').classList.remove('on');};
+addEventListener('keydown',function(e){if(e.key==='Escape')$('mod').classList.remove('on');});
+RBH.me().then(function(){$('tb').innerHTML=RBH.skel(6);RBH.api('/api/vendor360/list').then(function(r){V=r.vendors||[];draw();}).catch(function(e){$('tb').innerHTML='<tr><td colspan="6" class="empty">'+E(e.message)+'</td></tr>';});});})();
+</script></body></html>

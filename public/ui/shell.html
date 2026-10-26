@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0b1424">
+<title>Royal Bath Hub</title><link rel="stylesheet" href="ui.css"></head>
+<body>
+<div class="app">
+  <aside class="side" id="side"><div class="brand">ROYAL BATH HUB</div><nav class="nav" id="nav" aria-label="Main menu"></nav></aside>
+  <main class="main">
+    <header class="top">
+      <div class="srch" id="srchBtn" role="button" tabindex="0" aria-label="Search and jump (Ctrl+K)"><span aria-hidden="true">&#128269;</span><span class="grow">Item code, name or screen</span><span class="kbd hide-m">Ctrl+K</span></div>
+      <span class="grow"></span>
+      <span class="chip c-mut hide-m" id="who">...</span>
+      <button class="btn sm" id="themeBtn" type="button" aria-label="Light or dark">&#9680;</button>
+    </header>
+    <iframe class="frame" id="frame" title="Screen"></iframe>
+  </main>
+</div>
+<nav class="bar" id="bar" aria-label="Quick menu"></nav>
+<div class="pal" id="pal"><div class="box glass"><input class="in" id="palIn" placeholder="Type a screen name, or an item code or name to start a sale" autocomplete="off"><div id="palList" style="margin-top:8px"></div></div></div>
+<script src="ui-core.js"></script>
+<script>
+(function(){'use strict';
+var I={dash:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z"/>',pos:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 12.2a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 7H6"/>',inv:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/>',ven:'<path d="M1 7h14v10H1zM15 10h4l3 3v4h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',stk:'<path d="M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8"/>',pend:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',cus:'<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0114 0M17 11a3 3 0 100-6M22 21a6 6 0 00-4-5.6"/>',chq:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h5"/>',rep:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',usr:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',set:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 00-2-1.2L14 3h-4l-.6 2.6a7 7 0 00-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 005 12a7 7 0 00.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 002 1.2L10 21h4l.6-2.6a7 7 0 002-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>',old:'<path d="M3 12l9-9 9 9M5 10v10h14V10"/>',more:'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>'};
+var S=[ // key, label, icon, url, who (c = cashier may see)
+ {k:'dash',l:'Dashboard',i:'dash',u:'dashboard.html',g:'Main'},
+ {k:'pos',l:'Sell',i:'pos',u:'pos.html',c:1,g:'Main'},
+ {k:'inv',l:'Invoices',i:'inv',u:'invoices.html',c:1,g:'Main'},
+ {k:'ven',l:'Vendors',i:'ven',u:'vendor.html',g:'Money'},
+ {k:'chq',l:'Cheques',i:'chq',u:'/cheque_register.html',g:'Money'},
+ {k:'stk',l:'Prices and reorder',i:'stk',u:'/stock_helper.html',g:'Stock'},
+ {k:'pend',l:'Awaiting delivery',i:'pend',u:'/pending_delivery.html',g:'Stock'},
+ {k:'cus',l:'Customers',i:'cus',u:'/customers.html',g:'People'},
+ {k:'usr',l:'Staff logins',i:'usr',u:'/staff_logins.html',g:'People'},
+ {k:'rep',l:'Reports',i:'rep',u:'/reports_hub.html',g:'More'},
+ {k:'set',l:'Settings',i:'set',u:'/settings.html',g:'More'},
+ {k:'old',l:'Classic app',i:'old',u:'/bathco_complete.html',g:'More',top:1}
+];
+var cashier=false,cur='',frame=document.getElementById('frame');
+function svg(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+I[k]+'</svg>';}
+function vis(){return S.filter(function(s){return !cashier||s.c;});}
+function drawNav(){var h='',g='';vis().forEach(function(s){if(s.g!==g){g=s.g;if(!cashier)h+='<div class="sep">'+g+'</div>';}h+='<button class="ni'+(s.k===cur?' on':'')+'" data-k="'+s.k+'" type="button">'+svg(s.i)+'<span>'+RBH.esc(s.l)+'</span></button>';});document.getElementById('nav').innerHTML=h;
+ var q=[['pos','Sell'],['inv','Bills'],['stk','Stock'],['more','More']].filter(function(x){return x[0]==='more'||vis().some(function(s){return s.k===x[0]});});if(cashier)q=[['pos','Sell'],['inv','Bills']];
+ document.getElementById('bar').innerHTML=q.map(function(x){return '<button type="button" data-k="'+x[0]+'" class="'+(x[0]===cur?'on':'')+'">'+svg(x[0]==='more'?'more':x[0]==='stk'?'stk':x[0])+x[1]+'</button>';}).join('');}
+function open(k,qs){var s=S.filter(function(x){return x.k===k})[0];if(!s||(cashier&&!s.c))s=S.filter(function(x){return x.k==='pos'})[0];
+ if(s.top){location.href=s.u;return;}cur=s.k;history.replaceState(null,'','#'+s.k);frame.src=s.u+(qs?('?q='+encodeURIComponent(qs)):'');drawNav();document.title=s.l+' | Royal Bath Hub';}
+addEventListener('hashchange',function(){var h=(location.hash||'').slice(1);if(h&&h!==cur)open(h);});
+document.getElementById('nav').onclick=function(e){var b=e.target.closest('[data-k]');if(b)open(b.dataset.k);};
+document.getElementById('bar').onclick=function(e){var b=e.target.closest('[data-k]');if(!b)return;if(b.dataset.k==='more')pal(true);else open(b.dataset.k);};
+/* command palette: screens, or any other text = start a sale with that item code or name */
+var P=document.getElementById('pal'),PI=document.getElementById('palIn'),PL=document.getElementById('palList'),pi=0,pr=[];
+function pal(on){P.classList.toggle('on',on);if(on){PI.value='';draw();setTimeout(function(){PI.focus();},30);}}
+function draw(){var q=PI.value.trim().toLowerCase();pr=vis().filter(function(s){return !q||s.l.toLowerCase().indexOf(q)>-1;}).map(function(s){return{t:s.l,k:s.k};});
+ if(q&&vis().some(function(s){return s.k==='pos'}))pr.push({t:'Sell: add "'+PI.value.trim()+'" to a new sale',k:'pos',q:PI.value.trim()});
+ if(pi>=pr.length)pi=0;PL.innerHTML=pr.map(function(r,i){return '<div class="li'+(i===pi?' on':'')+'" data-i="'+i+'">'+RBH.esc(r.t)+'</div>';}).join('');}
+PI.oninput=function(){pi=0;draw();};
+PL.onclick=function(e){var d=e.target.closest('[data-i]');if(d){var r=pr[+d.dataset.i];pal(false);open(r.k,r.q);}};
+PI.onkeydown=function(e){if(e.key==='ArrowDown'){pi=Math.min(pi+1,pr.length-1);draw();e.preventDefault();}else if(e.key==='ArrowUp'){pi=Math.max(pi-1,0);draw();e.preventDefault();}else if(e.key==='Enter'){var r=pr[pi];if(r){pal(false);open(r.k,r.q);}}else if(e.key==='Escape')pal(false);};
+P.onclick=function(e){if(e.target===P)pal(false);};
+document.getElementById('srchBtn').onclick=function(){pal(true);};
+document.getElementById('srchBtn').onkeydown=function(e){if(e.key==='Enter')pal(true);};
+function keys(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();pal(true);}else if(e.key==='F2'){e.preventDefault();open('pos');}else if(e.key==='Escape'&&P.classList.contains('on'))pal(false);}
+addEventListener('keydown',keys);frame.addEventListener('load',function(){try{frame.contentWindow.addEventListener('keydown',keys);}catch(e){}});
+document.getElementById('themeBtn').onclick=function(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';RBH.theme(t);try{frame.contentWindow.RBH&&frame.contentWindow.RBH.theme(t);}catch(e){}};
+RBH.me().then(function(u){cashier=u.role==='cashier';document.getElementById('who').textContent=(u.name||u.username||'').toString().slice(0,18)+(u.role?' | '+u.role:'');var h=(location.hash||'').slice(1);open(cashier?'pos':(h||'dash'));});
+})();
+</script></body></html>

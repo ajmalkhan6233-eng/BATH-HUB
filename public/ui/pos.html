@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sell</title><link rel="stylesheet" href="ui.css">
+<style>
+.pos{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(340px,1fr);gap:14px;padding:14px;height:100dvh}
+.col{display:flex;flex-direction:column;min-height:0;gap:10px}
+.big{font-size:18px;min-height:54px;border-radius:16px;border:2px solid var(--gold);padding:0 16px}
+.res{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.it{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-radius:var(--r-m);border:1px solid var(--line);background:var(--field);cursor:pointer;min-height:54px;text-align:left;width:100%}
+.it:hover,.it.on{border-color:var(--gold);background:var(--gold-soft)}.it .cd{font-weight:800;color:var(--gold)}.it .st{font-size:12px;color:var(--mut)}
+.cart{padding:14px;display:flex;flex-direction:column;min-height:0;height:100%}
+.lines{flex:1;overflow:auto;margin:8px 0}
+.ln{display:grid;grid-template-columns:1fr auto;gap:6px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.q{display:inline-flex;align-items:center;gap:4px}.q button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-size:18px;cursor:pointer}.q input{width:54px;text-align:center;min-height:34px;border-radius:10px;border:1px solid var(--line);background:var(--field)}
+.tot{font-size:30px;font-weight:800;color:var(--gold)}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.pay .btn{min-height:52px}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:4px}
+@media (max-width:820px){.pos{grid-template-columns:1fr;height:auto;padding:10px}.res{max-height:34dvh}.cart{height:auto}.lines{max-height:30dvh}}
+</style></head><body>
+<div class="pos">
+  <section class="col" aria-label="Find an item">
+    <input class="in big" id="q" placeholder="Item code or name   (3*014 = three of code 014)" autocomplete="off" inputmode="search" autofocus>
+    <div class="sub" id="hint">Type, then Enter. Arrow keys move. Esc clears.</div>
+    <div class="res" id="res"></div>
+  </section>
+  <section class="cart glass" aria-label="Current sale">
+    <div class="row"><b class="grow" style="font-size:16px">Current sale</b><button class="btn sm" id="hold" type="button">Hold</button><button class="btn sm" id="held" type="button">Held (0)</button><button class="btn sm bad" id="clr" type="button">Clear</button></div>
+    <div class="lines" id="lines"><div class="empty">Nothing yet. Search an item.</div></div>
+    <div class="row"><input class="in grow" id="cn" placeholder="Customer name (needed for credit)"><input class="in grow" id="cp" placeholder="Phone (for WhatsApp bill)" inputmode="tel"></div>
+    <div class="row" style="margin-top:8px"><label class="k grow" for="dp">Discount %</label><input class="in" id="dp" style="width:96px" inputmode="decimal" value="0"></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px"><span class="k">Total</span><span class="tot" id="tot">Rs 0</span></div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="pay" id="pay">
+      <button class="btn pri" data-m="cash" type="button">Cash</button><button class="btn" data-m="card" type="button">Card</button><button class="btn" data-m="online" type="button">Bank transfer</button>
+      <button class="btn" data-m="cheque" type="button">Cheque</button><button class="btn" data-m="credit" type="button">Credit</button><button class="btn" data-m="split" type="button">Split</button>
+    </div>
+  </section>
+</div>
+<div class="modal" id="mod"><div class="box"><div class="hd"><b id="mt"></b><button class="btn sm" id="mx" type="button">Close</button></div><div class="bd" id="mb"></div></div></div>
+<script src="ui-core.js"></script>
+<script>
+(function(){'use strict';
+var $=function(i){return document.getElementById(i)},E=RBH.esc,M=RBH.money;
+var K='rbh_pos_v2',H='rbh_pos_held_v2',cart=[],hits=[],sel=0,busy=false;
+function load(){try{var s=JSON.parse(localStorage.getItem(K)||'{}');cart=s.cart||[];$('cn').value=s.cn||'';$('cp').value=s.cp||'';$('dp').value=s.dp||'0';}catch(e){}}
+function save(){try{localStorage.setItem(K,JSON.stringify({cart:cart,cn:$('cn').value,cp:$('cp').value,dp:$('dp').value}));}catch(e){}draw();}
+function held(){try{return JSON.parse(localStorage.getItem(H)||'[]');}catch(e){return[];}}
+function sub(){return cart.reduce(function(a,l){return a+Math.round(l.qty*l.price*100)/100;},0);}
+function pct(){var d=parseFloat($('dp').value);return isFinite(d)&&d>0?d:0;}
+function total(){var s=sub();return Math.round((s-s*pct()/100)*100)/100;}
+function draw(){
+ $('lines').innerHTML=cart.length?cart.map(function(l,i){return '<div class="ln"><div><b>'+E(l.name)+'</b><div class="sub">'+E(l.code)+' &middot; '+M(l.price)+(l.stock!=null&&l.qty>l.stock?' &middot; <span style="color:var(--warn)">only '+l.stock+' in stock</span>':'')+'</div></div><div style="text-align:right"><div class="q"><button data-a="m" data-i="'+i+'" type="button" aria-label="Less">&minus;</button><input data-a="q" data-i="'+i+'" value="'+l.qty+'" inputmode="decimal" aria-label="Quantity"><button data-a="p" data-i="'+i+'" type="button" aria-label="More">+</button></div><div><b>'+M(l.qty*l.price)+'</b> <button class="btn sm bad" data-a="x" data-i="'+i+'" type="button" aria-label="Remove">&times;</button></div></div></div>';}).join(''):'<div class="empty">Nothing yet. Search an item.</div>';
+ $('tot').textContent=M(total());$('held').textContent='Held ('+held().length+')';}
+function add(it,qty){qty=qty||1;var f=cart.filter(function(l){return l.code===it.item_code})[0];
+ if(f)f.qty=Math.round((f.qty+qty)*1000)/1000;else cart.push({code:it.item_code,name:it.name,price:Number(it.selling_price)||0,qty:qty,stock:it.stock_level==null?null:Number(it.stock_level)});
+ if(Number(it.selling_price)<=0)RBH.toast('No selling price set for '+it.name+'. Set it in Prices and reorder.','bad');
+ save();$('q').value='';hits=[];$('res').innerHTML='';$('q').focus();}
+$('lines').onclick=function(e){var b=e.target.closest('[data-a]');if(!b)return;var i=+b.dataset.i,a=b.dataset.a;if(a==='x')cart.splice(i,1);else if(a==='p')cart[i].qty=Math.round((cart[i].qty+1)*1000)/1000;else if(a==='m'){cart[i].qty=Math.round((cart[i].qty-1)*1000)/1000;if(cart[i].qty<=0)cart.splice(i,1);}save();};
+$('lines').onchange=function(e){var t=e.target;if(t.dataset.a==='q'){var v=parseFloat(t.value);if(isFinite(v)&&v>0)cart[+t.dataset.i].qty=v;save();}};
+['cn','cp','dp'].forEach(function(i){$(i).oninput=save;});
+/* search: "3*014" or "014*3" sets quantity */
+var tm=0;function parse(v){v=v.trim();var m=v.match(/^(\d+(?:\.\d+)?)\s*[*xX]\s*(.+)$/)||null;if(m)return{qty:parseFloat(m[1]),q:m[2].trim()};m=v.match(/^(.+?)\s*[*]\s*(\d+(?:\.\d+)?)$/);if(m)return{qty:parseFloat(m[2]),q:m[1].trim()};return{qty:1,q:v};}
+function find(v,cb){var p=parse(v);if(!p.q){hits=[];$('res').innerHTML='';return;}RBH.api('/api/items?limit=30&q='+encodeURIComponent(p.q)).then(function(rows){if(!Array.isArray(rows))rows=[];var ql=p.q.toLowerCase();rows.sort(function(a,b){return (String(b.item_code).toLowerCase()===ql)-(String(a.item_code).toLowerCase()===ql);});hits=rows;sel=0;showHits(p);if(cb)cb(rows,p);}).catch(function(e){$('res').innerHTML='<div class="empty">'+E(e.message)+'</div>';});}
+function showHits(p){$('res').innerHTML=hits.length?hits.map(function(it,i){var out=Number(it.stock_level)<=0;return '<button class="it'+(i===sel?' on':'')+'" data-i="'+i+'" type="button"><span class="cd">'+E(it.item_code)+'</span><span><b>'+E(it.name)+'</b><div class="st">'+E(it.category||'')+' &middot; '+(out?'<span style="color:var(--warn)">out of stock (you can still sell, it will warn)</span>':Number(it.stock_level)+' in stock')+'</div></span><b>'+(Number(it.selling_price)>0?M(it.selling_price):'no price')+'</b></button>';}).join(''):'<div class="empty">No item found for "'+E(p.q)+'"</div>';}
+$('res').onclick=function(e){var b=e.target.closest('[data-i]');if(b){var p=parse($('q').value);add(hits[+b.dataset.i],p.qty);}};
+$('q').oninput=function(){clearTimeout(tm);var v=this.value;tm=setTimeout(function(){find(v);},160);};
+$('q').onkeydown=function(e){if(e.key==='ArrowDown'){sel=Math.min(sel+1,hits.length-1);showHits(parse(this.value));e.preventDefault();}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);showHits(parse(this.value));e.preventDefault();}
+ else if(e.key==='Escape'){this.value='';hits=[];$('res').innerHTML='';}
+ else if(e.key==='Enter'){e.preventDefault();var v=this.value,p=parse(v);if(!p.q)return;if(hits.length){add(hits[sel],p.qty);}else find(v,function(rows){if(rows.length)add(rows[0],p.qty);});}};
+/* hold / resume */
+$('hold').onclick=function(){if(!cart.length)return;var h=held();h.push({at:Date.now(),cart:cart,cn:$('cn').value,cp:$('cp').value,dp:$('dp').value});try{localStorage.setItem(H,JSON.stringify(h.slice(-10)));}catch(e){}reset();RBH.toast('Sale held','ok');};
+$('held').onclick=function(){var h=held();if(!h.length){RBH.toast('No held sales');return;}modal('Held sales',h.map(function(x,i){return '<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>'+E(x.cn||'Walk-in')+'</b><div class="sub">'+x.cart.length+' items &middot; '+M(x.cart.reduce(function(a,l){return a+l.qty*l.price;},0))+'</div></div><button class="btn sm pri" data-r="'+i+'" type="button">Resume</button><button class="btn sm bad" data-d="'+i+'" type="button">Delete</button></div>';}).join(''));};
+$('mb').onclick=function(e){var r=e.target.closest('[data-r]'),d=e.target.closest('[data-d]'),h=held();if(r){var x=h.splice(+r.dataset.r,1)[0];try{localStorage.setItem(H,JSON.stringify(h));}catch(e2){}if(cart.length)h.push({at:Date.now(),cart:cart,cn:$('cn').value,cp:$('cp').value,dp:$('dp').value});cart=x.cart;$('cn').value=x.cn;$('cp').value=x.cp;$('dp').value=x.dp;save();close();}else if(d){h.splice(+d.dataset.d,1);try{localStorage.setItem(H,JSON.stringify(h));}catch(e3){}close();draw();}};
+function modal(t,h){$('mt').textContent=t;$('mb').innerHTML=h;$('mod').classList.add('on');}function close(){$('mod').classList.remove('on');}$('mx').onclick=close;
+$('clr').onclick=function(){if(cart.length&&!confirm('Clear this sale?'))return;reset();};
+function reset(){cart=[];$('cn').value='';$('cp').value='';$('dp').value='0';$('err').textContent='';save();$('q').focus();}
+/* paying */
+function pay(method,payments,override){if(busy)return;if(!cart.length){$('err').textContent='Add an item first.';return;}$('err').textContent='';busy=true;
+ var body={customer_name:$('cn').value.trim()||undefined,customer_phone:$('cp').value.trim()||undefined,discount_pct:pct(),items:cart.map(function(l){return{item_code:l.code,item_name:l.name,qty:l.qty,unit_price:l.price};})};
+ if(payments)body.payments=payments;else body.payment_method=method;if(override)body.override=true;
+ RBH.api('/api/pos-bills',{body:body}).then(function(b){busy=false;done(b);}).catch(function(e){busy=false;
+  if(e.code==='discount_over_cap'&&e.data&&e.data.can_override){if(confirm('Discount is above the allowed '+e.data.max_allowed+'%. Approve as owner?'))return pay(method,payments,true);}
+  $('err').textContent=e.message;RBH.toast(e.message,'bad');});}
+function done(b){var phone=(b.customer_phone||$('cp').value||'').replace(/\D/g,'');if(phone.length===9)phone='94'+phone;else if(phone[0]==='0')phone='94'+phone.slice(1);
+ var tx=encodeURIComponent('Thank you for shopping at Royal Bath Hub. Bill '+(b.bill_number||'')+' total '+M(b.total)+'.');
+ reset();modal('Sale saved',
+  '<div style="text-align:center"><div class="tot">'+M(b.total)+'</div><div class="sub">Bill '+E(b.bill_number||'')+'</div><div class="row" style="justify-content:center;margin-top:14px"><a class="btn pri" target="_blank" rel="noopener" href="/api/pos-bills/'+b.id+'/pdf">Open receipt</a>'+(phone?'<a class="btn" target="_blank" rel="noopener" href="https://wa.me/'+phone+'?text='+tx+'">Send on WhatsApp</a>':'')+'<button class="btn" id="nw" type="button">New sale</button></div></div>');
+ var n=$('nw');if(n)n.onclick=function(){close();$('q').focus();};}
+$('pay').onclick=function(e){var b=e.target.closest('[data-m]');if(!b)return;var m=b.dataset.m,t=total();
+ if(m==='cash'||m==='card'||m==='online')return pay(m);
+ if(m==='credit'){if(!$('cn').value.trim()&&!$('cp').value.trim()){$('err').textContent='Credit needs the customer name or phone.';$('cn').focus();return;}return pay('credit',[{method:'credit',amount:t}]);}
+ if(m==='cheque'){var r=prompt('Cheque number, bank and date (for example 004512 Sampath 30/11)');if(!r||!r.trim())return;return pay('cheque',[{method:'cheque',amount:t,reference:r.trim()}]);}
+ if(m==='split'){if(!cart.length){$('err').textContent='Add an item first.';return;}var opts='<option value="cash">Cash</option><option value="card">Card</option><option value="online">Bank transfer</option><option value="cheque">Cheque</option><option value="credit">Credit</option>';
+  var rows='';for(var i=0;i<3;i++)rows+='<div class="row" style="margin-bottom:8px"><select class="in grow" data-s="m'+i+'">'+opts+'</select><input class="in grow" data-s="a'+i+'" placeholder="Amount" inputmode="decimal"><input class="in grow" data-s="r'+i+'" placeholder="Cheque no. (if cheque)"></div>';
+  modal('Split payment. Total '+M(t),rows+'<div class="sub" id="sl"></div><button class="btn pri" id="sg" type="button">Save sale</button>');
+  var upd=function(){var s=0;for(var j=0;j<3;j++){var v=parseFloat($('mb').querySelector('[data-s="a'+j+'"]').value);if(isFinite(v))s+=v;}$('sl').textContent='Entered '+M(s)+(Math.abs(s-t)<0.005?'  OK':'  still '+M(t-s));};
+  $('mb').oninput=upd;upd();$('sg').onclick=function(){var ps=[];for(var j=0;j<3;j++){var a=parseFloat($('mb').querySelector('[data-s="a'+j+'"]').value);if(isFinite(a)&&a>0)ps.push({method:$('mb').querySelector('[data-s="m'+j+'"]').value,amount:a,reference:$('mb').querySelector('[data-s="r'+j+'"]').value.trim()||undefined});}close();pay('split',ps);};}};
+addEventListener('keydown',function(e){if(e.key==='F2'||(e.key==='/'&&document.activeElement.tagName!=='INPUT')){e.preventDefault();$('q').focus();}else if(e.key==='F4'){e.preventDefault();$('hold').click();}});
+RBH.me().then(function(){load();draw();var u=new URLSearchParams(location.search).get('q');if(u){$('q').value=u;find(u,function(rows,p){if(rows.length===1)add(rows[0],p.qty);});}$('q').focus();});
+})();
+</script></body></html>
