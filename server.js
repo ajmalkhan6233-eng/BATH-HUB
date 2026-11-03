@@ -212,7 +212,7 @@ app.use(require('./middleware/tenantStatusMiddleware'));
 // DB enum (user_role) uses admin/owner/staff. These map 1:1 onto the
 // PHASE 2 role spec admin / uncle_readonly / staff — 'owner' IS
 // uncle_readonly (an investor, view-only). No new accounts
-// needed; 'uncle' (role='owner') and the 9 staff accounts already exist
+// needed; the read-only 'owner'-role viewer account (legacy username 'uncle') and the 9 staff accounts already exist
 // (see scripts/seed_accounts.js).
 // admin  : full access
 // owner  : same access as admin in this white-label template (the read-only
@@ -392,7 +392,7 @@ app.get('/api/auth/totp-setup', async (req, res) => {
         return res.status(403).json({ error: 'Admin only' });
     try {
         const generated = speakeasy.generateSecret({
-            name: `BATHCO COMMAND (${req.session.user.username})`,
+            name: `Royal Bath Hub (RBH) (${req.session.user.username})`,
             length: 32
         });
         const qrDataUrl = await QRCode.toDataURL(generated.otpauth_url);
@@ -3414,7 +3414,7 @@ async function m8CallOpenRouter(message, history) {
     return response.choices[0].message.content.trim();
 }
 
-const M8_SYSTEM_PROMPT = `You are the BATHCO COMMAND dashboard assistant — a help/navigation
+const M8_SYSTEM_PROMPT = `You are the Royal Bath Hub (RBH) dashboard assistant — a help/navigation
 assistant embedded in the Your Business Name internal dashboard (a different system from
 LAYLA, the customer-facing WhatsApp bot — never confuse the two, and never claim to be LAYLA).
 

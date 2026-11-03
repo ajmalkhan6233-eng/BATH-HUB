@@ -4,4 +4,4 @@ DONE: backup-live-21oct pushed; DB backup OK; main folder on work; apex-server r
 NEXT: AJ decides step 4 wipe (clean) + step 5 drill (both denied by auto-mode classifier), plugins, push work.
 STUCK ON: classifier denial on rbh_wipe.ps1 and pm2 stop apex-server.
 reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not the override).
-- 2026-11-03: Profile + queue saved, waiting for go. (AJMAL_PROFILE.md, QUEUE_TOMORROW.md, GLOBAL_CLAUDE.md; old versions in _archive/)
+- 2026-11-03: Correction applied: Ajmal is NOT owner of old shop. Profile/global replaced, wording fixed, old rules archived (_archive/former-workplace.md). Renames NOT done: see RENAME_PLAN_WAITING_GO.md. Waiting for Ajmal's go + 5 answers.

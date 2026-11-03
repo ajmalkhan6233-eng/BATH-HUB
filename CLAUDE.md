@@ -29,7 +29,7 @@ Very short, plain, answer first, call him AJ. HEADS-UP block first (never the wo
 - RULE 1: give AJ the LEAST work. Do what you can yourself first. RULE 1b: you decide the method; ask only if something can be lost, costs money, sends data out, or installs third-party tools.
 - RULE 13: chat writes code; you run it. If a run fails, put the EXACT error in LIVE.md and stop; chat fixes it. Do not write or rewrite feature code.
 - Work on branch `work` only; never push main; never force-push. Never merge or push unless the task says so.
-- Never touch live First Choice Bathco (C:\BATHCO_PHASE1, Railway alert-cooperation). Never start a second WhatsApp bridge on the PC. pm2 only with --only apex-server.
+- Never touch the former workplace's live system (history only) (C:\BATHCO_PHASE1, Railway alert-cooperation). Never start a second WhatsApp bridge on the PC. pm2 only with --only apex-server.
 - Backup must pass before any delete or wipe. The big wipe (-Scope all) runs only on AJ's word.
 - Never push secrets. Never print or read .env or SECRETS files. Never commit data/ (gitignored). Dry run and TEST flags stay as they are unless a task says change them.
 - Rule 11: every notification to AJ goes ONLY at 06:00 Sri Lanka time, once, as ONE message (utils/notify.js).

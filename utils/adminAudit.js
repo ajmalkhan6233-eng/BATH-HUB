@@ -2,7 +2,7 @@
 //   ensureAdminAudit(pool)                         creates the table admin_audit (append-only trail of who changed what)
 //   logAdmin(pool, req, action, type, id, detail)  one row: who (session user), when, what, on which record, details
 //   adminOnly                                      Express middleware: 403 unless the session user is an admin
-// The read-only 'owner' (uncle) account and staff are NOT admins.
+// The read-only 'owner'-role viewer account (legacy username 'uncle') and staff are NOT admins.
 const DDL = `CREATE TABLE IF NOT EXISTS admin_audit (
     id          SERIAL PRIMARY KEY,
     at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),

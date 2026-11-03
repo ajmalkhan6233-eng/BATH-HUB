@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // ─── HEALTH CHECK ────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-    res.json({ status: 'BATHCO COMMAND ACTIVE', agent: 'LAYLA', time: new Date() });
+    res.json({ status: 'ROYAL BATH HUB ACTIVE', agent: 'LAYLA', time: new Date() });
 });
 
 // ─── WHATSAPP WEBHOOK (incoming messages) ────────────────────────────────────
@@ -219,7 +219,7 @@ app.get('/api/packages', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════╗
-║   BATHCO COMMAND — PHASE 1 ACTIVE     ║
+║   ROYAL BATH HUB — PHASE 1 ACTIVE     ║
 ║   Your Business Name (Pvt) Ltd         ║
 ║   Your City                ║
 ║                                        ║
