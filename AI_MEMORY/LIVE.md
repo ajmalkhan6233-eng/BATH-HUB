@@ -9,3 +9,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-03: QUEUE_SIMPLIFY saved (6-module simplify plan). Waiting for Ajmal's go; QUEUE_TOMORROW runs first.
 - 2026-11-03: Commission answered (5% weekly). Rule saved: cloud builds + pushes, PC pulls + runs. Waiting for go.
 - 2026-11-03: HARD RULE 0 added (everything built in the cloud, PC only runs) to global + project CLAUDE.md, profile, RULES.
+- 2026-11-03 (last msg of the day): CORE_RULES.md + SessionStart hook (.claude/settings.json) + rbh-link-reader skill added. Cloud box cannot reach youtube/instagram (network policy). Waiting for Ajmal's go tomorrow: QUEUE_TOMORROW first.

@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat AI_MEMORY/CORE_RULES.md; echo; echo '--- LIVE.md (last 12 lines) ---'; tail -n 12 AI_MEMORY/LIVE.md; echo; echo 'Queues: QUEUE_TOMORROW.md then QUEUE_SIMPLIFY.md (AI_MEMORY/)'"
+          }
+        ]
+      }
+    ]
+  }
+}
