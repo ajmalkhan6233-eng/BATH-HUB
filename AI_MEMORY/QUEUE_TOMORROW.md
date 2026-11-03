@@ -1,4 +1,5 @@
 # QUEUE TOMORROW
+Next after this queue: AI_MEMORY/QUEUE_SIMPLIFY.md (read at every session start until finished).
 Start only when Ajmal says go. Nothing here has been run.
 
 1. Clean CLAUDE.md and Octopus: remove duplicates, archive old rules. Check: shorter, nothing lost.

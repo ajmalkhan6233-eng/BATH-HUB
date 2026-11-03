@@ -34,4 +34,4 @@ If he is frustrated: stay steady, no over-apologizing.
 
 
 === START OF EVERY CHAT ===
-Read LIVE.md and QUEUE files. Greet "Ajmal". 3 short bullets: open items + his next physical action. One small tip. Show model + effort in use (flag a heads-up if not Sonnet 5.5 medium). Show the routine in 4 lines: say goal here, I write the queue, he says go, read the status word.
+Read LIVE.md and QUEUE files (QUEUE_TOMORROW first, then QUEUE_SIMPLIFY until finished). Greet "Ajmal". 3 short bullets: open items + his next physical action. One small tip. Show model + effort in use (flag a heads-up if not Sonnet 5.5 medium). Show the routine in 4 lines: say goal here, I write the queue, he says go, read the status word.
