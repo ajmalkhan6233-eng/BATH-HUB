@@ -28,6 +28,8 @@ const ping = () => new Promise((res) => {
     ['On branch work, nothing unsaved', false, branch === 'work' && dirty === ''],
     ['Audit file present', false, ex(path.join(root, 'AI_MEMORY/AUDIT.md'))],
     ['Pop-up + laptop setup scripts present', false, ex(path.join(root, 'scripts/pc/rbh_popup.ps1')) && ex(path.join(root, 'scripts/pc/rbh_setup_laptop.js'))],
+    ['Cloud playbook + one-command test script', false, ex(path.join(root, 'AI_MEMORY/CLOUD_PLAYBOOK.md')) && ex(path.join(root, 'scripts/dev/cloud_test.sh'))],
+    ['Efficiency log + task-loop skill present', false, ex(path.join(root, 'AI_MEMORY/EFFICIENCY_LOG.md')) && ex(path.join(root, '.claude/skills/ecc-task-loop/SKILL.md'))],
     ['Link reader skill present', false, ex(path.join(root, '.claude/skills/rbh-link-reader/SKILL.md'))],
     // PC-level (this computer)
     ['Global rules on this computer (HARD RULE 0)', true, /HARD RULE 0/.test(rd(path.join(home, 'CLAUDE.md')))],

@@ -16,7 +16,7 @@ PC folder: E:\AI Sttuf\BATHCO_TEMPLATE, branch `work`. Live app = pm2 `apex-serv
 - Watchdog task RBH_Watchdog restarts apex-server if it is down (logs only on DOWN). Health: http://localhost:3100/health.
 - Nothing visible from chat unless you push it. Chat reads LIVE.md; if it is not in LIVE.md, chat does not know it happened.
 
-## 2. SESSION START (3 steps only)
+## 2. SESSION START (3 steps only; for the greeting and report style, AI_MEMORY/CORE_RULES.md rule 5 and REPLY LENGTH win)
 1. git pull in the bridge folder. Read the TOP 6 lines of AI_BRIDGE/LIVE.md and the tasks marked PLAYED in BRIDGE.md (grep "STATUS: PLAYED"). Nothing else.
 2. Do the task. Every step has a check. Never say done unless a check ran (else UNVERIFIED).
 3. Write ONE line at the top of LIVE.md: time | task | state | next. Push the bridge. Stop.
