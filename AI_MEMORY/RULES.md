@@ -1,4 +1,5 @@
 SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
+- **PROFILE (2026-11-03): who Ajmal is, values, projects, shop rules, report format and chat start are in AJMAL_PROFILE.md (same text as global CLAUDE.md "ABOUT AJMAL"). If it clashes with a rule below, the rule below wins; HARD RULE 14 SUMMARY still ends every reply.**
 # RULES (Ajmal's own orders, newest first, max 30 lines)
 - **HARD RULE 14 (Ajmal 18 Oct, restored 22 Oct): EVERY report and every chat reply ENDS with a block "SUMMARY (5 lines)": 1 done, 2 not done or UNVERIFIED, 3 Aj's next physical action (or none), 4 save usage note (cheapest way used), 5 status word. A report written to a branch (not main) STARTS with a 3-line handover (branch, commit, what changed).**
 - **RULE 1 (Ajmal, 2026-10-21): GIVE AJ THE LEAST WORK. Find the free, easiest, fastest way first. Read and change only the lines that need it. Build every task of a request in one go, then tell Aj only what HE must do (one paste at most, ideally none). Find and attach any new repo, connection or tool yourself; never ask Aj to remember it. Save usage.**
