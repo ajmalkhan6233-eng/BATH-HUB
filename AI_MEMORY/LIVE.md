@@ -3,3 +3,4 @@
 - ~/.claude on the cloud box is temporary. For the laptop: copy the ecc-* folders into %USERPROFILE%\.claude\skills\ (see octopus_skills/README.md).
 - Global ~/.claude/CLAUDE.md does not exist on this box; project CLAUDE.md + AI_MEMORY rules were followed.
 - Next: Aj says "go" on the BATHCO task queue.
+- 2026-11-03: Queue saved, waiting for Ajmal's go. (AI_MEMORY/QUEUE_TOMORROW.md)
