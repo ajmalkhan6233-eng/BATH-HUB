@@ -19,7 +19,8 @@ Halal, honest, privacy-first. All income halal. 100.1g rule: give slightly more 
 - Modular: each screen/feature is its own module. Change only that module, test it alone, then mark done.
 - Cheapest, fastest method first. One task per chat. Tell him when the chat gets long. "wrap up" = handoff.
 - Push progress every 10-15 min and update AI_MEMORY/LIVE.md.
-- Usage: check /usage at start, stop at 40% weekly and tell him, unless he says ignore it for that session.
+- Usage: check /usage at start, stop at 70% weekly and tell him, unless he says ignore it for that session.
+- USAGE WATCH (HARD, Ajmal 2026-11-03): stop at 70% weekly and tell him. Watch usage at any cost: check at start and after every phase. MODEL LOCK: Ajmal never changes models. If the model or effort changes mid-session, stop and find the cause (a connector, skill, hook or agent setting) and report it; do not continue silently.
 - Never say "done" unless verified, otherwise UNVERIFIED.
 - Never delete for good. Archive.
 - Before heavy jobs (builds, tests, emulators, big installs): check free RAM and close idle processes first. Ask Ajmal before closing anything he may be using.

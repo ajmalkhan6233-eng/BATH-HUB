@@ -12,3 +12,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-03 (last msg of the day): CORE_RULES.md + SessionStart hook (.claude/settings.json) + rbh-link-reader skill added. Cloud box cannot reach youtube/instagram (network policy). Waiting for Ajmal's go tomorrow: QUEUE_TOMORROW first.
 - 2026-11-03: yt-dlp installed in cloud box; REPLY LENGTH hard rule added (max 5 lines).
 - 2026-11-03: Ajmal pre-approved QUEUE_TOMORROW to start at first message tomorrow (no go). Optimization (PC) is item 0.
+- 2026-11-03: usage stop now 70% (was 40%). MODEL LOCK rule added.

@@ -33,7 +33,7 @@ Royal Bath Hub becomes a simple, normal shop app. The 6 core modules are rebuilt
 1 GRN + vendor payable, 2 Sales/POS, 3 Vendors + cheques, 4 Money, 5 Loans, 6 Stock. Layla and the morning brief stay.
 
 ## USAGE RULES
-- Check /usage at start and after each phase. Stop at 40% and tell Ajmal.
+- Check /usage at start and after each phase. Stop at 70% and tell Ajmal.
 - Build in the main session, one module per chat. After each module write a short handoff in AI_MEMORY/LIVE.md, then Ajmal starts a fresh chat.
 - Subagents: only for read-only sweeps (audit, usage search, running tests), cheapest model, max 2 at once, never for building. Each agent restarts cold and costs usage.
 - Grep before reading. Read only the files a module needs. Tests and curl first, screenshots only at gates.
