@@ -5,7 +5,7 @@
   var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'vendors', 'moneycontrol', 'loans', 'stock'];   // Dashboard + the 6 core modules
   var GROUPS = [
     ['Dashboard', ['dashboard']],
-    ['1 GRN + Payable', ['grn', 'purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorledger']],
+    ['1 GRN + Payable', ['grn', 'purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorreturns', 'vendorledger']],
     ['2 Sales', ['pos', 'daily-sales', 'dailyledger', 'posledger', 'customers', 'credit']],
     ['3 Vendors + Cheques', ['vendors', 'vendorsum', 'vendor360', 'cheques', 'chequereg']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],

@@ -2,13 +2,13 @@
 OK = exists and tested here | NEW = built tonight | CHECK = exists, needs Ajmal's eyes on real numbers | GAP = not built
 | Fact | Where | Status |
 |---|---|---|
-| Menu: 6 modules + Dashboard, rest inactive | public/simple_mode.js (groups), config/modules.json, routes/modules.js, public/js/simple-modules.js, public/inactive_modules.html | NEW (API tested live; menu look NOT seen on a phone: UNVERIFIED) |
+| Menu: 6 modules + Dashboard, rest inactive | public/simple_mode.js (groups), config/modules.json, routes/modules.js, public/js/simple-modules.js, public/inactive_modules.html | NEW. Checked in a headless browser on the test copy: simple menu = Dashboard, GRN, POS, Pay vendors, Money Control, Loans, Stock. Real phone look still UNVERIFIED |
 | Module on/off, nothing deleted | utils/modulesConfig.js + tests (5) | NEW, OK |
 | Oversell allowed, warn only, next entry asks how gap was covered | utils/oversold.js, routes/oversold.js, tests | OK (existing) |
 | Vendor bill math (qty x rate, totals), mismatch alert | utils/billChecks.js, tests | OK (existing) |
 | Awaiting-delivery checklist | routes/pending_delivery.js | OK (existing) |
 | Free items from vendor add stock at cost 0 | commit a5393f5 "Free stock module" | OK (existing) |
-| Vendor RETURN updates payable + stock + cost together | utils/vendorAdjust.js, routes/vendor_returns.js, 6 unit tests, run on real Postgres copy | NEW, CHECK (UI button not built: API only) |
+| Vendor RETURN updates payable + stock + cost together | utils/vendorAdjust.js, routes/vendor_returns.js, 6 unit tests, run on real Postgres copy | NEW, CHECK. Screen built: public/vendor_returns.html (menu: GRN > Return / Discount), checked at phone width in a headless browser |
 | Vendor DISCOUNT updates payable + cost of items in stock | same | NEW, CHECK. Known edge: units returned earlier count as "no longer in stock" in the sold-share figure |
 | Payable stays until cheque clears; Fri->Mon, Sat/Sun->Tue | utils/bankDays.js, tests | OK (existing) |
 | Pop-up 3 days before cheque due | utils/chequeAlerts.js (WhatsApp, 06:00 rule) | OK; on-screen pop-up GAP |

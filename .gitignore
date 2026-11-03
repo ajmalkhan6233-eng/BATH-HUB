@@ -96,3 +96,4 @@ logs/
 
 # RBH status snapshot (local)
 .rbh_status.json
+node_modules
