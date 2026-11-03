@@ -13,3 +13,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-03: yt-dlp installed in cloud box; REPLY LENGTH hard rule added (max 5 lines).
 - 2026-11-03: Ajmal pre-approved QUEUE_TOMORROW to start at first message tomorrow (no go). Optimization (PC) is item 0.
 - 2026-11-03: usage stop now 70% (was 40%). MODEL LOCK rule added.
+- 2026-11-03 night: BUILT in cloud: readiness score (scripts/pc/rbh_readiness.js), colour pop-ups (rbh_notify.js + rbh_popup.ps1, hooks Stop/Notification), laptop setup (rbh_setup_laptop.js, tested on fake home), project permissions, AUDIT.md (Phase 2, from code), CLAUDE.md trimmed. UNVERIFIED: pop-up on Windows, hooks in a fresh window. PC steps a-g listed in QUEUE_TOMORROW. Gate next: Phase 3 needs Ajmal YES.

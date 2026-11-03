@@ -1,6 +1,6 @@
 # QUEUE_SIMPLIFY (read at the start of every session until finished)
 Do NOT run until Ajmal says "go". Run QUEUE_TOMORROW first. Update the status line below after each phase.
-STATUS: not started (commission answered: 5% weekly)
+STATUS: Phase 2 audit written from code (AI_MEMORY/AUDIT.md). Waiting: PC steps, then Phase 3 gate (Ajmal YES). Commission = 5% weekly.
 
 ## GOAL
 Royal Bath Hub becomes a simple, normal shop app. The 6 core modules are rebuilt from scratch in the GRN pattern. Everything else goes inactive and archived. Minimum usage.

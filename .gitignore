@@ -93,3 +93,6 @@ audit_out/
 
 # watchdog and wipe logs (plain text, per PC)
 logs/
+
+# RBH status snapshot (local)
+.rbh_status.json
