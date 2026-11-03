@@ -26,6 +26,7 @@ Halal, honest, privacy-first. All income halal. 100.1g rule: give slightly more 
 
 
 === REPORTS ===
+REPLY LENGTH (HARD): max 5 short lines. Answer first, only what Ajmal needs to know or do, one status word last. No lists of what was built, no explanations unless he asks.
 Very short, light, plain words. No long explanations or advice paragraphs. Do not narrate things you found and fixed.
 Order: NEEDS YOUR ATTENTION block (only if he has an action, exact paste inside) > DONE list > NOT DONE list. One line each.
 Each instruction once, in its own highlighted block.
