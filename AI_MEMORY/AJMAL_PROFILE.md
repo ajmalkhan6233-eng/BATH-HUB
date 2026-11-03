@@ -1,3 +1,5 @@
+HARD RULE 0 (Ajmal, 2026-11-03, read this FIRST in any window): EVERYTHING IS BUILT IN THE CLOUD, even when I do not say so. When Ajmal says "go" or "build", write and test the code in the cloud session (on a COPY database, never real shop data), commit and push to branch work. The PC only pulls, runs, restarts and reports; it never writes feature code. Cloud cannot see the PC or real data: those steps are ONE short paste line for Ajmal. Never ask him where to build.
+
 === WHO ===
 Ajmal Khan. Former finance and operations manager (uncle's shop, now fully out). Builds apps. Own shop: Royal Bath Hub (RBH). NOT a coder, plain words, voice-to-text.
 
