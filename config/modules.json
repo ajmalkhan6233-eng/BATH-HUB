@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "note": "Switch a module off here (or on the Inactive modules page). Off = hidden from the menu, nothing deleted, every page still opens from the Inactive modules page.",
+  "always": ["dashboard", "settings", "layla", "morningbrief", "assistant", "adminsystem", "adminusers", "adminsettings"],
+  "modules": [
+    { "key": "grn",     "label": "1 GRN + Payable",     "active": true, "pages": ["grn", "purchasing", "docinbox", "documents", "vendorcredit", "vendorledger"] },
+    { "key": "sales",   "label": "2 Sales (POS)",       "active": true, "pages": ["pos", "daily-sales", "dailyledger", "posledger", "customers", "credit"] },
+    { "key": "vendors", "label": "3 Vendors + Cheques", "active": true, "pages": ["vendors", "vendorsum", "vendor360", "cheques", "chequereg"] },
+    { "key": "money",   "label": "4 Money",             "active": true, "pages": ["expenses", "salary", "staff", "moneycontrol", "dailybreakdown", "commissions", "moneyplan", "reports", "reportshub"] },
+    { "key": "loans",   "label": "5 Loans",             "active": true, "pages": ["loans"] },
+    { "key": "stock",   "label": "6 Stock",             "active": true, "pages": ["stock", "prices", "stickers", "labels"] },
+    { "key": "inactive_extras", "label": "Inactive extras", "active": false, "core": false,
+      "pages": ["quotations", "accounting", "auditacc", "reports2", "enquiries", "replies", "webcat", "website", "tilegallery", "policy", "branches", "shoptools", "content", "competitors", "agentreview", "agent-rules", "adminaudit", "corrections"] }
+  ]
+}

@@ -84,9 +84,10 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
             if (!Number.isFinite(qty) || qty <= 0) throw badRequest(`Row ${n} (${name}): quantity must be more than 0`);
             if (!Number.isFinite(cost) || cost < 0) throw badRequest(`Row ${n} (${name}): unit cost must be 0 or more`);
             if (l.selling_price !== undefined && l.selling_price !== null && l.selling_price !== '' && (!Number.isFinite(Number(l.selling_price)) || Number(l.selling_price) < 0)) throw badRequest(`Row ${n} (${name}): selling price must be 0 or more`);
-            return { name, qty, cost, category: l.category, selling_price: l.selling_price, file: files[`photo_${i}`] };
+            return { name, qty, cost, category: l.category, selling_price: l.selling_price, vendor_code: l.vendor_code, file: files[`photo_${i}`] };
         });
 
+        await catalog.schemaReady;   // products.vendor_code column is in place
         client = await pool.connect();
         await client.query('BEGIN');
         await client.query('SELECT pg_advisory_xact_lock($1)', [GRN_NUMBER_LOCK_ID]);
@@ -111,14 +112,15 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                 const u = await client.query(
                     `UPDATE products SET stock_level = COALESCE(stock_level,0) + $1,
                             avg_cost = $4,
-                            photo_url = COALESCE(photo_url, $2) WHERE id = $3 RETURNING *`,
-                    [l.qty, photo_url, ex.rows[0].id, weightedAvgCost(ex.rows[0].stock_level, ex.rows[0].avg_cost, l.qty, l.cost)]);
+                            photo_url = COALESCE(photo_url, $2),
+                            vendor_code = COALESCE(vendor_code, $5) WHERE id = $3 RETURNING *`,
+                    [l.qty, photo_url, ex.rows[0].id, weightedAvgCost(ex.rows[0].stock_level, ex.rows[0].avg_cost, l.qty, l.cost), String(l.vendor_code || '').trim().slice(0, 60) || null]);
                 item = u.rows[0];
             } else {
                 isNew = true;
                 item = await catalog.createItem({
                     name: l.name, category: l.category, selling_price: l.selling_price,
-                    avg_cost: l.cost, stock_level: l.qty, photo_url,
+                    avg_cost: l.cost, stock_level: l.qty, photo_url, vendor_code: l.vendor_code,
                 }, { client });
             }
             const prev = await client.query(`SELECT unit_cost FROM grn_records WHERE LOWER(supplier_name) = LOWER($1) AND item_description LIKE $2 ORDER BY id DESC LIMIT 1`, [supplier_name, `${item.item_code} - %`]);

@@ -646,6 +646,8 @@ app.use('/api', require('./routes/attention'));           // /attention (dashboa
 app.use('/api', require('./routes/bill_watch'));          // /bill-watch (vendor bills to chase: mismatch reminders)
 app.use('/api', require('./routes/pending_delivery'));  // /pending-delivery (items billed by a vendor but not delivered yet)
 app.use('/api', require('./routes/oversold'));           // /oversold/open, /oversold/:id/resolve
+app.use('/api', require('./routes/modules'));            // /modules (module on/off switch for the simple menu)
+app.use('/api', require('./routes/vendor_returns'));      // /vendor-returns (vendor return or discount: payable, stock and cost move together)
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
 app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
 app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)

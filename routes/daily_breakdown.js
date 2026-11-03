@@ -21,7 +21,7 @@ const ready = pool.query(`
     rent_monthly NUMERIC(12,2) NOT NULL DEFAULT 70000,
     salary_monthly NUMERIC(12,2) NOT NULL DEFAULT 0,
     other_monthly NUMERIC(12,2) NOT NULL DEFAULT 0,
-    commission_rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+    commission_rate NUMERIC(5,2) NOT NULL DEFAULT 5,
     rent_day INT NOT NULL DEFAULT 0,
     salary_day INT NOT NULL DEFAULT 0,
     cheque_window_days INT NOT NULL DEFAULT 7,

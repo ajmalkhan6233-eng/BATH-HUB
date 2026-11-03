@@ -1,6 +1,6 @@
 # QUEUE_SIMPLIFY (read at the start of every session until finished)
 Do NOT run until Ajmal says "go". Run QUEUE_TOMORROW first. Update the status line below after each phase.
-STATUS: Phase 2 audit written from code (AI_MEMORY/AUDIT.md). Waiting: PC steps, then Phase 3 gate (Ajmal YES). Commission = 5% weekly.
+STATUS: Phase 3 gate APPROVED (Ajmal: "yes menu", 2026-11-03). Built in cloud: module switch + 6-item menu groups, vendor return/discount, vendor_code. See AI_MEMORY/SPEC_COVERAGE.md for what is OK / GAP. Ajmal said: build everything possible; usage ignored for the night.
 
 ## GOAL
 Royal Bath Hub becomes a simple, normal shop app. The 6 core modules are rebuilt from scratch in the GRN pattern. Everything else goes inactive and archived. Minimum usage.

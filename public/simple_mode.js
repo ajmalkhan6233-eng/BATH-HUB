@@ -2,18 +2,19 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'pos', 'grn', 'stock', 'prices', 'stickers', 'vendorsum', 'vendor360'];
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'vendors', 'moneycontrol', 'loans', 'stock'];   // Dashboard + the 6 core modules
   var GROUPS = [
-    ['Daily work', ['dashboard', 'pos', 'daily-sales', 'dailybreakdown']],
-    ['Items', ['stock', 'prices', 'stickers']],
-    ['Purchasing', ['grn', 'vendorsum', 'vendor360', 'vendors', 'cheques']],
-    ['Money', ['expenses', 'loans', 'commissions', 'salary', 'moneycontrol']],
-    ['Reports', ['reportshub', 'reports', 'competitors']],
-    ['Papers', ['docinbox', 'documents', 'policy']],
-    ['Customers and web', ['enquiries', 'replies', 'website', 'webcat', 'tilegallery', 'branches']],
-    ['Settings and admin', ['settings', 'shoptools', 'adminusers', 'adminaudit', 'adminsystem', 'adminsettings', 'agentreview', 'agent-rules', 'content']]
+    ['Dashboard', ['dashboard']],
+    ['1 GRN + Payable', ['grn', 'purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorledger']],
+    ['2 Sales', ['pos', 'daily-sales', 'dailyledger', 'posledger', 'customers', 'credit']],
+    ['3 Vendors + Cheques', ['vendors', 'vendorsum', 'vendor360', 'cheques', 'chequereg']],
+    ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],
+    ['5 Loans', ['loans']],
+    ['6 Stock', ['stock', 'prices', 'stickers', 'labels']],
+    ['Layla and brief', ['layla', 'morningbrief', 'assistant']],
+    ['Settings and admin', ['settings', 'adminusers', 'adminsystem', 'adminsettings', 'inactive']]
   ];
-  var OPEN_DEFAULT = { 'Daily work': 1, 'Items': 1, 'Purchasing': 1 };
+  var OPEN_DEFAULT = { 'Dashboard': 1, '1 GRN + Payable': 1, '2 Sales': 1 };
   var busy = false;
   function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (_) { /* not remembered */ } }
