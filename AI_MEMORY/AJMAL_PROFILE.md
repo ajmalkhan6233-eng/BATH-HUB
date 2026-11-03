@@ -20,6 +20,7 @@ Halal, honest, privacy-first. All income halal. 100.1g rule: give slightly more 
 - Usage: check /usage at start, stop at 40% weekly and tell him, unless he says ignore it for that session.
 - Never say "done" unless verified, otherwise UNVERIFIED.
 - Never delete for good. Archive.
+- Before heavy jobs (builds, tests, emulators, big installs): check free RAM and close idle processes first. Ask Ajmal before closing anything he may be using.
 
 
 === REPORTS ===
