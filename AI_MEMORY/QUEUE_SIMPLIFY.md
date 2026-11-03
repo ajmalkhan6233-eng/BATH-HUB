@@ -1,6 +1,6 @@
 # QUEUE_SIMPLIFY (read at the start of every session until finished)
 Do NOT run until Ajmal says "go". Run QUEUE_TOMORROW first. Update the status line below after each phase.
-STATUS: not started
+STATUS: not started (commission answered: 5% weekly)
 
 ## GOAL
 Royal Bath Hub becomes a simple, normal shop app. The 6 core modules are rebuilt from scratch in the GRN pattern. Everything else goes inactive and archived. Minimum usage.
@@ -49,5 +49,11 @@ Royal Bath Hub becomes a simple, normal shop app. The 6 core modules are rebuilt
 7. Proof run: stock, vendor payable, cash and net profit agree across screens. Offline save and sync works. Show the numbers.
 8. Report DONE / NOT DONE, one line each, one status word. Commit + push after every module.
 
-## OPEN QUESTIONS FOR AJMAL (answer before phase 4)
-- Q1. Commission: this plan says 5% of gross profit weekly; DECISIONS.md says default 2% of profit, editable. Which one is RBH? Paste: "5% weekly" or "2%".
+## WHERE WORK RUNS (Ajmal, 2026-11-03: build in the cloud, run on the PC)
+- Cloud session (this kind) WRITES the code, tests it on a COPY database (bash scripts/dev/cloud_rig.sh), and pushes to branch work after every module.
+- PC Claude Code only PULLS, runs the tests, restarts apex-server and reports. It does not write feature code. (Same as Rule 13 in CLAUDE.md.)
+- If a PC run fails: put the exact error in LIVE.md, stop; the cloud session fixes it.
+- Cloud cannot see the PC or the real shop database: anything needing them (Phase 0 backup restore, Phase 1 entry, Phase 7 proof run) is a PC step with ONE short paste line for Ajmal.
+
+## ANSWERED
+- Commission = 5% of gross profit, paid weekly (Ajmal, 2026-11-03). Replaces the older 2% default in DECISIONS.md. Code default changes only when module 4 (Money) is built and he sees the numbers.

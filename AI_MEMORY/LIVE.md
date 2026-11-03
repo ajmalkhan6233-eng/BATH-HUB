@@ -7,3 +7,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-03: Correction applied: Ajmal is NOT owner of old shop. Profile/global replaced, wording fixed, old rules archived (_archive/former-workplace.md). Renames NOT done: see RENAME_PLAN_WAITING_GO.md. Waiting for Ajmal's go + 5 answers.
 - 2026-11-03: PC health check script ready (scripts/pc/rbh_health_check.ps1, read-only, not run: cloud box cannot see Ajmal's PC). Light RAM rule added to profile/global CLAUDE.md.
 - 2026-11-03: QUEUE_SIMPLIFY saved (6-module simplify plan). Waiting for Ajmal's go; QUEUE_TOMORROW runs first.
+- 2026-11-03: Commission answered (5% weekly). Rule saved: cloud builds + pushes, PC pulls + runs. Waiting for go.
