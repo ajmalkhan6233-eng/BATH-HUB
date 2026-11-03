@@ -1,5 +1,5 @@
 # Attribution
-Ideas drawn from github.com/affaan-m/ECC (Everything Claude Code), licensed MIT:
+Ideas drawn (incl. the 19 global ecc-* skills) from github.com/affaan-m/ECC (Everything Claude Code), licensed MIT:
 
 MIT License
 Copyright (c) 2026 Affaan Mustafa
