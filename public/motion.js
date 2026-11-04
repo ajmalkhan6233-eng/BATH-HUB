@@ -55,4 +55,40 @@
     for (var i = 0; i < 28; i++) { var p = doc.createElement('i'), a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 150; p.style.background = cols[i % cols.length]; p.style.setProperty('--dx', Math.cos(a) * d + 'px'); p.style.setProperty('--dy', Math.sin(a) * d - 40 + 'px'); p.style.setProperty('--rot', (Math.random() * 540 - 270) + 'deg'); p.style.animationDelay = (Math.random() * 80) + 'ms'; box.appendChild(p); }
     doc.body.appendChild(box); setTimeout(function () { box.remove(); }, 1300);
   };
+
+  /* ---- round 2 ---- */
+  var weak = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+  if (weak) doc.documentElement.classList.add('mo-lite');   // no blur, no tilt light on slow computers
+
+  /* toast: window.bhToast('Saved') */
+  win.bhToast = function (msg, ms) {
+    ms = ms || 3500; var c = doc.querySelector('.toast-container');
+    if (!c) { c = doc.createElement('div'); c.className = 'toast-container'; doc.body.appendChild(c); }
+    var t = doc.createElement('div'); t.className = 'bh-toast'; var m = doc.createElement('div'); m.textContent = msg; var b = doc.createElement('div'); b.className = 'bar'; t.append(m, b); c.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add('show'); b.style.transition = 'transform ' + ms + 'ms linear'; b.style.transform = 'scaleX(0)'; });
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 400); }, ms);
+  };
+
+  /* a small gold dot flies from one element to another (item picked -> bill list) */
+  win.bhFly = function (from, to) {
+    if (!from || !to || !from.animate) return;
+    var a = from.getBoundingClientRect(), b = to.getBoundingClientRect(), d = doc.createElement('div'); d.className = 'mo-fly';
+    var x0 = a.left + 12, y0 = a.top + a.height / 2 - 13, x1 = b.left + 24, y1 = b.top + 12;
+    doc.body.appendChild(d);
+    var an = d.animate([{ transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(1)', opacity: 1 }, { transform: 'translate(' + ((x0 + x1) / 2) + 'px,' + (Math.min(y0, y1) - 70) + 'px) scale(1.15)', opacity: 1, offset: .5 }, { transform: 'translate(' + x1 + 'px,' + y1 + 'px) scale(.3)', opacity: .2 }], { duration: 560, easing: 'cubic-bezier(.3,.7,.3,1)' });
+    an.onfinish = function () { d.remove(); };
+  };
+
+  /* one gold pill glides behind the hovered top menu button (the menu rebuilds itself now and then, so the pill is made on demand) */
+  (function () {
+    var raf = 0;
+    function glider(bar) { var g = bar.querySelector('.nav-glider'); if (!g) { g = doc.createElement('div'); g.className = 'nav-glider'; bar.insertBefore(g, bar.firstChild); } return g; }
+    doc.addEventListener('mouseover', function (e) {
+      var b = e.target.closest && e.target.closest('#rbh-menubar .mb-btn'); if (!b) return;
+      var bar = doc.getElementById('rbh-menubar'), g = glider(bar);
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function () { var br = bar.getBoundingClientRect(), r = b.getBoundingClientRect(); g.style.width = r.width + 'px'; g.style.height = r.height + 'px'; g.style.transform = 'translate3d(' + (r.left - br.left) + 'px,' + (r.top - br.top) + 'px,0)'; g.style.opacity = '1'; });
+    });
+    doc.addEventListener('mouseout', function (e) { var bar = doc.getElementById('rbh-menubar'); if (bar && !bar.contains(e.relatedTarget)) { var g = bar.querySelector('.nav-glider'); if (g) g.style.opacity = '0'; } });
+  })();
 })();
