@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
+<script>if (window.top === window.self) location.replace('/owner#/pos');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generate Bill — Royal Bath Hub Thihariya</title>
+<style>
+  :root {
+    --emerald-900:#062e21; --emerald-800:#0a4531; --emerald-700:#0f5132;
+    --earth-800:#3d2b1f; --earth-700:#5c4033; --earth-500:#8b6f47;
+    --gold-500:#c9a227; --gold-400:#d4af37; --gold-300:#e8cf7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Arial, sans-serif;
+    margin: 0; padding: 24px; background:var(--bg-canvas); color:var(--text-primary);
+  }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  @media (max-width: 800px) { .wrap { grid-template-columns: 1fr; } }
+
+  .panel { background:var(--bg-surface); border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  h1 { font-size:20px; color:var(--text-primary); margin: 0 0 4px; }
+  .sub { color:var(--text-muted); font-size:14px; margin-bottom: 18px; }
+
+  label { display: block; font-size:12px; font-weight: 600; color:var(--text-secondary); margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 8px 10px; border:1px solid var(--border-subtle); border-radius: 6px; font-size:14px; }
+
+  .item-row { display: grid; grid-template-columns: 1fr 70px 90px 32px; gap: 8px; margin-bottom: 8px; align-items: end; }
+  .item-row input { margin: 0; }
+  .remove-btn { background: none; border: none; color:var(--status-danger); font-size:18px; cursor: pointer; padding: 4px; }
+  .cap-hint { font-size:12px; margin-top: 4px; color:var(--text-muted); }
+  .cap-hint.warn { color:var(--status-danger); font-weight: 700; }
+  .today { margin-top: 18px; }
+  .today h2 { font-size:15px; color:var(--text-primary); margin: 0 0 6px; }
+  .today table { width: 100%; border-collapse: collapse; font-size:14px; }
+  .today th, .today td { text-align: left; padding: 5px 4px; border-bottom:1px solid var(--border-subtle); }
+  .today td.num, .today th.num { text-align: right; }
+  .today .flag { color:var(--status-warning); font-size:12px; }
+  .today tr.void td { color:var(--text-muted); text-decoration: line-through; background:var(--bg-surface-elevated); }
+  .today tr.void td:last-child, .today tr.void td .void-tag { text-decoration: none; }
+  .void-tag { display: inline-block; background:var(--status-danger); color: #fff; font-size:12px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+  .today .mini-btn { font-size:12px; padding: 2px 8px; margin-left: 4px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius: 6px; cursor: pointer; }
+  .today .mini-btn.danger { color:var(--status-danger); border-color:var(--status-danger); }
+  .edit-banner { background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size:14px; display: none; }
+  /* item picker */
+  .pick-wrap { position: relative; }
+  .pick-list { display: none; position: absolute; z-index: 20; left: 0; min-width: 270px; max-width: 86vw; top: 100%; background:var(--bg-surface); border:1px solid var(--border-strong); border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15); max-height: 260px; overflow-y: auto; }
+  .pick-list.open { display: block; }
+  .pick-opt { padding: 8px 10px; cursor: pointer; border-bottom:1px solid var(--border-subtle); }
+  .pick-opt:last-child { border-bottom: none; }
+  .pick-opt.active, .pick-opt:hover { background:var(--bg-surface-elevated); }
+  .pick-opt b { display: block; font-size:14px; color:var(--text-primary); }
+  .pick-opt span { font-size:12px; color:var(--text-muted); }
+  .stock-hint { font-size:12px; margin-top: 3px; min-height: 0; }
+  .stock-hint.ok { color:var(--status-success); } .stock-hint.low { color:var(--status-warning); } .stock-hint.out, .stock-hint.over { color:var(--status-danger); font-weight: 700; }
+  .add-btn {
+    background:var(--gold-primary); color:var(--text-on-accent); border: none; border-radius: 6px;
+    padding: 8px 14px; font-size:14px; cursor: pointer; margin-top: 4px;
+  }
+  .add-btn:hover { background:var(--gold-primary); }
+
+  .generate-btn {
+    width: 100%; margin-top: 18px; background:var(--gold-primary); color:var(--text-on-accent);
+    border: none; border-radius: 8px; padding: 12px; font-size:15px; font-weight: 700; cursor: pointer;
+  }
+  .generate-btn:hover { background:var(--gold-primary); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .err { color:var(--status-danger); font-size:14px; margin-top: 8px; display: none; }
+
+  /* Bill preview (receipt style) */
+  #billPanel { display: none; }
+  .receipt {
+    background:var(--bg-surface); border:1px dashed var(--border-strong); border-radius: 8px; padding: 18px;
+    font-family: 'Courier New', monospace; font-size:14px; color:var(--text-primary);
+  }
+  .receipt .logo-row { text-align: center; margin-bottom: 6px; }
+  .receipt .logo-row img { height: 56px; width: auto; }
+  .receipt .shop-name { text-align: center; font-weight: 700; font-size:15px; color:var(--text-primary); }
+  .receipt .shop-tagline { text-align: center; font-size:12px; color:var(--text-muted); margin-bottom: 8px; }
+  .receipt hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
+  .receipt .row { display: flex; justify-content: space-between; }
+  .receipt .items .row { margin-bottom: 2px; }
+  .receipt .totals .row { margin-top: 2px; }
+  .receipt .discount-line { color:var(--text-muted); }
+  .receipt .grand-total { font-weight: 700; font-size:14px; color:var(--text-primary); }
+  .receipt .footer { text-align: center; margin-top: 10px; font-size:12px; color:var(--text-muted); }
+
+  .share-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px; border-radius: 6px; border: none; font-size:14px; font-weight: 600; cursor: pointer;
+    text-decoration: none; color: #fff;
+  }
+  .share-btn.whatsapp { background: #25D366; }
+  .share-btn.email { background: #4a5a6a; }
+  .share-btn.download { background:var(--gold-primary); }
+  .share-btn.print { background: var(--earth-700); }
+  .share-btn:hover { filter: brightness(0.95); }
+  .share-btn.wa-receipt { grid-column: 1 / -1; background: #128C7E; }
+  .share-btn:disabled { opacity: .6; cursor: default; }
+  .wa-receipt-msg { margin-top: 8px; font-size:14px; min-height: 16px; color:var(--text-secondary); }
+  .wa-receipt-msg.err { color: #b42318; }
+  .wa-receipt-msg.ok { color: #067647; }
+
+  .new-bill-btn {
+    width: 100%; margin-top: 10px; background: none; border:1px solid var(--border-strong); color:var(--text-secondary);
+    border-radius: 6px; padding: 8px; font-size:14px; cursor: pointer;
+  }
+
+  /* POS tools: scan box, quantity steps, hold / held bills, reprint (tap targets 44px or more) */
+  .pos-tools { display:grid; gap:8px; margin: 12px 0 4px; }
+  .pos-tools .scan-row input { width:100%; font-size:16px; }
+  .pos-tools .tool-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .pos-tools .tool-row button { flex:1 1 40%; min-height:44px; padding:8px 10px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; }
+  .scan-msg { min-height:18px; font-size:14px; color:var(--text-secondary); }
+  .scan-msg.ok { color:var(--status-success); } .scan-msg.err { color:var(--status-danger); }
+  .tool-panel { border:1px solid var(--border-subtle); border-radius:8px; padding:8px; background:var(--bg-surface-subtle); display:none; }
+  .tool-panel.open { display:block; }
+  .tool-panel .t-row { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-subtle); font-size:14px; }
+  .tool-panel .t-row:last-child { border-bottom:0; }
+  .tool-panel .t-row button { min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-weight:600; }
+  .tool-panel .t-row button.danger { color:var(--status-danger); border-color:var(--status-danger); }
+  .tool-panel .find-row { display:flex; gap:8px; margin-bottom:6px; } .tool-panel .find-row input { flex:1; min-width:0; }
+  .pay-sub { margin-top:8px; }
+  .split-row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; align-items:center; }
+  .split-row select, .split-row input { margin:0; min-width:0; width:100%; }
+  .split-row .s-ref { grid-column: 1 / -1; display:none; }
+  .split-row .s-del { grid-column: 1 / -1; justify-self:end; }
+  .qty-step { display:flex; align-items:stretch; gap:4px; }
+  .qty-step button { min-width:44px !important; min-height:44px !important; padding:0; border:1px solid var(--border-strong); background:var(--bg-surface); border-radius:8px; font-size:20px; font-weight:700; line-height:1; }
+  .qty-step .i-qty { flex:1; min-width:46px; width:100%; text-align:center; }
+  html body .item-row { grid-template-columns: 1fr 156px 100px 48px !important; }
+  @media (max-width:480px) { html body .item-row { grid-template-columns: 136px minmax(0, 1fr) 44px !important; } .qty-step .i-qty { min-width:40px; } }
+  /* receipt printer (80 mm roll, USB on the PC): print this page, choose the receipt printer, paper size 80mm */
+  @page { size: 80mm auto; margin: 2mm; }
+  @media print {
+    .receipt { font-size: 12px; line-height: 1.25; max-width: 76mm; color: #000; background: #fff; }
+    .receipt .logo-row img { height: 40px; }
+    body * { visibility: hidden; }
+    .receipt, .receipt * { visibility: visible; }
+    .receipt { position: absolute; top: 0; left: 0; width: 100%; border: none; }
+  }
+
+  /* compact POS (Ajmal 11:47): customer first, tools in a drop-down, less scrolling */
+  body { padding: 10px; }
+  .panel { padding: 12px 14px; }
+  .pos-h1 { font-size:16px; margin:0 0 6px; } .pos-h1-sub { font-size:12px; font-weight:400; color:var(--text-muted); margin-left:6px; }
+  .cust-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cust-row label, .panel > label { margin:6px 0 2px; }
+  .wa-line { display:flex; gap:6px; align-items:center; margin:4px 0 0; font-weight:400; font-size:12px; }
+  .wa-line input { width:auto; }
+  .pos-tools { margin:8px 0 2px; gap:6px; }
+  .scan-row { display:flex; gap:8px; }
+  .scan-row input { flex:1; min-width:0; }
+  .tools-btn { flex:0 0 auto; min-height:44px; padding:6px 12px; border:1px solid var(--border-strong); background:var(--bg-surface); color:var(--text-primary); border-radius:8px; font-weight:600; cursor:pointer; }
+  .pos-tools .tool-menu { display:none; }
+  .pos-tools .tool-menu.open { display:flex; }
+  #waCheck:empty { display:none; min-height:0; margin:0; }
+  @media (max-width:340px){ .cust-row { grid-template-columns:1fr; } }
+</style>
+<link rel="stylesheet" href="/bathhub-design.css">
+<link rel="stylesheet" href="/bathhub-logo.css">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="panel" id="formPanel">
+    <h1 class="pos-h1">Generate Bill <span class="pos-h1-sub">Royal Bath Hub Thihariya</span></h1>
+
+    <div class="cust-row" id="custRow">
+      <div><label for="customerName">Customer name</label>
+        <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
+      <div><label for="customerPhone">Phone (WhatsApp)</label>
+        <input type="tel" id="customerPhone" placeholder="e.g. 077 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
+    </div>
+    <div id="waCheck" class="wa-receipt-msg" role="status"></div>
+    <label class="wa-line"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send receipt to WhatsApp on Print</label>
+
+    <div class="pos-tools" id="posTools">
+      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
+      <div class="scan-msg" id="scanMsg" role="status"></div>
+      <div class="tool-row tool-menu" id="toolMenu">
+        <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
+        <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
+        <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
+        <button type="button" id="findBtn" onclick="toggleTool('findPanel')">Find bill</button>
+        <button type="button" id="quoteBtn" onclick="toggleTool('quotePanel')">Load quotation</button>
+      </div>
+      <div class="tool-panel" id="heldPanel"></div>
+      <div class="tool-panel" id="quotePanel">
+        <div class="find-row"><input type="text" id="quoteBox" placeholder="Filter by quote number or customer" autocomplete="off"></div>
+        <div id="quoteResults"></div>
+      </div>
+      <div class="tool-panel" id="findPanel">
+        <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 0007 or BHT-20261009-0007" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
+        <div id="findResults"></div>
+      </div>
+    </div>
+
+    <label>Items</label>
+    <div id="itemRows"></div>
+    <button type="button" class="add-btn" onclick="addItemRow()">+ Add item</button>
+
+    <label>Discount %</label>
+    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()">
+    <div class="cap-hint" id="capHint"></div>
+
+    <label>Payment method</label>
+    <select id="paymentMethod">
+      <option value="cash">Cash</option>
+      <option value="card">Card</option>
+      <option value="online">Online transfer</option>
+      <option value="cheque">Cheque</option>
+      <option value="credit">Credit (pays later)</option>
+      <option value="split">Split (more than one)</option>
+    </select>
+    <div id="chequeBox" class="pay-sub" style="display:none"><label for="chequeRef">Cheque number, bank and date</label><input type="text" id="chequeRef" maxlength="120" placeholder="e.g. 004512 Sampath 30/10/2026" autocomplete="off"></div>
+    <div id="creditNote" class="cap-hint pay-sub" style="display:none">Credit: the customer pays later. Type the customer name or phone above. This is only recorded on the bill.</div>
+    <div id="splitBox" class="pay-sub" style="display:none">
+      <div id="splitRows"></div>
+      <button type="button" class="add-btn" onclick="addSplitRow()">+ Add payment</button>
+      <div class="cap-hint" id="splitHint" role="status"></div>
+    </div>
+
+    <div class="edit-banner" id="editBanner"></div>
+    <div class="err" id="errMsg"></div>
+    <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
+    <button type="button" class="mini-btn" id="cancelEditBtn" style="display:none;margin-top:8px" onclick="resetForm()">Cancel edit</button>
+    <div class="today" id="todayBox"></div>
+  </div>
+
+  <div class="panel" id="billPanel">
+    <div class="receipt" id="receipt">
+      <div class="logo-row"><img src="/brand/logo-main-transparent.png" alt="Royal Bath Hub"></div>
+      <div class="shop-name" id="rShopName">Royal Bath Hub Thihariya</div>
+      <div class="shop-tagline" id="rTagline">Everything for your bathroom, on Kandy Road</div>
+      <hr>
+      <div id="rMeta"></div>
+      <hr>
+      <div class="items" id="rItems"></div>
+      <hr>
+      <div class="totals" id="rTotals"></div>
+      <div class="footer">Thank you for shopping with us!</div>
+    </div>
+
+    <div class="share-buttons">
+      <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="share-btn" id="vcfBtn" href="#" style="display:none">Save contact</a>
+      <a class="share-btn email" id="emailBtn" href="#">Email</a>
+      <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
+      <button class="share-btn print" onclick="printBill()">Print</button>
+      <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
+    </div>
+    <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
+    <div id="billAttach" style="margin-top:8px"></div>
+    <button class="new-bill-btn" onclick="resetForm()">+ New bill</button>
+  </div>
+</div>
+
+<script src="/pos-picker.js"></script>
+<script src="/suggest.js"></script>
+<script>
+/* 24 Oct: a phone number typed in the NAME box (it ended up as the customer's name, 94777999219 twice in the list) moves to the phone box. */
+(function () {
+  var nm = document.getElementById('customerName'), ph = document.getElementById('customerPhone');
+  if (!nm || !ph) return;
+  nm.addEventListener('blur', function () {
+    var v = nm.value.trim();
+    if (/^\+?[\d\s-]{9,15}$/.test(v) && !ph.value.trim()) { ph.value = v; nm.value = ''; try { ph.dispatchEvent(new Event('input')); } catch (e) {} }
+  });
+})();
+</script>
+<script src="/pos-cart.js"></script>
+<script>
+let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
+
+fetch('/api/discount-rules').catch(() => {}); // warm connection, ignore result
+
+function loadBranding() {
+  return fetch('/api/branding').then(r => r.ok ? r.json() : null).then(cfg => {
+    if (cfg) {
+      branding = cfg;
+      document.getElementById('rShopName').textContent = cfg.company_name || branding.company_name;
+      document.getElementById('rTagline').textContent = cfg.tagline || '';
+    }
+  }).catch(() => {});
+}
+loadBranding();
+
+function addItemRow(name, qty, price) {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div class="pick-wrap">
+      <input type="text" placeholder="Item name or code" class="i-name" autocomplete="off">
+      <div class="pick-list"></div>
+      <div class="stock-hint"></div>
+    </div>
+    <div class="qty-step">
+      <button type="button" class="q-minus" aria-label="One less">&minus;</button>
+      <input type="number" placeholder="Qty" class="i-qty" value="${qty || 1}" min="0.01" step="0.01" onfocus="this.select()">
+      <button type="button" class="q-plus" aria-label="One more">+</button>
+    </div>
+    <input type="number" placeholder="Unit price" class="i-price" value="${price || ''}" min="0" step="0.01" onfocus="this.select()">
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  row.querySelector('.i-name').value = name || '';      // set as a value, never as HTML
+  const qIn = row.querySelector('.i-qty');
+  const bump = d => { qIn.value = PosCart.stepQty(qIn.value, d); qIn.dispatchEvent(new Event('input', { bubbles: true })); };
+  row.querySelector('.q-minus').addEventListener('click', () => bump(-1));
+  row.querySelector('.q-plus').addEventListener('click', () => bump(1));
+  document.getElementById('itemRows').appendChild(row);
+  attachPicker(row);
+}
+
+// Item picker: type a name or code, choose from the catalogue, name + selling price fill in (both stay editable).
+// Free-typed items still work. Stock is shown, and a warning appears if the quantity is more than what is in stock.
+function attachPicker(row) {
+  const nameEl = row.querySelector('.i-name'), listEl = row.querySelector('.pick-list'), hintEl = row.querySelector('.stock-hint');
+  const qtyEl = row.querySelector('.i-qty'), priceEl = row.querySelector('.i-price');
+  let timer = null, results = [], active = -1, chosen = null, seq = 0;
+
+  const close = () => { listEl.classList.remove('open'); listEl.textContent = ''; results = []; active = -1; };
+  const showHint = () => {
+    if (!chosen) { hintEl.textContent = ''; hintEl.className = 'stock-hint'; return; }
+    const s = PosPicker.stockStatus(chosen, qtyEl.value);
+    hintEl.textContent = s.text; hintEl.className = 'stock-hint ' + s.level;
+  };
+  const choose = item => {
+    const f = PosPicker.fill(item);
+    chosen = item; nameEl.value = f.name; priceEl.value = f.price; row.dataset.itemCode = item.item_code || '';
+    close(); showHint(); qtyEl.focus(); qtyEl.select();
+  };
+  const draw = () => {
+    listEl.textContent = '';
+    results.forEach((item, i) => {
+      const o = PosPicker.optionLabel(item), div = document.createElement('div');
+      div.className = 'pick-opt' + (i === active ? ' active' : '');
+      const b = document.createElement('b'); b.textContent = o.title;
+      const s = document.createElement('span'); s.textContent = o.detail;
+      div.append(b, s);
+      div.addEventListener('mousedown', e => { e.preventDefault(); choose(item); });      // before the field loses focus
+      listEl.appendChild(div);
+    });
+    listEl.classList.toggle('open', results.length > 0);
+  };
+
+  nameEl.addEventListener('input', () => {
+    if (chosen && nameEl.value !== chosen.name) { chosen = null; delete row.dataset.itemCode; showHint(); }   // edited by hand: no longer "that item"
+    clearTimeout(timer);
+    const q = nameEl.value, mine = ++seq;
+    if (!q.trim()) { close(); return; }
+    timer = setTimeout(async () => {
+      const found = await PosPicker.search(q);
+      if (mine !== seq) return;                                                           // a newer search is running
+      results = found; active = -1; draw();
+    }, 200);
+  });
+  nameEl.addEventListener('keydown', e => {
+    if (!results.length) return;
+    if (e.key === 'ArrowDown') { active = (active + 1) % results.length; draw(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = (active - 1 + results.length) % results.length; draw(); e.preventDefault(); }
+    else if (e.key === 'Enter' && active >= 0) { choose(results[active]); e.preventDefault(); }
+    else if (e.key === 'Escape') close();
+  });
+  nameEl.addEventListener('blur', () => setTimeout(close, 120));
+  qtyEl.addEventListener('input', showHint);
+}
+addItemRow();
+loadToday();
+
+function showError(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function generateBill() {
+  showError('');
+  const rows = [...document.querySelectorAll('.item-row')];
+  const items = rows.map(r => ({
+    item_name: r.querySelector('.i-name').value.trim(),
+    item_code: r.dataset.itemCode || undefined,           // set when the item was picked from the catalogue
+    qty: parseFloat(r.querySelector('.i-qty').value),
+    unit_price: parseFloat(r.querySelector('.i-price').value),
+  }));
+  if (!items.length || items.some(it => !it.item_name || !(it.qty > 0) || !(it.unit_price >= 0))) {
+    showError('Add at least one item with a name, quantity, and unit price.');
+    return;
+  }
+  const discount_pct = parseFloat(document.getElementById('discountPct').value) || 0;
+  if (discount_pct < 0 || discount_pct > 100) {
+    showError('Discount % must be between 0 and 100.');
+    return;
+  }
+
+  const genBtn = document.getElementById('genBtn');
+  genBtn.disabled = true;
+  genBtn.textContent = editingId ? 'Saving…' : 'Generating…';
+
+  try {
+    const payload = {
+      customer_name: document.getElementById('customerName').value.trim() || null,
+      customer_phone: document.getElementById('customerPhone').value.trim() || null,
+      items,
+      discount_pct,
+      payment_method: document.getElementById('paymentMethod').value,
+    };
+    if (_quoteId && !editingId) payload.quotation_id = _quoteId;
+    // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
+    const mode = payload.payment_method;
+    if (['cheque', 'credit', 'split'].includes(mode)) {
+      const total = PosCart.totals(items.map(i => ({ qty: i.qty, unit_price: i.unit_price })), discount_pct).total;
+      const bp = PosCart.buildPayments(mode, total, { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() });
+      if (bp.error) throw new Error(bp.error);
+      payload.payments = bp.payments;
+      if (mode === 'credit' && !payload.customer_name && !payload.customer_phone) throw new Error('A credit bill needs the customer name or phone.');
+    }
+    const post = extra => fetch(editingId ? '/api/pos-bills/' + editingId : '/api/pos-bills', { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, ...extra }) });
+    let res = await post();
+    let data = await res.json();
+    // Over the discount cap: only the owner can approve it (the server checks), and it is recorded on the bill.
+    if (res.status === 409 && data.code === 'discount_over_cap' && data.can_override) {
+      if (!confirm(`${discount_pct}% is more than the allowed ${data.max_allowed}%.\n\nApprove this discount as the owner?`)) throw new Error('Not approved. Lower the discount or approve it.');
+      res = await post({ override: true });
+      data = await res.json();
+    }
+    if (!res.ok) throw new Error(data.error || 'Failed to generate bill');
+    const wasEdit = !!editingId;
+    editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
+    _quoteId = null;   // the marker was saved with the bill
+    renderBill(data);
+    clearCustomer();   // the bill is saved: the next customer starts from an empty name and phone
+    if (wasEdit) loadToday();
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    genBtn.disabled = false;
+    genBtn.textContent = editingId ? 'Save changes' : 'Generate Bill';
+  }
+}
+
+let currentBill = null;
+let editingId = null;                 // set while an existing bill is being edited (owner only)
+let isOwner = false;
+fetch('/api/me').then(r => r.ok ? r.json() : null).then(u => { if (u && u.role === 'admin') { isOwner = true; loadToday(); } }).catch(() => {});
+
+// Is the typed number on WhatsApp? Asked while the cashier types (after a short pause). Sends nothing.
+let _waTimer = null, _waSeq = 0;
+function waCheckSoon() {
+  const out = document.getElementById('waCheck');
+  clearTimeout(_waTimer);
+  const phone = document.getElementById('customerPhone').value.trim();
+  if (phone.replace(/\D/g, '').length < 9) { out.textContent = ''; out.className = 'wa-receipt-msg'; return; }
+  out.textContent = 'Checking WhatsApp…'; out.className = 'wa-receipt-msg';
+  const mine = ++_waSeq;
+  _waTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/invoice-receipts/check-number?phone=' + encodeURIComponent(phone));
+      const d = await r.json().catch(() => ({}));
+      if (mine !== _waSeq) return;
+      if (!r.ok) { out.textContent = d.error || 'Check the number'; out.className = 'wa-receipt-msg err'; }
+      else if (d.registered === true) { out.textContent = '✓ This number is on WhatsApp'; out.className = 'wa-receipt-msg ok'; }
+      else if (d.registered === false) { out.textContent = '✗ This number is NOT on WhatsApp. Check it, or hand over the printed bill.'; out.className = 'wa-receipt-msg err'; }
+      else { out.textContent = 'Could not check WhatsApp right now (it will still try when you print).'; out.className = 'wa-receipt-msg'; }
+    } catch (e) { if (mine === _waSeq) { out.textContent = ''; } }
+  }, 700);
+}
+try { if (localStorage.getItem('pos_auto_wa') === '0') document.getElementById('autoWa').checked = false; } catch (e) {}
+
+// Print the bill and, if the box is ticked and the bill has a phone, send the receipt to the customer's WhatsApp.
+async function printBill() {
+  window.print();
+  if (!currentBill || !document.getElementById('autoWa').checked || !currentBill.customer_phone) return;
+  await sendWhatsAppReceipt(true);
+}
+
+// Sends the designed receipt image for the bill on screen through the WhatsApp bridge.
+// auto = called by Print: never asks questions, never sends twice, and says plainly what happened.
+async function sendWhatsAppReceipt(auto) {
+  const msg = document.getElementById('waReceiptMsg');
+  const btn = document.getElementById('waReceiptBtn');
+  const setMsg = (t, cls) => { msg.textContent = t; msg.className = 'wa-receipt-msg' + (cls ? ' ' + cls : ''); };
+  if (!currentBill) return;
+  let phone = currentBill.customer_phone;
+  if (!phone && auto) return;
+  if (!phone) {
+    phone = prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):');
+    if (!phone) return;
+  }
+  btn.disabled = true;
+  setMsg('Building and sending the receipt…');
+  try {
+    let res = await fetch('/api/invoice-receipts/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim() }),
+    });
+    let d = await res.json().catch(() => ({}));
+    if (res.status === 409 && d.code === 'already_sent') {
+      if (auto) { setMsg('Receipt was already sent to this customer.', 'ok'); return; }
+      // Sent before: only send again if the cashier confirms.
+      if (!confirm(d.error)) { setMsg('Not sent again.', ''); return; }
+      res = await fetch('/api/invoice-receipts/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bill_id: currentBill.id, customer_phone: phone.trim(), resend: true }),
+      });
+      d = await res.json().catch(() => ({}));
+    }
+    if (!res.ok) throw new Error(d.error || 'the server answered ' + res.status);
+    currentBill.customer_phone = phone.trim();
+    setMsg(`Receipt sent to ${d.to}.`, 'ok');
+  } catch (e) {
+    setMsg(`Receipt not sent: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderBill(bill) {
+  currentBill = bill;
+  document.getElementById('waReceiptMsg').textContent = '';
+  const sym = branding.currency_symbol || 'Rs';
+  document.getElementById('rMeta').innerHTML = `
+    <div class="row"><span>Bill No:</span><span>${bill.bill_number}</span></div>
+    <div class="row"><span>Date:</span><span>${new Date(bill.created_at).toLocaleString()}</span></div>
+    ${bill.customer_name ? `<div class="row"><span>Customer:</span><span>${escapeHtml(bill.customer_name)}</span></div>` : ''}
+    ${bill.voided ? `<div class="row"><span><b>VOID</b></span><span>${escapeHtml(bill.void_reason || '')}</span></div>` : ''}
+  `;
+  document.getElementById('rItems').innerHTML = bill.items.map(it => `
+    <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
+  `).join('');
+  let totalsHtml = `<div class="row"><span>Subtotal</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
+  if (Number(bill.discount_amount) > 0) {
+    totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
+  }
+  totalsHtml += `<div class="row grand-total"><span>Total</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
+  if (Array.isArray(bill.payments) && bill.payments.length) {
+    totalsHtml += bill.payments.map(p => `<div class="row"><span>Paid by ${escapeHtml(p.method.toUpperCase())}${p.reference ? ' (' + escapeHtml(p.reference) + ')' : ''}${p.method === 'credit' ? ' (pays later)' : ''}</span><span>${sym} ${Number(p.amount).toFixed(2)}</span></div>`).join('');
+  } else {
+    totalsHtml += `<div class="row"><span>Payment</span><span>${bill.payment_method.toUpperCase()}</span></div>`;
+  }
+  document.getElementById('rTotals').innerHTML = totalsHtml;
+
+  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
+  document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
+  document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
+  document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
+  // Save contact: a small contact card (.vcf). One tap on the phone saves the name and number.
+  const vb = document.getElementById('vcfBtn'), vnum = toWhatsAppNumber(bill.customer_phone);
+  if (vb) {
+    if (vnum) {
+      const nm = String(bill.customer_name || 'Customer').replace(/[\r\n;,]/g, ' ').trim();
+      const vcf = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + nm + '\r\nN:' + nm + ';;;;\r\nTEL;TYPE=CELL:+' + vnum + '\r\nORG:Royal Bath Hub customer\r\nEND:VCARD\r\n';
+      vb.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(vcf);
+      vb.download = nm.replace(/[^A-Za-z0-9]+/g, '_') + '.vcf';
+      vb.style.display = '';
+    } else { vb.style.display = 'none'; }
+  }
+
+  document.getElementById('formPanel').style.display = 'none';
+  document.getElementById('billPanel').style.display = 'block';
+  if (window.AttachWidget) { const ba = document.getElementById('billAttach'); ba.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Take a photo of the paper bill, or upload it here</div>'; const w = document.createElement('div'); ba.appendChild(w); AttachWidget.mount(w, { type: 'pos_bill', id: bill.id }); }
+}
+
+// wa.me needs the full international number, no leading 0 and no '+'.
+// Sri Lankan local numbers are entered as 0XXXXXXXXX; assume LK (94) unless
+// the number already carries a country code (11+ digits or already starts with 94).
+function toWhatsAppNumber(raw) {
+  let digits = (raw || '').replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('94')) return digits;
+  if (digits.startsWith('0')) return '94' + digits.slice(1);
+  return digits;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Discount cap hint (from the owner's discount rule). A warning only: the server enforces it.
+let discountCap = { max_allowed: null, can_override: false };
+fetch('/api/pos-bills/discount-cap').then(r => r.ok ? r.json() : null).then(c => { if (c) { discountCap = c; updateCapHint(); } }).catch(() => {});
+function updateCapHint() {
+  const el = document.getElementById('capHint');
+  if (discountCap.max_allowed === null) { el.textContent = ''; el.className = 'cap-hint'; return; }
+  const pct = parseFloat(document.getElementById('discountPct').value) || 0, over = pct > discountCap.max_allowed;
+  el.className = 'cap-hint' + (over ? ' warn' : '');
+  el.textContent = over
+    ? `Over the ${discountCap.max_allowed}% limit. ` + (discountCap.can_override ? 'You will be asked to approve it.' : 'The owner must approve this.')
+    : `Maximum discount: ${discountCap.max_allowed}%`;
+}
+
+// Today's bills (Sri Lanka date), with the day's total.
+async function loadToday() {
+  const box = document.getElementById('todayBox');
+  try {
+    const r = await fetch('/api/pos-bills/today');
+    if (!r.ok) { box.textContent = ''; return; }
+    const d = await r.json(), sym = branding.currency_symbol || 'Rs';
+    const esc = escapeHtml;
+    box.innerHTML = `<h2>Today's bills: ${d.count} · ${sym} ${Number(d.total).toLocaleString()}${d.bills.some(b => b.voided) ? ' <span class="sub">(void bills not counted)</span>' : ''}</h2>` + (d.count ? `<table><thead><tr><th>Bill</th><th>Customer</th><th class="num">Total</th><th></th></tr></thead><tbody>` +
+      d.bills.map(b => `<tr class="${b.voided ? 'void' : ''}"><td>${esc(b.bill_number.split('-').pop())}${b.source === 'manual_photo' ? ' <span class="flag" title="Filed from a photo of a paper bill">paper bill</span>' : ''}${b.discount_override ? ' <span class="flag" title="Discount above the limit, approved by the owner">approved discount</span>' : ''}</td><td>${esc(b.customer_name || 'Walk-in')}</td><td class="num">${Number(b.total).toLocaleString()}</td><td>${b.voided ? '<span class="void-tag">VOID</span>' : ''} <a href="/api/pos-bills/${b.id}/pdf" target="_blank">PDF</a> <button type="button" class="mini-btn" title="Photos and files" onclick="toggleBillFiles(${b.id}, this)"><svg class="bh-icon" aria-hidden="true"><use href="#i-paperclip"/></svg></button>${isOwner && !b.voided ? ` <button type="button" class="mini-btn" onclick="editBill(${b.id})">Edit</button><button type="button" class="mini-btn danger" onclick="voidBill(${b.id}, '${esc(b.bill_number)}')">Void</button>` : ''}</td></tr>`).join('') + `</tbody></table>` : '<div class="sub">No bills yet today.</div>');
+  } catch (e) { box.textContent = ''; }
+}
+
+function toggleBillFiles(id, btn) {
+  const tr = btn.closest('tr'), next = tr.nextElementSibling;
+  if (next && next.classList.contains('files-row')) { next.remove(); return; }
+  const row = document.createElement('tr'); row.className = 'files-row';
+  row.innerHTML = '<td colspan="4"></td>'; tr.after(row);
+  const w = document.createElement('div'); row.firstChild.appendChild(w);
+  if (window.AttachWidget) AttachWidget.mount(w, { type: 'pos_bill', id });
+}
+
+async function voidBill(id, number) {
+  const reason = prompt('Void bill ' + number + '?\nThe bill is kept, marked VOID and left out of today\'s totals. Stock is given back.\n\nReason (required):');
+  if (reason === null) return;
+  if (reason.trim().length < 3) { alert('A reason is required to void a bill.'); return; }
+  const r = await fetch('/api/pos-bills/' + id + '/void', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { alert(d.error || 'Could not void the bill'); return; }
+  loadToday();
+}
+
+async function editBill(id) {
+  const r = await fetch('/api/pos-bills/' + id);
+  if (!r.ok) { alert('Could not load that bill'); return; }
+  const b = await r.json();
+  if (b.voided) { alert('A void bill cannot be edited.'); return; }
+  if (Array.isArray(b.payments) && b.payments.length) { alert('This bill was paid by cheque, credit or split payment. Void it and enter it again.'); return; }
+  document.getElementById('itemRows').innerHTML = '';
+  b.items.forEach(it => { addItemRow(it.item_name, Number(it.qty), Number(it.unit_price)); if (it.item_code) document.querySelector('#itemRows .item-row:last-child').dataset.itemCode = it.item_code; });
+  document.getElementById('customerName').value = b.customer_name || '';
+  document.getElementById('customerPhone').value = b.customer_phone || '';
+  document.getElementById('discountPct').value = Number(b.discount_pct) || 0;
+  document.getElementById('paymentMethod').value = b.payment_method || 'cash';
+  editingId = id;
+  const ban = document.getElementById('editBanner');
+  ban.textContent = 'Editing bill ' + b.bill_number + '. The old version is saved in the bill history.'; ban.style.display = 'block';
+  document.getElementById('genBtn').textContent = 'Save changes';
+  document.getElementById('cancelEditBtn').style.display = 'inline-block';
+  updateCapHint();
+  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('billPanel').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+// ───────── PAYMENT TYPES ─────────
+function currentTotal() {
+  return PosCart.totals(cartRows(), document.getElementById('discountPct').value).total;
+}
+function splitRowsData() {
+  return [...document.querySelectorAll('#splitRows .split-row')].map(r => ({ method: r.querySelector('.s-method').value, amount: r.querySelector('.s-amount').value, reference: r.querySelector('.s-ref').value }));
+}
+function splitHintUpdate() {
+  showError('');                       // an old "payments do not add up" message goes away as soon as the rows change
+  const rem = PosCart.splitRemaining(currentTotal(), splitRowsData()), h = document.getElementById('splitHint'), sym = branding.currency_symbol || 'Rs';
+  h.className = 'cap-hint' + (rem === 0 ? '' : ' warn');
+  h.textContent = rem === 0 ? 'Payments add up to the total.' : (rem > 0 ? 'Still to cover: ' + sym + ' ' + rem.toFixed(2) : 'Over the total by ' + sym + ' ' + Math.abs(rem).toFixed(2));
+}
+function addSplitRow(data) {
+  const d = data || {}, row = document.createElement('div'); row.className = 'split-row';
+  const sel = document.createElement('select'); sel.className = 's-method'; sel.setAttribute('aria-label', 'Payment method');
+  [['cash', 'Cash'], ['card', 'Card'], ['online', 'Online'], ['cheque', 'Cheque'], ['credit', 'Credit']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
+  const amt = document.createElement('input'); amt.type = 'number'; amt.className = 's-amount'; amt.min = '0'; amt.step = '0.01'; amt.placeholder = 'Amount'; amt.setAttribute('aria-label', 'Amount');
+  const ref = document.createElement('input'); ref.type = 'text'; ref.className = 's-ref'; ref.placeholder = 'Cheque number, bank, date'; ref.maxLength = 120;
+  const del = document.createElement('button'); del.type = 'button'; del.className = 's-del mini-btn'; del.textContent = 'Remove'; del.onclick = () => { row.remove(); splitHintUpdate(); };
+  sel.value = d.method || 'cash';
+  amt.value = d.amount !== undefined ? d.amount : (() => { const r = PosCart.splitRemaining(currentTotal(), splitRowsData()); return r > 0 ? r : ''; })();
+  ref.value = d.reference || '';
+  const showRef = () => { ref.style.display = sel.value === 'cheque' ? 'block' : 'none'; };
+  sel.addEventListener('change', () => { showRef(); splitHintUpdate(); }); amt.addEventListener('input', splitHintUpdate); showRef();
+  row.append(sel, amt, ref, del);
+  document.getElementById('splitRows').appendChild(row);
+  splitHintUpdate();
+}
+function payModeChanged() {
+  const m = document.getElementById('paymentMethod').value;
+  document.getElementById('chequeBox').style.display = m === 'cheque' ? 'block' : 'none';
+  document.getElementById('creditNote').style.display = m === 'credit' ? 'block' : 'none';
+  document.getElementById('splitBox').style.display = m === 'split' ? 'block' : 'none';
+  if (m === 'split' && !document.querySelector('#splitRows .split-row')) { addSplitRow({ method: 'cash' }); addSplitRow({ method: 'card' }); }
+  if (m === 'split') splitHintUpdate();
+}
+document.getElementById('paymentMethod').addEventListener('change', payModeChanged);
+document.getElementById('discountPct').addEventListener('input', () => { if (document.getElementById('paymentMethod').value === 'split') splitHintUpdate(); });
+
+// ───────── SCAN, HOLD, REPRINT (screen only: nothing here saves a bill) ─────────
+function cartRows() {
+  return [...document.querySelectorAll('#itemRows .item-row')].map(r => ({
+    item_code: r.dataset.itemCode || '', name: r.querySelector('.i-name').value.trim(),
+    qty: parseFloat(r.querySelector('.i-qty').value) || 1, unit_price: parseFloat(r.querySelector('.i-price').value) || 0 }));
+}
+function setCartRows(rows) {
+  const box = document.getElementById('itemRows'); box.innerHTML = '';
+  (rows.length ? rows : [{}]).forEach(r => { addItemRow(r.name, r.qty, r.unit_price); if (r.item_code) box.lastElementChild.dataset.itemCode = r.item_code; });
+}
+function scanMsg(text, cls) { const el = document.getElementById('scanMsg'); el.textContent = text; el.className = 'scan-msg' + (cls ? ' ' + cls : ''); }
+
+async function scanCode() {
+  const box = document.getElementById('scanBox');
+  const code = PosCart.cleanCode(box.value);
+  box.value = '';
+  if (!code) return;
+  scanMsg('Looking up ' + code + '…');
+  const found = PosCart.findExact(await PosPicker.search(code, undefined, 50), code);
+  if (!found) { scanMsg('Code ' + code + ' not found. Nothing added.', 'err'); box.focus(); return; }
+  const rows = cartRows().filter(r => r.name);                 // the empty starter row is dropped
+  const before = rows.find(r => r.item_code === String(found.item_code));
+  setCartRows(PosCart.addScanned(rows, found));
+  scanMsg('Added ' + found.name + ' (qty ' + ((before ? before.qty : 0) + 1) + ')', 'ok');
+  box.focus();
+}
+document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
+
+function toggleTool(id) {
+  ['heldPanel', 'findPanel', 'quotePanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });
+  if (id === 'heldPanel') drawHeld();
+  if (id === 'quotePanel' && document.getElementById('quotePanel').classList.contains('open')) loadQuotes();
+}
+// ───────── LOAD QUOTATION (read only: the quotation is never changed; the bill is saved by the normal button) ─────────
+let _quotes = [];
+let _billed = {};      // quotation id -> bill number it was already billed as (live bills only)
+let _quoteId = null;   // the quotation the screen was loaded from; sent with the bill so it can be marked
+async function loadQuotes() {
+  const out = document.getElementById('quoteResults'); out.textContent = 'Loading…';
+  try { const r = await fetch('/api/quotations'); _quotes = r.ok ? await r.json() : []; } catch (e) { _quotes = []; }
+  try { const r = await fetch('/api/pos-ledger/quotation-billed'); _billed = r.ok ? await r.json() : {}; } catch (e) { _billed = {}; }
+  drawQuotes();
+}
+function drawQuotes() {
+  const out = document.getElementById('quoteResults'), f = document.getElementById('quoteBox').value.trim().toLowerCase(), sym = branding.currency_symbol || 'Rs';
+  out.textContent = '';
+  const list = _quotes.filter(q => !f || String(q.quote_no || '').toLowerCase().includes(f) || String(q.customer_name || '').toLowerCase().includes(f)).slice(0, 15);
+  if (!list.length) { out.textContent = _quotes.length ? 'No quotation matches.' : 'No quotations.'; return; }
+  list.forEach(q => {
+    const row = document.createElement('div'); row.className = 't-row';
+    const info = document.createElement('span');
+    info.textContent = (q.quote_no || 'Q-' + q.id) + ' · ' + (q.customer_name || 'No customer') + ' · ' + sym + ' ' + Number(q.total || 0).toLocaleString() + ' · ' + (q.status || '');
+    if (_billed[q.id]) info.textContent += ' · Already billed (' + _billed[q.id] + ')';
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Load'; go.onclick = () => loadQuote(q.id);
+    row.append(info, go); out.appendChild(row);
+  });
+}
+async function loadQuote(id) {
+  try {
+    const r = await fetch('/api/quotations/' + id);
+    if (!r.ok) { scanMsg('Could not open that quotation.', 'err'); return; }
+    const qj = await r.json();
+    if (_billed[id] && !confirm('Quotation ' + (qj.quote_no || id) + ' was already billed as ' + _billed[id] + '. Load it again?')) return;
+    const c = PosCart.quotationToCart(qj);
+    if (!c.rows.length) { scanMsg('That quotation has no items.', 'err'); return; }
+    if (cartRows().some(x => x.name) && !confirm('The screen has items. Replace them with quotation ' + c.quote_no + '?')) return;
+    resetForm(true); setCartRows(c.rows);
+    _quoteId = id;
+    document.getElementById('customerName').value = c.customer_name; document.getElementById('customerPhone').value = c.customer_phone;
+    document.getElementById('discountPct').value = c.discount_pct; updateCapHint();
+    document.getElementById('quotePanel').classList.remove('open');
+    const sym = branding.currency_symbol || 'Rs';
+    scanMsg('Loaded ' + c.quote_no + ': bill total ' + sym + ' ' + c.bill_total.toLocaleString() + (c.matches ? ' (same as the quotation).' : ' (the quotation said ' + sym + ' ' + c.quote_total.toLocaleString() + '. Check the prices.)'), c.matches ? 'ok' : 'err');
+  } catch (e) { scanMsg('Could not load the quotation.', 'err'); }
+}
+document.getElementById('quoteBox').addEventListener('input', drawQuotes);
+
+function drawHeld() {
+  const list = PosCart.loadHeld(), panel = document.getElementById('heldPanel');
+  document.getElementById('heldBtn').textContent = 'Held bills (' + list.length + ')';
+  panel.textContent = '';
+  if (!list.length) { panel.textContent = 'No held bills.'; return; }
+  list.forEach(h => {
+    const t = PosCart.totals(h.rows, h.discount_pct).total, row = document.createElement('div'); row.className = 't-row';
+    const info = document.createElement('span');
+    info.textContent = new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + (h.customer_name || 'Walk-in') + ' · ' + h.rows.length + ' item(s) · ' + (branding.currency_symbol || 'Rs') + ' ' + t.toLocaleString();
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Resume'; go.onclick = () => resumeBill(h.id);
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'danger'; del.textContent = 'Delete'; del.onclick = () => deleteHeld(h.id);
+    row.append(info, go, del); panel.appendChild(row);
+  });
+}
+function holdBill() {
+  const cart = { customer_name: document.getElementById('customerName').value, customer_phone: document.getElementById('customerPhone').value,
+    discount_pct: document.getElementById('discountPct').value, payment_method: document.getElementById('paymentMethod').value, rows: cartRows(),
+    pay_extra: { chequeRef: document.getElementById('chequeRef').value, split: splitRowsData() } };
+  const r = PosCart.holdAdd(PosCart.loadHeld(), PosCart.makeHeld(cart));
+  if (!r.ok) { scanMsg(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.', 'err'); return; }
+  if (!PosCart.saveHeld(undefined, r.list)) { scanMsg('This browser would not keep the held bill. Nothing was held.', 'err'); return; }
+  resetForm(true);
+  scanMsg('Bill held on this device. It is not saved as a bill.', 'ok'); drawHeld();
+}
+function resumeBill(id) {
+  const list = PosCart.loadHeld(), h = PosCart.holdGet(list, id);
+  if (!h) return;
+  if (cartRows().some(r => r.name) && !confirm('The screen has items. Replace them with this held bill? (Hold the current bill first to keep it.)')) return;
+  resetForm(true);
+  setCartRows(h.rows);
+  document.getElementById('customerName').value = h.customer_name; document.getElementById('customerPhone').value = h.customer_phone;
+  document.getElementById('discountPct').value = h.discount_pct; document.getElementById('paymentMethod').value = h.payment_method;
+  if (h.pay_extra) { document.getElementById('chequeRef').value = h.pay_extra.chequeRef || ''; document.getElementById('splitRows').innerHTML = ''; (h.pay_extra.split || []).forEach(r => addSplitRow(r)); }
+  payModeChanged();
+  PosCart.saveHeld(undefined, PosCart.holdRemove(list, id));
+  updateCapHint(); drawHeld(); scanMsg('Held bill resumed.', 'ok');
+}
+function deleteHeld(id) {
+  if (!confirm('Delete this held bill? It cannot be brought back.')) return;
+  PosCart.saveHeld(undefined, PosCart.holdRemove(PosCart.loadHeld(), id)); drawHeld();
+}
+
+async function openBillById(id) {
+  const r = await fetch('/api/pos-bills/' + id);
+  if (!r.ok) { scanMsg('Could not open that bill.', 'err'); return; }
+  renderBill(await r.json());
+}
+async function openLastBill() {
+  try {
+    const r = await fetch('/api/pos-bills');
+    const rows = r.ok ? await r.json() : [];
+    if (!rows.length) { scanMsg('No bills yet.', 'err'); return; }
+    await openBillById(rows[0].id);
+  } catch (e) { scanMsg('Could not load the last bill.', 'err'); }
+}
+async function findBills() {
+  const q = document.getElementById('findBox').value.trim(), out = document.getElementById('findResults');
+  out.textContent = '';
+  if (!q) return;
+  try {
+    const r = await fetch('/api/pos-bills?q=' + encodeURIComponent(q));
+    const rows = (r.ok ? await r.json() : []).slice(0, 10);
+    if (!rows.length) { out.textContent = 'No bill found for "' + q + '".'; return; }
+    if (rows.length === 1) { await openBillById(rows[0].id); return; }
+    rows.forEach(b => {
+      const row = document.createElement('div'); row.className = 't-row';
+      const info = document.createElement('span'); info.textContent = b.bill_number + (b.voided ? ' (VOID)' : '') + ' · ' + (branding.currency_symbol || 'Rs') + ' ' + Number(b.total).toLocaleString();
+      const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Open'; go.onclick = () => openBillById(b.id);
+      row.append(info, go); out.appendChild(row);
+    });
+  } catch (e) { out.textContent = 'Could not search bills.'; }
+}
+document.getElementById('findBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); findBills(); } });
+drawHeld();
+
+function resetForm() {
+  loadToday();
+  _quoteId = null;
+  editingId = null;
+  document.getElementById('editBanner').style.display = 'none';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('genBtn').textContent = 'Generate Bill';
+  document.getElementById('itemRows').innerHTML = '';
+  addItemRow();
+  clearCustomer();
+  document.getElementById('paymentMethod').value = 'cash'; document.getElementById('chequeRef').value = ''; document.getElementById('splitRows').innerHTML = ''; payModeChanged();
+  if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
+  document.getElementById('discountPct').value = 0;
+  updateCapHint();
+  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('billPanel').style.display = 'none';
+}
+// ---- customer name / phone: drop-down list, no stale value (Task 30) ----
+let _custId = null;   // set only when a row is TAPPED in the list
+function clearCustomer() {
+  document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = '';
+  _custId = null; const w = document.getElementById('waCheck'); if (w) { w.textContent = ''; w.className = 'wa-receipt-msg'; }
+}
+(function () {
+  const nameBox = document.getElementById('customerName'), phoneBox = document.getElementById('customerPhone');
+  clearCustomer();   // opening the screen starts empty
+  let pickedPhone = '';   // the phone a TAP filled in; if the name is then retyped, that phone is dropped with it
+  const base = { load: () => fetch('/api/customers').then(r => (r.ok ? r.json() : [])), text: c => c.name || c.phone || '', sub: c => c.phone || '', match: c => (c.name || '') + ' ' + (c.phone || ''),
+    onPick: c => { nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
+  const nameOpts = Object.assign({}, base, { onType: () => { if (_custId && phoneBox.value === pickedPhone) { phoneBox.value = ''; waCheckSoon(); } _custId = null; } });
+  const phoneOpts = Object.assign({}, base, { onType: () => { _custId = null; } });
+  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); }
+})();
+
+
+// ---- Compact POS: Bill tools drop-down + Enter moves to the next box (Ajmal 11:47) ----
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var menu = $('toolMenu'), btn = $('toolsBtn');
+  function setMenu(open) { if (!menu) return; menu.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  if (btn) {
+    btn.addEventListener('click', function (e) { e.stopPropagation(); setMenu(!menu.classList.contains('open')); });
+    menu.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') setMenu(false); });
+    document.addEventListener('click', function (e) { if (!menu.contains(e.target) && e.target !== btn) setMenu(false); });
+  }
+  // Enter -> next box. Enter never picks a suggestion (Task 30 rule) and never generates the bill by itself.
+  function next(id, to) {
+    var el = $(id); if (!el) return;
+    el.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      var t = typeof to === 'function' ? to() : $(to);
+      if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') try { t.select(); } catch (x) {} }
+    });
+  }
+  next('customerName', 'customerPhone');
+  next('customerPhone', 'scanBox');
+  next('discountPct', 'paymentMethod');
+  next('paymentMethod', function () { var c = $('chequeRef'); return (c && c.offsetParent) ? c : $('genBtn'); });
+  next('chequeRef', 'genBtn');
+  // Opening the screen: cursor starts in Customer name.
+  try { var cn = $('customerName'); if (cn && !/Mobi|Android/i.test(navigator.userAgent)) cn.focus(); } catch (e) {}
+})();
+</script>
+
+<script src="/attach-widget.js"></script>
+<script src="/bathhub-logo.js"></script>
+<script src="/test-banner.js"></script>
+<script src="/layla-door.js"></script>
+</body>
+</html>

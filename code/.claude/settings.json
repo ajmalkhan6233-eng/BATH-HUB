@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Write", "Glob", "Grep", "WebSearch",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git add:*)",
+      "Bash(git commit:*)", "Bash(git push origin work)", "Bash(git pull origin work)", "Bash(git fetch:*)",
+      "Bash(npm test:*)", "Bash(npm run build:*)", "Bash(npx jest:*)", "Bash(node scripts/pc/rbh_readiness.js:*)",
+      "Bash(node --check:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)", "Bash(git push origin master:*)", "Bash(git push origin main:*)",
+      "Read(./.env)", "Read(./.env.local)", "Read(./.env.production)", "Read(**/SECRETS*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "cat AI_MEMORY/CORE_RULES.md; echo; node scripts/pc/rbh_readiness.js --brief; echo '--- NOW.md (newest state, read this first) ---'; cat AI_MEMORY/NOW.md; echo '--- LIVE.md (newest 4 lines are at the top) ---'; head -n 4 AI_MEMORY/LIVE.md | cut -c1-400; echo; echo 'Queues: NOW.md above is newer than the queue files; QUEUE_TODAY.md then QUEUE_TOMORROW.md only if NOW.md has no open item'" } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "node scripts/pc/rbh_notify.js attention" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node scripts/pc/rbh_notify.js done" } ] }
+    ]
+  }
+}

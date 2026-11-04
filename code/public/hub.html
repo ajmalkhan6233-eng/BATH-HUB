@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hub</title>
+<link rel="stylesheet" href="/rbh-app.css">
+<style>
+html{font-size:17px}body{margin:0;background:var(--c-bg);color:var(--c-text);font-size:1rem;display:flex;flex-direction:column;height:100vh}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}
+.tabs button{cursor:pointer;font:inherit;font-weight:600;padding:10px 16px;min-height:44px;border:1.5px solid var(--c-line-strong);border-bottom:0;border-radius:10px 10px 0 0;background:#e6e6e2;color:var(--c-text)}
+.tabs button.on{background:var(--c-ink);color:var(--c-gold)}
+iframe{flex:1;width:100%;border:0;border-top:2px solid var(--c-ink);background:var(--c-surface)}
+</style></head><body>
+<div class="tabs" id="t"></div><iframe id="f" title="screen"></iframe>
+<script>
+(function(){
+var SETS={
+ grn:[['Purchasing','/purchasing.html'],['Vendor ledger','/vendor-ledger.html'],['Vendor credit','/vendor-credit.html'],['Return / discount','/vendor_returns.html'],['Documents','/documents.html']],
+ sales:[['Daily ledger','/daily-entry-v2.html'],['POS + ledger','/pos-ledger.html'],['Customers','/customers.html'],['Credit & aging','/credit_aging.html'],['Quotations','/quotations.html']]
+};
+var q=new URLSearchParams(location.search),set=SETS[q.get('set')]||SETS.grn,t=document.getElementById('t'),f=document.getElementById('f');
+function go(i){Array.prototype.forEach.call(t.children,function(b,j){b.className=j===i?'on':''});f.src=set[i][1]}
+set.forEach(function(s,i){var b=document.createElement('button');b.textContent=s[0];b.onclick=function(){go(i)};t.appendChild(b)});
+go(0);
+})();
+</script></body></html>

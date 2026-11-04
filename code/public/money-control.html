@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
+<script>if (window.top === window.self) location.replace('/owner#/moneycontrol');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Control — Royal Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;
+    --emerald-800:#0a4531;
+    --earth-800:#3d2b1f;
+    --earth-700:#5c4033;
+    --earth-500:#8b6f47;
+    --gold-500:#c9a227;
+    --gold-300:#e8cf7a;
+    --stone-100:#efe9dc;
+    --stone-50:#f7f4ec;
+    --ink:#201c16;
+    --red-600:#a02020;
+    --red-100:#f6dede;
+    --green-700:#1e5c3f;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:var(--stone-50);
+    color:var(--ink);
+    line-height:1.5;
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--gold-primary);
+    color:var(--stone-50);
+    padding:20px 20px;
+  }
+  header h1{
+    margin:0;
+    font-size:20px;
+    font-weight:600;
+  }
+  header .date{
+    color:var(--gold-300);
+    font-size:14px;
+    margin-top:4px;
+  }
+  main{max-width:720px;margin:0 auto;padding:20px 16px;}
+
+  .card{
+    background:var(--bg-surface);
+    border:1px solid #e2dccb;
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:15px;
+    text-transform:none;
+    margin:0 0 14px;
+    color:var(--text-primary);
+  }
+  .big-number{
+    font-size:34px;
+    font-weight:700;
+    color:var(--text-primary);
+  }
+  .sub{
+    font-size:14px;
+    color:var(--text-muted);
+  }
+
+  .mode-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:8px 0;border-bottom:1px solid var(--border-subtle);
+  }
+  .mode-row:last-child{border-bottom:none;}
+  .mode-row label{font-size:14px;color:var(--text-secondary);}
+  .mode-row input{
+    width:120px;text-align:right;
+    padding:6px 8px;border:1px solid #d8d0bd;border-radius:4px;
+    font-size:14px;font-family:inherit;
+  }
+  .total-row{
+    display:flex;justify-content:space-between;
+    margin-top:12px;padding-top:12px;border-top:2px solid var(--border-strong);
+    font-weight:700;font-size:16px;
+  }
+
+  .alert{
+    background:var(--red-100);
+    border:1px solid var(--red-600);
+    border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .alert .title{color:var(--red-600);font-weight:700;font-size:14px;}
+  .alert .detail{font-size:14px;color:var(--text-primary);margin-top:4px;}
+
+  .list-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:10px 0;border-bottom:1px solid var(--border-subtle);font-size:14px;
+  }
+  .list-row:last-child{border-bottom:none;}
+  .list-row .name{color:var(--ink);}
+  .list-row .amt{color:var(--text-primary);font-weight:600;}
+  .list-row .meta{font-size:12px;color:var(--text-muted);display:block;}
+  .held-strike{text-decoration:line-through;color:#b0a894;}
+
+  .empty{color:var(--text-muted);font-size:14px;font-style:italic;}
+
+  .btn{
+    background:var(--gold-primary);color:var(--text-on-accent);
+    border:none;border-radius:4px;padding:8px 16px;
+    font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;
+  }
+  .btn:hover{background:var(--gold-primary);}
+
+  .refresh{
+    position:fixed;bottom:16px;right:16px;
+    background:var(--gold-primary);color:var(--text-on-accent);
+    border:none;border-radius:24px;padding:12px 20px;
+    font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  }
+</style>
+<link rel="stylesheet" href="/bathhub-design.css">
+<link rel="stylesheet" href="/bathhub-logo.css">
+</head>
+<body>
+
+<header>
+  <h1>Money Control</h1>
+  <div class="date" id="today-label">Loading…</div>
+</header>
+
+<main>
+<div data-attach="money_control" data-attach-id="@month"></div>
+
+  <div class="card" style="border:2px solid var(--border-strong);">
+    <h2 style="color:var(--text-primary);margin:0;">Rule #1 — a cheque must never bounce or return</h2>
+    <div class="sub" style="margin-top:4px;">Pay early. Money has to be settled before the promised date, not on it.</div>
+  </div>
+
+  <div class="card" id="cheque-alerts-card" style="display:none;">
+    <h2>High alert — cheques due soon</h2>
+    <div id="cheque-alerts"></div>
+  </div>
+
+  <div class="card">
+    <h2>Today's full breakdown — enter once, get the report</h2>
+    <div class="mode-row"><label>Today's expenses</label><input type="number" id="dcp-expenses" value="0"></div>
+    <div class="mode-row"><label>Purchasing/restock budget today</label><input type="number" id="dcp-purchasing" value="0"></div>
+    <button class="btn" onclick="runDailyPlan()">Get today's breakdown</button>
+    <div id="dcp-report" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Today's sales, by payment mode</h2>
+    <div id="mode-rows"></div>
+    <div class="total-row">
+      <span>Total today</span>
+      <span id="today-total">LKR 0</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Daily reserve for rent, bills, salary</h2>
+    <div class="big-number" id="daily-reserve">LKR 0</div>
+    <div class="sub" id="reserve-sub">per day, auto-calculated from monthly fixed costs</div>
+  </div>
+
+  <div class="card">
+    <h2>Bank accounts</h2>
+    <div id="accounts-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cheques due — next 14 days</h2>
+    <div id="cheques-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Investor / friend loans due — next 14 days</h2>
+    <div id="loans-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Low stock</h2>
+    <div id="stock-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Planned money — investment in / spend out</h2>
+    <div id="allocations-list"></div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-subtle);display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input id="alloc-label" placeholder="What is it (e.g. New tile order)">
+      <select id="alloc-category">
+        <option value="planned_spend">Going out</option>
+        <option value="investment_in">Coming in</option>
+      </select>
+      <input id="alloc-amount" type="number" step="0.01" placeholder="Amount (LKR)">
+      <input id="alloc-date" type="date">
+      <input id="alloc-notes" placeholder="Notes (optional)" style="grid-column:1 / -1;">
+      <button class="btn" style="grid-column:1 / -1;" onclick="addAllocation()">Add planned item</button>
+    </div>
+  </div>
+
+</main>
+
+<button class="refresh" onclick="load()">Refresh</button>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+const MODES = [
+  {key: 'cash', label: 'Cash'},
+  {key: 'card', label: 'Card'},
+  {key: 'cheque', label: 'Cheque'},
+  {key: 'online_transfer', label: 'Online transfer'},
+  {key: 'credit', label: 'Credit / on account'},
+];
+
+async function load() {
+  const res = await fetch('/api/money-control/dashboard');
+  const d = await res.json();
+
+  document.getElementById('today-label').textContent = d.date;
+
+  // payment mode rows, editable, reactive total
+  const modeRowsEl = document.getElementById('mode-rows');
+  modeRowsEl.innerHTML = '';
+  const values = {};
+  MODES.forEach(m => {
+    const existing = d.sales_by_mode.find(x => x.mode === m.key);
+    values[m.key] = existing ? Number(existing.amount) : 0;
+    const row = document.createElement('div');
+    row.className = 'mode-row';
+    row.innerHTML = `<label>${m.label}</label><input type="number" step="0.01" value="${values[m.key]}" data-mode="${m.key}">`;
+    modeRowsEl.appendChild(row);
+  });
+  const totalEl = document.getElementById('today-total');
+  const recalcTotal = () => {
+    let total = 0;
+    modeRowsEl.querySelectorAll('input').forEach(inp => total += Number(inp.value || 0));
+    totalEl.textContent = money(total);
+  };
+  recalcTotal();
+  modeRowsEl.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', recalcTotal);
+    inp.addEventListener('change', async () => {
+      await fetch('/api/money-control/payment-breakdown', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({report_date: d.date, mode: inp.dataset.mode, amount: Number(inp.value || 0)})
+      });
+    });
+  });
+
+  // daily reserve
+  document.getElementById('daily-reserve').textContent = money(d.daily_overhead_reserve);
+
+  // bank accounts
+  const accEl = document.getElementById('accounts-list');
+  accEl.innerHTML = d.bank_accounts.length ? '' : '<div class="empty">No bank accounts added yet.</div>';
+  d.bank_accounts.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${a.account_label}${a.bank ? ' — ' + a.bank : ''}</span><span class="amt">${money(a.current_balance)}</span>`;
+    accEl.appendChild(row);
+  });
+
+  // cheques + high alerts (due within 3 days and account balance looks short)
+  const chEl = document.getElementById('cheques-list');
+  const alertsEl = document.getElementById('cheque-alerts');
+  const alertsCard = document.getElementById('cheque-alerts-card');
+  chEl.innerHTML = d.cheques_next_14_days.length ? '' : '<div class="empty">Nothing due in the next 14 days.</div>';
+  alertsEl.innerHTML = '';
+  let anyAlert = false;
+  d.cheques_next_14_days.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const dateDisplay = c.status === 'held'
+      ? `<span class="held-strike">${c.held_from_date}</span> → ${c.due_date} (held)`
+      : c.due_date;
+    row.innerHTML = `<span class="name">${c.payee}<span class="meta">${dateDisplay}${c.account_label ? ' · ' + c.account_label : ''}</span></span><span class="amt">${money(c.amount)}</span>`;
+    chEl.appendChild(row);
+
+    const daysOut = (new Date(c.due_date) - new Date(d.date)) / 86400000;
+    // Rule #1: pay early, never right up against the promised date — so this
+    // fires with a 5-day buffer, not 3, giving time to actually act.
+    if (c.status === 'pending' && daysOut <= 5) {
+      anyAlert = true;
+      const acc = d.bank_accounts.find(a => a.account_label === c.account_label);
+      const short = acc ? Number(acc.current_balance) < Number(c.amount) : null;
+      const div = document.createElement('div');
+      div.className = 'alert';
+      div.innerHTML = `<div class="title">${c.payee} — ${money(c.amount)} due ${c.due_date}</div>` +
+        `<div class="detail">${c.account_label || 'No account set'}${short === true ? ' — balance looks short, move money before this clears.' : short === false ? ' — balance covers it.' : ''}</div>`;
+      alertsEl.appendChild(div);
+    }
+  });
+  alertsCard.style.display = anyAlert ? 'block' : 'none';
+
+  // investor loans
+  const loanEl = document.getElementById('loans-list');
+  loanEl.innerHTML = d.investor_loans_next_14_days.length ? '' : '<div class="empty">No loan repayments due in the next 14 days.</div>';
+  d.investor_loans_next_14_days.forEach(l => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${l.lender_name}<span class="meta">${l.due_date}</span></span><span class="amt">${money(l.outstanding)}</span>`;
+    loanEl.appendChild(row);
+  });
+
+  // low stock
+  const stockEl = document.getElementById('stock-list');
+  stockEl.innerHTML = d.low_stock.length ? '' : '<div class="empty">Nothing below reorder level.</div>';
+  d.low_stock.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="name">${s.item_name}</span><span class="amt">${s.current_qty} left (reorder at ${s.reorder_level})</span>`;
+    stockEl.appendChild(row);
+  });
+
+  // planned allocations
+  const allocEl = document.getElementById('allocations-list');
+  allocEl.innerHTML = d.planned_allocations.length ? '' : '<div class="empty">Nothing planned right now.</div>';
+  d.planned_allocations.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const tag = a.category === 'investment_in' ? 'Coming in' : 'Going out';
+    row.innerHTML = `<span class="name">${a.label}<span class="meta">${tag}${a.planned_date ? ' · ' + a.planned_date : ''}</span></span>` +
+      `<span class="amt">${money(a.amount)} <button class="btn" style="padding:3px 8px;font-size:12px;margin:0 0 0 8px;" onclick="markAllocationDone(${a.id})">Done</button></span>`;
+    allocEl.appendChild(row);
+  });
+}
+
+async function addAllocation() {
+  const label = document.getElementById('alloc-label').value.trim();
+  const category = document.getElementById('alloc-category').value;
+  const amount = document.getElementById('alloc-amount').value;
+  const planned_date = document.getElementById('alloc-date').value;
+  const notes = document.getElementById('alloc-notes').value.trim();
+  if (!label || !amount) { alert('What it is and the amount are required.'); return; }
+  await fetch('/api/money-control/money-allocations', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ label, category, amount, planned_date: planned_date || null, notes: notes || null })
+  });
+  document.getElementById('alloc-label').value = '';
+  document.getElementById('alloc-amount').value = '';
+  document.getElementById('alloc-date').value = '';
+  document.getElementById('alloc-notes').value = '';
+  load();
+}
+
+async function markAllocationDone(id) {
+  await fetch(`/api/money-control/money-allocations/${id}`, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ status: 'done' })
+  });
+  load();
+}
+
+load();
+
+async function runDailyPlan() {
+  const reportEl = document.getElementById('dcp-report');
+  reportEl.innerHTML = '<div class="empty">Working...</div>';
+  const today = new Date().toISOString().slice(0, 10);
+
+  const dashRes = await fetch('/api/money-control/dashboard');
+  const dash = await dashRes.json();
+  const sales_total = dash.sales_total_today;
+  const expenses_total = Number(document.getElementById('dcp-expenses').value || 0);
+  const purchasing_reserve = Number(document.getElementById('dcp-purchasing').value || 0);
+
+  await fetch('/api/money-control/daily-cash-plan', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ report_date: today, sales_total, expenses_total, purchasing_reserve })
+  });
+
+  const r = await fetch('/api/money-control/daily-cash-plan?date=' + today);
+  const d = await r.json();
+  if (!r.ok) { reportEl.innerHTML = '<div class="empty">' + (d.error || ('The server answered ' + r.status + ' — nothing was calculated.')) + '</div>'; return; }
+
+  let html = `<div class="total-row" style="border-top:none;padding-top:0;margin-top:0;">
+      <span>Gross profit</span><span>${money(d.gross_profit)}</span>
+    </div>`;
+  html += `<div class="mode-row"><label>Rent/bills/salary reserve</label><span>${money(d.set_aside.overhead_reserve)}</span></div>`;
+  html += `<div class="mode-row"><label>Cheques (spread to due dates)</label><span>${money(d.set_aside.cheques.total)}</span></div>`;
+  d.set_aside.cheques.breakdown.forEach(c => {
+    html += `<div class="list-row" style="font-size:12px;padding:4px 0 4px 12px;"><span class="name">${c.payee}${c.overdue ? ' (overdue)' : ''}</span><span class="amt">${money(c.daily_amount)}/day</span></div>`;
+  });
+  html += `<div class="mode-row"><label>Loans (spread to due dates)</label><span>${money(d.set_aside.loans.total)}</span></div>`;
+  d.set_aside.loans.breakdown.forEach(l => {
+    html += `<div class="list-row" style="font-size:12px;padding:4px 0 4px 12px;"><span class="name">${l.lender_name}${l.overdue ? ' (overdue)' : ''}</span><span class="amt">${money(l.daily_amount)}/day</span></div>`;
+  });
+  html += `<div class="mode-row"><label>Purchasing budget</label><span>${money(d.set_aside.purchasing_reserve)}</span></div>`;
+  html += `<div class="total-row"><span>Total to set aside</span><span>${money(d.set_aside.total_to_set_aside)}</span></div>`;
+  html += `<div class="alert" style="background:${d.safe_to_withdraw >= 0 ? '#e8f3e8' : '#f6dede'};border-color:${d.safe_to_withdraw >= 0 ? '#1e5c3f' : '#a02020'};margin-top:12px;">
+      <div class="detail" style="color:${d.safe_to_withdraw >= 0 ? '#1e5c3f' : '#a02020'};font-weight:700;">${d.verdict}</div>
+    </div>`;
+  reportEl.innerHTML = html;
+}
+</script>
+
+<script src="/attach-widget.js"></script>
+<script src="/bathhub-logo.js"></script>
+<script src="/layla-door.js"></script>
+</body>
+</html>

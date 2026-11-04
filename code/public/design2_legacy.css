@@ -1,0 +1,46 @@
+/* ==========================================================================
+   DESIGN 2 FOR THE SIX PAGES THAT KEEP THEIR OWN CSS (public/design2_legacy.css)
+   vendor-ledger, money-plan, morning-brief, layla-owner, pos-ledger, daily-entry-v2.
+   Colours and look only, in the shop colours (black, ash, gold). It does NOT load the app's design layer
+   (that layer resizes buttons and inputs); it only re-points each page's own colour names, so layouts stay as they are.
+   Rule: every selector starts with `html` to win over the page's own style. Roll back: remove the <link> from the page.
+   ========================================================================== */
+html:root {
+  /* vendor-ledger / money-plan / morning-brief */
+  --bg: #F4F4F2; --ink: #0B0B0C; --card: #ffffff; --line: #DCDCD8; --gold: #C9A227; --red: #b91c1c; --green: #15803d; --muted: #6B6E73;
+  /* layla-owner */
+  --panel: #ffffff; --me: #C9A227; --meInk: #0B0B0C;
+  /* daily-entry-v2: its green "emerald" and "brass" become shop gold, its dark "granite" becomes black / ash.
+     !important because the page's own script writes these names inline when a swatch theme is chosen. */
+  --granite-0: #0B0B0C !important; --granite-1: #18181B !important; --granite-2: #26262A !important;
+  --emerald: #C9A227 !important; --emerald-deep: #7A5C0A !important; --emerald-ink: #26262A !important;
+  --brass: #C9A227 !important; --brass-soft: #F6F0DC !important;
+  --porcelain: #ffffff; --porcelain-2: #F4F4F2;
+  --ink-soft: #6B6E73; --grout: #DCDCD8; --grout-strong: #C4C4BE;
+  --c-sales: #26262A; --c-card: #6B6E73; --c-online: #7A5C0A; --c-cheque: #9A7B14; --c-cih: #C9A227;
+  --theme-bg: linear-gradient(180deg, #18181B, #0B0B0C 480px) !important;
+}
+html body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
+html button { color: #0B0B0C; }
+html button.ghost { color: var(--ink); }
+/* layla-owner: a light chat in Design 2 */
+html header b, html #badge { color: #7A5C0A; }
+html #badge[data-state=waiting] { color: #b45309; }
+/* pos-ledger: the two-pane frame */
+html, html body { background-color: #F4F4F2; }
+html .bar { background: #0B0B0C; color: #ffffff; border: 1px solid #DCDCD8; }
+html .bar a { color: #C9A227; background: transparent; }
+html .bar button { background: #C9A227; color: #0B0B0C; }
+html iframe { border-color: #DCDCD8; }
+/* daily-entry-v2: the hard-coded green glows become gold; the brand strip is black */
+html .datewrap button:hover { background: rgba(201,162,39,.22); }
+html .tb-sales, html .lasersoft-note { background: rgba(201,162,39,.12); border-color: rgba(201,162,39,.4); }
+html .hbtn:hover { box-shadow: 0 0 0 1px var(--emerald), 0 0 16px rgba(201,162,39,.25); background: rgba(201,162,39,.08); }
+html .hbtn.primary:hover { box-shadow: 0 0 20px rgba(201,162,39,.45); }
+html .sendmenu button:hover { background: rgba(201,162,39,.16); }
+html .syncbanner.info { background: rgba(201,162,39,.12); border-color: rgba(201,162,39,.4); }
+html td input:focus, html td select:focus { box-shadow: 0 0 0 4px rgba(201,162,39,.2); }
+html #saveBtn { box-shadow: 0 0 16px rgba(201,162,39,.35); }
+html #saveBtn:hover { box-shadow: 0 0 24px rgba(201,162,39,.55); }
+html .bh-strip { background: #0B0B0C; border-bottom: 2px solid #C9A227; }
+html .bh-strip .bh-name { color: #C9A227; }

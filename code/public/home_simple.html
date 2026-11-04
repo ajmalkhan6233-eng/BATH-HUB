@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Bath Hub — Home</title>
+  <link rel="stylesheet" href="/rbh-app.css">
+  <style>
+    /* Home look: tokens come from /rbh-app.css (dark = black, ash, gold). Only layout lives here. */
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:var(--s3) var(--s3) calc(var(--s3) + env(safe-area-inset-bottom))}
+    header{text-align:center;padding:env(safe-area-inset-top) 0 var(--s3)}
+    .shop-title{color:var(--c-gold);font-size:var(--t-xl);font-weight:700;letter-spacing:.5px}
+    .shop-subtitle{color:var(--c-muted);font-size:var(--t-s);margin-top:var(--s1)}
+    .button-grid{display:grid;grid-template-columns:1fr;gap:var(--s3);flex:1;align-content:start}
+    @media(min-width:640px){.button-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:880px;width:100%;margin:0 auto}}
+    .action-btn{background:var(--c-surface);border:1px solid var(--c-line);border-left:5px solid var(--c-gold);border-radius:var(--r2);padding:var(--s3) var(--s4);display:flex;align-items:center;gap:var(--s4);text-decoration:none;color:var(--c-text);min-height:76px;cursor:pointer;transition:transform var(--d1) var(--ease),background-color var(--d1) var(--ease)}
+    .action-btn:hover{background:var(--c-surface-2)}
+    .action-btn:active{background:var(--c-surface-2);transform:scale(.98)}
+    .action-btn.main{border-left-width:8px;background:var(--c-gold-soft)}
+    .btn-icon{font-size:28px;line-height:1;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(201,162,39,.14);border-radius:var(--r1);flex-shrink:0}
+    .btn-text{display:flex;flex-direction:column;min-width:0}
+    .btn-title{font-size:var(--t-l);font-weight:700}
+    .btn-subtitle{font-size:var(--t-s);color:var(--c-muted);margin-top:2px}
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="shop-title">Bath Hub</div>
+    <div class="shop-subtitle">Shop Overview</div>
+  </header>
+
+  <main class="button-grid">
+    <a href="/bathco_complete.html#/pos" class="action-btn" onclick="openPage('pos', event)">
+      <div class="btn-icon">🛒</div>
+      <div class="btn-text">
+        <span class="btn-title">Sell</span>
+        <span class="btn-subtitle">New sale and checkout</span>
+      </div>
+    </a>
+
+    <a href="/bathco_complete.html#/grn" class="action-btn" onclick="openPage('grn', event)">
+      <div class="btn-icon">📥</div>
+      <div class="btn-text">
+        <span class="btn-title">Receive stock</span>
+        <span class="btn-subtitle">Add new items from supplier</span>
+      </div>
+    </a>
+
+    <a href="/grn_workbench.html" class="action-btn main">
+      <div class="btn-icon">🧾</div>
+      <div class="btn-text">
+        <span class="btn-title">GRN workbench</span>
+        <span class="btn-subtitle">Photo, stock, prices and vendor bill in one save</span>
+      </div>
+    </a>
+
+    <a href="/bathco_complete.html#/stock" class="action-btn" onclick="openPage('stock', event)">
+      <div class="btn-icon">📦</div>
+      <div class="btn-text">
+        <span class="btn-title">Items</span>
+        <span class="btn-subtitle">View stock list and prices</span>
+      </div>
+    </a>
+
+    <a href="/bathco_complete.html#/dashboard" class="action-btn" onclick="openPage('dashboard', event)">
+      <div class="btn-icon">📊</div>
+      <div class="btn-text">
+        <span class="btn-title">Today</span>
+        <span class="btn-subtitle">Today's sales total</span>
+      </div>
+    </a>
+  </main>
+
+  <script>
+    function openPage(pageKey, event) {
+      if (window.parent && window.parent !== window && window.parent.location.pathname.includes('bathco_complete.html')) {
+        event.preventDefault();
+        window.parent.location.hash = '#/' + pageKey;
+      } else {
+        window.location.href = '/bathco_complete.html#/' + pageKey;
+      }
+    }
+  </script>
+
+</body>
+</html>
+

@@ -1,0 +1,10 @@
+# AI Core Behavioral Rules
+Pre-Coding Decision Matrix:
+1. Does this need to exist? -> no: skip it (YAGNI)
+2. Stdlib does it? -> use it
+3. Native platform feature? -> use it
+4. Installed dependency? -> use it
+5. One line? -> one line
+6. Only then: the minimum that works
+
+Lazy, not negligent: trust-boundary validation, data-loss handling, error block.

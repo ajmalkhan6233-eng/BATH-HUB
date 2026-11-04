@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Invoices</title><link rel="stylesheet" href="ui.css"></head><body>
+<div class="page">
+ <h1 class="pt">Invoices</h1>
+ <div class="grid g4" id="kp"></div>
+ <div class="glass card row" style="margin:14px 0"><input class="in grow" id="q" placeholder="Search bill number, customer or phone"><input class="in" type="date" id="d" style="width:170px" aria-label="Date"><button class="btn pri" id="go" type="button">Search</button><button class="btn" id="td" type="button">Today</button></div>
+ <div class="tw"><table><thead><tr><th>Bill</th><th>Time</th><th>Customer</th><th>Paid by</th><th class="num">Total</th><th>Status</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+ <div class="sub" id="note" style="margin-top:8px"></div>
+</div>
+<script src="ui-core.js"></script>
+<script>
+(function(){'use strict';var $=function(i){return document.getElementById(i)},E=RBH.esc,M=RBH.money;
+function lk(d){return new Date(new Date(d).getTime()+5.5*3600e3).toISOString().replace('T',' ').slice(5,16);}
+function load(){var q=$('q').value.trim(),d=$('d').value,u='/api/pos-bills?'+(d?'date='+d+'&':'')+'q='+encodeURIComponent(q);
+ if(!d&&!q)u='/api/pos-bills/today';
+ $('tb').innerHTML=RBH.skel(6);
+ RBH.api(u).then(function(r){var b=Array.isArray(r)?r:(r.bills||[]);var live=b.filter(function(x){return !x.voided;}),tot=live.reduce(function(a,x){return a+Number(x.total||0);},0),cr=live.filter(function(x){return x.payment_method==='credit';}).reduce(function(a,x){return a+Number(x.total||0);},0);
+  $('kp').innerHTML='<div class="glass card"><div class="k">Bills</div><div class="v">'+live.length+'</div></div><div class="glass card"><div class="k">Sales</div><div class="v gold">'+M(tot)+'</div></div><div class="glass card"><div class="k">On credit</div><div class="v bad">'+M(cr)+'</div></div><div class="glass card"><div class="k">Voided</div><div class="v">'+(b.length-live.length)+'</div></div>';
+  $('tb').innerHTML=b.length?b.map(function(x){var ph=String(x.customer_phone||'').replace(/\D/g,'');if(ph.length===9)ph='94'+ph;else if(ph[0]==='0')ph='94'+ph.slice(1);
+   var wa=ph?'<a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/'+ph+'?text='+encodeURIComponent('Thank you for shopping at Royal Bath Hub. Bill '+x.bill_number+' total '+M(x.total)+'.')+'">WhatsApp</a>':'';
+   return '<tr><td><b>'+E(x.bill_number)+'</b></td><td>'+E(lk(x.created_at))+'</td><td>'+E(x.customer_name||'Walk-in')+'</td><td>'+E(x.payment_method||'cash')+'</td><td class="num"><b>'+M(x.total)+'</b></td><td>'+(x.voided?'<span class="chip c-bad">VOID</span>':(x.payment_method==='credit'?'<span class="chip c-warn">CREDIT</span>':'<span class="chip c-ok">PAID</span>'))+'</td><td class="num"><a class="btn sm" target="_blank" rel="noopener" href="/api/pos-bills/'+x.id+'/pdf">Receipt</a> '+wa+'</td></tr>';}).join(''):'<tr><td colspan="7" class="empty">No bills found.</td></tr>';
+  $('note').textContent=b.length>=200?'Showing the newest 200. Narrow the search to see older ones.':'';}).catch(function(e){$('tb').innerHTML='<tr><td colspan="7" class="empty">'+E(e.message)+'</td></tr>';});}
+$('go').onclick=load;$('q').onkeydown=function(e){if(e.key==='Enter')load();};$('td').onclick=function(){$('q').value='';$('d').value='';load();};
+RBH.me().then(load);})();
+</script></body></html>

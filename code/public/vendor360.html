@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vendor 360 | Royal Bath Hub</title>
+<style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070;--sel:rgba(201,162,75,.18)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14)}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14)}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070;--sel:rgba(201,162,75,.18)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh}
+.left,.right{padding:12px;min-width:0}.right{display:none}
+.app.pick .left{display:none}.app.pick .right{display:block}
+@media(min-width:900px){.app{grid-template-columns:30% 70%}.left{border-right:1px solid var(--line);height:100vh;overflow:auto;position:sticky;top:0}.right{display:block}.app.pick .left{display:block}.back{display:none!important}}
+h1{font-size:20px;margin:4px 0 10px}h2{font-size:17px;margin:0}
+input,select,button,textarea{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 10px;max-width:100%}
+button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;border:0}button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible,.v:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.search{width:100%}.chips{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.chips button{min-height:44px;background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}.chips button[aria-pressed=true]{background:var(--sel);border-color:var(--gold);font-weight:700}
+.v{display:flex;justify-content:space-between;gap:8px;align-items:center;min-height:56px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:6px 0;cursor:pointer;width:100%;text-align:left;color:var(--ink)}
+.v[aria-current=true]{background:var(--sel);border-color:var(--gold)}.v b{display:block}.v small{color:var(--muted)}
+.amt{font-weight:700;white-space:nowrap}.bad{color:var(--red)}.good{color:var(--green)}.sm{color:var(--muted);font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}.kpi b{display:block;font-size:20px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;margin-top:6px}
+.tabs button{background:transparent;color:var(--ink);border-radius:10px 10px 0 0;border:1px solid transparent;font-weight:500;white-space:nowrap}.tabs button[aria-selected=true]{border-color:var(--line);border-bottom-color:var(--bg);background:var(--sel);font-weight:700}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:13px;color:var(--muted)}td.n,th.n{text-align:right}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid var(--line)}.state{padding:24px 8px;text-align:center;color:var(--muted)}
+#msg{min-height:22px}.back{margin-bottom:8px}
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}.drawer.on{display:block}
+.sheet{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--bg);padding:14px;overflow:auto;border-left:1px solid var(--line)}
+.sheet label{display:block;margin:8px 0 2px;font-size:14px;color:var(--muted)}.sheet input,.sheet select{width:100%}
+</style><link rel="stylesheet" href="/bathhub-logo.css">
+</head><body>
+<div class="app" id="app">
+  <aside class="left" aria-label="Vendors">
+    <h1>Vendors</h1>
+    <input id="q" class="search" type="search" placeholder="Search vendor" aria-label="Search vendor" autocomplete="off">
+    <div class="chips" role="group" aria-label="Filter">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="bal" aria-pressed="false">We owe</button>
+      <button type="button" data-f="over" aria-pressed="false">Overdue</button>
+    </div>
+    <div id="list" role="list"><div class="state">Loading vendors...</div></div>
+  </aside>
+  <main class="right" id="right">
+    <button type="button" class="ghost back" id="back">&larr; All vendors</button>
+    <div id="msg" class="sm" role="status"></div>
+    <div id="detail"><div class="state">Pick a vendor on the left.</div></div>
+  </main>
+</div>
+<div class="drawer" id="dr" role="dialog" aria-modal="true" aria-label="Add"><div class="sheet" id="sheet"></div></div>
+<script src="/lib/offlineSave.js"></script>
+<script src="/vendor360.js"></script>
+<script src="/bathhub-logo.js" defer></script>
+</body></html>

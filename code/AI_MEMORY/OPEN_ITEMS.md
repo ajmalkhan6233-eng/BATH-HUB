@@ -1,0 +1,22 @@
+# OPEN_ITEMS (2026-10-11)
+- Aj: the 9 listed bugs are WAITING for Aj's OK (not fixed, on purpose).
+- Aj: "MERGE TO LIVE" = move branch work to the live app on port 3100 (nothing merged to live yet).
+- Aj decide: POS credit bills stay separate from Credit & Aging totals (current). Paste: KEEP SEPARATE or MERGE POS CREDIT.
+- Android PWA / Play Store idea: PWA first, decide after the bug sweep.
+- Old-name (BATHCO) renames in code, folders, DB, env, pm2, Railway, repo: list and plan in AI_MEMORY/RENAME_PLAN_WAITING_GO.md. Waiting for Ajmal's go.
+- "Unverified commit" label on GitHub: check the commit signing setup.
+- Website: GEMINI_API_KEY in Netlify (Layla photo reading), confirm opening hours, real Google Maps link, native check of Sinhala/Tamil text.
+- Security NEXT: owner screen button for the agent outbox; wrapper on OCR/PDF text; queue sale receipts as drafts; live whatsapp-bridge needs the live repo + Aj.
+- POS: a registered cheque stays on the Cheques page if its bill is voided later (owner must clear it by hand). POS cheque needs the customer picked (phone match is automatic when found).
+- daily-entry-v2.html asks for /js/hyperspace-theme.js which is not in this repo (404 + one console error; copy is in reference/bathco/public_extras).
+- Remote branches still exist (overnight, claude/*, octopus-memory): delete when Aj agrees.
+- Aj: run /login once in Claude Code so claude-mem can save memories.
+- Old PCs files to decide (CLEANUP_LIST.md, ASK AJMAL): bathhub-website-export, bathhub-build-pack, harvest-bundle, design-from-aistudio, tile-photos, .rar files, old zips.
+- Railway go-live (parked): CLAUDE.md task 1. Before shipping a client copy: exclude SESSION_LOG.md, AISTUDIO_HANDOFF/, CLAUDE.md, backups/, frontend/, local_ops/.
+- Netlify old deploys (list only, never deleted): 6ac984b8, 6ac9516d, 6ac90e28 (drafts), 6ac90e1a (error, empty), 6ac36cf6 (old orange, rollback).
+- Aj OK needed: install Tailscale (iPhone reaches shop app), Tesseract (free OCR for photos), @imgly (cut-out photos), an https address for the website's shopApiUrl.
+- 22E: first run of scripts/website_health_check.js was blocked by the classifier; Aj types the line from bridge LIVE.md. Remove task: Unregister-ScheduledTask -TaskName RBH_Website_Health -Confirm:$false
+- Cheque/GRN/price alerts and photo intake only reach WhatsApp when WA_TOKEN + WA_PHONE_NUMBER_ID + LAYLA_OWNER_LIVE=true are set and the shop app runs this code (MERGE TO LIVE).
+- Link public/sync-review.html from an owner menu (page exists, no menu link yet).
+- Website draft for logo: Aj to look and say publish.
+- LATER (Aj, free time): GRN photo scan on the GRN screen itself + connect Tesseract (installed) to Layla. Preview, then Go / Fix / Cancel. Not urgent.

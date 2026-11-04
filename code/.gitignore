@@ -1,0 +1,99 @@
+# Dependencies
+node_modules/
+bathco-mobile/node_modules/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.env.local
+TEMP_PASSWORDS.txt
+cookies.txt
+
+# WhatsApp session (auth credentials, not source)
+.wwebjs_auth/
+.wwebjs_cache/
+whatsapp-qr.png
+
+# Excel temp/lock files
+~$*
+
+# Runtime state (not source code)
+agent_run_log.json
+test-cookie*.txt
+
+# Logs
+*.log
+server*.log
+
+# Database dumps (large binary files)
+backups/*.dump
+backups/*.sql
+*.dump
+*.db
+*.sqlite3
+# Root-level SQL backups (data, not schema)
+bathco_backup*.sql
+bathco_master_fix.sql
+
+# Large binary data files (stay on local PC, not needed on server)
+DAY SALE/
+DALI/
+data/
+cheques/
+uploads/
+scripts/BATHCO_MASTER_DATA_REBUILD.xlsx
+bathco-complete-app.zip
+*.pdf
+
+# Encrypted backups
+*.enc
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Reports (generated — don't need versioning)
+reports/*.html
+reports/*.pdf
+local_ops/
+
+# local test database helpers (never commit)
+.pg_test_superpw
+.test-login.txt
+.dev/
+
+.pg_owner_superpw
+
+Claude outputs/
+
+backups/*.zip
+backups/*.sql
+
+# Daily ledger host backups (real shop data written by routes/daily_entry_sync.js)
+backups/daily/
+
+# Layla owner assistant: incoming photos and voice notes are private
+uploads/layla-inbox/
+
+# half-hourly backup bookkeeping (scripts/backup_rotate.js)
+backups/.last_hash
+
+# print outputs for the shop (barcode / card samples)
+!public/print/*.pdf
+audit_out/
+
+# watchdog and wipe logs (plain text, per PC)
+logs/
+
+# RBH status snapshot (local)
+.rbh_status.json
+node_modules

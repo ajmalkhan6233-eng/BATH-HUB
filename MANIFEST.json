@@ -1,0 +1,8 @@
+{
+ "at": "2026-11-04T12:17:33.777Z",
+ "app_commit": "bfe00f85fc708243fa5b70fcff8e95100ca88145",
+ "db_bytes": 20259,
+ "files": 1427,
+ "skipped_big_files": [],
+ "restore": "node scripts/pc/restore_from_backup.js"
+}

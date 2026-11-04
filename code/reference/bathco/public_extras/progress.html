@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress — First Choice Bathco</title>
+<style>
+  :root{
+    --bg:#F6F5F1; --card:#FFFFFF; --ink:#20261F; --ink-soft:#5B655A;
+    --line:#E2E0D6;
+    --done-bg:#E4F4E9; --done-ink:#1E7A46; --done-border:#BEE6C9;
+    --prog-bg:#FDF2DC; --prog-ink:#8A5A0A; --prog-border:#F3DBA6;
+    --none-bg:#EEEDE8; --none-ink:#767267; --none-border:#DAD7CC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:24px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI", system-ui, sans-serif; font-size:17px; line-height:1.5;
+  }
+  .wrap{max-width:720px; margin:0 auto;}
+  h1{font-size:24px; margin:0 0 4px;}
+  .updated{color:var(--ink-soft); font-size:14px; margin:0 0 20px;}
+  .overall{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px; font-size:19px; font-weight:700; margin-bottom:24px;
+  }
+  h2{font-size:19px; margin:28px 0 4px;}
+  .sectionSummary{color:var(--ink-soft); font-size:15px; margin:0 0 12px; font-weight:600;}
+  ul.items{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+  li.item{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; display:flex; gap:12px; align-items:flex-start;
+  }
+  .num{
+    flex-shrink:0; width:30px; height:30px; border-radius:50%;
+    background:var(--none-bg); color:var(--ink); font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .body{flex:1; min-width:0;}
+  .desc{margin:0 0 6px;}
+  .status{
+    display:inline-block; font-size:12.5px; font-weight:700; letter-spacing:.03em;
+    padding:3px 10px; border-radius:999px; border:1px solid transparent;
+  }
+  .status.done{background:var(--done-bg); color:var(--done-ink); border-color:var(--done-border);}
+  .status.progress{background:var(--prog-bg); color:var(--prog-ink); border-color:var(--prog-border);}
+  .status.none{background:var(--none-bg); color:var(--none-ink); border-color:var(--none-border);}
+  .status.checked{background:var(--done-bg); color:var(--done-ink); border-color:var(--done-border);}
+  .status.decided{background:var(--none-bg); color:var(--none-ink); border-color:var(--none-border);}
+  footer{margin-top:32px; color:var(--ink-soft); font-size:13px; text-align:center;}
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#181C17; --card:#212620; --ink:#EDEEE8; --ink-soft:#A2A99D;
+      --line:#333930;
+      --done-bg:#173626; --done-ink:#7BD99B; --done-border:#245239;
+      --prog-bg:#3A2C10; --prog-ink:#F0C674; --prog-border:#5B4519;
+      --none-bg:#2B302A; --none-ink:#B4B9AC; --none-border:#3A4038;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>First Choice Bathco — Progress</h1>
+  <p class="updated">Last updated: 26 July 2026</p>
+
+  <div class="overall">Overall: 50 of 50 things done</div>
+
+  <h2>1) Daily Ledger Fixes</h2>
+  <p class="sectionSummary">27 of 27 done</p>
+  <ul class="items" id="ledger"></ul>
+  <p class="sectionSummary" style="margin-top:16px; font-weight:400; color:var(--ink);">
+    <b>Important extra fix (not one of the 27, but found and fixed this round):</b>
+    the cheque list was never actually being saved to the server — it was quietly failing every time
+    and only ever living on the one device you typed it into. Cheque photos were at the same risk.
+    This is now fixed with its own proper save location, a clear on-screen warning if it ever can't
+    save, a "Migrate to Server" button that shows you exactly how many rows were found and confirms
+    the same number made it to the server, and a "Backup to File" button so you can always keep your
+    own copy. One step is still needed on the server side before this is fully live — not something
+    you need to do anything about right now.
+    <br><br>
+    <b>Two things worth knowing:</b> item 20's holiday list should be checked once a year (a reminder
+    is built into the page itself for whoever updates it), and item 23's PDF reading was built
+    carefully but has not been tried on one of your actual Lasersoft PDF exports yet — check the
+    first real one against your own numbers before fully relying on it.
+  </p>
+
+  <h2>2) Offline Entry Page (for when there's no internet)</h2>
+  <p class="sectionSummary">8 of 8 done</p>
+  <ul class="items" id="offline"></ul>
+
+  <h2>3) Checked a list of 8 reported problems</h2>
+  <p class="sectionSummary">8 of 8 checked</p>
+  <ul class="items" id="followup"></ul>
+  <p class="sectionSummary" style="margin-top:16px; font-weight:400; color:var(--ink);">
+    <b>Real bug found and fixed while checking the above:</b> typing into the description or amount
+    box on the Expenses or Payouts list could wipe out what you'd just typed after the first letter,
+    in some cases — the same "only one letter" problem as the old Salary bug, just never fixed in
+    these two lists. Fixed now and tested.
+  </p>
+
+  <h2>4) Extra polish</h2>
+  <p class="sectionSummary">7 of 7 done</p>
+  <ul class="items" id="polish"></ul>
+
+  <footer>This page updates whenever work is finished — check back any time.</footer>
+</div>
+<script>
+  var LEDGER = [
+    ["1","When you scroll down the sales list, the column titles (Receipt No, Sales, Cash, etc.) now stay at the top instead of disappearing.","done"],
+    ["2","The daily totals (Sales, Cash, Card, Online, Cheque, Credit, Cash In Hand) now stay visible at the top of the screen no matter which tab you're on or how far you scroll.","done"],
+    ["3","Cash In Hand — the number that matters most at the end of the day — is now the biggest and clearest number on the screen.","done"],
+    ["4","The floating \"Cash Given\" button no longer covers up other numbers on the screen.","done"],
+    ["5","Removed the \"Quick add\" box from the Expenses list, as you asked.","done"],
+    ["6","Expense descriptions and amounts now line up neatly in their own columns.","done"],
+    ["7","The Payouts description box is wider now, so long entries aren't cut off.","done"],
+    ["8","You can now type in any staff name for salary, including temporary or casual staff — not just pick from a fixed list.","done"],
+    ["9","Fixed a bug where the salary amount box would only let you type one digit.","done"],
+    ["10","Salary amounts now add up correctly into the Total Salary figure.","done"],
+    ["11","Staff salary is now correctly subtracted from Cash In Hand.","done"],
+    ["12","Uploading a cheque spreadsheet now correctly reads the cheque number and bank name — before, those two often came through blank or wrong.","done"],
+    ["13","Cheques marked as cleared now show up in green, just like on your paper sheet.","done"],
+    ["14","The \"Add cheque\" button now properly adds a new blank row — before it looked like nothing happened.","done"],
+    ["15","Downloading the cheque list now only downloads the ticked rows, or whatever is currently shown on screen, instead of always downloading everything.","done"],
+    ["16","Downloading the cheque list no longer triggers a security warning in Chrome.","done"],
+    ["17","The \"Send via WhatsApp\" button for cheques now actually works, the same way the daily report's WhatsApp button already does.","done"],
+    ["18","The \"Show due within\" dropdown menu is readable now — before, the options were invisible.","done"],
+    ["19","Added a running total showing how much money is due for whichever time period you pick.","done"],
+    ["20","Cheque clearing dates are now worked out from the date written on the cheque (not when it was typed in), correctly skipping weekends and Sri Lankan bank holidays. The 2026 holiday list you gave me is loaded, with a clearly marked spot to add 2027 and 2028 next year. If a cheque's date ever falls in a year with no holiday list loaded yet, it still shows a date but flags it in amber so it's never silently wrong.","done"],
+    ["21","Made the printed daily report shorter — the summary now prints first, blank rows you never typed anything into no longer print at all, and it now fits on one page for a normal day. Also fixed a background image that was accidentally printing behind the report.","done"],
+    ["22","Checked, not touched — the WhatsApp report is confirmed exactly the same as before, byte-for-byte.","done"],
+    ["23","Added a way to upload the Lasersoft sales report (as a PDF) so it's automatically compared to your entered sales, and shows Net Profit. This one genuinely needs you to try it on a real Lasersoft file before fully trusting it — see the note above.","done"],
+    ["24","You can now pick one date, or a start and end date, and see only the cheques clearing in that window, with the total shown — \"what's clearing Monday\" is two clicks.","done"],
+    ["25","You can now attach a photo to any cheque (like a picture of the actual cheque) and view it again later.","done"],
+    ["26","Tick two or more cheques and either download just those, or send just those via WhatsApp — both now show the combined total for what you picked.","done"],
+    ["27","Downloading the cheque list no longer triggers a security warning in Chrome (re-checked again after the other cheque changes above).","done"]
+  ];
+  var OFFLINE = [
+    ["A","Built the Expenses and Payouts screen for the offline entry page.","done"],
+    ["B","Built the Cheques screen for the offline entry page.","done"],
+    ["C","Set up the top bar on the offline page — date picker, color themes, buttons — to match the main page.","done"],
+    ["D","Every entry you make offline is still saved safely and individually, the same reliable way as before.","done"],
+    ["E","The offline page keeps things simple — it only saves what you type. It doesn't try to work out cheque dates, profit, or other calculations; those stay on the main system.","done"],
+    ["F","Reports that need the internet (like the Accountant Report) are clearly greyed out on the offline page, so it's obvious they're not available there.","done"],
+    ["G","The saving system on the server now understands the new kinds of entries (expenses, payouts, salary, cheques), not just sales.","done"],
+    ["H","Tested the whole offline page with the internet actually turned off, to make sure every screen saves entries properly.","done"]
+  ];
+  var FOLLOWUP = [
+    ["1","The staff dropdown in the Payouts list — tested it directly, it does work; it just sits lower on the screen because there are three lists stacked on that tab, so on a phone you may need to scroll down to reach it.","checked"],
+    ["2","You can now type any staff name (not just pick from a list) in the Payouts list too, the same as Salary already allowed.","done"],
+    ["3","The salary amount box only letting you type one digit — already fixed earlier, re-tested and still fixed.","checked"],
+    ["4","Salary being added into the Expenses Total — deliberately NOT done. You confirmed the Expenses list already has its own Salary line, so adding it again would count it twice and make the profit figure look worse than it really is. Left exactly as is.","decided"],
+    ["5","Staff salary being subtracted from Cash In Hand — already working, re-tested and confirmed.","checked"],
+    ["6","The Total Sales figure at the top updating instantly as you type — already working, re-tested and confirmed.","checked"],
+    ["7","Cash/Card/Online/Cheque/Credit totals updating instantly on every tab — already working, re-tested and confirmed.","checked"],
+    ["8","The colour theme buttons and the animated background toggle — already working, re-tested and confirmed.","checked"]
+  ];
+  var POLISH = [
+    ["9","Deleting a row no longer shows a pop-up asking \"are you sure\" — it deletes right away and shows a small \"Undo\" button for a few seconds in case you didn't mean to.","done"],
+    ["10","Checked whether typing long text shifts the columns around on the main Sales list — tested it directly, it doesn't. Already fine.","checked"],
+    ["11","The \"Saving...\" / \"Saved\" message at the bottom of the screen is now honest about what's happening, including showing clearly when the device has no internet.","done"],
+    ["12","If saving ever fails, there's now a clear red message with a \"Retry now\" button that stays on screen until it's fixed — before, a failed save could go unnoticed.","done"],
+    ["13","The \"Save backup file\" button now saves everything — Sales, Expenses, Payouts, Salary, AND Cheques — in one file. Before, it left Cheques out.","done"],
+    ["14","Checked the printed report — already made to fit one page cleanly from earlier work. Only had to make sure a new on-screen \"Undo\" button never accidentally shows up on a printout.","checked"],
+    ["15","Checked the whole page for anything that needs the internet to even load (fonts, images, code from other websites) — there is none. It already works with no internet connection at all.","checked"]
+  ];
+  var STATUS_LABEL = { done:"DONE", progress:"IN PROGRESS", none:"NOT STARTED", checked:"CHECKED — WORKING", decided:"DECIDED — NO CHANGE" };
+  function render(id, items){
+    var ul = document.getElementById(id);
+    items.forEach(function(row){
+      var li = document.createElement("li"); li.className = "item";
+      var num = document.createElement("div"); num.className = "num"; num.textContent = row[0];
+      var body = document.createElement("div"); body.className = "body";
+      var desc = document.createElement("p"); desc.className = "desc"; desc.textContent = row[1];
+      var status = document.createElement("span"); status.className = "status " + row[2]; status.textContent = STATUS_LABEL[row[2]];
+      body.appendChild(desc); body.appendChild(status);
+      li.appendChild(num); li.appendChild(body);
+      ul.appendChild(li);
+    });
+  }
+  render("ledger", LEDGER);
+  render("offline", OFFLINE);
+  render("followup", FOLLOWUP);
+  render("polish", POLISH);
+</script>
+</body>
+</html>

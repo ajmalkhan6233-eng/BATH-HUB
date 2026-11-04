@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Dashboard</title><link rel="stylesheet" href="ui.css">
+<style>.donut{width:150px;height:150px;border-radius:50%;margin:0 auto;position:relative}.donut:after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--bg)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:10px}.bars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}.bars i{display:block;width:100%;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,var(--gold-2),var(--gold));min-height:3px}.bars small{font-size:11px;color:var(--mut)}
+.at{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:var(--r-m);margin-bottom:6px;text-decoration:none;color:inherit}.at.red{background:rgba(239,68,68,.12)}.at.amber{background:rgba(245,158,11,.13)}</style></head><body>
+<div class="page">
+ <div class="row" style="margin-bottom:10px"><h1 class="pt grow" style="margin:0">Dashboard</h1>
+  <div class="row" id="per"><button class="btn sm pri" data-p="today" type="button">Today</button><button class="btn sm" data-p="week" type="button">7 days</button><button class="btn sm" data-p="month" type="button">30 days</button></div></div>
+ <div id="att"></div>
+ <div class="grid g4" id="kp"></div>
+ <div class="grid g2" style="margin-top:14px">
+  <div class="glass card"><div class="k">Sales, last 7 days</div><div class="bars" id="bars"><div class="skel" style="height:100px"></div></div></div>
+  <div class="glass card"><div class="k">Best sellers (by revenue)</div><div id="top" style="margin-top:10px"><div class="skel"></div></div></div>
+ </div>
+ <div class="glass card" style="margin-top:14px"><div class="k">Cheques clearing (next days)</div><div id="chq" style="margin-top:8px"><div class="skel"></div></div></div>
+</div>
+<script src="ui-core.js"></script>
+<script>
+(function(){'use strict';var $=function(i){return document.getElementById(i)},E=RBH.esc,M=RBH.money;
+function ymd(d){var z=new Date(d.getTime()+5.5*3600e3);return z.toISOString().slice(0,10);}
+function ago(n){return ymd(new Date(Date.now()-n*86400e3));}
+function kp(p){var from=p==='today'?ago(0):p==='week'?ago(6):ago(29),to=ago(0);
+ var calls=[RBH.api('/api/pos-bills/summary?from='+from+'&to='+to)];
+ if(!RBH.isCashier()){calls.push(RBH.api('/api/vendor360/list').catch(function(){return{vendors:[]};}));}
+ Promise.all(calls).then(function(r){var s=r[0],v=(r[1]&&r[1].vendors)||[],due=v.reduce(function(a,x){return a+(x.outstanding_balance||0);},0),chq=v.reduce(function(a,x){return a+(x.cheques_pending||0);},0);
+  var cash=0;(s.by_payment||[]).forEach(function(x){if(x.payment_method==='cash')cash=x.total;});
+  var h='<div class="glass card"><div class="k">Sales</div><div class="v gold">'+M(s.total)+'</div><div class="sub">'+s.bills+' bills</div></div>'+
+  '<div class="glass card"><div class="k">Cash in hand (sales)</div><div class="v">'+M(cash)+'</div><div class="sub">cash sales only</div></div>'+
+  '<div class="glass card"><div class="k">Discounts given</div><div class="v">'+M(s.discount)+'</div></div>';
+  if(!RBH.isCashier())h+='<div class="glass card"><div class="k">We owe vendors</div><div class="v bad">'+M(due)+'</div><div class="sub">cheques issued, not cleared: '+M(chq)+'</div></div>';
+  $('kp').innerHTML=h;}).catch(function(e){$('kp').innerHTML='<div class="glass card empty">'+E(e.message)+'</div>';});
+ RBH.api('/api/pos-bills/top-items?limit=6&from='+from+'&to='+to).then(function(t){var it=t.items||[],tot=it.reduce(function(a,x){return a+x.revenue;},0),cols=['#d4af37','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444'],acc=0,seg=[];
+  if(!it.length){$('top').innerHTML='<div class="empty">No sales in this period yet.</div>';return;}
+  it.forEach(function(x,i){var a=acc/tot*100;acc+=x.revenue;seg.push(cols[i]+' '+a+'% '+(acc/tot*100)+'%');});
+  $('top').innerHTML='<div class="donut" style="background:conic-gradient('+seg.join(',')+')"></div><div style="margin-top:12px">'+it.map(function(x,i){return '<div class="row" style="justify-content:space-between;font-size:13px;padding:3px 0"><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+cols[i]+';margin-right:8px"></i>'+E(x.item_name)+'</span><b>'+M(x.revenue)+'</b></div>';}).join('')+'</div>';}).catch(function(){$('top').innerHTML='<div class="empty">Could not load.</div>';});}
+function week(){var days=[];for(var i=6;i>=0;i--)days.push(ago(i));
+ Promise.all(days.map(function(d){return RBH.api('/api/pos-bills/summary?from='+d+'&to='+d).then(function(s){return s.total||0;}).catch(function(){return 0;});})).then(function(v){var mx=Math.max.apply(null,v.concat([1])),nm=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  $('bars').innerHTML=v.map(function(x,i){var dt=new Date(days[i]+'T00:00:00Z');return '<div title="'+days[i]+': '+M(x)+'"><small>'+(x?M(x).replace('Rs ',''):'')+'</small><i style="height:'+Math.max(2,x/mx*100)+'%"></i><small>'+nm[dt.getUTCDay()]+'</small></div>';}).join('');});}
+function attention(){RBH.api('/api/attention').then(function(a){var it=a.items||[];$('att').innerHTML=it.length?it.map(function(x){return (x.go?'<a href="'+E(x.go)+'" target="_top"':'<div')+' class="at '+E(x.level)+'"><b>'+(x.level==='red'?'&#9888;':'&#8226;')+'</b><span>'+E(x.text)+'</span>'+(x.go?'</a>':'</div>');}).join(''):'';}).catch(function(){});}
+function cheques(){RBH.api('/api/cheque-plan').then(function(p){var t=ymd(new Date()),d=(p.days||[]).filter(function(x){return x.day>=t;}).slice(0,6);$('chq').innerHTML=d.length?'<div class="tw"><table><thead><tr><th>Clears</th><th class="num">Cheques</th><th class="num">Amount</th></tr></thead><tbody>'+d.map(function(x){return '<tr><td>'+E(x.day)+'</td><td class="num">'+x.count+'</td><td class="num"><b>'+M(x.total)+'</b></td></tr>';}).join('')+'</tbody></table></div>':'<div class="empty">No vendor cheques waiting.</div>';}).catch(function(){$('chq').innerHTML='<div class="empty">Not available.</div>';});}
+$('per').onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;[].forEach.call($('per').children,function(x){x.classList.toggle('pri',x===b);});kp(b.dataset.p);};
+RBH.me().then(function(){if(RBH.isCashier()){location.replace('pos.html');return;}kp('today');week();attention();cheques();});
+})();
+</script></body></html>

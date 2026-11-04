@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+
+  # ── PostgreSQL Database ─────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: bathco-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: bathco
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ── Open WebUI (AI Chat Interface for Ollama) ───────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: bathco-openwebui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - openwebui_data:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ── n8n Automation (Workflows) ──────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: bathco-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=bathco
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=admin
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=ajmal
+      - N8N_BASIC_AUTH_PASSWORD=bathco2026
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - postgres
+
+  # ── Portainer (Docker Management UI) ───────────────────────────
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: bathco-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  # ── Metabase (Business Intelligence Dashboard) ──────────────────
+  metabase:
+    image: metabase/metabase:latest
+    container_name: bathco-metabase
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: bathco
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres
+      MB_DB_PASS: admin
+      MB_DB_HOST: postgres
+    depends_on:
+      - postgres
+    volumes:
+      - metabase_data:/metabase-data
+
+  # ── Uptime Kuma (Service Monitor) ───────────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: bathco-uptime
+    restart: unless-stopped
+    ports:
+      - "3002:3001"
+    volumes:
+      - uptime_data:/app/data
+
+volumes:
+  postgres_data:
+  openwebui_data:
+  n8n_data:
+  portainer_data:
+  metabase_data:
+  uptime_data:

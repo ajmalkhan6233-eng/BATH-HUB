@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
+<script>if (window.top === window.self) location.replace('/owner#/settings');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Royal Bath Hub Thihariya</title>
+<style>
+  :root{
+    --emerald-900:#062e21;--gold-500:#c9a227;--stone-50:#f7f4ec;--ink:#201c16;
+    --earth-700:#5c4033;--radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--stone-50);color:var(--ink);padding-bottom:60px;}
+  header{background:var(--gold-primary);color:var(--stone-50);padding:20px;}
+  header h1{margin:0;font-size:18px;}
+  main{max-width:640px;margin:0 auto;padding:20px 16px;}
+  .card{background:var(--bg-surface);border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--text-secondary);}
+  .row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .row input{flex:1;min-width:100px;padding:8px;border:1px solid #d8d0bd;border-radius:4px;font-size:14px;}
+  .btn{background:var(--gold-primary);color:var(--text-on-accent);border:none;border-radius:4px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--gold-primary);}
+  .list-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-subtle);font-size:14px;}
+  .list-row:last-child{border-bottom:none;}
+  .empty{color:var(--text-muted);font-size:14px;font-style:italic;}
+  .msg{font-size:14px;color:var(--text-secondary);margin-top:8px;min-height:16px;}
+</style>
+<link rel="stylesheet" href="/bathhub-design.css">
+<link rel="stylesheet" href="/bathhub-logo.css">
+</head>
+<body>
+<header><h1>Settings</h1></header>
+<main>
+
+  <div class="card" id="bh-theme-picker">
+    <h2>Appearance</h2>
+    <p class="msg" style="margin-top:0">Pick how the app looks on this device. It is remembered here and works without internet.</p>
+    <div class="bh-theme-row" role="radiogroup" aria-label="Theme">
+      <button type="button" class="bh-theme-btn" role="radio" data-theme-set="dark"><span class="bh-sw" style="background:#0b0d10;border-color:#d4af37"><i style="background:var(--gold-primary)"></i></span><b>Gold</b><small>Dark with brass</small></button>
+      <button type="button" class="bh-theme-btn" role="radio" data-theme-set="water"><span class="bh-sw" style="background:#060e15;border-color:#06b6d4"><i style="background:#06b6d4"></i></span><b>Water</b><small>Deep blue with aqua</small></button>
+      <button type="button" class="bh-theme-btn" role="radio" data-theme-set="light"><span class="bh-sw" style="background:var(--bg-canvas);border-color:#8f670a"><i style="background:#8f670a"></i></span><b>Light</b><small>Bright, easy outdoors</small></button>
+    </div>
+    <div class="msg" id="bh-theme-msg"></div>
+  </div>
+
+
+  <div class="card">
+    <h2>Bank accounts</h2>
+    <div id="accounts-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="acc-label" placeholder="Account label (e.g. Ajmal Khan - Sampath)">
+      <input id="acc-bank" placeholder="Bank">
+      <input id="acc-balance" type="number" placeholder="Current balance">
+    </div>
+    <button class="btn" onclick="addAccount()">Add account</button>
+    <div class="msg" id="acc-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Monthly fixed costs (rent, electricity, salary...)</h2>
+    <div id="overheads-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="oh-name" placeholder="Name (e.g. Rent)">
+      <input id="oh-amount" type="number" placeholder="Monthly amount">
+    </div>
+    <button class="btn" onclick="addOverhead()">Add cost</button>
+    <div class="msg" id="oh-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Discount limit for staff</h2>
+    <div id="discount-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="disc-role" placeholder="Role (leave blank for everyone)">
+      <input id="disc-pct" type="number" placeholder="Max discount %">
+    </div>
+    <button class="btn" onclick="addDiscountRule()">Set limit</button>
+    <div class="msg" id="disc-msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Customer credit limits</h2>
+    <div id="credit-list"></div>
+    <div class="row" style="margin-top:12px;">
+      <input id="cr-name" placeholder="Customer name">
+      <input id="cr-limit" type="number" placeholder="Credit limit">
+    </div>
+    <button class="btn" onclick="addCreditLimit()">Set limit</button>
+    <div class="msg" id="cr-msg"></div>
+  </div>
+
+</main>
+
+<script>
+const money = n => 'LKR ' + Number(n || 0).toLocaleString();
+const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// Turns a response into a message that says what went wrong (server's own error text when it sends one).
+async function outcome(r, okText) {
+  if (r.ok) return okText;
+  let detail = '';
+  try { detail = (await r.json()).error || ''; } catch (_) {}
+  return `Not saved: ${detail || 'the server answered ' + r.status}`;
+}
+async function post(url, body) {
+  try {
+    return await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+  } catch (e) {
+    return { ok: false, status: 0, json: async () => ({ error: 'could not reach the server (' + e.message + ')' }) };
+  }
+}
+async function getList(url, what) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'server answered ' + r.status);
+    return await r.json();
+  } catch (e) {
+    return { failed: `Could not load ${what}: ${e.message}` };
+  }
+}
+
+async function loadAll() {
+  const accounts = await getList('/api/money-control/bank-accounts', 'bank accounts');
+  const accEl = document.getElementById('accounts-list');
+  accEl.innerHTML = accounts.failed ? `<div class="empty">${esc(accounts.failed)}</div>` : accounts.length ? '' : '<div class="empty">No accounts added yet.</div>';
+  (accounts.failed ? [] : accounts).forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${esc(a.account_label)}${a.bank ? ' — ' + esc(a.bank) : ''}</span><span>${money(a.current_balance)}</span>`;
+    accEl.appendChild(row);
+  });
+
+  const overheads = await getList('/api/money-control/fixed-overheads', 'fixed costs');
+  const ohEl = document.getElementById('overheads-list');
+  ohEl.innerHTML = overheads.failed ? `<div class="empty">${esc(overheads.failed)}</div>` : overheads.length ? '' : '<div class="empty">No fixed costs added yet.</div>';
+  (overheads.failed ? [] : overheads).forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${esc(o.name)}</span><span>${money(o.monthly_amount)}/month</span>`;
+    ohEl.appendChild(row);
+  });
+
+  const discounts = await getList('/api/discount-rules', 'discount limits');
+  const discEl = document.getElementById('discount-list');
+  discEl.innerHTML = discounts.failed ? `<div class="empty">${esc(discounts.failed)}</div>` : discounts.length ? '' : '<div class="empty">No limit set — staff can give any discount.</div>';
+  (discounts.failed ? [] : discounts).forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${d.role === 'all' ? 'Everyone' : esc(d.role)}</span><span>Max ${d.max_discount_pct}%</span>`;
+    discEl.appendChild(row);
+  });
+
+  const credits = await getList('/api/credit-limits', 'credit limits');
+  const crEl = document.getElementById('credit-list');
+  crEl.innerHTML = credits.failed ? `<div class="empty">${esc(credits.failed)}</div>` : credits.length ? '' : '<div class="empty">No customer credit limits set.</div>';
+  (credits.failed ? [] : credits).forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>${esc(c.customer_name)}</span><span>${money(c.credit_limit)}</span>`;
+    crEl.appendChild(row);
+  });
+}
+
+async function addAccount() {
+  const account_label = document.getElementById('acc-label').value.trim();
+  const bank = document.getElementById('acc-bank').value.trim();
+  const current_balance = document.getElementById('acc-balance').value;
+  const msg = document.getElementById('acc-msg');
+  if (!account_label) { msg.textContent = 'Enter an account label first.'; return; }
+  const r = await post('/api/money-control/bank-accounts', { account_label, bank, current_balance: Number(current_balance || 0) });
+  msg.textContent = await outcome(r, 'Added.');
+  if (r.ok) { document.getElementById('acc-label').value=''; document.getElementById('acc-bank').value=''; document.getElementById('acc-balance').value=''; loadAll(); }
+}
+
+async function addOverhead() {
+  const name = document.getElementById('oh-name').value.trim();
+  const monthly_amount = document.getElementById('oh-amount').value;
+  const msg = document.getElementById('oh-msg');
+  if (!name || !monthly_amount) { msg.textContent = 'Enter both a name and an amount.'; return; }
+  const r = await post('/api/money-control/fixed-overheads', { name, monthly_amount: Number(monthly_amount) });
+  msg.textContent = await outcome(r, 'Added.');
+  if (r.ok) { document.getElementById('oh-name').value=''; document.getElementById('oh-amount').value=''; loadAll(); }
+}
+
+async function addDiscountRule() {
+  const role = document.getElementById('disc-role').value.trim() || 'all';
+  const max_discount_pct = document.getElementById('disc-pct').value;
+  const msg = document.getElementById('disc-msg');
+  if (!max_discount_pct) { msg.textContent = 'Enter a percentage first.'; return; }
+  const r = await post('/api/discount-rules', { role, max_discount_pct: Number(max_discount_pct) });
+  msg.textContent = await outcome(r, 'Set.');
+  if (r.ok) { document.getElementById('disc-role').value=''; document.getElementById('disc-pct').value=''; loadAll(); }
+}
+
+async function addCreditLimit() {
+  const customer_name = document.getElementById('cr-name').value.trim();
+  const credit_limit = document.getElementById('cr-limit').value;
+  const msg = document.getElementById('cr-msg');
+  if (!customer_name || !credit_limit) { msg.textContent = 'Enter both a name and a limit.'; return; }
+  const r = await post('/api/credit-limits', { customer_name, credit_limit: Number(credit_limit) });
+  msg.textContent = await outcome(r, 'Set.');
+  if (r.ok) { document.getElementById('cr-name').value=''; document.getElementById('cr-limit').value=''; loadAll(); }
+}
+
+loadAll();
+</script>
+<script>
+(function () {
+  var btns = document.querySelectorAll("[data-theme-set]"), msg = document.getElementById("bh-theme-msg");
+  function mark() { var cur = (window.BHTheme && BHTheme.current()) || "dark"; btns.forEach(function (b) { var on = b.getAttribute("data-theme-set") === cur; b.setAttribute("aria-checked", on ? "true" : "false"); b.classList.toggle("on", on); }); }
+  btns.forEach(function (b) { b.addEventListener("click", function () { if (!window.BHTheme) return; BHTheme.set(b.getAttribute("data-theme-set")); mark(); msg.textContent = "Theme: " + BHTheme.label() + ". Saved on this device."; }); });
+  window.addEventListener("storage", mark); mark();
+})();
+</script>
+<script src="/bathhub-logo.js"></script>
+</body>
+</html>

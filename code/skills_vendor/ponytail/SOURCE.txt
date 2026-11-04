@@ -1,0 +1,1 @@
+Copied unchanged from github.com/DietrichGebert/ponytail @09c434a (MIT), skill only, no hooks. Reviewed 21 Oct.

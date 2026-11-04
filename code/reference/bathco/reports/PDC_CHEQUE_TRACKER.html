@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1st Choice Bathco — PDC Cheque Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+  h2 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+  .header { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 20px 24px; border-bottom: 2px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+  .header-right { font-size: 0.78rem; color: #64748b; text-align: right; }
+  .header-right span { display: block; }
+
+  .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px 24px; background: #0f172a; border-bottom: 1px solid #1e293b; }
+  .stat-card { background: #1e293b; border-radius: 10px; padding: 12px 16px; border-left: 4px solid #334155; }
+  .stat-card.red { border-left-color: #ef4444; }
+  .stat-card.orange { border-left-color: #f97316; }
+  .stat-card.yellow { border-left-color: #eab308; }
+  .stat-card.green { border-left-color: #22c55e; }
+  .stat-card.blue { border-left-color: #3b82f6; }
+  .stat-card.purple { border-left-color: #a855f7; }
+  .stat-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .stat-value { font-size: 1.3rem; font-weight: 700; }
+  .stat-sub { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+  .stat-card.red .stat-value { color: #ef4444; }
+  .stat-card.orange .stat-value { color: #f97316; }
+  .stat-card.yellow .stat-value { color: #eab308; }
+  .stat-card.green .stat-value { color: #22c55e; }
+  .stat-card.blue .stat-value { color: #3b82f6; }
+  .stat-card.purple .stat-value { color: #a855f7; }
+
+  .controls { padding: 14px 24px; background: #0f172a; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid #1e293b; }
+  .controls input, .controls select { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 7px 12px; border-radius: 6px; font-size: 0.82rem; outline: none; }
+  .controls input:focus, .controls select:focus { border-color: #3b82f6; }
+  .controls input { width: 200px; }
+  .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+  .btn-blue { background: #2563eb; color: white; }
+  .btn-blue:hover { background: #1d4ed8; }
+  .btn-gray { background: #334155; color: #94a3b8; }
+  .btn-gray:hover { background: #475569; color: #e2e8f0; }
+  .alert-box { background: #7f1d1d; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; color: #fca5a5; }
+  .alert-box strong { color: #ef4444; }
+
+  .month-section { margin: 0 0 0 0; }
+  .month-header { padding: 8px 24px; background: #1e293b; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; border-top: 1px solid #334155; }
+  .month-header span { color: #94a3b8; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead { position: sticky; top: 0; z-index: 10; }
+  th { background: #1e293b; padding: 10px 12px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #334155; }
+  td { padding: 9px 12px; border-bottom: 1px solid #1e293b; vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .row-overdue td { background: rgba(239,68,68,0.06); }
+  .row-overdue td:first-child { border-left: 3px solid #ef4444; }
+  .row-today td { background: rgba(249,115,22,0.08); }
+  .row-today td:first-child { border-left: 3px solid #f97316; }
+  .row-week td { background: rgba(234,179,8,0.05); }
+  .row-week td:first-child { border-left: 3px solid #eab308; }
+  .row-month td:first-child { border-left: 3px solid #3b82f6; }
+  .row-future td:first-child { border-left: 3px solid #22c55e; }
+  .row-undated td:first-child { border-left: 3px solid #a855f7; }
+  .row-cleared td { opacity: 0.45; }
+  .row-cleared td:first-child { border-left: 3px solid #22c55e; }
+  .row-bounced td { background: rgba(239,68,68,0.12); }
+  .row-bounced td:first-child { border-left: 3px solid #dc2626; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-overdue { background: #7f1d1d; color: #fca5a5; }
+  .badge-today { background: #7c2d12; color: #fdba74; }
+  .badge-week { background: #713f12; color: #fde68a; }
+  .badge-month { background: #1e3a5f; color: #93c5fd; }
+  .badge-future { background: #14532d; color: #86efac; }
+  .badge-undated { background: #4a1d96; color: #d8b4fe; }
+  .badge-cleared { background: #14532d; color: #86efac; }
+  .badge-bounced { background: #7f1d1d; color: #fca5a5; }
+  .badge-critical { background: #dc2626; color: white; animation: pulse 1.5s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  .cheq-no { font-family: monospace; font-size: 0.8rem; color: #94a3b8; }
+  .amount { font-weight: 700; font-family: monospace; }
+  .amount-large { color: #ef4444; }
+
+  .status-select { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; width: 110px; }
+  .notes-input { background: #0f172a; border: 1px solid #1e293b; color: #94a3b8; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; width: 160px; }
+  .notes-input:focus { outline: none; border-color: #3b82f6; color: #e2e8f0; }
+
+  .table-wrap { overflow-x: auto; }
+  .no-print { }
+
+  .timeline { padding: 16px 24px 0; display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+  .timeline-month { background: #1e293b; border-radius: 8px; padding: 10px; text-align: center; }
+  .timeline-month h3 { font-size: 0.72rem; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+  .timeline-month .tamt { font-size: 0.95rem; font-weight: 700; color: #e2e8f0; }
+  .timeline-month .tcnt { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+  .bar { height: 4px; border-radius: 2px; margin-top: 8px; }
+
+  @media print {
+    body { background: white; color: black; }
+    .controls, .no-print { display: none; }
+    td, th { border: 1px solid #ccc; color: black !important; background: white !important; }
+    .header { background: white; color: black; border: 2px solid #333; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>1ST CHOICE BATHCO — PDC CHEQUE TRACKER</h1>
+    <div style="font-size:0.75rem;color:#64748b;margin-top:4px;">Kandy Road, Thihariya | Outbound Supplier Cheques</div>
+  </div>
+  <div class="header-right">
+    <span id="today-display"></span>
+    <span id="last-updated" style="margin-top:4px;"></span>
+  </div>
+</div>
+
+<div class="summary-bar" id="summary-bar"></div>
+
+<div class="timeline" id="timeline"></div>
+
+<div style="padding:12px 24px 0;" class="no-print">
+  <div class="alert-box">
+    <strong>CRITICAL:</strong> Cheque #760329 to ISURU PRINTING (Rs. 355,070) recorded TWICE — 01-Apr & 10-Apr 2026. Call ISURU PRINTING to confirm only ONE was deposited. &nbsp;|&nbsp;
+    <strong>WARNING:</strong> Cheque #641098 (Rs. 748,000 F.R MARKETING) appears twice on 05-May — verify duplicate.
+  </div>
+</div>
+
+<div style="padding:14px 24px 6px;" class="no-print">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search supplier or cheque no..." oninput="renderTable()">
+    <select id="filter-status" onchange="renderTable()">
+      <option value="">All Status</option>
+      <option value="pending">Pending</option>
+      <option value="overdue">Overdue</option>
+      <option value="cleared">Cleared</option>
+      <option value="bounced">Bounced</option>
+      <option value="on-hold">On Hold</option>
+    </select>
+    <select id="filter-supplier" onchange="renderTable()">
+      <option value="">All Suppliers</option>
+    </select>
+    <select id="filter-month" onchange="renderTable()">
+      <option value="">All Months</option>
+    </select>
+    <button class="btn btn-blue" onclick="printPage()">Print / PDF</button>
+    <button class="btn btn-gray" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-gray" onclick="resetAll()">Reset Filters</button>
+    <span style="margin-left:auto;font-size:0.75rem;color:#64748b;" id="showing-count"></span>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Clearing Date</th>
+        <th>Cheque No</th>
+        <th>Supplier</th>
+        <th>Bank</th>
+        <th style="text-align:right">Amount (Rs.)</th>
+        <th>Status</th>
+        <th>Notes</th>
+        <th class="no-print">Update</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div style="padding:16px 24px;font-size:0.72rem;color:#475569;text-align:right;">
+  Data source: OUTBOUND_CHEQ_CLEAN.xlsx · Generated by Claude Code · 1st Choice Bathco 2026
+</div>
+
+<script>
+const TODAY = new Date('2026-05-31');
+TODAY.setHours(0,0,0,0);
+
+const CHEQUES_RAW = [
+  // April 2026
+  ["2026-04-30","760346",500000,"ESKEMA CERAMIC",""],
+  ["2026-04-30","145572",1000000,"MACKSONS TILES LANKA",""],
+  ["2026-04-30","964461",100000,"LOLC PAYMENT",""],
+  ["2026-04-30","296831",1000000,"NEGAMBO MAC",""],
+  ["2026-04-30","296832",1000000,"NEGAMBO MAC",""],
+  ["2026-04-30","296833",1000000,"NEGAMBO MAC",""],
+  // May 2026
+  ["2026-05-01","760348",500000,"ESKEMA CERAMIC",""],
+  ["2026-05-02","145575",1000000,"MACKTILE",""],
+  ["2026-05-03","145547",1000000,"AZMI",""],
+  ["2026-05-05","641098",748000,"F.R MARKETING","NDB"],
+  ["2026-05-05","964447",125900,"A1 MOTAR","NDB"],
+  ["2026-05-05","964451",500000,"FAZAL HARDWERE","NDB"],
+  ["2026-05-06","145574",1253625,"MACKTILE",""],
+  ["2026-05-06","141082",188055,"MACTILE",""],
+  ["2026-05-10","145546",1000000,"AZMI",""],
+  ["2026-05-10","760347",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-05-12","145548",1000000,"AZMI",""],
+  ["2026-05-14","145549",1000000,"AZMI",""],
+  ["2026-05-14","964452",682200,"FAZAL HARDWERE","NDB"],
+  ["2026-05-16","145550",510000,"AZMI",""],
+  ["2026-05-16","760349",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-05-18","145551",1000000,"AZMI","NDB"],
+  ["2026-05-18","875456",570000,"NADIR AZMI",""],
+  ["2026-05-18","964445",455000,"FAZAL HARDWERE","NDB"],
+  ["2026-05-20","641099",748000,"F.R MARKETING","NDB"],
+  ["2026-05-20","760353",500000,"ADHIL F.R","NDB"],
+  ["2026-05-20","875455",1000000,"NADIR AZMI",""],
+  ["2026-05-22","145576",388500,"FAZAL HARDWERE",""],
+  ["2026-05-23","760350",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-05-23","964436",600000,"ALI BROTHERS",""],
+  ["2026-05-25","964448",477850,"LEO MARKETING","NDB"],
+  ["2026-05-25","145563",100000,"AZMI","NDB"],
+  ["2026-05-27","964437",692000,"ALI BROTHERS","NDB"],
+  ["2026-05-28","964450",404280,"FAZAL HARDWERE","NDB"],
+  ["2026-05-28","964454",210800,"TRURFEX MOTAR","NDB"],
+  ["2026-05-29","964449",598400,"LEO MARKETING","NDB"],
+  ["2026-05-30","641100",748000,"F.R MARKETING","NDB"],
+  ["2026-05-30","760351",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-05-30","145562",100000,"AZMI","NDB"],
+  ["2026-05-30","964462",100000,"LOLC VAN",""],
+  // June 2026
+  ["2026-06-02","145553",500000,"LEO MARKETING","NDB"],
+  ["2026-06-03","296840",262500,"GREAT LANKA IMPEX",""],
+  ["2026-06-04","145578",598700,"CERAMIC STUDIO",""],
+  ["2026-06-05","760352",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-06-05","145565",217400,"FR MARKETING","NDB"],
+  ["2026-06-05","760354",500000,"ADHIL F.R","NDB"],
+  ["2026-06-12","760355",500000,"ADHIL F.R","NDB"],
+  ["2026-06-12","145535",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-06-14","145554",500000,"LEO MARKETING","NDB"],
+  ["2026-06-16","145552",500000,"LEO MARKETING","NDB"],
+  ["2026-06-19","760356",500000,"ADHIL F.R","NDB"],
+  ["2026-06-19","145536",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-06-19","875457",254000,"TRUFIX","ABZL CATE"],
+  ["2026-06-20","296835",300000,"AR MARKETING",""],
+  ["2026-06-20","296836",300000,"AR MARKETING",""],
+  ["2026-06-24","296841",127500,"A1 MOTAR",""],
+  ["2026-06-26","145537",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-06-26","875458",254000,"TRUFIX","ABZL CATE"],
+  ["2026-06-27","296853",155000,"A1 MOTAR",""],
+  ["2026-06-28","760357",500000,"ADHIL F.R","NDB"],
+  ["2026-06-30","145564",181500,"ALI BROTHERS","NDB"],
+  ["2026-06-30","145568",551810,"METRO ENT.","NDB"],
+  ["2026-06-30","964463",100000,"LOLC VAN",""],
+  // July 2026
+  ["2026-07-02","296846",500000,"LEO MARKETING","NDB"],
+  ["2026-07-03","145538",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-07-04","145579",400000,"CERAMIC STUDIO",""],
+  ["2026-07-05","296839",285000,"TRUFIX ENGI.",""],
+  ["2026-07-06","296837",300000,"ESKEMA CERAMIC",""],
+  ["2026-07-09","296847",500000,"LEO MARKETING",""],
+  ["2026-07-10","145539",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-07-11","145532",600000,"AR MARKETING","NDB"],
+  ["2026-07-14","145566",702650,"METRO ENT.","NDB"],
+  ["2026-07-15","269842",883800,"ALI BROTHERS",""],
+  ["2026-07-17","145540",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-07-18","145533",600000,"AR MARKETING","NDB"],
+  ["2026-07-20","145567",555000,"METRO ENT.","NDB"],
+  ["2026-07-22","145580",402000,"CERAMIC STUDIO",""],
+  ["2026-07-23","296844",500000,"LEO MARKETING",""],
+  ["2026-07-24","145541",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-07-25","145534",656700,"AR MARKETING","NDB"],
+  ["2026-07-28","296845",500000,"LEO MARKETING",""],
+  ["2026-07-29","296838",328525,"ESKEMA CERAMIC",""],
+  ["2026-07-30","296843",500000,"LEO MARKETING",""],
+  ["2026-07-30","964464",100000,"LOLC VAN",""],
+  ["2026-07-31","145542",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-07-31","296848",548492,"LEO MARKETING",""],
+  // August 2026
+  ["2026-08-05","296851",500000,"METRO ENT.",""],
+  ["2026-08-07","145543",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-08-08","296849",500000,"METRO ENT.",""],
+  ["2026-08-14","145544",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-08-15","296850",500000,"METRO ENT.",""],
+  ["2026-08-21","145545",500000,"ESKEMA CERAMIC","NDB"],
+  ["2026-08-22","296852",620890,"METRO ENT.",""],
+  ["2026-08-30","964465",100000,"LOLC VAN",""],
+  // Undated
+  ["","499887",100000,"ASIAN (THARIK) 2*1 TILE","NDB"],
+];
+
+// Duplicate flag cheque numbers
+const DUPLICATE_CHEQS = ["641098","760329"];
+
+// Load saved state
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('bathco_cheques') || '{}'); } catch(e) { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem('bathco_cheques', JSON.stringify(state));
+  localStorage.setItem('bathco_cheques_updated', new Date().toLocaleString());
+}
+
+let state = loadState();
+
+function getStatus(row, idx) {
+  const key = row[1] + '_' + idx;
+  if (state[key]) return state[key].status || 'pending';
+  return 'pending';
+}
+function getNotes(row, idx) {
+  const key = row[1] + '_' + idx;
+  if (state[key]) return state[key].notes || '';
+  if (DUPLICATE_CHEQS.includes(row[1])) return 'VERIFY DUPLICATE';
+  return '';
+}
+
+function getDateStatus(dateStr) {
+  if (!dateStr) return 'undated';
+  const d = new Date(dateStr);
+  d.setHours(0,0,0,0);
+  const diff = Math.floor((d - TODAY) / 86400000);
+  if (diff < 0) return 'overdue';
+  if (diff === 0) return 'today';
+  if (diff <= 7) return 'week';
+  if (diff <= 30) return 'month';
+  return 'future';
+}
+
+function getMonthLabel(dateStr) {
+  if (!dateStr) return 'Undated';
+  const d = new Date(dateStr);
+  return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
+function fmt(n) {
+  return n.toLocaleString('en-US');
+}
+
+function buildFilters() {
+  const suppliers = [...new Set(CHEQUES_RAW.map(r => r[3]))].sort();
+  const supSel = document.getElementById('filter-supplier');
+  suppliers.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    supSel.appendChild(o);
+  });
+
+  const months = [...new Set(CHEQUES_RAW.map(r => getMonthLabel(r[0])))];
+  const mSel = document.getElementById('filter-month');
+  months.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m;
+    mSel.appendChild(o);
+  });
+}
+
+function buildSummary() {
+  let totalPending = 0, countPending = 0;
+  let totalOverdue = 0, countOverdue = 0;
+  let totalCleared = 0;
+  let totalWeek = 0, countWeek = 0;
+  let totalMonth = 0, countMonth = 0;
+  let totalJun = 0, countJun = 0;
+  let totalJul = 0, countJul = 0;
+  let totalAug = 0, countAug = 0;
+
+  CHEQUES_RAW.forEach((row, idx) => {
+    const st = getStatus(row, idx);
+    if (st === 'cleared' || st === 'bounced') return;
+    const ds = getDateStatus(row[0]);
+    const amt = row[2];
+    totalPending += amt;
+    countPending++;
+    if (ds === 'overdue') { totalOverdue += amt; countOverdue++; }
+    if (ds === 'week' || ds === 'today') { totalWeek += amt; countWeek++; }
+    if (ds === 'month') { totalMonth += amt; countMonth++; }
+    const mo = getMonthLabel(row[0]);
+    if (mo === 'June 2026') { totalJun += amt; countJun++; }
+    if (mo === 'July 2026') { totalJul += amt; countJul++; }
+    if (mo === 'August 2026') { totalAug += amt; countAug++; }
+  });
+
+  const bar = document.getElementById('summary-bar');
+  bar.innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">Total Pending</div>
+      <div class="stat-value">Rs. ${fmt(totalPending)}</div>
+      <div class="stat-sub">${countPending} cheques · Dec–Aug 2026</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Overdue — Verify</div>
+      <div class="stat-value">${countOverdue}</div>
+      <div class="stat-sub">Rs. ${fmt(totalOverdue)} past clearing date</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Due This Week</div>
+      <div class="stat-value">${countWeek}</div>
+      <div class="stat-sub">Rs. ${fmt(totalWeek)}</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Due This Month</div>
+      <div class="stat-value">${countMonth}</div>
+      <div class="stat-sub">Rs. ${fmt(totalMonth)} in June</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">July 2026</div>
+      <div class="stat-value">Rs. ${(totalJul/1000000).toFixed(1)}M</div>
+      <div class="stat-sub">${countJul} cheques</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">August 2026</div>
+      <div class="stat-value">Rs. ${(totalAug/1000000).toFixed(1)}M</div>
+      <div class="stat-sub">${countAug} cheques</div>
+    </div>
+  `;
+}
+
+function buildTimeline() {
+  const months = {};
+  CHEQUES_RAW.forEach((row, idx) => {
+    const st = getStatus(row, idx);
+    const mo = getMonthLabel(row[0]);
+    if (!months[mo]) months[mo] = { total: 0, count: 0, cleared: 0 };
+    months[mo].total += row[2];
+    months[mo].count++;
+    if (st === 'cleared') months[mo].cleared += row[2];
+  });
+
+  const colors = ['#ef4444','#ef4444','#f97316','#eab308','#3b82f6','#22c55e','#22c55e'];
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = Object.entries(months).map(([mo, d], i) => `
+    <div class="timeline-month">
+      <h3>${mo}</h3>
+      <div class="tamt">Rs. ${(d.total/1000000).toFixed(1)}M</div>
+      <div class="tcnt">${d.count} cheques</div>
+      <div class="bar" style="background:${colors[i]||'#64748b'};"></div>
+    </div>
+  `).join('');
+}
+
+function renderTable() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const filterStatus = document.getElementById('filter-status').value;
+  const filterSupplier = document.getElementById('filter-supplier').value;
+  const filterMonth = document.getElementById('filter-month').value;
+
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  let shown = 0;
+  let totalShown = 0;
+
+  CHEQUES_RAW.forEach((row, idx) => {
+    const [dateStr, cheqNo, amount, supplier, bank] = row;
+    const st = getStatus(row, idx);
+    const ds = getDateStatus(dateStr);
+    const notes = getNotes(row, idx);
+    const mo = getMonthLabel(dateStr);
+
+    if (search && !supplier.toLowerCase().includes(search) && !cheqNo.toLowerCase().includes(search)) return;
+    if (filterSupplier && supplier !== filterSupplier) return;
+    if (filterMonth && mo !== filterMonth) return;
+    if (filterStatus) {
+      if (filterStatus === 'overdue' && !(ds === 'overdue' && st === 'pending')) return;
+      else if (filterStatus !== 'overdue' && st !== filterStatus) return;
+    }
+
+    shown++;
+    totalShown += amount;
+
+    const dispStatus = st !== 'pending' ? st : ds;
+    const badgeMap = {
+      overdue: 'badge-overdue', today: 'badge-today', week: 'badge-week',
+      month: 'badge-month', future: 'badge-future', undated: 'badge-undated',
+      cleared: 'badge-cleared', bounced: 'badge-bounced', 'on-hold': 'badge-month',
+      pending: 'badge-future'
+    };
+    const labelMap = {
+      overdue: 'OVERDUE', today: 'DUE TODAY', week: 'THIS WEEK',
+      month: 'THIS MONTH', future: 'UPCOMING', undated: 'UNDATED',
+      cleared: 'CLEARED', bounced: 'BOUNCED', 'on-hold': 'ON HOLD',
+      pending: 'PENDING'
+    };
+
+    const rowClass = st === 'cleared' ? 'row-cleared' : st === 'bounced' ? 'row-bounced' :
+      ds === 'overdue' ? 'row-overdue' : ds === 'today' ? 'row-today' :
+      ds === 'week' ? 'row-week' : ds === 'month' ? 'row-month' :
+      ds === 'future' ? 'row-future' : ds === 'undated' ? 'row-undated' : '';
+
+    const isDuplicate = DUPLICATE_CHEQS.includes(cheqNo);
+    const amtClass = amount >= 1000000 ? 'amount amount-large' : 'amount';
+    const key = cheqNo + '_' + idx;
+
+    const tr = document.createElement('tr');
+    tr.className = rowClass;
+    tr.innerHTML = `
+      <td style="color:#475569;font-size:0.72rem;">${shown}</td>
+      <td>${dateStr ? new Date(dateStr).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) : '<span style="color:#a855f7">UNDATED</span>'}</td>
+      <td><span class="cheq-no">${cheqNo}${isDuplicate ? ' <span class="badge badge-critical">DUP!</span>' : ''}</span></td>
+      <td style="font-weight:600;">${supplier}</td>
+      <td style="color:#64748b;font-size:0.75rem;">${bank||'—'}</td>
+      <td style="text-align:right;" class="${amtClass}">${fmt(amount)}</td>
+      <td><span class="badge ${badgeMap[dispStatus]||'badge-future'}">${labelMap[dispStatus]||dispStatus}</span></td>
+      <td style="color:#64748b;font-size:0.73rem;">${notes}</td>
+      <td class="no-print">
+        <select class="status-select" onchange="updateStatus('${key}',this.value)">
+          <option value="pending" ${st==='pending'?'selected':''}>Pending</option>
+          <option value="cleared" ${st==='cleared'?'selected':''}>Cleared</option>
+          <option value="bounced" ${st==='bounced'?'selected':''}>Bounced</option>
+          <option value="on-hold" ${st==='on-hold'?'selected':''}>On Hold</option>
+        </select>
+        <input class="notes-input" type="text" placeholder="Notes..." value="${state[key]?.notes||''}" onchange="updateNotes('${key}',this.value)" style="margin-top:3px;">
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('showing-count').textContent =
+    `Showing ${shown} cheques · Rs. ${fmt(totalShown)}`;
+}
+
+function updateStatus(key, val) {
+  if (!state[key]) state[key] = {};
+  state[key].status = val;
+  saveState(state);
+  buildSummary();
+  buildTimeline();
+  renderTable();
+  document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+}
+
+function updateNotes(key, val) {
+  if (!state[key]) state[key] = {};
+  state[key].notes = val;
+  saveState(state);
+}
+
+function resetAll() {
+  document.getElementById('search').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-supplier').value = '';
+  document.getElementById('filter-month').value = '';
+  renderTable();
+}
+
+function printPage() { window.print(); }
+
+function exportCSV() {
+  const rows = [['Date','ChequeNo','Supplier','Bank','Amount','Status','Notes']];
+  CHEQUES_RAW.forEach((row, idx) => {
+    const st = getStatus(row, idx);
+    const notes = getNotes(row, idx);
+    rows.push([row[0], row[1], row[3], row[4], row[2], st, notes]);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'bathco_cheques_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// Init
+document.getElementById('today-display').textContent = 'Today: ' + TODAY.toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const saved = localStorage.getItem('bathco_cheques_updated');
+document.getElementById('last-updated').textContent = saved ? 'Last saved: ' + saved : 'Not yet saved';
+
+buildFilters();
+buildSummary();
+buildTimeline();
+renderTable();
+</script>
+</body>
+</html>
