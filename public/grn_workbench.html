@@ -113,6 +113,7 @@ input,select{padding:2px 8px;min-height:36px}button{padding:3px 12px;min-height:
 .lines td,.lines th{padding:3px 4px}.lines input,.lines select{min-height:34px;padding:1px 6px}
 .stat{padding:8px 12px}.stats{gap:8px;margin-bottom:8px}.tabs button{min-height:38px;padding:4px 14px}
 .row{gap:6px}.msg{padding:6px 10px;margin:6px 0}label{margin-top:4px}}
+#ibox.wide{max-width:860px;width:min(860px,96vw);display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:0 20px}#imodal .box:has(#ibox){}#ibox.wide .ph{max-height:150px}#ibox.wide .mg{flex-wrap:nowrap}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
@@ -516,22 +517,23 @@ function draw(){box.textContent='';rows.forEach(function(r,i){var d=h('div',{cla
 q.oninput=function(){clearTimeout(T);var v=q.value.trim();if(!v){close();return}T=setTimeout(function(){fetch('/api/items?limit=15&q='+encodeURIComponent(v),{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){rows=Array.isArray(j)?j:[];sel=-1;draw()}).catch(function(){})},180)};
 q.onkeydown=function(e){if(e.key==='ArrowDown'){sel=Math.min(rows.length-1,sel+1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(0,sel-1);draw();e.preventDefault()}else if(e.key==='Enter'){var r=rows[sel>=0?sel:0];if(r){close();openItem(r.item_code)}}else if(e.key==='Escape')close()};
 document.addEventListener('click',function(e){if(!e.target.closest('.isrch'))close()});
-function openItem(code){var B=$('ibox');B.textContent='Loading...';$('imodal').classList.add('on');
+function openItem(code){var B=$('ibox');B.className='';B.textContent='Loading...';$('imodal').classList.add('on');
  fetch('/api/item-detail/'+encodeURIComponent(code),{credentials:'same-origin'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){if(!x.ok){B.textContent='';B.appendChild(h('div',{class:'msg bad',text:x.j.error||'Could not open'}));B.appendChild(h('button',{text:'Close',onclick:function(){$('imodal').classList.remove('on')}}));return}paint(x.j)}).catch(function(e){B.textContent='No connection: '+e.message});
  function paint(it){B.textContent='';var nm=h('input',{value:it.name}),pr=h('input',{type:'number',step:'0.01',value:it.selling_price||''}),ct=h('input',{value:it.category||''}),ph=h('input',{type:'file',accept:'image/*'}),msg=h('div',{class:'msg',style:'display:none'}),img=h('img',{class:'ph',src:it.photo_url||'',alt:'',style:it.photo_url?'':'display:none'}),mgn=h('div',{class:'mg'});
   function marg(){var s=Number(pr.value)||0,c=it.avg_cost||0;mgn.textContent='';[['Cost','Rs '+fmt(c)],['Selling','Rs '+fmt(s)],['Profit','Rs '+fmt(s-c)],['Margin',s>0?(Math.round((s-c)/s*1000)/10)+' %':'-']].forEach(function(a){mgn.appendChild(h('div',{},[h('span',{text:a[0]}),h('b',{text:a[1]})]))})}
   pr.oninput=marg;marg();
-  B.appendChild(h('h2',{text:'Item '+it.item_code}));B.appendChild(img);
-  [['Picture (choose or take a photo)',ph],['Name',nm],['Category',ct],['Selling price (Rs)',pr]].forEach(function(a){B.appendChild(h('label',{text:a[0]}));B.appendChild(a[1])});
-  B.appendChild(mgn);B.appendChild(h('p',{class:'mut',text:'In stock: '+Number(it.stock_level||0)+(it.vendor_code?'   Vendor code: '+it.vendor_code:'')}));B.appendChild(msg);
-  B.appendChild(h('div',{class:'row',style:'margin-top:12px'},[h('button',{text:'Close',onclick:function(){$('imodal').classList.remove('on')}}),h('button',{class:'p',text:'Save',onclick:function(){
+  B.className='wide';B.appendChild(h('h2',{text:'Item '+it.item_code+'   (in stock: '+Number(it.stock_level||0)+(it.vendor_code?', vendor code '+it.vendor_code:'')+')',style:'grid-column:1/-1;margin:0 0 4px'}));
+  var L=h('div'),R=h('div');L.appendChild(img);L.appendChild(h('label',{text:'Picture (choose or take a photo)'}));L.appendChild(ph);
+  [['Name',nm],['Category',ct],['Selling price (Rs)',pr]].forEach(function(a){R.appendChild(h('label',{text:a[0]}));R.appendChild(a[1])});
+  B.appendChild(L);B.appendChild(R);mgn.style.gridColumn='1/-1';B.appendChild(mgn);msg.style.gridColumn='1/-1';B.appendChild(msg);
+  B.appendChild(h('div',{class:'row',style:'margin-top:8px;grid-column:1/-1'},[h('button',{text:'Close',onclick:function(){$('imodal').classList.remove('on')}}),h('button',{class:'p',text:'Save',onclick:function(){
    function send(photo){var body={name:nm.value,category:ct.value,selling_price:pr.value};if(photo)body.photo_data_url=photo;
     fetch('/api/item-detail/'+encodeURIComponent(code),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){msg.style.display='block';if(x.ok){it=x.j;msg.className='msg ok';msg.textContent='Saved.';if(x.j.photo_url){img.src=x.j.photo_url+'?t='+Date.now();img.style.display=''}marg()}else{msg.className='msg bad';msg.textContent=x.j.error||'Not saved'}})}
    if(ph.files&&ph.files[0]){var fr=new FileReader();fr.onload=function(){send(fr.result)};fr.readAsDataURL(ph.files[0])}else send(null)}})]))}}
 })();
 /* ---- tab 3: cheques (add / edit / delete / clear) and what I owe ---- */
 function jf(u,m,b){return fetch(u,{method:m||'GET',credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.text().then(function(t){var j;try{j=JSON.parse(t)}catch(e){j={error:'Unexpected reply ('+r.status+')'}}return{ok:r.ok,s:r.status,j:j}})})}
-function chequeEdit(c){var F={no:h('input',{value:c.cheque_no||''}),bank:h('input',{value:c.bank||''}),amt:h('input',{type:'number',step:'0.01',value:c.amount}),cd:h('input',{type:'date',value:c.cheque_date}),dd:h('input',{type:'date',value:c.due_date})},B=$('ibox'),msg=h('div',{class:'msg',style:'display:none'});B.textContent='';B.appendChild(h('h2',{text:'Edit cheque: '+c.vendor_name}));
+function chequeEdit(c){var F={no:h('input',{value:c.cheque_no||''}),bank:h('input',{value:c.bank||''}),amt:h('input',{type:'number',step:'0.01',value:c.amount}),cd:h('input',{type:'date',value:c.cheque_date}),dd:h('input',{type:'date',value:c.due_date})},B=$('ibox'),msg=h('div',{class:'msg',style:'display:none'});B.className='';B.textContent='';B.appendChild(h('h2',{text:'Edit cheque: '+c.vendor_name}));
  [['Cheque number',F.no],['Bank',F.bank],['Amount (Rs)',F.amt],['Cheque date',F.cd],['Clears on (due)',F.dd]].forEach(function(a){B.appendChild(h('label',{text:a[0]}));B.appendChild(a[1])});B.appendChild(msg);
  B.appendChild(h('div',{class:'row',style:'margin-top:12px'},[h('button',{text:'Cancel',onclick:function(){$('imodal').classList.remove('on')}}),h('button',{class:'p',text:'Save',onclick:function(){jf('/api/grn-cheques/'+c.id,'PUT',{cheque_no:F.no.value,bank:F.bank.value,amount:F.amt.value,cheque_date:F.cd.value,due_date:F.dd.value}).then(function(x){if(x.ok){$('imodal').classList.remove('on');loadCheques()}else{msg.style.display='block';msg.className='msg bad';msg.textContent=x.j.error||'Not saved'}})}})]));$('imodal').classList.add('on')}
 function loadCheques(){var V=$('view3');V.textContent='Loading...';

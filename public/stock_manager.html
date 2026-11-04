@@ -11,13 +11,14 @@ table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px 12p
 th{background:#ececE8}td.r,th.r{text-align:right}tr.row{cursor:pointer}tr.row:hover{background:#f4efe0}
 td select{min-height:36px;padding:2px 6px;max-width:150px}.none{color:#b00020}
 .modal{position:fixed;inset:0;background:rgba(10,10,10,.6);display:none;align-items:center;justify-content:center;z-index:9;padding:12px}.modal.on{display:flex}
-.box{background:#fff;border-radius:14px;padding:20px;max-width:460px;width:100%;max-height:92vh;overflow:auto;border-top:6px solid var(--c-gold)}
+.box{background:#fff;border-radius:14px;padding:16px 20px;max-width:460px;width:100%;max-height:92vh;overflow:auto;border-top:6px solid var(--c-gold)}
 .box label{display:block;color:#444;margin-top:8px;font-size:.9rem}.box input{width:100%;box-sizing:border-box}
 .ph{width:100%;max-height:200px;object-fit:contain;background:#f4f4f1;border-radius:8px}.mg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.mg div{flex:1 1 90px;background:#f4efe0;border-radius:8px;padding:8px}.mg b{display:block;font-size:1.15rem}
 .msg{margin-top:8px;padding:8px 12px;border-radius:8px}.ok{background:#e3f4e6}.bad{background:#fdecea}
 @media(max-width:700px){th:nth-child(5),td:nth-child(5){display:none}}
 html body,html body *{font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}.modal.on .box{animation:pop .18s ease-out}.stat,.card{transition:transform .15s,box-shadow .15s}.stat:hover,.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.14)}button:active{transform:scale(.97)}
 @media(min-width:900px){input,select,button{min-height:36px;padding:2px 10px}th,td{padding:6px 10px}.tabs button{min-height:38px;padding:4px 14px}}
+.box.wide{max-width:860px;display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:0 20px}.box.wide .ph{max-height:150px}.box.wide .mg{flex-wrap:nowrap}.box.wide .mg div{padding:6px 10px}.box.wide label{margin-top:4px}@media(max-width:700px){.box.wide{display:block}}
 </style></head><body>
 <div class="bar"><input id="q" type="search" placeholder="Search: item code, name or anything. Double-click an item to edit." autocomplete="off">
 <select id="cat"></select><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="nocat" style="min-height:auto;width:20px;height:20px"> No category only</label></div>
@@ -42,13 +43,15 @@ function draw(){var q=$('q').value.trim().toLowerCase(),cat=$('cat').value,nc=$(
   var tr=h('tr',{class:'row',title:'Double-click to edit',ondblclick:function(){edit(r.item_code)}},[h('td',{text:r.item_code}),h('td',{text:r.name}),h('td',{class:r.category?'':'none'},[s]),h('td',{class:'r',text:String(r.stock)}),h('td',{class:'r',text:fmt(r.cost)}),h('td',{class:'r',text:r.sell?fmt(r.sell):'-'}),h('td',{class:'r',text:r.sell?(Math.round((r.sell-r.cost)/r.sell*1000)/10)+' %':'-'})]);tb.appendChild(tr)});
  $('sum').textContent=n+' items, '+pcs+' pieces. Stock at cost Rs '+fmt(cv)+', at selling price Rs '+fmt(sv)+'.'}
 $('q').oninput=draw;$('cat').onchange=draw;$('nocat').onchange=draw;
-function edit(code){var B=$('box');B.textContent='Loading...';$('m').classList.add('on');
+function edit(code){var B=$('box');B.className='box';B.textContent='Loading...';$('m').classList.add('on');
  jf('/api/item-detail/'+encodeURIComponent(code)).then(function(x){if(!x.ok){B.textContent=x.j.error||'Could not open';return}var it=x.j;B.textContent='';
   var nm=h('input',{value:it.name}),ct=h('input',{value:it.category||'',list:'cats'}),pr=h('input',{type:'number',step:'0.01',value:it.selling_price||''}),ph=h('input',{type:'file',accept:'image/*'}),msg=h('div',{style:'display:none'}),img=h('img',{class:'ph',src:it.photo_url||'',alt:'',style:it.photo_url?'':'display:none'}),mg=h('div',{class:'mg'});
   function marg(){var s=Number(pr.value)||0,c=it.avg_cost||0;mg.textContent='';[['Cost','Rs '+fmt(c)],['Selling','Rs '+fmt(s)],['Profit','Rs '+fmt(s-c)],['Margin',s>0?(Math.round((s-c)/s*1000)/10)+' %':'-']].forEach(function(a){mg.appendChild(h('div',{},[h('span',{text:a[0]}),h('b',{text:a[1]})]))})}
-  pr.oninput=marg;marg();B.appendChild(h('h2',{text:'Item '+it.item_code}));B.appendChild(img);
-  [['Picture (choose or take a photo)',ph],['Name',nm],['Category',ct],['Selling price (Rs)',pr]].forEach(function(a){B.appendChild(h('label',{text:a[0]}));B.appendChild(a[1])});B.appendChild(mg);B.appendChild(h('p',{text:'In stock: '+Number(it.stock_level||0)}));B.appendChild(msg);
-  B.appendChild(h('div',{style:'display:flex;gap:8px;margin-top:12px'},[h('button',{text:'Close',onclick:function(){$('m').classList.remove('on');load()}}),h('button',{class:'p',text:'Save',onclick:function(){function send(p){var b={name:nm.value,category:ct.value,selling_price:pr.value};if(p)b.photo_data_url=p;jf('/api/item-detail/'+encodeURIComponent(code),'POST',b).then(function(r){msg.style.display='block';if(r.ok){it=r.j;msg.className='msg ok';msg.textContent='Saved.';if(r.j.photo_url){img.src=r.j.photo_url+'?t='+Date.now();img.style.display=''}marg()}else{msg.className='msg bad';msg.textContent=r.j.error||'Not saved'}})}
+  pr.oninput=marg;marg();B.className='box wide';B.appendChild(h('h2',{text:'Item '+it.item_code+'   (in stock: '+Number(it.stock_level||0)+')',style:'grid-column:1/-1;margin:0 0 4px'}));
+  var L=h('div'),R=h('div');L.appendChild(img);L.appendChild(h('label',{text:'Picture (choose or take a photo)'}));L.appendChild(ph);
+  [['Name',nm],['Category',ct],['Selling price (Rs)',pr]].forEach(function(a){R.appendChild(h('label',{text:a[0]}));R.appendChild(a[1])});
+  B.appendChild(L);B.appendChild(R);mg.style.gridColumn='1/-1';B.appendChild(mg);msg.style.gridColumn='1/-1';B.appendChild(msg);
+  B.appendChild(h('div',{style:'display:flex;gap:8px;margin-top:8px;grid-column:1/-1'},[h('button',{text:'Close',onclick:function(){$('m').classList.remove('on');load()}}),h('button',{class:'p',text:'Save',onclick:function(){function send(p){var b={name:nm.value,category:ct.value,selling_price:pr.value};if(p)b.photo_data_url=p;jf('/api/item-detail/'+encodeURIComponent(code),'POST',b).then(function(r){msg.style.display='block';if(r.ok){it=r.j;msg.className='msg ok';msg.textContent='Saved.';if(r.j.photo_url){img.src=r.j.photo_url+'?t='+Date.now();img.style.display=''}marg()}else{msg.className='msg bad';msg.textContent=r.j.error||'Not saved'}})}
    if(ph.files&&ph.files[0]){var fr=new FileReader();fr.onload=function(){send(fr.result)};fr.readAsDataURL(ph.files[0])}else send(null)}})]))})}
 load();
 })();
