@@ -174,6 +174,16 @@ async function visionModels() {
 async function readWithVision(content) {
     const { client } = require('../openrouter.config');
     let lastErr = null;
+    // Gemini free tier first (own key, no OpenRouter rate limit); falls through to OpenRouter on any error.
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            const g = new (require('openai'))({ apiKey: process.env.GEMINI_API_KEY, baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/' });
+            const r = await g.chat.completions.create({ model: process.env.GEMINI_VISION_MODEL || 'gemini-2.5-flash', max_tokens: 3500, messages: [{ role: 'user', content }] }, { timeout: 90000 });
+            const raw = (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) || '';
+            if (raw.match(/\{[\s\S]*\}/)) return raw;
+            lastErr = new Error('no JSON from gemini');
+        } catch (e) { lastErr = e; }
+    }
     for (const model of (await visionModels()).slice(0, 4)) {
         try {
             const r = await client.chat.completions.create({ model, max_tokens: 3500, messages: [{ role: 'user', content }] }, { timeout: 90000 });

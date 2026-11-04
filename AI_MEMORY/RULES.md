@@ -1,3 +1,4 @@
+﻿- 04Nov (Ajmal, own words): CODE IS BUILT IN THE CLOUD, the PC only pulls, tests, restarts and pushes. Never let him repeat it. Everything free of charge. Save usage always.
 SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
 - **HARD RULE 0 (Ajmal, 2026-11-03, read this FIRST in any window): EVERYTHING IS BUILT IN THE CLOUD, even when I do not say so. When Ajmal says "go" or "build", write and test the code in the cloud session (on a COPY database, never real shop data), commit and push to branch work. The PC only pulls, runs, restarts and reports; it never writes feature code. Cloud cannot see the PC or real data: those steps are ONE short paste line for Ajmal. Never ask him where to build.**
 - **PROFILE (2026-11-03): who Ajmal is, values, projects, shop rules, report format and chat start are in AJMAL_PROFILE.md (same text as global CLAUDE.md "ABOUT AJMAL"). If it clashes with a rule below, the rule below wins; HARD RULE 14 SUMMARY still ends every reply.**
@@ -18,3 +19,4 @@ SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-
 - **2026-10-09 WATCH: plugins aikido and playwright stay installed (Ajmal's decision). Every LATEST_REPORT.md gets one line: what each did/ran since last report and any data sent out; else UNVERIFIED.**
 - **2026-10-09 Royal Bath Hub output only on branch work; after push: git fetch + git log origin/work -1 before saying VERIFIED.**
 SAVE USAGE: cheapest, shortest, free way first. No long unguided jobs. Never re-read what you already know.
+

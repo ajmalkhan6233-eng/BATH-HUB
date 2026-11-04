@@ -8,7 +8,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
 header{background:var(--green);color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 header b{font-size:18px}header span{opacity:.9;font-size:14px}
-.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:14px;max-width:1400px;margin:0 auto}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:14px;max-width:none;margin:0}
 @media(min-width:960px){.wrap{grid-template-columns:minmax(280px,var(--lw,40%)) 14px minmax(0,1fr);gap:0 0;align-items:start}}
 .split{display:none}
 @media(min-width:960px){.split{display:block;cursor:col-resize;align-self:stretch;min-height:200px;position:relative;touch-action:none}.split:before{content:'';position:absolute;left:5px;top:0;bottom:0;width:4px;border-radius:4px;background:#b7c6bc}.split:hover:before,.split.drag:before{background:var(--green)}.split:after{content:'\22EE';position:absolute;top:50%;left:0;width:14px;text-align:center;color:#33493c;font-size:20px;background:#f3f5f2;line-height:1}}
@@ -45,7 +45,7 @@ td.n input{text-align:right}
 .modal.on{display:flex}.modal .box{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;border-top:6px solid var(--bad)}
 .modal h2{margin:0 0 8px;color:var(--bad);font-size:20px}
 #printArea{display:none}
-.tabs{display:flex;gap:6px;padding:10px 14px 0;max-width:1400px;margin:0 auto}
+.tabs{display:flex;gap:6px;padding:10px 14px 0;max-width:none;margin:0}
 .tabs button{border-radius:10px 10px 0 0;border-bottom:0;min-height:44px;font-size:16px}
 .tabs button.on{background:var(--green);color:#fff}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
@@ -57,7 +57,7 @@ td.n input{text-align:right}
 .vtab{font-size:14px}.vtab td,.vtab th{padding:8px 8px;vertical-align:middle;white-space:nowrap}.vtab td.b{white-space:normal;min-width:200px}.drop{margin:-4px 0 14px}.drop table{font-size:14px}.drop td,.drop th{padding:6px 8px;white-space:nowrap;border-bottom:1px solid var(--line);text-align:left}.drop td.r,.drop th.r{text-align:right}.vtab td.b{font-weight:700;color:#0f3d26}
 .vtab tr.off td{opacity:.5}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:8px 0}
-#view2{display:none;max-width:1400px;margin:0 auto;padding:14px}
+#view2{display:none;max-width:none;margin:0;padding:14px}
 @media print{body{background:#fff}header,.wrap,.modal{display:none!important}#printArea{display:block;padding:12px}#printArea img{max-width:100%;max-height:420px;margin-top:12px}#printArea table td,#printArea table th{border:1px solid #999;padding:4px}}
 </style></head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo on the left, fix on the right, nothing is saved until you press OK</span></header>
@@ -306,7 +306,7 @@ function showDrop(key){var D=$('drop');if(!D||!SUM)return;document.querySelector
  else if(key==='owe'){c.appendChild(h('h3',{text:'What you owe, by vendor'}));c.appendChild(tbl(['Vendor','Billed','Owed'],S.vendors.filter(function(v){return Number(v.billed)>0}).map(function(v){return[v.name,fmt(v.billed),fmt(v.owed)]}),[1,2]))}
  D.appendChild(c)}
 function drawSummary(S){var V=$('view2');V.textContent='';SUM=S;openKey='';
- vorder=S.vendors.filter(function(v){return v.active}).map(function(v){return v.name});vinfo={};S.vendors.forEach(function(v){if(v.default_credit_days!=null)vinfo[v.name.toLowerCase()]=v.default_credit_days});
+ vorder=S.vendors.filter(function(v){return v.active}).map(function(v){return v.name});var hid=S.vendors.filter(function(v){return !v.active}).map(function(v){return v.name});vendors=Array.from(new Set(vendors.concat(vorder))).filter(function(n){return hid.indexOf(n)<0});var vl=$('vlist');vl.textContent='';vendors.forEach(function(n){vl.appendChild(h('option',{value:n}))});vinfo={};S.vendors.forEach(function(v){if(v.default_credit_days!=null)vinfo[v.name.toLowerCase()]=v.default_credit_days});
  var act=S.vendors.filter(function(v){return v.active}).length,owed=S.vendors.reduce(function(s,v){return s+Number(v.owed||0)},0);
  var nd=(S.bill_list||[]).filter(function(g){return Number(g.copies)>1}).length;
  if(nd)V.appendChild(h('div',{class:'msg bad',style:'margin-bottom:10px',text:'Heads-up: '+nd+' bills share a bill number with another saved bill (possible duplicates). Tap GRNs entered, open the extra copy, press Cancel this bill.'}));
