@@ -79,7 +79,6 @@ a { color:var(--gold-text); }
 ::placeholder { color:var(--text-muted); opacity:1; }
 ::selection { background:var(--gold-bg-subtle); }
 :focus-visible { outline:2px solid var(--border-focus); outline-offset:2px; }
-@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
 .tabular-nums, .num, td.num, th.num, .money, .money-cell { font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
 ::-webkit-scrollbar { width:8px; height:8px; } ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; }
 

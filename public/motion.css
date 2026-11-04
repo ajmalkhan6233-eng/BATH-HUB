@@ -29,7 +29,6 @@ tbody tr:nth-child(2){animation-delay:30ms}tbody tr:nth-child(3){animation-delay
 .mo-confetti{position:fixed;left:0;top:0;width:0;height:0;z-index:99999;pointer-events:none}
 .mo-confetti i{position:absolute;width:9px;height:14px;border-radius:2px;animation:moBurst .95s cubic-bezier(.2,.7,.3,1) forwards}
 html.mo-off *,html.mo-off *::before,html.mo-off *::after{animation:none!important;transition:none!important}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* ---- round 2 (from Gemini's snippets, trimmed for speed) ---- */
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:100000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
 .bh-toast{pointer-events:auto;background:rgba(12,34,56,.92);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 18px;min-width:260px;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translate3d(120%,0,0);transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .3s;position:relative;overflow:hidden;font-size:15px}
@@ -49,3 +48,32 @@ html.mo-off *,html.mo-off *::before,html.mo-off *::after{animation:none!importan
 html.mo-lite .mo-in,html.mo-lite .main-content>.page.active{filter:none!important;animation-name:moPageLite!important}
 @keyframes moPageLite{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 html.mo-lite .mo-tilt::after{display:none}
+
+/* ===== BIG ANIMATION PACK (5 Nov 2026): obvious, always-on motion. The Windows "reduce motion" setting is ignored on purpose; the switch is bh_motion=off. ===== */
+@keyframes moPageBig{0%{opacity:0;transform:translateY(34px) scale(.94);filter:blur(8px)}60%{opacity:1;filter:none}100%{opacity:1;transform:none;filter:none}}
+@keyframes moSlideIn{from{opacity:0;transform:translateX(calc(var(--dir,1)*60px))}to{opacity:1;transform:none}}
+@keyframes moFloat{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes moSweep{0%{transform:translateX(-30%);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(130vw);opacity:0}}
+@keyframes moGlow{0%,100%{filter:drop-shadow(0 0 0 rgba(255,196,107,0))}50%{filter:drop-shadow(0 0 10px rgba(255,196,107,.95))}}
+@keyframes moCardIn{0%{opacity:0;transform:translateY(46px) scale(.9) rotateX(14deg)}100%{opacity:1;transform:none}}
+@keyframes moWobble{0%{transform:scale(1)}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.96) rotate(2deg)}100%{transform:scale(1)}}
+.main-content>.page.active{animation:moPageBig .55s cubic-bezier(.16,1,.3,1) both!important}
+.mo-in{animation:moSlideIn .45s cubic-bezier(.16,1,.3,1) both!important}
+.page.active .dp-card,.page.active .stat{animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards}
+.page.active .dp-card:nth-child(2){animation-delay:.07s}.page.active .dp-card:nth-child(3){animation-delay:.14s}.page.active .dp-card:nth-child(4){animation-delay:.21s}.page.active .dp-card:nth-child(5){animation-delay:.28s}.page.active .dp-card:nth-child(6){animation-delay:.35s}.page.active .dp-card:nth-child(7){animation-delay:.42s}.page.active .dp-card:nth-child(n+8){animation-delay:.5s}
+/* the tiles keep floating gently after they arrive (uses the separate "translate" property, so hover and entrance still work) */
+.page.active .dp-card,.page.active .stat{translate:0 0}
+body.mo-alive .dp-card:nth-child(odd){animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards,moFloat 5.5s ease-in-out 1.2s infinite}
+body.mo-alive .dp-card:nth-child(even){animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards,moFloat 6.5s ease-in-out 1.6s infinite}
+/* a light runs along the menu bar */
+#rbh-menubar::after{content:"";position:absolute;left:0;bottom:0;width:22vw;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--c-gold,#C9A24B),#fff,var(--c-gold,#C9A24B),transparent);pointer-events:none;animation:moSweep 5.5s ease-in-out infinite}
+/* the logo glows slowly */
+header.topbar img{animation:moGlow 3.4s ease-in-out infinite}
+/* every button wobbles when pressed, every click rings out */
+button:active{animation:moWobble .35s ease}
+.mo-ripple>.mo-rp{animation-duration:.8s!important}
+#rbh-menubar .mb-top.on .mb-item{animation-duration:.4s!important}
+#rbh-menubar .mb-top.on .mb-item:nth-child(n){animation-name:moItem}
+@keyframes moItem{from{opacity:0;transform:translateX(-26px) scale(.92)}to{opacity:1;transform:none}}
+.modal.on .box,#qModal>div{animation-duration:.5s!important}
+tbody tr{animation-duration:.5s}

@@ -23,9 +23,9 @@ html[data-theme="win7"] h1,html[data-theme="win7"] h2,html[data-theme="win7"] h3
 html[data-theme="win7"] button,html[data-theme="win7"] .sm-pill{background:linear-gradient(180deg,#f6f6f6 0%,#ededed 48%,#dcdcdc 52%,#cfcfcf 100%)!important;border:1px solid #6d7d90!important;border-radius:3px!important;color:#111!important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.55),0 1px 2px rgba(0,30,60,.35)!important;text-shadow:0 1px 0 rgba(255,255,255,.8);transition:background .15s,box-shadow .15s,transform .1s}
 html[data-theme="win7"] button:hover,html[data-theme="win7"] .sm-pill:hover{background:linear-gradient(180deg,#f2faff 0%,#d9f0fd 48%,#bfe5fb 52%,#a9d9f6 100%)!important;border-color:#2c7fb8!important;box-shadow:inset 0 1px 0 #fff,0 0 8px rgba(80,170,240,.8)!important}
 html[data-theme="win7"] button:active{background:linear-gradient(180deg,#c3e3f8 0%,#a4d3f0 48%,#8cc6ec 52%,#7fbbe4 100%)!important;box-shadow:inset 0 2px 4px rgba(0,40,80,.4)!important;transform:translateY(1px)}
-html[data-theme="win7"] button.p,html[data-theme="win7"] .generate-btn,html[data-theme="win7"] #bh-upd{background:linear-gradient(180deg,#9ad3ff 0%,#5aaeef 48%,#2f84d6 52%,#4aa3ea 100%)!important;border:1px solid #1d5f9e!important;color:#fff!important;text-shadow:0 -1px 0 rgba(0,40,90,.6)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,50,110,.5)!important}
+html[data-theme="win7"] button.p,html[data-theme="win7"] .generate-btn,html[data-theme="win7"] #bh-upd{background:linear-gradient(180deg,#9ad3ff 0%,#5aaeef 48%,#2f84d6 52%,#4aa3ea 100%)!important;border:1px solid #1d5f9e!important;color:#06223f!important;text-shadow:0 1px 0 rgba(255,255,255,.7)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,50,110,.5)!important}
 html[data-theme="win7"] button.p:hover,html[data-theme="win7"] .generate-btn:hover,html[data-theme="win7"] #bh-upd:hover{background:linear-gradient(180deg,#b8e2ff 0%,#78bdf5 48%,#4396e2 52%,#63b4f2 100%)!important;box-shadow:inset 0 1px 0 #fff,0 0 12px rgba(90,180,255,.95)!important}
-html[data-theme="win7"] button.d{background:linear-gradient(180deg,#fbe3e1 0%,#f3b9b4 48%,#e0766d 52%,#e88c84 100%)!important;border-color:#a1362d!important;color:#fff!important;text-shadow:0 -1px 0 rgba(90,10,10,.6)!important}
+html[data-theme="win7"] button.d{background:linear-gradient(180deg,#fbe3e1 0%,#f3b9b4 48%,#e0766d 52%,#e88c84 100%)!important;border-color:#a1362d!important;color:#4a0b07!important;text-shadow:0 1px 0 rgba(255,255,255,.6)!important}
 html[data-theme="win7"] button:disabled{opacity:.55}
 html[data-theme="win7"] input,html[data-theme="win7"] select,html[data-theme="win7"] textarea{background:#fff!important;color:#10243a!important;border:1px solid #8a9bb0!important;border-top-color:#6d7d90!important;border-radius:3px!important;box-shadow:inset 0 1px 2px rgba(0,30,60,.25)!important}
 html[data-theme="win7"] input:focus,html[data-theme="win7"] select:focus,html[data-theme="win7"] textarea:focus{border-color:#3399ff!important;box-shadow:inset 0 1px 2px rgba(0,30,60,.25),0 0 6px rgba(51,153,255,.85)!important;outline:none}
@@ -40,8 +40,8 @@ html[data-theme="win7"] .tabs>button.on{background:linear-gradient(180deg,#fff,#
 html[data-theme="win7"] .tab-ink{background:#3399ff!important;box-shadow:0 0 8px #3399ff!important}
 html[data-theme="win7"] .msg{background:#eef6fd;color:#10243a;border:1px solid #9db4ca;border-radius:4px}html[data-theme="win7"] .msg.ok{background:#d9f2e1}html[data-theme="win7"] .msg.warn{background:#fff0c8}html[data-theme="win7"] .msg.bad{background:#fde0de}
 html[data-theme="win7"] ::selection{background:#3399ff;color:#fff}
-html[data-theme="win7"] ::-webkit-scrollbar{width:17px;height:17px}html[data-theme="win7"] ::-webkit-scrollbar-track{background:linear-gradient(90deg,#e3edf7,#f6fafe)}
-html[data-theme="win7"] ::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#f4f8fc,#c5d8ea 50%,#aec6de);border:1px solid #7d95ad;border-radius:3px}
+
+
 html[data-theme="win7"] .toast-container .bh-toast,html[data-theme="win7"] .bh-toast{background:rgba(236,246,255,.97);color:#10243a;border:1px solid #6d8fb0}
 
 /* ===================================================== 2. WINDOWS 10 FLUENT (dark, flat, reveal highlight) */
@@ -81,7 +81,7 @@ html[data-theme="win10"] .tabs>button.on{background:#333!important;color:#fff!im
 html[data-theme="win10"] .tab-ink{background:#0078d7!important;box-shadow:none!important;border-radius:0!important}
 html[data-theme="win10"] .msg{background:#2f2f2f;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:0}html[data-theme="win10"] .msg.ok{background:#12301a}html[data-theme="win10"] .msg.warn{background:#3a2f00}html[data-theme="win10"] .msg.bad{background:#3a1717}
 html[data-theme="win10"] ::selection{background:#0078d7;color:#fff}
-html[data-theme="win10"] ::-webkit-scrollbar{width:12px;height:12px}html[data-theme="win10"] ::-webkit-scrollbar-track{background:#1b1b1b}html[data-theme="win10"] ::-webkit-scrollbar-thumb{background:#5a5a5a}html[data-theme="win10"] ::-webkit-scrollbar-thumb:hover{background:#808080}
+
 html[data-theme="win10"] .bh-toast{background:rgba(43,43,43,.96);color:#fff;border-radius:0}
 
 /* ===================================================== 3. WINDOWS 11 (light Mica, rounded, accent pill) */
@@ -117,10 +117,10 @@ html[data-theme="win11"] #rbh-menubar .mb-btn::before,html[data-theme="win11"] .
 html[data-theme="win11"] #rbh-menubar .mb-btn:hover::before,html[data-theme="win11"] #rbh-menubar .mb-top.on>.mb-btn::before,html[data-theme="win11"] .tabs>button.on::before{transform:translateY(-50%) scaleY(1)}
 html[data-theme="win11"] .tabs>button{position:relative;background:rgba(255,255,255,.6)!important;border:1px solid rgba(0,0,0,.06)!important;border-bottom:0!important;border-radius:8px 8px 0 0!important;color:#333!important}
 html[data-theme="win11"] .tabs>button.on{background:#fff!important;color:#005fb8!important}
-html[data-theme="win11"] .tab-ink{background:#005fb8!important;box-shadow:none!important;height:3px!important}
+html[data-theme="win11"] .tab-ink{background:#005fb8!important;box-shadow:none!important}
 html[data-theme="win11"] .msg{background:#fff;color:#1b1b1b;border:1px solid rgba(0,0,0,.08);border-radius:6px}html[data-theme="win11"] .msg.ok{background:#dff6dd}html[data-theme="win11"] .msg.warn{background:#fff4ce}html[data-theme="win11"] .msg.bad{background:#fde7e9}
 html[data-theme="win11"] ::selection{background:#005fb8;color:#fff}
-html[data-theme="win11"] ::-webkit-scrollbar{width:14px;height:14px}html[data-theme="win11"] ::-webkit-scrollbar-track{background:transparent}html[data-theme="win11"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.35);border-radius:8px;border:4px solid transparent;background-clip:content-box}
+
 html[data-theme="win11"] .bh-toast{background:rgba(252,252,252,.97);color:#1b1b1b;border:1px solid rgba(0,0,0,.08);border-radius:8px}
 
 /* ===================================================== 4. APPLE LIQUID GLASS (colourful wallpaper, refractive glass, capsules) */
@@ -138,13 +138,12 @@ html[data-theme="apple"] .topbar,html[data-theme="apple"] #rbh-menubar{backgroun
 html[data-theme="apple"] .topbar,html[data-theme="apple"] .topbar *,html[data-theme="apple"] #rbh-menubar .mb-btn{color:#fff!important;text-shadow:0 1px 2px rgba(10,5,40,.55)}
 html[data-theme="apple"] .card,html[data-theme="apple"] .panel,html[data-theme="apple"] .dp-card,html[data-theme="apple"] .stat,html[data-theme="apple"] .glass-card{
   background:radial-gradient(260px circle at var(--px) var(--py),rgba(255,255,255,.34),transparent 62%),linear-gradient(135deg,rgba(255,255,255,.26) 0%,rgba(255,255,255,.07) 38%,rgba(40,30,110,.3) 100%)!important;
-  backdrop-filter:blur(26px) saturate(190%) brightness(1.06);-webkit-backdrop-filter:blur(26px) saturate(190%) brightness(1.06);
   border:1px solid rgba(255,255,255,.34)!important;border-radius:28px!important;box-shadow:0 22px 44px rgba(8,4,40,.42),inset 1.5px 1.5px 0 rgba(255,255,255,.75),inset -1px -1px 0 rgba(255,255,255,.18),inset 0 0 26px rgba(255,255,255,.08)!important;color:#fff;transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s}
 html[data-theme="apple"] .card:hover,html[data-theme="apple"] .dp-card:hover,html[data-theme="apple"] .stat:hover{transform:translateY(-5px) scale(1.012);box-shadow:0 30px 56px rgba(8,4,40,.5),inset 1.5px 1.5px 0 rgba(255,255,255,.85),inset -1px -1px 0 rgba(255,255,255,.22),inset 0 0 32px rgba(255,255,255,.12)!important}
 html[data-theme="apple"] button,html[data-theme="apple"] .sm-pill{background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.12))!important;border:1px solid rgba(255,255,255,.45)!important;border-radius:999px!important;color:#fff!important;text-shadow:0 1px 2px rgba(10,5,40,.5);box-shadow:inset 1px 1px 0 rgba(255,255,255,.7),inset -1px -1px 0 rgba(255,255,255,.15),0 6px 14px rgba(8,4,40,.3)!important;transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .2s}
 html[data-theme="apple"] button:hover,html[data-theme="apple"] .sm-pill:hover{background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.2))!important;transform:scale(1.04)}
 html[data-theme="apple"] button:active{transform:scale(.93)}
-html[data-theme="apple"] button.p,html[data-theme="apple"] .generate-btn,html[data-theme="apple"] #bh-upd{background:linear-gradient(180deg,#4aa8ff,#0a84ff)!important;border-color:rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.8),0 8px 20px rgba(10,132,255,.55)!important}
+html[data-theme="apple"] button.p,html[data-theme="apple"] .generate-btn,html[data-theme="apple"] #bh-upd{background:linear-gradient(180deg,#1f78e6,#0a58c9)!important;border-color:rgba(255,255,255,.55)!important;color:#fff!important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.8),0 8px 20px rgba(10,132,255,.55)!important}
 html[data-theme="apple"] button.d{background:linear-gradient(180deg,#ff7b72,#ff453a)!important;color:#fff!important}
 html[data-theme="apple"] input,html[data-theme="apple"] select,html[data-theme="apple"] textarea{background:rgba(255,255,255,.94)!important;color:#14123a!important;border:1px solid rgba(255,255,255,.7)!important;border-radius:14px!important;box-shadow:inset 0 1px 3px rgba(20,10,80,.25)!important}
 html[data-theme="apple"] input:focus,html[data-theme="apple"] select:focus,html[data-theme="apple"] textarea:focus{outline:none!important;box-shadow:0 0 0 4px rgba(10,132,255,.55)!important}
@@ -159,21 +158,24 @@ html[data-theme="apple"] .tabs>button.on{background:rgba(255,255,255,.34)!import
 html[data-theme="apple"] .tab-ink{background:#fff!important;box-shadow:0 0 14px rgba(255,255,255,.9)!important}
 html[data-theme="apple"] .msg{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:14px}html[data-theme="apple"] .msg.ok{background:rgba(48,209,88,.34)}html[data-theme="apple"] .msg.warn{background:rgba(255,214,10,.3)}html[data-theme="apple"] .msg.bad{background:rgba(255,69,58,.4)}
 html[data-theme="apple"] ::selection{background:#0a84ff;color:#fff}
-html[data-theme="apple"] ::-webkit-scrollbar{width:10px;height:10px}html[data-theme="apple"] ::-webkit-scrollbar-track{background:transparent}html[data-theme="apple"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.5);border-radius:10px;border:2px solid transparent;background-clip:content-box}
+
 html[data-theme="apple"] .bh-toast{background:rgba(50,40,130,.8);color:#fff;border-radius:18px;backdrop-filter:blur(20px)}
 
 /* slow or reduced-motion computers: no blur layers on cards, no springs, no transforms (colours stay) */
 html.mo-lite[data-theme="apple"] .card,html.mo-lite[data-theme="apple"] .panel,html.mo-lite[data-theme="apple"] .dp-card,html.mo-lite[data-theme="apple"] .stat,html.mo-lite[data-theme="apple"] .glass-card{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(135deg,rgba(90,76,190,.72),rgba(40,30,110,.82))!important}
 html.mo-lite[data-theme="apple"] .topbar,html.mo-lite[data-theme="apple"] #rbh-menubar{backdrop-filter:none!important;background:rgba(70,56,160,.85)!important}
-html.mo-lite[data-theme] .card:hover,html.mo-lite[data-theme] .dp-card:hover,html.mo-lite[data-theme] .stat:hover{transform:none!important}
 @supports not (backdrop-filter:blur(1px)){
   html[data-theme="apple"] .mb-list,html[data-theme="apple"] #bh-pal,html[data-theme="apple"] .pick-list,html[data-theme="apple"] .modal .box{background:rgba(52,42,130,.96)!important}
   html[data-theme="win10"] .mb-list,html[data-theme="win10"] .modal .box,html[data-theme="win10"] .pick-list,html[data-theme="win10"] #bh-pal{background:#2b2b2b!important}
   html[data-theme="win11"] .topbar,html[data-theme="win11"] #rbh-menubar,html[data-theme="win11"] .mb-list,html[data-theme="win11"] .modal .box,html[data-theme="win11"] .pick-list,html[data-theme="win11"] #bh-pal{background:#fafafa!important}
 }
-@media(prefers-reduced-motion:reduce){html[data-theme] *{transition:none!important;animation:none!important}}
 
 /* readable headings and the clock pill on the dark / colourful themes */
 html[data-theme="apple"] .main-content h1,html[data-theme="apple"] .main-content h2,html[data-theme="apple"] .main-content h3,html[data-theme="apple"] .main-content h4,html[data-theme="win10"] .main-content h1,html[data-theme="win10"] .main-content h2,html[data-theme="win10"] .main-content h3,html[data-theme="win10"] .main-content h4{color:#fff!important}
 html[data-theme="apple"] .topbar-right>*:not(button),html[data-theme="win10"] .topbar-right>*:not(button){background:rgba(255,255,255,.16)!important;border-radius:999px;color:#fff!important}
 html[data-theme="win10"] .topbar-right>*:not(button){border-radius:0}
+
+html[data-theme="win7"] *{scrollbar-color:#9db4ca #e3edf7}
+html[data-theme="win10"] *{scrollbar-color:#6a6a6a #1b1b1b}
+html[data-theme="win11"] *{scrollbar-color:rgba(0,0,0,.4) transparent}
+html[data-theme="apple"] *{scrollbar-color:rgba(255,255,255,.55) transparent}

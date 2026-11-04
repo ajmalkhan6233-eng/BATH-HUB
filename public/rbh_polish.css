@@ -10,7 +10,6 @@ table,td,th,.card,.kpi,.num{font-variant-numeric:tabular-nums}
 /* 5 Table headers stay visible while scrolling long lists */
 thead th{position:sticky;top:0;z-index:1;background:var(--bg-surface,var(--card,#fff))}
 /* 6 Respect "reduce motion" */
-@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important} }
 /* 7 Keep content clear of the iPhone home bar */
 body{padding-bottom:max(0px,env(safe-area-inset-bottom))}
 /* 8 Headings wrap neatly */

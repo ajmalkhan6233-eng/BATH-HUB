@@ -81,4 +81,3 @@ body{margin:0;background:var(--c-bg);color:var(--c-text);font:var(--t-m)/1.4 var
 @keyframes app-slide{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
 .app-pop{animation:app-pop var(--d2) var(--ease)}
 @keyframes app-pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){*,*:after{animation:none!important;transition:none!important}}

@@ -12,7 +12,7 @@
   var NAMES = ['win7', 'win10', 'win11', 'apple', 'kinetic', 'aqua'];
   var off = false;
   try { off = localStorage.getItem('bh_motion') === 'off'; } catch (e) { /* ignore */ }
-  var reduced = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var reduced = false;   // Ajmal wants animation: the Windows 'reduce motion' setting is NOT obeyed; the switch is localStorage bh_motion=off
   var isTop = win === win.top;
   var enabled = !off && !reduced;
   if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) root.classList.add('mo-lite');
@@ -40,7 +40,7 @@
       var ca = tg.closest(CARDS); if (!ca) return;
       var ra = ca.getBoundingClientRect(); ca.style.setProperty('--px', ((ev.clientX - ra.left) / ra.width * 100).toFixed(1) + '%'); ca.style.setProperty('--py', ((ev.clientY - ra.top) / ra.height * 100).toFixed(1) + '%');
     } else if (t === 'kinetic') {
-      root.style.setProperty('--pxx', ((ev.clientX / win.innerWidth) - .5).toFixed(3)); root.style.setProperty('--pyy', ((ev.clientY / win.innerHeight) - .5).toFixed(3));
+      var amb = doc.getElementById('bh-ambient'); if (amb) { amb.style.setProperty('--pxx', ((ev.clientX / win.innerWidth) - .5).toFixed(3)); amb.style.setProperty('--pyy', ((ev.clientY / win.innerHeight) - .5).toFixed(3)); }
       magnet(ev.clientX, ev.clientY);
     }
   }
@@ -75,10 +75,10 @@
     if (t === 'aqua') {
       var d = doc.createElement('div'); d.className = 'bh-drop'; d.style.left = x + 'px'; d.style.top = (y - 20) + 'px'; doc.body.appendChild(d);
       setTimeout(function () { d.remove(); for (var i = 0; i < 3; i++) { var s = doc.createElement('div'); s.className = 'bh-splash'; s.style.left = x + 'px'; s.style.top = y + 'px'; s.style.animationDelay = (i * 120) + 'ms'; doc.body.appendChild(s); (function (n) { setTimeout(function () { n.remove(); }, 1000 + i * 120); })(s); } }, 520);
-    } else if (t === 'kinetic' && win.bhBurst) win.bhBurst(x, y);
+    }
   }
   function watchBill() {
-    var bp = doc.getElementById('billPanel'); if (!bp || bp.__fx) return; bp.__fx = 1;
+    var bp = doc.getElementById('billPanel'); if (!bp) { if ((watchBill.n = (watchBill.n || 0) + 1) < 30) setTimeout(watchBill, 1500); return; } if (bp.__fx) return; bp.__fx = 1;
     var was = bp.style.display !== 'none' && bp.style.display !== '';
     new MutationObserver(function () { var on = bp.style.display !== 'none' && bp.style.display !== ''; if (on && !was) success(); was = on; }).observe(bp, { attributes: true, attributeFilter: ['style'] });
   }
@@ -106,18 +106,25 @@
   /* if the first 40 frames are slow (>24 ms average) switch to lite by itself */
   var probing = false;
   function probe() {
-    if (probing || lite() || !isTop) return; probing = true; var n = 0, t0 = 0, last = 0;
-    (function tick(now) { if (!t0) t0 = now; n++; if (n < 40) return requestAnimationFrame(tick); var avg = (now - t0) / n; probing = false; if (avg > 24) { root.classList.add('mo-lite'); build(); } })(performance.now());
-    requestAnimationFrame(function s(now) { /* spacer so the first sample is a real frame */ });
+    if (probing || lite() || !isTop || doc.hidden) return; probing = true; var n = 0, t0 = 0;
+    requestAnimationFrame(function tick(now) {
+      if (doc.hidden) { probing = false; return; }
+      if (!t0) t0 = now; n++;
+      if (n < 40) return requestAnimationFrame(tick);
+      probing = false; var avg = (now - t0) / (n - 1);
+      if (avg > 40) { root.classList.add('mo-lite'); build(); }   // only a really slow screen (under 25 frames a second) switches the extras down
+    });
   }
   function watchFrames() { /* same-origin frames carry the theme attribute already (ui_comfort syncs it); nothing else to do here */ }
 
+  var lastT = '';
   function apply() {
-    var t = theme(), known = NAMES.indexOf(t) >= 0;
+    var t = theme(), known = NAMES.indexOf(t) >= 0; if (t === lastT && doc.getElementById('bh-ambient') !== null) return; lastT = t;
+    mags.forEach(function (m) { m.b.style.translate = ''; m.on = 0; });
     if (!known) { clearAmbient(); return; }
     build(); if (t === 'kinetic' || t === 'aqua') setTimeout(probe, 1500);
   }
-  new MutationObserver(function (m) { for (var i = 0; i < m.length; i++) if (m[i].attributeName === 'data-theme') { apply(); break; } }).observe(root, { attributes: true });
+  new MutationObserver(function (m) { for (var i = 0; i < m.length; i++) if (m[i].attributeName === 'data-theme') { apply(); break; } }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', apply); else apply();
 
   win.BHThemeFX = {

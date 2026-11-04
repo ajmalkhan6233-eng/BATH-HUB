@@ -30,7 +30,7 @@
     '.main-content [class*="card"],.main-content .dp-card,.main-content [class*="tile"]{transition:transform .15s,box-shadow .15s}.main-content [class*="card"]:hover,.main-content .dp-card:hover,.main-content [class*="tile"]:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.14)}' +
     'button:active{transform:scale(.97)}button{transition:transform .08s,background .15s}' +
     '@media(min-width:900px){h1,h2,h3{margin-top:0!important;margin-bottom:6px!important}td,th{padding-top:5px!important;padding-bottom:5px!important}input,select,textarea{padding-top:3px!important;padding-bottom:3px!important;min-height:34px!important}button{min-height:34px!important;padding-top:3px!important;padding-bottom:3px!important}.card,.panel,.dp-card,[class*="-card"]{padding:10px 14px!important;margin-bottom:8px!important}[class*="grid"]{gap:8px!important}p{margin:4px 0!important}}' +
-    '@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}';
+    '';
   document.head.appendChild(css);
   function start() {
     var sb = document.querySelector('.sidebar'); if (!sb || document.getElementById('sb-grip')) return;
@@ -118,7 +118,6 @@
 /* ---- numbers count up on the dashboard (1.2 s, ease-out), like the dashboard video ---- */
 (function () {
   'use strict';
-  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   function run(el) {
     var t = el.textContent, m = /(\d[\d,]*)(\.\d+)?/.exec(t); if (!m || el.dataset.cu === t) return;
     var target = parseFloat(m[0].replace(/,/g, '')); if (!isFinite(target) || target < 10) { el.dataset.cu = t; return; }
@@ -142,7 +141,7 @@
     ['glass', 'Ocean glass', 'linear-gradient(135deg,#0d2740,#2a97b3)'], ['aurora', 'Aurora', 'linear-gradient(135deg,#1a0f3a,#0f8aa0)'], ['midnight', 'Midnight', 'linear-gradient(135deg,#04060d,#12285a)'], ['emerald', 'Emerald', 'linear-gradient(135deg,#03261f,#16936a)'], ['rose', 'Sunset', 'linear-gradient(135deg,#2e0f2b,#e0715a)'],
     ['win7', 'Windows 7 Aero', 'linear-gradient(135deg,#5fa8dc,#b7e6e2)'], ['win10', 'Windows 10', 'linear-gradient(135deg,#1b1b1b,#0078d7)'], ['win11', 'Windows 11', 'linear-gradient(135deg,#f3f3f3,#bcd6f5)'], ['apple', 'Apple glass', 'linear-gradient(135deg,#3a1c6e,#ff5caa)'], ['kinetic', 'Kinetic', 'linear-gradient(135deg,#2a0f3d,#ff5e62)'], ['aqua', 'Aqua', 'linear-gradient(135deg,#0a6fb8,#5fe0f7)']];
   var css = document.createElement('style');
-  css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(4,112px);gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
+  css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(auto-fill,minmax(96px,112px));max-width:min(500px,calc(100vw - 16px));max-height:calc(100vh - 70px);overflow:auto;gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
     '#bh-pal.on{display:grid}#bh-pal button{border:2px solid transparent;border-radius:14px;background:transparent;color:#fff;padding:6px;cursor:pointer;font:600 13px "Segoe UI",Arial,sans-serif;text-align:center}#bh-pal button:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}' +
     '#bh-pal button.cur{border-color:#C9A24B}#bh-pal i{display:block;height:46px;border-radius:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,.25)}';
   document.head.appendChild(css);
@@ -151,6 +150,13 @@
     pal = document.createElement('div'); pal.id = 'bh-pal';
     T.forEach(function (t) { var b = document.createElement('button'); b.type = 'button'; b.dataset.t = t[0]; var i = document.createElement('i'); i.style.background = t[2]; b.appendChild(i); b.appendChild(document.createTextNode(t[1]));
       b.onclick = function () { if (window.BHTheme) BHTheme.set(t[0]); try { if (typeof _theme !== 'undefined') { _theme = t[0]; } if (typeof _paintThemeButton === 'function') _paintThemeButton(); } catch (e) { /* ignore */ } mark(); pal.classList.remove('on'); }; pal.appendChild(b); });
+    var row = document.createElement('div'); row.style.cssText = 'grid-column:1/-1;display:flex;gap:8px;margin-top:4px';
+    var demo = document.createElement('button'); demo.type = 'button'; demo.textContent = '\u25B6 Show me the animations'; demo.style.cssText = 'flex:1;border:1px solid #C9A24B;background:#C9A24B;color:#111;border-radius:12px;padding:10px;cursor:pointer;font:700 14px "Segoe UI",Arial,sans-serif';
+    demo.onclick = function () { pal.classList.remove('on'); if (window.bhShowAnimations) window.bhShowAnimations(); };
+    var sw = document.createElement('button'); sw.type = 'button'; var off = false; try { off = localStorage.getItem('bh_motion') === 'off'; } catch (e) { /* ignore */ }
+    sw.textContent = off ? 'Animation: OFF (tap to turn on)' : 'Animation: ON (tap to turn off)'; sw.style.cssText = 'flex:1;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:12px;padding:10px;cursor:pointer;font:600 13px "Segoe UI",Arial,sans-serif';
+    sw.onclick = function () { try { if (off) localStorage.removeItem('bh_motion'); else localStorage.setItem('bh_motion', 'off'); } catch (e) { /* ignore */ } location.reload(); };
+    row.appendChild(demo); row.appendChild(sw); pal.appendChild(row);
     document.body.appendChild(pal);
   }
   function mark() { var c = window.BHTheme ? BHTheme.current() : ''; Array.prototype.forEach.call(pal.children, function (b) { b.classList.toggle('cur', b.dataset.t === c); }); }

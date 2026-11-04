@@ -4,7 +4,6 @@
   var doc = document, win = window;
   if (win.__bhMotion) return; win.__bhMotion = 1;
   try { if (localStorage.getItem('bh_motion') === 'off') { doc.documentElement.classList.add('mo-off'); return; } } catch (e) { /* ignore */ }
-  if (win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var fine = win.matchMedia && win.matchMedia('(pointer:fine)').matches;
 
   /* 1 ripple on buttons and menu items */
@@ -27,7 +26,8 @@
     var b = e.target.closest && e.target.closest('.tabs button'); if (!b) return;
     setTimeout(function () {
       tabs();
-      Array.prototype.forEach.call(doc.querySelectorAll('[id^="view"]'), function (v) { if (v.offsetParent) { v.classList.remove('mo-in'); void v.offsetWidth; v.classList.add('mo-in'); } });
+      var btns = Array.prototype.slice.call(b.parentNode.children).filter(function (x) { return x.tagName === 'BUTTON'; }), idx = btns.indexOf(b), dir = idx >= (b.parentNode.__lastIdx || 0) ? 1 : -1; b.parentNode.__lastIdx = idx;
+      Array.prototype.forEach.call(doc.querySelectorAll('[id^="view"]'), function (v) { if (v.offsetParent) { v.style.setProperty('--dir', dir); v.classList.remove('mo-in'); void v.offsetWidth; v.classList.add('mo-in'); } });
     }, 20);
   }, true);
   win.addEventListener('resize', tabs); setTimeout(tabs, 300); setTimeout(tabs, 1200);
@@ -91,4 +91,14 @@
     });
     doc.addEventListener('mouseout', function (e) { var bar = doc.getElementById('rbh-menubar'); if (bar && !bar.contains(e.relatedTarget)) { var g = bar.querySelector('.nav-glider'); if (g) g.style.opacity = '0'; } });
   })();
+
+  /* ---- alive mode: tiles float; demo button ---- */
+  if (doc.body) doc.body.classList.add('mo-alive'); else doc.addEventListener('DOMContentLoaded', function () { doc.body.classList.add('mo-alive'); });
+  win.bhShowAnimations = function () {   // plays everything once, so Ajmal can see it works
+    var p = doc.querySelector('.main-content>.page.active'); if (p) { p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; }
+    Array.prototype.forEach.call(doc.querySelectorAll('.page.active .dp-card,.page.active .stat'), function (c) { c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; });
+    if (win.bhToast) win.bhToast('Animations are ON. Cards fly in, the menu light runs, buttons wobble.');
+    var l = doc.querySelector('header.topbar img'); if (l && win.bhBurst) { var r = l.getBoundingClientRect(); win.bhBurst(r.left + r.width / 2, r.top + r.height + 20); }
+    if (win.BHLogo && win.BHLogo.jump) win.BHLogo.jump();
+  };
 })();

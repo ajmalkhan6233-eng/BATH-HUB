@@ -59,7 +59,6 @@ html[data-style="glass"] .topbar-right>*:not(button){background:rgba(255,255,255
 
 html[data-style="glass"] button:hover{transform:scale(1.02);background:rgba(255,255,255,.28)}html[data-style="glass"] button:active{transform:scale(.97)}
 html[data-style="glass"] td{transition:background .2s}html[data-style="glass"] tr:hover td{background:rgba(255,255,255,.07)}
-@media(prefers-reduced-motion:reduce){html[data-style="glass"] *{animation:none!important;transition:none!important}}
 
 /* ---- Sand: warm light theme like bathroom tiles (not glass) ---- */
 html[data-theme="sand"]{--bg:#f4ecdc;--bg2:#fffaf0;--bg3:#efe4cc;--card:#fffaf0;--card-border:rgba(120,90,40,.22);--card-hover:#fff;--text:#2b2113;--text2:#57472d;--text3:#7a6a4e;--gold:#b8860b;--gold-dark:#8f6908;--gold-light:#d9a93a;

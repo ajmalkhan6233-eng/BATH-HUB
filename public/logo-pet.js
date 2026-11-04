@@ -8,7 +8,6 @@
   var FRICTION = 2.4, BOUNCE = 0.72, MAX_SPEED = 2600, MIN_SPEED = 8, DRAG_START = 5;   // friction per second, bounce keep, px/s
   var doc = document;
   try { if (localStorage.getItem('bh_motion') === 'off') return; } catch (e) { /* ignore */ }
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   var css = doc.createElement('style');
   css.textContent = '#lp{position:fixed;left:0;top:0;z-index:99990;touch-action:none;cursor:grab;will-change:transform;-webkit-user-select:none;user-select:none}' +
@@ -17,7 +16,7 @@
     '#lp.breathe::before{animation:lpBreathe 3.2s ease-in-out infinite}#lp.grab::before{opacity:.9}' +
     '#lp::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:3px solid transparent;border-top-color:#ffc46b;border-right-color:rgba(255,196,107,.4);opacity:0;pointer-events:none}' +
     '#lp.spin::after{opacity:1;animation:lpSpin .8s linear infinite}' +
-    '#lp.shake img{animation:lpShake .5s ease}#lp.drop img{animation:lpDrop .6s cubic-bezier(.34,1.56,.64,1)}' +
+    '#lp.hop img{animation:lpHop .8s cubic-bezier(.34,1.56,.64,1)}@keyframes lpHop{0%{transform:translateY(0) scale(1)}30%{transform:translateY(-34px) scale(1.2) rotate(-10deg)}60%{transform:translateY(0) scale(.9,1.1)}100%{transform:none}}#lp.shake img{animation:lpShake .5s ease}#lp.drop img{animation:lpDrop .6s cubic-bezier(.34,1.56,.64,1)}' +
     '@keyframes lpBreathe{0%,100%{opacity:0;transform:scale(.92)}50%{opacity:.85;transform:scale(1.08)}}@keyframes lpSpin{to{transform:rotate(360deg)}}' +
     '@keyframes lpShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px) rotate(-8deg)}35%{transform:translateX(6px) rotate(7deg)}55%{transform:translateX(-4px) rotate(-4deg)}75%{transform:translateX(3px) rotate(2deg)}}' +
     '@keyframes lpDrop{0%{transform:translateY(-46px) scale(.7);opacity:0}100%{transform:none;opacity:1}}' +
@@ -44,7 +43,7 @@
     bind(); idleAt = Date.now();
   }
   function attach() {   // back home: remove the floating copy, show the real logo
-    if (!box) return; box.remove(); box = null; orig.style.visibility = ''; clear(); loopOn = false; homing = null;
+    if (!box) return; box.remove(); box = null; bound = false; orig.style.visibility = ''; clear(); loopOn = false; homing = null;
   }
 
   function bounds() { return { maxX: Math.max(0, window.innerWidth - W), maxY: Math.max(0, window.innerHeight - H) }; }
@@ -64,7 +63,7 @@
   /* ---- one loop, runs only while something moves ---- */
   function loop(t) {
     if (!box) { loopOn = false; return; }
-    var dt = Math.min(0.04, (t - lastT) / 1000 || 0.016); lastT = t;
+    var dt = Math.max(0, Math.min(0.04, (t - lastT) / 1000)) || 0.016; lastT = t;
     if (homing) {
       homing.t += dt / homing.d; var k = Math.min(1, homing.t), e = 1 - Math.pow(1 - k, 3);
       x = homing.x0 + (homing.x1 - homing.x0) * e; y = homing.y0 + (homing.y1 - homing.y0) * e - Math.sin(k * Math.PI) * 60; rot = (1 - k) * 18; sx = sy = 1; paint();
@@ -89,6 +88,7 @@
   /* ---- pointer handling on the floating logo and on the real one ---- */
   function down(e) {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (window.innerWidth < 768) return;
     pending = true; px0 = e.clientX; py0 = e.clientY; trail = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
     var r = (box || orig).getBoundingClientRect(); ox = e.clientX - r.left; oy = e.clientY - r.top;
     try { (e.currentTarget).setPointerCapture(e.pointerId); } catch (x2) { /* ignore */ }
@@ -104,7 +104,8 @@
   function up(e) {
     pending = false; if (!dragging) return; dragging = false; box.classList.remove('grab');
     var a = trail[0], c = trail[trail.length - 1], dt = Math.max(16, c.t - a.t);
-    vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, (c.x - a.x) / dt * 1000)); vy = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, (c.y - a.y) / dt * 1000)); run();
+    if (performance.now() - c.t > 90) { vx = vy = 0; } else { vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, (c.x - a.x) / dt * 1000)); vy = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, (c.y - a.y) / dt * 1000)); }
+    run();
   }
   var bound = false;
   function bind() {
@@ -116,13 +117,13 @@
 
   /* ---- reactions ---- */
   function react(cls, ms) { if (!box) return; box.classList.remove(cls); void box.offsetWidth; box.classList.add(cls); setTimeout(function () { if (box) box.classList.remove(cls); }, ms); }
-  function celebrate() { if (!box) return; vy = -760; vx += (Math.random() - .5) * 200; run(); if (window.bhBurst) window.bhBurst(x + W / 2, y + H / 2); }
+  function celebrate() { if (!box) { var l = orig && orig.getBoundingClientRect(); if (l && window.bhBurst) window.bhBurst(l.left + l.width / 2, l.top + l.height / 2); return; } react('hop', 800); if (window.bhBurst) window.bhBurst(x + W / 2, y + H / 2); }
   function watchDoc(d) {
-    if (!d || d.__lpw) return; d.__lpw = 1;
+    if (!d || !d.body) return;
     try {
+      if (!d.__lpw) { d.__lpw = 1; new MutationObserver(function (ms) { for (var i = 0; i < ms.length; i++) for (var j = 0; j < ms[i].addedNodes.length; j++) { var n = ms[i].addedNodes[j]; if (n.nodeType === 1 && n.matches && n.matches('.msg.bad')) { react('shake', 600); return; } } }).observe(d.body, { childList: true, subtree: true }); }
       var bp = d.getElementById('billPanel');
-      if (bp) { var was = bp.style.display !== 'none' && bp.style.display !== ''; new MutationObserver(function () { var on = bp.style.display !== 'none' && bp.style.display !== ''; if (on && !was) celebrate(); was = on; }).observe(bp, { attributes: true, attributeFilter: ['style'] }); }
-      new MutationObserver(function (ms) { for (var i = 0; i < ms.length; i++) for (var j = 0; j < ms[i].addedNodes.length; j++) { var n = ms[i].addedNodes[j]; if (n.nodeType === 1 && (n.matches && n.matches('.msg.bad') || n.querySelector && n.querySelector('.msg.bad'))) { react('shake', 600); return; } } }).observe(d.body, { childList: true, subtree: true });
+      if (bp && !bp.__lpb) { bp.__lpb = 1; var was = bp.style.display !== 'none' && bp.style.display !== ''; new MutationObserver(function () { var on = bp.style.display !== 'none' && bp.style.display !== ''; if (on && !was) celebrate(); was = on; }).observe(bp, { attributes: true, attributeFilter: ['style'] }); }
     } catch (e) { /* other origin */ }
   }
   function scanFrames() { watchDoc(doc); Array.prototype.forEach.call(doc.querySelectorAll('iframe'), function (f) { try { if (f.contentDocument && f.contentDocument.body) watchDoc(f.contentDocument); } catch (e) { /* ignore */ } }); }
@@ -139,11 +140,11 @@
   setInterval(function () { var b = doc.getElementById('bh-upd'); if (!box) return; var on = b && /Updating|Restarting/i.test(b.textContent || ''); box.classList.toggle('spin', !!on); }, 700);
 
   function start() {
-    orig = logoEl(); if (!orig) { setTimeout(start, 700); return; }
+    orig = logoEl(); if (!orig) { if ((start.n = (start.n || 0) + 1) < 20) setTimeout(start, 700); return; }
     orig.style.cursor = 'grab'; orig.addEventListener('pointerdown', down); orig.addEventListener('pointermove', move); orig.addEventListener('pointerup', up); orig.addEventListener('pointercancel', up);
     orig.style.touchAction = 'none'; orig.setAttribute('draggable', 'false'); orig.addEventListener('dragstart', function (e) { e.preventDefault(); });
     var s = null; try { s = JSON.parse(localStorage.getItem('bh_logo_pos') || 'null'); } catch (e) { s = null; }
-    if (s && typeof s.x === 'number') { var b = bounds(), h = homeRect(); if (Math.abs(s.x - h.x) > 26 || Math.abs(s.y - h.y) > 26) detach(Math.max(0, Math.min(b.maxX, s.x)), Math.max(0, Math.min(b.maxY, s.y)), true); }
+    if (s && typeof s.x === 'number' && typeof s.y === 'number' && window.innerWidth >= 768) { var b = bounds(), h = homeRect(); if (Math.abs(s.x - h.x) > 26 || Math.abs(s.y - h.y) > 26) detach(Math.max(0, Math.min(b.maxX, s.x)), Math.max(0, Math.min(b.maxY, s.y)), true); }
     scanFrames(); setInterval(scanFrames, 2500);
     window.addEventListener('resize', function () { if (!box || dragging) return; var b = bounds(); x = Math.max(0, Math.min(b.maxX, x)); y = Math.max(0, Math.min(b.maxY, y)); paint(); });
   }
