@@ -86,6 +86,28 @@ async function billExists(db, vendor, bill_no, exceptId) {
     return b.rows.length > 0;
 }
 
+// ---- Receiving details kept next to a bill (additive table, nothing existing is altered) ----
+// A GRN line can be: not delivered yet (arrived=false), short (some missing), returned, or damaged-and-returned.
+// Stock and the bill total follow the NET quantity (ordered - short - returned - damaged; 0 if not arrived). The paper total stays for reference.
+const num = (x) => { const n = Number(x); return Number.isFinite(n) && n > 0 ? n : 0; };
+function cleanExtra(body) {
+    const e = (body && body.extra) || {};
+    const lines = (Array.isArray(e.lines) ? e.lines : []).slice(0, MAX_LINES).map(l => ({
+        name: String(l.name || '').trim().slice(0, 200), vendor_code: String(l.vendor_code || '').trim().slice(0, 40),
+        ordered: num(l.ordered), short: num(l.short), ret: num(l.ret), dmg: num(l.dmg), arrived: l.arrived !== false,
+        unit: num(l.unit), disc: num(l.disc), sell: num(l.sell)
+    })).filter(l => l.name);
+    return { paper_total: round2(num(e.paper_total)), lines };
+}
+async function saveExtra(db, billId, body) {
+    const x = cleanExtra(body);
+    await db.query(`CREATE TABLE IF NOT EXISTS grn_bill_extra (bill_id INT PRIMARY KEY, paper_total NUMERIC, lines JSONB, updated_at TIMESTAMPTZ DEFAULT NOW())`);
+    await db.query(`INSERT INTO grn_bill_extra (bill_id, paper_total, lines, updated_at) VALUES ($1,$2,$3::jsonb,NOW()) ON CONFLICT (bill_id) DO UPDATE SET paper_total=EXCLUDED.paper_total, lines=EXCLUDED.lines, updated_at=NOW()`, [billId, x.paper_total, JSON.stringify(x.lines)]);
+}
+async function loadExtra(db, billId) {
+    try { const r = await db.query(`SELECT paper_total, lines FROM grn_bill_extra WHERE bill_id=$1`, [billId]); return r.rows[0] ? { paper_total: Number(r.rows[0].paper_total) || 0, lines: r.rows[0].lines || [] } : null; } catch (e) { return null; }
+}
+
 // Drafts waiting for Ajmal (bills Claude read from photos): drafts_inbox/*.json. Shown as drafts in the workbench; once the bill is saved it stops showing.
 const INBOX = path.join(__dirname, '..', 'drafts_inbox');
 router.use('/grn-inbox', express.static(INBOX, { index: false, dotfiles: 'deny', extensions: ['jpg'] }));
@@ -311,6 +333,7 @@ router.post('/grn-workbench', express.json({ limit: '14mb' }), async (req, res) 
         if (p.payment_type === 'CASH') {
             await client.query(`INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES (1,$1,$2,'CASH',$3,'Paid cash at receipt','grn-workbench')`, [bill.rows[0].id, p.total, p.received]);
         }
+        await saveExtra(client, bill.rows[0].id, req.body);
         await client.query('COMMIT');
         res.status(201).json({ ok: true, grn_number: p.bill_no, vendor: p.vendor, total: p.total, due_date: p.due, bill_id: bill.rows[0].id, photo: photo_url, items: results });
     } catch (e) {
@@ -371,7 +394,7 @@ router.get('/grn-workbench/saved/:id', async (req, res) => {
         const received = gd || b.bill_date_s;
         const iso = (d) => (d instanceof Date ? d.toISOString() : String(d || '')).slice(0, 10);
         const paid = (await pool.query(`SELECT COALESCE((SELECT SUM(amount) FROM vendor_payments WHERE bill_id=$1),0) AS p, (SELECT COUNT(*) FROM vendor_bill_cheques WHERE bill_id=$1 AND status<>'CANCELLED') AS c`, [b.id])).rows[0];
-        res.json({ id: b.id, vendor: b.vendor_name, bill_no: b.bill_no, bill_date: b.bill_date_s, received: iso(received), credit_days: cd ? Number(cd[1]) : 90, ptype: pt ? pt[1] : 'BILL', total: Number(b.total), mode: recs.length ? 'GRN' : 'BILL_ONLY', lines, photo: b.photo_path || '', paid: Number(paid.p), cheques: Number(paid.c), voided: b.voided });
+        res.json({ id: b.id, vendor: b.vendor_name, bill_no: b.bill_no, bill_date: b.bill_date_s, received: iso(received), credit_days: cd ? Number(cd[1]) : 90, ptype: pt ? pt[1] : 'BILL', total: Number(b.total), mode: recs.length ? 'GRN' : 'BILL_ONLY', lines, photo: b.photo_path || '', paid: Number(paid.p), cheques: Number(paid.c), voided: b.voided, extra: await loadExtra(pool, b.id) });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -403,6 +426,7 @@ router.put('/grn-workbench/bill/:id', express.json({ limit: '14mb' }), async (re
             if (has.rows.length) await client.query(`UPDATE vendor_payments SET amount=$1 WHERE id=$2`, [p.total, has.rows[0].id]);
             else await client.query(`INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES (1,$1,$2,'CASH',$3,'Paid cash at receipt','grn-workbench')`, [b.id, p.total, p.received]);
         }
+        await saveExtra(client, b.id, req.body);
         await client.query('COMMIT');
         res.json({ ok: true, bill_id: b.id, grn_number: p.bill_no, vendor: p.vendor, total: p.total, due_date: p.due, photo: keepPhoto, items: results });
     } catch (e) {
@@ -534,3 +558,4 @@ module.exports.readFailure = readFailure;
 module.exports.isRateLimit = isRateLimit;
 module.exports.nextFreeNumber = nextFreeNumber;
 module.exports.keyNo = keyNo;
+module.exports.cleanExtra = cleanExtra;

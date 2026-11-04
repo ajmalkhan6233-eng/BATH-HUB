@@ -76,7 +76,6 @@ td.n input{text-align:right}
  .lines td:before{content:attr(data-l);display:block;font-size:12px;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
  .lines td input{min-height:var(--tap);width:100%!important;font-size:17px}
  .lines td:nth-child(1){grid-column:1/4;grid-row:1;font-weight:800;align-self:center}.lines td:nth-child(1):before{display:none}
- .lines td:nth-child(10){grid-column:4/7;grid-row:1;text-align:right}.lines td:nth-child(10):before{display:none}
  .lines td:nth-child(3){grid-column:1/7;grid-row:2}
  .lines td:nth-child(2){grid-column:1/4;grid-row:3}
  .lines td:nth-child(4){grid-column:4/7;grid-row:3}
@@ -88,6 +87,16 @@ td.n input{text-align:right}
  .lines td.n{text-align:left}
 }
 @media print{body{background:#fff}header,.wrap,.modal{display:none!important}#printArea{display:block;padding:12px}#printArea img{max-width:100%;max-height:420px;margin-top:12px}#printArea table td,#printArea table th{border:1px solid #999;padding:4px}}
+
+.actions{position:sticky;bottom:0;z-index:4;background:var(--c-surface);padding:var(--s2) 0;margin-top:var(--s2);border-top:1px solid var(--c-line);box-shadow:0 -6px 12px -8px rgba(0,0,0,.25)}
+tr.pend td{background:var(--c-warn-bg)}tr.pend td input[type=number],tr.pend td input[type=text]{opacity:.6}tr.part td{background:var(--c-gold-soft)}
+tr.pend td:first-child,tr.part td:first-child{box-shadow:inset 4px 0 0 var(--c-gold)}
+@media(max-width:640px){
+ .lines td:nth-child(14){grid-column:4/7;grid-row:1;text-align:right}.lines td:nth-child(14):before{display:none}
+ .lines td:nth-child(10){grid-column:1/3;grid-row:6;align-self:end}.lines td:nth-child(11){grid-column:3/5;grid-row:6}
+ .lines td:nth-child(12){grid-column:5/7;grid-row:6}.lines td:nth-child(13){grid-column:1/4;grid-row:7}
+ .lines td:nth-child(10) input{width:32px!important}
+}
 </style><script src="/bathhub-a11y.js" defer></script>
 </head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
@@ -128,10 +137,16 @@ function h(tag,props,kids){var e=document.createElement(tag);for(var k in (props
 function today(){return new Date().toISOString().slice(0,10)}
 function addDays(d,n){var x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+Number(n||0));return x.toISOString().slice(0,10)}
 var seq=0;
-function blank(kind){return{id:'D'+(++seq)+'-'+Date.now(),kind:kind,vendor:'',no:'',date:today(),received:today(),credit_days:90,ptype:'BILL',lines:kind==='GRN'?[{code:'',name:'',qty:1,unit:0,sell:0}]:[],paper:0,amount:0,photo:'',status:'draft',note:'',dup:null,ch:{cheque_no:'',bank:'',amount:0,cheque_date:today(),due_date:today(),bill_id:'',same_bank:false}}}
+function blank(kind){return{id:'D'+(++seq)+'-'+Date.now(),kind:kind,vendor:'',no:'',date:today(),received:today(),credit_days:90,ptype:'BILL',lines:kind==='GRN'?[newLine()]:[],paper:0,amount:0,photo:'',status:'draft',note:'',dup:null,ch:{cheque_no:'',bank:'',amount:0,cheque_date:today(),due_date:today(),bill_id:'',same_bank:false}}}
 function fromBill(b){var d=blank('GRN');d.id=b.id;d.vendor=b.vendor;d.no=/^\s*[\(\[].*[\)\]]\s*$/.test(String(b.no||''))?'':b.no;d.date=b.date;d.received=b.received||b.date;d.credit_days=b.credit_days==null?90:b.credit_days;d.paper=b.printed_total;d.note=b.note||'';d.photoUrl=b.photo||'';d.lines=b.lines.map(function(l){return{code:l.code||'',name:l.name,qty:l.qty,unit:l.unit,sell:l.sell||0}});return d}
+function newLine(){return{code:'',name:'',qty:1,unit:0,sell:0,short:0,ret:0,dmg:0,arrived:true}}
+/* Received quantity: paper qty minus short, returned and damaged; 0 if the line has not arrived. Stock and the GRN total follow THIS. The paper total stays for reference. */
+function nq(l){return l.arrived===false?0:Math.max(0,(Number(l.qty)||0)-(Number(l.short)||0)-(Number(l.ret)||0)-(Number(l.dmg)||0))}
+function isPart(l){return l.arrived===false||(Number(l.short)||0)>0||(Number(l.ret)||0)>0||(Number(l.dmg)||0)>0}
+function hasPart(d){return d.kind==='GRN'&&d.lines.some(function(l){return(l.name||l.unit)&&isPart(l)})}
+function fullTotal(d){return d.lines.reduce(function(s,l){return s+l.qty*net(l)},0)}
 function net(l){var x=Number(l.disc)||0;return x>0?Math.round(l.unit*(1-x/100)*100)/100:l.unit}
-function total(d){return d.kind==='GRN'?d.lines.reduce(function(s,l){return s+l.qty*net(l)},0):d.kind==='BILL'?Number(d.amount)||0:Number(d.ch.amount)||0}
+function total(d){return d.kind==='GRN'?d.lines.reduce(function(s,l){return s+nq(l)*net(l)},0):d.kind==='BILL'?Number(d.amount)||0:Number(d.ch.amount)||0}
 function title(d){var k=d.kind==='GRN'?'GRN':d.kind==='BILL'?'Bill':'Cheque';return k+': '+(d.vendor||'(no vendor)')+' '+(d.no||d.ch.cheque_no||'')}
 function isEmpty(d){return !d.vendor&&!d.no&&!d.photo&&!d.ch.cheque_no&&!d.amount&&d.lines.every(function(l){return !l.name&&!l.unit})}
 function save(){try{localStorage.setItem('grn_drafts_v3',JSON.stringify(drafts.map(function(d){var c=JSON.parse(JSON.stringify(Object.assign({},d,{photo:''})));return c})))}catch(e){}}
@@ -151,7 +166,7 @@ function idbGet(id){return idbOpen().then(function(db){return new Promise(functi
 
 function api(path,opt){return fetch('/api/grn-workbench'+path,Object.assign({credentials:'same-origin'},opt||{})).then(function(r){return r.text().then(function(t){var j;try{j=JSON.parse(t)}catch(e){j={error:r.status===429?'Too many requests right now. Wait about a minute and try again.':'The app sent an unexpected reply ('+r.status+').'}}return{s:r.status,j:j}})})}
 function useNumber(d,n){d.no=n;d.dup=null;if(d.status==='dup')d.status='draft';render();checkDup(d,true)}
-function stOf(d){return d.status==='saved'?['SAVED','t-saved']:d.status==='editing'?['EDITING SAVED BILL','t-new']:d.status==='dup'?['ALREADY IN APP','t-dup']:d.status==='cancelled'?['CANCELLED','t-dup']:['NEW','t-new']}
+function stOf(d){var r=d.status==='saved'?['SAVED','t-saved']:d.status==='editing'?['SAVED (you can keep editing)','t-new']:d.status==='dup'?['ALREADY IN APP','t-dup']:d.status==='cancelled'?['CANCELLED','t-dup']:['NEW','t-new'];if(hasPart(d)&&d.status!=='cancelled'&&d.status!=='dup')r=[r[0]+' | PART RECEIVED','t-new'];return r}
 /* Number check: this vendor + this number, looked up in saved bills and GRN records (read only, nothing is changed). */
 function checkDup(d,quiet){
  if(!CLOUD||d.kind==='CHEQUE'||d.status==='saved'||d.billId||(!d.no&&!d.vendor))return Promise.resolve();
@@ -192,7 +207,7 @@ function applyRead(d,o){
  var got=[],miss=[];
  if(o.kind==='cheque'){d.kind='CHEQUE';d.vendor=o.vendor||d.vendor;d.ch.cheque_no=o.cheque_no||'';d.ch.bank=o.bank||'';d.ch.amount=o.amount||0;if(o.cheque_date){d.ch.cheque_date=o.cheque_date;d.ch.due_date=o.cheque_date}d.lines=[];return{cheque:true}}
  if(d.kind==='CHEQUE')d.kind='GRN';
- if(!d.lines.length&&d.kind==='GRN')d.lines=[{code:'',name:'',qty:1,unit:0,sell:0}];
+ if(!d.lines.length&&d.kind==='GRN')d.lines=[newLine()];
  if(o.vendor){d.vendor=o.vendor;got.push('vendor')}else miss.push('vendor');
  if(o.bill_no){d.no=o.bill_no;got.push('bill number')}else miss.push('bill number');
  if(o.bill_date){d.date=o.bill_date;d.received=o.bill_date;got.push('dates')}else miss.push('bill date');
@@ -235,8 +250,9 @@ $('gen').onclick=function(){runGenerate(cur)};
 function vrank(d){var n=String(d.vendor||'').toLowerCase().split(' ')[0];for(var i=0;i<vorder.length;i++){if(String(vorder[i]).toLowerCase().split(' ')[0]===n)return i}return 99}
 function drawDrafts(){var L=$('drafts');L.textContent='';
  drafts.slice().sort(function(a,b){return vrank(a)-vrank(b)}).forEach(function(d){
-  var st=d.status==='saved'?['SAVED','t-saved']:d.status==='editing'?['EDITING','t-new']:d.status==='dup'?['ALREADY IN APP','t-dup']:['draft','t-draft'];
-  var row=h('div',{class:'dr'+(d===cur?' on':'')},[h('span',{class:'t',onclick:function(){open(d)}},[h('span',{text:title(d)}),h('span',{class:'s',text:(d.paper?'Paper total '+fmt(d.paper):'')+(d.photo?'  |  photo added':'')})]),h('span',{class:'tag '+st[1],text:st[0]}),h('span',{class:'gap'}),h('button',{class:'d',text:'Delete draft',style:'min-height:32px;padding:2px 10px',onclick:function(){del(d)}})]);
+  var st=d.status==='saved'?['SAVED','t-saved']:d.status==='editing'?['SAVED, editable','t-saved']:d.status==='dup'?['ALREADY IN APP','t-dup']:['draft','t-draft'];
+  var pr=hasPart(d)?h('span',{class:'tag t-new',text:'PART RECEIVED'}):document.createTextNode('');
+  var row=h('div',{class:'dr'+(d===cur?' on':'')},[h('span',{class:'t',onclick:function(){open(d)}},[h('span',{text:title(d)}),h('span',{class:'s',text:(d.paper?'Paper total '+fmt(d.paper):'')+(d.photo?'  |  photo added':'')})]),h('span',{class:'tag '+st[1],text:st[0]}),pr,h('span',{class:'gap'}),h('button',{class:'d',text:'Delete draft',style:'min-height:32px;padding:2px 10px',onclick:function(){del(d)}})]);
   L.appendChild(row)});
  if(!drafts.length)L.appendChild(h('div',{class:'msg',text:'No drafts. Press + New GRN.'}))}
 function del(d){var i=drafts.indexOf(d);if(i<0)return;idbDel(d.id);drafts.splice(i,1);if(!drafts.length)drafts.push(blank('GRN'));if(cur===d)cur=drafts[Math.max(0,i-1)];save();render()}
@@ -274,31 +290,40 @@ function drawRight(){
   if(d.kind==='BILL'){R.appendChild(h('div',{class:'row'},[field('Bill amount (Rs)',inp(d.amount,'number',function(v){d.amount=Number(v)||0;render()}))]));}
   else{
    var tb=h('tbody');curTb=tb;d.lines.forEach(function(l,k){tb.appendChild(mkRow(d,l,k))});
-   R.appendChild(h('div',{class:'scroll lines'},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty','Cost each','Disc %','Amount','Sell price','Margin',''].map(function(x){return h('th',{text:x})}))]),tb])]));
+   R.appendChild(h('div',{class:'scroll lines'},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty (paper)','Cost each','Disc %','Received amount','Sell price','Margin','Arrived?','Short','Return','Damage',''].map(function(x){return h('th',{text:x})}))]),tb])]));
    R.appendChild(h('div',{class:'row'},[h('button',{text:'+ Add line',onclick:function(){addLine(d)}})]));
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
   }
  }
- R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?'Change what you need, then press Save changes.':((d.note?d.note+' ':'')+'Waiting for OK. Nothing is saved yet.'),style:d.status==='saved'?'':''}));
+ R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?(d.note||'Change what you need, then press Save changes.'):((d.note?d.note+' ':'')+'Waiting for OK. Nothing is saved yet.'),style:d.status==='saved'?'':''}));
  var isSaved=(d.status==='saved'||d.status==='editing')&&d.billId&&d.kind!=='CHEQUE';
  var btns=[h('button',{class:'p',id:'ok',text:d.status==='editing'?'Save changes':'OK: save this to the app',style:'font-size:17px;padding:10px 20px',onclick:doSave})];
  if(d.status==='saved'&&d.billId&&d.kind!=='CHEQUE')btns.push(h('button',{id:'editbtn',text:'Edit this bill',style:'font-size:17px;padding:10px 20px',onclick:function(){d.status='editing';render()}}));
  if(d.status==='editing')btns.push(h('button',{text:'Stop editing',onclick:function(){openSaved(d.billId,d)}}));
  if(isSaved)btns.push(h('button',{class:'d',id:'cancelbtn',text:'Cancel this bill',onclick:function(){cancelBill(d)}}));
  btns.push(h('button',{text:'Print',onclick:doPrint}),h('button',{text:'Download',onclick:doDownload}),h('button',{text:'Send by WhatsApp',onclick:doWhatsApp}));
- R.appendChild(h('div',{class:'row'},btns));
+ R.appendChild(h('div',{class:'row actions'},btns));
  drawDup();sums();
 }
 var curTb=null;
 function margin(l){return l.sell>0&&l.unit>0?((l.sell-net(l))/net(l)*100).toFixed(0)+'%':'-'}
 function mkRow(d,l,k){
- var ta=h('td',{class:'n','data-l':'Amount',text:fmt(l.qty*net(l)),style:'white-space:nowrap'}),tm=h('td',{class:'n','data-l':'Margin',text:margin(l)});
- function re(){ta.textContent=fmt(l.qty*net(l));tm.textContent=margin(l);sums();save()}
+ var ta=h('td',{class:'n','data-l':'Received Rs',text:fmt(nq(l)*net(l)),style:'white-space:nowrap'}),tm=h('td',{class:'n','data-l':'Margin',text:margin(l)});
+ var tr=h('tr',{class:l.arrived===false?'pend':''});
+ function re(){ta.textContent=fmt(nq(l)*net(l));tm.textContent=margin(l);tr.className=l.arrived===false?'pend':(isPart(l)?'part':'');sums();save();drawDrafts()}
  function c(i,label,val,type,fn,extra){return h('td',{'data-l':label,class:type==='number'?'n':''},[inp(val,type,fn,Object.assign({'data-r':k,'data-c':i,'aria-label':label+' line '+(k+1)},extra||{}))])}
- return h('tr',{},[h('td',{text:String(k+1)}),c(0,'Code',l.code,'text',function(v){l.code=v;save()}),c(1,'Item',l.name,'text',function(v){l.name=v;save()},{style:'min-width:190px'}),c(2,'Qty',l.qty,'number',function(v){l.qty=Number(v)||0;re()},{style:'width:70px'}),c(3,'Cost each',l.unit,'number',function(v){l.unit=Number(v)||0;re()},{style:'width:100px'}),c(4,'Disc %',l.disc||'','number',function(v){l.disc=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),ta,c(5,'Sell price',l.sell||'','number',function(v){l.sell=Number(v)||0;re()},{style:'width:100px'}),tm,h('td',{},[h('button',{class:'d',text:'X',title:'Delete line','aria-label':'Delete line '+(k+1),style:'min-height:40px;padding:2px 12px',onclick:function(){d.lines.splice(k,1);if(!d.lines.length)d.lines.push({code:'',name:'',qty:1,unit:0,sell:0});save();render()}})])])}
+ var got=h('input',{type:'checkbox','aria-label':'Line '+(k+1)+' arrived','data-g':k,style:'width:28px;height:28px;min-height:0;accent-color:#15803d'});got.checked=l.arrived!==false;got.onchange=function(){l.arrived=got.checked;re()};
+ if(isPart(l)&&l.arrived!==false)tr.className='part';
+ [h('td',{text:String(k+1)}),c(0,'Code',l.code,'text',function(v){l.code=v;save()}),c(1,'Item',l.name,'text',function(v){l.name=v;save()},{style:'min-width:190px'}),c(2,'Qty (paper)',l.qty,'number',function(v){l.qty=Number(v)||0;re()},{style:'width:70px'}),c(3,'Cost each',l.unit,'number',function(v){l.unit=Number(v)||0;re()},{style:'width:100px'}),c(4,'Disc %',l.disc||'','number',function(v){l.disc=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),ta,c(5,'Sell price',l.sell||'','number',function(v){l.sell=Number(v)||0;re()},{style:'width:100px'}),tm,
+  h('td',{'data-l':'Arrived?',style:'text-align:center'},[got]),
+  c(6,'Short (not got)',l.short||'','number',function(v){l.short=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
+  c(7,'Return',l.ret||'','number',function(v){l.ret=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
+  c(8,'Damage',l.dmg||'','number',function(v){l.dmg=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
+  h('td',{},[h('button',{class:'d',text:'X',title:'Delete line','aria-label':'Delete line '+(k+1),style:'min-height:40px;padding:2px 12px',onclick:function(){d.lines.splice(k,1);if(!d.lines.length)d.lines.push(newLine());save();render()}})])].forEach(function(td){tr.appendChild(td)});
+ return tr}
 function focusCell(r,c){var e=$('right').querySelector('[data-r="'+r+'"][data-c="'+c+'"]');if(e){e.focus();try{e.select()}catch(_){}}}
 function focusFirst(){if(window.matchMedia&&matchMedia('(pointer:fine)').matches){var e=$('right').querySelector('input');if(e)e.focus()}}
-function addLine(d){var l={code:'',name:'',qty:1,unit:0,sell:0};d.lines.push(l);save();if(!curTb||d!==cur){render();return}curTb.appendChild(mkRow(d,l,d.lines.length-1));sums();focusCell(d.lines.length-1,0)}
+function addLine(d){var l=newLine();d.lines.push(l);save();if(!curTb||d!==cur){render();return}curTb.appendChild(mkRow(d,l,d.lines.length-1));sums();focusCell(d.lines.length-1,0)}
 /* ENTER = next box. Last box of a line = next line. Last box of the last line = new line. Paper total = the OK button. */
 function goNext(t){
  var R=$('right'),all=function(){return Array.prototype.slice.call(R.querySelectorAll('input,select'))},i=all().indexOf(t);
@@ -312,22 +337,26 @@ function goNext(t){
  if(t.id==='paper'){var ok=$('ok');if(ok&&!ok.disabled)ok.focus();return}
  var list=all(),n=list[i+1];if(n){n.focus();try{n.select()}catch(_){}}else{var ok2=$('ok');if(ok2&&!ok2.disabled)ok2.focus()}}
 $('right').addEventListener('keydown',function(e){if(e.key!=='Enter'||e.shiftKey||e.isComposing||e.keyCode===229)return;var t=e.target;if(!t||(t.tagName!=='INPUT'&&t.tagName!=='SELECT'))return;e.preventDefault();goNext(t)});
-function sums(){var d=cur;if($('due'))$('due').textContent=addDays(d.received,d.credit_days);if(d.kind!=='GRN'){if($('ok'))$('ok').disabled=(d.status==='saved'||d.status==='dup'||d.status==='cancelled');return}
- var t=total(d);if($('calc'))$('calc').textContent=fmt(t);var m=$('match');if(m){var ok=d.paper>0&&Math.abs(t-d.paper)<0.5;m.textContent=d.paper>0?(ok?'Matches the paper':'Differs from paper by '+fmt(t-d.paper)):'Type the paper total to check';m.className=ok?'good':(d.paper>0?'bad':'')}
+function sums(){var d=cur;var T=$('sttag');if(T){var so=stOf(d);T.textContent=so[0];T.className='tag '+so[1]}if($('due'))$('due').textContent=addDays(d.received,d.credit_days);if(d.kind!=='GRN'){if($('ok'))$('ok').disabled=(d.status==='saved'||d.status==='dup'||d.status==='cancelled');return}
+ var t=total(d),full=fullTotal(d);if($('calc'))$('calc').textContent=fmt(t);var m=$('match');if(m){var okf=d.paper>0&&Math.abs(full-d.paper)<0.5,gap=full-t,txt=[];
+  txt.push(d.paper>0?(okf?'Lines match the paper':'Lines differ from the paper by '+fmt(full-d.paper)):'Type the paper total to check');
+  if(gap>0.5)txt.push('NOT received / returned: Rs '+fmt(gap)+' (marked, the paper total stays '+fmt(d.paper||full)+')');
+  m.textContent=txt.join('. ');m.className=(okf&&gap<0.5)?'good':(gap>0.5?'bad':(d.paper>0?'bad':''))}
  if($('due'))$('due').textContent=addDays(d.received,d.credit_days);if($('ok'))$('ok').disabled=(d.status==='saved'||d.status==='dup'||d.status==='cancelled')}
 function render(){drawDrafts();drawFrame();drawRight();$('vlist').textContent='';vendors.forEach(function(v){$('vlist').appendChild(h('option',{value:v}))});save()}
 
 /* ---------- save / print / download / whatsapp ---------- */
 function setStatus(t,cls){var s=$('status');if(s){s.textContent=t;s.className='msg '+(cls||'')}}
 function openSaved(id,reuse,autoEdit){
- if(!CLOUD)return;
+ if(!CLOUD)return;autoEdit=autoEdit!==false;   /* a saved bill always opens ready to edit: no locked screen */
  api('/saved/'+id).then(function(x){
   if(x.s!==200){modal('Cannot open',[x.j.error||'Bill not found']);return}
   var b=x.j,d=reuse||blank(b.mode==='GRN'?'GRN':'BILL');
   if(!reuse){d=blank(b.mode==='GRN'?'GRN':'BILL');drafts.unshift(d)}
   d.billId=b.id;d.vendor=b.vendor;d.no=b.bill_no;d.date=b.bill_date;d.received=b.received;d.credit_days=b.credit_days;d.ptype=b.ptype;d.photoUrl=b.photo||'';d.photo=reuse?'':'';d.dup=null;d.status='saved';d.amount=b.total;d.paper=b.total;
   d.note='Saved bill. Paid so far Rs '+fmt(b.paid)+(b.cheques?', cheques '+b.cheques:'')+'. Press Edit this bill to change it.';
-  if(b.mode==='GRN')d.lines=b.lines.map(function(l){return{code:l.code,name:l.name,qty:l.qty,unit:l.unit,sell:l.sell}});
+  if(b.extra&&b.extra.lines&&b.extra.lines.length){d.kind='GRN';d.paper=b.extra.paper_total||b.total;d.lines=b.extra.lines.map(function(l){return{code:l.vendor_code||'',name:l.name,qty:l.ordered,unit:l.unit,disc:l.disc||0,sell:l.sell||0,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false}})}
+  else if(b.mode==='GRN')d.lines=b.lines.map(function(l){return{code:l.code,name:l.name,qty:l.qty,unit:l.unit,sell:l.sell}});
   if(autoEdit){d.status='editing';d.note=''}
   cur=d;tab(1);render();gm('','')})}
 function delBillRow(g,after){
@@ -353,26 +382,28 @@ function doSave(){
  var d=cur;
  if(!CLOUD){setStatus('This page was opened as a file, so it cannot save. Open it from the shop app (localhost:3100/grn_workbench.html).','warn');return}
  var path,body;
+ if(d.kind==='GRN'&&!d.lines.some(function(l){return(l.name||l.unit)&&nq(l)>0})){setStatus('Nothing has arrived yet, so there is nothing to add to stock. Tick Arrived and check Short, Return and Damage on at least one line.','warn');return}
  if(d.kind==='CHEQUE'){path='/cheque';body={bill_id:d.ch.bill_id,cheque_no:d.ch.cheque_no,bank:d.ch.bank,amount:d.ch.amount,cheque_date:d.ch.cheque_date,due_date:d.ch.due_date,same_bank:d.ch.same_bank,photo_data_url:d.photo}}
  else{path='';body={mode:d.kind==='BILL'?'BILL_ONLY':'GRN',vendor:{name:d.vendor},bill_no:d.no,bill_date:d.date,received_date:d.received,credit_days:d.credit_days,payment_type:d.ptype,photo_data_url:d.photo,total:total(d),
-  lines:d.kind==='GRN'?d.lines.filter(function(l){return l.name||l.unit}).map(function(l){return{vendor_code:l.code,name:l.name,qty:l.qty,unit_cost:net(l),selling_price:l.sell||null}}):[]}}
+  lines:d.kind==='GRN'?d.lines.filter(function(l){return(l.name||l.unit)&&nq(l)>0}).map(function(l){return{vendor_code:l.code,name:l.name,qty:nq(l),unit_cost:net(l),selling_price:l.sell||null}}):[],
+  extra:d.kind==='GRN'?{paper_total:d.paper||0,lines:d.lines.filter(function(l){return l.name||l.unit}).map(function(l){return{name:l.name,vendor_code:l.code,ordered:l.qty,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false,unit:l.unit,disc:l.disc||0,sell:l.sell||0}})}:undefined}}
  var editing=d.status==='editing'&&d.billId;if(editing){path='/bill/'+d.billId;body.photo_data_url=(d.photo&&d.photo.indexOf('data:')===0)?d.photo:''}
  $('ok').disabled=true;setStatus('Saving...','');
  api(path,{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(x){
-  if(x.s===200&&editing){d.status='saved';d.note='CHANGES SAVED. Bill '+fmt(x.j.total)+', due '+x.j.due_date+(x.j.items&&x.j.items.length?'. Stock corrected for '+x.j.items.length+' items.':'.');if(x.j.photo)d.photoUrl=x.j.photo;render();setStatus(d.note,'ok');return}
-  if(x.s===201){d.billId=x.j.bill_id||null;if(x.j.photo)d.photoUrl=x.j.photo;d.status='saved';d.note=d.kind==='CHEQUE'?'SAVED. Cheque '+fmt(x.j.amount)+' for '+x.j.vendor+', clears '+x.j.due_date:'SAVED. '+(x.j.items?x.j.items.length+' items added to stock. ':'')+'Bill '+fmt(x.j.total)+', due '+x.j.due_date;render();setStatus(d.note,'ok')}
+  if(x.s===200&&editing){d.status='editing';d.note='CHANGES SAVED. You can keep editing; press Save changes again if you change more. Bill '+fmt(x.j.total)+', due '+x.j.due_date+(x.j.items&&x.j.items.length?'. Stock corrected for '+x.j.items.length+' items.':'.');if(x.j.photo)d.photoUrl=x.j.photo;render();setStatus(d.note,'ok');return}
+  if(x.s===201){d.billId=x.j.bill_id||null;if(x.j.photo)d.photoUrl=x.j.photo;d.status=d.kind==='CHEQUE'?'saved':'editing';d.note=d.kind==='CHEQUE'?'SAVED. Cheque '+fmt(x.j.amount)+' for '+x.j.vendor+', clears '+x.j.due_date:'SAVED. You can keep editing; press Save changes again if you change more. '+(x.j.items?x.j.items.length+' items added to stock. ':'')+'Bill '+fmt(x.j.total)+', due '+x.j.due_date;render();setStatus(d.note,'ok')}
   else{if(x.s===409&&editing){$('ok').disabled=false;setStatus('Not saved: '+x.j.error,'bad');modal('Not saved',[x.j.error])}else if(x.s===409){d.status='dup';render();modal('Already entered',[x.j.error])}else{$('ok').disabled=false;setStatus('Not saved: '+(x.j.error||x.s),'bad')}}
  }).catch(function(e){$('ok').disabled=false;setStatus('Not saved: no connection ('+e.message+')','bad')})}
 function lines(d){if(d.kind==='GRN')return d.lines.filter(function(l){return l.name||l.unit});return[]}
 function summaryText(d){var t=[(d.kind==='CHEQUE'?'CHEQUE':d.kind==='BILL'?'BILL':'GRN')+' - Royal Bath Hub','Vendor: '+d.vendor,d.kind==='CHEQUE'?'Cheque no: '+d.ch.cheque_no+'  Bank: '+d.ch.bank+'  Clears: '+d.ch.due_date:'Number: '+d.no+'  Date: '+d.date+'  Due: '+addDays(d.received,d.credit_days)];
- lines(d).forEach(function(l,i){t.push((i+1)+'. '+l.name+'  '+l.qty+' x '+fmt(net(l))+' = '+fmt(l.qty*net(l)))});t.push('TOTAL: Rs '+fmt(total(d)));return t.join('\n')}
+ lines(d).forEach(function(l,i){t.push((i+1)+'. '+l.name+'  '+nq(l)+(nq(l)!==l.qty?' of '+l.qty:'')+' x '+fmt(net(l))+' = '+fmt(nq(l)*net(l))+(isPart(l)?(l.arrived===false?'  (NOT DELIVERED YET)':'  (short '+(l.short||0)+', return '+(l.ret||0)+', damage '+(l.dmg||0)+')'):''))});t.push('TOTAL: Rs '+fmt(total(d)));return t.join('\n')}
 function doWhatsApp(){window.open('https://wa.me/?text='+encodeURIComponent(summaryText(cur)),'_blank')}
-function doDownload(){var d=cur,rows=[['#','Code','Item','Qty','Cost each','Amount']];lines(d).forEach(function(l,i){rows.push([i+1,l.code,l.name,l.qty,net(l),l.qty*net(l)])});
+function doDownload(){var d=cur,rows=[['#','Code','Item','Qty','Cost each','Amount']];lines(d).forEach(function(l,i){rows.push([i+1,l.code,l.name,nq(l),net(l),nq(l)*net(l)])});
  var csv=summaryText(d).split('\n').map(function(x){return '"'+x.replace(/"/g,'""')+'"'}).join('\n')+'\n\n'+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
  var a=h('a',{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:(d.vendor||'bill').replace(/\W+/g,'_')+'_'+(d.no||d.ch.cheque_no||'draft').replace(/\W+/g,'_')+'.csv'});document.body.appendChild(a);a.click();a.remove()}
 function doPrint(){var P=$('printArea');P.textContent='';P.appendChild(h('h2',{text:'Royal Bath Hub - '+(cur.kind==='CHEQUE'?'Cheque':cur.kind==='BILL'?'Bill':'GRN')}));
  summaryText(cur).split('\n').slice(1).forEach(function(x){if(!/^\d+\. /.test(x))P.appendChild(h('div',{text:x}))});
- if(lines(cur).length){var tb=h('tbody');lines(cur).forEach(function(l,i){tb.appendChild(h('tr',{},[i+1,l.code,l.name,l.qty,fmt(net(l)),fmt(l.qty*net(l))].map(function(c){return h('td',{text:String(c)})})))});P.appendChild(h('table',{style:'width:100%;border-collapse:collapse;margin-top:8px'},[h('thead',{},[h('tr',{},['#','Code','Item','Qty','Cost','Amount'].map(function(x){return h('th',{text:x})}))]),tb]))}
+ if(lines(cur).length){var tb=h('tbody');lines(cur).forEach(function(l,i){tb.appendChild(h('tr',{},[i+1,l.code,l.name,nq(l),fmt(net(l)),fmt(nq(l)*net(l))].map(function(c){return h('td',{text:String(c)})})))});P.appendChild(h('table',{style:'width:100%;border-collapse:collapse;margin-top:8px'},[h('thead',{},[h('tr',{},['#','Code','Item','Qty','Cost','Amount'].map(function(x){return h('th',{text:x})}))]),tb]))}
  if(cur.photo)P.appendChild(h('img',{src:cur.photo}));window.print()}
 
 /* ---------- splitter ---------- */

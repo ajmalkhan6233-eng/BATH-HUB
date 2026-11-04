@@ -55,3 +55,11 @@ describe('POST /api/grn-workbench/read', () => {
     expect(r.body.lines_total).toBe(2500); expect(r.body.total).toBe(2500); expect(r.body.total_from_lines).toBe(true);
   });
 });
+
+test('receiving extra: clean numbers, keeps not-arrived flag, drops empty names', () => {
+  const { cleanExtra } = require('../routes/grn_workbench');
+  const x = cleanExtra({ extra: { paper_total: '551340.456', lines: [{ name: ' TAP ', ordered: 10, short: 2, ret: -1, dmg: 'x', arrived: false, unit: 100 }, { name: '' }] } });
+  expect(x.paper_total).toBe(551340.46); expect(x.lines).toHaveLength(1);
+  expect(x.lines[0]).toMatchObject({ name: 'TAP', ordered: 10, short: 2, ret: 0, dmg: 0, arrived: false, unit: 100 });
+  expect(cleanExtra({}).lines).toEqual([]);
+});

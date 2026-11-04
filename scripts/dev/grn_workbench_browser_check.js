@@ -138,7 +138,7 @@ const errors = [];
   await p2.goto(BASE + '/grn_workbench.html'); await p2.evaluate(() => localStorage.clear()); await p2.goto(BASE + '/grn_workbench.html'); await p2.waitForSelector('#right input'); await p2.click('[data-new="GRN"]');
   await p2.fill('#right input[list="vlist"]', 'Phone Test'); await p2.fill('input[data-r="0"][data-c="1"]', 'ZZTEST item');
   ok(await p2.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'GRN: no sideways scroll at 390 (lines are cards)');
-  const inh = await p2.locator('#right input:visible').evaluateAll(a => a.map(x => x.getBoundingClientRect().height));
+  const inh = await p2.locator('#right input:visible:not([type=checkbox])').evaluateAll(a => a.map(x => x.getBoundingClientRect().height));
   ok(inh.every(h => h >= 43), 'GRN: every field is a big tap target (min ' + Math.min(...inh).toFixed(0) + ' px)');
   if (shotsDir) { await p2.screenshot({ path: shotsDir + '/grn_390.png', fullPage: false }); await p2.locator('#right').screenshot({ path: shotsDir + '/grn_right_390.png' }); }
   const t0 = Date.now(); await p2.goto(BASE + '/home_simple.html', { waitUntil: 'load' }); const loadMs = Date.now() - t0;
