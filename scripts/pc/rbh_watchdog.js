@@ -43,5 +43,14 @@ const deps = {
     },
 };
 
-W.runOnce(deps).then(r => { if (r.state !== 'up' && r.state !== 'blip') console.log(JSON.stringify(r)); process.exit(['still_down', 'failed', 'blocked', 'crashloop'].includes(r.state) ? 2 : 0); })
+// Auto update first (clean fast-forward of branch work only; restarts apex-server only if server code changed).
+(async () => {
+    try {
+        const U = require('../../utils/autoUpdate').autoUpdate(root);
+        if (U.state === 'updated') {
+            await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE updated ' + U.files.length + ' files' + (U.deps ? ' (package.json changed: run npm install once)' : '') + (U.restart ? '; restarting apex-server' : '; no restart needed'));
+            if (U.restart && !U.deps) { try { await deps.pm2Restart(); } catch (e) { await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE restart failed: ' + String(e.message).slice(0, 100)); } }
+        } else if (U.state === 'blocked') { await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE blocked: ' + U.why); }
+    } catch (e) { /* never stop the watchdog */ }
+})().then(() => W.runOnce(deps)).then(r => { if (r.state !== 'up' && r.state !== 'blip') console.log(JSON.stringify(r)); process.exit(['still_down', 'failed', 'blocked', 'crashloop'].includes(r.state) ? 2 : 0); })
     .catch(e => { console.error('watchdog error:', e.message); process.exit(1); });
