@@ -20,6 +20,8 @@ const ALLOWED = {
   'routes/corrections.js': [4, 'table and column names come from the internal MODULES map (unknown module is refused); values are $n'],
   'routes/document_inbox.js': [1, "fixed ' FOR UPDATE' or nothing"],
   'routes/grn_workbench.js': [9, "NORM() and KEY() are internal constants that wrap a fixed column name; the typed bill number always goes through a $n placeholder (reviewed 2026-11-04)"],
+  'routes/item_detail.js': [3, "SET list from fixed column names with $n placeholders; COLS is a constant; table names to re-point come from information_schema and are double-quoted (reviewed 2026-11-05)"],
+  'routes/sales_view.js': [2, "base and g are internal constants (fixed FROM/WHERE text and a fixed grouping expression); dates are $n (reviewed 2026-11-05)"],
   'routes/item_prices.js': [1, "SET list from fixed column names (selling_price, category) with $n placeholders (reviewed 2026-11-04)"],
   'routes/vendor360.js': [1, "fixed 'AND vb.vendor_name = $1' or nothing (reviewed 2026-11-04)"],
   'utils/auditInvariants.js': [4, "TOL is the constant 0.01 (reviewed 2026-11-04)"],
@@ -71,7 +73,7 @@ describe('dynamic SQL ratchet', () => {
     const stale = Object.keys(ALLOWED).filter((f) => !found[f] || found[f] < ALLOWED[f][0]);
     expect(stale).toEqual([]);
   });
-  test('63 reviewed spots in total', () => {
-    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(63);
+  test('68 reviewed spots in total', () => {
+    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(68);
   });
 });
