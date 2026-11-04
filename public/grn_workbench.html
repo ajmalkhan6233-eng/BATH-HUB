@@ -104,10 +104,11 @@ tr.pend td:first-child,tr.part td:first-child{box-shadow:inset 4px 0 0 var(--c-g
 #isr small{color:var(--c-muted)}#ibox label{display:block;font-size:var(--t-s);color:var(--c-muted);margin-top:8px}#ibox input{width:100%}
 #ibox .ph{width:100%;max-height:220px;object-fit:contain;background:#f4f4f1;border-radius:var(--r1)}#ibox .mg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#ibox .mg div{flex:1 1 90px;background:#f4efe0;border-radius:var(--r1);padding:8px}#ibox .mg b{display:block;font-size:var(--t-l)}
 body.embed header{display:none}
+html{font-size:17px}body{color:#111}.tabs button{font-weight:600}.lines input,.lines select{font-size:1rem}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
-<div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button>
+<div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button><button id="tab5">5. More (purchasing, ledger, credit)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>
 <div class="wrap" id="view1">
  <section>
@@ -133,6 +134,7 @@ body.embed header{display:none}
 <div id="view2"></div>
 <div id="view3" style="display:none;padding:var(--s3)"></div>
 <div id="view4" style="display:none;padding:var(--s3)"></div>
+<div id="view5" style="display:none"></div>
 <div class="modal" id="imodal"><div class="box" id="ibox"></div></div>
 <div class="modal" id="modal"><div class="box"><h2 id="mt"></h2><div id="mb"></div><div class="row" style="margin-top:14px"><button class="d" id="mn" style="display:none">No</button><button class="p" id="mx">OK, close</button></div></div></div>
 <div id="printArea"></div>
@@ -428,8 +430,8 @@ function doPrint(){var P=$('printArea');P.textContent='';P.appendChild(h('h2',{t
  sp.addEventListener('dblclick',function(){wr.style.removeProperty('--lw');try{localStorage.removeItem('grn_lw')}catch(e){}})})();
 
 /* ---------- vendors & summary ---------- */
-function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
-$('tab1').onclick=function(){tab(1)};$('tab2').onclick=function(){tab(2)};$('tab3').onclick=function(){tab(3)};$('tab4').onclick=function(){tab(4)};
+function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('view5').style.display=n===5?'block':'none';$('tab5').className=n===5?'on':'';if(n===5&&!$('view5').firstChild){var fr=document.createElement('iframe');fr.src='/hub.html?set=grn';fr.style.cssText='width:100%;height:calc(100vh - 150px);min-height:480px;border:0';$('view5').appendChild(fr)}$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
+$('tab1').onclick=function(){tab(1)};$('tab2').onclick=function(){tab(2)};$('tab3').onclick=function(){tab(3)};$('tab4').onclick=function(){tab(4)};$('tab5').onclick=function(){tab(5)};
 function loadSummary(){var V=$('view2');
  if(!CLOUD){V.textContent='';V.appendChild(h('div',{class:'msg warn',text:'The vendor list lives in the app. Open this page from the shop app (localhost:3100/grn_workbench.html).'}));return}
  V.textContent='Loading...';

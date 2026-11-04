@@ -2,11 +2,11 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'vendors', 'moneycontrol', 'loans', 'stock', 'docinbox'];   // Dashboard + the 6 core modules + Add by photo
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'saleshub', 'vendors', 'moneycontrol', 'loans', 'stock', 'docinbox'];   // Dashboard + the 6 core modules + Add by photo
   var GROUPS = [
     ['Dashboard', ['dashboard']],
-    ['1 GRN + Payable', ['grn', 'purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorreturns', 'vendorledger']],
-    ['2 Sales', ['pos', 'daily-sales', 'dailyledger', 'posledger', 'customers', 'credit']],
+    ['1 GRN + Payable', ['grn']],
+    ['2 Sales', ['pos', 'daily-sales', 'saleshub']],
     ['3 Vendors + Cheques', ['vendors', 'vendorsum', 'vendor360', 'cheques', 'chequereg']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
@@ -14,6 +14,8 @@
     ['Layla and brief', ['layla', 'morningbrief', 'assistant']],
     ['Settings and admin', ['settings', 'adminusers', 'adminsystem', 'adminsettings', 'inactive']]
   ];
+  // Screens now living INSIDE another screen (tabs). They still exist and the top menu bar can still open them; the side list no longer repeats them.
+  var MERGED = ['purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorreturns', 'vendorledger', 'dailyledger', 'posledger', 'customers', 'credit', 'chequereg'];
   var OPEN_DEFAULT = { 'Dashboard': 1, '1 GRN + Payable': 1, '2 Sales': 1 };
   var busy = false;
   function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
@@ -41,6 +43,7 @@
         seq.push({ head: g[0] });
         here.forEach(function (k) { used[k] = 1; seq.push({ li: byKey[k], group: g[0] }); });
       });
+      MERGED.forEach(function (k) { used[k] = 1; if (byKey[k]) byKey[k].classList.add('sm-hide'); });
       var rest = items.filter(function (li) { return !used[li.dataset.page]; });
       if (rest.length) { seq.push({ head: 'More' }); rest.forEach(function (li) { seq.push({ li: li, group: 'More' }); }); }
       var heads = {}; Array.prototype.forEach.call(ul.querySelectorAll('li.sm-head'), function (h) { heads[h.dataset.g] = h; });
@@ -78,6 +81,7 @@
     if (typeof addFramePage !== 'function') return;
     fetch('/api/me', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
       if (!me || (me.role !== 'admin' && me.role !== 'owner')) return;
+      addFramePage({ key: 'saleshub', label: 'Sales tools', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/hub.html?set=sales', sub: 'Daily ledger, POS + ledger, customers, credit, quotations', after: 'pos' });
       addFramePage({ key: 'prices', label: 'Item catalog', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
       addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
       addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
