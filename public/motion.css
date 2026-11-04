@@ -1,0 +1,32 @@
+/* MOTION layer (4 Nov 2026): small, light animations for clicks, tabs, menus, cards, popups. CSS + a little JS, no libraries.
+   Switch off: localStorage bh_motion = off. Also off for "reduce motion" computers. */
+@keyframes moPage{from{opacity:0;transform:translateY(16px) scale(.985);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes moItem{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes moSpring{0%{opacity:0;transform:scale(.88) translateY(12px)}60%{opacity:1;transform:scale(1.025)}100%{transform:none}}
+@keyframes moRow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes moPop{0%{transform:scale(.9);opacity:0}60%{transform:scale(1.03);opacity:1}100%{transform:none}}
+@keyframes moRipple{from{transform:scale(0);opacity:.45}to{transform:scale(1);opacity:0}}
+@keyframes moFlash{0%{background:rgba(255,179,71,.55)}100%{background:transparent}}
+@keyframes moBurst{0%{transform:translate(0,0) scale(1) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4) rotate(var(--rot));opacity:0}}
+.mo-in{animation:moPage .38s cubic-bezier(.16,1,.3,1) both}
+.main-content>.page.active{animation:moPage .38s cubic-bezier(.16,1,.3,1) both!important}
+#rbh-menubar .mb-top.on .mb-item{animation:moItem .26s cubic-bezier(.16,1,.3,1) both}
+#rbh-menubar .mb-top.on .mb-item:nth-child(1){animation-delay:0ms}#rbh-menubar .mb-top.on .mb-item:nth-child(2){animation-delay:30ms}#rbh-menubar .mb-top.on .mb-item:nth-child(3){animation-delay:60ms}
+#rbh-menubar .mb-top.on .mb-item:nth-child(4){animation-delay:90ms}#rbh-menubar .mb-top.on .mb-item:nth-child(5){animation-delay:120ms}#rbh-menubar .mb-top.on .mb-item:nth-child(6){animation-delay:150ms}
+#rbh-menubar .mb-top.on .mb-item:nth-child(7){animation-delay:180ms}#rbh-menubar .mb-top.on .mb-item:nth-child(8){animation-delay:210ms}#rbh-menubar .mb-top.on .mb-item:nth-child(n+9){animation-delay:240ms}
+#rbh-menubar button.mb-btn{transition:background .18s,transform .12s}#rbh-menubar button.mb-btn:active{transform:scale(.94)}
+.modal.on .box,#qModal>div{animation:moSpring .34s cubic-bezier(.34,1.56,.64,1) both}
+.modal.on{animation:moFade .2s ease both}@keyframes moFade{from{opacity:0}to{opacity:1}}
+tbody tr{animation:moRow .35s cubic-bezier(.16,1,.3,1) both}
+tbody tr:nth-child(2){animation-delay:30ms}tbody tr:nth-child(3){animation-delay:60ms}tbody tr:nth-child(4){animation-delay:90ms}tbody tr:nth-child(5){animation-delay:120ms}tbody tr:nth-child(6){animation-delay:150ms}tbody tr:nth-child(7){animation-delay:180ms}tbody tr:nth-child(8){animation-delay:210ms}tbody tr:nth-child(n+9){animation-delay:240ms}
+.msg.ok,.msg.warn,.msg.bad{animation:moPop .32s cubic-bezier(.34,1.56,.64,1) both}
+.tabs{position:relative}.tab-ink{position:absolute;bottom:-2px;height:4px;border-radius:4px;background:#C9A24B;box-shadow:0 0 10px rgba(201,162,75,.8);transition:left .38s cubic-bezier(.34,1.56,.64,1),width .38s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.mo-ripple{position:relative;overflow:hidden}
+.mo-ripple>.mo-rp{position:absolute;border-radius:50%;background:currentColor;pointer-events:none;animation:moRipple .55s ease-out forwards}
+.mo-tilt{transition:transform .18s ease-out,box-shadow .25s;transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));position:relative}
+.mo-tilt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.22),transparent 60%);opacity:var(--sh,0);transition:opacity .25s}
+.mo-flash{animation:moFlash .9s ease-out}
+.mo-confetti{position:fixed;left:0;top:0;width:0;height:0;z-index:99999;pointer-events:none}
+.mo-confetti i{position:absolute;width:9px;height:14px;border-radius:2px;animation:moBurst .95s cubic-bezier(.2,.7,.3,1) forwards}
+html.mo-off *,html.mo-off *::before,html.mo-off *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}

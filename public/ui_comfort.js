@@ -72,6 +72,8 @@
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
       var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
+      var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
+      var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       var gl = doc.createElement('link'); gl.rel = 'stylesheet'; gl.href = '/glass.css'; doc.head.appendChild(gl);   // the Glass look reaches every screen
       var theme = function () { try { var t = localStorage.getItem('bathhub-theme'); if (t) doc.documentElement.setAttribute('data-theme', t); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }

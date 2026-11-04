@@ -25,6 +25,7 @@
       c.forEach(function (x, i) { var td = document.createElement('td'); td.textContent = x; if (i) td.className = 'r'; tr.appendChild(td); }); tb.appendChild(tr);
     });
     box.appendChild(tb);
+    var lastTr = tb.lastElementChild; if (lastTr && ls.length > (live.n || 0)) lastTr.classList.add('mo-flash'); live.n = ls.length;
     if (t.disc > 0) { var d = document.createElement('div'); d.className = 'lb-tot'; d.style.fontSize = '14px'; d.style.fontWeight = '600'; d.innerHTML = '<span></span><span></span>'; d.children[0].textContent = 'Discount ' + t.pct + '%'; d.children[1].textContent = '- ' + fmt(t.disc); box.appendChild(d); }
     var tot = document.createElement('div'); tot.className = 'lb-tot'; tot.innerHTML = '<span>Total</span><span></span>'; tot.children[1].textContent = 'Rs ' + fmt(t.total); box.appendChild(tot);
   }
@@ -41,7 +42,8 @@
   })();
   // wide layout only while a finished bill is on screen
   var bp = $('billPanel'), wrap = document.querySelector('.wrap');
-  function sync() { wrap.classList.toggle('has-bill', bp && bp.style.display !== 'none' && bp.style.display !== ''); }
+  var hadBill = false;
+  function sync() { var on = !!(bp && bp.style.display !== 'none' && bp.style.display !== ''); wrap.classList.toggle('has-bill', on); if (on && !hadBill && window.bhBurst) { var g = $('genBtn'), r = g ? g.getBoundingClientRect() : null; window.bhBurst(r ? r.left + r.width / 2 : null, r ? r.top : null); } hadBill = on; }
   if (bp) { new MutationObserver(sync).observe(bp, { attributes: true, attributeFilter: ['style'] }); sync(); }
   live();
 
