@@ -162,6 +162,19 @@
   .pos-tools .tool-menu.open { display:flex; }
   #waCheck:empty { display:none; min-height:0; margin:0; }
   @media (max-width:340px){ .cust-row { grid-template-columns:1fr; } }
+
+  /* one-page layout on a computer screen (Ajmal 4 Nov): bill form in two columns, live item list on the right */
+  .pick-opt { display:flex; gap:10px; align-items:center; } .pick-ico { width:34px; height:34px; object-fit:cover; border-radius:6px; background:#eee; flex:0 0 auto; }
+  .stock-hint .pick-ico { width:22px; height:22px; vertical-align:middle; }
+  #liveBill .lb-h { font-weight:700; margin:0 0 6px; } #liveBill table { width:100%; border-collapse:collapse; font-size:14px; } #liveBill td { padding:4px 6px; border-bottom:1px solid var(--border-subtle); }
+  #liveBill td.r { text-align:right; white-space:nowrap; } #liveBill .lb-tot { font-weight:800; font-size:18px; padding-top:6px; display:flex; justify-content:space-between; } #liveBill { margin-bottom:8px; }
+  @media (min-width: 1000px) {
+    body { padding: 12px 16px; } .wrap { grid-template-columns: minmax(0,1fr); gap: 12px; } .wrap.has-bill { grid-template-columns: minmax(0,1fr) minmax(300px,32%); }
+    #formPanel { display:grid; grid-template-columns: minmax(0,1.5fr) minmax(300px,1fr); gap: 20px; align-items:start; padding:14px 16px; }
+    #formPanel label { margin: 6px 0 2px; } #formPanel input, #formPanel select { padding: 5px 9px; }
+    .fp-right { position:sticky; top:8px; } .generate-btn { margin-top:8px; }
+  }
+  @media (max-width: 999px) { .fp-left, .fp-right { display:block; } }
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
@@ -170,6 +183,7 @@
 
 <div class="wrap">
   <div class="panel" id="formPanel">
+    <div class="fp-left">
     <h1 class="pos-h1">Generate Bill <span class="pos-h1-sub">Royal Bath Hub Thihariya</span></h1>
 
     <div class="cust-row" id="custRow">
@@ -205,7 +219,9 @@
     <label>Items</label>
     <div id="itemRows"></div>
     <button type="button" class="add-btn" onclick="addItemRow()">+ Add item</button>
-
+    </div>
+    <div class="fp-right">
+    <div id="liveBill"></div>
     <label>Discount %</label>
     <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()">
     <div class="cap-hint" id="capHint"></div>
@@ -231,7 +247,9 @@
     <div class="err" id="errMsg"></div>
     <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
     <button type="button" class="mini-btn" id="cancelEditBtn" style="display:none;margin-top:8px" onclick="resetForm()">Cancel edit</button>
+    <button type="button" class="mini-btn" id="quoteSaveBtn" style="margin-top:8px;width:100%">Make quotation (with item codes) and send</button>
     <div class="today" id="todayBox"></div>
+    </div>
   </div>
 
   <div class="panel" id="billPanel">
@@ -329,7 +347,7 @@ function attachPicker(row) {
   const showHint = () => {
     if (!chosen) { hintEl.textContent = ''; hintEl.className = 'stock-hint'; return; }
     const s = PosPicker.stockStatus(chosen, qtyEl.value);
-    hintEl.textContent = s.text; hintEl.className = 'stock-hint ' + s.level;
+    hintEl.textContent = ''; if (chosen.photo_url) { const im = document.createElement('img'); im.className = 'pick-ico'; im.src = chosen.photo_url; im.alt = ''; hintEl.appendChild(im); } hintEl.appendChild(document.createTextNode(' ' + s.text)); hintEl.className = 'stock-hint ' + s.level;
   };
   const choose = item => {
     const f = PosPicker.fill(item);
@@ -343,7 +361,8 @@ function attachPicker(row) {
       div.className = 'pick-opt' + (i === active ? ' active' : '');
       const b = document.createElement('b'); b.textContent = o.title;
       const s = document.createElement('span'); s.textContent = o.detail;
-      div.append(b, s);
+      const im = document.createElement('img'); im.className = 'pick-ico'; im.alt = ''; if (item.photo_url) im.src = item.photo_url; else im.style.visibility = 'hidden';
+      const tx = document.createElement('div'); tx.append(b, s); div.append(im, tx);
       div.addEventListener('mousedown', e => { e.preventDefault(); choose(item); });      // before the field loses focus
       listEl.appendChild(div);
     });
@@ -365,11 +384,14 @@ function attachPicker(row) {
     if (!results.length) return;
     if (e.key === 'ArrowDown') { active = (active + 1) % results.length; draw(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { active = (active - 1 + results.length) % results.length; draw(); e.preventDefault(); }
-    else if (e.key === 'Enter' && active >= 0) { choose(results[active]); e.preventDefault(); }
+    else if (e.key === 'Enter') { choose(results[active >= 0 ? active : 0]); e.preventDefault(); }
     else if (e.key === 'Escape') close();
   });
   nameEl.addEventListener('blur', () => setTimeout(close, 120));
   qtyEl.addEventListener('input', showHint);
+  // Enter in quantity or price = this line is done: a new line opens and the cursor goes to its item box
+  const nextLine = e => { if (e.key !== 'Enter') return; e.preventDefault(); if (!nameEl.value.trim()) return; const rows = [...document.querySelectorAll('.item-row')]; if (rows[rows.length - 1] === row) addItemRow(); const n = [...document.querySelectorAll('.item-row')]; const nx = n[n.indexOf(row) + 1]; if (nx) nx.querySelector('.i-name').focus(); };
+  qtyEl.addEventListener('keydown', nextLine); priceEl.addEventListener('keydown', nextLine);
 }
 addItemRow();
 loadToday();
@@ -913,5 +935,6 @@ function clearCustomer() {
 <script src="/bathhub-logo.js"></script>
 <script src="/test-banner.js"></script>
 <script src="/layla-door.js"></script>
+<script src="/pos_extra.js"></script>
 </body>
 </html>
