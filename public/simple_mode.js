@@ -2,7 +2,7 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'vendors', 'moneycontrol', 'loans', 'stock'];   // Dashboard + the 6 core modules
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'vendors', 'moneycontrol', 'loans', 'stock', 'docinbox'];   // Dashboard + the 6 core modules + Add by photo
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn', 'purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorreturns', 'vendorledger']],
@@ -89,6 +89,7 @@
   }
   function start() {
     addButtons(); organise(); addOwnerPages();
+    var di = document.querySelector('.sidebar-nav [data-page="docinbox"] .nav-label'); if (di) di.textContent = 'Add by photo';   // bills, vouchers, stock sheets: photo in, app reads it, one tap to confirm
     var ul = document.querySelector('.sidebar-nav'); if (!ul) return;
     var t = null; new MutationObserver(function () { if (busy) return; clearTimeout(t); t = setTimeout(organise, 80); }).observe(ul, { childList: true });
     setTimeout(organise, 600); setTimeout(organise, 2000);
