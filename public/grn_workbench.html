@@ -88,7 +88,8 @@ td.n input{text-align:right}
  .lines td.n{text-align:left}
 }
 @media print{body{background:#fff}header,.wrap,.modal{display:none!important}#printArea{display:block;padding:12px}#printArea img{max-width:100%;max-height:420px;margin-top:12px}#printArea table td,#printArea table th{border:1px solid #999;padding:4px}}
-</style></head><body>
+</style><script src="/bathhub-a11y.js" defer></script>
+</head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
 <div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button></div>
 <div class="wrap" id="view1">
@@ -128,7 +129,7 @@ function today(){return new Date().toISOString().slice(0,10)}
 function addDays(d,n){var x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+Number(n||0));return x.toISOString().slice(0,10)}
 var seq=0;
 function blank(kind){return{id:'D'+(++seq)+'-'+Date.now(),kind:kind,vendor:'',no:'',date:today(),received:today(),credit_days:90,ptype:'BILL',lines:kind==='GRN'?[{code:'',name:'',qty:1,unit:0,sell:0}]:[],paper:0,amount:0,photo:'',status:'draft',note:'',dup:null,ch:{cheque_no:'',bank:'',amount:0,cheque_date:today(),due_date:today(),bill_id:'',same_bank:false}}}
-function fromBill(b){var d=blank('GRN');d.id=b.id;d.vendor=b.vendor;d.no=b.no;d.date=b.date;d.received=b.received||b.date;d.credit_days=b.credit_days==null?90:b.credit_days;d.paper=b.printed_total;d.note=b.note||'';d.photoUrl=b.photo||'';d.lines=b.lines.map(function(l){return{code:l.code||'',name:l.name,qty:l.qty,unit:l.unit,sell:l.sell||0}});return d}
+function fromBill(b){var d=blank('GRN');d.id=b.id;d.vendor=b.vendor;d.no=/^\s*[\(\[].*[\)\]]\s*$/.test(String(b.no||''))?'':b.no;d.date=b.date;d.received=b.received||b.date;d.credit_days=b.credit_days==null?90:b.credit_days;d.paper=b.printed_total;d.note=b.note||'';d.photoUrl=b.photo||'';d.lines=b.lines.map(function(l){return{code:l.code||'',name:l.name,qty:l.qty,unit:l.unit,sell:l.sell||0}});return d}
 function net(l){var x=Number(l.disc)||0;return x>0?Math.round(l.unit*(1-x/100)*100)/100:l.unit}
 function total(d){return d.kind==='GRN'?d.lines.reduce(function(s,l){return s+l.qty*net(l)},0):d.kind==='BILL'?Number(d.amount)||0:Number(d.ch.amount)||0}
 function title(d){var k=d.kind==='GRN'?'GRN':d.kind==='BILL'?'Bill':'Cheque';return k+': '+(d.vendor||'(no vendor)')+' '+(d.no||d.ch.cheque_no||'')}
@@ -432,7 +433,7 @@ var VF=[['name','Vendor name *','text'],['contact_person','Contact person','text
 function vform(v){var F=$('vform');F.textContent='';var c=h('div',{class:'card',style:'margin-top:14px;border-color:#1b7a4a'});
  c.appendChild(h('h3',{text:v?'Edit vendor: '+v.name:'Register new vendor'}));
  var ins={},kids=[];VF.forEach(function(f){var i=h('input',{type:f[2]});i.value=v&&v[f[0]]!=null?v[f[0]]:'';ins[f[0]]=i;kids.push(field(f[1],i))});
- c.appendChild(h('div',{class:'fgrid'},kids));
+ c.appendChild(h('div',{class:'fgrid','data-enter-next':'1'},kids));
  var m=h('div',{class:'msg',style:'display:none'});
  c.appendChild(h('div',{class:'row'},[h('button',{class:'p',text:v?'Save changes':'Register vendor',onclick:function(){
   var body={};VF.forEach(function(f){body[f[0]]=ins[f[0]].value});
@@ -443,7 +444,7 @@ function vdel(v){ask('Delete '+v.name+'?',[v.grns>0||Number(v.billed)>0?'This ve
 
 /* ---------- start ---------- */
 function start(list){
- var mine=load();
+ var mine=load();mine.forEach(function(x){if(x&&/^\s*[\(\[].*[\)\]]\s*$/.test(String(x.no||'')))x.no=''});
  drafts=(list||[]).map(function(b){var d=fromBill(b),kept=mine.filter(function(x){return x&&x.id===b.id})[0];if(kept){kept.photoUrl=kept.photoUrl||d.photoUrl;kept.photo=kept.photo||'';return kept}return d});
  var old=mine.filter(function(d){return d&&d.kind&&!isEmpty(d)&&!drafts.some(function(x){return x.id===d.id})});
  old.forEach(function(d){d.photo=d.photo||'';drafts.push(d)});

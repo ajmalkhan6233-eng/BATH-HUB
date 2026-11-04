@@ -116,6 +116,17 @@ const errors = [];
   ok(await page.inputValue('input[data-r="0"][data-c="3"]') === '1500' && /3,000\.00/.test(await page.textContent('#calc')), 'typed values were kept (line total 3,000.00)');
   ok(!(await page.locator('#ok').isDisabled()), 'OK button is ready');
 
+  console.log('5b. Hint text clears on click; Enter in the vendor form jumps box to box');
+  await fresh();
+  await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('grn_drafts_v3') || '[]'); d.forEach(x => { x.no = '(no number on slip)'; x.vendor = x.vendor || 'Hint Vendor'; }); localStorage.setItem('grn_drafts_v3', JSON.stringify(d)); });
+  await page.goto(BASE + '/grn_workbench.html'); await page.waitForSelector('#right input'); await page.locator('.dr .t', { hasText: 'Hint' }).first().click();
+  const numBox = page.locator('#right input[placeholder^="Bill / GRN"]');
+  ok(await numBox.inputValue() === '', 'a bracketed hint from an old bill list is not a real bill number');
+  await numBox.evaluate(e => { e.value = '(no number on slip)'; }); await numBox.focus();
+  ok(await numBox.inputValue() === '', 'clicking a box that holds only "(no number on slip)" empties it');
+  await page.click('#tab2'); await page.waitForSelector('button:has-text("+ Register new vendor")'); await page.click('button:has-text("+ Register new vendor")');
+  await page.waitForSelector('#vform input'); await page.fill('#vform input >> nth=0', 'Enter Vendor'); await page.keyboard.press('Enter');
+  ok(await page.evaluate(() => document.activeElement === document.querySelectorAll('#vform input')[1]), 'Enter in the vendor form goes to the next box');
   console.log('6. LOOK at phone width');
   const ph = await br.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, hasTouch: true });
   const p2 = await ph.newPage(); p2.on('pageerror', e => errors.push('phone pageerror ' + e.message));
