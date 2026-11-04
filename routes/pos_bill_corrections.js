@@ -13,7 +13,7 @@ const pool = require('../utils/pool');
 
 const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
-// Only the admin (the shop owner who runs the till) may correct a bill. The read-only 'owner' (uncle) account may not.
+// Only the admin (the shop owner who runs the till) may correct a bill. The read-only 'owner'-role viewer account (legacy username 'uncle') may not.
 const isOwner = req => roleOf(req) === 'admin';
 const whoOf = req => (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || 'unknown';
 const deductsStock = () => String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';

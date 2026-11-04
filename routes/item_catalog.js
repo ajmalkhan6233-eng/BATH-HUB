@@ -24,8 +24,10 @@ const pool = require('../utils/pool');
 const PHOTO_DIR = path.join(__dirname, '..', 'uploads', 'item_photos');
 fs.mkdirSync(PHOTO_DIR, { recursive: true });
 
-pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS photo_url TEXT`)
-    .catch(e => console.error('[item_catalog] photo_url migration failed:', e.message));
+// vendor_code = the vendor's own code for the item (our series 001, 002... stays item_code). Added with the same safe ADD COLUMN IF NOT EXISTS.
+const schemaReady = pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS photo_url TEXT`)
+    .then(() => pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS vendor_code TEXT`))
+    .catch(e => console.error('[item_catalog] products migration failed:', e.message));
 
 // ─── Photo handling ──────────────────────────────────────────────────────────
 const photoUpload = multer({
@@ -89,6 +91,7 @@ async function createItem(fields, opts = {}) {
         avg_cost: num(fields.avg_cost, 'Cost'),
     };
 
+    await schemaReady;
     const own = !opts.client;
     const db = opts.client || await pool.connect();
     try {
@@ -105,10 +108,10 @@ async function createItem(fields, opts = {}) {
         }
         const item_code = await nextItemCode(db);
         const r = await db.query(
-            `INSERT INTO products (item_code, name, category, stock_level, reorder_threshold, selling_price, avg_cost, photo_url, active)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) RETURNING *`,
+            `INSERT INTO products (item_code, name, category, stock_level, reorder_threshold, selling_price, avg_cost, photo_url, vendor_code, active)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true) RETURNING *`,
             [item_code, name, vals.category, vals.stock_level, vals.reorder_threshold,
-             vals.selling_price, vals.avg_cost, fields.photo_url || null]);
+             vals.selling_price, vals.avg_cost, fields.photo_url || null, String(fields.vendor_code || '').trim().slice(0, 60) || null]);
         if (own) await db.query('COMMIT');
         return r.rows[0];
     } catch (e) {
@@ -215,4 +218,5 @@ router.post('/items', photoMiddleware, async (req, res) => {
 module.exports = router;
 module.exports.createItem = createItem;
 module.exports.savePhoto = savePhoto;
+module.exports.schemaReady = schemaReady;
 module.exports.photoMiddleware = photoMiddleware;

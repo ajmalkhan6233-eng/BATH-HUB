@@ -1,4 +1,4 @@
-# COMMANDS (all slash commands in .claude/commands, merged from the old BATHCO repo)
+# COMMANDS (all slash commands in .claude/commands, merged from the former workplace repo, history only)
 
 Type `/name` in Claude Code. Shop commands (marked *) were adapted to Royal Bath Hub's API; the rest are copied as they were and may need checking against server.js. Never let a command start the live server.
 

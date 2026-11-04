@@ -4,7 +4,7 @@
 //
 //   1. Ask the app "are you alive?" (/health).
 //   2. If it is not, find out WHY in plain words (pm2 state + the last lines of its error log).
-//   3. Restart ONLY pm2 "apex-server" (never anything else: the same pm2 also runs the live First Choice system).
+//   3. Restart ONLY pm2 "apex-server" (never anything else: the same pm2 also runs the former workplace's live system).
 //   4. Write ONE plain line to logs/watchdog.log so Aj (or Claude) can read what happened.
 // Safety: after 3 restarts in one hour it stops restarting and says so (a crash loop needs a fix, not more restarts).
 // Everything outside the logic (http, pm2, files, clock) is injected, so the unit test needs no PC.

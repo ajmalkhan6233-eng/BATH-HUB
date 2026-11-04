@@ -1,6 +1,6 @@
 // Hyperspace background theme (Task Batch D, 2026-07-21) — a stationary-
 // viewpoint Canvas2D starfield with particles streaming toward the viewer.
-// Shared by daily-entry.html and BATHCO_NATURE.html (the "BATHCO COMMAND"
+// Shared by daily-entry.html and BATHCO_NATURE.html (the old dashboard
 // dashboard's non-3D pages). 100% procedurally generated — no images, no
 // network requests, so there is zero imagery-licensing surface for this
 // theme (a real photo cannot convincingly "stream" anyway; that motion is

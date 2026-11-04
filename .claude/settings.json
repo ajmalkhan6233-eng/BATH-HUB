@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Write", "Glob", "Grep", "WebSearch",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git add:*)",
+      "Bash(git commit:*)", "Bash(git push origin work)", "Bash(git pull origin work)", "Bash(git fetch:*)",
+      "Bash(npm test:*)", "Bash(npm run build:*)", "Bash(npx jest:*)", "Bash(node scripts/pc/rbh_readiness.js:*)",
+      "Bash(node --check:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)", "Bash(git push origin master:*)", "Bash(git push origin main:*)",
+      "Read(./.env)", "Read(./.env.local)", "Read(./.env.production)", "Read(**/SECRETS*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "cat AI_MEMORY/CORE_RULES.md; echo; node scripts/pc/rbh_readiness.js --brief; echo '--- LIVE.md (last 12 lines) ---'; tail -n 12 AI_MEMORY/LIVE.md; echo; echo 'Queues: QUEUE_TOMORROW.md then QUEUE_SIMPLIFY.md (AI_MEMORY/)'" } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "node scripts/pc/rbh_notify.js attention" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node scripts/pc/rbh_notify.js done" } ] }
+    ]
+  }
+}

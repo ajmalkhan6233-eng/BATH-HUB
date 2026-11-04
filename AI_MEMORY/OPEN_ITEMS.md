@@ -3,7 +3,7 @@
 - Aj: "MERGE TO LIVE" = move branch work to the live app on port 3100 (nothing merged to live yet).
 - Aj decide: POS credit bills stay separate from Credit & Aging totals (current). Paste: KEEP SEPARATE or MERGE POS CREDIT.
 - Android PWA / Play Store idea: PWA first, decide after the bug sweep.
-- BATHCO text rename in code (~121 files) and the GitHub repo name: Aj decides later.
+- Old-name (BATHCO) renames in code, folders, DB, env, pm2, Railway, repo: list and plan in AI_MEMORY/RENAME_PLAN_WAITING_GO.md. Waiting for Ajmal's go.
 - "Unverified commit" label on GitHub: check the commit signing setup.
 - Website: GEMINI_API_KEY in Netlify (Layla photo reading), confirm opening hours, real Google Maps link, native check of Sinhala/Tamil text.
 - Security NEXT: owner screen button for the agent outbox; wrapper on OCR/PDF text; queue sale receipts as drafts; live whatsapp-bridge needs the live repo + Aj.
