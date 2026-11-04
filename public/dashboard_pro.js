@@ -137,7 +137,7 @@
     h += '<div class="dp-grid">'
       + tile('Stock bought today (GRN)', lkr(G.today), 'This week ' + lkr(G.week))
       + tile('Stock bought this month', lkr(G.month), n(G.grns_month) + ' GRN(s)')
-      + tile('Stock bought, all time', lkr(G.all_time), n(G.grns) + ' GRNs · ' + Math.round(n(G.units)).toLocaleString('en-LK') + ' pieces')
+      + tile('Stock bought, all time', lkr(G.all_time), n(G.grns) + ' bills (same as GRN > Vendors & summary)')
       + tile('Vendors: paid vs owed', pct(G.all_time > 0 ? ((G.all_time - V.owed) / G.all_time) * 100 : null), 'We owe ' + lkr(V.owed) + ' of ' + lkr(G.all_time))
       + '</div>';
     h += '<div class="dp-card" style="margin-bottom:12px"><h3>Latest GRNs</h3>' + ((G.list || []).length ? G.list.map(function (x) { return row(esc(x.grn_number) + ' · ' + esc(x.supplier || '') + ' · ' + fdate(x.grn_date) + ' · ' + x.lines + ' lines', lkr(x.total)); }).join('') : '<div class="dp-note">No GRNs yet.</div>') + '</div>';

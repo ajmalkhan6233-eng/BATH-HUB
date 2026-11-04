@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stock &amp; items</title>
+<link rel="stylesheet" href="/rbh-app.css">
+<style>
+html{font-size:17px}body{margin:0;background:var(--c-bg);color:#111;font-size:1rem}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px;align-items:center;position:sticky;top:0;background:var(--c-bg);z-index:5}
+input,select,button{font:inherit;min-height:44px;border:1.5px solid var(--c-line-strong);border-radius:8px;padding:6px 12px;background:#fff;color:#111}
+button{cursor:pointer;font-weight:600}button.p{background:var(--c-gold);border-color:var(--c-gold)}
+#q{flex:1 1 260px}.sum{padding:0 12px 6px;color:#333}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px 12px;border-bottom:1px solid var(--c-line);text-align:left}
+th{background:#ececE8}td.r,th.r{text-align:right}tr.row{cursor:pointer}tr.row:hover{background:#f4efe0}
+td select{min-height:36px;padding:2px 6px;max-width:150px}.none{color:#b00020}
+.modal{position:fixed;inset:0;background:rgba(10,10,10,.6);display:none;align-items:center;justify-content:center;z-index:9;padding:12px}.modal.on{display:flex}
+.box{background:#fff;border-radius:14px;padding:20px;max-width:460px;width:100%;max-height:92vh;overflow:auto;border-top:6px solid var(--c-gold)}
+.box label{display:block;color:#444;margin-top:8px;font-size:.9rem}.box input{width:100%;box-sizing:border-box}
+.ph{width:100%;max-height:200px;object-fit:contain;background:#f4f4f1;border-radius:8px}.mg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.mg div{flex:1 1 90px;background:#f4efe0;border-radius:8px;padding:8px}.mg b{display:block;font-size:1.15rem}
+.msg{margin-top:8px;padding:8px 12px;border-radius:8px}.ok{background:#e3f4e6}.bad{background:#fdecea}
+@media(max-width:700px){th:nth-child(5),td:nth-child(5){display:none}}
+</style></head><body>
+<div class="bar"><input id="q" type="search" placeholder="Search: item code, name or anything. Double-click an item to edit." autocomplete="off">
+<select id="cat"></select><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="nocat" style="min-height:auto;width:20px;height:20px"> No category only</label></div>
+<div class="sum" id="sum">Loading...</div>
+<div style="overflow:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th class="r">In stock</th><th class="r">Cost</th><th class="r">Selling</th><th class="r">Margin</th></tr></thead><tbody id="tb"></tbody></table></div>
+<datalist id="cats"></datalist>
+<div class="modal" id="m"><div class="box" id="box"></div></div>
+<script>
+(function(){
+var ALL=[],$=function(i){return document.getElementById(i)};
+function fmt(n){return Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function h(t,p,k){var e=document.createElement(t);for(var a in(p||{})){if(a==='text')e.textContent=p[a];else if(a==='class')e.className=p[a];else if(a.slice(0,2)==='on')e[a]=p[a];else e.setAttribute(a,p[a])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
+function jf(u,m,b){return fetch(u,{method:m||'GET',credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}},function(){return{ok:false,j:{error:'Unexpected reply'}}})})}
+var BASE=['Fittings','Accessories','Bathroom','Tiles','Taps','Mirrors','Showers','Sanitaryware'];
+function cats(){var s={};BASE.forEach(function(c){s[c]=1});ALL.forEach(function(x){if(x.category)s[x.category]=1});return Object.keys(s).sort()}
+function load(){jf('/api/item-prices').then(function(x){if(!x.ok){$('sum').textContent=x.j.error||'Could not load (owner only)';return}ALL=x.j.map(function(r){return{item_code:r.item_code,name:r.name,category:r.category||'',stock:Number(r.stock_level)||0,cost:Number(r.avg_cost)||0,sell:Number(r.selling_price)||0}});
+ var c=cats();$('cats').textContent='';c.forEach(function(v){$('cats').appendChild(h('option',{value:v}))});
+ var sel=$('cat'),cur=sel.value;sel.textContent='';sel.appendChild(h('option',{value:'',text:'All categories'}));c.forEach(function(v){sel.appendChild(h('option',{value:v,text:v}))});sel.value=cur;draw()})}
+function draw(){var q=$('q').value.trim().toLowerCase(),cat=$('cat').value,nc=$('nocat').checked,tb=$('tb');tb.textContent='';var n=0,pcs=0,cv=0,sv=0;
+ ALL.forEach(function(r){if(q&&(r.item_code+' '+r.name+' '+r.category).toLowerCase().indexOf(q)<0)return;if(cat&&r.category!==cat)return;if(nc&&r.category)return;n++;pcs+=r.stock;cv+=r.stock*r.cost;sv+=r.stock*r.sell;
+  var s=h('select',{onclick:function(e){e.stopPropagation()},ondblclick:function(e){e.stopPropagation()},onchange:function(){var v=s.value;jf('/api/item-detail/'+encodeURIComponent(r.item_code),'POST',{category:v}).then(function(x){if(x.ok){r.category=v;draw()}else alert(x.j.error||'Not saved')})}},[h('option',{value:'',text:'(choose)'})].concat(cats().map(function(v){return h('option',{value:v,text:v})})));s.value=r.category;
+  var tr=h('tr',{class:'row',title:'Double-click to edit',ondblclick:function(){edit(r.item_code)}},[h('td',{text:r.item_code}),h('td',{text:r.name}),h('td',{class:r.category?'':'none'},[s]),h('td',{class:'r',text:String(r.stock)}),h('td',{class:'r',text:fmt(r.cost)}),h('td',{class:'r',text:r.sell?fmt(r.sell):'-'}),h('td',{class:'r',text:r.sell?(Math.round((r.sell-r.cost)/r.sell*1000)/10)+' %':'-'})]);tb.appendChild(tr)});
+ $('sum').textContent=n+' items, '+pcs+' pieces. Stock at cost Rs '+fmt(cv)+', at selling price Rs '+fmt(sv)+'.'}
+$('q').oninput=draw;$('cat').onchange=draw;$('nocat').onchange=draw;
+function edit(code){var B=$('box');B.textContent='Loading...';$('m').classList.add('on');
+ jf('/api/item-detail/'+encodeURIComponent(code)).then(function(x){if(!x.ok){B.textContent=x.j.error||'Could not open';return}var it=x.j;B.textContent='';
+  var nm=h('input',{value:it.name}),ct=h('input',{value:it.category||'',list:'cats'}),pr=h('input',{type:'number',step:'0.01',value:it.selling_price||''}),ph=h('input',{type:'file',accept:'image/*'}),msg=h('div',{style:'display:none'}),img=h('img',{class:'ph',src:it.photo_url||'',alt:'',style:it.photo_url?'':'display:none'}),mg=h('div',{class:'mg'});
+  function marg(){var s=Number(pr.value)||0,c=it.avg_cost||0;mg.textContent='';[['Cost','Rs '+fmt(c)],['Selling','Rs '+fmt(s)],['Profit','Rs '+fmt(s-c)],['Margin',s>0?(Math.round((s-c)/s*1000)/10)+' %':'-']].forEach(function(a){mg.appendChild(h('div',{},[h('span',{text:a[0]}),h('b',{text:a[1]})]))})}
+  pr.oninput=marg;marg();B.appendChild(h('h2',{text:'Item '+it.item_code}));B.appendChild(img);
+  [['Picture (choose or take a photo)',ph],['Name',nm],['Category',ct],['Selling price (Rs)',pr]].forEach(function(a){B.appendChild(h('label',{text:a[0]}));B.appendChild(a[1])});B.appendChild(mg);B.appendChild(h('p',{text:'In stock: '+Number(it.stock_level||0)}));B.appendChild(msg);
+  B.appendChild(h('div',{style:'display:flex;gap:8px;margin-top:12px'},[h('button',{text:'Close',onclick:function(){$('m').classList.remove('on');load()}}),h('button',{class:'p',text:'Save',onclick:function(){function send(p){var b={name:nm.value,category:ct.value,selling_price:pr.value};if(p)b.photo_data_url=p;jf('/api/item-detail/'+encodeURIComponent(code),'POST',b).then(function(r){msg.style.display='block';if(r.ok){it=r.j;msg.className='msg ok';msg.textContent='Saved.';if(r.j.photo_url){img.src=r.j.photo_url+'?t='+Date.now();img.style.display=''}marg()}else{msg.className='msg bad';msg.textContent=r.j.error||'Not saved'}})}
+   if(ph.files&&ph.files[0]){var fr=new FileReader();fr.onload=function(){send(fr.result)};fr.readAsDataURL(ph.files[0])}else send(null)}})]))})}
+load();
+})();
+</script></body></html>

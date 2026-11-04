@@ -78,13 +78,17 @@ router.get('/dashboard-pro', ownerOnly, async (req, res) => {
     safe('exp', () => q(`SELECT COALESCE(SUM(amount) FILTER (WHERE report_date = CURRENT_DATE),0) AS today,
         COALESCE(SUM(amount) FILTER (WHERE report_date >= date_trunc('month', CURRENT_DATE)::date),0) AS month FROM expenses_detail`)),
     safe('settings', () => q(`SELECT key, value #>> '{}' AS v FROM app_settings WHERE key IN ('dashboard_sales_target','dashboard_sales_target_week','dashboard_sales_target_month')`)),
-    safe('grn', () => q(`SELECT COALESCE(SUM(total_amount) FILTER (WHERE grn_date = CURRENT_DATE),0) AS today,
-        COALESCE(SUM(total_amount) FILTER (WHERE grn_date >= date_trunc('week', CURRENT_DATE)::date),0) AS week,
-        COALESCE(SUM(total_amount) FILTER (WHERE grn_date >= date_trunc('month', CURRENT_DATE)::date),0) AS month,
-        COALESCE(SUM(total_amount),0) AS all_time, COUNT(DISTINCT grn_number) AS grns, COALESCE(SUM(quantity),0) AS units,
-        COUNT(DISTINCT grn_number) FILTER (WHERE grn_date >= date_trunc('month', CURRENT_DATE)::date) AS grns_month FROM grn_records`)),
-    safe('grnList', () => q(`SELECT grn_number, MAX(supplier_name) AS supplier, MAX(grn_date) AS grn_date, SUM(total_amount) AS total, COUNT(*) AS lines
-        FROM grn_records GROUP BY grn_number ORDER BY MAX(grn_date) DESC, MAX(id) DESC LIMIT 6`)),
+    // "Stock bought" comes from the vendor BILLS (the numbers Ajmal checks in GRN > Vendors & summary), not from raw GRN lines
+    // (raw lines can hold the same goods twice, e.g. a manual GRN plus the bill copy). Voided bills are left out.
+    safe('grn', () => q(`SELECT COALESCE(SUM(total) FILTER (WHERE bill_date = CURRENT_DATE),0) AS today,
+        COALESCE(SUM(total) FILTER (WHERE bill_date >= date_trunc('week', CURRENT_DATE)::date),0) AS week,
+        COALESCE(SUM(total) FILTER (WHERE bill_date >= date_trunc('month', CURRENT_DATE)::date),0) AS month,
+        COALESCE(SUM(total),0) AS all_time, COUNT(*) AS grns, 0 AS units,
+        COUNT(*) FILTER (WHERE bill_date >= date_trunc('month', CURRENT_DATE)::date) AS grns_month FROM vendor_bills WHERE voided = FALSE`)),
+    safe('grnList', () => q(`SELECT COALESCE(NULLIF(b.bill_no,''),'(no number on slip)') AS grn_number, b.vendor_name AS supplier, b.bill_date AS grn_date, b.total AS total,
+          (SELECT COUNT(*) FROM grn_records g WHERE lower(g.supplier_name) = lower(b.vendor_name)
+             AND regexp_replace(lower(g.grn_number),'[^a-z0-9]','','g') = regexp_replace(lower(COALESCE(b.bill_no,'')),'[^a-z0-9]','','g')) AS lines
+        FROM vendor_bills b WHERE b.voided = FALSE ORDER BY b.bill_date DESC, b.id DESC LIMIT 6`)),
     safe('cash', () => q(`SELECT p.method,
         COALESCE(SUM(p.amount) FILTER (WHERE b.created_at::date = CURRENT_DATE),0) AS today,
         COALESCE(SUM(p.amount) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date),0) AS month,

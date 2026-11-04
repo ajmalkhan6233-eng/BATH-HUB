@@ -12,7 +12,7 @@ iframe{flex:1;width:100%;border:0;border-top:2px solid var(--c-ink);background:v
 <script>
 (function(){
 var SETS={
- grn:[['Purchasing','/purchasing.html'],['Vendor ledger','/vendor-ledger.html'],['Vendor credit','/vendor-credit.html'],['Return / discount','/vendor_returns.html'],['Documents','/documents.html']],
+ grn:[['Purchasing','/purchasing.html'],['Documents','/documents.html']],
  sales:[['Daily ledger','/daily-entry-v2.html'],['POS + ledger','/pos-ledger.html'],['Customers','/customers.html'],['Credit & aging','/credit_aging.html'],['Quotations','/quotations.html']]
 };
 var q=new URLSearchParams(location.search),set=SETS[q.get('set')]||SETS.grn,t=document.getElementById('t'),f=document.getElementById('f');

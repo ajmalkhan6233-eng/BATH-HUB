@@ -2,20 +2,21 @@
    Added with ONE script tag at the end of bathco_complete.html. Touches no data. Remembers choice on this device (try/catch). */
 (function () {
   'use strict';
-  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'saleshub', 'vendors', 'moneycontrol', 'loans', 'stock', 'docinbox'];   // Dashboard + the 6 core modules + Add by photo
+  var KEY = 'bh_ui_mode', SIMPLE = ['dashboard', 'grn', 'pos', 'saleshub', 'stockmgr', 'moneycontrol', 'loans', 'docinbox'];   // Dashboard + the 6 core modules + Add by photo
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
     ['2 Sales', ['pos', 'daily-sales', 'saleshub']],
-    ['3 Vendors + Cheques', ['vendors', 'vendorsum', 'vendor360', 'cheques', 'chequereg']],
+    ['Vendors', ['vendors', 'vendorsum', 'vendor360', 'vendorledger', 'vendorcredit', 'vendorreturns', 'cheques', 'chequereg']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
-    ['6 Stock', ['stock', 'prices', 'stickers', 'labels']],
+    ['6 Stock', ['stockmgr', 'stock', 'prices', 'stickers', 'labels']],
     ['Layla and brief', ['layla', 'morningbrief', 'assistant']],
     ['Settings and admin', ['settings', 'adminusers', 'adminsystem', 'adminsettings', 'inactive']]
   ];
   // Screens now living INSIDE another screen (tabs). They still exist and the top menu bar can still open them; the side list no longer repeats them.
-  var MERGED = ['purchasing', 'docinbox', 'documents', 'vendorcredit', 'vendorreturns', 'vendorledger', 'dailyledger', 'posledger', 'customers', 'credit', 'chequereg'];
+  var MERGED = ['purchasing', 'docinbox', 'documents', 'dailyledger', 'posledger', 'customers', 'credit', 'stock', 'prices'];
+  var FOLD = { 'Vendors': 1 };   // groups that fold open as a drop-down even in Simple mode
   var OPEN_DEFAULT = { 'Dashboard': 1, '1 GRN + Payable': 1, '2 Sales': 1 };
   var busy = false;
   function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
@@ -51,8 +52,8 @@
       var cur = Array.prototype.slice.call(ul.children);
       if (cur.length !== want.length || want.some(function (n, i) { return cur[i] !== n; })) want.forEach(function (n) { ul.appendChild(n); });
       seq.forEach(function (s) {
-        if (s.head) { heads[s.head].classList.toggle('sm-hide', !full); heads[s.head].classList.toggle('sm-shut', closed(s.head)); return; }
-        var k = s.li.dataset.page, hide = full ? closed(s.group) && k !== 'dashboard' : SIMPLE.indexOf(k) < 0;
+        if (s.head) { heads[s.head].classList.toggle('sm-hide', !(full || FOLD[s.head])); heads[s.head].classList.toggle('sm-shut', closed(s.head)); return; }
+        var k = s.li.dataset.page, hide = full || FOLD[s.group] ? closed(s.group) && k !== 'dashboard' : SIMPLE.indexOf(k) < 0;
         s.li.classList.toggle('sm-hide', hide);
       });
       Array.prototype.forEach.call(document.querySelectorAll('.sm-modebtn'), function (b) { b.textContent = full ? 'Simple' : 'Full menu'; });
@@ -82,6 +83,7 @@
     fetch('/api/me', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
       if (!me || (me.role !== 'admin' && me.role !== 'owner')) return;
       addFramePage({ key: 'saleshub', label: 'Sales tools', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/hub.html?set=sales', sub: 'Daily ledger, POS + ledger, customers, credit, quotations', after: 'pos' });
+      addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit name, category, price, picture', after: 'saleshub' });
       addFramePage({ key: 'prices', label: 'Item catalog', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
       addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
       addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
