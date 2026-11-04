@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GRN Workbench</title>
-<link rel="stylesheet" href="/rbh-app.css">
+<link rel="stylesheet" href="/rbh-app.css"><link rel="stylesheet" href="/bathhub-logo.css">
 <style>
 /* Look: tokens live in /rbh-app.css (black, ash, gold). This block is layout only. */
 :root{--bg:var(--c-bg);--card:var(--c-surface);--tx:var(--c-text);--mut:var(--c-muted);--line:var(--c-line);--green:var(--c-ink);--greenD:var(--c-ink);--gold:var(--c-warn);--bad:var(--c-bad);--badbg:var(--c-bad-bg);--okbg:var(--c-ok-bg);--warnbg:var(--c-warn-bg)}
@@ -104,10 +104,10 @@ tr.pend td:first-child,tr.part td:first-child{box-shadow:inset 4px 0 0 var(--c-g
 #isr small{color:var(--c-muted)}#ibox label{display:block;font-size:var(--t-s);color:var(--c-muted);margin-top:8px}#ibox input{width:100%}
 #ibox .ph{width:100%;max-height:220px;object-fit:contain;background:#f4f4f1;border-radius:var(--r1)}#ibox .mg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#ibox .mg div{flex:1 1 90px;background:#f4efe0;border-radius:var(--r1);padding:8px}#ibox .mg b{display:block;font-size:var(--t-l)}
 body.embed header{display:none}
-</style><script src="/bathhub-a11y.js" defer></script>
+</style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
-<div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button>
+<div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>
 <div class="wrap" id="view1">
  <section>
@@ -132,6 +132,7 @@ body.embed header{display:none}
 </div>
 <div id="view2"></div>
 <div id="view3" style="display:none;padding:var(--s3)"></div>
+<div id="view4" style="display:none;padding:var(--s3)"></div>
 <div class="modal" id="imodal"><div class="box" id="ibox"></div></div>
 <div class="modal" id="modal"><div class="box"><h2 id="mt"></h2><div id="mb"></div><div class="row" style="margin-top:14px"><button class="d" id="mn" style="display:none">No</button><button class="p" id="mx">OK, close</button></div></div></div>
 <div id="printArea"></div>
@@ -427,8 +428,8 @@ function doPrint(){var P=$('printArea');P.textContent='';P.appendChild(h('h2',{t
  sp.addEventListener('dblclick',function(){wr.style.removeProperty('--lw');try{localStorage.removeItem('grn_lw')}catch(e){}})})();
 
 /* ---------- vendors & summary ---------- */
-function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('view3').style.display=n===3?'block':'none';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques()}
-$('tab1').onclick=function(){tab(1)};$('tab2').onclick=function(){tab(2)};$('tab3').onclick=function(){tab(3)};
+function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
+$('tab1').onclick=function(){tab(1)};$('tab2').onclick=function(){tab(2)};$('tab3').onclick=function(){tab(3)};$('tab4').onclick=function(){tab(4)};
 function loadSummary(){var V=$('view2');
  if(!CLOUD){V.textContent='';V.appendChild(h('div',{class:'msg warn',text:'The vendor list lives in the app. Open this page from the shop app (localhost:3100/grn_workbench.html).'}));return}
  V.textContent='Loading...';
@@ -517,13 +518,42 @@ function openItem(code){var B=$('ibox');B.textContent='Loading...';$('imodal').c
     fetch('/api/item-detail/'+encodeURIComponent(code),{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){msg.style.display='block';if(x.ok){it=x.j;msg.className='msg ok';msg.textContent='Saved.';if(x.j.photo_url){img.src=x.j.photo_url+'?t='+Date.now();img.style.display=''}marg()}else{msg.className='msg bad';msg.textContent=x.j.error||'Not saved'}})}
    if(ph.files&&ph.files[0]){var fr=new FileReader();fr.onload=function(){send(fr.result)};fr.readAsDataURL(ph.files[0])}else send(null)}})]))}}
 })();
-/* ---- tab 3: cheques and what I owe ---- */
+/* ---- tab 3: cheques (add / edit / delete / clear) and what I owe ---- */
+function jf(u,m,b){return fetch(u,{method:m||'GET',credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.text().then(function(t){var j;try{j=JSON.parse(t)}catch(e){j={error:'Unexpected reply ('+r.status+')'}}return{ok:r.ok,s:r.status,j:j}})})}
+function chequeEdit(c){var F={no:h('input',{value:c.cheque_no||''}),bank:h('input',{value:c.bank||''}),amt:h('input',{type:'number',step:'0.01',value:c.amount}),cd:h('input',{type:'date',value:c.cheque_date}),dd:h('input',{type:'date',value:c.due_date})},B=$('ibox'),msg=h('div',{class:'msg',style:'display:none'});B.textContent='';B.appendChild(h('h2',{text:'Edit cheque: '+c.vendor_name}));
+ [['Cheque number',F.no],['Bank',F.bank],['Amount (Rs)',F.amt],['Cheque date',F.cd],['Clears on (due)',F.dd]].forEach(function(a){B.appendChild(h('label',{text:a[0]}));B.appendChild(a[1])});B.appendChild(msg);
+ B.appendChild(h('div',{class:'row',style:'margin-top:12px'},[h('button',{text:'Cancel',onclick:function(){$('imodal').classList.remove('on')}}),h('button',{class:'p',text:'Save',onclick:function(){jf('/api/grn-cheques/'+c.id,'PUT',{cheque_no:F.no.value,bank:F.bank.value,amount:F.amt.value,cheque_date:F.cd.value,due_date:F.dd.value}).then(function(x){if(x.ok){$('imodal').classList.remove('on');loadCheques()}else{msg.style.display='block';msg.className='msg bad';msg.textContent=x.j.error||'Not saved'}})}})]));$('imodal').classList.add('on')}
 function loadCheques(){var V=$('view3');V.textContent='Loading...';
- Promise.all([api('/summary'),fetch('/api/cheque-register',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():[]}).catch(function(){return[]})]).then(function(a){var x=a[0],ch=a[1]||[];if(x.s!==200){V.textContent='';V.appendChild(h('div',{class:'msg bad',text:'Could not load: '+(x.j.error||x.s)}));return}
-  var S=x.j,owed=S.vendors.reduce(function(s,v){return s+Number(v.owed||0)},0),open=(S.bill_list||[]).filter(function(b){return Number(b.owed)>0.005}),pend=ch.filter(function(c){return c.status!=='cleared'&&c.status!=='cancelled'}),pendSum=pend.reduce(function(s,c){return s+Number(c.amount||0)},0);
-  V.textContent='';V.appendChild(h('div',{class:'stats'},[stat('I owe vendors','Rs '+fmt(owed),open.length+' open bills',1,'x'),stat('Cheques not cleared','Rs '+fmt(pendSum),pend.length+' cheques',0,'x'),stat('Left after cheques','Rs '+fmt(owed-pendSum),'owed minus cheques given',0,'x')]));
-  var c1=h('div',{class:'card',style:'margin-top:14px'});c1.appendChild(h('h3',{text:'What I owe, by vendor'}));c1.appendChild(tbl(['Vendor','Billed','Remaining to pay'],S.vendors.filter(function(v){return Number(v.billed)>0||Math.abs(Number(v.owed))>0.005}).map(function(v){return[v.name,fmt(v.billed),fmt(v.owed)]}),[1,2]));V.appendChild(c1);
-  var c2=h('div',{class:'card',style:'margin-top:14px'});c2.appendChild(h('h3',{text:'Open bills (remaining on each)'}));c2.appendChild(tbl(['Vendor','Bill','Date','Bill total','Remaining'],open.map(function(b){return[b.vendor,b.bill_no,String(b.bill_date||'').slice(0,10),fmt(b.total),fmt(b.owed)]}),[3,4]));V.appendChild(c2);
-  var c3=h('div',{class:'card',style:'margin-top:14px'});c3.appendChild(h('h3',{text:'Cheques'}));c3.appendChild(tbl(['Cheque','Payee','Bank','Due','Amount','Status'],ch.map(function(c){return[c.cheque_no,c.payee,c.bank||'-',String(c.due_date||'').slice(0,10),fmt(c.amount),c.status]}),[4]));c3.appendChild(h('p',{class:'mut',text:'To record a new cheque press tab 1, then + New cheque.'}));V.appendChild(c3)}).catch(function(e){V.textContent='No connection: '+e.message})}
+ jf('/api/grn-cheques').then(function(x){if(!x.ok){V.textContent='';V.appendChild(h('div',{class:'msg bad',text:'Could not load: '+(x.j.error||x.s)}));return}
+  var ch=x.j.cheques||[],bills=x.j.bills||[],rem=bills.reduce(function(s,b){return s+b.remaining},0),iss=ch.filter(function(c){return c.status==='ISSUED'}),issSum=iss.reduce(function(s,c){return s+c.amount},0),open=bills.filter(function(b){return b.remaining>0.005}),byV={};
+  bills.forEach(function(b){var v=byV[b.vendor_name]||(byV[b.vendor_name]={name:b.vendor_name,billed:0,rem:0,iss:0});v.billed+=b.total;v.rem+=b.remaining;v.iss+=b.issued});
+  V.textContent='';V.appendChild(h('div',{class:'stats'},[stat('I still owe (not cleared yet)','Rs '+fmt(rem),open.length+' open bills',1,'x'),stat('Cheques given, not cleared','Rs '+fmt(issSum),iss.length+' cheques',0,'x'),stat('Will remain after they clear','Rs '+fmt(rem-issSum),'owed minus cheques given',0,'x')]));
+  var c3=h('div',{class:'card',style:'margin-top:14px'});c3.appendChild(h('h3',{text:'Cheques'}));
+  c3.appendChild(h('div',{class:'row'},[h('button',{class:'p',text:'+ Add a cheque',onclick:function(){tab(1);var b=document.querySelector('[data-new="CHEQUE"]');if(b)b.click()}})]));
+  var tb=h('tbody');ch.forEach(function(c){var act=h('td',{style:'white-space:nowrap'});
+   if(c.status==='ISSUED'){act.appendChild(h('button',{text:'Cleared',onclick:function(){ask('Mark cheque '+(c.cheque_no||'')+' as cleared?',['Rs '+fmt(c.amount)+' to '+c.vendor_name+'. The bill balance goes down.'],'Yes, cleared',function(){jf('/api/vendor-ledger/cheques/'+c.id+'/clear','POST',{}).then(function(r){if(r.ok)loadCheques();else modal('Not changed',r.j.error||'Error')})})}}));act.appendChild(document.createTextNode(' '))}
+   if(c.status!=='CLEARED'){act.appendChild(h('button',{text:'Edit',onclick:function(){chequeEdit(c)}}));act.appendChild(document.createTextNode(' '));act.appendChild(h('button',{class:'d',text:'Delete',onclick:function(){ask('Delete this cheque?',['Cheque '+(c.cheque_no||'(no number)')+', Rs '+fmt(c.amount)+', '+c.vendor_name+'. It is removed completely.'],'Yes, delete',function(){jf('/api/grn-cheques/'+c.id,'DELETE').then(function(r){if(r.ok)loadCheques();else modal('Not deleted',r.j.error||'Error')})})}}))}
+   else act.appendChild(h('span',{class:'mut',text:'paid'}));
+   tb.appendChild(h('tr',{},[h('td',{text:c.cheque_no||'-'}),h('td',{text:c.vendor_name}),h('td',{text:c.bill_no||'-'}),h('td',{text:c.bank||'-'}),h('td',{text:c.due_date}),h('td',{class:'r',text:fmt(c.amount)}),h('td',{text:c.status==='ISSUED'?'Given':c.status==='CLEARED'?'Cleared':c.status==='BOUNCED'?'Bounced':'Cancelled'}),act]))});
+  if(!ch.length)tb.appendChild(h('tr',{},[h('td',{text:'No cheques yet'})]));
+  c3.appendChild(h('div',{class:'scroll'},[h('table',{},[h('thead',{},[h('tr',{},['Cheque','Vendor','Bill','Bank','Clears on','Amount','Status',''].map(function(t){return h('th',{text:t})}))]),tb])]));V.appendChild(c3);
+  var c1=h('div',{class:'card',style:'margin-top:14px'});c1.appendChild(h('h3',{text:'What I owe, by vendor'}));c1.appendChild(tbl(['Vendor','Billed','Cheques given','Remaining'],Object.keys(byV).map(function(k){return byV[k]}).filter(function(v){return v.billed>0}).map(function(v){return[v.name,fmt(v.billed),fmt(v.iss),fmt(v.rem)]}),[1,2,3]));V.appendChild(c1);
+  var c2=h('div',{class:'card',style:'margin-top:14px'});c2.appendChild(h('h3',{text:'Open bills (remaining on each)'}));c2.appendChild(tbl(['Vendor','Bill','Date','Bill total','Remaining'],open.map(function(b){return[b.vendor_name,b.bill_no,b.bill_date,fmt(b.total),fmt(b.remaining)]}),[3,4]));V.appendChild(c2)}).catch(function(e){V.textContent='No connection: '+e.message})}
+/* ---- tab 4: customer bills for the day / week / hour I pick ---- */
+function loadSales(){var V=$('view4'),today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ if(!V.getAttribute('data-ready')){V.setAttribute('data-ready','1');V.textContent='';
+  var f=h('input',{type:'date',id:'sf',value:today}),t=h('input',{type:'date',id:'st',value:today}),by=h('select',{id:'sby'},[h('option',{value:'hour',text:'By hour'}),h('option',{value:'day',text:'By day'})]);
+  function setR(a,b,m){f.value=a;t.value=b;by.value=m;go()}
+  function add(n){var d=new Date(today);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  V.appendChild(h('div',{class:'card'},[h('h3',{text:'Customer bills: pick a date'}),h('div',{class:'row'},[h('label',{text:'From'}),f,h('label',{text:'To'}),t,by,h('button',{class:'p',text:'Show',onclick:function(){go()}})]),
+   h('div',{class:'row'},[h('button',{text:'Today',onclick:function(){setR(today,today,'hour')}}),h('button',{text:'Yesterday',onclick:function(){setR(add(-1),add(-1),'hour')}}),h('button',{text:'Last 7 days',onclick:function(){setR(add(-6),today,'day')}}),h('button',{text:'This month',onclick:function(){setR(today.slice(0,8)+'01',today,'day')}})])]));
+  V.appendChild(h('div',{id:'sout'}));
+  window.salesGo=go;function go(){var O=$('sout');O.textContent='Loading...';jf('/api/sales-view?from='+f.value+'&to='+(t.value||f.value)+'&by='+by.value).then(function(x){O.textContent='';if(!x.ok){O.appendChild(h('div',{class:'msg bad',text:x.j.error||'Could not load'}));return}draw(O,x.j)})}}
+ window.salesGo()
+ function draw(O,d){O.appendChild(h('div',{class:'stats',style:'margin-top:14px'},[stat('Sales in this period','Rs '+fmt(d.total),d.from===d.to?d.from:d.from+' to '+d.to,1,'x'),stat('Customer bills',d.bills,'not counting cancelled bills',0,'x'),stat('Discounts given','Rs '+fmt(d.discount),'',0,'x')]));
+  var c=h('div',{class:'card'});c.appendChild(h('h3',{text:d.by==='hour'?'Sales by hour':'Sales by day'}));var mx=Math.max.apply(null,d.rows.map(function(r){return r.total}).concat([1]));
+  c.appendChild(tbl([d.by==='hour'?'Hour':'Day','Bills','Sales',''],d.rows.map(function(r){return[d.by==='hour'?(String(r.key).padStart(2,'0')+':00 - '+String(r.key).padStart(2,'0')+':59'):r.key,r.bills,fmt(r.total),'█'.repeat(Math.max(1,Math.round(r.total/mx*20)))]}),[1,2]));O.appendChild(c);
+  var p=h('div',{class:'card',style:'margin-top:14px'});p.appendChild(h('h3',{text:'How customers paid'}));p.appendChild(tbl(['Method','Bills','Total'],d.by_payment.map(function(r){return[r.method,r.bills,fmt(r.total)]}),[1,2]));O.appendChild(p);
+  var l=h('div',{class:'card',style:'margin-top:14px'});l.appendChild(h('h3',{text:'Bills ('+d.list.length+(d.list.length>=300?', latest 300':'')+')'}));l.appendChild(tbl(['Time','Bill','Customer','Paid by','Total'],d.list.map(function(b){return[b.at,b.bill_number+(b.voided?' (cancelled)':''),b.customer_name||'Walk-in',b.payment_method||'cash',fmt(b.total)]}),[4]));O.appendChild(l)}}
 })();
 </script></body></html>

@@ -569,6 +569,7 @@ const setupGate = (handler) => async (req, res) => {
 };
 // One site: the Royal Bath Hub website (Netlify) is the front door; the owner's business screens live at /owner (sign-in required for every private API).
 app.get('/', setupGate((req, res) => res.redirect(302, PUBLIC_SITE_URL)));
+app.get('/grn', (req, res) => res.redirect(302, '/bathco_complete.html#/grn'));   // short link: opens the GRN screen in the main app
 app.get('/app', setupGate((req, res) => res.redirect(302, '/owner')));
 app.get('/owner', setupGate((req, res) => res.sendFile('public/bathco_complete.html', { root: __dirname })));
 
@@ -636,6 +637,8 @@ app.use('/api', require('./routes/item_catalog'));       // routes are relative 
 app.use('/api', require('./routes/qr_svg'));            // /api/qr/<code>.svg (sticker QR pictures)
 app.use('/api', require('./routes/item_prices'));       // /api/item-prices (owner Prices screen)
 app.use('/api', require('./routes/item_detail'));      // item pop-up: cost, price, margin, name, photo (owner)
+app.use('/api', require('./routes/grn_cheques'));      // GRN screen: vendor cheques list, edit, delete
+app.use('/api', require('./routes/sales_view'));      // GRN screen: customer bills by day / hour
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
