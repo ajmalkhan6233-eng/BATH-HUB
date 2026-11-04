@@ -164,7 +164,7 @@ async function visionModels() {
     try {
         const r = await fetch('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(15000) });
         const j = await r.json();
-        found = (j.data || []).filter(m => m.id && /:free$/.test(m.id) && ((m.architecture || {}).input_modalities || []).includes('image'))
+        found = (j.data || []).filter(m => m.id && /:free$/.test(m.id) && ((m.architecture || {}).input_modalities || []).includes('image') && !/safety|inkling|dots|reasoning/.test(m.id))
             .sort((a, b) => (b.created || 0) - (a.created || 0)).map(m => m.id);
     } catch (_) {}
     const list = [...new Set(first.concat(found))];
