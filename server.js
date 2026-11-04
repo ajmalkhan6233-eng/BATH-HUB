@@ -3478,7 +3478,8 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
         laylaOwner.start();   // reminders every minute; WhatsApp relay only if RELAY_URL is set; DRY RUN unless LAYLA_OWNER_LIVE=true
-        console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);   // one clean line (the old banner still said "Your Business Name")
+        console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);
+        require('./utils/extraAdmins').run(pool).catch(() => {});   // owner-level logins listed in config/extra_admins.json   // one clean line (the old banner still said "Your Business Name")
     });
 }
 
