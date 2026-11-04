@@ -7,7 +7,7 @@ const express = require('express');
 const pool = require('../utils/pool');
 const R = require('../scripts/renumber_item_codes');
 const router = express.Router();
-const admin = (req, res, next) => (req.session && req.session.user && req.session.user.role === 'admin') ? next() : res.status(403).json({ error: 'Only the owner (admin) can do this.' });
+const admin = (req, res, next) => (req.session && req.session.user && ['admin','owner'].includes(req.session.user.role)) ? next() : res.status(403).json({ error: 'Only the owner (admin) can do this.' });
 router.use('/item-renumber', admin);
 
 router.get('/item-renumber/plan', async (req, res) => {

@@ -111,19 +111,30 @@ async function loadExtra(db, billId) {
 // Drafts waiting for Ajmal (bills Claude read from photos): drafts_inbox/*.json. Shown as drafts in the workbench; once the bill is saved it stops showing.
 const INBOX = path.join(__dirname, '..', 'drafts_inbox');
 router.use('/grn-inbox', express.static(INBOX, { index: false, dotfiles: 'deny', extensions: ['jpg'] }));
+const DISMISSED_FILE = path.join(__dirname, '..', 'data', 'grn_dismissed.json');
+const readDismissed = () => { try { return new Set(JSON.parse(fs.readFileSync(DISMISSED_FILE, 'utf8'))); } catch (e) { return new Set(); } };
+router.post('/grn-workbench/dismiss', express.json(), (req, res) => {   // "Delete draft" on a draft that comes from the server lists: it must stay deleted after a refresh
+    const id = String((req.body || {}).id || '').slice(0, 120);
+    if (!id) return res.status(400).json({ error: 'No draft chosen' });
+    try { const set = readDismissed(); set.add(id); fs.mkdirSync(path.dirname(DISMISSED_FILE), { recursive: true }); fs.writeFileSync(DISMISSED_FILE, JSON.stringify([...set])); res.json({ ok: true }); }
+    catch (e) { res.status(500).json({ error: 'Could not remember that: ' + e.message }); }
+});
 router.get('/grn-workbench/bills', async (req, res) => {
     let list = [];
     try { list = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'grn_bills.json'), 'utf8')); } catch (e) { list = []; }
     try {
         for (const f of fs.readdirSync(INBOX).filter(x => x.endsWith('.json'))) {
-            for (const b of JSON.parse(fs.readFileSync(path.join(INBOX, f), 'utf8'))) {
-                let saved = false;
-                try { saved = await billExists(pool, b.vendor, b.no); } catch (_) {}
-                if (!saved) list.push(b);
-            }
+            for (const b of JSON.parse(fs.readFileSync(path.join(INBOX, f), 'utf8'))) list.push(b);
         }
     } catch (e) { /* no inbox folder: fine */ }
-    res.json(list);
+    const gone = readDismissed(), out = [];
+    for (const b of list) {   // a bill already saved in the app, or one Ajmal deleted, is not offered again
+        if (gone.has(String(b.id))) continue;
+        let saved = false;
+        try { saved = await billExists(pool, b.vendor, b.no); } catch (_) { /* keep it */ }
+        if (!saved) out.push(b);
+    }
+    res.json(out);
 });
 
 // Next free number for a vendor. Looks at the vendor's own numbers (saved bills + GRN records), read only.

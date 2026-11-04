@@ -114,6 +114,7 @@ input,select{padding:2px 8px;min-height:36px}button{padding:3px 12px;min-height:
 .stat{padding:8px 12px}.stats{gap:8px;margin-bottom:8px}.tabs button{min-height:38px;padding:4px 14px}
 .row{gap:6px}.msg{padding:6px 10px;margin:6px 0}label{margin-top:4px}}
 #ibox.wide{max-width:860px;width:min(860px,96vw);display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:0 20px}#imodal .box:has(#ibox){}#ibox.wide .ph{max-height:150px}#ibox.wide .mg{flex-wrap:nowrap}
+@media(min-width:900px){.frame{height:300px}.wrap{padding:6px}.card{padding:8px}.dr{padding:4px 8px;margin-bottom:4px}h3{margin:0 0 4px}.tabs{padding-top:4px}input,select{min-height:32px}button{min-height:32px}}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
 <header><b>Royal Bath Hub</b><span>GRN workbench: photo, fix, press OK. Nothing is saved before that.</span></header>
@@ -278,7 +279,7 @@ function drawDrafts(){var L=$('drafts');L.textContent='';
   var row=h('div',{class:'dr'+(d===cur?' on':'')},[h('span',{class:'t',onclick:function(){open(d)}},[h('span',{text:title(d)}),h('span',{class:'s',text:(d.paper?'Paper total '+fmt(d.paper):'')+(d.photo?'  |  photo added':'')})]),h('span',{class:'tag '+st[1],text:st[0]}),pr,h('span',{class:'gap'}),h('button',{class:'d',text:'Delete draft',style:'min-height:32px;padding:2px 10px',onclick:function(){del(d)}})]);
   L.appendChild(row)});
  if(!drafts.length)L.appendChild(h('div',{class:'msg',text:'No drafts. Press + New GRN.'}))}
-function del(d){var i=drafts.indexOf(d);if(i<0)return;idbDel(d.id);drafts.splice(i,1);if(!drafts.length)drafts.push(blank('GRN'));if(cur===d)cur=drafts[Math.max(0,i-1)];save();render()}
+function del(d){var i=drafts.indexOf(d);if(i<0)return;idbDel(d.id);if(CLOUD&&d.id&&d.status!=='saved'){fetch('/api/grn-workbench/dismiss',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:d.id})}).catch(function(){})}drafts.splice(i,1);if(!drafts.length)drafts.push(blank('GRN'));if(cur===d)cur=drafts[Math.max(0,i-1)];save();render()}
 $('clearEmpty').onclick=function(){drafts=drafts.filter(function(d){return !isEmpty(d)||d===cur});if(!drafts.length)drafts.push(blank('GRN'));if(drafts.indexOf(cur)<0)cur=drafts[0];save();render()};
 function open(d){cur=d;gm('','');render();checkDup(d,true);if(!d.photo)idbGet(d.id).then(function(p){if(p&&cur===d){d.photo=p;drawFrame()}})}
 document.querySelectorAll('[data-new]').forEach(function(b){b.onclick=function(){var d=blank(b.getAttribute('data-new'));drafts.push(d);cur=d;gm('','');render();focusFirst()}});
@@ -468,7 +469,7 @@ function drawSummary(S){var V=$('view2');V.textContent='';SUM=S;openKey='';
   tb.appendChild(h('tr',{class:v.active?'':'off'},[h('td',{text:String(i+1)}),h('td',{class:'b',text:v.name+(v.active?'':'  (hidden)')}),h('td',{text:v.contact_person||'-'}),h('td',{text:v.phone||'-'}),h('td',{text:v.category||'-'}),h('td',{text:String(v.grns)}),h('td',{text:'Rs '+fmt(v.billed)}),h('td',{text:'Rs '+fmt(v.owed),style:'font-weight:700;color:'+(Number(v.owed)>0.5?'#8a5f0a':'#135c37')}),
    h('td',{style:'white-space:nowrap'},[h('button',{class:'p',text:'Bills',style:'min-height:32px;padding:2px 12px',onclick:function(){vbills(v)}}),document.createTextNode(' '),h('button',{text:'Edit details',style:'min-height:32px;padding:2px 12px',onclick:function(){vform(v)}}),document.createTextNode(' '),v.active?h('button',{class:'d',text:'Delete',style:'min-height:32px;padding:2px 12px',onclick:function(){vdel(v)}}):h('button',{text:'Show again',style:'min-height:32px;padding:2px 12px',onclick:function(){api('/vendor/'+v.id+'/show',{method:'POST'}).then(loadSummary)}})])]))});
  card.appendChild(h('div',{class:'scroll',style:'max-height:none'},[h('table',{class:'vtab'},[h('thead',{},[h('tr',{},['No.','Vendor','Contact','Phone','Category','GRNs','Billed','You owe',''].map(function(x){return h('th',{text:x})}))]),tb])]));
- V.appendChild(card);V.appendChild(renumCard());V.appendChild(h('div',{id:'vbills'}));V.appendChild(h('div',{id:'vform'}));}
+ V.appendChild(card);V.appendChild(h('div',{id:'vbills'}));V.appendChild(h('div',{id:'vform'}));}
 /* Item codes in vendor order: Metro stays, then Fazal, Maheshan, Afam, Imran, Leo. Look first, then apply. Undo is one tap. */
 function renumCard(){
  var c=h('div',{class:'card',style:'margin-top:14px'}),out=h('div',{id:'renumOut'}),m=h('div',{class:'msg',style:'display:none'});
@@ -571,10 +572,11 @@ function loadSales(){var V=$('view4'),today=new Date(Date.now()-new Date().getTi
 
 /* ---- play buttons: backup now, find double-counted GRNs ---- */
 var toolsBuilt=false;
-function buildTools(){if(toolsBuilt)return;toolsBuilt=true;var T=$('tools'),card=h('div',{class:'card'}),bst=h('div',{class:'mut',style:'margin:6px 0'}),bbtn=h('button',{class:'p',text:'▶ Backup everything to GitHub now'}),dout=h('div'),dbtn=h('button',{class:'p',text:'▶ Check for double-counted GRNs'});
+function buildTools(){if(toolsBuilt)return;toolsBuilt=true;var T=$('tools'),card=h('div',{class:'card'}),bst=h('div',{class:'mut',style:'margin:6px 0'}),bbtn=h('button',{class:'p',text:'▶ Backup everything to GitHub now'}),dout=h('div'),dbtn=h('button',{class:'p',text:'▶ Check for double-counted GRNs'}),ubtn=h('button',{class:'p',text:'▶ Put my own item codes back'});
  card.appendChild(h('h3',{text:'Keep it safe and correct'}));
- card.appendChild(h('div',{class:'row'},[bbtn,dbtn]));card.appendChild(bst);card.appendChild(dout);T.appendChild(card);
+ card.appendChild(h('div',{class:'row'},[bbtn,dbtn,ubtn]));card.appendChild(bst);card.appendChild(dout);T.appendChild(card);
  function showB(){jf('/api/github-backup').then(function(x){if(!x.ok){bst.textContent=x.j.error||'';return}var l=x.j.last;bst.textContent=x.j.running?'Backing up...':(l?(l.ok?'Last backup OK: ':'Last backup NOT done: ')+String(l.at).slice(0,16).replace('T',' ')+'  '+l.msg:'No backup yet. Press the button.');if(x.j.running)setTimeout(showB,3000)})}
+ ubtn.onclick=function(){ask('Put your own item codes back?',['This undoes the automatic renumbering and brings back the codes as they were before (the ones you typed). Bills, stock and prices follow. Nothing is lost.'],'Yes, put them back',function(){jf('/api/item-renumber/undo','POST',{}).then(function(r){modal(r.ok?'Done':'Not changed',r.ok?(r.j.message||'Done'):(r.j.error||'Error'))})})};
  bbtn.onclick=function(){bst.textContent='Starting...';jf('/api/github-backup/run','POST',{}).then(function(){setTimeout(showB,2500)})};showB();
  dbtn.onclick=function(){dout.textContent='Checking...';jf('/api/grn-dupes').then(function(x){dout.textContent='';if(!x.ok){dout.appendChild(h('div',{class:'msg bad',text:x.j.error||'Could not check'}));return}var f=x.j.found||[];if(!f.length){dout.appendChild(h('div',{class:'msg ok',text:'Nothing is double-counted. All good.'}));return}
   f.forEach(function(p){var box=h('div',{class:'msg warn',style:'margin-top:8px'});box.appendChild(h('div',{text:'Bill '+p.bill_no+' ('+p.vendor+', Rs '+fmt(p.total)+') was also entered as GRN '+p.duplicate_numbers.join(' + ')+' ('+p.lines+' lines). The same goods are in stock twice.'}));
