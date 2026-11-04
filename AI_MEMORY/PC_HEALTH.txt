@@ -1,0 +1,63 @@
+﻿=== RAM / CPU ===
+RAM: 7.9 GB total, 1.7 GB free, 78% used
+CPU load now: 27%
+
+=== TOP 10 BY RAM ===
+
+Name                   Id RAM_MB CPU_s
+----                   -- ------ -----
+Memory Compression   2832    797     0
+claude               1284    680   558
+claude              19784    439   589
+MsMpEng              4476    242     0
+PhoneExperienceHost 17524    233    90
+claude              25520    221   302
+claude               8448    221   247
+chrome               9612    197    95
+claude              18928    191    61
+explorer            19216    156    56
+
+
+
+=== PROCESS COUNTS ===
+node: 10 | pm2-related node: 8 | emulator/adb/android-studio: 0 | browser: 23
+
+=== FREE DISK ===
+C: 35.8 GB free of 170.7 GB
+D: 2 GB free of 2.3 GB
+E: 8.4 GB free of 50 GB
+
+=== STARTUP PROGRAMS ===
+
+Name                                                     Location                                                      
+----                                                     --------                                                      
+Ollama                                                   Startup                                                       
+Premium Imports LK Server                                Startup                                                       
+RBH_Open_Chrome                                          Startup                                                       
+MicrosoftEdgeAutoLaunch_0FBCFF898F286632688F2BA9443F03CE HKU\S-1-5-21-433467196-319411629-3402735532-1001\SOFTWARE\M...
+Gemini                                                   HKU\S-1-5-21-433467196-319411629-3402735532-1001\SOFTWARE\M...
+GoogleUpdaterTaskUser157.0.8089.0                        HKU\S-1-5-21-433467196-319411629-3402735532-1001\SOFTWARE\M...
+Tailscale                                                Common Startup                                                
+SecurityHealth                                           HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run            
+RtHDVCpl                                                 HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run            
+RtHDVBg_Dolby                                            HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run            
+MTPW                                                     HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run            
+
+
+
+=== TEMP / CACHE SIZES (MB) ===
+User temp (C:\Users\Sony\AppData\Local\Temp): 934
+Windows temp: 0
+npm cache (C:\Users\Sony\AppData\Local\npm-cache): 4267
+Chrome cache: 260
+Edge cache: 59
+Gradle cache: n/a
+Pub cache (Flutter): 339
+
+=== PROJECT BUILD FOLDERS (MB) ===
+E:\AI Sttuf\BATHCO_TEMPLATE\node_modules: 234
+
+=== TEMPERATURE ===
+CPU/GPU temperature: not readable here (Windows does not expose it on many PCs)
+
+DONE. Nothing was changed.

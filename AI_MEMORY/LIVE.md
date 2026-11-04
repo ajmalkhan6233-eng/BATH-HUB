@@ -1,4 +1,6 @@
-﻿# LIVE (12:45 2026-10-21)
+﻿10:15 | Queue Part A 3-5 | apex-server restarted ok (health ok, /owner 200); PC_HEALTH.txt written; readiness 83% RED; temp clean-up BLOCKED by permission; restore check UNVERIFIED | next: Ajmal choose GRN link target + paper counts
+09:36 | Queue Part A step 2 | BLOCKED: restore check, 'ERROR: permission denied to create database' (user bathco_owner_user) | next: Ajmal/chat decide how to give a createdb role or use a scratch PG
+# LIVE (12:45 2026-10-21)
 DOING NOW: stopped after Task 77 steps 3,6 (see AI_BRIDGE/LIVE.md top line).
 DONE: backup-live-21oct pushed; DB backup OK; main folder on work; apex-server restarted, /health 200; scheduled tasks Ready.
 NEXT: AJ decides step 4 wipe (clean) + step 5 drill (both denied by auto-mode classifier), plugins, push work.
@@ -20,3 +22,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-04: Ajmal asked for design/cinematic tools. Added ecc-cinematic-web skill (21st ecc-), AI_MEMORY/DESIGN_TOOLS.md (5 picks, none installed except our text skill). Installs need his YES.
 - 2026-11-04: ecc-web-motion-pro written (pro playbook + effects catalog + redesign playbook + tested recipes; headless test phone/desktop/reduced: no errors, 2 bugs found+fixed). Ajmal gave standing OK to auto-install good free local design libs for website repo. Ox Alpha (reel 2): free preview model from China (Z.ai), skip: sends data out + model lock.
 - 2026-11-04: QUEUE_TODAY written (PC prep, data entry via Add by photo, ERP polish). Simple menu now also shows 'Add by photo' (Document Inbox). Defaults chosen, no questions. Plain-text DB password removed from .claude/commands/dubai-status.md (still in git history; Ajmal should change it).
+
+
