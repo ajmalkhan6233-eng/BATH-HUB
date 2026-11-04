@@ -1,10 +1,10 @@
-﻿# LATEST REPORT 2026-10-21 14:30 (Task 77, done except Ponytail)
-DONE (VERIFIED):
-- clean wipe on bathco_owner: backup 325 KB first, rows left 0, 23 photos removed, /health 200. Big wipe NOT run.
-- watchdog drill: stopped apex-server, watchdog restarted it in 3s, /health 200.
-- skills: document-skills, example-skills (frontend-design, webapp-testing), karpathy-skills enabled. Superpowers = 15 plain skills, plugin removed (it had a SessionStart hook).
-- work pushed: origin/work = 41b15be.
-NOT DONE: Ponytail (git clone stalled twice), step 7 inbox (skipped by AJ).
-PLUGIN/WATCH: aikido/playwright did not connect this session; data sent: UNVERIFIED.
-STATUS: GREEN (Ponytail open)
-AJ next: none needed; retry Ponytail when network is good.
+﻿# LATEST REPORT 2026-11-04
+Branch work, commit 8b96177 (pushed, verified origin/work).
+- Pulled work, merged; setup script ran (22 skills, global rules).
+- apex-server restarted (pm2 restart apex-server), health ok, /owner 200.
+- PC_HEALTH.txt written. Readiness 83% RED. Temp clean-up BLOCKED by permission.
+- Bridge tasks 99-143: live files match bridge patch; nothing newer than T143. Photo scan 14 of 19 errors: waiting chat fix.
+- Menu: GRN workbench button added on simple home (page 200).
+UNVERIFIED: restore check (DB user cannot create db; Ajmal skipped password), clean-up, aikido/playwright activity.
+Next physical action: open localhost:3100/grn_workbench.html and enter papers.
+Status: NEEDS YOU
