@@ -41,3 +41,62 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
+
+/* ---- part 2 (4 Nov): small print everywhere, also inside every screen frame; and a ▶ Update button ---- */
+(function () {
+  'use strict';
+  var MINPX = 15;
+  var FRAME_CSS = 'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
+    'html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
+    '*{scrollbar-width:auto}';
+  function bump(doc) {
+    try {
+      var win = doc.defaultView; if (!win || !doc.body) return;
+      var els = doc.body.querySelectorAll('*'), n = els.length, i, e, cs, fs;
+      for (i = 0; i < n && i < 6000; i++) {
+        e = els[i]; if (e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'svg' || e.tagName === 'path' || e.tagName === 'IFRAME') continue;
+        if (!e.firstChild || !Array.prototype.some.call(e.childNodes, function (c) { return c.nodeType === 3 && c.nodeValue.trim(); })) continue;
+        cs = win.getComputedStyle(e); fs = parseFloat(cs.fontSize);
+        if (fs && fs < MINPX) e.style.setProperty('font-size', MINPX + 'px', 'important');
+      }
+    } catch (x) { /* never break a screen */ }
+  }
+  function lift(doc) {
+    try {
+      if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
+      var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
+      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
+      run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });
+    } catch (x) { /* ignore */ }
+  }
+  function watchFrames() {
+    Array.prototype.forEach.call(document.querySelectorAll('iframe'), function (f) {
+      if (f.dataset.bhLift) return; f.dataset.bhLift = '1';
+      var go = function () { try { if (f.contentDocument && f.contentDocument.body) lift(f.contentDocument); } catch (x) { /* other origin */ } };
+      f.addEventListener('load', go); go();
+    });
+  }
+  function updateButton() {
+    var right = document.querySelector('.topbar-right'); if (!right || document.getElementById('bh-upd')) return;
+    var b = document.createElement('button'); b.id = 'bh-upd'; b.type = 'button'; b.className = 'sm-pill'; b.textContent = '▶ Update';
+    b.title = 'Get the newest version of the app now (it restarts by itself if needed)';
+    b.style.cssText = 'font-weight:700;padding:6px 14px;min-height:40px;border-radius:999px;border:2px solid #C9A24B;background:#C9A24B;color:#111;cursor:pointer;margin-right:6px';
+    b.onclick = function () {
+      b.disabled = true; b.textContent = 'Updating...';
+      fetch('/api/pc-actions/update', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.error) { b.textContent = '▶ Update'; b.disabled = false; alert(j.error); return; }
+          if (j.state === 'current') { b.textContent = 'Already newest'; setTimeout(function () { location.reload(); }, 900); return; }
+          if (j.state === 'blocked') { b.textContent = '▶ Update'; b.disabled = false; alert('Could not update: ' + (j.why || 'unknown') + '. Tell Claude this exact line.'); return; }
+          if (j.needsInstall) alert('Updated. One extra step (npm install) is needed: tell Claude.');
+          b.textContent = j.restart ? 'Restarting...' : 'Done';
+          var tries = 0, wait = function () { tries++; fetch('/health', { cache: 'no-store' }).then(function (r) { if (r.ok && (!j.restart || tries > 3)) location.reload(); else setTimeout(wait, 2000); }).catch(function () { setTimeout(wait, 2000); }); };
+          setTimeout(wait, j.restart ? 4000 : 500);
+        }).catch(function () { b.textContent = '▶ Update'; b.disabled = false; alert('Could not reach the app.'); });
+    };
+    right.insertBefore(b, right.firstChild);
+  }
+  function start() { lift(document); watchFrames(); updateButton(); new MutationObserver(function () { watchFrames(); updateButton(); }).observe(document.body, { childList: true, subtree: true }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
