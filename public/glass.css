@@ -1,0 +1,51 @@
+/* GLASS look (from the admin dashboard Ajmal liked, 4 Nov 2026): blue-teal gradient, frosted-glass cards, soft shadows, dark pill buttons.
+   Only active when the theme is "Glass" (theme button, top right: it cycles Gold, Water, Light, Glass). Nothing else changes. */
+html[data-theme="glass"]{
+  --bg:#0d2740;--bg2:rgba(255,255,255,.10);--bg3:rgba(255,255,255,.08);--card:rgba(255,255,255,.14);--card-border:rgba(255,255,255,.30);--card-hover:rgba(255,255,255,.22);
+  --text:#f3fbff;--text2:#d3e8f3;--text3:#aecbdb;--gold:#ffb347;--gold-dark:#e69a2e;--gold-light:#ffd08a;
+  --bg-canvas:transparent;--bg-surface:rgba(255,255,255,.14);--bg-surface-elevated:rgba(255,255,255,.2);--bg-surface-subtle:rgba(255,255,255,.08);--bg-surface-hover:rgba(255,255,255,.24);
+  --text-primary:#f3fbff;--text-secondary:#d3e8f3;--text-muted:#aecbdb;--border-subtle:rgba(255,255,255,.26);--border-strong:rgba(255,255,255,.45);--bg-input:rgba(255,255,255,.92);
+  --c-bg:transparent;--c-surface:rgba(255,255,255,.14);--c-surface-2:rgba(255,255,255,.10);--c-line:rgba(255,255,255,.26);--c-line-strong:rgba(255,255,255,.45);
+  --c-text:#f3fbff;--c-muted:#c2dcea;--c-ink:#0b1f33;--c-ink-text:#fff;--c-gold:#ffb347;--c-gold-ink:#ffd08a;--c-gold-soft:rgba(255,179,71,.18);
+  --c-ok-bg:rgba(34,197,94,.22);--c-warn-bg:rgba(255,179,71,.22);--c-bad-bg:rgba(239,68,68,.25);--c-ok:#7ee2a2;--c-warn:#ffd08a;--c-bad:#ffb4b4;--c-focus:#ffb347;
+  --primary:#ffb347;--accent:#ffb347;
+}
+html[data-theme="glass"] body{background:linear-gradient(135deg,#0d2740 0%,#15587a 48%,#2a97b3 100%) fixed!important;color:#f3fbff}
+html[data-theme="glass"] .topbar,html[data-theme="glass"] #rbh-menubar{background:rgba(255,255,255,.12)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-color:rgba(255,255,255,.25)!important}
+html[data-theme="glass"] .card,html[data-theme="glass"] .panel,html[data-theme="glass"] .dp-card,html[data-theme="glass"] .stat,html[data-theme="glass"] [class*="-card"],html[data-theme="glass"] .box,html[data-theme="glass"] .modal-box{
+  background:rgba(255,255,255,.14)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.30)!important;border-radius:18px!important;box-shadow:0 10px 30px rgba(0,20,40,.25)!important;color:#f3fbff}
+html[data-theme="glass"] .modal .box,html[data-theme="glass"] #qModal>div{background:rgba(16,52,80,.92)!important;color:#f3fbff}
+html[data-theme="glass"] input,html[data-theme="glass"] select,html[data-theme="glass"] textarea{background:rgba(255,255,255,.93)!important;color:#0b1f33!important;border:1px solid rgba(255,255,255,.6)!important;border-radius:12px!important}
+html[data-theme="glass"] ::placeholder{color:#5b7488}
+html[data-theme="glass"] button{border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#f3fbff}
+html[data-theme="glass"] button.p,html[data-theme="glass"] .generate-btn,html[data-theme="glass"] .btn-primary{background:#0b1f33!important;color:#fff!important;border-color:#0b1f33!important}
+html[data-theme="glass"] button.d{background:rgba(239,68,68,.25);color:#ffd7d7;border-color:rgba(255,160,160,.6)}
+html[data-theme="glass"] table{background:transparent!important;color:#f3fbff}
+html[data-theme="glass"] th{background:rgba(255,255,255,.16)!important;color:#fff!important}
+html[data-theme="glass"] td{border-color:rgba(255,255,255,.18)!important;color:#f3fbff}
+html[data-theme="glass"] tr.row:hover,html[data-theme="glass"] .mb-item:hover{background:rgba(255,255,255,.18)!important}
+html[data-theme="glass"] .mb-list{background:rgba(16,52,80,.94)!important;border-color:rgba(255,255,255,.3)!important;color:#f3fbff}
+html[data-theme="glass"] .mb-item,html[data-theme="glass"] #rbh-menubar button.mb-btn{color:#f3fbff!important}
+html[data-theme="glass"] .msg{background:rgba(255,255,255,.14);color:#f3fbff}
+html[data-theme="glass"] .msg.warn{background:rgba(255,179,71,.25)}html[data-theme="glass"] .msg.ok{background:rgba(34,197,94,.25)}html[data-theme="glass"] .msg.bad{background:rgba(239,68,68,.3)}
+html[data-theme="glass"] .tabs button{background:rgba(255,255,255,.14);color:#f3fbff;border-radius:14px 14px 0 0}
+html[data-theme="glass"] .tabs button.on{background:#0b1f33;color:#ffb347}
+html[data-theme="glass"] a{color:#ffd08a}
+html[data-theme="glass"] .pick-list,html[data-theme="glass"] #isr{background:rgba(16,52,80,.96)!important;color:#f3fbff}
+html[data-theme="glass"] .pick-opt,html[data-theme="glass"] #isr div{color:#f3fbff}
+html[data-theme="glass"] .main-content>.page.active:has(>iframe) iframe{border-radius:18px;border:1px solid rgba(255,255,255,.3)!important;background:transparent!important}
+/* life: cards rise in one after another, numbers feel alive */
+@keyframes glassRise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+html[data-theme="glass"] .dp-card,html[data-theme="glass"] .stat,html[data-theme="glass"] .card{animation:glassRise .45s cubic-bezier(.2,.7,.2,1) both}
+html[data-theme="glass"] .dp-grid>*:nth-child(2),html[data-theme="glass"] .stats>*:nth-child(2){animation-delay:.05s}
+html[data-theme="glass"] .dp-grid>*:nth-child(3),html[data-theme="glass"] .stats>*:nth-child(3){animation-delay:.1s}
+html[data-theme="glass"] .dp-grid>*:nth-child(4),html[data-theme="glass"] .stats>*:nth-child(4){animation-delay:.15s}
+html[data-theme="glass"] .dp-grid>*:nth-child(5){animation-delay:.2s}html[data-theme="glass"] .dp-grid>*:nth-child(6){animation-delay:.25s}
+html[data-theme="glass"] .dp-grid>*:nth-child(7){animation-delay:.3s}html[data-theme="glass"] .dp-grid>*:nth-child(8){animation-delay:.35s}
+html[data-theme="glass"] .dp-card:hover,html[data-theme="glass"] .stat:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(0,20,40,.38)!important}
+/* readable text everywhere on glass */
+html[data-theme="glass"] label,html[data-theme="glass"] h1,html[data-theme="glass"] h2,html[data-theme="glass"] h3,html[data-theme="glass"] h4,html[data-theme="glass"] .pos-h1,html[data-theme="glass"] .topbar,html[data-theme="glass"] .topbar *,html[data-theme="glass"] .main-content h3,html[data-theme="glass"] .main-content h4{color:#f3fbff!important}
+html[data-theme="glass"] .pos-h1-sub,html[data-theme="glass"] .sub,html[data-theme="glass"] .mut,html[data-theme="glass"] small,html[data-theme="glass"] .main-content .sub{color:#cfe6f2!important}
+html[data-theme="glass"] .topbar button,html[data-theme="glass"] .topbar .sm-pill{color:#f3fbff!important}
+html[data-theme="glass"] .topbar #bh-upd{color:#111!important}
+html[data-theme="glass"] .topbar-right>*:not(button){background:rgba(255,255,255,.18)!important;border-radius:999px;color:#f3fbff!important}
