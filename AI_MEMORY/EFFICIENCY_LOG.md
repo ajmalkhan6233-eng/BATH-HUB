@@ -3,3 +3,4 @@ Score = how many of 8 practice checks were met (each 12.5%): 1 task restated 2 g
 Target: 95%+ = 8 of 8 on every task (a 7/8 task needs a one-word reason). Usage and tool-call count are logged so waste is visible.
 date | task | tool calls (approx) | score /8 | note
 2026-11-03 | simple menu + module switch + vendor return/discount | ~60 | 7/8 | #6 met; #3 partly: tests written after code on 2 files; reply long before the 5-line rule was applied
+2026-11-04 | ecc-cinematic-web + DESIGN_TOOLS research | ~12 | 7/8 | no code to test (text skill); #5/#6 N/A
