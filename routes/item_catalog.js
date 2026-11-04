@@ -130,7 +130,7 @@ router.get('/items/next-code', async (req, res) => {
 
 // ─── Item lookup (search box / barcode / stock check) ───────────────────────
 // Selling price and stock only: the cost price is deliberately not returned here.
-const ITEM_COLS = `item_code, name, category, stock_level, reorder_threshold, selling_price, photo_url,
+const ITEM_COLS = `item_code, name, category, stock_level, reorder_threshold, selling_price, photo_url, vendor_code,
                    (stock_level <= reorder_threshold) AS low_stock`;
 
 // GET /items?q=floor&category=Tiles&low=1&limit=50  -> active items, name or code contains q
@@ -142,7 +142,7 @@ router.get('/items', async (req, res) => {
         const r = await pool.query(
             `SELECT ${ITEM_COLS} FROM products
              WHERE active = true
-               AND ($1 = '' OR LOWER(name) LIKE '%' || $1 || '%' OR item_code LIKE '%' || $1 || '%')
+               AND ($1 = '' OR LOWER(name) LIKE '%' || $1 || '%' OR item_code LIKE '%' || $1 || '%' OR LOWER(COALESCE(vendor_code,'')) LIKE '%' || $1 || '%')
                AND ($2 = '' OR category = $2)
                AND ($3::boolean = false OR stock_level <= reorder_threshold)
              ORDER BY item_code

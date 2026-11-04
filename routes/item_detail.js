@@ -33,11 +33,32 @@ router.post('/item-detail/:code', ownerOnly, express.json({ limit: '8mb' }), asy
             const buf = Buffer.from(m[2], 'base64'); if (buf.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'Photo too large (max 5 MB)' });
             vals.push(savePhoto(buf)); sets.push(`photo_url = $${vals.length}`);
         }
-        if (!sets.length) return res.status(400).json({ error: 'Nothing to save' });
-        vals.push(String(req.params.code));
-        const r = await pool.query(`UPDATE products SET ${sets.join(', ')} WHERE item_code = $${vals.length} RETURNING ${COLS}`, vals);
-        if (!r.rows.length) return res.status(404).json({ error: 'Item not found' });
-        res.json(shape(r.rows[0]));
+        if (b.vendor_code !== undefined) { vals.push(String(b.vendor_code).trim().slice(0, 60) || null); sets.push(`vendor_code = $${vals.length}`); }
+        const oldCode = String(req.params.code);
+        const newCode = b.new_code === undefined ? oldCode : String(b.new_code).trim();
+        if (newCode !== oldCode && !/^[A-Za-z0-9-]{1,20}$/.test(newCode)) return res.status(400).json({ error: 'Item code: letters, numbers and - only (max 20)' });
+        if (!sets.length && newCode === oldCode) return res.status(400).json({ error: 'Nothing to save' });
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const same = await client.query(`SELECT id FROM products WHERE item_code = $1 FOR UPDATE`, [oldCode]);
+            if (same.rows.length > 1 && newCode !== oldCode) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Two items share code ' + oldCode + '. Fix that first (tell Claude). Nothing was changed.' }); }
+            if (newCode !== oldCode) {
+                const dup = await client.query(`SELECT 1 FROM products WHERE item_code = $1`, [newCode]);
+                if (dup.rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Item code ' + newCode + ' is already used by another item. Nothing was changed.' }); }
+                vals.push(newCode); sets.push(`item_code = $${vals.length}`);
+            }
+            vals.push(oldCode);
+            const r = await client.query(`UPDATE products SET ${sets.join(', ')} WHERE item_code = $${vals.length} RETURNING ${COLS}`, vals);
+            if (!r.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Item not found' }); }
+            if (newCode !== oldCode) {   // keep every record that points at this code in step (bills, quotations, price history, GRN lines)
+                const t = await client.query(`SELECT table_name FROM information_schema.columns WHERE column_name='item_code' AND table_schema='public' AND table_name NOT IN ('products') AND table_name NOT LIKE 'audit\\_%'`);
+                for (const row of t.rows) await client.query(`UPDATE "${row.table_name}" SET item_code = $1 WHERE item_code = $2`, [newCode, oldCode]);
+                await client.query(`UPDATE grn_records SET item_description = $1 || substr(item_description, $2) WHERE item_description LIKE $3`, [newCode, oldCode.length + 1, oldCode + ' - %']);
+            }
+            await client.query('COMMIT');
+            res.json(shape(r.rows[0]));
+        } catch (e) { try { await client.query('ROLLBACK'); } catch (x) { /* ignore */ } throw e; } finally { client.release(); }
     } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
 });
 module.exports = router;

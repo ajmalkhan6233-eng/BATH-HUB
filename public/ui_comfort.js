@@ -11,6 +11,10 @@
   css.textContent =
     /* one menu only: the top menu bar. The left side list is hidden on a computer screen (phone keeps its own bottom bar). */
     '@media(min-width:768px){.sidebar{display:none!important}.main-content{margin-left:0!important}#sb-grip{display:none!important}}' +
+    /* no outer up-and-down scrolling: the top bar and menu stay put, the screen below fills the rest of the window and only scrolls inside if it really must (Ajmal 4 Nov) */
+    '@media(min-width:768px){html,body{height:100%;overflow:hidden!important}.app-wrapper,.main-content{height:100dvh;overflow:hidden}.main-content{display:flex;flex-direction:column}' +
+    '.main-content>.page.active{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px!important}.main-content>.page.active:has(>iframe){display:flex;flex-direction:column;overflow:hidden;padding:6px 8px!important}' +
+    'html body .main-content>.page.active>iframe{flex:1 1 auto;height:auto!important;min-height:0!important}.topbar-right .sm-modebtn{display:none!important}}' +
     /* clear sans-serif font everywhere, darker text, bigger small print */
     'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}' +
     'html body{font-size:17px}html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +

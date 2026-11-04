@@ -31,6 +31,14 @@
   var tmr = null; function soon() { clearTimeout(tmr); tmr = setTimeout(live, 80); }
   document.addEventListener('input', soon, true); document.addEventListener('click', soon, true); document.addEventListener('change', soon, true);
   new MutationObserver(soon).observe($('itemRows'), { childList: true, subtree: true, attributes: true, attributeFilter: ['data-item-code'] });
+  // discount in Rs and in % stay in step
+  (function () {
+    var pct = $('discountPct'), amt = $('discountAmt'); if (!pct || !amt) return;
+    function sub() { return lines().reduce(function (s, l) { return s + Math.round(l.qty * l.price * 100) / 100; }, 0); }
+    amt.addEventListener('input', function () { var s = sub(), a = parseFloat(amt.value) || 0; pct.value = s > 0 ? Math.min(100, Math.round(a / s * 1e6) / 1e4) : 0; try { pct.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ } });
+    pct.addEventListener('input', function (e) { if (e.isTrusted === false && document.activeElement === amt) return; var s = sub(), p = parseFloat(pct.value) || 0; if (document.activeElement !== amt) amt.value = p > 0 && s > 0 ? (Math.round(s * p) / 100) : ''; });
+    document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('.item-row') && document.activeElement !== amt && (parseFloat(pct.value) || 0) > 0 && !amt.dataset.byAmt) { var s = sub(), p = parseFloat(pct.value) || 0; amt.value = s > 0 ? Math.round(s * p) / 100 : ''; } }, true);
+  })();
   // wide layout only while a finished bill is on screen
   var bp = $('billPanel'), wrap = document.querySelector('.wrap');
   function sync() { wrap.classList.toggle('has-bill', bp && bp.style.display !== 'none' && bp.style.display !== ''); }

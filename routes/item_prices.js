@@ -9,7 +9,7 @@ const roleOf = req => (req.session && req.session.user && req.session.user.role)
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 router.get('/item-prices', ownerOnly, async (req, res) => {
   try {
-    const r = await pool.query(`SELECT item_code, name, category, stock_level, avg_cost, selling_price FROM products WHERE active = true ORDER BY item_code`);
+    const r = await pool.query(`SELECT item_code, name, category, stock_level, avg_cost, selling_price, vendor_code FROM products WHERE active = true ORDER BY item_code`);
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: 'could not load items' }); }
 });

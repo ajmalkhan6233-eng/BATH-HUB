@@ -175,6 +175,9 @@
     .fp-right { position:sticky; top:8px; } .generate-btn { margin-top:8px; }
   }
   @media (max-width: 999px) { .fp-left, .fp-right { display:block; } }
+
+  .disc-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .today-d summary { cursor:pointer; font-weight:700; padding:6px 0; }
+  @media (min-width:1000px) { .cust-row { grid-template-columns: 1fr 1fr auto; } .fp-left { min-height: calc(100dvh - 190px); } #itemRows { min-height: 38vh; } }
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
@@ -191,9 +194,9 @@
         <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
       <div><label for="customerPhone">Phone (WhatsApp)</label>
         <input type="tel" id="customerPhone" placeholder="e.g. 077 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
+      <label class="wa-line" style="align-self:end;margin:0 0 8px;white-space:nowrap"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}" style="width:auto"> WhatsApp receipt</label>
     </div>
     <div id="waCheck" class="wa-receipt-msg" role="status"></div>
-    <label class="wa-line"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}"> Send receipt to WhatsApp on Print</label>
 
     <div class="pos-tools" id="posTools">
       <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
@@ -222,8 +225,10 @@
     </div>
     <div class="fp-right">
     <div id="liveBill"></div>
-    <label>Discount %</label>
-    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()">
+    <div class="disc-row"><div><label>Discount %</label>
+    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()"></div>
+    <div><label>or Discount in Rs</label>
+    <input type="number" id="discountAmt" value="" min="0" step="1" placeholder="0"></div></div>
     <div class="cap-hint" id="capHint"></div>
 
     <label>Payment method</label>
@@ -248,7 +253,7 @@
     <button type="button" class="generate-btn" id="genBtn" onclick="generateBill()">Generate Bill</button>
     <button type="button" class="mini-btn" id="cancelEditBtn" style="display:none;margin-top:8px" onclick="resetForm()">Cancel edit</button>
     <button type="button" class="mini-btn" id="quoteSaveBtn" style="margin-top:8px;width:100%">Make quotation (with item codes) and send</button>
-    <div class="today" id="todayBox"></div>
+    <details class="today-d"><summary>Today's bills</summary><div class="today" id="todayBox"></div></details>
     </div>
   </div>
 
