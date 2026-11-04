@@ -26,3 +26,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 26 Oct: NEW UI (public/ui/: shell, pos, dashboard, invoices, vendor credit book, ui.css, ui-core.js). Glass design from Gemini's tokens, rebuilt by chat on the REAL endpoints (Gemini's files used made-up numbers and wrong field names, so only the design was kept). Open at /ui/shell.html. Old app untouched; screens not yet rebuilt open the existing pages. State: BUILT + tested on the cloud copy (sale by code 2*001 -> bill, stock 100->98), NOT yet on the PC. Branch claude/ui-pro.
 - 2026-11-03: yt-dlp (pip, free, local, Ajmal YES) on the cloud box; PC install still needed for YouTube (cloud network blocks it).
 2026-11-04 design tools: ecc-cinematic-web skill added (own words, text only); 4 tool picks documented, not installed.
+2026-11-04 skill ecc-web-motion-pro (text + own recipes, tested). No third-party library installed yet (installed per website project when needed).

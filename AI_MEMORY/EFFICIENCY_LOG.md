@@ -4,3 +4,4 @@ Target: 95%+ = 8 of 8 on every task (a 7/8 task needs a one-word reason). Usage 
 date | task | tool calls (approx) | score /8 | note
 2026-11-03 | simple menu + module switch + vendor return/discount | ~60 | 7/8 | #6 met; #3 partly: tests written after code on 2 files; reply long before the 5-line rule was applied
 2026-11-04 | ecc-cinematic-web + DESIGN_TOOLS research | ~12 | 7/8 | no code to test (text skill); #5/#6 N/A
+2026-11-04 | ecc-web-motion-pro | ~25 | 8/8 | recipes tested in headless chromium (3 modes); 2 bugs found and fixed (counter in reduced mode, clip reveal observer)

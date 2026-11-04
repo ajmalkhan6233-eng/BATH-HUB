@@ -11,3 +11,7 @@ Reference only (read, do not install): Open Design "cinematic scroll storytellin
 SKIPPED: GetLayers AI (templates + prompts through its MCP go to a third party; prices not public; generic template look).
 YES to paste when you want 3, 4 and 5 added to the website project: `YES add GSAP, Lenis, Three.js to bathhub-website`
 Sources: claudelog.com/faqs/what-is-frontend-design-skill-in-claude-code, github.com/darkroomengineering/lenis, open-design.ai/plugins/cinematic-scroll-storytelling, moge.ai/product/getlayers
+
+## UPDATE 2026-11-04 (Ajmal: complete authority)
+Ajmal pre-approved: Claude selects the good free/local/open-source design libraries and installs them automatically when needed, and rejects the bad ones. Bounds that stay: free only, runs locally, nothing sent out, no hook/network-running scripts, website repo only (never the shop app), each install logged in docs/INSTALLED.md.
+New skill: ecc-web-motion-pro (SKILL.md + effects-catalog + redesign-playbook + tested recipes.css/js + demo.html). ecc-cinematic-web stays as the short version.
