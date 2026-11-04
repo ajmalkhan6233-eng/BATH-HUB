@@ -110,3 +110,23 @@
   function start() { lift(document); watchFrames(); updateButton(); new MutationObserver(function () { watchFrames(); updateButton(); }).observe(document.body, { childList: true, subtree: true }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
+
+/* ---- numbers count up on the dashboard (1.2 s, ease-out), like the dashboard video ---- */
+(function () {
+  'use strict';
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  function run(el) {
+    var t = el.textContent, m = /(\d[\d,]*)(\.\d+)?/.exec(t); if (!m || el.dataset.cu === t) return;
+    var target = parseFloat(m[0].replace(/,/g, '')); if (!isFinite(target) || target < 10) { el.dataset.cu = t; return; }
+    var pre = t.slice(0, m.index), post = t.slice(m.index + m[0].length), dec = m[2] ? m[2].length - 1 : 0, t0 = performance.now();
+    el.dataset.cu = t; var final = t;
+    (function step(now) {
+      var p = Math.min(1, (now - t0) / 1200), e = 1 - Math.pow(1 - p, 3), v = target * e;
+      el.textContent = pre + v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + post;
+      if (p < 1) requestAnimationFrame(step); else { el.textContent = final; el.dataset.cu = final; }
+    })(t0);
+  }
+  function scan() { Array.prototype.forEach.call(document.querySelectorAll('#dash-pro .dp-val'), run); }
+  var tm = null, start = function () { var d = document.getElementById('dash-pro') || document.body; new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(scan, 60); }).observe(d, { childList: true, subtree: true }); scan(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
