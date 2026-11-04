@@ -2164,6 +2164,16 @@ async function loadManualGRNList() {
     <td>${r.quantity||0}</td><td>${fmtLKR(r.unit_cost)}</td><td>${fmtLKR(r.total_amount)}</td></tr>`).join('');
 }
 async function openGRNPage() {
+  // The GRN workbench (photo, lines, receiving, vendors, cheques, item search) is the GRN screen. The old manual form below stays hidden as a fallback.
+  const pg = document.getElementById('page-grn');
+  if (pg && !document.getElementById('frame-grn')) {
+    [...pg.children].forEach(c => { c.style.display = 'none'; c.dataset.oldgrn = '1'; });
+    const f = document.createElement('iframe'); f.id = 'frame-grn'; f.title = 'GRN';
+    f.style.cssText = 'width:100%;height:calc(100vh - 130px);min-height:560px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)';
+    f.src = '/grn_workbench.html?embed=1'; pg.appendChild(f);
+    return;
+  }
+  if (document.getElementById('frame-grn')) return;
   const d = document.getElementById('mg-date');
   if (!d.value) d.value = today();
   if (!document.querySelector('#mg-rows .mg-row')) mgAddRow();

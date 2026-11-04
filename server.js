@@ -635,6 +635,7 @@ app.use('/api/daily-breakdown', require('./routes/daily_breakdown')); // Daily B
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*
 app.use('/api', require('./routes/qr_svg'));            // /api/qr/<code>.svg (sticker QR pictures)
 app.use('/api', require('./routes/item_prices'));       // /api/item-prices (owner Prices screen)
+app.use('/api', require('./routes/item_detail'));      // item pop-up: cost, price, margin, name, photo (owner)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
