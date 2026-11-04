@@ -32,7 +32,7 @@ router.post('/item-renumber/apply', async (req, res) => {
 });
 router.post('/item-renumber/undo', async (req, res) => {
     const c = await pool.connect();
-    try { const r = await R.undo(c); res.json({ ok: true, changed: r.changed, message: r.changed ? 'Old codes are back (' + r.changed + ').' : 'Nothing to undo.' }); }
+    try { const r = await R.undo(c); try { await require('./item_codes_fix').restamp(c); } catch (e) { /* codes are back; text re-stamp is a nicety */ } res.json({ ok: true, changed: r.changed, message: r.changed ? 'Old codes are back (' + r.changed + ').' : 'Nothing to undo.' }); }
     catch (e) { res.status(500).json({ error: 'Nothing was changed: ' + e.message }); } finally { c.release(); }
 });
 module.exports = router;
