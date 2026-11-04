@@ -13,11 +13,11 @@
   var MAP = [
     ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], ['agent-rules', 'Agent Rules'], ['agentreview', 'Agent Review'],
       ['shoptools', 'Shop Tools'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
-    ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
+    ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
-    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['grn', 'GRN']]],
-    ['Stock', [['stock', 'Stock'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['prices', 'Item catalog and prices'], ['stickers', 'Stickers']]],
-    ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Vendors', [['grn', 'GRN (enter bills, cheques, sales)'], ['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
+    ['Stock', [['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Profit', [['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category']]],
     ['Reports', [['reports', 'Reports'], ['reportshub', 'Download reports']]]
   ];
@@ -125,7 +125,7 @@
       if (m && win.matchMedia && win.matchMedia('(max-width:767px)').matches) { e.preventDefault(); e.stopImmediatePropagation(); openDrawer(); }
     }, true);
     ensureProfit(); build();
-    [800, 2500, 5000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
+    [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
   }
   return { MAP: MAP, HOME: HOME, allKeys: allKeys, start: start };
 });

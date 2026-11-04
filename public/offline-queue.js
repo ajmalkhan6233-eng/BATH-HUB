@@ -508,6 +508,7 @@
             else if (s.state === 'error') { label = 'SYNC ERROR'; bg = '#c62828'; title = s.lastError || (s.rejected + ' item(s) refused by the server') + ' - click for details'; }
             else { label = 'ONLINE'; bg = '#2e7d32'; title = 'Connected'; }
             pill.textContent = label; pill.style.background = bg; pill.title = title;
+            pill.style.display = (s.state === 'error') ? '' : 'none';   // Ajmal 4 Nov: no ONLINE / OFFLINE / SYNCING badge; only show when something is refused or login ended
             pill.style.cursor = s.state === 'error' ? 'pointer' : 'default';
             if (s.state !== 'error' && open && !s.rejected) { open = false; }
             if (open) renderPanel(); else { panel.style.display = 'none'; }
