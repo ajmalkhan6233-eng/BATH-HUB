@@ -242,7 +242,7 @@ table tr:last-child td{border-bottom:none}
 /* embed mode: the new shell shows a screen inside a frame, without this page's own menu and header */
 .embed .sidebar,.embed .topbar{display:none!important}.embed .main-content{margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
 </style>
-<link rel="stylesheet" href="/bathhub-design.css"><link rel="stylesheet" href="/glass.css"><link rel="stylesheet" href="/motion.css">
+<link rel="stylesheet" href="/bathhub-design.css"><link rel="stylesheet" href="/glass.css"><link rel="stylesheet" href="/motion.css"><link rel="stylesheet" href="/themes-os.css"><link rel="stylesheet" href="/themes-anim.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
 </head>
 <body>
@@ -1668,7 +1668,7 @@ setInterval(tick, 1000); tick();
    THEME
 ───────────────────────────────────────────── */
 let _theme = (window.BHTheme && BHTheme.current()) || 'dark';
-const _themeIcon = { dark: 'moon', water: 'water', light: 'sun' }, _themeName = { dark: 'Gold', water: 'Water', light: 'Light', sand: 'Sand', glass: 'Ocean glass', aurora: 'Aurora', midnight: 'Midnight', emerald: 'Emerald', rose: 'Sunset' };
+const _themeIcon = { dark: 'moon', water: 'water', light: 'sun' }, _themeName = { dark: 'Gold', water: 'Water', light: 'Light', sand: 'Sand', glass: 'Ocean glass', aurora: 'Aurora', midnight: 'Midnight', emerald: 'Emerald', rose: 'Sunset', win7: 'Windows 7 Aero', win10: 'Windows 10', win11: 'Windows 11', apple: 'Apple glass', kinetic: 'Kinetic', aqua: 'Aqua' };
 function _paintThemeButton() {
   const btn = document.querySelector('.theme-toggle'); if (!btn) return;
   btn.innerHTML = '<svg class="bh-icon" aria-hidden="true"><use href="#i-' + (_themeIcon[_theme] || 'water') + '"/></svg>';
@@ -2778,6 +2778,8 @@ async function initApp() {
 <script src="/simple_mode.js"></script>
 <script src="/ui_comfort.js"></script>
 <script src="/motion.js"></script>
+<script src="/themes-fx.js"></script>
+<script src="/logo-pet.js"></script>
 <link rel="stylesheet" href="/rbh_polish.css">
 <script src="/menubar.js"></script>
 <script src="/oversold_prompt.js"></script>

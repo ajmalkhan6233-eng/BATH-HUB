@@ -72,6 +72,8 @@
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
       var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
+      ['/themes-os.css', '/themes-anim.css'].forEach(function (h) { var l = doc.createElement('link'); l.rel = 'stylesheet'; l.href = h; doc.head.appendChild(l); });
+      var fx = doc.createElement('script'); fx.src = '/themes-fx.js'; doc.head.appendChild(fx);
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       var gl = doc.createElement('link'); gl.rel = 'stylesheet'; gl.href = '/glass.css'; doc.head.appendChild(gl);   // the Glass look reaches every screen
@@ -137,9 +139,10 @@
 (function () {
   'use strict';
   var T = [['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)'], ['water', 'Water', 'linear-gradient(135deg,#0b3b5c,#5fb7d4)'], ['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['sand', 'Sand', 'linear-gradient(135deg,#f7f0e1,#d9c08a)'],
-    ['glass', 'Ocean glass', 'linear-gradient(135deg,#0d2740,#2a97b3)'], ['aurora', 'Aurora', 'linear-gradient(135deg,#1a0f3a,#0f8aa0)'], ['midnight', 'Midnight', 'linear-gradient(135deg,#04060d,#12285a)'], ['emerald', 'Emerald', 'linear-gradient(135deg,#03261f,#16936a)'], ['rose', 'Sunset', 'linear-gradient(135deg,#2e0f2b,#e0715a)']];
+    ['glass', 'Ocean glass', 'linear-gradient(135deg,#0d2740,#2a97b3)'], ['aurora', 'Aurora', 'linear-gradient(135deg,#1a0f3a,#0f8aa0)'], ['midnight', 'Midnight', 'linear-gradient(135deg,#04060d,#12285a)'], ['emerald', 'Emerald', 'linear-gradient(135deg,#03261f,#16936a)'], ['rose', 'Sunset', 'linear-gradient(135deg,#2e0f2b,#e0715a)'],
+    ['win7', 'Windows 7 Aero', 'linear-gradient(135deg,#5fa8dc,#b7e6e2)'], ['win10', 'Windows 10', 'linear-gradient(135deg,#1b1b1b,#0078d7)'], ['win11', 'Windows 11', 'linear-gradient(135deg,#f3f3f3,#bcd6f5)'], ['apple', 'Apple glass', 'linear-gradient(135deg,#3a1c6e,#ff5caa)'], ['kinetic', 'Kinetic', 'linear-gradient(135deg,#2a0f3d,#ff5e62)'], ['aqua', 'Aqua', 'linear-gradient(135deg,#0a6fb8,#5fe0f7)']];
   var css = document.createElement('style');
-  css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(3,112px);gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
+  css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(4,112px);gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
     '#bh-pal.on{display:grid}#bh-pal button{border:2px solid transparent;border-radius:14px;background:transparent;color:#fff;padding:6px;cursor:pointer;font:600 13px "Segoe UI",Arial,sans-serif;text-align:center}#bh-pal button:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}' +
     '#bh-pal button.cur{border-color:#C9A24B}#bh-pal i{display:block;height:46px;border-radius:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,.25)}';
   document.head.appendChild(css);
