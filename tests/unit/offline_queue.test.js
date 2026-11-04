@@ -130,7 +130,7 @@ describe('offline queue', () => {
     const r = await q.replay();
     expect(r.stopped).toBe(true);
     expect(q.status().waiting).toBe(1);
-    expect(q.status().lastError).toBe('boom');
+    expect(q.status().lastError).toMatch(/boom/);   // the message may start with a plain-words prefix (503 busy)
   });
 
   test('6. a 4xx is kept as rejected and does not block later items', async () => {
