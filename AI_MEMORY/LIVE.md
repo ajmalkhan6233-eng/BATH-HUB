@@ -1,4 +1,5 @@
-﻿10:15 | Queue Part A 3-5 | apex-server restarted ok (health ok, /owner 200); PC_HEALTH.txt written; readiness 83% RED; temp clean-up BLOCKED by permission; restore check UNVERIFIED | next: Ajmal choose GRN link target + paper counts
+11:30 | GRN_FIXES (cloud, branch work) | Generate: progress + 429 Retry + fills the draft that was read; per-vendor number check (001=1) + next free; Enter key flow; new look (public/rbh-app.css, home_simple, GRN workbench) | tests 13 pass + browser 38/38 on bhtest | next: Ajmal pulls work, restarts apex-server, tries a real photo | DEFAULT CHOSEN: 'GRN enter goes to next step' = Enter on Paper total focuses the OK button; Enter on an empty last line does not add another
+10:15 | Queue Part A 3-5 | apex-server restarted ok (health ok, /owner 200); PC_HEALTH.txt written; readiness 83% RED; temp clean-up BLOCKED by permission; restore check UNVERIFIED | next: Ajmal choose GRN link target + paper counts
 09:36 | Queue Part A step 2 | BLOCKED: restore check, 'ERROR: permission denied to create database' (user bathco_owner_user) | next: Ajmal/chat decide how to give a createdb role or use a scratch PG
 # LIVE (12:45 2026-10-21)
 DOING NOW: stopped after Task 77 steps 3,6 (see AI_BRIDGE/LIVE.md top line).

@@ -75,11 +75,14 @@ router.use('/grn-photos', express.static(PHOTO_DIR, { index: false, dotfiles: 'd
 // Bill numbers are compared ignoring case, spaces, dashes and slashes: ME2026-1757 = ME2026/1757 = me20261757.
 const NORM = (c) => `regexp_replace(LOWER(${c}),'[^a-z0-9]','','g')`;
 const normNo = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// Number-aware key: 001 = 01 = 1 (same vendor, same GRN number), paper numbers like ME2026/1757 keep letters and digits only.
+const KEY = (c) => `(CASE WHEN ${NORM(c)} ~ '^[0-9]+$' THEN COALESCE(NULLIF(ltrim(${NORM(c)},'0'),''),'0') ELSE ${NORM(c)} END)`;
+const keyNo = (s) => { const n = normNo(s); return /^[0-9]+$/.test(n) ? (n.replace(/^0+/, '') || '0') : n; };
 async function billExists(db, vendor, bill_no, exceptId) {
-    const a = await db.query(`SELECT 1 FROM vendor_bills WHERE voided=FALSE AND LOWER(vendor_name)=LOWER($1) AND ${NORM('bill_no')}=$2 AND ($3::int IS NULL OR id<>$3) LIMIT 1`, [vendor, normNo(bill_no), exceptId || null]);
+    const a = await db.query(`SELECT 1 FROM vendor_bills WHERE voided=FALSE AND LOWER(vendor_name)=LOWER($1) AND ${KEY('bill_no')}=$2 AND ($3::int IS NULL OR id<>$3) LIMIT 1`, [vendor, keyNo(bill_no), exceptId || null]);
     if (a.rows.length) return true;
     if (exceptId) return false;
-    const b = await db.query(`SELECT 1 FROM grn_records WHERE ${NORM('grn_number')}=$1 AND LOWER(supplier_name)=LOWER($2) LIMIT 1`, [normNo(bill_no), vendor]);
+    const b = await db.query(`SELECT 1 FROM grn_records WHERE ${KEY('grn_number')}=$1 AND LOWER(supplier_name)=LOWER($2) LIMIT 1`, [keyNo(bill_no), vendor]);
     return b.rows.length > 0;
 }
 
@@ -88,16 +91,32 @@ router.get('/grn-workbench/bills', (req, res) => {
     catch (e) { res.json([]); }
 });
 
+// Next free number for a vendor. Looks at the vendor's own numbers (saved bills + GRN records), read only.
+// Numeric style (001, 002 ...) keeps the width of what was typed (at least 3). Paper style numbers (ME2026/1757) get no suggestion.
+async function nextFreeNumber(db, vendor, typed) {
+    const t = String(typed || '').trim();
+    if (t && !/^\d+$/.test(t)) return null;
+    if (!vendor) return t ? null : '001';
+    const rows = await db.query(`SELECT bill_no AS n FROM vendor_bills WHERE voided=FALSE AND LOWER(vendor_name)=LOWER($1)
+        UNION SELECT grn_number AS n FROM grn_records WHERE LOWER(supplier_name)=LOWER($1)`, [vendor]);
+    const used = new Set(rows.rows.map(r => String(r.n || '').trim()).filter(x => /^\d+$/.test(x)).map(x => parseInt(x, 10)));
+    const width = Math.max(3, t.length, ...rows.rows.map(r => /^\d+$/.test(String(r.n || '').trim()) ? String(r.n).trim().length : 0));
+    let n = used.size ? Math.max(...used) + 1 : 1;
+    while (used.has(n)) n++;
+    return String(n).padStart(width, '0');
+}
+
 router.get('/grn-workbench/check', async (req, res) => {
     try {
         const no = String(req.query.bill_no || '').trim(), v = String(req.query.vendor || '').trim();
-        if (!no) return res.json({ exists: false });
+        if (!no) return res.json({ exists: false, next_free: v ? await nextFreeNumber(pool, v, '') : null });
         // Bill number is the main key. Same number from the same vendor = duplicate; same number from another vendor = warning.
-        const r = await pool.query(`SELECT id, vendor_name, bill_no, to_char(bill_date,'YYYY-MM-DD') AS bill_date, total, created_at FROM vendor_bills WHERE voided=FALSE AND ${NORM('bill_no')}=$1 ORDER BY id DESC LIMIT 5`, [normNo(no)]);
+        const r = await pool.query(`SELECT id, vendor_name, bill_no, to_char(bill_date,'YYYY-MM-DD') AS bill_date, total, created_at FROM vendor_bills WHERE voided=FALSE AND ${KEY('bill_no')}=$1 ORDER BY id DESC LIMIT 5`, [keyNo(no)]);
         const same = r.rows.find(x => !v || x.vendor_name.toLowerCase() === v.toLowerCase());
-        if (same) return res.json({ exists: true, bill: same });
-        const g = await pool.query(`SELECT grn_number, supplier_name, to_char(grn_date,'YYYY-MM-DD') AS grn_date, SUM(total_amount) AS total FROM grn_records WHERE ${NORM('grn_number')}=$1 GROUP BY 1,2,3 LIMIT 1`, [normNo(no)]);
-        if (g.rows.length && (!v || String(g.rows[0].supplier_name).toLowerCase() === v.toLowerCase())) return res.json({ exists: true, bill: { vendor_name: g.rows[0].supplier_name, bill_no: g.rows[0].grn_number, bill_date: g.rows[0].grn_date, total: g.rows[0].total } });
+        if (same) return res.json({ exists: true, bill: same, next_free: await nextFreeNumber(pool, same.vendor_name, no) });
+        // GRN records of this vendor (filtered in SQL, so another vendor's row with the same number can never hide it).
+        const g = await pool.query(`SELECT grn_number, supplier_name, to_char(grn_date,'YYYY-MM-DD') AS grn_date, SUM(total_amount) AS total FROM grn_records WHERE ${KEY('grn_number')}=$1 AND ($2='' OR LOWER(supplier_name)=LOWER($2)) GROUP BY 1,2,3 ORDER BY grn_date DESC LIMIT 1`, [keyNo(no), v]);
+        if (g.rows.length) return res.json({ exists: true, bill: { vendor_name: g.rows[0].supplier_name, bill_no: g.rows[0].grn_number, bill_date: g.rows[0].grn_date, total: g.rows[0].total }, next_free: await nextFreeNumber(pool, g.rows[0].supplier_name, no) });
         res.json({ exists: false, other_vendor: r.rows[0] || null });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -171,9 +190,16 @@ async function visionModels() {
     if (found.length) _vm = { at: Date.now(), list };
     return list;
 }
+// A free reader that says "too many requests" (429 / quota) is busy, not broken: the screen offers a plain Retry.
+function isRateLimit(e) { return !!e && (e.status === 429 || e.rateLimited === true || /\b429\b|rate.?limit|too many requests|quota|RESOURCE_EXHAUSTED/i.test(String(e.message || ''))); }
+function readFailure(e) {
+    if (isRateLimit(e)) return { ok: false, retry: true, code: 'busy', message: 'The free photo reader is busy right now (too many requests). Wait about a minute, then press Retry. Nothing was lost.' };
+    return { ok: false, retry: true, code: 'error', message: 'Could not read the photo automatically (' + String((e && e.message) || e).slice(0, 80) + '). Press Retry, or type it using the photo on the left.' };
+}
 async function readWithVision(content) {
     const { client } = require('../openrouter.config');
-    let lastErr = null;
+    let lastErr = null, sawRate = false;
+    const mark = (e) => { if (isRateLimit(e)) sawRate = true; return e; };
     // Gemini free tier first (own key, no OpenRouter rate limit); falls through to OpenRouter on any error.
     if (process.env.GEMINI_API_KEY) {
         try {
@@ -182,7 +208,7 @@ async function readWithVision(content) {
             const raw = (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) || '';
             if (raw.match(/\{[\s\S]*\}/)) return raw;
             lastErr = new Error('no JSON from gemini');
-        } catch (e) { lastErr = e; }
+        } catch (e) { lastErr = mark(e); }
     }
     for (const model of (await visionModels()).slice(0, 4)) {
         try {
@@ -190,9 +216,11 @@ async function readWithVision(content) {
             const raw = (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) || '';
             if (raw.match(/\{[\s\S]*\}/)) return raw;
             lastErr = new Error('no JSON from ' + model);
-        } catch (e) { lastErr = e; if (_vm.list.length) _vm.at = 0; }
+        } catch (e) { lastErr = mark(e); if (_vm.list.length) _vm.at = 0; }
     }
-    throw lastErr || new Error('no free vision model available');
+    const fail = lastErr || new Error('no free vision model available');
+    try { fail.rateLimited = sawRate; } catch (_) {}
+    throw fail;
 }
 
 router.post('/grn-workbench/read', express.json({ limit: '14mb' }), async (req, res) => {
@@ -201,13 +229,15 @@ router.post('/grn-workbench/read', express.json({ limit: '14mb' }), async (req, 
         if (!m) return res.status(400).json({ error: 'Add a JPG, PNG or WEBP photo first' });
         const raw = await readWithVision([{ type: 'text', text: READ_PROMPT }, { type: 'image_url', image_url: { url: req.body.photo_data_url } }]);
         const jm = raw.match(/\{[\s\S]*\}/);
-        if (!jm) return res.json({ ok: false, message: 'The reader could not read this photo. Type it using the photo on the left.' });
+        if (!jm) return res.json({ ok: false, retry: true, code: 'empty', message: 'The reader could not read this photo. Press Retry, or type it using the photo on the left.' });
         const o = JSON.parse(jm[0]);
         const out = { ok: true, kind: String(o.kind || 'unknown'), confidence: o.confidence || null, notes: o.notes || '' };
         if (out.kind === 'vendor_bill') {
             out.vendor = String(o.vendor_name || '').trim(); out.bill_no = String(o.bill_number || '').trim(); out.bill_date = isDate(o.bill_date) ? o.bill_date : null;
             out.credit_days = Number.isFinite(Number(o.credit_days)) && o.credit_days !== null ? Number(o.credit_days) : null; out.total = Number(o.total) || null;
             out.lines = (Array.isArray(o.items) ? o.items : []).slice(0, MAX_LINES).map(i => ({ code: String(i.vendor_code || '').trim(), name: String(i.description || '').trim(), qty: Number(i.qty) || 1, unit: Number(i.unit_cost) || (Number(i.amount) && Number(i.qty) ? Number(i.amount) / Number(i.qty) : 0) }));
+            out.lines_total = round2(out.lines.reduce((t, l) => t + l.qty * l.unit, 0));
+            if (!out.total && out.lines_total > 0) { out.total = out.lines_total; out.total_from_lines = true; }
             try { // known vendor? match against the vendors already in the app
                 const names = (await pool.query(`SELECT name FROM suppliers`)).rows.map(x => x.name);
                 const want = normName(out.vendor), first = want.split(' ')[0];
@@ -218,7 +248,7 @@ router.post('/grn-workbench/read', express.json({ limit: '14mb' }), async (req, 
             out.cheque_no = String(o.cheque_number || ''); out.bank = String(o.bank || ''); out.amount = Number(o.amount) || null; out.cheque_date = isDate(o.cheque_date) ? o.cheque_date : null; out.vendor = String(o.payee || '');
         }
         res.json(out);
-    } catch (e) { res.json({ ok: false, message: 'Could not read the photo automatically (' + String(e.message).slice(0, 80) + '). Type it using the photo on the left.' }); }
+    } catch (e) { res.json(readFailure(e)); }
 });
 
 async function applyLines(client, p, supplier_id, photo_url) {
@@ -487,3 +517,7 @@ module.exports = router;
 module.exports.validatePackage = validatePackage;
 module.exports.READ_PROMPT = READ_PROMPT;
 module.exports.readWithVision = readWithVision;
+module.exports.readFailure = readFailure;
+module.exports.isRateLimit = isRateLimit;
+module.exports.nextFreeNumber = nextFreeNumber;
+module.exports.keyNo = keyNo;

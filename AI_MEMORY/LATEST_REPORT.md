@@ -1,10 +1,6 @@
-﻿# LATEST REPORT 2026-11-04
-Branch work, commit 8b96177 (pushed, verified origin/work).
-- Pulled work, merged; setup script ran (22 skills, global rules).
-- apex-server restarted (pm2 restart apex-server), health ok, /owner 200.
-- PC_HEALTH.txt written. Readiness 83% RED. Temp clean-up BLOCKED by permission.
-- Bridge tasks 99-143: live files match bridge patch; nothing newer than T143. Photo scan 14 of 19 errors: waiting chat fix.
-- Menu: GRN workbench button added on simple home (page 200).
-UNVERIFIED: restore check (DB user cannot create db; Ajmal skipped password), clean-up, aikido/playwright activity.
-Next physical action: open localhost:3100/grn_workbench.html and enter papers.
-Status: NEEDS YOU
+# LATEST REPORT 2026-11-04 (GRN fixes, branch work)
+1. Generate now shows steps + timer, fills vendor, number, dates, credit days, paper total and ALL lines into the draft you pressed it on; busy 429 gives a plain message + Retry. Likely cause of "CANCELLED, 0 lines": an old cancelled draft kept its status, and clicking a duplicate draft jumped into the saved bill. Both fixed. UNVERIFIED with a real Cool Lanka photo (fake reader used).
+2. Number check is per vendor (001 = 01 = 1), shows "GRN 001 already exists for <vendor> (date, total)", Open it, Use next free number (002). Read-only, no data changed. Also fixed a case where another vendor's same number could hide the duplicate.
+3. Enter moves cell to cell, line to line, adds a line at the end (not an empty one twice), Paper total goes to the OK button.
+4. New look: tokens in public/rbh-app.css (black, ash, gold, 48 px taps, no fonts/images), simple home + GRN workbench done; phone shows each line as a card. Next: Sales, Vendors+Cheques.
+5. Tests: 13 pass (new ones included), full suite 14 failed = same old baseline; headless browser 38/38 (1 of 10 runs had 3 unexplained fails, not repeated). Pushed to work only. NEXT FOR AJMAL: pull work, restart apex-server, try one real photo. Status: UNVERIFIED on the PC.
