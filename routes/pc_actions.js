@@ -32,4 +32,19 @@ router.post('/pc-actions/backup', ownerOnly, (req, res) => {
     try { spawn(process.execPath, [path.join(root, 'scripts', 'pc', 'github_backup.js'), '--force'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref(); res.json({ started: true }); }
     catch (e) { res.status(500).json({ error: String(e.message).slice(0, 120) }); }
 });
+// Once per PC: set up "start by itself when the computer is switched on" (scheduled tasks + startup shortcut). Windows only, runs the same installer
+// Ajmal already knows (scripts/pc/rbh_install_tasks.ps1), writes logs/startup_installed.flag. Skip: create local_ops/NO_AUTOSTART_INSTALL.
+function ensureStartup() {
+    try {
+        if (process.platform !== 'win32') return;
+        const fs = require('fs'), flag = path.join(root, 'logs', 'startup_installed.flag');
+        if (fs.existsSync(flag) || fs.existsSync(path.join(root, 'local_ops', 'NO_AUTOSTART_INSTALL'))) return;
+        fs.mkdirSync(path.dirname(flag), { recursive: true });
+        const p = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(root, 'scripts', 'pc', 'rbh_install_tasks.ps1')], { cwd: root, windowsHide: true, stdio: 'ignore' });
+        p.on('close', code => { try { if (code === 0) fs.writeFileSync(flag, new Date().toISOString()); } catch (e) { /* retry next start */ } });
+        p.on('error', () => {});
+    } catch (e) { /* never block the app */ }
+}
+setTimeout(ensureStartup, 20000);
 module.exports = router;
+module.exports.ensureStartup = ensureStartup;

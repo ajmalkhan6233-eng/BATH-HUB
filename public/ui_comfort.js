@@ -75,7 +75,7 @@
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       var gl = doc.createElement('link'); gl.rel = 'stylesheet'; gl.href = '/glass.css'; doc.head.appendChild(gl);   // the Glass look reaches every screen
-      var theme = function () { try { var t = localStorage.getItem('bathhub-theme'); if (t) doc.documentElement.setAttribute('data-theme', t); } catch (x) { /* ignore */ } };
+      var theme = function () { try { var t = localStorage.getItem('bathhub-theme'); if (t) { doc.documentElement.setAttribute('data-theme', t); if (['glass', 'aurora', 'midnight', 'emerald', 'rose'].indexOf(t) >= 0) doc.documentElement.setAttribute('data-style', 'glass'); else doc.documentElement.removeAttribute('data-style'); } } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
       var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
       run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });
@@ -131,4 +131,29 @@
   function scan() { Array.prototype.forEach.call(document.querySelectorAll('#dash-pro .dp-val'), run); }
   var tm = null, start = function () { var d = document.getElementById('dash-pro') || document.body; new MutationObserver(function () { clearTimeout(tm); tm = setTimeout(scan, 60); }).observe(d, { childList: true, subtree: true }); scan(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+/* ---- theme palette: tap the theme icon, pick a look ---- */
+(function () {
+  'use strict';
+  var T = [['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)'], ['water', 'Water', 'linear-gradient(135deg,#0b3b5c,#5fb7d4)'], ['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['sand', 'Sand', 'linear-gradient(135deg,#f7f0e1,#d9c08a)'],
+    ['glass', 'Ocean glass', 'linear-gradient(135deg,#0d2740,#2a97b3)'], ['aurora', 'Aurora', 'linear-gradient(135deg,#1a0f3a,#0f8aa0)'], ['midnight', 'Midnight', 'linear-gradient(135deg,#04060d,#12285a)'], ['emerald', 'Emerald', 'linear-gradient(135deg,#03261f,#16936a)'], ['rose', 'Sunset', 'linear-gradient(135deg,#2e0f2b,#e0715a)']];
+  var css = document.createElement('style');
+  css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(3,112px);gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
+    '#bh-pal.on{display:grid}#bh-pal button{border:2px solid transparent;border-radius:14px;background:transparent;color:#fff;padding:6px;cursor:pointer;font:600 13px "Segoe UI",Arial,sans-serif;text-align:center}#bh-pal button:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}' +
+    '#bh-pal button.cur{border-color:#C9A24B}#bh-pal i{display:block;height:46px;border-radius:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,.25)}';
+  document.head.appendChild(css);
+  var pal = null;
+  function build() {
+    pal = document.createElement('div'); pal.id = 'bh-pal';
+    T.forEach(function (t) { var b = document.createElement('button'); b.type = 'button'; b.dataset.t = t[0]; var i = document.createElement('i'); i.style.background = t[2]; b.appendChild(i); b.appendChild(document.createTextNode(t[1]));
+      b.onclick = function () { if (window.BHTheme) BHTheme.set(t[0]); try { if (typeof _theme !== 'undefined') { _theme = t[0]; } if (typeof _paintThemeButton === 'function') _paintThemeButton(); } catch (e) { /* ignore */ } mark(); pal.classList.remove('on'); }; pal.appendChild(b); });
+    document.body.appendChild(pal);
+  }
+  function mark() { var c = window.BHTheme ? BHTheme.current() : ''; Array.prototype.forEach.call(pal.children, function (b) { b.classList.toggle('cur', b.dataset.t === c); }); }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.theme-toggle');
+    if (btn) { e.preventDefault(); e.stopImmediatePropagation(); if (!pal) build(); mark(); var r = btn.getBoundingClientRect(); pal.style.top = (r.bottom + 8) + 'px'; pal.style.right = Math.max(8, window.innerWidth - r.right) + 'px'; pal.classList.toggle('on'); return; }
+    if (pal && !e.target.closest('#bh-pal')) pal.classList.remove('on');
+  }, true);
 })();

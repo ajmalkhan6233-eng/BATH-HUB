@@ -35,7 +35,7 @@ html.mo-off *,html.mo-off *::before,html.mo-off *::after{animation:none!importan
 .bh-toast{pointer-events:auto;background:rgba(12,34,56,.92);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 18px;min-width:260px;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translate3d(120%,0,0);transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .3s;position:relative;overflow:hidden;font-size:15px}
 .bh-toast.show{transform:none}.bh-toast .bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#C9A24B;transform-origin:left}
 .nav-glider{position:absolute;top:0;left:0;background:rgba(201,162,75,.2);border:1px solid rgba(201,162,75,.45);border-radius:10px;pointer-events:none;transition:transform .25s cubic-bezier(.2,.8,.2,1),width .25s,height .25s,opacity .15s;opacity:0;z-index:0}
-#rbh-menubar{position:relative}#rbh-menubar>*{position:relative;z-index:1}#rbh-menubar>.nav-glider{position:absolute;z-index:0}
+#rbh-menubar>.mb-btn,#rbh-menubar>.mb-top{position:relative;z-index:1}#rbh-menubar>.nav-glider{position:absolute;z-index:0}
 .mo-fly{position:fixed;z-index:99999;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff3c4,#C9A24B);box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
 .btn-gold-ready{position:relative;overflow:hidden}
 .btn-gold-ready::after{content:"";position:absolute;top:-50%;left:-60%;width:60%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,215,0,.45),transparent);transform:rotate(25deg);animation:goldSweep 3.2s infinite}

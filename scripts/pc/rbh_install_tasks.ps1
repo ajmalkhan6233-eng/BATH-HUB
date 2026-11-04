@@ -10,7 +10,8 @@ Unregister-ScheduledTask -TaskName 'Apex_Server_Watchdog' -Confirm:$false -Error
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 4)
 $a1 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "{1}"' -f $vbs, (Join-Path $root 'scripts\pc\rbh_watchdog.js')) -WorkingDirectory $root
 $t1 = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 5)
-Register-ScheduledTask -TaskName 'RBH_Watchdog' -Action $a1 -Trigger $t1 -Settings $settings -Description 'Royal Bath Hub: checks the shop app every 5 minutes, restarts only apex-server if it is down, writes the reason to logs\watchdog.log' -Force | Out-Null
+$t1b = New-ScheduledTaskTrigger -AtLogOn   # also runs the moment you sign in: starts the app and pulls the newest version
+Register-ScheduledTask -TaskName 'RBH_Watchdog' -Action $a1 -Trigger @($t1, $t1b) -Settings $settings -Description 'Royal Bath Hub: checks the shop app every 5 minutes, restarts only apex-server if it is down, writes the reason to logs\watchdog.log' -Force | Out-Null
 
 $a2 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "{1}"' -f $vbs, (Join-Path $root 'scripts\pc\rbh_logrotate.js')) -WorkingDirectory $root
 $t2 = New-ScheduledTaskTrigger -Daily -At '03:30'
@@ -31,6 +32,17 @@ $lnk.Arguments = ('-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f (Join-Path
 $lnk.WorkingDirectory = $root
 $lnk.Description = 'Start Royal Bath Hub (starts the shop app if it is down, then opens it)'
 $lnk.Save()
+
+# Startup shortcut: when you sign in to Windows, Royal Bath Hub starts (and updates) by itself and opens in the browser
+try {
+  $startup = [Environment]::GetFolderPath('Startup')
+  $sl = $ws.CreateShortcut((Join-Path $startup 'Royal Bath Hub (auto start).lnk'))
+  $sl.TargetPath = Join-Path $PSHOME 'powershell.exe'
+  $sl.Arguments = ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}"' -f (Join-Path $root 'scripts\pc\rbh_start.ps1'))
+  $sl.WorkingDirectory = $root
+  $sl.WindowStyle = 7
+  $sl.Save()
+} catch { Write-Host ('Startup shortcut not made: ' + $_.Exception.Message) }
 
 if ($NoSleep) { powercfg /change standby-timeout-ac 0; powercfg /change hibernate-timeout-ac 0 }   # plugged in: never sleep
 
