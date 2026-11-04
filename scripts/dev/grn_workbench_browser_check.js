@@ -22,7 +22,7 @@ const errors = [];
   await page.request.post(BASE + '/api/grn-workbench', { data: { mode: 'BILL_ONLY', vendor: { name: 'Cool Lanka (Pvt) Ltd' }, bill_no: '001', bill_date: '2026-10-28', credit_days: 90, payment_type: 'BILL', total: 527000 } });
   const addPhoto = async () => { await page.setInputFiles('#photo', { name: 'bill.jpg', mimeType: 'image/jpeg', buffer: jpgBuf }); await page.waitForFunction(() => document.querySelector('#frame img')); };
   const val = (sel) => page.inputValue(sel);
-  const fresh = async () => { await page.goto(BASE + '/grn_workbench.html'); await page.evaluate(() => { localStorage.clear(); }); await page.goto(BASE + '/grn_workbench.html'); await page.waitForSelector('#right input'); };
+  const fresh = async () => { await page.goto(BASE + '/grn_workbench.html'); await page.evaluate(() => { localStorage.clear(); }); await page.goto(BASE + '/grn_workbench.html'); await page.waitForSelector('#right input'); await page.click('[data-new="GRN"]'); };   // the Leo inbox draft is on screen first: start from a blank GRN
 
   console.log('1. GENERATE: progress, fills ALL fields + lines, lands in the right draft');
   await fresh();
@@ -70,7 +70,7 @@ const errors = [];
   console.log('3. Old CANCELLED state never leaks into a new reading');
   await fresh();
   await page.evaluate(() => { const d = { id: 'DX-1', kind: 'GRN', vendor: 'Old', no: 'OLD1', date: '2026-10-01', received: '2026-10-01', credit_days: 30, ptype: 'BILL', lines: [{ code: '', name: 'X', qty: 1, unit: 5, sell: 0 }], paper: 5, amount: 0, photo: '', status: 'cancelled', note: 'CANCELLED. Stock taken back for 0 lines.', dup: null, ch: { cheque_no: '', bank: '', amount: 0, cheque_date: '2026-10-01', due_date: '2026-10-01', bill_id: '', same_bank: false } }; localStorage.setItem('grn_drafts_v3', JSON.stringify([d])); });
-  await page.goto(BASE + '/grn_workbench.html'); await page.waitForSelector('#right input');
+  await page.goto(BASE + '/grn_workbench.html'); await page.waitForSelector('#right input'); await page.locator('.dr .t', { hasText: 'Old' }).first().click();
   ok(/CANCELLED/.test(await page.textContent('#right')), '(setup) the stale cancelled draft is on screen');
   await page.route('**/api/grn-workbench/read', r => r.fulfill({ json: READ_OK }));
   await addPhoto(); await page.click('#gen');
@@ -124,7 +124,7 @@ const errors = [];
   const hts = await p2.locator('.action-btn').evaluateAll(a => a.map(x => x.getBoundingClientRect().height));
   ok(hts.length === 5 && hts.every(h => h >= 48), 'home: five big buttons (all at least 48 px tall)');
   if (shotsDir) await p2.screenshot({ path: shotsDir + '/home_390.png' });
-  await p2.goto(BASE + '/grn_workbench.html'); await p2.evaluate(() => localStorage.clear()); await p2.goto(BASE + '/grn_workbench.html'); await p2.waitForSelector('#right input');
+  await p2.goto(BASE + '/grn_workbench.html'); await p2.evaluate(() => localStorage.clear()); await p2.goto(BASE + '/grn_workbench.html'); await p2.waitForSelector('#right input'); await p2.click('[data-new="GRN"]');
   await p2.fill('#right input[list="vlist"]', 'Phone Test'); await p2.fill('input[data-r="0"][data-c="1"]', 'ZZTEST item');
   ok(await p2.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'GRN: no sideways scroll at 390 (lines are cards)');
   const inh = await p2.locator('#right input:visible').evaluateAll(a => a.map(x => x.getBoundingClientRect().height));
