@@ -131,6 +131,7 @@ html{font-size:17px}body{color:#111}.tabs button{font-weight:600}.lines input,.l
  <div id="split" class="split" title="Drag to make the left or right side bigger. Double-click to reset."></div>
  <section class="card" id="right"></section>
 </div>
+<div id="tools" style="display:none;padding:var(--s3) var(--s3) 0"></div>
 <div id="view2"></div>
 <div id="view3" style="display:none;padding:var(--s3)"></div>
 <div id="view4" style="display:none;padding:var(--s3)"></div>
@@ -430,7 +431,7 @@ function doPrint(){var P=$('printArea');P.textContent='';P.appendChild(h('h2',{t
  sp.addEventListener('dblclick',function(){wr.style.removeProperty('--lw');try{localStorage.removeItem('grn_lw')}catch(e){}})})();
 
 /* ---------- vendors & summary ---------- */
-function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('view5').style.display=n===5?'block':'none';$('tab5').className=n===5?'on':'';if(n===5&&!$('view5').firstChild){var fr=document.createElement('iframe');fr.src='/hub.html?set=grn';fr.style.cssText='width:100%;height:calc(100vh - 150px);min-height:480px;border:0';$('view5').appendChild(fr)}$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
+function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('tools').style.display=n===2?'block':'none';if(n===2)buildTools();$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('view5').style.display=n===5?'block':'none';$('tab5').className=n===5?'on':'';if(n===5&&!$('view5').firstChild){var fr=document.createElement('iframe');fr.src='/hub.html?set=grn';fr.style.cssText='width:100%;height:calc(100vh - 150px);min-height:480px;border:0';$('view5').appendChild(fr)}$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
 $('tab1').onclick=function(){tab(1)};$('tab2').onclick=function(){tab(2)};$('tab3').onclick=function(){tab(3)};$('tab4').onclick=function(){tab(4)};$('tab5').onclick=function(){tab(5)};
 function loadSummary(){var V=$('view2');
  if(!CLOUD){V.textContent='';V.appendChild(h('div',{class:'msg warn',text:'The vendor list lives in the app. Open this page from the shop app (localhost:3100/grn_workbench.html).'}));return}
@@ -557,5 +558,16 @@ function loadSales(){var V=$('view4'),today=new Date(Date.now()-new Date().getTi
   c.appendChild(tbl([d.by==='hour'?'Hour':'Day','Bills','Sales',''],d.rows.map(function(r){return[d.by==='hour'?(String(r.key).padStart(2,'0')+':00 - '+String(r.key).padStart(2,'0')+':59'):r.key,r.bills,fmt(r.total),'█'.repeat(Math.max(1,Math.round(r.total/mx*20)))]}),[1,2]));O.appendChild(c);
   var p=h('div',{class:'card',style:'margin-top:14px'});p.appendChild(h('h3',{text:'How customers paid'}));p.appendChild(tbl(['Method','Bills','Total'],d.by_payment.map(function(r){return[r.method,r.bills,fmt(r.total)]}),[1,2]));O.appendChild(p);
   var l=h('div',{class:'card',style:'margin-top:14px'});l.appendChild(h('h3',{text:'Bills ('+d.list.length+(d.list.length>=300?', latest 300':'')+')'}));l.appendChild(tbl(['Time','Bill','Customer','Paid by','Total'],d.list.map(function(b){return[b.at,b.bill_number+(b.voided?' (cancelled)':''),b.customer_name||'Walk-in',b.payment_method||'cash',fmt(b.total)]}),[4]));O.appendChild(l)}}
+
+/* ---- play buttons: backup now, find double-counted GRNs ---- */
+var toolsBuilt=false;
+function buildTools(){if(toolsBuilt)return;toolsBuilt=true;var T=$('tools'),card=h('div',{class:'card'}),bst=h('div',{class:'mut',style:'margin:6px 0'}),bbtn=h('button',{class:'p',text:'▶ Backup everything to GitHub now'}),dout=h('div'),dbtn=h('button',{class:'p',text:'▶ Check for double-counted GRNs'});
+ card.appendChild(h('h3',{text:'Keep it safe and correct'}));
+ card.appendChild(h('div',{class:'row'},[bbtn,dbtn]));card.appendChild(bst);card.appendChild(dout);T.appendChild(card);
+ function showB(){jf('/api/github-backup').then(function(x){if(!x.ok){bst.textContent=x.j.error||'';return}var l=x.j.last;bst.textContent=x.j.running?'Backing up...':(l?(l.ok?'Last backup OK: ':'Last backup NOT done: ')+String(l.at).slice(0,16).replace('T',' ')+'  '+l.msg:'No backup yet. Press the button.');if(x.j.running)setTimeout(showB,3000)})}
+ bbtn.onclick=function(){bst.textContent='Starting...';jf('/api/github-backup/run','POST',{}).then(function(){setTimeout(showB,2500)})};showB();
+ dbtn.onclick=function(){dout.textContent='Checking...';jf('/api/grn-dupes').then(function(x){dout.textContent='';if(!x.ok){dout.appendChild(h('div',{class:'msg bad',text:x.j.error||'Could not check'}));return}var f=x.j.found||[];if(!f.length){dout.appendChild(h('div',{class:'msg ok',text:'Nothing is double-counted. All good.'}));return}
+  f.forEach(function(p){var box=h('div',{class:'msg warn',style:'margin-top:8px'});box.appendChild(h('div',{text:'Bill '+p.bill_no+' ('+p.vendor+', Rs '+fmt(p.total)+') was also entered as GRN '+p.duplicate_numbers.join(' + ')+' ('+p.lines+' lines). The same goods are in stock twice.'}));
+   box.appendChild(h('button',{class:'p',style:'margin-top:8px',text:'▶ Yes, remove the extra copy and fix stock',onclick:function(){ask('Fix stock?',['The extra GRN lines are kept in an archive (not lost). Stock goes down by those quantities. If anything does not match, nothing changes.'],'Yes, fix it',function(){jf('/api/grn-dupes/fix','POST',{numbers:p.duplicate_numbers}).then(function(r){modal(r.ok?'Fixed':'Not changed',r.ok?(r.j.lines+' lines archived, '+r.j.items+' items corrected.'):(r.j.error||'Error'));if(r.ok){box.remove();toolsBuilt=false}})})}}));dout.appendChild(box)})})};}
 })();
 </script></body></html>

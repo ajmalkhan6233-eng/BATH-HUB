@@ -639,6 +639,8 @@ app.use('/api', require('./routes/item_prices'));       // /api/item-prices (own
 app.use('/api', require('./routes/item_detail'));      // item pop-up: cost, price, margin, name, photo (owner)
 app.use('/api', require('./routes/grn_cheques'));      // GRN screen: vendor cheques list, edit, delete
 app.use('/api', require('./routes/sales_view'));      // GRN screen: customer bills by day / hour
+app.use('/api', require('./routes/grn_dupes'));      // double-counted GRN check + fix (owner)
+app.use('/api', require('./routes/github_backup_api')); // play button: backup to the private GitHub branch (owner)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)

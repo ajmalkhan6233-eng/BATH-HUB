@@ -52,5 +52,8 @@ const deps = {
             if (U.restart && !U.deps) { try { await deps.pm2Restart(); } catch (e) { await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE restart failed: ' + String(e.message).slice(0, 100)); } }
         } else if (U.state === 'blocked') { await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE blocked: ' + U.why); }
     } catch (e) { /* never stop the watchdog */ }
+    // Hourly private backup (Ajmal asked for it, 4 Nov 2026). Own process, never blocks the watchdog; skips itself if a good backup is under 55 min old.
+    // Pushes ONLY to the private bridge repo and refuses a public one. Switch off: create an empty file local_ops\NO_GITHUB_BACKUP.
+    try { if (!fs.existsSync(path.join(root, 'local_ops', 'NO_GITHUB_BACKUP'))) require('child_process').spawn(process.execPath, [path.join(root, 'scripts', 'pc', 'github_backup.js'), '--tick'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { /* ignore */ }
 })().then(() => W.runOnce(deps)).then(r => { if (r.state !== 'up' && r.state !== 'blip') console.log(JSON.stringify(r)); process.exit(['still_down', 'failed', 'blocked', 'crashloop'].includes(r.state) ? 2 : 0); })
     .catch(e => { console.error('watchdog error:', e.message); process.exit(1); });
