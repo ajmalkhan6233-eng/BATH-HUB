@@ -1,0 +1,7 @@
+# NOW (newest state; the start-up hook prints THIS FIRST. Rewrite it after every phase, max 12 lines)
+Updated 2026-11-04 evening. Branch work, everything below is pushed.
+DONE (cloud, tested on throwaway DB): GRN workbench fixes (Generate progress + 429 Retry, per-vendor number check + next free, Enter key flow, new look: public/rbh-app.css, simple home); item codes in vendor order (button in GRN workbench > Vendors & summary, Metro kept; Afam and Imran are two vendors); Leo Marketing invoice 0000010887 as a GRN draft (drafts_inbox/, 41 lines, total 551,340 matches); 3 old tests fixed; money logic checked on real Postgres = correct; PC auto-update built (utils/autoUpdate.js in the 5-minute watchdog).
+NOT YET ON THE PC: none of the above. Ajmal's screenshot shows the OLD GRN page. The PC watchdog is still the old file, so ONE manual 'git pull origin work' + 'pm2 restart apex-server' is needed once; after that updates are automatic. Cloud cannot do it (cannot reach the PC).
+DECIDED by Ajmal: website availability feed stays OFF; cost code on sticker pages LEAVE; GRN/bill numbers are never changed, only item codes.
+STILL OPEN: confirm Leo draft shows on the PC; Sarah + other Leo pages to come as photos (read them into drafts_inbox/ the same way); DB password in git history (dubai-status.md) should be changed by Ajmal.
+RULES THAT KEPT BEING MISSED: never hand Ajmal paste tasks (do it yourself or build automation); reply = short summary only, status word last; he will not read long text.

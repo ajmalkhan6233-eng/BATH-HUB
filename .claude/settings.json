@@ -14,7 +14,7 @@
   },
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "cat AI_MEMORY/CORE_RULES.md; echo; node scripts/pc/rbh_readiness.js --brief; echo '--- LIVE.md (last 12 lines) ---'; tail -n 12 AI_MEMORY/LIVE.md; echo; echo 'Queues: QUEUE_TOMORROW.md then QUEUE_SIMPLIFY.md (AI_MEMORY/)'" } ] }
+      { "hooks": [ { "type": "command", "command": "cat AI_MEMORY/CORE_RULES.md; echo; node scripts/pc/rbh_readiness.js --brief; echo '--- NOW.md (newest state, read this first) ---'; cat AI_MEMORY/NOW.md; echo '--- LIVE.md (newest 4 lines are at the top) ---'; head -n 4 AI_MEMORY/LIVE.md | cut -c1-400; echo; echo 'Queues: NOW.md above is newer than the queue files; QUEUE_TODAY.md then QUEUE_TOMORROW.md only if NOW.md has no open item'" } ] }
     ],
     "Notification": [
       { "hooks": [ { "type": "command", "command": "node scripts/pc/rbh_notify.js attention" } ] }
