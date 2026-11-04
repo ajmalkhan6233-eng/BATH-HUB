@@ -86,9 +86,22 @@ async function billExists(db, vendor, bill_no, exceptId) {
     return b.rows.length > 0;
 }
 
-router.get('/grn-workbench/bills', (req, res) => {
-    try { res.json(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'grn_bills.json'), 'utf8'))); }
-    catch (e) { res.json([]); }
+// Drafts waiting for Ajmal (bills Claude read from photos): drafts_inbox/*.json. Shown as drafts in the workbench; once the bill is saved it stops showing.
+const INBOX = path.join(__dirname, '..', 'drafts_inbox');
+router.use('/grn-inbox', express.static(INBOX, { index: false, dotfiles: 'deny', extensions: ['jpg'] }));
+router.get('/grn-workbench/bills', async (req, res) => {
+    let list = [];
+    try { list = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'grn_bills.json'), 'utf8')); } catch (e) { list = []; }
+    try {
+        for (const f of fs.readdirSync(INBOX).filter(x => x.endsWith('.json'))) {
+            for (const b of JSON.parse(fs.readFileSync(path.join(INBOX, f), 'utf8'))) {
+                let saved = false;
+                try { saved = await billExists(pool, b.vendor, b.no); } catch (_) {}
+                if (!saved) list.push(b);
+            }
+        }
+    } catch (e) { /* no inbox folder: fine */ }
+    res.json(list);
 });
 
 // Next free number for a vendor. Looks at the vendor's own numbers (saved bills + GRN records), read only.

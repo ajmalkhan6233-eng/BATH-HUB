@@ -128,7 +128,7 @@ function today(){return new Date().toISOString().slice(0,10)}
 function addDays(d,n){var x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+Number(n||0));return x.toISOString().slice(0,10)}
 var seq=0;
 function blank(kind){return{id:'D'+(++seq)+'-'+Date.now(),kind:kind,vendor:'',no:'',date:today(),received:today(),credit_days:90,ptype:'BILL',lines:kind==='GRN'?[{code:'',name:'',qty:1,unit:0,sell:0}]:[],paper:0,amount:0,photo:'',status:'draft',note:'',dup:null,ch:{cheque_no:'',bank:'',amount:0,cheque_date:today(),due_date:today(),bill_id:'',same_bank:false}}}
-function fromBill(b){var d=blank('GRN');d.id=b.id;d.vendor=b.vendor;d.no=b.no;d.date=b.date;d.received=b.received||b.date;d.credit_days=b.credit_days==null?90:b.credit_days;d.paper=b.printed_total;d.note=b.note||'';d.lines=b.lines.map(function(l){return{code:l.code||'',name:l.name,qty:l.qty,unit:l.unit,sell:0}});return d}
+function fromBill(b){var d=blank('GRN');d.id=b.id;d.vendor=b.vendor;d.no=b.no;d.date=b.date;d.received=b.received||b.date;d.credit_days=b.credit_days==null?90:b.credit_days;d.paper=b.printed_total;d.note=b.note||'';d.photoUrl=b.photo||'';d.lines=b.lines.map(function(l){return{code:l.code||'',name:l.name,qty:l.qty,unit:l.unit,sell:l.sell||0}});return d}
 function net(l){var x=Number(l.disc)||0;return x>0?Math.round(l.unit*(1-x/100)*100)/100:l.unit}
 function total(d){return d.kind==='GRN'?d.lines.reduce(function(s,l){return s+l.qty*net(l)},0):d.kind==='BILL'?Number(d.amount)||0:Number(d.ch.amount)||0}
 function title(d){var k=d.kind==='GRN'?'GRN':d.kind==='BILL'?'Bill':'Cheque';return k+': '+(d.vendor||'(no vendor)')+' '+(d.no||d.ch.cheque_no||'')}
@@ -278,7 +278,7 @@ function drawRight(){
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
   }
  }
- R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?'Change what you need, then press Save changes.':'Waiting for OK. Nothing is saved yet.',style:d.status==='saved'?'':''}));
+ R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?'Change what you need, then press Save changes.':((d.note?d.note+' ':'')+'Waiting for OK. Nothing is saved yet.'),style:d.status==='saved'?'':''}));
  var isSaved=(d.status==='saved'||d.status==='editing')&&d.billId&&d.kind!=='CHEQUE';
  var btns=[h('button',{class:'p',id:'ok',text:d.status==='editing'?'Save changes':'OK: save this to the app',style:'font-size:17px;padding:10px 20px',onclick:doSave})];
  if(d.status==='saved'&&d.billId&&d.kind!=='CHEQUE')btns.push(h('button',{id:'editbtn',text:'Edit this bill',style:'font-size:17px;padding:10px 20px',onclick:function(){d.status='editing';render()}}));
@@ -443,8 +443,9 @@ function vdel(v){ask('Delete '+v.name+'?',[v.grns>0||Number(v.billed)>0?'This ve
 
 /* ---------- start ---------- */
 function start(list){
- drafts=(list||[]).map(fromBill);
- var old=load().filter(function(d){return d&&d.kind&&!isEmpty(d)&&!drafts.some(function(x){return x.id===d.id})});
+ var mine=load();
+ drafts=(list||[]).map(function(b){var d=fromBill(b),kept=mine.filter(function(x){return x&&x.id===b.id})[0];if(kept){kept.photoUrl=kept.photoUrl||d.photoUrl;kept.photo=kept.photo||'';return kept}return d});
+ var old=mine.filter(function(d){return d&&d.kind&&!isEmpty(d)&&!drafts.some(function(x){return x.id===d.id})});
  old.forEach(function(d){d.photo=d.photo||'';drafts.push(d)});
  if(!drafts.length)drafts.push(blank('GRN'));
  cur=drafts[0];render();idbGet(cur.id).then(function(p){if(p&&!cur.photo){cur.photo=p;drawFrame()}});
