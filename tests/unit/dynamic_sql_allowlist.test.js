@@ -29,6 +29,8 @@ const ALLOWED = {
   'utils/oversold.js': [1, "fixed status clause plus 'item_code = ANY($1)' (reviewed 2026-11-04)"],
   'routes/investor_loans.js': [5, "LOAN_SELECT is a constant; fixed 'WHERE l.status = $1'"],
   'routes/item_catalog.js': [2, 'ITEM_COLS is a constant; limit is a clamped number'],
+  'routes/item_catalog_fix.js': [2, 'table names come from information_schema and a Date.now() digit suffix; every value is $n (reviewed 2026-11-05)'],
+  'routes/item_dupe_merge.js': [2, 'table names come from information_schema and a Date.now() digit suffix; every value is $n (reviewed 2026-11-05)'],
   'layla_owner/taskStore.js': [2, "done/snooze: fixed 'source=$n' or fixed 'NOT LIKE family' fragment chosen by a yes/no; values are $n"],
   'routes/money_control.js': [2, "fixed 'WHERE status = $1'"],
   'routes/purchasing_accounting.js': [5, 'SET lists from fixed field names; notVoided() and CASH_OUT_EXPR are internal constants'],
@@ -73,7 +75,7 @@ describe('dynamic SQL ratchet', () => {
     const stale = Object.keys(ALLOWED).filter((f) => !found[f] || found[f] < ALLOWED[f][0]);
     expect(stale).toEqual([]);
   });
-  test('68 reviewed spots in total', () => {
-    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(68);
+  test('72 reviewed spots in total', () => {
+    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(72);
   });
 });
