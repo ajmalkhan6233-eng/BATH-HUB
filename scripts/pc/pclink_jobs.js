@@ -29,7 +29,7 @@ const jobs = {
     code_sources_report: async (a, log) => { log('running scripts/dev/code_sources_report.js (read only)'); const r = await sh(process.execPath, ['scripts/dev/code_sources_report.js'], { timeout: 180000 }); return r.text; },
     // Item names + Leo codes (Ajmal 5 Nov). mode "plan" changes nothing. mode "apply" makes a database backup first and stops if it fails.
     catalog_fix: async (a, log) => {
-        const F = require('../../routes/item_catalog_fix'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
+        for (const m of ['../../routes/item_catalog_fix', '../../scripts/renumber_item_codes']) { try { delete require.cache[require.resolve(m)]; } catch (e) { /* not loaded yet */ } } const F = require('../../routes/item_catalog_fix'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
         if (mode === 'plan') { const p = await F.plan(pool, a && a.extra); return JSON.stringify({ products: p.products, will_rename: p.renames.length, will_change_codes: p.codes.length, grn_lines_with_old_codes: p.grn_lines_with_old_codes, skipped: p.skipped, problems: p.problems }) + '\nRENAMES\n' + p.renames.map(r => r.code + ' | ' + r.old + ' => ' + r.new).join('\n') + '\nCODES\n' + p.codes.map(c => c.old + ' => ' + c.new + ' | ' + c.name).join('\n'); }
         if (mode !== 'apply') throw new Error('mode must be plan or apply');
         log('backup first'); const B = require('./github_backup'); const env = Object.assign({}, B.readEnv(path.join(root, '.env')), process.env);
