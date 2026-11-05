@@ -34,7 +34,7 @@ async function plan(db) {
     return { map, skipped, metroCount: metro.length, nextFree: pad(n + 1) };
 }
 async function codeTables(db) {
-    return (await db.query(`SELECT table_name FROM information_schema.columns WHERE table_schema='public' AND column_name='item_code' AND table_name<>'products' AND table_name<>'item_code_renumber_log' ORDER BY 1`)).rows.map(r => r.table_name);
+    return (await db.query(`SELECT table_name FROM information_schema.columns WHERE table_schema='public' AND column_name='item_code' AND table_name<>'products' AND table_name<>'item_code_renumber_log' AND table_name NOT LIKE '%\\_bak\\_%' AND table_name NOT LIKE '%\\_bak' ORDER BY 1`)).rows.map(r => r.table_name);
 }
 async function apply(db, map) {   // db = one connected client
     const ch = map.filter(m => m.changed);
