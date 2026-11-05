@@ -1,6 +1,6 @@
 'use strict';
 // ITEM CATALOG FIX (Ajmal 5 Nov 2026, from his own words):
-//  1) no "?" in item names;  2) the vendor's code is NOT a separate field: it is printed BEHIND the name (e.g. "FH 1208 Flexible Tap?" -> "Flexible Tap FH1208");
+//  1) no "?" in item names;  2) the vendor's code is NOT a separate field: it is printed in FRONT of the name (e.g. "FH 1208 Flexible Tap?" -> "FH1208 Flexible Tap", "SQUARE SOAP DISH 304" -> "304 SQUARE SOAP DISH");
 //  3) Leo's items get EXACTLY the 4-digit codes he typed in the Leo bill (0065 ...);  4) GRN lines that show OLD-xxx / TBD-xxx get the live item's code.
 // Never touches stock, prices, cost or bills' money. plan() changes nothing. apply() backs up first (tables products_bak_catalogfix_<time>, item_name_fix_log, item_code_renumber_log).
 const fs = require('fs'), path = require('path');
@@ -8,26 +8,23 @@ const R = require('../scripts/renumber_item_codes');
 const root = path.resolve(__dirname, '..');
 const DEAD = /^(OLD|TBD)-/i, isLive = c => !DEAD.test(String(c || ''));
 const clean = s => String(s || '').replace(/\?/g, '').replace(/\s+/g, ' ').trim();
-// leading vendor-code words are moved to the end; known shapes only (never a size like 60X80, 3 PIN, 1.5FT)
-const LEAD = [/^(FH)\s*(\d+)(?:\s*\(([A-Za-z0-9])\))?\s+(?=\S)/i, /^(ME\d+)\s+(?=\S)/i, /^(\d{2,3}-\d{1,3})\s+(?=\S)/, /^([A-Za-z]{1,2}\d*-\d{1,3})\s+(?=\S)/, /^(\d{3,4})\s+(?=[A-Za-z(])/];
+// FRONT RULE (Ajmal 5 Nov 2026, final): the vendor's code is printed in FRONT of the name, like "WT00167 PILLAR SINK TAP MQ203 WTC".
+// A code already in front stays. Items with a vendor code in the old separate field get it in front. A model code at the END ("SQUARE SOAP DISH 304") moves to the front.
+// Sizes (60X80, 1.5FT, 3 PIN) are never codes. "?" is removed everywhere.
+const LEAD = [/^FH\s*\d+/i, /^ME\d+\s+\S/i, /^[A-Za-z]{1,4}\d{3,}[A-Za-z0-9-]*\s+\S/, /^\d{2,3}-\d{1,3}\s+\S/, /^[A-Za-z]{1,2}\d*-\d{1,3}\s+\S/, /^\d{3,4}\s+[A-Za-z(]/];
+const TAIL = /^(?:[A-Za-z]{1,2}\d*-\d{1,3}|[A-Za-z]{0,3}\d{3,}[A-Za-z]{0,2})$/;
+const NOTCODE = /^\d+(?:X\d+)+$|^\d+(?:MM|CM|IN|FT|MTR|KG|L|W|A|V|M|G)$|^\d+\/\d+/i;
 function cleanName(name, vendorCode) {
-    let s = clean(name); const codes = [];
-    for (let guard = 0; guard < 4; guard++) {
-        let hit = false;
-        for (const re of LEAD) {
-            const m = s.match(re); if (!m) continue;
-            let code = m[0].trim();
-            if (re === LEAD[0]) code = 'FH' + m[2] + (m[3] ? '(' + m[3].toUpperCase() + ')' : '');
-            let rest = s.slice(m[0].length).trim();
-            if (re === LEAD[4]) { const sz = rest.match(/^\((\d+x\d+)\)\s*/i); if (sz) { rest = rest.slice(sz[0].length) + ' (' + sz[1] + ')'; } }   // "1001 (50x70) Plain Mirror" -> "Plain Mirror (50x70) 1001"
-            if (!/[A-Za-z]/.test(rest)) continue;
-            codes.push(code); s = rest.trim(); hit = true; break;
-        }
-        if (!hit) break;
+    let s = clean(name);
+    s = s.replace(/^FH\s*(\d+)(?:\s*\(([A-Za-z0-9])\))?/i, (m, d, v) => 'FH' + d + (v ? '(' + v.toUpperCase() + ')' : ''));
+    const vc = clean(vendorCode);
+    const hasLead = LEAD.some(re => re.test(s));
+    if (vc && !hasLead && !s.toLowerCase().startsWith(vc.toLowerCase())) return (vc + ' ' + s.replace(new RegExp('\\s*' + vc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i'), '')).trim();
+    if (!hasLead) {
+        const w = s.split(' ');
+        if (w.length >= 2) { const last = w[w.length - 1]; if (TAIL.test(last) && !NOTCODE.test(last) && /\d/.test(last)) return (last + ' ' + w.slice(0, -1).join(' ')).trim(); }
     }
-    const vc = clean(vendorCode); if (vc) codes.push(vc);
-    const out = [s].concat(codes.filter(c => !new RegExp('(^|\\s)' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(\\s|$)', 'i').test(s))).join(' ').trim();
-    return out;
+    return s;
 }
 async function leoCodes(db, prods) {   // typed 4-digit codes from saved bill lines, matched to a live item by NAME
     const out = [], skipped = [], seenCode = new Set(), byName = new Map();
@@ -42,9 +39,11 @@ async function leoCodes(db, prods) {   // typed 4-digit codes from saved bill li
     }
     return { codes: out, skipped };
 }
-async function plan(db) {
+async function plan(db, extra) {
     const prods = (await db.query(`SELECT id, item_code, name, vendor_code FROM products ORDER BY id`)).rows;
     const renames = []; for (const p of prods) { if (!isLive(p.item_code)) continue; const nn = cleanName(p.name, p.vendor_code); if (nn !== p.name || p.vendor_code) renames.push({ id: p.id, code: p.item_code, old: p.name, new: nn, vendor_code: p.vendor_code || null }); }
+    // explicit renames chosen from the bill lines (placeholder item -> the exact name on the bill, so saving the bill later adds stock to THIS item)
+    for (const x of (extra || [])) { const p = prods.find(q => q.item_code === String(x.code) && isLive(q.item_code)); if (!p) continue; const nn = clean(x.name); const i = renames.findIndex(r => r.id === p.id); const rec = { id: p.id, code: p.item_code, old: p.name, new: nn, vendor_code: p.vendor_code || null }; if (nn === p.name) { if (i >= 0) renames.splice(i, 1); } else if (i >= 0) renames[i] = rec; else renames.push(rec); }
     const L = await leoCodes(db, prods), problems = [];
     const used = new Map(prods.map(p => [p.item_code, p.id])); for (const c of L.codes) { if (used.has(c.new) && used.get(c.new) !== c.id) problems.push('Code ' + c.new + ' is already used by another item'); }
     const dead = (await db.query(`SELECT count(*)::int n FROM grn_records WHERE item_description ~ '^(OLD|TBD)-'`)).rows[0].n;
@@ -57,8 +56,8 @@ async function nameTables(db) { return (await db.query(`SELECT table_name FROM i
 async function apply(pool, opts = {}) {
     const c = await pool.connect();
     try {
-        const P = await plan(c); if (P.problems.length) return { ok: false, error: P.problems[0] + '. Nothing was changed.' };
-        const ts = new Date().toISOString().replace(/\D/g, '').slice(0, 14), run = 'N' + Date.now();
+        const P = await plan(c, opts.extra); if (P.problems.length) return { ok: false, error: P.problems[0] + '. Nothing was changed.' };
+        const ts = String(Date.now()), run = 'N' + Date.now();
         await c.query('BEGIN');
         await c.query(`CREATE TABLE products_bak_catalogfix_${ts} AS SELECT * FROM products`);
         await c.query(`CREATE TABLE IF NOT EXISTS item_name_fix_log (id SERIAL PRIMARY KEY, run_id TEXT, product_id INT, item_code TEXT, old_name TEXT, new_name TEXT, old_vendor_code TEXT, run_at TIMESTAMPTZ DEFAULT NOW(), undone BOOLEAN DEFAULT FALSE)`);
