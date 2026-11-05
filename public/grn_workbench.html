@@ -9,7 +9,7 @@
 header{background:var(--c-ink);color:var(--c-ink-text);padding:var(--s2) var(--s3);display:flex;gap:var(--s2) var(--s3);align-items:center;flex-wrap:wrap;border-bottom:3px solid var(--c-gold)}
 header b{font-size:var(--t-l);color:var(--c-gold)}header span{font-size:var(--t-s);color:#c9c9c4}
 .wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s2);padding:var(--s2);max-width:none;margin:0}
-@media(min-width:960px){.wrap{grid-template-columns:minmax(280px,var(--lw,24%)) 14px minmax(0,1fr);gap:0;padding:var(--s3);align-items:start}}
+@media(min-width:960px){.wrap{grid-template-columns:minmax(190px,var(--lw,15%)) 14px minmax(0,1fr);gap:0;padding:var(--s3);align-items:start}}
 .split{display:none}
 @media(min-width:960px){.split{display:block;cursor:col-resize;align-self:stretch;min-height:200px;position:relative;touch-action:none}.split:before{content:'';position:absolute;left:5px;top:0;bottom:0;width:4px;border-radius:4px;background:var(--c-line-strong)}.split:hover:before,.split.drag:before{background:var(--c-gold)}.split:after{content:'\22EE';position:absolute;top:50%;left:0;width:14px;text-align:center;color:var(--c-muted);font-size:20px;background:var(--c-bg);line-height:1}}
 .card{background:var(--c-surface);border:1px solid var(--c-line);border-radius:var(--r2);padding:var(--s3);box-shadow:var(--sh1)}
@@ -160,9 +160,20 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 .lines td:nth-child(10) input{width:18px !important;height:18px !important;min-height:0 !important}
 .lines td button.d{min-height:24px !important;height:26px !important;padding:0 6px !important;border-radius:5px !important}
 .srtog,.row.actions button{border-radius:6px !important}
+/* fit in ONE window, no sideways scrolling (AJ 5 Nov 7pm) */
+.lines table{width:100% !important}
+.lines td:nth-child(3) input{min-width:90px !important;width:100% !important}
+.lines td:nth-child(5) input,.lines td:nth-child(8) input{width:62px !important}
+.lines td.dcell input{width:38px !important}.lines td.dcell .dsel{width:40px !important}
+.lines td:nth-child(11) input,.lines td:nth-child(12) input,.lines td:nth-child(13) input{width:38px !important}
+.lines td:nth-child(2) input{width:48px !important}
+.lines td:nth-child(4) input{width:40px !important}
+.lines td,.lines th{padding-left:1px !important;padding-right:1px !important}
+.lines td:nth-child(1){width:22px}.lines td:nth-child(10){width:26px}
+.scroll.lines{overflow-x:auto}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
-<header><b>Royal Bath Hub</b><span>GRN workbench (build 67): photo, fix, press OK. Nothing is saved before that.</span></header>
+<header><b>Royal Bath Hub</b><span>GRN workbench (build 68): photo, fix, press OK. Nothing is saved before that.</span></header>
 <div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button><button id="tab5">5. More (purchasing, documents)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>
 <div class="wrap" id="view1">
@@ -487,13 +498,13 @@ function doPrint(){var P=$('printArea');P.textContent='';P.appendChild(h('h2',{t
 
 /* ---------- splitter ---------- */
 (function(){var sp=$('split'),wr=$('view1'),drag=false;
- try{var w=localStorage.getItem('grn_lw');if(w)wr.style.setProperty('--lw',w)}catch(e){}
- function setW(x){var r=wr.getBoundingClientRect(),px=Math.max(280,Math.min(r.width-460,x-r.left-14));var v=px+'px';wr.style.setProperty('--lw',v);try{localStorage.setItem('grn_lw',v)}catch(e){}}
+ try{var w=localStorage.getItem('grn_lw2');if(w)wr.style.setProperty('--lw',w)}catch(e){}
+ function setW(x){var r=wr.getBoundingClientRect(),px=Math.max(190,Math.min(r.width-460,x-r.left-14));var v=px+'px';wr.style.setProperty('--lw',v);try{localStorage.setItem('grn_lw2',v)}catch(e){}}
  sp.addEventListener('pointerdown',function(e){drag=true;sp.classList.add('drag');try{sp.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()});
  sp.addEventListener('pointermove',function(e){if(drag)setW(e.clientX)});
  function end(){drag=false;sp.classList.remove('drag')}
  sp.addEventListener('pointerup',end);sp.addEventListener('pointercancel',end);
- sp.addEventListener('dblclick',function(){wr.style.removeProperty('--lw');try{localStorage.removeItem('grn_lw')}catch(e){}})})();
+ sp.addEventListener('dblclick',function(){wr.style.removeProperty('--lw');try{localStorage.removeItem('grn_lw2')}catch(e){}})})();
 
 /* ---------- vendors & summary ---------- */
 function tab(n){$('view1').style.display=n===1?'':'none';$('view2').style.display=n===2?'block':'none';$('tools').style.display=n===2?'block':'none';if(n===2)buildTools();$('view3').style.display=n===3?'block':'none';$('view4').style.display=n===4?'block':'none';$('view5').style.display=n===5?'block':'none';$('tab5').className=n===5?'on':'';if(n===5&&!$('view5').firstChild){var fr=document.createElement('iframe');fr.src='/hub.html?set=grn';fr.style.cssText='width:100%;height:calc(100vh - 150px);min-height:480px;border:0';$('view5').appendChild(fr)}$('tab4').className=n===4?'on':'';$('tab1').className=n===1?'on':'';$('tab2').className=n===2?'on':'';$('tab3').className=n===3?'on':'';if(n===2)loadSummary();if(n===3)loadCheques();if(n===4)loadSales()}
