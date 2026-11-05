@@ -31,3 +31,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-04: QUEUE_TODAY written (PC prep, data entry via Add by photo, ERP polish). Simple menu now also shows 'Add by photo' (Document Inbox). Defaults chosen, no questions. Plain-text DB password removed from .claude/commands/dubai-status.md (still in git history; Ajmal should change it).
 
 
+09:58 | PC: Metro double-count refused | all 58 lines (MG-20261009-01/02) point to OLD-xxx items at stock 0; real stock is on the bill's TBD items. Proposed clamp (take back only what exists) in AI_MEMORY/_proposed_clamp_grn_dupes.patch, NOT applied, dry run hung on PC | CLOUD: build+test on bhtest (incl. all-zero-stock case), push | DEFAULT CHOSEN: live data untouched
