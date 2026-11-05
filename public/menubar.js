@@ -1,5 +1,5 @@
 /* Classic menu bar for the owner shell (24 Oct 2026, from MENU_MAP.md).
-   Desktop: a menu bar under the top bar (File, Sales, Customers & Online, Vendors, Stock, Banking & Money, Reports; profit reports live inside Reports) with drop-down lists.
+   Desktop: a menu bar under the top bar (File, Sales, Customers & Online, Vendors, Inventory, Banking & Money, Reports; profit reports live inside Reports) with drop-down lists.
    Phone: the bottom "More" button opens the same groups as one-at-a-time lists (rows 48 px).
    Touches no data. Every screen keeps its own key. A screen that does not exist yet shows "coming soon" and does nothing.
    The map is also exported (window.RBHMenu.MAP) so tests can check that every screen appears exactly once. */
@@ -15,8 +15,8 @@
       ['shoptools', 'Shop Tools'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
-    ['Vendors', [['grn', 'GRN (enter bills, cheques, sales)'], ['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
-    ['Stock', [['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
+    ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
@@ -133,6 +133,12 @@
       if (m && win.matchMedia && win.matchMedia('(max-width:767px)').matches) { e.preventDefault(); e.stopImmediatePropagation(); openDrawer(); }
     }, true);
     ensureProfit(); build();
+    // Owner screens (Stock & items, Vendor 360, Stickers...) are added by other scripts a moment after load, on a slow PC even after 9 s.
+    // Rebuild the menu whenever the side list changes (not while a drop-down is open).
+    try {
+      var side = doc.querySelector('.sidebar-nav'), t = null;
+      if (side && win.MutationObserver) new win.MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { if (!bar.querySelector('.mb-top.on') && !drawer.classList.contains('on')) build(); }, 400); }).observe(side, { childList: true, subtree: true });
+    } catch (e) { /* the timed rebuilds below still run */ }
     [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
   }
   return { MAP: MAP, HOME: HOME, allKeys: allKeys, start: start };

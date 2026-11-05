@@ -24,3 +24,13 @@ test('every rep: entry exists as an option in the report page, and the page can 
 test('no screen key appears twice in the menu (headings excluded)', () => {
   const keys = M.allKeys(); expect(new Set(keys).size).toBe(keys.length);
 });
+
+test('GRN is the first item of Inventory (was Stock) and no longer under Vendors', () => {
+  expect(group('Stock')).toBeUndefined();
+  const inv = group('Inventory')[1].map(i => i[0]);
+  expect(inv[0]).toBe('grn');
+  expect(inv).toEqual(expect.arrayContaining(['stockmgr', 'pending', 'helper', 'barcode', 'stickers']));
+  const ven = group('Vendors')[1].map(i => i[0]);
+  expect(ven).not.toContain('grn');
+  expect(ven).toEqual(expect.arrayContaining(['vendorsum', 'vendor360', 'vendors', 'vendorledger', 'vendorcredit', 'vendorreturns', 'chequereg', 'purchasing']));
+});
