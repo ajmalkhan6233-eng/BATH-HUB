@@ -27,6 +27,16 @@ const jobs = {
     morning_fix_status: async () => { try { return fs.readFileSync(path.join(root, 'logs', 'morning_fix.json'), 'utf8'); } catch (e) { return 'no morning_fix.json'; } },
     tail_log: async a => { const f = { watchdog: 'watchdog.log', morning: 'morning_fix.json', backup: 'github_backup.json' }[String(a && a.name)]; if (!f) throw new Error('name must be watchdog, morning or backup'); const n = Math.min(Number(a.lines) || 40, 200); try { return fs.readFileSync(path.join(root, 'logs', f), 'utf8').split(/\r?\n/).slice(-n).join('\n'); } catch (e) { return 'no such log yet'; } },
     code_sources_report: async (a, log) => { log('running scripts/dev/code_sources_report.js (read only)'); const r = await sh(process.execPath, ['scripts/dev/code_sources_report.js'], { timeout: 180000 }); return r.text; },
+    // Item names + Leo codes (Ajmal 5 Nov). mode "plan" changes nothing. mode "apply" makes a database backup first and stops if it fails.
+    catalog_fix: async (a, log) => {
+        const F = require('../../routes/item_catalog_fix'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
+        if (mode === 'plan') { const p = await F.plan(pool); return JSON.stringify({ products: p.products, will_rename: p.renames.length, will_change_codes: p.codes.length, grn_lines_with_old_codes: p.grn_lines_with_old_codes, skipped: p.skipped, problems: p.problems }) + '\nRENAMES\n' + p.renames.map(r => r.code + ' | ' + r.old + ' => ' + r.new).join('\n') + '\nCODES\n' + p.codes.map(c => c.old + ' => ' + c.new + ' | ' + c.name).join('\n'); }
+        if (mode !== 'apply') throw new Error('mode must be plan or apply');
+        log('backup first'); const B = require('./github_backup'); const env = Object.assign({}, B.readEnv(path.join(root, '.env')), process.env);
+        const dir = path.join(root, 'backups'); fs.mkdirSync(dir, { recursive: true }); const out = path.join(dir, 'pre_catalog_fix_' + new Date().toISOString().replace(/[:.]/g, '-') + '.sql.gz');
+        await B.dumpDb(env, out); if (fs.statSync(out).size < 500) throw new Error('backup looks empty: nothing changed'); log('backup ok ' + path.basename(out));
+        const r = await F.apply(pool); if (!r.ok) throw new Error(r.error); return JSON.stringify(r);
+    },
     query: async (a, log) => {
         const sql = checkSql(a && a.sql); log('read-only query: ' + sql.slice(0, 120));
         const pool = require('../../utils/pool'); const c = await pool.connect();
