@@ -106,6 +106,18 @@
       + tile('Out of stock', n(st.out_of_stock), 'Low stock: ' + n(st.low_stock))
       + tile('Items without price', n(st.no_price), 'Set them on the Item catalog screen')
       + '</div>';
+    /* 5b what if we discount everything (priced items only) */
+    (function () {
+      var rv = n(st.retail_value), cp = n(st.cost_priced);
+      if (!(rv > 0)) return;
+      var rows = [0, 5, 10, 15, 25].map(function (p) {
+        var got = rv * (1 - p / 100), pr = got - cp;
+        return '<tr><td>' + (p ? p + '% off' : 'No discount') + '</td><td style="text-align:right">' + lkr(got) + '</td><td style="text-align:right">' + lkr(pr) + '</td><td style="text-align:right">' + (got > 0 ? Math.round(pr / got * 100) : 0) + '%</td></tr>';
+      }).join('');
+      h += '<div class="dp-card" style="margin-bottom:12px"><h3>If we sell all stock with a discount</h3>'
+        + '<div style="font-size:12px;opacity:.75;margin-bottom:6px">Cost ' + lkr(cp) + ' · priced items only</div>'
+        + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="opacity:.7"><th style="text-align:left">Discount</th><th style="text-align:right">We get</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    })();
     h += '<div class="dp-grid2"><div class="dp-card"><h3>Reorder soon</h3>' + (st.low_list.length ? st.low_list.map(function (x) { return row(esc(x.item_code + ' ' + x.name), n(x.stock_level) <= 0 ? '<span class="down">OUT</span>' : n(x.stock_level) + ' left'); }).join('') : '<div class="dp-note">Nothing low.</div>') + '</div>'
       + '<div class="dp-card"><h3>Stock by category (cost)</h3>' + (st.categories.length ? st.categories.map(function (x) { return row(esc(x.category) + ' (' + x.items + ')', lkr(x.cost_value)); }).join('') : '<div class="dp-note">No items.</div>') + '</div>'
       + '<div class="dp-card"><h3>Top sellers this month</h3>' + (d.top_items_month.length ? d.top_items_month.map(function (x) { return row(esc(x.name) + ' ×' + Math.round(x.qty), lkr(x.revenue)); }).join('') : '<div class="dp-note">No sales yet this month.</div>') + '</div></div>';

@@ -49,6 +49,7 @@ router.get('/dashboard-pro', ownerOnly, async (req, res) => {
     safe('stock', () => q(`SELECT COUNT(*) AS items, COALESCE(SUM(GREATEST(stock_level,0)),0) AS units,
         COALESCE(SUM(GREATEST(stock_level,0) * avg_cost),0) AS cost_value,
         COALESCE(SUM(GREATEST(stock_level,0) * selling_price) FILTER (WHERE selling_price > 0),0) AS retail_value,
+        COALESCE(SUM(GREATEST(stock_level,0) * avg_cost) FILTER (WHERE selling_price > 0),0) AS cost_priced,
         COUNT(*) FILTER (WHERE stock_level <= 0) AS out_of_stock,
         COUNT(*) FILTER (WHERE stock_level > 0 AND reorder_threshold > 0 AND stock_level <= reorder_threshold) AS low_stock,
         COUNT(*) FILTER (WHERE selling_price IS NULL OR selling_price <= 0) AS no_price
