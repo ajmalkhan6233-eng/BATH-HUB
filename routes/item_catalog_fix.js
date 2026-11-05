@@ -79,6 +79,7 @@ async function apply(pool, opts = {}) {
         const f = path.join(root, 'data', 'grn_bills.json');
         if (!opts.noFile && fs.existsSync(f)) { try {
             const list = JSON.parse(fs.readFileSync(f, 'utf8')); fs.copyFileSync(f, f + '.bak_catalogfix_' + ts);
+            for (const x of (opts.extra || [])) if (x.from) map.set(String(x.from).toLowerCase(), clean(x.name));   // draft bill lines get the same new name, so saving the bill adds stock to THIS item
             const cm = new Map(P.codes.map(x => [x.old, x.new]));
             for (const b of list) for (const l of (b.lines || [])) { const n = map.get(String(l.name || '').toLowerCase()); if (n) { l.name = n; files++; } const lc = live.get(String(l.name || '').toLowerCase()); if (lc && (!l.code || DEAD.test(l.code) || cm.has(l.code))) { if (l.code !== lc) files++; l.code = lc; } }
             fs.writeFileSync(f, JSON.stringify(list, null, 1)); } catch (e) { /* the database is fixed; the file is a nicety */ } }
