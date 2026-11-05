@@ -1,3 +1,4 @@
+PC WINDOW: do AI_MEMORY/PC_START.md (numbered steps, the whole job) before anything else.
 HANDOFF: read AI_MEMORY/HANDOFF_2026-11-05.md FIRST (full list of what is built, open, and the first PC action).
 # NOW (newest state; the start-up hook prints THIS FIRST. Rewrite it after every phase, max 12 lines)
 Updated 2026-11-04 night. Branch work. Everything below is pushed (last commits: input help, extra admin + 3D logo, auto-update).
