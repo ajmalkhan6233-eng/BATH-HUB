@@ -173,7 +173,7 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 .scroll.lines{overflow-x:auto}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
-<header><b>Royal Bath Hub</b><span>GRN workbench (build 68): photo, fix, press OK. Nothing is saved before that.</span></header>
+<header><b>Royal Bath Hub</b><span>GRN workbench (build 69): photo, fix, press OK. Nothing is saved before that.</span></header>
 <div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button><button id="tab5">5. More (purchasing, documents)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>
 <div class="wrap" id="view1">
@@ -388,6 +388,12 @@ function drawRight(){
  btns.push(h('button',{text:'Print',onclick:doPrint}),h('button',{text:'Download',onclick:doDownload}),h('button',{text:'Send by WhatsApp',onclick:doWhatsApp}));
  R.appendChild(h('div',{class:'row actions'},btns));
  drawDup();sums();
+ /* fit in ONE window: if the table is wider than its box, shrink it just enough (AJ 5 Nov) */
+ (function(){if(!linesBox||!srBtn)return;var tb=linesBox.querySelector('table');if(!tb)return;
+  function fit(){tb.style.zoom='';var cw=linesBox.clientWidth,sw=tb.scrollWidth;if(cw>0&&sw>cw+1){tb.style.zoom=Math.max(.55,(cw-2)/sw).toFixed(3)}}
+  fit();setTimeout(fit,60);
+  try{if(window.ResizeObserver){var ro=new ResizeObserver(fit);ro.observe(linesBox);ro.observe(tb)}}catch(e){}
+  window.addEventListener('resize',fit);srBtn.addEventListener('click',function(){setTimeout(fit,30)})})();
 }
 var curTb=null;
 function margin(l){return l.sell>0&&l.unit>0?((l.sell-net(l))/net(l)*100).toFixed(0)+'%':'-'}

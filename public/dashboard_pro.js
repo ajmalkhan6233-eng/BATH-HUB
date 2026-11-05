@@ -174,15 +174,15 @@
 
   function box() {
     var b = el(BOX_ID), page = el('page-dashboard');
-    if (!b && page) { b = document.createElement('div'); b.id = BOX_ID; page.insertBefore(b, page.firstChild); }
+    if (!b && page) { b = document.createElement('div'); b.id = BOX_ID; b.innerHTML = '<div class="dp-note" style="padding:10px">Loading your dashboard…</div>'; page.insertBefore(b, page.firstChild); page.classList.add('dp-on'); }
     return b;
   }
   function load() {
     var b = box(); if (!b || busy) return; busy = true;
     fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      busy = false; if (!d) { b.innerHTML = ''; return; }
-      try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = load; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; }
-    }).catch(function () { busy = false; });
+      busy = false; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
+      try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = load; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
+    }).catch(function () { busy = false; var pg3 = el('page-dashboard'); if (pg3) pg3.classList.remove('dp-on'); });
   }
   function visible() { var p = el('page-dashboard'); return p && p.classList.contains('active') && !document.hidden; }
   function start() {
@@ -200,7 +200,7 @@
 
 /* tap a "Needs attention" line to open the screen that fixes it */
 (function () {
-  var css = document.createElement('style'); css.textContent = '#dash-pro .dp-go{cursor:pointer}#dash-pro .dp-go:hover{border-color:var(--gold,#C9A24B)}'; document.head.appendChild(css);
+  var css = document.createElement('style'); css.textContent = '#page-dashboard.dp-on>:not(#dash-pro){display:none!important}#dash-pro .dp-go{cursor:pointer}#dash-pro .dp-go:hover{border-color:var(--gold,#C9A24B)}'; document.head.appendChild(css);
   function go(e) { var c = e.target.closest && e.target.closest('#dash-pro .dp-go'); if (!c) return; if (e.type === 'keydown' && e.key !== 'Enter') return; try { if (window.rbhGo) window.rbhGo(c.getAttribute('data-go')); else if (window.navigate) window.navigate(c.getAttribute('data-go')); } catch (x) { /* ignore */ } }
   document.addEventListener('click', go); document.addEventListener('keydown', go);
 })();
