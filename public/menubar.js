@@ -1,5 +1,5 @@
 /* Classic menu bar for the owner shell (24 Oct 2026, from MENU_MAP.md).
-   Desktop: a menu bar under the top bar (File, Sales, Customers & Online, Vendors, Stock, Banking & Money, Profit, Reports) with drop-down lists.
+   Desktop: a menu bar under the top bar (File, Sales, Customers & Online, Vendors, Inventory, Banking & Money, Reports; profit reports live inside Reports) with drop-down lists.
    Phone: the bottom "More" button opens the same groups as one-at-a-time lists (rows 48 px).
    Touches no data. Every screen keeps its own key. A screen that does not exist yet shows "coming soon" and does nothing.
    The map is also exported (window.RBHMenu.MAP) so tests can check that every screen appears exactly once. */
@@ -15,25 +15,31 @@
       ['shoptools', 'Shop Tools'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
-    ['Vendors', [['grn', 'GRN (enter bills, cheques, sales)'], ['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
-    ['Stock', [['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
+    ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
-    ['Profit', [['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category']]],
-    ['Reports', [['reports', 'Reports'], ['reportshub', 'Download reports']]]
+    ['Reports', [
+      ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
+      ['--', 'Sales'], ['rep:sday', 'Sales by day'], ['rep:sweek', 'Sales by week'], ['rep:smonth', 'Sales by month'], ['reports', 'Daily summary and investor report'],
+      ['--', 'Stock and items'], ['rep:items', 'Items: cost, price, profit'], ['rep:svalue', 'Stock value by category'], ['rep:lowstock', 'Low stock (5 or less)'], ['rep:zero', 'Out of stock'], ['rep:noprice', 'Items with no price'], ['rep:nocost', 'Items with no cost'],
+      ['--', 'Vendors and cheques'], ['rep:vsum', 'Vendors: bought, paid, pending'], ['rep:vbills', 'Vendor bills: every bill'], ['rep:vone', 'One vendor: all bills'], ['rep:vcheq', 'Cheques given, not cleared'], ['rep:vdue', 'Bills still to pay, by due date'], ['rep:grn', 'GRN history: every goods-in line'],
+      ['--', 'All in one place'], ['reportshub', 'Report list (show, download, print)']
+    ]]
   ];
   var HOME = ['dashboard', 'Home'];
 
-  function allKeys() { var o = [HOME[0]]; MAP.forEach(function (g) { g[1].forEach(function (i) { o.push(i[0]); }); }); return o; }
+  function allKeys() { var o = [HOME[0]]; MAP.forEach(function (g) { g[1].forEach(function (i) { if (i[0] !== '--') o.push(i[0]); }); }); return o; }
 
   function start(win) {
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
-    var labelOf = function (k, fallback) { var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
+    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var labelOf = function (k, fallback) { if (k === '--' || k === 'reports' || k === 'reportshub' || k.indexOf(':') > 0) return fallback; var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
     function go(k) {
       closeAll(); closeDrawer();
       if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
+      if (k.indexOf('rep:') === 0) { var id = k.slice(4); win.__rbhPick = id; try { win.navigate('reportshub'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-reportshub'); try { f && f.contentWindow.postMessage({ type: 'report-pick', id: id }, win.location.origin); } catch (e) {} }, 300); setTimeout(function () { win.__rbhPick = ''; }, 3000); return; }
       if (k === 'pending') { ensurePending(); }
       if (k === 'helper') { ensureHelper(); }
       if (k === 'logins') { ensureLogins(); }
@@ -61,9 +67,10 @@
       '#rbh-menubar .mb-top{position:relative}#rbh-menubar button.mb-btn{background:transparent;color:inherit;border:0;font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 12px;cursor:pointer;border-radius:8px}' +
       '#rbh-menubar button.mb-btn:hover,#rbh-menubar button.mb-btn[aria-expanded=true]{background:var(--gold-bg-subtle,rgba(201,162,75,.15))}' +
       '#rbh-menubar button:focus-visible,#rbh-drawer button:focus-visible{outline:3px solid var(--gold-primary,#C9A24B);outline-offset:1px}' +
-      '#rbh-menubar .mb-list{display:none;position:absolute;left:0;top:100%;min-width:230px;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border:1px solid var(--border-subtle,#ddd);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:6px;z-index:60}' +
+      '#rbh-menubar .mb-list{display:none;position:absolute;left:0;top:100%;min-width:230px;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border:1px solid var(--border-subtle,#ddd);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:6px;z-index:60;max-height:72dvh;overflow-y:auto}' +
       '#rbh-menubar .mb-top.on .mb-list{display:block}' +
       '.mb-item{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:transparent;color:inherit;border:0;font:inherit;font-size:14px;min-height:40px;padding:0 10px;border-radius:8px;cursor:pointer}' +
+      '.mb-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.65;padding:8px 10px 2px;pointer-events:none}' +
       '.mb-item:hover{background:var(--gold-bg-subtle,rgba(201,162,75,.15))}.mb-item[disabled]{opacity:.5;cursor:default}.mb-item small{opacity:.7;font-size:11px}' +
       '#rbh-drawer{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9996;display:none}#rbh-drawer.on{display:block}' +
       '#rbh-drawer .dr{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border-radius:16px 16px 0 0;padding:8px 10px calc(16px + env(safe-area-inset-bottom))}' +
@@ -81,13 +88,14 @@
     topbar.parentNode.insertBefore(bar, topbar.nextSibling); doc.body.appendChild(drawer);
 
     function itemBtn(k, label, soon) {
+      if (k === '--') { var h = doc.createElement('div'); h.className = 'mb-head'; h.setAttribute('role', 'presentation'); h.textContent = label; return h; }
       var b = doc.createElement('button'); b.type = 'button'; b.className = 'mb-item'; b.setAttribute('role', 'menuitem'); b.dataset.k = k;
       var ok = !soon && exists(k);
       b.innerHTML = '<span></span>' + (ok ? '' : '<small>coming soon</small>'); b.firstChild.textContent = label;
       if (!ok) b.disabled = true; else b.onclick = function () { go(k); };
       return b;
     }
-    function visible(g) { return g[1].filter(function (i) { return i[2] || i[0].indexOf('profit:') === 0 || exists(i[0]); }); }
+    function visible(g) { return g[1].filter(function (i) { return i[0] === '--' || i[2] || i[0].indexOf('profit:') === 0 || exists(i[0]); }); }
     function build() {
       bar.innerHTML = '';
       var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home);
@@ -125,6 +133,12 @@
       if (m && win.matchMedia && win.matchMedia('(max-width:767px)').matches) { e.preventDefault(); e.stopImmediatePropagation(); openDrawer(); }
     }, true);
     ensureProfit(); build();
+    // Owner screens (Stock & items, Vendor 360, Stickers...) are added by other scripts a moment after load, on a slow PC even after 9 s.
+    // Rebuild the menu whenever the side list changes (not while a drop-down is open).
+    try {
+      var side = doc.querySelector('.sidebar-nav'), t = null;
+      if (side && win.MutationObserver) new win.MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { if (!bar.querySelector('.mb-top.on') && !drawer.classList.contains('on')) build(); }, 400); }).observe(side, { childList: true, subtree: true });
+    } catch (e) { /* the timed rebuilds below still run */ }
     [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
   }
   return { MAP: MAP, HOME: HOME, allKeys: allKeys, start: start };
