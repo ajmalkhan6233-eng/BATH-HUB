@@ -37,6 +37,16 @@ const jobs = {
         await B.dumpDb(env, out); if (fs.statSync(out).size < 500) throw new Error('backup looks empty: nothing changed'); log('backup ok ' + path.basename(out));
         const r = await F.apply(pool, { extra: a && a.extra }); if (!r.ok) throw new Error(r.error); return JSON.stringify(r);
     },
+    // Fazaal twins (AJ 5 Nov): the real item (200+) takes the typed number 059-098, the empty placeholder is retired. mode plan changes nothing; apply backs up first.
+    dupe_merge: async (a, log) => {
+        delete require.cache[require.resolve('../../routes/item_dupe_merge')]; const M = require('../../routes/item_dupe_merge'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
+        if (mode === 'plan') { const p = await M.plan(pool, a && a.extra); return JSON.stringify({ will_merge: p.pairs.length, problems: p.problems, skipped: p.skipped }) + '\n' + p.pairs.map(x => x.twin_code + ' (stock ' + x.twin_stock + ') takes ' + x.code + ' | ' + x.name).join('\n'); }
+        if (mode !== 'apply') throw new Error('mode must be plan or apply');
+        log('backup first'); const B = require('./github_backup'); const env = Object.assign({}, B.readEnv(path.join(root, '.env')), process.env);
+        const dir = path.join(root, 'backups'); fs.mkdirSync(dir, { recursive: true }); const out = path.join(dir, 'pre_dupe_merge_' + new Date().toISOString().replace(/[:.]/g, '-') + '.sql.gz');
+        await B.dumpDb(env, out); if (fs.statSync(out).size < 500) throw new Error('backup looks empty: nothing changed'); log('backup ok ' + path.basename(out));
+        const r = await M.apply(pool, { extra: a && a.extra }); if (!r.ok) throw new Error(r.error); return JSON.stringify(r);
+    },
     // Saved-bill drafts (data/grn_bills.json): vendor | bill | code | name | qty | unit cost. Read only.
     read_drafts: async () => { const L = JSON.parse(fs.readFileSync(path.join(root, 'data', 'grn_bills.json'), 'utf8')); const out = []; L.forEach((b, i) => (b.lines || []).forEach(l => out.push([i, b.vendor || b.supplier || '?', (b.bill_no || b.number || b.date || ''), l.code, l.name, l.qty, l.unit].join(' | ')))); return out.length + ' lines\n' + out.join('\n'); },
     query: async (a, log) => {
