@@ -45,6 +45,7 @@
       if (k === 'logins') { ensureLogins(); }
       try { win.navigate(k); } catch (e) {}
     }
+    win.rbhGo = go;   // the dashboard alerts use this to open a screen
     function ensureLogins() {
       if (doc.getElementById('page-logins') || typeof win.addFramePage !== 'function') return;
       try { win.addFramePage({ key: 'logins', label: 'Staff logins', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/staff_logins.html', sub: 'Cashier logins with a PIN: can only sell', after: 'dashboard' }); } catch (e) {}

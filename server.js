@@ -641,6 +641,7 @@ app.use('/api', require('./routes/grn_cheques'));      // GRN screen: vendor che
 app.use('/api', require('./routes/sales_view'));      // GRN screen: customer bills by day / hour
 app.use('/api', require('./routes/grn_dupes'));      // double-counted GRN check + fix (owner)
 app.use('/api', require('./routes/github_backup_api')); // play button: backup to the private GitHub branch (owner)
+app.use('/api', require('./routes/play'));            // green play buttons for tasks Claude wrote (owner, whitelist)
 app.use('/api', require('./routes/pc_actions'));      // play buttons: update app, restart, backup (owner, fixed list)
 app.use('/api', require('./routes/item_codes_fix'));   // item codes: Metro auto, Leo as typed, others TBD (owner)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)

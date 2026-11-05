@@ -85,11 +85,11 @@
     if (V.due7 > 0) al.push(['', 'Vendor bills due in 7 days: ' + lkr(V.due7)]);
     if (C.overdue > 0) al.push(['red', 'Cheques overdue: ' + lkr(C.overdue)]);
     if (C.n7 > 0) al.push(['', pl(C.n7, 'cheque', 'cheques') + ' due in 7 days: ' + lkr(C.due7)]);
-    if (st.out_of_stock > 0) al.push(['', pl(st.out_of_stock, 'item', 'items') + ' out of stock']);
-    if (st.low_stock > 0) al.push(['', pl(st.low_stock, 'item', 'items') + ' running low']);
-    if (st.no_price > 0) al.push(['', pl(st.no_price, 'item has', 'items have') + ' no selling price yet (Item catalog screen)']);
+    if (st.out_of_stock > 0) al.push(['', pl(st.out_of_stock, 'item', 'items') + ' out of stock', 'stockmgr']);
+    if (st.low_stock > 0) al.push(['', pl(st.low_stock, 'item', 'items') + ' running low', 'helper']);
+    if (st.no_price > 0) al.push(['', pl(st.no_price, 'item has', 'items have') + ' no selling price yet (tap to set prices)', 'helper']);
     if (CU.overdue > 0) al.push(['', 'Customers overdue to pay us: ' + lkr(CU.overdue)]);
-    h += '<div class="dp-card" style="margin-bottom:12px"><h3>Needs attention</h3>' + (al.length ? al.map(function (a) { return '<div class="dp-alert ' + a[0] + '">' + esc(a[1]) + '</div>'; }).join('') : '<div class="dp-alert ok">All clear. Nothing urgent.</div>') + '</div>';
+    h += '<div class="dp-card" style="margin-bottom:12px"><h3>Needs attention</h3>' + (al.length ? al.map(function (a) { return '<div class="dp-alert ' + a[0] + (a[2] ? ' dp-go' : '') + '"' + (a[2] ? ' data-go="' + a[2] + '" role="button" tabindex="0"' : '') + '>' + esc(a[1]) + (a[2] ? ' <b style="margin-left:auto">\u203A</b>' : '') + '</div>'; }).join('') : '<div class="dp-alert ok">All clear. Nothing urgent.</div>') + '</div>';
     /* 4 trends */
     var dl = d.daily.map(function (x) { return new Date(x.d).getDate(); }), dv = d.daily.map(function (x) { return x.total; });
     var hours = []; for (var i = 8; i <= 20; i++) hours.push(i);
@@ -184,4 +184,11 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   window.BHDashboardPro = { reload: load };
+})();
+
+/* tap a "Needs attention" line to open the screen that fixes it */
+(function () {
+  var css = document.createElement('style'); css.textContent = '#dash-pro .dp-go{cursor:pointer}#dash-pro .dp-go:hover{border-color:var(--gold,#C9A24B)}'; document.head.appendChild(css);
+  function go(e) { var c = e.target.closest && e.target.closest('#dash-pro .dp-go'); if (!c) return; if (e.type === 'keydown' && e.key !== 'Enter') return; try { if (window.rbhGo) window.rbhGo(c.getAttribute('data-go')); else if (window.navigate) window.navigate(c.getAttribute('data-go')); } catch (x) { /* ignore */ } }
+  document.addEventListener('click', go); document.addEventListener('keydown', go);
 })();

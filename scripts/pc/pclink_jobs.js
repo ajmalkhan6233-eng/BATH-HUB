@@ -47,6 +47,12 @@ const jobs = {
         await B.dumpDb(env, out); if (fs.statSync(out).size < 500) throw new Error('backup looks empty: nothing changed'); log('backup ok ' + path.basename(out));
         const r = await M.apply(pool, { extra: a && a.extra }); if (!r.ok) throw new Error(r.error); return JSON.stringify(r);
     },
+    // Why does the PC switch off? Read only: Windows event log (unexpected shutdown 41/6008, planned 1074/1076, CPU heat 37), battery, uptime.
+    power_events: async (a, log) => {
+        log('reading the Windows event log (read only)');
+        const ps = "$e=Get-WinEvent -FilterHashtable @{LogName='System';Id=41,6008,1074,1076,37;StartTime=(Get-Date).AddDays(-14)} -ErrorAction SilentlyContinue | Select-Object -First 25 | ForEach-Object { ($_.TimeCreated.ToString('yyyy-MM-dd HH:mm')+' | id '+$_.Id+' | '+$_.ProviderName+' | '+(($_.Message -split \"`n\")[0])) }; if($e){$e}else{'no shutdown events in 14 days'}; $b=Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue; if($b){'battery % '+$b.EstimatedChargeRemaining+' status '+$b.BatteryStatus}else{'no battery (desktop)'}; 'boot '+(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('yyyy-MM-dd HH:mm'); 'now '+(Get-Date).ToString('yyyy-MM-dd HH:mm')";
+        const r = await sh('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 60000 }); return r.text;
+    },
     // Saved-bill drafts (data/grn_bills.json): vendor | bill | code | name | qty | unit cost. Read only.
     read_drafts: async () => { const L = JSON.parse(fs.readFileSync(path.join(root, 'data', 'grn_bills.json'), 'utf8')); const out = []; L.forEach((b, i) => (b.lines || []).forEach(l => out.push([i, b.vendor || b.supplier || '?', (b.bill_no || b.number || b.date || ''), l.code, l.name, l.qty, l.unit].join(' | ')))); return out.length + ' lines\n' + out.join('\n'); },
     query: async (a, log) => {
