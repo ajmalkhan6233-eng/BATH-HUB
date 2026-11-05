@@ -9,7 +9,7 @@
 header{background:var(--c-ink);color:var(--c-ink-text);padding:var(--s2) var(--s3);display:flex;gap:var(--s2) var(--s3);align-items:center;flex-wrap:wrap;border-bottom:3px solid var(--c-gold)}
 header b{font-size:var(--t-l);color:var(--c-gold)}header span{font-size:var(--t-s);color:#c9c9c4}
 .wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s2);padding:var(--s2);max-width:none;margin:0}
-@media(min-width:960px){.wrap{grid-template-columns:minmax(280px,var(--lw,30%)) 14px minmax(0,1fr);gap:0;padding:var(--s3);align-items:start}}
+@media(min-width:960px){.wrap{grid-template-columns:minmax(280px,var(--lw,24%)) 14px minmax(0,1fr);gap:0;padding:var(--s3);align-items:start}}
 .split{display:none}
 @media(min-width:960px){.split{display:block;cursor:col-resize;align-self:stretch;min-height:200px;position:relative;touch-action:none}.split:before{content:'';position:absolute;left:5px;top:0;bottom:0;width:4px;border-radius:4px;background:var(--c-line-strong)}.split:hover:before,.split.drag:before{background:var(--c-gold)}.split:after{content:'\22EE';position:absolute;top:50%;left:0;width:14px;text-align:center;color:var(--c-muted);font-size:20px;background:var(--c-bg);line-height:1}}
 .card{background:var(--c-surface);border:1px solid var(--c-line);border-radius:var(--r2);padding:var(--s3);box-shadow:var(--sh1)}
@@ -122,15 +122,22 @@ input,select{padding:2px 8px;min-height:36px}button{padding:3px 12px;min-height:
 .lines td.n input{width:52px !important;min-width:0 !important}
 .lines td:nth-child(2) input{width:96px !important;min-width:88px !important}
 .lines td:nth-child(3){width:100%}
-.lines td:nth-child(3) input{width:100% !important;min-width:150px !important}
-.lines td:nth-child(5) input,.lines td:nth-child(8) input{width:72px !important}
+.lines td:nth-child(3) input{width:100% !important;min-width:130px !important}
+.lines td:nth-child(5) input,.lines td:nth-child(8) input{width:80px !important}
 .lines td:nth-child(7),.lines td:nth-child(9){font-size:14px;white-space:nowrap}
-.lines td:nth-child(11) input,.lines td:nth-child(12) input,.lines td:nth-child(13) input,.lines td:nth-child(6) input,.lines td:nth-child(4) input{width:36px !important}
+.lines td:nth-child(11) input,.lines td:nth-child(12) input,.lines td:nth-child(13) input,.lines td:nth-child(6) input,.lines td:nth-child(4) input{width:42px !important}
 .lines td button.d{min-height:28px !important;padding:2px 6px !important}.lines td:nth-child(10) input{width:20px !important;height:20px !important;min-height:0 !important}
 .lines th{font-size:12px;line-height:1.1;z-index:3;background:var(--c-surface-2,#f1ece0)}.lines td{overflow:hidden}
 .scroll.lines{max-height:none !important;min-height:320px;overflow-x:auto}
 .row.actions{position:sticky;bottom:0;z-index:4;background:var(--c-surface,#fff);padding:6px 0;border-top:1px solid var(--c-line)}
 }
+/* AJ 5 Nov: hide the rarely used Short / Return / Damage columns until asked; opaque pinned bar; compact buttons */
+.lines.hide-sr th:nth-child(n+11):nth-child(-n+13),.lines.hide-sr td:nth-child(n+11):nth-child(-n+13){display:none}
+.srtog{min-height:28px !important;padding:2px 12px !important;margin:2px 0 4px !important;font-size:14px !important;border-radius:8px !important}
+.row.actions{background:#1c2230 !important;backdrop-filter:none !important}
+html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[data-theme="win7"] .row.actions,html[data-theme="win11"] .row.actions,html[data-theme="water"] .row.actions{background:#f6f2e8 !important}
+.row.actions button{min-height:34px !important;padding:3px 14px !important;font-size:15px !important;border-radius:10px !important}
+.row.actions #ok{padding:4px 18px !important;font-size:16px !important}
 @media(min-width:900px){.frame{height:300px}.wrap{padding:6px}.card{padding:8px}.dr{padding:4px 8px;margin-bottom:4px}h3{margin:0 0 4px}.tabs{padding-top:4px}input,select{min-height:32px}button{min-height:32px}}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
@@ -331,7 +338,10 @@ function drawRight(){
   if(d.kind==='BILL'){R.appendChild(h('div',{class:'row'},[field('Bill amount (Rs)',inp(d.amount,'number',function(v){d.amount=Number(v)||0;render()}))]));}
   else{
    var tb=h('tbody');curTb=tb;d.lines.forEach(function(l,k){tb.appendChild(mkRow(d,l,k))});
-   R.appendChild(h('div',{class:'scroll lines'},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty (paper)','Cost each','Disc %','Received amount','Sell price','Margin','Arrived?','Short','Return','Damage',''].map(function(x){return h('th',{text:x})}))]),tb])]));
+   var srAny=d.lines.some(function(l){return l.arrived===false||Number(l.short)>0||Number(l.ret)>0||Number(l.dmg)>0}),srOff=false;try{srOff=localStorage.getItem('grn_sr')==='1'}catch(e){}
+   var linesBox=h('div',{class:'scroll lines'+((srAny||srOff)?'':' hide-sr')},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty (paper)','Cost each','Disc %','Received amount','Sell price','Margin','Arrived?','Short','Return','Damage',''].map(function(x){return h('th',{text:x})}))]),tb])]);
+   var srBtn=h('button',{class:'srtog',text:linesBox.classList.contains('hide-sr')?'+ Short / Return / Damage':'- Hide Short / Return / Damage',onclick:function(){var on=linesBox.classList.toggle('hide-sr');srBtn.textContent=on?'+ Short / Return / Damage':'- Hide Short / Return / Damage';try{localStorage.setItem('grn_sr',on?'0':'1')}catch(e){}}});
+   R.appendChild(srBtn);R.appendChild(linesBox);
    R.appendChild(h('div',{class:'row'},[h('button',{text:'+ Add line',onclick:function(){addLine(d)}})]));
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
   }
