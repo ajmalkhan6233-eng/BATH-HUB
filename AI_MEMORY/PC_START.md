@@ -1,3 +1,8 @@
+# URGENT 2 (chat 13:25): codes are back to the pre-fix state, but the typed codes (Metro 001.., Leo 0065..0101) are not in the item list. Find where Ajmal's typed codes live. READ ONLY, change nothing.
+Run once from the app folder (it prints samples only, no keys), then paste the WHOLE output into AI_MEMORY/LIVE.md (one block, newest on top) and push it:
+  git pull --ff-only ; node scripts/dev/code_sources_report.js
+Then tell Ajmal in 3 lines: which source holds the typed codes (live GRN text, grn_bill_extra, data/grn_bills.json, or only the pre-fix backup). Do NOT run undo, restamp, fix or any button. Do not write code. Then STOP: chat builds the exact restore from your output.
+
 # URGENT FIRST (Ajmal 5 Nov 12:30): ITEM CODES WERE CHANGED BY THE MORNING FIX AND ARE WRONG. RESTORE THEM. Do this BEFORE the steps below.
 What he wants: the codes as they were when he switched the computer off on 4 Nov night: Metro items 001, 002, ... (first vendor), Leo items EXACTLY as he typed them (0065 to 0101), Fazaal as he typed. No OLD-xxx, no TBD-xxx unless that item truly never had a code. Do NOT wipe or clean any data.
 Cause: the morning fix step item_codes ran routes/item_codes_fix.js: it kept Metro codes as they were (they were OLD-xxx, not 001), set Leo from GRN text by name, and turned every other item into TBD-<id>.
