@@ -132,12 +132,23 @@ input,select{padding:2px 8px;min-height:36px}button{padding:3px 12px;min-height:
 .row.actions{position:sticky;bottom:0;z-index:4;background:var(--c-surface,#fff);padding:6px 0;border-top:1px solid var(--c-line)}
 }
 /* AJ 5 Nov: hide the rarely used Short / Return / Damage columns until asked; opaque pinned bar; compact buttons */
-.lines.hide-sr th:nth-child(n+11):nth-child(-n+13),.lines.hide-sr td:nth-child(n+11):nth-child(-n+13){display:none}
+.lines.hide-sr th:nth-child(n+11):nth-child(-n+12),.lines.hide-sr td:nth-child(n+11):nth-child(-n+12){display:none}
 .srtog{min-height:28px !important;padding:2px 12px !important;margin:2px 0 4px !important;font-size:14px !important;border-radius:8px !important}
 .row.actions{background:#1c2230 !important;backdrop-filter:none !important}
 html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[data-theme="win7"] .row.actions,html[data-theme="win11"] .row.actions,html[data-theme="water"] .row.actions{background:#f6f2e8 !important}
 .row.actions button{min-height:34px !important;padding:3px 14px !important;font-size:15px !important;border-radius:10px !important}
 .row.actions #ok{padding:4px 18px !important;font-size:16px !important}
+/* AJ 5 Nov pm: exact box sizes. Code 4 digits, Item long, Qty tiny, Cost/Sell 5 digits, Discount % or Rs, Damaged pcs always visible */
+@media(min-width:900px){
+.lines td:nth-child(2) input{width:58px !important;min-width:0 !important}
+.lines td:nth-child(3) input{min-width:240px !important}
+.lines td:nth-child(4) input{width:46px !important}
+.lines td:nth-child(5) input,.lines td:nth-child(8) input{width:72px !important}
+.lines input[type=number]{-moz-appearance:textfield;padding:2px 3px !important;text-align:right}.lines input[type=number]::-webkit-inner-spin-button,.lines input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.lines td.dcell{white-space:nowrap}.lines td.dcell input{width:52px !important}.lines td.dcell .dsel{width:48px;min-height:28px;padding:0 2px;font-size:13px}
+.lines td:nth-child(13) input{width:46px !important}
+.lines td:nth-child(7){min-width:70px;text-align:right}
+}
 @media(min-width:900px){.frame{height:300px}.wrap{padding:6px}.card{padding:8px}.dr{padding:4px 8px;margin-bottom:4px}h3{margin:0 0 4px}.tabs{padding-top:4px}input,select{min-height:32px}button{min-height:32px}}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 </head><body>
@@ -180,6 +191,7 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 var CLOUD=location.protocol!=='file:';if(/[?&]embed=1/.test(location.search))document.body.classList.add('embed');
 var drafts=[],cur=null,vendors=[],openBills=[],vorder=[],vinfo={};
 function $(i){return document.getElementById(i)}
+function fmt0(n){return Math.round(Number(n)||0).toLocaleString('en-LK')}
 function fmt(n){return Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function h(tag,props,kids){var e=document.createElement(tag);for(var k in (props||{})){if(k==='text')e.textContent=props[k];else if(k==='class')e.className=props[k];else if(k.slice(0,2)==='on')e[k]=props[k];else e.setAttribute(k,props[k])}(kids||[]).forEach(function(c){e.appendChild(c)});return e}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -339,8 +351,8 @@ function drawRight(){
   else{
    var tb=h('tbody');curTb=tb;d.lines.forEach(function(l,k){tb.appendChild(mkRow(d,l,k))});
    var srAny=d.lines.some(function(l){return l.arrived===false||Number(l.short)>0||Number(l.ret)>0||Number(l.dmg)>0}),srOff=false;try{srOff=localStorage.getItem('grn_sr')==='1'}catch(e){}
-   var linesBox=h('div',{class:'scroll lines'+((srAny||srOff)?'':' hide-sr')},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty (paper)','Cost each','Disc %','Received amount','Sell price','Margin','Arrived?','Short','Return','Damage',''].map(function(x){return h('th',{text:x})}))]),tb])]);
-   var srBtn=h('button',{class:'srtog',text:linesBox.classList.contains('hide-sr')?'+ Short / Return / Damage':'- Hide Short / Return / Damage',onclick:function(){var on=linesBox.classList.toggle('hide-sr');srBtn.textContent=on?'+ Short / Return / Damage':'- Hide Short / Return / Damage';try{localStorage.setItem('grn_sr',on?'0':'1')}catch(e){}}});
+   var linesBox=h('div',{class:'scroll lines'+((srAny||srOff)?'':' hide-sr')},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty','Cost each','Discount','Received amount','Sell price','Margin','Arrived?','Short','Return','Damaged pcs',''].map(function(x){return h('th',{text:x})}))]),tb])]);
+   var srBtn=h('button',{class:'srtog',text:linesBox.classList.contains('hide-sr')?'+ Short / Return':'- Hide Short / Return',onclick:function(){var on=linesBox.classList.toggle('hide-sr');srBtn.textContent=on?'+ Short / Return':'- Hide Short / Return';try{localStorage.setItem('grn_sr',on?'0':'1')}catch(e){}}});
    R.appendChild(srBtn);R.appendChild(linesBox);
    R.appendChild(h('div',{class:'row'},[h('button',{text:'+ Add line',onclick:function(){addLine(d)}})]));
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
@@ -359,13 +371,19 @@ function drawRight(){
 var curTb=null;
 function margin(l){return l.sell>0&&l.unit>0?((l.sell-net(l))/net(l)*100).toFixed(0)+'%':'-'}
 function mkRow(d,l,k){
- var ta=h('td',{class:'n','data-l':'Received Rs',text:fmt(nq(l)*net(l)),style:'white-space:nowrap'}),tm=h('td',{class:'n','data-l':'Margin',text:margin(l)});
+ var ta=h('td',{class:'n','data-l':'Received Rs',text:fmt0(nq(l)*net(l)),style:'white-space:nowrap'}),tm=h('td',{class:'n','data-l':'Margin',text:margin(l)});
  var tr=h('tr',{class:l.arrived===false?'pend':''});
- function re(){ta.textContent=fmt(nq(l)*net(l));tm.textContent=margin(l);tr.className=l.arrived===false?'pend':(isPart(l)?'part':'');sums();save();drawDrafts()}
+ function re(){if(l.dmode==='Rs'){var g=(Number(l.qty)||0)*(Number(l.unit)||0);l.disc=g>0?Math.round((Number(l.dcash)||0)/g*1000000)/10000:0}ta.textContent=fmt0(nq(l)*net(l));tm.textContent=margin(l);tr.className=l.arrived===false?'pend':(isPart(l)?'part':'');sums();save();drawDrafts()}
  function c(i,label,val,type,fn,extra){return h('td',{'data-l':label,class:type==='number'?'n':''},[inp(val,type,fn,Object.assign({'data-r':k,'data-c':i,'aria-label':label+' line '+(k+1)},extra||{}))])}
+
+ function discCell(){var cash=l.dmode==='Rs';
+  var i=inp(cash?(l.dcash||''):(l.disc||''),'number',function(v){if(l.dmode==='Rs')l.dcash=Number(v)||0;else l.disc=Number(v)||0;re()},{'data-r':k,'data-c':4,'aria-label':'Discount line '+(k+1),placeholder:'0'});
+  var sel=h('select',{'aria-label':'Discount type line '+(k+1),title:'% or Rs off this line',class:'dsel'},[h('option',{value:'%',text:'%'}),h('option',{value:'Rs',text:'Rs'})]);sel.value=cash?'Rs':'%';
+  sel.onchange=function(){l.dmode=sel.value;if(sel.value==='Rs'){var g=(Number(l.qty)||0)*(Number(l.unit)||0);l.dcash=Math.round(g*(Number(l.disc)||0)/100);i.value=l.dcash||''}else{i.value=l.disc||''}re()};
+  return h('td',{'data-l':'Disc',class:'n dcell'},[i,sel])}
  var got=h('input',{type:'checkbox','aria-label':'Line '+(k+1)+' arrived','data-g':k,style:'width:28px;height:28px;min-height:0;accent-color:#15803d'});got.checked=l.arrived!==false;got.onchange=function(){l.arrived=got.checked;re()};
  if(isPart(l)&&l.arrived!==false)tr.className='part';
- [h('td',{text:String(k+1)}),c(0,'Code',l.code,'text',function(v){l.code=v;save()}),c(1,'Item',l.name,'text',function(v){l.name=v;save()},{style:'min-width:190px'}),c(2,'Qty (paper)',l.qty,'number',function(v){l.qty=Number(v)||0;re()},{style:'width:70px'}),c(3,'Cost each',l.unit,'number',function(v){l.unit=Number(v)||0;re()},{style:'width:100px'}),c(4,'Disc %',l.disc||'','number',function(v){l.disc=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),ta,c(5,'Sell price',l.sell||'','number',function(v){l.sell=Number(v)||0;re()},{style:'width:100px'}),tm,
+ [h('td',{text:String(k+1)}),c(0,'Code',l.code,'text',function(v){l.code=v;save()}),c(1,'Item',l.name,'text',function(v){l.name=v;save()},{style:'min-width:190px'}),c(2,'Qty (paper)',l.qty,'number',function(v){l.qty=Number(v)||0;re()},{style:'width:70px'}),c(3,'Cost each',l.unit,'number',function(v){l.unit=Number(v)||0;re()},{style:'width:100px'}),discCell(),ta,c(5,'Sell price',l.sell||'','number',function(v){l.sell=Number(v)||0;re()},{style:'width:100px'}),tm,
   h('td',{'data-l':'Arrived?',style:'text-align:center'},[got]),
   c(6,'Short (not got)',l.short||'','number',function(v){l.short=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
   c(7,'Return',l.ret||'','number',function(v){l.ret=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
@@ -406,7 +424,7 @@ function openSaved(id,reuse,autoEdit){
   if(!reuse){d=blank(b.mode==='GRN'?'GRN':'BILL');drafts.unshift(d)}
   d.billId=b.id;d.vendor=b.vendor;d.no=b.bill_no;d.date=b.bill_date;d.received=b.received;d.credit_days=b.credit_days;d.ptype=b.ptype;d.photoUrl=b.photo||'';d.photo=reuse?'':'';d.dup=null;d.status='saved';d.amount=b.total;d.paper=b.total;
   d.note='Saved bill. Paid so far Rs '+fmt(b.paid)+(b.cheques?', cheques '+b.cheques:'')+'. Press Edit this bill to change it.';
-  if(b.extra&&b.extra.lines&&b.extra.lines.length){d.kind='GRN';d.paper=b.extra.paper_total||b.total;d.lines=b.extra.lines.map(function(l){return{code:l.vendor_code||'',name:l.name,qty:l.ordered,unit:l.unit,disc:l.disc||0,sell:l.sell||0,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false}})}
+  if(b.extra&&b.extra.lines&&b.extra.lines.length){d.kind='GRN';d.paper=b.extra.paper_total||b.total;d.lines=b.extra.lines.map(function(l){return{code:l.vendor_code||'',name:l.name,qty:l.ordered,unit:l.unit,disc:l.disc||0,dmode:l.dmode||'%',dcash:l.dcash||0,sell:l.sell||0,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false}})}
   else if(b.mode==='GRN')d.lines=b.lines.map(function(l){return{code:l.code,name:l.name,qty:l.qty,unit:l.unit,sell:l.sell}});
   if(autoEdit){d.status='editing';d.note=''}
   cur=d;tab(1);render();gm('','')})}
@@ -437,7 +455,7 @@ function doSave(){
  if(d.kind==='CHEQUE'){path='/cheque';body={bill_id:d.ch.bill_id,cheque_no:d.ch.cheque_no,bank:d.ch.bank,amount:d.ch.amount,cheque_date:d.ch.cheque_date,due_date:d.ch.due_date,same_bank:d.ch.same_bank,photo_data_url:d.photo}}
  else{path='';body={mode:d.kind==='BILL'?'BILL_ONLY':'GRN',vendor:{name:d.vendor},bill_no:d.no,bill_date:d.date,received_date:d.received,credit_days:d.credit_days,payment_type:d.ptype,photo_data_url:d.photo,total:total(d),
   lines:d.kind==='GRN'?d.lines.filter(function(l){return(l.name||l.unit)&&nq(l)>0}).map(function(l){return{vendor_code:l.code,name:l.name,qty:nq(l),unit_cost:net(l),selling_price:l.sell||null}}):[],
-  extra:d.kind==='GRN'?{paper_total:d.paper||0,lines:d.lines.filter(function(l){return l.name||l.unit}).map(function(l){return{name:l.name,vendor_code:l.code,ordered:l.qty,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false,unit:l.unit,disc:l.disc||0,sell:l.sell||0}})}:undefined}}
+  extra:d.kind==='GRN'?{paper_total:d.paper||0,lines:d.lines.filter(function(l){return l.name||l.unit}).map(function(l){return{name:l.name,vendor_code:l.code,ordered:l.qty,short:l.short||0,ret:l.ret||0,dmg:l.dmg||0,arrived:l.arrived!==false,unit:l.unit,disc:l.disc||0,dmode:l.dmode||'%',dcash:l.dcash||0,sell:l.sell||0}})}:undefined}}
  var editing=d.status==='editing'&&d.billId;if(editing){path='/bill/'+d.billId;body.photo_data_url=(d.photo&&d.photo.indexOf('data:')===0)?d.photo:''}
  $('ok').disabled=true;setStatus('Saving...','');
  api(path,{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(x){
