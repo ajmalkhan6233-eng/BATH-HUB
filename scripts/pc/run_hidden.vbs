@@ -7,4 +7,8 @@ For i = 1 To 3
 Next
 Set sh = CreateObject("WScript.Shell")
 sh.CurrentDirectory = root
-sh.Run "node """ & WScript.Arguments(0) & """", 0, True
+extra = ""
+For j = 1 To WScript.Arguments.Count - 1
+  extra = extra & " " & WScript.Arguments(j)
+Next
+sh.Run "node """ & WScript.Arguments(0) & """" & extra, 0, True

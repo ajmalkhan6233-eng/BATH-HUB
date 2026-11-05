@@ -17,6 +17,12 @@ $a2 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "
 $t2 = New-ScheduledTaskTrigger -Daily -At '03:30'
 Register-ScheduledTask -TaskName 'RBH_LogTidy' -Action $a2 -Trigger $t2 -Settings $settings -Description 'Royal Bath Hub: keeps the apex-server logs small' -Force | Out-Null
 
+# PC live line (AJ 5 Nov, hard rule: chat must see the PC all the time). Keeps scripts\pc\pclink.js alive: at logon and every 5 minutes. --ensure starts it only if it is not already running.
+$a5 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "{1}" --ensure' -f $vbs, (Join-Path $root 'scripts\pc\pclink.js')) -WorkingDirectory $root
+$t5 = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 5)
+$t5b = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName 'RBH_PCLink' -Action $a5 -Trigger @($t5, $t5b) -Settings $settings -Description 'Royal Bath Hub: keeps the live line to Claude chat running (pclink.js --ensure)' -Force | Out-Null
+
 # bridge watcher: every 15 min, plain code; starts Claude Code only when AJ has "played" a task (so a phone "play" is enough)
 $settings3 = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 3)
 $a3 = New-ScheduledTaskAction -Execute $wscript -Argument ('//B //Nologo "{0}" "{1}"' -f $vbs, (Join-Path $root 'scripts\pc\bridge_watcher.js')) -WorkingDirectory $root
@@ -46,5 +52,5 @@ try {
 
 if ($NoSleep) { powercfg /change standby-timeout-ac 0; powercfg /change hibernate-timeout-ac 0 }   # plugged in: never sleep
 
-Get-ScheduledTask -TaskName 'RBH_Watchdog', 'RBH_LogTidy', 'RBH_BridgeWatcher' | ForEach-Object { '{0}: {1}' -f $_.TaskName, $_.State }
+Get-ScheduledTask -TaskName 'RBH_Watchdog', 'RBH_LogTidy', 'RBH_BridgeWatcher', 'RBH_PCLink' | ForEach-Object { '{0}: {1}' -f $_.TaskName, $_.State }
 "Shortcut: $lnkPath"
