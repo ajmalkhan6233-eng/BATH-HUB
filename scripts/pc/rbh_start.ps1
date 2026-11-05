@@ -16,7 +16,7 @@ if (-not (Test-Up)) {
 }
 if (Test-Up) {
     Write-Host 'Royal Bath Hub is UP.'
-    if (-not $NoBrowser) { Start-Process "$url/owner" }
+    if (-not $NoBrowser) { $ch = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe","${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($ch) { Start-Process $ch "$url/owner" } }   # Chrome only, never Edge (Ajmal 5 Nov)
 } else {
     Write-Host 'Still down. The reason is in logs\watchdog.log (tell Claude: read the watchdog log).'
     exit 2

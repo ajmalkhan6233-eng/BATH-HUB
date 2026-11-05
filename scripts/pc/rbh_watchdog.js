@@ -43,8 +43,12 @@ const deps = {
     },
 };
 
-// Auto update first (clean fast-forward of branch work only; restarts apex-server only if server code changed).
+// ORDER (Ajmal 5 Nov: the app took about 5 minutes after boot): keep the live line (pclink) alive, START OR CHECK THE APP FIRST,
+// and only then pull updates and run the hourly backup (git can hang for minutes while the network wakes up).
 (async () => {
+    try { require('child_process').spawn(process.execPath, [path.join(root, 'scripts', 'pc', 'pclink.js'), '--ensure'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { /* never stop the watchdog */ }
+    return W.runOnce(deps);
+})().then(async r => {
     try {
         const U = require('../../utils/autoUpdate').autoUpdate(root);
         if (U.state === 'updated') {
@@ -55,7 +59,6 @@ const deps = {
     // Hourly private backup (Ajmal asked for it, 4 Nov 2026). Own process, never blocks the watchdog; skips itself if a good backup is under 55 min old.
     // Pushes ONLY to the private bridge repo and refuses a public one. Switch off: create an empty file local_ops\NO_GITHUB_BACKUP.
     try { if (!fs.existsSync(path.join(root, 'local_ops', 'NO_GITHUB_BACKUP'))) require('child_process').spawn(process.execPath, [path.join(root, 'scripts', 'pc', 'github_backup.js'), '--tick'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { /* ignore */ }
-    // Live line to Claude chat (Ajmal 5 Nov 2026): plain script, no AI. Keeps scripts/pc/pclink.js running (checks tasks every 30 s). Switch off: local_ops\NO_PCLINK.
-    try { require('child_process').spawn(process.execPath, [path.join(root, 'scripts', 'pc', 'pclink.js'), '--ensure'], { cwd: root, detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { /* never stop the watchdog */ }
-})().then(() => W.runOnce(deps)).then(r => { if (r.state !== 'up' && r.state !== 'blip') console.log(JSON.stringify(r)); process.exit(['still_down', 'failed', 'blocked', 'crashloop'].includes(r.state) ? 2 : 0); })
+    return r;
+}).then(r => { if (r.state !== 'up' && r.state !== 'blip') console.log(JSON.stringify(r)); process.exit(['still_down', 'failed', 'blocked', 'crashloop'].includes(r.state) ? 2 : 0); })
     .catch(e => { console.error('watchdog error:', e.message); process.exit(1); });

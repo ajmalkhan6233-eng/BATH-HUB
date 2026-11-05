@@ -69,9 +69,11 @@ async function runOnce(d) {
 
     let h = await d.health(url);
     if (h.ok) return { state: 'up' };
-    await d.sleep(10000);                       // a blip (a slow moment) is not an outage: look once more
-    h = await d.health(url);
-    if (h.ok) return { state: 'blip' };
+    if (info && info.status === 'online') {     // a blip (a slow moment) is not an outage: look once more. Skipped when the app is plainly not running (boot): start it at once.
+        await d.sleep(10000);
+        h = await d.health(url);
+        if (h.ok) return { state: 'blip' };
+    }
 
     // down. Why?
     const tail = info && info.errLog ? await d.readTail(info.errLog, 40) : '';
