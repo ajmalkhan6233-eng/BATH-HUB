@@ -66,6 +66,12 @@ const jobs = {
         ].join('; ');
         const r = await sh('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 60000 }); return r.text;
     },
+    // Remove ONLY the Edge auto-start entry from the current user's Windows startup list. Saves a backup of the entry first (local_ops\startup_backup_*.json) so it can be put back.
+    startup_clean_edge: async (a, log) => {
+        log('removing the Edge auto-start entry (backup first)');
+        const ps = "$k='HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'; $p=Get-ItemProperty $k; $hit=@($p.PSObject.Properties | Where-Object { $_.Name -like 'MicrosoftEdgeAutoLaunch*' }); if(-not $hit.Count){ 'no Edge auto-start entry found (nothing to do)'; return }; $dir=Join-Path (Get-Location) 'local_ops'; New-Item -ItemType Directory -Force $dir | Out-Null; $f=Join-Path $dir ('startup_backup_'+(Get-Date -Format yyyyMMdd_HHmmss)+'.json'); ($hit | ForEach-Object { @{name=$_.Name;value=[string]$_.Value} } | ConvertTo-Json) | Set-Content $f; foreach($h in $hit){ Remove-ItemProperty -Path $k -Name $h.Name; 'removed: '+$h.Name }; 'backup: '+$f";
+        const r = await sh('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 30000, cwd: root }); return r.text;
+    },
     // Saved-bill drafts (data/grn_bills.json): vendor | bill | code | name | qty | unit cost. Read only.
     read_drafts: async () => { const L = JSON.parse(fs.readFileSync(path.join(root, 'data', 'grn_bills.json'), 'utf8')); const out = []; L.forEach((b, i) => (b.lines || []).forEach(l => out.push([i, b.vendor || b.supplier || '?', (b.bill_no || b.number || b.date || ''), l.code, l.name, l.qty, l.unit].join(' | ')))); return out.length + ' lines\n' + out.join('\n'); },
     query: async (a, log) => {
