@@ -76,6 +76,7 @@
       var fx = doc.createElement('script'); fx.src = '/themes-fx.js'; doc.head.appendChild(fx);
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
+      ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
       var gl = doc.createElement('link'); gl.rel = 'stylesheet'; gl.href = '/glass.css'; doc.head.appendChild(gl);   // the Glass look reaches every screen
       var theme = function () { try { var t = localStorage.getItem('bathhub-theme'); if (t) { doc.documentElement.setAttribute('data-theme', t); if (['glass', 'aurora', 'midnight', 'emerald', 'rose'].indexOf(t) >= 0) doc.documentElement.setAttribute('data-style', 'glass'); else doc.documentElement.removeAttribute('data-style'); } } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
