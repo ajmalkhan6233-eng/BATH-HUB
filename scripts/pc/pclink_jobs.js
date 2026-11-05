@@ -39,7 +39,7 @@ const jobs = {
     },
     // Fazaal twins (AJ 5 Nov): the real item (200+) takes the typed number 059-098, the empty placeholder is retired. mode plan changes nothing; apply backs up first.
     dupe_merge: async (a, log) => {
-        delete require.cache[require.resolve('../../routes/item_dupe_merge')]; const M = require('../../routes/item_dupe_merge'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
+        for (const m of ['../../routes/item_dupe_merge', '../../scripts/renumber_item_codes']) { try { delete require.cache[require.resolve(m)]; } catch (e) { /* not loaded */ } } const M = require('../../routes/item_dupe_merge'), pool = require('../../utils/pool'); const mode = String((a && a.mode) || 'plan');
         if (mode === 'plan') { const p = await M.plan(pool, a && a.extra); return JSON.stringify({ will_merge: p.pairs.length, problems: p.problems, skipped: p.skipped }) + '\n' + p.pairs.map(x => x.twin_code + ' (stock ' + x.twin_stock + ') takes ' + x.code + ' | ' + x.name).join('\n'); }
         if (mode !== 'apply') throw new Error('mode must be plan or apply');
         log('backup first'); const B = require('./github_backup'); const env = Object.assign({}, B.readEnv(path.join(root, '.env')), process.env);
