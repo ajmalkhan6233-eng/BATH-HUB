@@ -17,8 +17,8 @@ async function plan(db, extra) {
         if (!fresh.length) { skipped.push(x.code + ' no new twin (nothing to merge)'); continue; }
         if (fresh.length > 1) { problems.push(x.code + ': ' + fresh.length + ' possible twins'); continue; }
         if (Number(ph.st) !== 0) { problems.push(x.code + ': placeholder has stock ' + ph.st); continue; }
-        let refs = 0; for (const t of tabs) refs += Number((await db.query(`SELECT COUNT(*)::int n FROM ${t} WHERE item_code=$1`, [ph.item_code])).rows[0].n);
-        if (refs) { problems.push(x.code + ': placeholder is used in ' + refs + ' rows'); continue; }
+        let refs = 0; const where = []; for (const t of tabs) { const n = Number((await db.query(`SELECT COUNT(*)::int n FROM ${t} WHERE item_code=$1`, [ph.item_code])).rows[0].n); if (n) { refs += n; where.push(t + ':' + n); } }
+        if (refs) { problems.push(x.code + ': placeholder is used in ' + where.join(', ')); continue; }
         pairs.push({ code: ph.item_code, ph_id: ph.id, twin_code: fresh[0].item_code, twin_id: fresh[0].id, twin_stock: fresh[0].st, name: clean(x.name) });
     }
     return { pairs, problems, skipped };
