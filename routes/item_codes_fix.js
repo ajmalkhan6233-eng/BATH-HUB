@@ -56,19 +56,23 @@ router.get('/item-codes-fix/plan', async (req, res) => {
             sample: p.map.filter(m => m.changed).slice(0, 12).map(m => ({ vendor: m.vendor, old: m.old, new: m.new, name: m.name })) });
     } catch (e) { res.status(500).json({ error: 'Could not check: ' + e.message }); }
 });
-router.post('/item-codes-fix/apply', async (req, res) => {
+// The fix itself (also used by the morning job). Returns {ok, changed, message} or {ok:false, error}.
+async function applyFix() {
     const c = await pool.connect();
     try {
         const p = await plan(c);
-        if (p.problems.length) return res.status(409).json({ error: p.problems[0] + ' Nothing was changed.' });
+        if (p.problems.length) return { ok: false, status: 409, error: p.problems[0] + ' Nothing was changed.' };
         const n = p.map.filter(m => m.changed).length;
-        if (!n) return res.json({ ok: true, changed: 0, message: 'Codes are already right. Nothing to change.' });
+        if (!n) return { ok: true, changed: 0, message: 'Codes are already right. Nothing to change.' };
         await c.query(`CREATE TABLE IF NOT EXISTS products_bak_codefix AS SELECT * FROM products WHERE FALSE`);
         await c.query(`DELETE FROM products_bak_codefix; INSERT INTO products_bak_codefix SELECT * FROM products`);
         const r = await R.apply(c, p.map);
         await restamp(c);
-        res.json({ ok: true, changed: r.changed, message: r.changed + ' item codes fixed: Metro ' + p.metro.count + ' (up to ' + p.metro.last + '), Leo ' + p.leo.count + ' (' + p.leo.first + ' to ' + p.leo.last + '), others ' + p.other + ' now say TBD-... until you give their code.' });
-    } catch (e) { res.status(500).json({ error: 'Nothing was changed: ' + e.message }); } finally { c.release(); }
-});
+        return { ok: true, changed: r.changed, message: r.changed + ' item codes fixed: Metro ' + p.metro.count + ' (up to ' + p.metro.last + '), Leo ' + p.leo.count + ' (' + p.leo.first + ' to ' + p.leo.last + '), others ' + p.other + ' now say TBD-... until you give their code.' };
+    } catch (e) { return { ok: false, status: 500, error: 'Nothing was changed: ' + e.message }; } finally { c.release(); }
+}
+router.post('/item-codes-fix/apply', async (req, res) => { const r = await applyFix(); res.status(r.ok ? 200 : r.status || 500).json(r); });
 module.exports = router;
 module.exports.restamp = restamp;
+module.exports.plan = plan;
+module.exports.applyFix = applyFix;

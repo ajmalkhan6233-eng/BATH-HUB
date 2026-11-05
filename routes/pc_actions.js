@@ -46,5 +46,7 @@ function ensureStartup() {
     } catch (e) { /* never block the app */ }
 }
 setTimeout(ensureStartup, 20000);
+setTimeout(() => { try { require('../utils/morningFix').run().catch(() => {}); } catch (e) { /* never block the app */ } }, 40000);
+router.get('/pc-actions/morning-fix', ownerOnly, (req, res) => res.json(require('../utils/morningFix').status()));
 module.exports = router;
 module.exports.ensureStartup = ensureStartup;

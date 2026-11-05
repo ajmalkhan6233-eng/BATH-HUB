@@ -38,13 +38,14 @@ router.get('/grn-dupes', ownerOnly, async (req, res) => {
     try { res.json({ found: await plan() }); } catch (e) { res.status(500).json({ error: 'Could not check: ' + e.message }); }
 });
 
-router.post('/grn-dupes/fix', ownerOnly, express.json(), async (req, res) => {
-    const nums = Array.isArray((req.body || {}).numbers) ? req.body.numbers.map(String) : [];
-    if (!nums.length) return res.status(400).json({ error: 'Nothing chosen' });
+// The fix itself (also used by the morning job). Throws {status,message}; returns {lines, items}.
+async function fixDupes(nums) {
+    nums = (nums || []).map(String);
+    if (!nums.length) throw Object.assign(new Error('Nothing chosen'), { status: 400 });
     const client = await pool.connect();
     try {
         const allowed = new Set((await plan()).flatMap(p => p.duplicate_numbers.map(String)));
-        if (nums.some(n => !allowed.has(n))) return res.status(400).json({ error: 'That GRN is not a double-counted one. Nothing was changed.' });
+        if (nums.some(n => !allowed.has(n))) throw Object.assign(new Error('That GRN is not a double-counted one. Nothing was changed.'), { status: 400 });
         await client.query('BEGIN');
         await client.query(`CREATE TABLE IF NOT EXISTS grn_records_archive (LIKE grn_records INCLUDING DEFAULTS)`);
         await client.query(`ALTER TABLE grn_records_archive ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ DEFAULT NOW()`);
@@ -64,10 +65,13 @@ router.post('/grn-dupes/fix', ownerOnly, express.json(), async (req, res) => {
         await client.query(`INSERT INTO grn_records_archive SELECT g.*, NOW(), 'double-counted: same goods as a vendor bill' FROM grn_records g WHERE g.grn_number = ANY($1::text[])`, [nums]);
         await client.query(`DELETE FROM grn_records WHERE grn_number = ANY($1::text[])`, [nums]);
         await client.query('COMMIT');
-        res.json({ ok: true, lines: rows.length, items: adj.length });
-    } catch (e) {
-        try { await client.query('ROLLBACK'); } catch (x) { /* ignore */ }
-        res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not fix (nothing changed): ' + e.message });
-    } finally { client.release(); }
+        return { lines: rows.length, items: adj.length };
+    } catch (e) { try { await client.query('ROLLBACK'); } catch (x) { /* ignore */ } throw e; } finally { client.release(); }
+}
+router.post('/grn-dupes/fix', ownerOnly, express.json(), async (req, res) => {
+    try { const r = await fixDupes((req.body || {}).numbers); res.json({ ok: true, ...r }); }
+    catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not fix (nothing changed): ' + e.message }); }
 });
 module.exports = router;
+module.exports.plan = plan;
+module.exports.fixDupes = fixDupes;

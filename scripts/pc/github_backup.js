@@ -125,7 +125,7 @@ async function run(opts = {}) {
     return status(true, 'Backed up: DB ' + Math.round(dumpBytes / 1024) + ' KB, ' + stats.files + ' files' + (stats.skipped.length ? ', skipped ' + stats.skipped.length + ' big file(s)' : ''), { skipped: stats.skipped });
 }
 
-module.exports = { run, isPublicRepo };
+module.exports = { run, isPublicRepo, dumpDb, readEnv };
 if (require.main === module) {
     run({ tick: process.argv.includes('--tick'), force: process.argv.includes('--force') })
         .then(r => { console.log((r.ok ? 'OK: ' : 'NOT DONE: ') + r.msg); process.exitCode = r.ok ? 0 : 1; })
