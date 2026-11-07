@@ -1,4 +1,4 @@
-# CLAUDE.md for Royal Bath Hub (rebuilt 7 Nov 2026, kept under 4 KB on purpose; trim it, never grow it)
+# CLAUDE.md for Royal Bath Hub (rebuilt 7 Nov 2026, kept under 5 KB on purpose; trim it, never grow it)
 Old long version: AI_MEMORY/_archive/CLAUDE_root_2026-11-07_before-rebuild.md. All rules in detail: docs/AJ_RULES.md, AI_MEMORY/CORE_RULES.md.
 
 ## WHO AJ IS AND HOW HE TALKS
