@@ -17,6 +17,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 3. After each task: ONE line at the top of LIVE.md: HH:MM | PC | task N | DONE/PARTIAL/BLOCKED | what you saw | what AJ must do. Push. Then the next task.
 4. Never say DONE unless the check in the task ran. Otherwise UNVERIFIED.
 5. Heartbeat: on jobs over 10 minutes push a LIVE line every 10 to 15 minutes. /compact yourself at about 50% context. Never ask AJ to open a new window.
+6. ROUTE: always the fastest, cheapest (free first), shortest way. A plain script beats AI. Reuse before installing. One command beats many. Fewest steps for AJ.
 
 ## HOW TO TALK TO AJ (iPhone, one screen)
 - Max 5 short lines. Answer first. Plain words. Call him AJ.
@@ -38,4 +39,5 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md at the start of every reply; if it is not in LIVE.md, chat does not know it happened. Bridge repo: github.com/ajmalkhan6233-eng/Universal-project- (private). Chat-built PC scripts live in AI_BRIDGE/pc/ in the bridge repo.
 
 ## WHERE THINGS ARE (read only when a task needs it)
+Shop numbers (stock, bills, sales): private repo rbh-data, read SUMMARY.md first.
 AGENTS.md map | START_HERE.md state | AI_MEMORY/NOW.md newest state | docs/INSTALLED.md | docs/RBH_STUDY_AND_AUDIT_7NOV2026.md (audit list, Fix 1 to 14) | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
