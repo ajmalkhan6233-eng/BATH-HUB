@@ -181,8 +181,10 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, secure: 'auto', maxAge: 12 * 60 * 60 * 1000 },
+    cookie: { httpOnly: true, secure: 'auto', sameSite: 'lax', maxAge: 12 * 60 * 60 * 1000 },   // FIX 2: sameSite lax
 }));
+
+app.use(require('./utils/csrfGuard').csrfGuard());   // FIX 2: refuse logged-in actions that come from another website
 
 // Brute-force limits on the two guessable secrets (password, 4-digit admin PIN). Only FAILED
 // attempts count; a correct login/PIN does not use up the allowance. Loopback is not exempt here.
