@@ -448,7 +448,7 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         y += 8;
 
         doc.font('Helvetica').fontSize(8.5).fillColor('#000')
-            .text(`Subtotal: ${sym} ${Number(bill.subtotal).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+            .text(`${Number(bill.discount_amount) > 0 ? 'Real price' : 'Subtotal'}: ${sym} ${Number(bill.subtotal).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
         y = doc.y + 2;
         if (Number(bill.discount_amount) > 0) {
             doc.fillColor('#8b6f47')
@@ -457,7 +457,13 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
             y = doc.y + 2;
         }
         doc.font('Helvetica-Bold').fontSize(11)
-            .text(`Total: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+            .text(`${Number(bill.discount_amount) > 0 ? 'Price given' : 'Total'}: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+        if (Number(bill.discount_amount) > 0) {
+            y = doc.y + 2;
+            doc.font('Helvetica-Bold').fontSize(9).fillColor('#8b6f47')
+                .text(`You saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)`, MARGIN, y, { width: CONTENT_W, align: 'right' })
+                .fillColor('#000');
+        }
         y = doc.y + 2;
         doc.font('Helvetica').fontSize(8)
             .text(`Payment: ${(bill.payment_method || 'cash').toUpperCase()}`, MARGIN, y, { width: CONTENT_W, align: 'right' });

@@ -87,6 +87,7 @@
   .receipt .items .row { margin-bottom: 2px; }
   .receipt .totals .row { margin-top: 2px; }
   .receipt .discount-line { color:var(--text-muted); }
+  .receipt .you-saved { font-weight:700; color:#8b6f47; }
   .receipt .grand-total { font-weight: 700; font-size:14px; color:var(--text-primary); }
   .receipt .footer { text-align: center; margin-top: 10px; font-size:12px; color:var(--text-muted); }
 
@@ -176,8 +177,22 @@
   }
   @media (max-width: 999px) { .fp-left, .fp-right { display:block; } }
 
-  .disc-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .today-d summary { cursor:pointer; font-weight:700; padding:6px 0; }
+  .disc-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .disc-row .sp-cell { grid-column:1 / -1; } .today-d summary { cursor:pointer; font-weight:700; padding:6px 0; }
   @media (min-width:1000px) { .cust-row { grid-template-columns: 1fr 1fr auto; } .fp-left { min-height: calc(100dvh - 190px); } #itemRows { min-height: 38vh; } }
+
+  /* BLOCK: one-page-desktop. On a computer the bill page fits the screen; only the item list and the bill column scroll inside themselves. */
+  @media (min-width:1000px) {
+    html, body { height:100%; } body { height:100dvh; overflow:hidden; box-sizing:border-box; display:flex; flex-direction:column; }
+    body .wrap { flex:1 1 auto; min-height:0; }
+    body #formPanel { height:100%; box-sizing:border-box; overflow:hidden; }
+    body #formPanel .fp-left { min-height:0; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+    body #formPanel #itemRows { flex:1 1 auto; min-height:0; overflow-y:auto; }
+    body #formPanel .fp-right { position:static; height:100%; overflow-y:auto; min-height:0; }
+    body #priceRow { grid-template-columns:1.3fr 1fr 1fr; gap:8px; } body #priceRow .sp-cell { grid-column:auto; }
+    body #formPanel .fp-right label { margin:3px 0 1px; font-size:13px; } body #formPanel .fp-right input, body #formPanel .fp-right select { padding:4px 8px; min-height:34px; }
+    body #formPanel .fp-right .generate-btn { margin-top:4px; min-height:42px; } body #formPanel .fp-right #quoteSaveBtn { margin-top:4px; min-height:34px; } body #formPanel .fp-right #liveBill { margin-bottom:4px; } body #formPanel .fp-right .cap-hint { margin:2px 0; font-size:12px; }
+    body #billPanel { height:100%; box-sizing:border-box; overflow-y:auto; }
+  }
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
@@ -225,10 +240,14 @@
     </div>
     <div class="fp-right">
     <div id="liveBill"></div>
-    <div class="disc-row"><div><label>Discount %</label>
-    <input type="number" id="discountPct" value="0" min="0" max="100" step="0.5" oninput="updateCapHint()"></div>
-    <div><label>or Discount in Rs</label>
-    <input type="number" id="discountAmt" value="" min="0" step="1" placeholder="0"></div></div>
+    <div class="disc-row" id="priceRow">
+      <div class="sp-cell"><label for="sellPrice">Selling price (Rs)</label>
+        <input type="number" id="sellPrice" inputmode="decimal" min="0" step="any" placeholder="Type the agreed price" autocomplete="off"></div>
+      <div><label for="discountPct">Discount %</label>
+        <input type="number" id="discountPct" value="0" min="0" max="100" step="any" oninput="updateCapHint()"></div>
+      <div><label for="discountAmt">Discount Rs</label>
+        <input type="number" id="discountAmt" value="" min="0" step="any" placeholder="0"></div></div>
+    <div class="cap-hint" id="saveHint" role="status">Type the price you agreed. The discount works itself out.</div>
     <div class="cap-hint" id="capHint"></div>
 
     <label>Payment method</label>
@@ -561,11 +580,15 @@ function renderBill(bill) {
   document.getElementById('rItems').innerHTML = bill.items.map(it => `
     <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
   `).join('');
-  let totalsHtml = `<div class="row"><span>Subtotal</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
-  if (Number(bill.discount_amount) > 0) {
+  const hasDisc = Number(bill.discount_amount) > 0;
+  let totalsHtml = `<div class="row"><span>${hasDisc ? 'Real price' : 'Subtotal'}</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
+  if (hasDisc) {
     totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
   }
-  totalsHtml += `<div class="row grand-total"><span>Total</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
+  totalsHtml += `<div class="row grand-total"><span>${hasDisc ? 'Price given' : 'Total'}</span><span>${sym} ${Number(bill.total).toFixed(2)}</span></div>`;
+  if (hasDisc) {
+    totalsHtml += `<div class="row you-saved"><span>You saved</span><span>${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)</span></div>`;
+  }
   if (Array.isArray(bill.payments) && bill.payments.length) {
     totalsHtml += bill.payments.map(p => `<div class="row"><span>Paid by ${escapeHtml(p.method.toUpperCase())}${p.reference ? ' (' + escapeHtml(p.reference) + ')' : ''}${p.method === 'credit' ? ' (pays later)' : ''}</span><span>${sym} ${Number(p.amount).toFixed(2)}</span></div>`).join('');
   } else {
@@ -573,7 +596,7 @@ function renderBill(bill) {
   }
   document.getElementById('rTotals').innerHTML = totalsHtml;
 
-  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` (incl. ${Number(bill.discount_pct)}% discount, you saved ${sym} ${Number(bill.discount_amount).toFixed(2)})` : ''}\nThank you for shopping with us!`;
+  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` \nReal price: ${sym} ${Number(bill.subtotal).toFixed(2)}\nYou saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)` : ''}\nThank you for shopping with us!`;
   document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
   document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
   document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;
@@ -666,7 +689,7 @@ async function editBill(id) {
   b.items.forEach(it => { addItemRow(it.item_name, Number(it.qty), Number(it.unit_price)); if (it.item_code) document.querySelector('#itemRows .item-row:last-child').dataset.itemCode = it.item_code; });
   document.getElementById('customerName').value = b.customer_name || '';
   document.getElementById('customerPhone').value = b.customer_phone || '';
-  document.getElementById('discountPct').value = Number(b.discount_pct) || 0;
+  document.getElementById('discountPct').value = Number(b.discount_pct) || 0; if (window.posClearSell) window.posClearSell();
   document.getElementById('paymentMethod').value = b.payment_method || 'cash';
   editingId = id;
   const ban = document.getElementById('editBanner');
@@ -788,7 +811,7 @@ async function loadQuote(id) {
     resetForm(true); setCartRows(c.rows);
     _quoteId = id;
     document.getElementById('customerName').value = c.customer_name; document.getElementById('customerPhone').value = c.customer_phone;
-    document.getElementById('discountPct').value = c.discount_pct; updateCapHint();
+    document.getElementById('discountPct').value = c.discount_pct; updateCapHint(); if (window.posClearSell) window.posClearSell();
     document.getElementById('quotePanel').classList.remove('open');
     const sym = branding.currency_symbol || 'Rs';
     scanMsg('Loaded ' + c.quote_no + ': bill total ' + sym + ' ' + c.bill_total.toLocaleString() + (c.matches ? ' (same as the quotation).' : ' (the quotation said ' + sym + ' ' + c.quote_total.toLocaleString() + '. Check the prices.)'), c.matches ? 'ok' : 'err');
@@ -827,7 +850,7 @@ function resumeBill(id) {
   resetForm(true);
   setCartRows(h.rows);
   document.getElementById('customerName').value = h.customer_name; document.getElementById('customerPhone').value = h.customer_phone;
-  document.getElementById('discountPct').value = h.discount_pct; document.getElementById('paymentMethod').value = h.payment_method;
+  document.getElementById('discountPct').value = h.discount_pct; if (window.posClearSell) window.posClearSell(); document.getElementById('paymentMethod').value = h.payment_method;
   if (h.pay_extra) { document.getElementById('chequeRef').value = h.pay_extra.chequeRef || ''; document.getElementById('splitRows').innerHTML = ''; (h.pay_extra.split || []).forEach(r => addSplitRow(r)); }
   payModeChanged();
   PosCart.saveHeld(undefined, PosCart.holdRemove(list, id));
@@ -883,7 +906,7 @@ function resetForm() {
   clearCustomer();
   document.getElementById('paymentMethod').value = 'cash'; document.getElementById('chequeRef').value = ''; document.getElementById('splitRows').innerHTML = ''; payModeChanged();
   if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
-  document.getElementById('discountPct').value = 0;
+  document.getElementById('discountPct').value = 0; if (window.posClearSell) window.posClearSell();
   updateCapHint();
   document.getElementById('formPanel').style.display = 'block';
   document.getElementById('billPanel').style.display = 'none';

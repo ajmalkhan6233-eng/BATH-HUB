@@ -71,6 +71,27 @@
       var box = document.createElement('div'); box.id = 'ld-float'; box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Send a paper to Layla');
       var slot = document.createElement('div'); box.appendChild(slot); document.body.appendChild(box);
       mount(slot, { label: 'Send to Layla' });
+      // BLOCK: drag-handle. Hold the little grip bar and move the box anywhere; the place is remembered on this device.
+      var gs = document.createElement('style');
+      gs.textContent = '#ld-float .ld-grip{height:18px;cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;color:var(--text-muted,#888);font-size:14px;line-height:1;letter-spacing:3px;user-select:none}#ld-float .ld-grip:active{cursor:grabbing}';
+      document.head.appendChild(gs);
+      var grip = document.createElement('div'); grip.className = 'ld-grip'; grip.textContent = '⋯'; grip.title = 'Drag to move this box'; grip.setAttribute('aria-label', 'Drag to move');
+      box.insertBefore(grip, box.firstChild);
+      var place = function (x, y) {
+        var w = box.offsetWidth, h = box.offsetHeight;
+        x = Math.max(4, Math.min(window.innerWidth - w - 4, x)); y = Math.max(4, Math.min(window.innerHeight - h - 4, y));
+        box.style.setProperty('left', x + 'px', 'important'); box.style.setProperty('top', y + 'px', 'important');
+        box.style.setProperty('right', 'auto', 'important'); box.style.setProperty('bottom', 'auto', 'important');
+        box.style.setProperty('transform', 'none', 'important');
+        return { x: x, y: y };
+      };
+      try { var saved = JSON.parse(localStorage.getItem('rbh-ld-pos') || 'null'); if (saved && isFinite(saved.x) && isFinite(saved.y)) place(saved.x, saved.y); } catch (e) { /* no saved place */ }
+      var dx = 0, dy = 0, drag = false;
+      grip.addEventListener('pointerdown', function (e) { var r = box.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; drag = true; try { grip.setPointerCapture(e.pointerId); } catch (x) { /* ok */ } e.preventDefault(); });
+      grip.addEventListener('pointermove', function (e) { if (drag) place(e.clientX - dx, e.clientY - dy); });
+      var stop = function () { if (!drag) return; drag = false; var r = box.getBoundingClientRect(); try { localStorage.setItem('rbh-ld-pos', JSON.stringify({ x: r.left, y: r.top })); } catch (x) { /* private mode */ } };
+      grip.addEventListener('pointerup', stop); grip.addEventListener('pointercancel', stop);
+      window.addEventListener('resize', function () { var r = box.getBoundingClientRect(); if (box.style.left) place(r.left, r.top); });
     }).catch(function () { /* no button when the account cannot be checked */ });
   }
   var api = { mount: mount, scan: scan, describe: describe, floatDoor: floatDoor };

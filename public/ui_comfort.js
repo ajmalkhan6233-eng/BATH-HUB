@@ -93,22 +93,22 @@
   }
   function updateButton() {
     var right = document.querySelector('.topbar-right'); if (!right || document.getElementById('bh-upd')) return;
-    var b = document.createElement('button'); b.id = 'bh-upd'; b.type = 'button'; b.className = 'sm-pill'; b.textContent = '▶ Update';
-    b.title = 'Get the newest version of the app now (it restarts by itself if needed)';
-    b.style.cssText = 'font-weight:700;padding:6px 14px;min-height:40px;border-radius:999px;border:2px solid #C9A24B;background:#C9A24B;color:#111;cursor:pointer;margin-right:6px';
+    var b = document.createElement('button'); b.id = 'bh-upd'; b.type = 'button'; b.className = 'sm-pill'; b.textContent = '⬆';
+    b.title = 'Check for update: get the newest version of the app (it restarts by itself if needed)'; b.setAttribute('aria-label', 'Check for update');
+    b.style.cssText = 'width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;border:1px solid rgba(201,162,75,.7);background:transparent;color:#C9A24B;font-size:16px;line-height:1;cursor:pointer;margin-right:6px;display:inline-flex;align-items:center;justify-content:center';
     b.onclick = function () {
-      b.disabled = true; b.textContent = 'Updating...';
+      b.disabled = true; b.textContent = '…';
       fetch('/api/pc-actions/update', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
         .then(function (r) { return r.json(); })
         .then(function (j) {
-          if (j.error) { b.textContent = '▶ Update'; b.disabled = false; alert(j.error); return; }
-          if (j.state === 'current') { b.textContent = 'Already newest'; setTimeout(function () { location.reload(); }, 900); return; }
-          if (j.state === 'blocked') { b.textContent = '▶ Update'; b.disabled = false; alert('Could not update: ' + (j.why || 'unknown') + '. Tell Claude this exact line.'); return; }
+          if (j.error) { b.textContent = '⬆'; b.disabled = false; alert(j.error); return; }
+          if (j.state === 'current') { b.textContent = '✔'; b.title = 'Already the newest version'; setTimeout(function () { location.reload(); }, 900); return; }
+          if (j.state === 'blocked') { b.textContent = '⬆'; b.disabled = false; alert('Could not update: ' + (j.why || 'unknown') + '. Tell Claude this exact line.'); return; }
           if (j.needsInstall) alert('Updated. One extra step (npm install) is needed: tell Claude.');
-          b.textContent = j.restart ? 'Restarting...' : 'Done';
+          b.textContent = j.restart ? '…' : '✔';
           var tries = 0, wait = function () { tries++; fetch('/health', { cache: 'no-store' }).then(function (r) { if (r.ok && (!j.restart || tries > 3)) location.reload(); else setTimeout(wait, 2000); }).catch(function () { setTimeout(wait, 2000); }); };
           setTimeout(wait, j.restart ? 4000 : 500);
-        }).catch(function () { b.textContent = '▶ Update'; b.disabled = false; alert('Could not reach the app.'); });
+        }).catch(function () { b.textContent = '⬆'; b.disabled = false; alert('Could not reach the app.'); });
     };
     right.insertBefore(b, right.firstChild);
   }
@@ -172,14 +172,14 @@
 (function () {
   'use strict';
   var css = document.createElement('style');
-  css.textContent = '#bh-tasks-btn{font-weight:700;padding:6px 14px;min-height:40px;border-radius:999px;border:2px solid #2e9e57;background:#2e9e57;color:#fff;cursor:pointer;margin-right:6px}#bh-tasks-btn.none{background:transparent;color:inherit;border-color:rgba(128,128,128,.5)}' +
+  css.textContent = '#bh-tasks-btn{position:relative;width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;border:1px solid #2e9e57;background:transparent;color:#2e9e57;font-size:16px;line-height:1;cursor:pointer;margin-right:6px;display:inline-flex;align-items:center;justify-content:center}#bh-tasks-btn.none{color:inherit;border-color:rgba(128,128,128,.5)}#bh-tasks-btn .n{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#2e9e57;color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center;padding:0 3px}' +
     '#bh-tasks{position:fixed;z-index:100002;top:64px;right:10px;width:min(440px,calc(100vw - 20px));max-height:calc(100vh - 80px);overflow:auto;background:#1c2230;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;font:15px "Segoe UI",Arial,sans-serif}#bh-tasks.on{display:block}' +
     '#bh-tasks .tk{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);margin-bottom:6px}#bh-tasks .tk b{display:block;font-size:16px}#bh-tasks .tk small{display:block;color:#c9d2e0;font-size:14px;line-height:1.25}' +
     '#bh-tasks .go{flex:0 0 auto;min-width:46px;min-height:46px;border-radius:50%;border:0;background:#2e9e57;color:#fff;font-size:20px;cursor:pointer}#bh-tasks .go:disabled{background:#556;cursor:default}#bh-tasks .st{flex:0 0 auto;font-size:14px;max-width:130px;text-align:right}';
   document.head.appendChild(css);
   var btn = null, panel = null, cards = [], busy = {};
   function api(u, o) { return fetch(u, Object.assign({ credentials: 'same-origin' }, o || {})).then(function (r) { return r.json(); }); }
-  function paintBtn() { if (!btn) return; var n = cards.filter(function (c) { return c.state === 'ready'; }).length; btn.className = n ? '' : 'none'; btn.textContent = n ? '▶ Tasks (' + n + ')' : 'Tasks'; }
+  function paintBtn() { if (!btn) return; var n = cards.filter(function (c) { return c.state === 'ready'; }).length; btn.className = n ? '' : 'none'; btn.textContent = '☑'; if (n) { var bd = document.createElement('span'); bd.className = 'n'; bd.textContent = n; btn.appendChild(bd); } btn.setAttribute('aria-label', n ? n + ' tasks waiting' : 'Tasks'); }
   function paint() {
     paintBtn(); if (!panel) return; panel.innerHTML = '';
     if (!cards.length) { panel.textContent = 'No tasks waiting. When Claude gives you a task, it shows here with a green ▶.'; return; }
@@ -198,7 +198,7 @@
   function load() { api('/api/play/list').then(function (j) { if (j && j.cards) { cards = j.cards; paint(); } }).catch(function () { /* app restarting */ }); }
   function make() {
     var right = document.querySelector('.topbar-right'); if (!right || document.getElementById('bh-tasks-btn')) return;
-    btn = document.createElement('button'); btn.id = 'bh-tasks-btn'; btn.type = 'button'; btn.className = 'none'; btn.textContent = 'Tasks'; btn.title = 'Tasks Claude wrote for you: press the green play button';
+    btn = document.createElement('button'); btn.id = 'bh-tasks-btn'; btn.type = 'button'; btn.className = 'none'; btn.textContent = '☑'; btn.title = 'Tasks Claude wrote for you (press the green play button inside)';
     panel = document.createElement('div'); panel.id = 'bh-tasks'; document.body.appendChild(panel);
     btn.onclick = function (e) { e.stopPropagation(); panel.classList.toggle('on'); load(); };
     document.addEventListener('click', function (e) { if (panel.classList.contains('on') && !e.target.closest('#bh-tasks')) panel.classList.remove('on'); });

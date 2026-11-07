@@ -27,8 +27,10 @@
     box.appendChild(tb);
     var lastTr = tb.lastElementChild; if (lastTr && ls.length > (live.n || 0)) { lastTr.classList.add('mo-flash'); var rows = document.querySelectorAll('.item-row'), src = rows.length > 1 ? rows[rows.length - 2] : rows[0]; if (window.bhFly && src) window.bhFly(src.querySelector('.i-name'), lastTr); } live.n = ls.length;
     var gb = $('genBtn'); if (gb) gb.classList.toggle('btn-gold-ready', ls.length > 0);
-    if (t.disc > 0) { var d = document.createElement('div'); d.className = 'lb-tot'; d.style.fontSize = '14px'; d.style.fontWeight = '600'; d.innerHTML = '<span></span><span></span>'; d.children[0].textContent = 'Discount ' + t.pct + '%'; d.children[1].textContent = '- ' + fmt(t.disc); box.appendChild(d); }
-    var tot = document.createElement('div'); tot.className = 'lb-tot'; tot.innerHTML = '<span>Total</span><span></span>'; tot.children[1].textContent = 'Rs ' + fmt(t.total); box.appendChild(tot);
+    if (t.disc > 0) { var rp = document.createElement('div'); rp.className = 'lb-tot'; rp.style.fontSize = '14px'; rp.style.fontWeight = '600'; rp.innerHTML = '<span></span><span></span>'; rp.children[0].textContent = 'Real price'; rp.children[1].textContent = fmt(t.sub); box.appendChild(rp); }
+    if (t.disc > 0) { var d = document.createElement('div'); d.className = 'lb-tot'; d.style.fontSize = '14px'; d.style.fontWeight = '600'; d.innerHTML = '<span></span><span></span>'; d.children[0].textContent = 'Discount ' + (Math.round(t.pct * 100) / 100) + '%'; d.children[1].textContent = '- ' + fmt(t.disc); box.appendChild(d); }
+    var tot = document.createElement('div'); tot.className = 'lb-tot'; tot.innerHTML = '<span>' + (t.disc > 0 ? 'Price given' : 'Total') + '</span><span></span>'; tot.children[1].textContent = 'Rs ' + fmt(t.total); box.appendChild(tot);
+    if (t.disc > 0) { var sv = document.createElement('div'); sv.style.cssText = 'font-weight:700;color:#8b6f47;text-align:right;font-size:14px'; sv.textContent = 'Customer saves Rs ' + fmt(t.disc); box.appendChild(sv); }
   }
   var tmr = null; function soon() { clearTimeout(tmr); tmr = setTimeout(live, 80); }
   document.addEventListener('input', soon, true); document.addEventListener('click', soon, true); document.addEventListener('change', soon, true);
@@ -37,9 +39,38 @@
   (function () {
     var pct = $('discountPct'), amt = $('discountAmt'); if (!pct || !amt) return;
     function sub() { return lines().reduce(function (s, l) { return s + Math.round(l.qty * l.price * 100) / 100; }, 0); }
-    amt.addEventListener('input', function () { var s = sub(), a = parseFloat(amt.value) || 0; pct.value = s > 0 ? Math.min(100, Math.round(a / s * 1e6) / 1e4) : 0; try { pct.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ } });
+    amt.addEventListener('input', function () { var s = sub(), a = parseFloat(amt.value) || 0; pct.value = s > 0 ? Math.min(100, Math.round(a / s * 1e10) / 1e8) : 0; try { pct.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ } });
     pct.addEventListener('input', function (e) { if (e.isTrusted === false && document.activeElement === amt) return; var s = sub(), p = parseFloat(pct.value) || 0; if (document.activeElement !== amt) amt.value = p > 0 && s > 0 ? (Math.round(s * p) / 100) : ''; });
     document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('.item-row') && document.activeElement !== amt && (parseFloat(pct.value) || 0) > 0 && !amt.dataset.byAmt) { var s = sub(), p = parseFloat(pct.value) || 0; amt.value = s > 0 ? Math.round(s * p) / 100 : ''; } }, true);
+  })();
+  // BLOCK: selling-price. Type the price you agreed; discount % and Rs work themselves out (the percent keeps 8 decimals so the total is exact).
+  (function () {
+    var sp = $('sellPrice'), pct = $('discountPct'), amt = $('discountAmt'), hint = $('saveHint'); if (!sp || !pct || !amt) return;
+    function sub() { return lines().reduce(function (s, l) { return s + Math.round(l.qty * l.price * 100) / 100; }, 0); }
+    function r2(n) { return Math.round(n * 100) / 100; }
+    function fire() { try { pct.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* ignore */ } }
+    function say(t) { if (hint) hint.textContent = t || ''; }
+    function fromSell() {
+      var s = sub(), v = parseFloat(sp.value);
+      if (sp.value === '' || isNaN(v)) { say(''); return; }
+      if (!(s > 0)) { say('Add the items first.'); return; }
+      if (v >= s) { pct.value = 0; amt.value = ''; fire(); say(v > s ? 'That is above the real price (Rs ' + fmt(s) + '): no discount.' : 'Full price: no discount.'); return; }
+      var d = r2(s - v); amt.value = d; pct.value = Math.round(d / s * 1e10) / 1e8; fire();
+      say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(d / s * 1e4) / 100) + '%). Real price Rs ' + fmt(s) + '.');
+    }
+    function toSell() {
+      if (document.activeElement === sp) return;
+      var s = sub(), p = parseFloat(pct.value) || 0;
+      if (!(s > 0) || !(p > 0)) { sp.value = ''; say(''); return; }
+      var d = r2(s * p / 100); sp.value = r2(s - d); say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(p * 100) / 100) + '%). Real price Rs ' + fmt(s) + '.');
+    }
+    sp.addEventListener('input', fromSell);
+    pct.addEventListener('input', function () { setTimeout(toSell, 0); });
+    amt.addEventListener('input', function () { setTimeout(toSell, 0); });
+    // when items change and a selling price is typed, the agreed price stays and the discount is worked out again
+    document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('.item-row') && sp.value !== '') setTimeout(fromSell, 0); }, true);
+    document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('.item-row') && sp.value !== '') setTimeout(fromSell, 120); }, true);
+    window.posClearSell = function () { sp.value = ''; say(''); };
   })();
   // wide layout only while a finished bill is on screen
   var bp = $('billPanel'), wrap = document.querySelector('.wrap');

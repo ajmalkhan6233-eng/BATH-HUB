@@ -148,6 +148,7 @@ function receiptHtml(r) {
       .row{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:4px 0}
       .row span:first-child{flex:1}
       .disc{color:#6b6b70}
+      .save{color:#8b6f47;font-weight:700}
       .total{display:flex;justify-content:space-between;align-items:baseline;background:#0b0b0c;border-radius:6px;padding:12px 14px;margin:10px 0 6px}
       .total span:first-child{font-size:13px;color:#c9a227;text-transform:uppercase;letter-spacing:1px}
       .total span:last-child{font-size:24px;font-weight:700;color:#fff}
@@ -165,9 +166,10 @@ function receiptHtml(r) {
         <hr>
         ${rows}
         <hr>
-        <div class="row"><span>Subtotal</span><span>${lkr(r.subtotal)}</span></div>
+        <div class="row"><span>${r.discount > 0 ? 'Real price' : 'Subtotal'}</span><span>${lkr(r.subtotal)}</span></div>
         ${r.discount > 0 ? `<div class="row disc"><span>Discount (${r.discount_pct}%)</span><span>-${lkr(r.discount)}</span></div>` : ''}
-        <div class="total"><span>Total</span><span>${lkr(r.total)}</span></div>
+        <div class="total"><span>${r.discount > 0 ? 'Price given' : 'Total'}</span><span>${lkr(r.total)}</span></div>
+        ${r.discount > 0 ? `<div class="row save"><span>You saved</span><span>${lkr(r.discount)} (${r.discount_pct}%)</span></div>` : ''}
         <div class="row"><span>Paid by</span><span>${esc(r.payment.toUpperCase())}</span></div>
         ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ''}
       </div>
@@ -215,10 +217,11 @@ function renderPdf(r) {
         line('Phone', r.phone); doc.moveDown(0.5);
         r.items.forEach(i => line(`${i.name} x ${i.qty}`, lkr(i.total)));
         doc.moveDown(0.5);
-        line('Subtotal', lkr(r.subtotal));
+        line(r.discount > 0 ? 'Real price' : 'Subtotal', lkr(r.subtotal));
         if (r.discount > 0) line(`Discount (${r.discount_pct}%)`, '-' + lkr(r.discount));
         doc.moveDown(0.3).fontSize(14).fillColor('#0b0b0c');
-        const y = doc.y; doc.text('Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
+        const y = doc.y; doc.text(r.discount > 0 ? 'Price given' : 'Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
+        if (r.discount > 0) { doc.moveDown(0.3).fontSize(10).fillColor('#8b6f47'); line('You saved', `${lkr(r.discount)} (${r.discount_pct}%)`); doc.fillColor('#0b0b0c'); }
         doc.moveDown(0.6).fontSize(10).fillColor('#201c16'); line('Paid by', r.payment.toUpperCase());
         if (r.notes) doc.moveDown(0.5).fontSize(9).fillColor('#6b6b70').text(r.notes, 20, doc.y, { width: 260 });
         doc.moveDown(1.5).fontSize(10).fillColor('#6b6b70').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
@@ -346,7 +349,7 @@ router.post('/invoice-receipts/send', async (req, res) => {
 
         const data = receiptData(bill, rec);
         const out = await renderReceipt(data);
-        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
+        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\n${data.discount > 0 ? `Real price: ${lkr(data.subtotal)}\nPrice given: ${lkr(data.total)}\nYou saved: ${lkr(data.discount)} (${data.discount_pct}%)` : `Total: ${lkr(data.total)}`}\nThank you for shopping with us!`;
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {
