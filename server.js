@@ -601,6 +601,7 @@ const sync = require('./routes/sync');
 app.use('/api', sync.idempotency());   // same key twice = one record (offline queue replays)
 app.use('/api', sync);                 // /api/sync/status, needs-review, review
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
+app.use('/api', require('./routes/client_errors'));       // FIX 3: screens report their own errors (POST /client-error public+limited, GET /client-errors owner)
 app.use('/api', require('./routes/staff_reports'));       // routes are relative (/attendance etc)
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...
 app.use('/', require('./routes/apex_admin'));             // APEX control plane, /api/apex/* (admin + PIN gated)
@@ -3483,15 +3484,16 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 });
 /* ===== END M8 ===== */
 
+app.use(require('./utils/safety').errorHandler);   // FIX 1: anything uncaught becomes a calm JSON answer
+
 // ─── START ────────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    app.listen(PORT, '0.0.0.0', () => {
+    const httpServer = app.listen(PORT, '0.0.0.0', () => {
         laylaOwner.start();   // reminders every minute; WhatsApp relay only if RELAY_URL is set; DRY RUN unless LAYLA_OWNER_LIVE=true
         console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);
         require('./utils/extraAdmins').run(pool).catch(() => {});   // owner-level logins listed in config/extra_admins.json   // one clean line (the old banner still said "Your Business Name")
     });
+    require('./utils/safety').installProcessGuards({ server: httpServer, pool });   // FIX 1: safe shutdown + no silent crashes
 }
-
-module.exports = app;
 
 module.exports = app;
