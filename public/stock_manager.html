@@ -45,7 +45,7 @@ function draw(){var q=$('q').value.trim().toLowerCase(),cat=$('cat').value,nc=$(
  ALL.forEach(function(r){if(q&&(r.item_code+' '+r.vcode+' '+r.name+' '+r.category).toLowerCase().indexOf(q)<0)return;if(cat&&r.category!==cat)return;if(nc&&r.category)return;n++;pcs+=r.stock;cv+=r.stock*r.cost;sv+=r.stock*r.sell;
   var s=h('select',{onclick:function(e){e.stopPropagation()},ondblclick:function(e){e.stopPropagation()},onchange:function(){var v=s.value;jf('/api/item-detail/'+encodeURIComponent(r.item_code),'POST',{category:v}).then(function(x){if(x.ok){r.category=v;draw()}else alert(x.j.error||'Not saved')})}},[h('option',{value:'',text:'(choose)'})].concat(cats().map(function(v){return h('option',{value:v,text:v})})));s.value=r.category;
   var tr=h('tr',{class:'row',title:'Double-click to edit',ondblclick:function(){edit(r.item_code)}},[h('td',{text:r.item_code}),h('td',{text:r.name}),h('td',{class:r.category?'':'none'},[s]),h('td',{class:'r',text:String(r.stock)}),h('td',{class:'r',text:fmt(r.cost)}),h('td',{class:'r',text:r.sell?fmt(r.sell):'-'}),h('td',{class:'r',text:r.sell?(Math.round((r.sell-r.cost)/r.sell*1000)/10)+' %':'-'})]);tb.appendChild(tr)});
- $('sum').textContent=n+' items, '+pcs+' pieces. Stock at cost Rs '+fmt(cv)+', at selling price Rs '+fmt(sv)+'.'}
+ $('sum').textContent=n+' items, '+pcs.toLocaleString('en-LK')+' pieces. (Stock value is on the Dashboard.)'}
 $('q').oninput=draw;$('cat').onchange=draw;$('nocat').onchange=draw;
 function edit(code){var B=$('box');B.className='box';B.textContent='Loading...';$('m').classList.add('on');
  jf('/api/item-detail/'+encodeURIComponent(code)).then(function(x){if(!x.ok){B.textContent=x.j.error||'Could not open';return}var it=x.j;B.textContent='';
