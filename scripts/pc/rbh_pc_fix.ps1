@@ -3,9 +3,11 @@
 $ErrorActionPreference = 'Continue'
 $root = (git rev-parse --show-toplevel 2>$null); if (-not $root) { Write-Host 'Run this inside the repo folder'; exit 1 }
 Set-Location $root
-git pull origin work 2>&1 | Out-Null
+$branch = (git rev-parse --abbrev-ref HEAD 2>$null)
+$onWork = ($branch -eq 'work')
+if ($onWork) { git pull origin work 2>&1 | Out-Null } else { Write-Host "Branch is '$branch', not work: read-only, no git changes" }
 $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
-$out = Join-Path $root "AI_MEMORY\PC_HEALTH_$stamp.txt"
+$out = if ($onWork) { Join-Path $root "AI_MEMORY\PC_HEALTH_$stamp.txt" } else { Join-Path $env:USERPROFILE "rbh_pc_health_$stamp.txt" }
 $L = New-Object System.Collections.Generic.List[string]
 function Add($t) { $L.Add([string]$t) }
 Add "PC HEALTH $stamp (read only)"
@@ -34,11 +36,13 @@ Add '--- Memory test result (if ever run)'
 try { Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-MemoryDiagnostics-Results' } -MaxEvents 2 -ErrorAction Stop | ForEach-Object { Add ("{0} | {1}" -f $_.TimeCreated, ($_.Message -split "`n")[0]) } } catch { Add 'never run' }
 $L | Set-Content -Path $out -Encoding UTF8
 $kp = ($L | Where-Object { $_ -match 'BugcheckCode' }).Count
-$live = Join-Path $root 'AI_MEMORY\LIVE.md'
-$line = ("{0} | PC | rbh_pc_fix | DONE | report AI_MEMORY/PC_HEALTH_{1}.txt, power-offs listed: {2}, gentle-mode UI pulled | AJ: nothing" -f (Get-Date -Format 'HH:mm'), $stamp, $kp)
-$old = if (Test-Path $live) { Get-Content $live -Raw } else { '' }
-Set-Content -Path $live -Value ($line + "`r`n" + $old) -Encoding UTF8
-git add $out $live 2>&1 | Out-Null
-git commit -m "PC health report $stamp (read only)" 2>&1 | Out-Null
-git push origin work 2>&1 | Select-Object -Last 2
-Write-Host "DONE. Report: AI_MEMORY\PC_HEALTH_$stamp.txt"
+if ($onWork) {
+  $live = Join-Path $root 'AI_MEMORY\LIVE.md'
+  $line = ("{0} | PC | rbh_pc_fix | DONE | report AI_MEMORY/PC_HEALTH_{1}.txt, power-offs listed: {2} | AJ: nothing" -f (Get-Date -Format 'HH:mm'), $stamp, $kp)
+  $old = if (Test-Path $live) { Get-Content $live -Raw } else { '' }
+  Set-Content -Path $live -Value ($line + "`r`n" + $old) -Encoding UTF8
+  git add $out $live 2>&1 | Out-Null
+  git commit -m "PC health report $stamp (read only)" 2>&1 | Out-Null
+  git push origin work 2>&1 | Select-Object -Last 2
+}
+Write-Host "DONE. Report: $out"
