@@ -7,7 +7,7 @@
  <div class="tw"><table><thead><tr><th>Vendor</th><th class="num">Bills</th><th class="num">Billed</th><th class="num">Paid</th><th class="num">Owed</th><th>Alerts</th></tr></thead><tbody id="tb"></tbody></table></div>
 </div>
 <div class="modal" id="mod"><div class="box"><div class="hd"><b id="mt">Supplier credit book</b><div class="row"><a class="btn sm" id="full" target="_top" href="/vendor360.html">Add bill or payment</a><button class="btn sm" id="mx" type="button">Close</button></div></div><div class="bd" id="mb"></div></div></div>
-<script src="ui-core.js"></script>
+<script src="ui-core.js"></script><script src="fx.js"></script>
 <script>
 (function(){'use strict';var $=function(i){return document.getElementById(i)},E=RBH.esc,M=RBH.money;var V=[],owing=false;
 function draw(){var q=$('q').value.trim().toLowerCase(),v=V.filter(function(x){return(!q||x.vendor_name.toLowerCase().indexOf(q)>-1)&&(!owing||x.outstanding_balance>0);});
