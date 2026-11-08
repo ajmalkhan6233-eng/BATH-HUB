@@ -15,7 +15,7 @@
   };
   RBH.toast = function (msg, kind) { var t = document.createElement('div'); t.className = 'toast ' + (kind || ''); t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 3200); };
   RBH.theme = function (t) { try { if (t) localStorage.setItem('rbh_theme', t); else t = localStorage.getItem('rbh_theme'); } catch (e) {} if (t === 'dark') t = 'gold'; if (t !== 'gold') t = 'light'; document.documentElement.setAttribute('data-theme', t); return t; };
-  RBH.lite = function () { if ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)) document.documentElement.classList.add('lite'); };
+  RBH.lite = function () { var on = false; try { on = localStorage.getItem('rbh_fx') === 'on'; } catch (e) {} if (!on) document.documentElement.classList.add('lite'); };   /* gentle mode is the default: no blur, no glow, no endless animation. Fancy only if rbh_fx=on */
   RBH.me = function () { return RBH.api('/api/me').then(function (u) { RBH.user = u || {}; return RBH.user; }).catch(function () { RBH.user = {}; return RBH.user; }); };
   RBH.isCashier = function () { return !!(RBH.user && RBH.user.role === 'cashier'); };
   RBH.skel = function (n) { var s = ''; for (var i = 0; i < (n || 5); i++) s += '<tr><td colspan="9"><div class="skel"></div></td></tr>'; return s; };

@@ -82,7 +82,7 @@ tr.click{cursor:pointer}tr.click:hover td{background:var(--gold-soft)}
 .card,tr.click{transition:transform .2s,box-shadow .25s,border-color .25s}
 @media (hover:hover){.glass.card:hover{transform:translateY(-2px);border-color:rgba(212,175,55,.55);box-shadow:var(--shadow),0 0 0 1px rgba(212,175,55,.25),0 14px 38px var(--halo)}}
 .card:active{transform:scale(.985)}
-.lite .glass.card:hover{transform:none}
+.lite .glass.card:hover{transform:none;box-shadow:var(--shadow)}.lite *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}.lite .live::after{animation:none;display:none}.lite .fxpill{transition:none}.lite .frame.enter,.lite .toast,.lite .pal.on .box{animation:none}.lite .skel{animation:none}
 .live{position:relative;display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok);flex:none}
 .live::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--ok);animation:fxping 1.6s cubic-bezier(0,0,.2,1) infinite}
 @keyframes fxping{75%,100%{transform:scale(2.4);opacity:0}}
