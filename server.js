@@ -322,7 +322,8 @@ app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root:
 // The customer front page is the real website (black + gold, RBH logo). The old page public/bathhub.html is no longer shown to anyone.
 const PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || 'https://dapper-dieffenbachia-69d038.netlify.app';
 app.get('/bathhub.html', (req, res) => res.redirect(302, PUBLIC_SITE_URL));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(require('./middleware/staticFast')(path.join(__dirname, 'public')));   // SPEED: gzip + ETag for screens (middleware/staticFast.js); remove this line to turn off
+app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, f) => { if (/\.(png|jpe?g|webp|gif|ico|woff2?)$/i.test(f)) res.setHeader('Cache-Control', 'public, max-age=86400'); } }));   // SPEED: pictures and fonts kept 1 day on the phone
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────
 const logLoginAttempt = (username, success, ip, reason) =>
