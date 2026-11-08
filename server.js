@@ -205,7 +205,7 @@ app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skip
 app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
 // Routes that carry photos (data-URLs) parse their own bigger JSON (14 MB, 8 MB, 16 MB). The global 1 MB parser used to run first and refused a photo over about 750 KB with 413, so the save failed. Those exact routes skip it.
-const BIG_BODY = /^\/api\/(grn-workbench(\/(cheque|read|bill\/\d+))?|item-detail\/[^/]+|layla-owner\/media)\/?$/;
+const BIG_BODY = /^\/api\/(grn-workbench(\/(cheque|read|bill\/\d+))?|item-detail\/[^/]+|layla-owner\/media|sync(\/[a-z-]+)?|setup\/complete)\/?$/;
 const jsonSmall = bodyParser.json({ limit: '1mb' });
 app.use((req, res, next) => ((req.method === 'POST' || req.method === 'PUT') && BIG_BODY.test(req.path)) ? next() : jsonSmall(req, res, next));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
@@ -773,6 +773,7 @@ app.get('/api/error-log', (req, res) => {
 app.get('/api/branding', (req, res) => {
     try {
         const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'active.branding.json'), 'utf8'));
+        delete cfg.db_name; delete cfg.db_host; delete cfg.db_user; // internal names stay private
         res.json(cfg);
     } catch (e) { res.status(500).json({ error: 'branding config missing or invalid: ' + e.message }); }
 });

@@ -23,6 +23,25 @@
     + 'html:not(.mo-off) #dash-pro svg rect{transform-box:fill-box;transform-origin:bottom;animation:v2grow .8s cubic-bezier(.2,.8,.2,1) both}'
     + 'html:not(.mo-off) #dash-pro .dp-bar>i{animation:v2wide .9s cubic-bezier(.2,.8,.2,1) both}html:not(.mo-off) #dash-pro .v2-donut circle{animation:v2dash 1s ease-out both}'
     + '@keyframes v2grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}@keyframes v2wide{from{width:0!important}}@keyframes v2dash{from{stroke-dasharray:0 999}}';
+
+  var css3 = ''
+    + '#page-dashboard.dp-on{background:radial-gradient(900px 420px at 12% -8%,rgba(224,180,60,.10),transparent 60%),radial-gradient(800px 380px at 100% 0,rgba(20,184,166,.09),transparent 60%),radial-gradient(700px 400px at 50% 110%,rgba(168,85,247,.08),transparent 60%),#0c0d10;border-radius:14px}'
+    + '#dash-pro .dp-card{background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015) 55%),rgba(16,17,21,.86);border:1px solid color-mix(in srgb,var(--v2c,#c9a24b) 38%,transparent);border-left-width:1px;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 10px 26px rgba(0,0,0,.45),0 0 22px -6px color-mix(in srgb,var(--v2c,#c9a24b) 55%,transparent)}'
+    + '#dash-pro .dp-card:before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--v2c,#c9a24b),transparent 85%);opacity:.9}'
+    + '#dash-pro .dp-val{font-size:26px;font-weight:800;letter-spacing:.2px;text-shadow:0 0 18px color-mix(in srgb,var(--v2c,#c9a24b) 60%,transparent)}'
+    + '#dash-pro .dp-lab{text-transform:uppercase;letter-spacing:.08em;font-size:10px;opacity:.85}'
+    + '#dash-pro .dp-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}#dash-pro .dp-bar>i{background:linear-gradient(90deg,var(--v2c,#c9a24b),color-mix(in srgb,var(--v2c,#c9a24b) 55%,#fff));box-shadow:0 0 12px var(--v2c,#c9a24b);border-radius:99px}'
+    + '#dash-pro .v3-ring{position:absolute;right:10px;bottom:8px;width:54px;height:54px}#dash-pro .v3-ring svg{width:54px;height:54px;transform:rotate(-90deg);filter:drop-shadow(0 0 6px var(--v2c,#c9a24b))}'
+    + '#dash-pro .v3-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--v2c,#fff)}'
+    + '#dash-pro .dp-title:after{content:" \\25CF live";font-size:11px;color:#22c55e;-webkit-text-fill-color:#22c55e;margin-left:8px}'
+    + 'html:not(.mo-off) #dash-pro .dp-title:after{animation:v3pulse 1.8s ease-in-out infinite}'
+    /* floating = a slow, tiny lift in place. Cards never change position in the layout, nothing slides around. */
+    + 'html:not(.mo-off) #dash-pro .dp-card{animation:v3float 7s ease-in-out infinite;animation-delay:calc(var(--i,0) * -.9s);will-change:transform}'
+    + 'html:not(.mo-off) #dash-pro .dp-card:hover{animation-play-state:paused;transform:translateY(-5px)}'
+    + 'html:not(.mo-off) #dash-pro .v3-ring circle.v3-arc{animation:v3arc 1.2s cubic-bezier(.2,.8,.2,1) both}'
+    + '@keyframes v3float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes v3pulse{50%{opacity:.35}}@keyframes v3arc{from{stroke-dasharray:0 100}}'
+    + '@media (max-width:520px){#dash-pro .dp-val{font-size:21px}#dash-pro .v3-ring,#dash-pro .v3-ring svg{width:42px;height:42px}#dash-pro .v3-ring b{font-size:10px}}'
+    + '@media (prefers-reduced-motion:reduce){#dash-pro .dp-card{animation:none!important}}';
   var KIND = [
     ['v2-m', /^(sales today|bills today|this week|this month|daily target|stock bought|cash sales|card \+ online|cheques received)/],
     ['v2-p', /(profit|margin)/], ['v2-e', /^(expenses|cancelled)/],
@@ -37,11 +56,17 @@
   var low = function (s) { return String(s || '').trim().toLowerCase(); };
 
   function count(el, key) {   // "LKR 12,345" or "12": count up from the last shown value (or 0)
-    var t = el.textContent, m = /^(LKR )?([\d,]+)$/.exec(t.trim()); if (!m) return;
-    var to = parseInt(m[2].replace(/,/g, ''), 10), pre = m[1] || '', from = last[key] != null ? last[key] : 0; last[key] = to;
+    var t = el.textContent, m = /^(LKR )?([\d,]+)(%?)$/.exec(t.trim()); if (!m) return;
+    var to = parseInt(m[2].replace(/,/g, ''), 10), pre = m[1] || '', suf = m[3] || '', from = last[key] != null ? last[key] : 0; last[key] = to;
     if (calm() || from === to || !isFinite(to)) return;
     var t0 = performance.now(), dur = 800;
-    (function step(now) { var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = Math.round(from + (to - from) * e); el.textContent = pre + v.toLocaleString('en-LK'); if (p < 1) requestAnimationFrame(step); else el.textContent = t; })(t0);
+    (function step(now) { var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = Math.round(from + (to - from) * e); el.textContent = pre + v.toLocaleString('en-LK') + suf; if (p < 1) requestAnimationFrame(step); else el.textContent = t; })(t0);
+  }
+  function ring(card, val) {   // a card whose number is a percent (margin, target) gets a live ring that fills to that percent
+    var note = card.querySelector('.dp-note'), m = /^(\d{1,3})%$/.exec(val.textContent.trim()) || /^Margin (\d{1,3})%/.exec(note ? note.textContent.trim() : ''); if (!m || card.querySelector('.v3-ring')) return;
+    var p = Math.min(100, parseInt(m[1], 10)), R = 15.9, d = document.createElement('div'); d.className = 'v3-ring';
+    d.innerHTML = '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="' + R + '" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4"/><circle class="v3-arc" cx="18" cy="18" r="' + R + '" fill="none" stroke="var(--v2c,#e0b43c)" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + p + ' ' + (100 - p) + '"/></svg><b>' + p + '</b>';
+    card.appendChild(d);
   }
   function donut(card) {
     var rows = card.querySelectorAll('.dp-row'), items = [], tot = 0;
@@ -56,11 +81,13 @@
     if (!box) return;
     obs.disconnect();
     try {
+      var idx = 0;
       box.querySelectorAll('.dp-card').forEach(function (c) {
         var lab = c.querySelector('.dp-lab'), h3 = c.querySelector('h3'), name = low((lab || h3 || {}).textContent);
         if (c.dataset.v2) return; c.dataset.v2 = '1';
         for (var i = 0; i < KIND.length; i++) if (KIND[i][1].test(name)) { c.classList.add(KIND[i][0]); break; }
-        var val = c.querySelector('.dp-val'); if (val) count(val, name);
+        c.style.setProperty('--i', String(idx++));
+        var val = c.querySelector('.dp-val'); if (val) { count(val, name); ring(c, val); }
         if (h3) {
           if (name === 'how customers paid today') donut(c);
           if (FOLD.indexOf(name) > -1) { c.classList.add('v2-fold', 'v2-shut'); h3.onclick = function () { c.classList.toggle('v2-shut'); }; }
@@ -83,7 +110,7 @@
     try { if (window.rbhGo) window.rbhGo(r.dataset.go2); else if (window.navigate) window.navigate(r.dataset.go2); } catch (x) { /* ignore */ }
   }
   function start() {
-    var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    var st = document.createElement('style'); st.textContent = css + css3; document.head.appendChild(st);
     document.addEventListener('click', go, true);
     var tries = 0, t = setInterval(function () {
       box = document.getElementById('dash-pro');

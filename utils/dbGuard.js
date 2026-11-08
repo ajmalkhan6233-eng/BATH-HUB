@@ -6,7 +6,7 @@
 // Scope: blocks the live LOCAL database by name. A hosted live DB can't be
 // caught by name (generic names like "railway") — but reaching one requires
 // explicitly pasting its connection URL, which is not a silent failure mode.
-const LIVE_DB_NAMES = new Set(['bathco', 'bathco_production']);
+const LIVE_DB_NAMES = new Set(['bathco', 'bathco_production', 'bathco_owner']);
 
 function resolvedDbName() {
     if (process.env.DATABASE_URL) {
