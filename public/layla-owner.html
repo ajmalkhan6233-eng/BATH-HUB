@@ -3,7 +3,7 @@
 <title>Layla | Royal Bath Hub</title>
 <style>
 :root{--bg:#0B1B3A;--panel:#10224a;--ink:#F6EFDC;--gold:#C9A24B;--me:#C9A24B;--meInk:#0B1B3A;--line:rgba(232,207,138,.25);padding-top:env(safe-area-inset-top,0)}
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:18px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}header b{letter-spacing:.2em;color:#E8CF8A}#badge{font-size:13px;color:#E8CF8A}#badge[data-state=waiting]{color:#ffb74d}#badge[data-state=failed]{color:#ff8a80}
 #log{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.m{max-width:86%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}.me{align-self:flex-end;background:var(--me);color:var(--meInk)}.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.sys{align-self:center;font-size:13px;color:#E8CF8A}
 form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0));border-top:1px solid var(--line);align-items:flex-end}
@@ -15,8 +15,8 @@ button,.btn{min-width:44px;min-height:44px;border-radius:12px;border:0;backgroun
 <header><b>LAYLA</b><span id="badge" role="status">All saved</span></header>
 <div id="log" aria-live="polite"></div>
 <div class="chips" id="chips"></div>
-<form id="f"><input id="photo" type="file" accept="image/*" capture="environment" hidden>
-<button type="button" class="ghost" id="cam" aria-label="Send a photo">&#128247;</button>
+<form id="f"><input id="photo" type="file" accept="image/*" capture="environment" hidden><input id="att" type="file" accept="image/*,application/pdf,audio/*,.ogg,.opus,.m4a,.mp3,.wav" hidden>
+<button type="button" class="ghost" id="cam" aria-label="Take a photo">&#128247;</button><button type="button" class="ghost" id="clip" aria-label="Attach a bill, PDF, photo or voice note">&#128206;</button>
 <textarea id="t" rows="1" placeholder="Talk to Layla: a bill, a cheque, a question" enterkeyhint="send"></textarea>
 <button type="button" class="ghost" id="mic" aria-label="Speak">&#127908;</button><button type="submit" id="go">Send</button></form>
 <script src="/lib/offlineSave.js"></script>
@@ -36,6 +36,17 @@ async function send(text){
 $('f').addEventListener('submit',e=>{e.preventDefault();const v=$('t').value;$('t').value='';send(v)});
 $('t').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('f').requestSubmit()}});
 $('cam').onclick=()=>$('photo').click();
+$('clip').onclick=()=>$('att').click();
+/* attach: photo or voice note go to Layla's media route; a PDF goes to the Document Inbox as a DRAFT (nothing is filed until you press Confirm there) */
+$('att').onchange=async()=>{const f=$('att').files[0];$('att').value='';if(!f)return;if(f.size>10*1024*1024){add('sys','That file is too big (max 10 MB).');return}
+  const cap=$('t').value.trim();$('t').value='';add('me','[attached: '+f.name+']'+(cap?' '+cap:''));
+  if(f.type.indexOf('image/')===0||f.type.indexOf('audio/')===0){
+    const b64=await new Promise((res)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.readAsDataURL(f)});
+    const r=await OfflineSave.post('/api/layla-owner/media',{kind:f.type.indexOf('audio/')===0?'audio':'image',mime:f.type,data:b64,caption:cap},{label:'attach'});
+    r.queued?add('sys','No internet. Saved on this device, it will be sent later.'):r.ok&&r.response?add('bot',r.response.reply):add('sys',r.error||'Not saved');return}
+  add('sys','Layla is reading it... up to a minute.');
+  try{const fd=new FormData();fd.append('photo',f);fd.append('doc_type','auto');const r=await fetch('/api/document-inbox/upload',{method:'POST',body:fd,credentials:'same-origin'});const d=await r.json().catch(()=>({}));
+    if(r.ok)add('bot','Got it. Read as '+((d&&d.type_label)||'a paper')+' (draft #'+(d&&d.id)+'). Nothing is filed until you press Confirm in the Document Inbox.');else add('sys',(d&&d.error)||'Could not send it. Try again.')}catch(e){add('sys','Could not send it: '+e.message)}};
 $('photo').onchange=async()=>{const f=$('photo').files[0];if(!f)return;if(f.size>12*1024*1024){add('sys','Photo is too big (max 12 MB).');return}
   const b64=await new Promise((res)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.readAsDataURL(f)});
   const cap=$('t').value.trim();$('t').value='';add('me','[photo]'+(cap?' '+cap:''));

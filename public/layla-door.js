@@ -70,7 +70,21 @@
       document.head.appendChild(st);
       var box = document.createElement('div'); box.id = 'ld-float'; box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Send a paper to Layla');
       var slot = document.createElement('div'); box.appendChild(slot); document.body.appendChild(box);
-      mount(slot, { label: 'Send to Layla' });
+      // 8 Nov: the floating button is a CHAT with Layla (text, voice, photo, PDF, reminders), not a bare file picker.
+      slot.className = 'ld';
+      var chatBtn = document.createElement('button'); chatBtn.type = 'button'; chatBtn.setAttribute('data-ld', 'chat'); chatBtn.textContent = 'Chat with Layla'; slot.appendChild(chatBtn);
+      var panel = null;
+      var closeChat = function () { if (panel) { panel.remove(); panel = null; } };
+      chatBtn.addEventListener('click', function () {
+        if (panel) { closeChat(); return; }
+        panel = document.createElement('div'); panel.id = 'ld-chat';
+        panel.style.cssText = 'position:fixed;right:14px;bottom:130px;width:min(440px,calc(100vw - 28px));height:min(640px,calc(100vh - 150px));z-index:9991;border:2px solid var(--gold,#b8892b);border-radius:14px;overflow:hidden;background:#0B1B3A;box-shadow:0 14px 40px rgba(0,0,0,.45);display:flex;flex-direction:column';
+        var bar = document.createElement('div'); bar.style.cssText = 'display:flex;justify-content:flex-end;background:#0B1B3A;padding:2px 6px';
+        var x = document.createElement('button'); x.type = 'button'; x.textContent = 'Close \u2715'; x.setAttribute('aria-label', 'Close chat'); x.style.cssText = 'background:transparent;border:0;color:#E8CF8A;font:700 15px system-ui;cursor:pointer;padding:6px 10px'; x.addEventListener('click', closeChat);
+        var fr = document.createElement('iframe'); fr.src = '/layla-owner.html'; fr.title = 'Chat with Layla'; fr.style.cssText = 'flex:1;border:0;width:100%';
+        bar.appendChild(x); panel.appendChild(bar); panel.appendChild(fr); document.body.appendChild(panel);
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeChat(); });
       // BLOCK: drag-handle. Hold the little grip bar and move the box anywhere; the place is remembered on this device.
       var gs = document.createElement('style');
       gs.textContent = '#ld-float .ld-grip{height:18px;cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;color:var(--text-muted,#888);font-size:14px;line-height:1;letter-spacing:3px;user-select:none}#ld-float .ld-grip:active{cursor:grabbing}';

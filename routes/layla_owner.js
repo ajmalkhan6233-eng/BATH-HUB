@@ -55,5 +55,12 @@ module.exports = function createRouter({ store, adapters, requireAuth, send, dow
   }));
 
   r.get('/tasks', wrap(async (req, res) => { res.json(await store.listOpen()); }));
+  // In-app reminder pop-ups: open reminders whose time has come (or whose snooze is over). Read only; "done N" / "snooze N 1 hour" go through /message.
+  r.get('/due', wrap(async (req, res) => {
+    const n = now(); const open = await store.listOpen();
+    const due = open.filter((t) => { const at = t.snoozed_until && t.snoozed_until > t.due_at ? t.snoozed_until : t.due_at; return at <= n; })
+      .slice(0, 10).map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, key: t.id + '@' + (t.snoozed_until && t.snoozed_until > t.due_at ? t.snoozed_until : t.due_at).toISOString() }));
+    res.json({ due });
+  }));
   return r;
 };
