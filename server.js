@@ -121,6 +121,8 @@ const PORT = process.env.PORT || 3000;
 
 // Must be first — bypasses all middleware so Railway's health probe always gets 200
 app.get('/health', (req, res) => res.json({ ok: true }));
+// deep check: proves the database answers (watchdog can use this instead of /health)
+app.get('/health/deep', async (req, res) => { try { await require('./utils/pool').query('SELECT 1'); res.json({ ok: true, db: true }); } catch (e) { res.status(503).json({ ok: false, db: false }); } });
 
 // ─── SESSION-BASED LOGIN (per-user accounts, role-based access) ───────────────
 const session = require('express-session');
@@ -141,7 +143,7 @@ if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PIN || process.
 // Trusts ngrok's X-Forwarded-Proto so cookie.secure:'auto' below marks the
 // session cookie HTTPS-only when reached via the ngrok tunnel, while still
 // allowing plain http://localhost access for local dev.
-app.set('trust proxy', 1);
+app.set('trust proxy', 'loopback'); // only the local tunnel may set X-Forwarded-For (was 1 = any direct caller could fake its IP)
 
 // ─── SECURITY HARDENING ───────────────────────────────────────────────────────
 // CSP intentionally left off: BATHCO_NATURE.html and dashboard.html rely on
@@ -195,13 +197,17 @@ const failedAuthLimiter = (max) => rateLimit({
 });
 app.use('/api/login', failedAuthLimiter(10));
 app.use('/api/admin/verify', failedAuthLimiter(5));
+app.use('/api/auth/verify-totp', failedAuthLimiter(5));
 // HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
 app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
 app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
-app.use(bodyParser.json({ limit: '1mb' }));
+// Routes that carry photos (data-URLs) parse their own bigger JSON (14 MB, 8 MB, 16 MB). The global 1 MB parser used to run first and refused a photo over about 750 KB with 413, so the save failed. Those exact routes skip it.
+const BIG_BODY = /^\/api\/(grn-workbench(\/(cheque|read|bill\/\d+))?|item-detail\/[^/]+|layla-owner\/media|sync(\/[a-z-]+)?|setup\/complete)\/?$/;
+const jsonSmall = bodyParser.json({ limit: '1mb' });
+app.use((req, res, next) => ((req.method === 'POST' || req.method === 'PUT') && BIG_BODY.test(req.path)) ? next() : jsonSmall(req, res, next));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
 app.use(['/api/public', '/api/site', '/api/sync'], require('./utils/hardening').jsonDepthGuard());   // HARDENING: refuse absurdly nested/huge JSON on public + sync endpoints
@@ -230,6 +236,7 @@ const STAFF_OWN_DATA = /^\/api\/staff\/(\d+)\/(salary|loans)$/;
 // code needs to change back. This does NOT touch the auth code itself
 // (login/logout/RBAC all still work if someone hits them directly).
 const LOGIN_DISABLED = process.env.LOGIN_DISABLED === 'true';
+if (LOGIN_DISABLED && process.env.NODE_ENV === 'production') { console.error('REFUSED: LOGIN_DISABLED=true is not allowed when NODE_ENV=production'); process.exit(1); }
 let _bypassUserCache = null;
 async function getBypassUser() {
     if (_bypassUserCache) return _bypassUserCache;
@@ -244,14 +251,14 @@ app.use(async (req, res, next) => {
     if (req.path.startsWith('/webhook/')) return next();
     if (req.path === '/api/login') return next();
     if (req.path === '/api/auth/verify-totp') return next();
-    if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
+    if (req.path.toLowerCase().startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
 if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
     if (req.method === 'GET' && req.path === '/api/site/catalogue.pdf') return next();                 // website: public catalogue PDF (routes/site_catalogue.js), visible tiles only, rate-limited
-    if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
+    if (req.method === 'GET' && req.path.toLowerCase().startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
     if (LOGIN_DISABLED && !req.session.user) {
@@ -260,7 +267,7 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
     }
 
     const user = req.session.user;
-    const isApi = req.path.startsWith('/api/');
+    const isApi = req.path.toLowerCase().startsWith('/api/');
 
     if (!user) {
         if (isApi) return res.status(401).json({ error: 'Not logged in' });
@@ -766,6 +773,7 @@ app.get('/api/error-log', (req, res) => {
 app.get('/api/branding', (req, res) => {
     try {
         const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'active.branding.json'), 'utf8'));
+        delete cfg.db_name; delete cfg.db_host; delete cfg.db_user; // internal names stay private
         res.json(cfg);
     } catch (e) { res.status(500).json({ error: 'branding config missing or invalid: ' + e.message }); }
 });
