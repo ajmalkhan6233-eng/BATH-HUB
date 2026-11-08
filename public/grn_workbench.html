@@ -171,9 +171,11 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 .lines td,.lines th{padding-left:1px !important;padding-right:1px !important}
 .lines td:nth-child(1){width:22px}.lines td:nth-child(10){width:26px}
 .scroll.lines{overflow-x:auto}
+/* column titles stay pinned while the lines scroll (AJ 8 Nov): the lines box scrolls inside itself so the sticky header has something to stick to */
+@media(min-width:641px){.scroll.lines{max-height:calc(100dvh - 330px)!important;min-height:240px;overflow:auto!important}.scroll.lines th{position:sticky;top:0;z-index:5;background:var(--c-surface-2,#eee);box-shadow:0 2px 0 var(--c-gold,#c9a24b)}}
 </style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 <script src="/ui/fx-legacy.js" defer></script>
-</head><body>
+</head><body><h1 style="margin:8px 12px 0;font-size:1.4rem">GRN (goods received)</h1>
 <header><b>Royal Bath Hub</b><span>GRN workbench (build 69): photo, fix, press OK. Nothing is saved before that.</span></header>
 <div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button><button id="tab5">5. More (purchasing, documents)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>

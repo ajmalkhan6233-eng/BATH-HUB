@@ -263,8 +263,10 @@ pool.query(`
 // A friend/investor asks for access — creates a pending request, nothing is visible yet.
 router.post('/viewer-requests', async (req, res) => {
     try {
-        const { requester_name, requester_contact } = req.body;
+        const requester_name = String((req.body || {}).requester_name || '').trim().slice(0, 80), requester_contact = String((req.body || {}).requester_contact || '').trim().slice(0, 80);
         if (!requester_name) return res.status(400).json({ error: 'requester_name is required' });
+        const open = await pool.query(`SELECT COUNT(*)::int AS n FROM viewer_access_requests WHERE status = 'pending'`);
+        if (open.rows[0].n >= 50) return res.status(429).json({ error: 'Too many open requests. Please try later.' });
         const r = await pool.query(`
             INSERT INTO viewer_access_requests (requester_name, requester_contact)
             VALUES ($1,$2) RETURNING id, status

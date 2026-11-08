@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const BRANCH = 'work', EVERY_MS = 10 * 60 * 1000;
-const SERVER_FILES = /^(server\.js|routes\/|utils\/|layla_owner\/|layla_v2\/|config\/|openrouter\.config\.js|drafts_inbox\/.*\.json$)/;
+const SERVER_FILES = /^(server\.js|routes\/|middleware\/|migrations\/|utils\/|layla_owner\/|layla_v2\/|config\/|openrouter\.config\.js|drafts_inbox\/.*\.json$)/;
 
 function git(root, args) { return execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 60000 }).trim(); }
 

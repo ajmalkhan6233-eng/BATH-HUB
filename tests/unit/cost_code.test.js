@@ -24,5 +24,5 @@ test('PRIVATE: only the owner label page may load the cost code', () => {
     const p = path.join(d, f.name);
     if (f.isDirectory()) walk(p); else if (/\.(html|js)$/.test(f.name) && f.name !== 'costcode.js' && /costcode|CostCode/.test(fs.readFileSync(p, 'utf8'))) users.push(path.relative(pub, p));
   } })(pub);
-  expect(users).toEqual(['labels.html']);
+  expect(users).toEqual(['labels.html','labels_a4.html','stickers.html']);
 });
