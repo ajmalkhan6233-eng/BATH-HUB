@@ -125,6 +125,11 @@
     function closeDrawer() { drawer.classList.remove('on'); }
     function openDrawer() { build(); drawer.classList.add('on'); var f = drawer.querySelector('.gh'); if (f) f.focus(); }
     doc.addEventListener('click', function (e) { if (!bar.contains(e.target)) closeAll(); });
+    // BLOCK: close on outside tap, also when the tap lands inside a screen frame (a click inside an iframe never reaches this page)
+    win.addEventListener('blur', closeAll);
+    function hookFrame(f) { try { var d = f.contentDocument; if (d && !d.__rbhMb) { d.__rbhMb = 1; d.addEventListener('pointerdown', closeAll, true); } } catch (e) {} }
+    Array.prototype.forEach.call(doc.querySelectorAll('iframe'), hookFrame);
+    doc.addEventListener('load', function (e) { if (e.target && e.target.tagName === 'IFRAME') hookFrame(e.target); }, true);
     doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeAll(); closeDrawer(); } });
     drawer.addEventListener('mousedown', function (e) { if (e.target === drawer) closeDrawer(); });
     doc.getElementById('rbh-dclose').onclick = closeDrawer;
