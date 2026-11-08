@@ -161,6 +161,7 @@
     if (btn) { e.preventDefault(); e.stopImmediatePropagation(); if (!pal) build(); mark(); var r = btn.getBoundingClientRect(); pal.style.top = (r.bottom + 8) + 'px'; pal.style.right = Math.max(8, window.innerWidth - r.right) + 'px'; pal.classList.toggle('on'); return; }
     if (pal && !e.target.closest('#bh-pal')) pal.classList.remove('on');
   }, true);
+  window.addEventListener('blur', function () { if (pal) pal.classList.remove('on'); });   // a tap inside a screen frame never reaches this page: close then too
 })();
 
 /* ---- green ▶ Tasks (5 Nov): tasks Claude wrote show here with a play button; one press runs it on this PC ---- */
@@ -197,6 +198,7 @@
     panel = document.createElement('div'); panel.id = 'bh-tasks'; document.body.appendChild(panel);
     btn.onclick = function (e) { e.stopPropagation(); panel.classList.toggle('on'); load(); };
     document.addEventListener('click', function (e) { if (panel.classList.contains('on') && !e.target.closest('#bh-tasks')) panel.classList.remove('on'); });
+    window.addEventListener('blur', function () { panel.classList.remove('on'); });   // same: close when a tap lands inside a screen frame
     right.insertBefore(btn, right.firstChild); load(); setInterval(function () { if (!document.hidden) load(); }, 5000);
   }
   function start() { make(); new MutationObserver(make).observe(document.body, { childList: true, subtree: true }); }
