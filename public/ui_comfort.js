@@ -72,13 +72,10 @@
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
       var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
-      ['/themes-os.css', '/themes-anim.css'].forEach(function (h) { var l = doc.createElement('link'); l.rel = 'stylesheet'; l.href = h; doc.head.appendChild(l); });
-      var fx = doc.createElement('script'); fx.src = '/themes-fx.js'; doc.head.appendChild(fx);
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
-      var gl = doc.createElement('link'); gl.rel = 'stylesheet'; gl.href = '/glass.css'; doc.head.appendChild(gl);   // the Glass look reaches every screen
-      var theme = function () { try { var t = localStorage.getItem('bathhub-theme'); if (t) { doc.documentElement.setAttribute('data-theme', t); if (['glass', 'aurora', 'midnight', 'emerald', 'rose'].indexOf(t) >= 0) doc.documentElement.setAttribute('data-style', 'glass'); else doc.documentElement.removeAttribute('data-style'); } } catch (x) { /* ignore */ } };
+      var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); doc.documentElement.setAttribute('data-theme', (t === 'gold' || t === 'dark') ? 'dark' : 'light'); doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
       var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
       run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });
@@ -138,9 +135,7 @@
 /* ---- theme palette: tap the theme icon, pick a look ---- */
 (function () {
   'use strict';
-  var T = [['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)'], ['water', 'Water', 'linear-gradient(135deg,#0b3b5c,#5fb7d4)'], ['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['sand', 'Sand', 'linear-gradient(135deg,#f7f0e1,#d9c08a)'],
-    ['glass', 'Ocean glass', 'linear-gradient(135deg,#0d2740,#2a97b3)'], ['aurora', 'Aurora', 'linear-gradient(135deg,#1a0f3a,#0f8aa0)'], ['midnight', 'Midnight', 'linear-gradient(135deg,#04060d,#12285a)'], ['emerald', 'Emerald', 'linear-gradient(135deg,#03261f,#16936a)'], ['rose', 'Sunset', 'linear-gradient(135deg,#2e0f2b,#e0715a)'],
-    ['win7', 'Windows 7 Aero', 'linear-gradient(135deg,#5fa8dc,#b7e6e2)'], ['win10', 'Windows 10', 'linear-gradient(135deg,#1b1b1b,#0078d7)'], ['win11', 'Windows 11', 'linear-gradient(135deg,#f3f3f3,#bcd6f5)'], ['apple', 'Apple glass', 'linear-gradient(135deg,#3a1c6e,#ff5caa)'], ['kinetic', 'Kinetic', 'linear-gradient(135deg,#2a0f3d,#ff5e62)'], ['aqua', 'Aqua', 'linear-gradient(135deg,#0a6fb8,#5fe0f7)']];
+  var T = [['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)']];
   var css = document.createElement('style');
   css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:4px;max-width:min(430px,calc(100vw - 16px));max-height:calc(100vh - 70px);overflow:auto;gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
     '#bh-pal.on{display:grid}#bh-pal button{border:2px solid transparent !important;border-radius:10px !important;background:transparent !important;color:#fff !important;padding:3px 4px !important;min-height:0 !important;height:auto !important;box-shadow:none !important;backdrop-filter:none !important;cursor:pointer;font:600 14px "Segoe UI",Arial,sans-serif !important;text-align:center;line-height:1.2}#bh-pal button:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}' +

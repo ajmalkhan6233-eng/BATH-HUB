@@ -1,16 +1,16 @@
-/* bathhub-theme.js: applies the saved theme (gold = dark default, water, light) before the page paints and keeps all open
-   screens (the owner shell and its frames) in step. Design only. */
+/* bathhub-theme.js: Light and Gold only. Applies the saved theme before the page paints and keeps every open screen in step.
+   Shares the key 'rbh_theme' (gold/light) with the new shell; 'dark' here is the Gold look the old pages know. Design only. */
 (function () {
-  var KEY = 'bathhub-theme', ORDER = ['dark', 'water', 'light', 'sand', 'glass', 'aurora', 'midnight', 'emerald', 'rose', 'win7', 'win10', 'win11', 'apple', 'kinetic', 'aqua'], GLASSY = ['glass', 'aurora', 'midnight', 'emerald', 'rose'];
-  function get() { try { var v = localStorage.getItem(KEY); return ORDER.indexOf(v) >= 0 ? v : 'dark'; } catch (e) { return 'dark'; } }
-  function apply(t) { var h = document.documentElement; h.setAttribute('data-theme', t); if (GLASSY.indexOf(t) >= 0) h.setAttribute('data-style', 'glass'); else h.removeAttribute('data-style'); }
+  var KEY = 'rbh_theme', OLD = 'bathhub-theme', ORDER = ['light', 'dark'];
+  function get() { try { var v = localStorage.getItem(KEY) || localStorage.getItem(OLD); return (v === 'gold' || v === 'dark') ? 'dark' : 'light'; } catch (e) { return 'light'; } }
+  function apply(t) { var h = document.documentElement; h.setAttribute('data-theme', t); h.removeAttribute('data-style'); }
   apply(get());
   window.BHTheme = {
     order: ORDER,
     current: get,
-    set: function (t) { if (ORDER.indexOf(t) < 0) return; try { localStorage.setItem(KEY, t); } catch (e) {} apply(t); },
-    next: function () { var t = ORDER[(ORDER.indexOf(get()) + 1) % ORDER.length]; this.set(t); return t; },
-    label: function (t) { return { dark: 'Gold', water: 'Water', light: 'Light', sand: 'Sand', glass: 'Ocean glass', aurora: 'Aurora', midnight: 'Midnight', emerald: 'Emerald', rose: 'Sunset', win7: 'Windows 7 Aero', win10: 'Windows 10', win11: 'Windows 11', apple: 'Apple glass', kinetic: 'Kinetic', aqua: 'Aqua' }[t || get()]; }
+    set: function (t) { if (ORDER.indexOf(t) < 0) return; try { localStorage.setItem(KEY, t === 'dark' ? 'gold' : 'light'); localStorage.setItem(OLD, t); } catch (e) {} apply(t); },
+    next: function () { var t = get() === 'dark' ? 'light' : 'dark'; this.set(t); return t; },
+    label: function (t) { return (t || get()) === 'dark' ? 'Gold' : 'Light'; }
   };
-  window.addEventListener('storage', function (e) { if (e.key === KEY) apply(get()); });   // another open screen changed it
+  window.addEventListener('storage', function (e) { if (e.key === KEY || e.key === OLD) apply(get()); });   // another open screen changed it
 })();
