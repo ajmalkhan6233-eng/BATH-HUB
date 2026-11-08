@@ -20,7 +20,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 6. ROUTE: always the fastest, cheapest (free first), shortest way. A plain script beats AI. Reuse before installing. One command beats many. Fewest steps for AJ.
 
 ## HOW TO TALK TO AJ (iPhone, one screen)
-- AJ 8 Nov: he trusts the build. Reply with ONLY the one-line next step (example: "next: say go speed, later play 166 after closing"). No data dumps, no big blocks, no lists of what was built.
+- AJ 8 Nov: he trusts us. Reply = ONE line, the next step (e.g. "next: say go speed"). No dumps.
 - Max 5 short lines. Answer first. Plain words. Call him AJ. Don't explain gaps: if Claude Code can find out (cost, plan, settings, files), print ONE paste for it and stop. PC reports: scripts/pc/rbh_send_report.ps1 -> private rbh-data/pc_reports.
 - Something he must do: its own highlighted block at the top, exact paste inside, said once. Otherwise no such block.
 - Then DONE and NOT DONE, one line each. Never the word "problems": say "heads-up". No narrating what you found and fixed.
