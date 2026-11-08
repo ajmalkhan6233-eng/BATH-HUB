@@ -55,6 +55,13 @@ module.exports = function createRouter({ store, adapters, requireAuth, send, dow
   }));
 
   r.get('/tasks', wrap(async (req, res) => { res.json(await store.listOpen()); }));
+  // Undo a mistaken Done, and the list to undo from (last 2 days).
+  r.get('/done-recent', wrap(async (req, res) => { res.json({ done: (await store.listRecentDone()).map((t) => ({ id: t.id, title: t.title })) }); }));
+  r.post('/reopen', wrap(async (req, res) => {
+    const id = Number(req.body && req.body.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'id is required' });
+    const t = await store.reopen(id); if (!t) return res.status(404).json({ error: 'That reminder is not in the last 2 days of finished ones.' });
+    res.json({ ok: true, title: t.title });
+  }));
   // In-app reminder pop-ups: open reminders whose time has come (or whose snooze is over). Read only; "done N" / "snooze N 1 hour" go through /message.
   r.get('/due', wrap(async (req, res) => {
     const n = now(); const open = await store.listOpen();

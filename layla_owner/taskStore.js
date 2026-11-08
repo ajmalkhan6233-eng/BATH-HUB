@@ -16,6 +16,9 @@ module.exports = function createTaskStore(pool) {
     async get(id) { const { rows } = await pool.query('SELECT * FROM owner_tasks WHERE id=$1', [id]); return norm(rows[0]); },
     // source omitted = the owner's own tasks only; source given = only that family member's task
     async done(id, source) { const { rows } = await pool.query(`UPDATE owner_tasks SET status='DONE', done_at=NOW() WHERE id=$1 AND status='OPEN' AND ${source ? 'source=$2' : "COALESCE(source,'owner') NOT LIKE 'family:%'"} RETURNING *`, source ? [id, source] : [id]); return norm(rows[0]); },
+    // Undo a mistaken Done (owner's own tasks, finished in the last 2 days). Nags start again from zero.
+    async reopen(id) { const { rows } = await pool.query(`UPDATE owner_tasks SET status='OPEN', done_at=NULL, nags_sent=0, last_sent_at=NULL WHERE id=$1 AND status='DONE' AND done_at > NOW() - INTERVAL '2 days' AND COALESCE(source,'owner') NOT LIKE 'family:%' RETURNING *`, [id]); return norm(rows[0]); },
+    async listRecentDone() { const { rows } = await pool.query(`SELECT * FROM owner_tasks WHERE status='DONE' AND done_at > NOW() - INTERVAL '2 days' AND COALESCE(source,'owner') NOT LIKE 'family:%' ORDER BY done_at DESC LIMIT 10`); return rows.map(norm); },
     async snooze(id, until, source) { const { rows } = await pool.query(`UPDATE owner_tasks SET snoozed_until=$2, nags_sent=0, last_sent_at=NULL WHERE id=$1 AND status='OPEN' AND ${source ? 'source=$3' : "COALESCE(source,'owner') NOT LIKE 'family:%'"} RETURNING *`, source ? [id, iso(until), source] : [id, iso(until)]); return norm(rows[0]); },
     async markSent(id, at) { const { rows } = await pool.query(`UPDATE owner_tasks SET nags_sent=nags_sent+1, last_sent_at=$2 WHERE id=$1 RETURNING *`, [id, iso(at)]); return norm(rows[0]); },
     /** Records an inbound/outbound message once. Returns false if this WhatsApp message id was already seen (duplicate delivery). */

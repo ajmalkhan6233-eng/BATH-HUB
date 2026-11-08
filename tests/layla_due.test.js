@@ -12,3 +12,13 @@ test('GET /due returns only reminders whose time has come, snooze respected', as
   expect(r.body.due.map((t) => t.id)).toEqual([1, 4]);
   expect(r.body.due[0].key).toBe('1@2026-11-08T08:00:00.000Z');
 });
+
+function post(app, path, body) { return new Promise((resolve) => { const s = app.listen(0, () => { const data = JSON.stringify(body); const rq = http.request({ port: s.address().port, path, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, (r) => { let b = ''; r.on('data', (c) => (b += c)); r.on('end', () => { s.closeAllConnections && s.closeAllConnections(); s.close(); resolve({ status: r.statusCode, body: JSON.parse(b) }); }); }); rq.end(data); }); }); }
+test('POST /reopen puts a mistaken Done back; unknown id is a clear 404; bad id is 400', async () => {
+  const store = { reopen: async (id) => (id === 5 ? { id: 5, title: 'cheque 100,000' } : null), listRecentDone: async () => [{ id: 5, title: 'cheque 100,000' }] };
+  const app = express(); app.use('/', createRouter({ store, adapters: {}, requireAuth: null, now: () => NOW, env: {} }));
+  expect((await post(app, '/reopen', { id: 5 })).body).toEqual({ ok: true, title: 'cheque 100,000' });
+  expect((await post(app, '/reopen', { id: 99 })).status).toBe(404);
+  expect((await post(app, '/reopen', { id: 'x' })).status).toBe(400);
+  expect((await get(app, '/done-recent')).body.done).toEqual([{ id: 5, title: 'cheque 100,000' }]);
+});

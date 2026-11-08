@@ -4,7 +4,10 @@
 (function () {
   'use strict';
   if (window !== window.top || window.__rbhAlerts) return; window.__rbhAlerts = 1;
-  var shown = {}, host = null;
+  var shown = {}, host = null, HIDE_MS = 3 * 3600e3;   // a pop-up you Close stays away for 3 hours, even after a page reload
+  function seen(k) { try { var m = JSON.parse(localStorage.getItem('rbh_alert_seen') || '{}'); return m[k] && Date.now() - m[k] < HIDE_MS; } catch (e) { return false; } }
+  function mark(k) { try { var m = JSON.parse(localStorage.getItem('rbh_alert_seen') || '{}'), n = Date.now(); Object.keys(m).forEach(function (x) { if (n - m[x] > 86400e3) delete m[x]; }); m[k] = n; localStorage.setItem('rbh_alert_seen', JSON.stringify(m)); } catch (e) { /* ignore */ } }
+  function post(url, body) { return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'ra' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) }, body: JSON.stringify(body) }).catch(function () { /* next minute */ }); }
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   function chime() { try { var A = window.AudioContext || window.webkitAudioContext, c = new A(), o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(0.15, c.currentTime + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.5); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.55); } catch (e) { /* silent is fine */ } }
   function ensureHost() {
@@ -25,9 +28,16 @@
   function card(t) {
     var el = document.createElement('div'); el.className = 'ra';
     el.innerHTML = '<small>REMINDER</small><div>' + esc(t.title) + '</div><button type="button" class="y" data-a="done">Done</button><button type="button" data-a="snooze">Snooze 1 hour</button><button type="button" data-a="later">Close</button>';
+    mark(t.key);   // shown once: reloading the page does not bring it back for 3 hours
+    function main() { el.innerHTML = '<small>REMINDER</small><div>' + esc(t.title) + '</div><button type="button" class="y" data-a="done">Done</button><button type="button" data-a="snooze">Snooze 1 hour</button><button type="button" data-a="later">Close</button>'; }
+    function say2(html, ms) { el.innerHTML = '<small>REMINDER</small><div>' + html + '</div>'; if (ms) setTimeout(function () { el.remove(); }, ms); }
     el.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('button'); if (!b) return; var a = b.getAttribute('data-a');
-      if (a === 'done') say('done ' + t.id); else if (a === 'snooze') say('snooze ' + t.id + ' 1 hour');
+      if (a === 'done') { el.innerHTML = '<small>ARE YOU SURE?</small><div>' + esc(t.title) + '<br>Is this finished?</div><button type="button" class="y" data-a="yes">Yes, it is done</button><button type="button" data-a="no">No, go back</button>'; return; }
+      if (a === 'no') { main(); return; }
+      if (a === 'yes') { say('done ' + t.id); el.innerHTML = '<small>MARKED DONE</small><div>' + esc(t.title) + '</div><button type="button" data-a="undo">Undo, that was a mistake</button>'; setTimeout(function () { el.remove(); }, 20000); return; }
+      if (a === 'undo') { post('/api/layla-owner/reopen', { id: t.id }).then(function () { say2('Put back. It will remind you again.', 3000); }); return; }
+      if (a === 'snooze') { say('snooze ' + t.id + ' 1 hour'); say2('Snoozed for 1 hour.', 2500); return; }
       el.remove();
     });
     ensureHost().appendChild(el);
@@ -37,7 +47,7 @@
   function poll() {
     fetch('/api/layla-owner/due', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d || !d.due) return;
-      d.due.forEach(function (t) { if (!shown[t.key]) { shown[t.key] = 1; card(t); } });
+      d.due.forEach(function (t) { if (!shown[t.key] && !seen(t.key)) { shown[t.key] = 1; card(t); } });
     }).catch(function () { /* offline: next minute */ });
   }
   function start() {
