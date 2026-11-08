@@ -25,14 +25,13 @@
     + '@keyframes v2grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}@keyframes v2wide{from{width:0!important}}@keyframes v2dash{from{stroke-dasharray:0 999}}';
 
   var css3 = ''
-    + '#page-dashboard.dp-on{background:radial-gradient(900px 420px at 12% -8%,rgba(224,180,60,.10),transparent 60%),radial-gradient(800px 380px at 100% 0,rgba(20,184,166,.09),transparent 60%),radial-gradient(700px 400px at 50% 110%,rgba(168,85,247,.08),transparent 60%),#0c0d10;border-radius:14px}'
-    + '#dash-pro .dp-card{background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015) 55%),rgba(16,17,21,.86);border:1px solid color-mix(in srgb,var(--v2c,#c9a24b) 38%,transparent);border-left-width:1px;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 10px 26px rgba(0,0,0,.45),0 0 22px -6px color-mix(in srgb,var(--v2c,#c9a24b) 55%,transparent)}'
+    + '#dash-pro .dp-card{background:var(--card,#fff);border:1px solid color-mix(in srgb,var(--v2c,#c9a24b) 45%,var(--card-border,#ddd));border-radius:16px;position:relative;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.10),0 0 14px -6px color-mix(in srgb,var(--v2c,#c9a24b) 55%,transparent)}'
     + '#dash-pro .dp-card:before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--v2c,#c9a24b),transparent 85%);opacity:.9}'
-    + '#dash-pro .dp-val{font-size:26px;font-weight:800;letter-spacing:.2px;text-shadow:0 0 18px color-mix(in srgb,var(--v2c,#c9a24b) 60%,transparent)}'
-    + '#dash-pro .dp-lab{text-transform:uppercase;letter-spacing:.08em;font-size:10px;opacity:.85}'
-    + '#dash-pro .dp-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}#dash-pro .dp-bar>i{background:linear-gradient(90deg,var(--v2c,#c9a24b),color-mix(in srgb,var(--v2c,#c9a24b) 55%,#fff));box-shadow:0 0 12px var(--v2c,#c9a24b);border-radius:99px}'
-    + '#dash-pro .v3-ring{position:absolute;right:10px;bottom:8px;width:54px;height:54px}#dash-pro .v3-ring svg{width:54px;height:54px;transform:rotate(-90deg);filter:drop-shadow(0 0 6px var(--v2c,#c9a24b))}'
-    + '#dash-pro .v3-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--v2c,#fff)}'
+    + '#dash-pro .dp-val{font-size:26px;font-weight:800;letter-spacing:.2px;text-shadow:none}'
+    + '#dash-pro .dp-lab{text-transform:uppercase;letter-spacing:.08em;font-size:10px}'
+    + '#dash-pro .dp-bar{height:8px;border-radius:99px;background:var(--bg3,#e5e7eb);overflow:hidden}#dash-pro .dp-bar>i{background:linear-gradient(90deg,var(--v2c,#c9a24b),color-mix(in srgb,var(--v2c,#c9a24b) 55%,#fff));box-shadow:0 0 12px var(--v2c,#c9a24b);border-radius:99px}'
+    + '#dash-pro .v3-ring{position:absolute;right:12px;top:32px;width:54px;height:54px}#dash-pro .dp-card:has(.v3-ring) .dp-note{padding-right:68px}#dash-pro .v3-ring svg{width:54px;height:54px;transform:rotate(-90deg);filter:drop-shadow(0 0 6px var(--v2c,#c9a24b))}'
+    + '#dash-pro .v3-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--v2c,#333)}'
     + '#dash-pro .dp-title:after{content:" \\25CF live";font-size:11px;color:#22c55e;-webkit-text-fill-color:#22c55e;margin-left:8px}'
     + 'html:not(.mo-off) #dash-pro .dp-title:after{animation:v3pulse 1.8s ease-in-out infinite}'
     /* floating = a slow, tiny lift in place. Cards never change position in the layout, nothing slides around. */
@@ -65,7 +64,7 @@
   function ring(card, val) {   // a card whose number is a percent (margin, target) gets a live ring that fills to that percent
     var note = card.querySelector('.dp-note'), m = /^(\d{1,3})%$/.exec(val.textContent.trim()) || /^Margin (\d{1,3})%/.exec(note ? note.textContent.trim() : ''); if (!m || card.querySelector('.v3-ring')) return;
     var p = Math.min(100, parseInt(m[1], 10)), R = 15.9, d = document.createElement('div'); d.className = 'v3-ring';
-    d.innerHTML = '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="' + R + '" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4"/><circle class="v3-arc" cx="18" cy="18" r="' + R + '" fill="none" stroke="var(--v2c,#e0b43c)" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + p + ' ' + (100 - p) + '"/></svg><b>' + p + '</b>';
+    d.innerHTML = '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="' + R + '" fill="none" stroke="rgba(120,120,120,.22)" stroke-width="4"/><circle class="v3-arc" cx="18" cy="18" r="' + R + '" fill="none" stroke="var(--v2c,#e0b43c)" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + p + ' ' + (100 - p) + '"/></svg><b>' + p + '</b>';
     card.appendChild(d);
   }
   function donut(card) {
