@@ -201,7 +201,10 @@ app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({
 app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
 app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
-app.use(bodyParser.json({ limit: '1mb' }));
+// Routes that carry photos (data-URLs) parse their own bigger JSON (14 MB, 8 MB, 16 MB). The global 1 MB parser used to run first and refused a photo over about 750 KB with 413, so the save failed. Those exact routes skip it.
+const BIG_BODY = /^\/api\/(grn-workbench(\/(cheque|read|bill\/\d+))?|item-detail\/[^/]+|layla-owner\/media)\/?$/;
+const jsonSmall = bodyParser.json({ limit: '1mb' });
+app.use((req, res, next) => ((req.method === 'POST' || req.method === 'PUT') && BIG_BODY.test(req.path)) ? next() : jsonSmall(req, res, next));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
 app.use(['/api/public', '/api/site', '/api/sync'], require('./utils/hardening').jsonDepthGuard());   // HARDENING: refuse absurdly nested/huge JSON on public + sync endpoints
@@ -244,14 +247,14 @@ app.use(async (req, res, next) => {
     if (req.path.startsWith('/webhook/')) return next();
     if (req.path === '/api/login') return next();
     if (req.path === '/api/auth/verify-totp') return next();
-    if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
+    if (req.path.toLowerCase().startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
 if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
     if (req.method === 'GET' && req.path === '/api/site/catalogue.pdf') return next();                 // website: public catalogue PDF (routes/site_catalogue.js), visible tiles only, rate-limited
-    if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
+    if (req.method === 'GET' && req.path.toLowerCase().startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
     if (LOGIN_DISABLED && !req.session.user) {
@@ -260,7 +263,7 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
     }
 
     const user = req.session.user;
-    const isApi = req.path.startsWith('/api/');
+    const isApi = req.path.toLowerCase().startsWith('/api/');
 
     if (!user) {
         if (isApi) return res.status(401).json({ error: 'Not logged in' });
