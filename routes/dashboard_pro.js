@@ -13,7 +13,10 @@ const NV = `LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NU
 async function safe(label, fn) { try { return await fn(); } catch (e) { console.error(`[dashboard_pro] ${label}:`, e.message); return null; } }
 const q = (sql, p) => pool.query(sql, p).then(r => r.rows);
 
+let dashCache = null;   // 15 s memory copy: many open screens/refreshes cost the database one run, not one each
 router.get('/dashboard-pro', ownerOnly, async (req, res) => {
+  if (dashCache && Date.now() - dashCache.at < 15000) return res.json(dashCache.body);
+  const _json = res.json.bind(res); res.json = (b) => { if (res.statusCode === 200 && b && b.sales) dashCache = { at: Date.now(), body: b }; return _json(b); };
   const [totals, daily, hourly, pays, profit, top, stock, lowList, cats, vendors, vendorList, cheques, chequeList, credit, exp, settings, grn, grnList, cash, banks, loans, comm, overheads, quotes, enq, weekday, dead, voids, catSales, billStats] = await Promise.all([
     safe('totals', () => q(`SELECT
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE),0) AS today, COUNT(*) FILTER (WHERE d = CURRENT_DATE) AS bills_today,

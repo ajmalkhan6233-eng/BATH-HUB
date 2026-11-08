@@ -2,7 +2,7 @@
    Needs: element #page-dashboard (bathco_complete.html). Plain JS, inline SVG charts, no libraries. Refreshes every 60 s while Home is open. */
 (function () {
   'use strict';
-  var BOX_ID = 'dash-pro', timer = null, busy = false;
+  var BOX_ID = 'dash-pro', timer = null, busy = false, lastLoad = 0, manual = false, wasVis = false;
   var css = '#dash-pro{margin-bottom:18px;font-size:14px}'
     + '#page-dashboard>.welcome-banner{display:none}'
     + '#dash-pro .dp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}'
@@ -178,21 +178,23 @@
     return b;
   }
   function load() {
-    var b = box(); if (!b || busy) return; busy = true;
+    var b = box(); if (!b || busy) return;
+    if (!manual && Date.now() - lastLoad < 8000) return;   // never hammer the server (a failed load used to re-trigger itself in a loop)
+    manual = false; lastLoad = Date.now(); busy = true;
     fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       busy = false; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
-      try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = load; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
+      try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
     }).catch(function () { busy = false; var pg3 = el('page-dashboard'); if (pg3) pg3.classList.remove('dp-on'); });
   }
   function visible() { var p = el('page-dashboard'); return p && p.classList.contains('active') && !document.hidden; }
   function start() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     var page = el('page-dashboard'); if (!page) return;
-    new MutationObserver(function () { if (visible()) load(); }).observe(page, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(function () { var v = !!visible(); if (v && !wasVis) load(); wasVis = v; }).observe(page, { attributes: true, attributeFilter: ['class'] });
     var lo = el('login-overlay'); if (lo) new MutationObserver(function () { if (lo.style.display === 'none' && visible()) setTimeout(load, 400); }).observe(lo, { attributes: true, attributeFilter: ['style', 'class'] });
     document.addEventListener('visibilitychange', function () { if (visible()) load(); });
     timer = setInterval(function () { if (visible()) load(); }, 60000);
-    setTimeout(function () { if (visible()) load(); }, 1500);
+    setTimeout(function () { wasVis = !!visible(); if (wasVis) load(); }, 1500);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   window.BHDashboardPro = { reload: load };
