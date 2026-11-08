@@ -101,4 +101,5 @@
     var l = doc.querySelector('header.topbar img'); if (l && win.bhBurst) { var r = l.getBoundingClientRect(); win.bhBurst(r.left + r.width / 2, r.top + r.height + 20); }
     if (win.BHLogo && win.BHLogo.jump) win.BHLogo.jump();
   };
+  try { if (win === win.top && sessionStorage.getItem('bh_demo')) { sessionStorage.removeItem('bh_demo'); setTimeout(function () { if (win.bhShowAnimations) win.bhShowAnimations(); }, 900); } } catch (e) { /* ignore */ }
 })();
