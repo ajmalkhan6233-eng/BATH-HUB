@@ -25,6 +25,9 @@ const $=(i)=>document.getElementById(i), log=$('log');
 const add=(cls,txt)=>{const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;log.append(d);log.scrollTop=log.scrollHeight};
 OfflineSave.badge($('badge'));
 add('bot','Hello. Tell me about a bill you have not entered, a cheque you wrote, or ask about stock, cheques and what you owe. Say "help" for examples.');
+const recent=document.createElement('button');recent.type='button';recent.className='chip';recent.textContent='recently done (undo)';recent.onclick=async()=>{try{const r=await fetch('/api/layla-owner/done-recent',{credentials:'same-origin'});const d=await r.json();if(!d.done||!d.done.length){add('bot','Nothing finished in the last 2 days.');return}
+  d.done.forEach(t=>{const w=document.createElement('div');w.className='m bot';w.textContent='#'+t.id+' '+t.title+'  ';const u=document.createElement('button');u.type='button';u.textContent='Undo';u.style.cssText='min-height:36px;padding:2px 12px;margin-top:4px';u.onclick=async()=>{const x=await fetch('/api/layla-owner/reopen',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Idempotency-Key':'ru'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)},body:JSON.stringify({id:t.id})});u.replaceWith(document.createTextNode(x.ok?'Put back.':'Could not undo.'))};w.appendChild(u);log.append(w)});log.scrollTop=log.scrollHeight}catch(e){add('sys','Could not load.')}};
+$('chips').appendChild(recent);
 ['cheques tomorrow','cash gap',"what's pending",'how much do we owe','help'].forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;b.onclick=()=>send(t);$('chips').append(b)});
 async function send(text){
   text=(text||'').trim(); if(!text)return; add('me',text);
