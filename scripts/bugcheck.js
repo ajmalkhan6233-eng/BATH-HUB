@@ -53,8 +53,7 @@ const fill = p => p.replace(/:ym\b/g, '2026-10').replace(/:(date|day)\b/g, '2026
 
 // ═══════════════════════════ STATIC CHECKS ═══════════════════════════
 add('mounting', 'every route file is mounted in server.js', async () => {
-    // item_catalog_fix and item_dupe_merge are libraries used by pclink_jobs (not routers); public_availability is OFF by AJ's decision
-    const server = read('server.js'), miss = walk('routes', '.js').map(f => path.basename(f, '.js')).filter(n => !['item_catalog_fix','item_dupe_merge','public_availability'].includes(n) && !new RegExp(`routes/${n}'`).test(server));
+    const server = read('server.js'), miss = walk('routes', '.js').map(f => path.basename(f, '.js')).filter(n => !new RegExp(`routes/${n}'`).test(server));
     return miss.length ? bad('not mounted: ' + miss.join(', ')) : ok(`${walk('routes', '.js').length} route files mounted`);
 });
 add('mounting', 'route discovery finds the routes (sanity)', async () => { const n = discoverRoutes().length; return n > 150 ? ok(n + ' routes') : bad('only ' + n + ' routes found'); });

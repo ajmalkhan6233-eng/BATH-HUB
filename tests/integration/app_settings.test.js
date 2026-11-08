@@ -110,6 +110,6 @@ describe('menu control', () => {
     expect(a.rows.map(x => x.action)).toEqual(expect.arrayContaining(['menu.update', 'menu.reset']));
   });
   test('the menu list covers all 26 owner-app items', () => {
-    expect(router.MENU_ITEMS.length).toBe(27);
+    expect(router.MENU_ITEMS.length).toBe(26);
   });
 });

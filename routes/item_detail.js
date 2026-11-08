@@ -50,8 +50,7 @@ router.post('/item-detail/:code', ownerOnly, express.json({ limit: '8mb' }), asy
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            await client.query('SELECT pg_advisory_xact_lock(774412)'); await client.query('SELECT pg_advisory_xact_lock(774413)');   // same locks the GRN screens take, so a code or name change never overlaps a GRN save
-            const same = await client.query(`SELECT id, stock_level, name FROM products WHERE item_code = $1 FOR UPDATE`, [oldCode]);
+            const same = await client.query(`SELECT id, stock_level FROM products WHERE item_code = $1 FOR UPDATE`, [oldCode]);
             if (same.rows.length > 1 && newCode !== oldCode) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Two items share code ' + oldCode + '. Fix that first (tell Claude). Nothing was changed.' }); }
             if (newCode !== oldCode) {
                 const dup = await client.query(`SELECT item_code, name FROM products WHERE UPPER(item_code) = UPPER($1) AND item_code <> $2`, [newCode, oldCode]);
@@ -64,16 +63,7 @@ router.post('/item-detail/:code', ownerOnly, express.json({ limit: '8mb' }), asy
             if (newCode !== oldCode) {   // keep every record that points at this code in step (bills, quotations, price history, GRN lines)
                 const t = await client.query(`SELECT table_name FROM information_schema.columns WHERE column_name='item_code' AND table_schema='public' AND table_name NOT IN ('products') AND table_name NOT LIKE 'audit\\_%'`);
                 for (const row of t.rows) await client.query(`UPDATE "${row.table_name}" SET item_code = $1 WHERE item_code = $2`, [newCode, oldCode]);
-                const hasArch = (await client.query(`SELECT to_regclass('public.grn_records_archive') AS t`)).rows[0].t;
-                for (const tb of hasArch ? ['grn_records', 'grn_records_archive'] : ['grn_records']) {   // GRN lines are written as "CODE - name"
-                    await client.query(`UPDATE ${tb} SET item_description = $1 || substr(item_description, $2) WHERE left(item_description, $3) = $4`, [newCode, oldCode.length + 1, (oldCode + ' - ').length, oldCode + ' - ']);
-                }
-            }
-            if (same.rows[0] && r.rows[0].name !== same.rows[0].name) {   // a new name must reach the GRN lines too, or the GRN edit/delete checks stop matching
-                const pre = r.rows[0].item_code + ' - ', hasArch2 = (await client.query(`SELECT to_regclass('public.grn_records_archive') AS t`)).rows[0].t;
-                for (const tb of hasArch2 ? ['grn_records', 'grn_records_archive'] : ['grn_records']) {
-                    await client.query(`UPDATE ${tb} SET item_description = $1 WHERE left(item_description, $2) = $3`, [pre + r.rows[0].name, pre.length, pre]);
-                }
+                await client.query(`UPDATE grn_records SET item_description = $1 || substr(item_description, $2) WHERE item_description LIKE $3`, [newCode, oldCode.length + 1, oldCode + ' - %']);
             }
             if (newStock !== undefined) {
                 const oldQ = Number(same.rows[0] && same.rows[0].stock_level) || 0;

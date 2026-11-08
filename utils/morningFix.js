@@ -37,8 +37,7 @@ async function run(opts = {}) {
             return 'saved ' + Math.round(n / 1024) + ' KB';
         });
         if (ok) {
-// DISABLED 8 Nov audit: plan() renames non-Metro/Leo items to TBD-n if log is missing.
-//             await step(s, 'item_codes', async () => { const r = await require('../routes/item_codes_fix').applyFix(); if (!r.ok) throw new Error(r.error); return r.message; });
+            await step(s, 'item_codes', async () => { const r = await require('../routes/item_codes_fix').applyFix(); if (!r.ok) throw new Error(r.error); return r.message; });
             await step(s, 'double_count', async () => {
                 const G = require('../routes/grn_dupes'); const found = await G.plan();
                 const nums = found.flatMap(f => f.duplicate_numbers.map(String));

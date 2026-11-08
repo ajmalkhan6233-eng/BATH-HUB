@@ -104,6 +104,6 @@ describe('the bill page: discount cap, item codes, today list', () => {
     expect(html).toMatch(/esc\(b\.customer_name \|\| 'Walk-in'\)/);
   });
   test('starting a new bill clears the discount warning', () => {
-    expect(html).toMatch(/discountPct'\)\.value = 0;[^\n]*\s*updateCapHint\(\);/);
+    expect(html).toMatch(/discountPct'\)\.value = 0;\s*updateCapHint\(\);/);
   });
 });

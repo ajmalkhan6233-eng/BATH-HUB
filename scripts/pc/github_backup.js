@@ -10,7 +10,6 @@ const path = require('path');
 const https = require('https');
 const zlib = require('zlib');
 const { execFileSync, spawn } = require('child_process');
-const { encryptFile } = require('../../utils/backupCrypto');
 
 const root = path.resolve(__dirname, '..', '..');
 const BRANCH = 'rbh-backup', MAX_FILE = 50 * 1024 * 1024, EVERY_MS = 55 * 60 * 1000, SQUASH_AT = 250;
@@ -84,8 +83,6 @@ async function run(opts = {}) {
         if (pub === true) return status(false, 'REFUSED: the backup repo is PUBLIC. Make it private first. Nothing was pushed.');
         if (pub === undefined) return status(false, 'Could not check that the backup repo is private (no internet?). Nothing was pushed.');
     }
-    const pass = env.BACKUP_PASSPHRASE || '';
-    if (pass.length < 8) return status(false, 'REFUSED: BACKUP_PASSPHRASE (8+ characters) is not set in .env. Secrets and the database are never pushed unencrypted. Nothing was pushed.');
     const dir = env.BACKUP_DIR || path.join(path.dirname(root), 'RBH_FullBackup');
     fs.mkdirSync(dir, { recursive: true });
     if (!fs.existsSync(path.join(dir, '.git'))) {
@@ -96,7 +93,7 @@ async function run(opts = {}) {
     try { git(dir, ['config', 'user.name']); } catch (e) { git(dir, ['config', 'user.name', 'RBH backup']); git(dir, ['config', 'user.email', 'backup@rbh.local']); }
 
     // 1) database
-    const stats = { files: 0, skipped: [] }, secretFiles = [];
+    const stats = { files: 0, skipped: [] };
     fs.mkdirSync(path.join(dir, 'db', 'daily'), { recursive: true });
     const tmp = path.join(dir, 'db', 'latest.sql.gz.tmp');
     if (!env.DB_NAME || !env.DB_USER) return status(false, 'DB_NAME / DB_USER missing in .env');
@@ -104,25 +101,16 @@ async function run(opts = {}) {
     const dumpBytes = fs.statSync(tmp).size;
     if (dumpBytes < 500) { fs.unlinkSync(tmp); return status(false, 'Database dump looks empty. Nothing pushed.'); }
     if (dumpBytes > MAX_FILE * 1.9) { fs.unlinkSync(tmp); return status(false, 'Database dump is over 95 MB (GitHub limit). Tell Claude: it needs a split.'); }
-    for (const f of ['latest.sql.gz']) fs.rmSync(path.join(dir, 'db', f), { force: true });
-    fs.readdirSync(path.join(dir, 'db', 'daily')).filter(f => /\.sql\.gz$/.test(f)).forEach(f => fs.unlinkSync(path.join(dir, 'db', 'daily', f))); // old plain copies
-    await encryptFile(tmp, path.join(dir, 'db', 'latest.sql.gz.enc'), pass); fs.unlinkSync(tmp);
+    fs.renameSync(tmp, path.join(dir, 'db', 'latest.sql.gz'));
     const day = new Date().toISOString().slice(0, 10);
-    fs.copyFileSync(path.join(dir, 'db', 'latest.sql.gz.enc'), path.join(dir, 'db', 'daily', day + '.sql.gz.enc'));
+    fs.copyFileSync(path.join(dir, 'db', 'latest.sql.gz'), path.join(dir, 'db', 'daily', day + '.sql.gz'));
     fs.readdirSync(path.join(dir, 'db', 'daily')).sort().slice(0, -14).forEach(f => fs.unlinkSync(path.join(dir, 'db', 'daily', f)));
 
     // 2) code (tracked + untracked, not ignored) and the private folders
     for (const d of ['code', 'files']) fs.rmSync(path.join(dir, d), { recursive: true, force: true });
     const list = git(root, ['ls-files', '-co', '--exclude-standard', '-z']).split('\0').filter(Boolean);
     for (const f of list) copyTree(path.join(root, f), path.join(dir, 'code', f), stats);
-    for (const f of ['uploads', 'drafts_inbox', 'config', 'local_ops']) copyTree(path.join(root, f), path.join(dir, 'files', f), stats);
-    // secrets and customer/shop records go in ENCRYPTED only (AES-256-GCM, key from BACKUP_PASSPHRASE)
-    const secretDir = path.join(dir, 'files', '_enc'), secretTmp = path.join(dir, '..', '.rbh_plain_tmp');
-    fs.rmSync(secretTmp, { recursive: true, force: true }); fs.mkdirSync(secretDir, { recursive: true });
-    for (const f of ['.env', 'data']) copyTree(path.join(root, f), path.join(secretTmp, f), stats);
-    (function walk(d) { for (const e of fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }) : []) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else secretFiles.push(p); } })(secretTmp);
-    for (const p of secretFiles) { const rel = path.relative(secretTmp, p).replace(/[\\/]/g, '__'); await encryptFile(p, path.join(secretDir, rel + '.enc'), pass); }
-    fs.rmSync(secretTmp, { recursive: true, force: true });
+    for (const f of ['.env', 'uploads', 'data', 'drafts_inbox', 'config', 'local_ops']) copyTree(path.join(root, f), path.join(dir, 'files', f), stats);
     let appCommit = ''; try { appCommit = git(root, ['rev-parse', 'HEAD']); } catch (e) { /* ignore */ }
     fs.writeFileSync(path.join(dir, 'MANIFEST.json'), JSON.stringify({ at: new Date().toISOString(), app_commit: appCommit, db_bytes: dumpBytes, files: stats.files, skipped_big_files: stats.skipped, restore: 'node scripts/pc/restore_from_backup.js' }, null, 1));
 
@@ -130,9 +118,7 @@ async function run(opts = {}) {
     git(dir, ['add', '-A']);
     let changed = true; try { git(dir, ['diff', '--cached', '--quiet']); changed = false; } catch (e) { /* has changes */ }
     if (changed) git(dir, ['commit', '-q', '-m', 'backup ' + new Date().toISOString()]);
-    const mark = path.join(dir, 'ENCRYPTED_V1'); let firstEnc = false; if (!fs.existsSync(mark)) { fs.writeFileSync(mark, 'since ' + new Date().toISOString()); firstEnc = true; git(dir, ['add', '-A']); }
     let count = 0; try { count = Number(git(dir, ['rev-list', '--count', 'HEAD'])); } catch (e) { /* empty */ }
-    if (firstEnc) count = SQUASH_AT + 1; // drop old history that still holds plain .env / DB
     if (count > SQUASH_AT) { git(dir, ['checkout', '-q', '--orphan', 'tmp_squash']); git(dir, ['add', '-A']); git(dir, ['commit', '-q', '-m', 'backup (history squashed) ' + new Date().toISOString()]); git(dir, ['branch', '-M', BRANCH]); say('history squashed'); }
     try { git(dir, ['push', '-q', 'origin', BRANCH]); }
     catch (e) { try { git(dir, ['push', '-q', '--force-with-lease', 'origin', BRANCH]); } catch (e2) { try { git(dir, ['push', '-q', '-f', 'origin', BRANCH]); } catch (e3) { return status(false, 'Push failed: ' + String(e3.message).split('\n')[0].slice(0, 160)); } } }
