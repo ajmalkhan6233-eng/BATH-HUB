@@ -121,6 +121,8 @@ const PORT = process.env.PORT || 3000;
 
 // Must be first — bypasses all middleware so Railway's health probe always gets 200
 app.get('/health', (req, res) => res.json({ ok: true }));
+// deep check: proves the database answers (watchdog can use this instead of /health)
+app.get('/health/deep', async (req, res) => { try { await require('./utils/pool').query('SELECT 1'); res.json({ ok: true, db: true }); } catch (e) { res.status(503).json({ ok: false, db: false }); } });
 
 // ─── SESSION-BASED LOGIN (per-user accounts, role-based access) ───────────────
 const session = require('express-session');
@@ -141,7 +143,7 @@ if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PIN || process.
 // Trusts ngrok's X-Forwarded-Proto so cookie.secure:'auto' below marks the
 // session cookie HTTPS-only when reached via the ngrok tunnel, while still
 // allowing plain http://localhost access for local dev.
-app.set('trust proxy', 1);
+app.set('trust proxy', 'loopback'); // only the local tunnel may set X-Forwarded-For (was 1 = any direct caller could fake its IP)
 
 // ─── SECURITY HARDENING ───────────────────────────────────────────────────────
 // CSP intentionally left off: BATHCO_NATURE.html and dashboard.html rely on
@@ -195,6 +197,7 @@ const failedAuthLimiter = (max) => rateLimit({
 });
 app.use('/api/login', failedAuthLimiter(10));
 app.use('/api/admin/verify', failedAuthLimiter(5));
+app.use('/api/auth/verify-totp', failedAuthLimiter(5));
 // HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
 app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
@@ -233,6 +236,7 @@ const STAFF_OWN_DATA = /^\/api\/staff\/(\d+)\/(salary|loans)$/;
 // code needs to change back. This does NOT touch the auth code itself
 // (login/logout/RBAC all still work if someone hits them directly).
 const LOGIN_DISABLED = process.env.LOGIN_DISABLED === 'true';
+if (LOGIN_DISABLED && process.env.NODE_ENV === 'production') { console.error('REFUSED: LOGIN_DISABLED=true is not allowed when NODE_ENV=production'); process.exit(1); }
 let _bypassUserCache = null;
 async function getBypassUser() {
     if (_bypassUserCache) return _bypassUserCache;
