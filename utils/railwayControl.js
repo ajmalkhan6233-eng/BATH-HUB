@@ -37,6 +37,7 @@ async function gql(query, variables) {
         throw err;
     }
     const res = await fetch(RAILWAY_GQL, {
+        signal: AbortSignal.timeout(20000),   // never hang on a third party
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RAILWAY_API_TOKEN}` },
         body: JSON.stringify({ query, variables }),
