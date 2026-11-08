@@ -5,6 +5,9 @@
   function get() { try { var v = localStorage.getItem(KEY) || localStorage.getItem(OLD); return (v === 'gold' || v === 'dark') ? 'dark' : 'light'; } catch (e) { return 'light'; } }
   function apply(t) { var h = document.documentElement; h.setAttribute('data-theme', t); h.removeAttribute('data-style'); }
   apply(get());
+  /* gentle mode (shop PC kept switching off): motion off by default, no blur. Turn motion on again from the theme palette. */
+  try { if (localStorage.getItem('bh_motion') === null) localStorage.setItem('bh_motion', 'off'); } catch (e) {}
+  try { var st = document.createElement('style'); st.id = 'bh-gentle'; st.textContent = '*{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}*,*::before,*::after{animation-iteration-count:1!important}'; (document.head || document.documentElement).appendChild(st); } catch (e) {}
   window.BHTheme = {
     order: ORDER,
     current: get,
