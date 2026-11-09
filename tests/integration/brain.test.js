@@ -133,3 +133,15 @@ describe('shop record links (read-only)', () => {
     expect(db.many('SELECT COUNT(*) AS n FROM vendor_bills')[0].n).toBe(2);
   });
 });
+
+describe('map', () => {
+  test('nodes and resolved links only; staff refused', async () => {
+    const a = (await request(owner).post('/api/brain/notes').send({ title: 'Map A', body: 'to [[Map B]] and [[Missing One]]' })).body.id;
+    const b = (await request(owner).post('/api/brain/notes').send({ title: 'Map B', body: 'back [[Map A]]' })).body.id;
+    expect((await request(appAs('staff')).get('/api/brain/graph')).status).toBe(403);
+    const g = (await request(owner).get('/api/brain/graph')).body;
+    expect(g.nodes.map(n => n.id)).toEqual(expect.arrayContaining([a, b]));
+    expect(g.edges).toEqual(expect.arrayContaining([{ from: a, to: b }, { from: b, to: a }]));
+    expect(g.edges.filter(e => e.from === a)).toHaveLength(1);
+  });
+});

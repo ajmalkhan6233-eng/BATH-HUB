@@ -31,6 +31,7 @@
   .big{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:9}.big img{max-width:96vw;max-height:92vh;border-radius:8px}
   .rec{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px;margin:6px 0}.rec .k{font-size:12px;font-weight:700;color:var(--ac);text-transform:uppercase;min-width:52px}.rec small{display:block;color:var(--mut)}.rec button{padding:2px 9px;background:transparent;color:var(--mut);font-size:18px}
   .pick{margin:8px 0;padding:10px;border:1px dashed var(--bd);border-radius:12px}.pick select{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);margin-bottom:8px}
+  #map{background:var(--card);border:1px solid var(--bd);border-radius:14px;width:100%;height:68vh;touch-action:manipulation}#map text{fill:var(--tx);font-size:10px;pointer-events:none}#map line{stroke:var(--mut);stroke-opacity:.55}#map circle{fill:var(--ac);cursor:pointer}#map circle.pin{fill:#c9a227}
   .back{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 </style>
 </head>
@@ -42,9 +43,10 @@
     <div class="chips" id="tags"></div>
     <div id="notes"></div>
     <p class="mut" id="empty" hidden>No notes yet. Tap + to write the first one.</p>
-    <div class="row"><a class="mut" href="/api/brain/export">Download all notes (Markdown)</a></div>
+    <div class="row"><button class="ghost small" id="showmap">🗺 Map of notes</button><a class="mut" href="/api/brain/export">Download all notes (Markdown)</a></div>
     <button class="fab" id="add" aria-label="New note">+</button>
   </div>
+  <div id="mapv" hidden><div class="row"><button class="ghost small" id="mapback">← Notes</button><span class="mut" id="mapinfo"></span></div><svg id="map" viewBox="0 0 360 520" role="img" aria-label="Map of your notes"></svg></div>
   <div id="note" hidden>
     <div class="row"><button class="ghost small" id="back">← Notes</button><span class="grow"></span><button class="ghost small" id="pin">Pin</button><button class="ghost small" id="edit">Edit</button></div>
     <div id="editor" hidden>
@@ -90,7 +92,7 @@
     if (ul) out.push('</ul>');
     return out.join('');
   }
-  function show(which) { $('list').hidden = which !== 'list'; $('note').hidden = which !== 'note'; }
+  function show(which) { $('list').hidden = which !== 'list'; $('note').hidden = which !== 'note'; $('mapv').hidden = which !== 'map'; }
   function loadList() {
     var qs = '?q=' + encodeURIComponent($('q').value) + (curTag ? '&tag=' + encodeURIComponent(curTag) : '');
     api('/notes' + qs).then(function (d) {
@@ -185,6 +187,31 @@
   $('kind').onchange = searchRec;
   $('rres').onclick = function (e) { var r = e.target.closest('[data-key]'); if (!r) return; api('/notes/' + cur.note.id + '/refs', { method: 'POST', body: { kind: r.dataset.k, key: r.dataset.key } }).then(function () { openNote(cur.note.id); }).catch(function (er) { $('msg').textContent = er.message; }); };
   $('recs').onclick = function (e) { var d = e.target.closest('[data-delrec]'); if (d) api('/refs/' + d.dataset.delrec, { method: 'DELETE' }).then(function () { openNote(cur.note.id); }).catch(function (er) { $('msg').textContent = er.message; }); };
+  // map of notes: a small force layout, drawn as SVG; tap a dot to open the note
+  function layout(nodes, edges) {
+    var W = 360, H = 520, i, j, n = nodes.length, idx = {};
+    nodes.forEach(function (d, k) { idx[d.id] = k; var a = 6.2832 * k / Math.max(1, n); d.x = W / 2 + Math.cos(a) * 110; d.y = H / 2 + Math.sin(a) * 150; d.vx = 0; d.vy = 0; });
+    for (var it = 0; it < 260; it++) {
+      for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) {
+        var dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y, d2 = dx * dx + dy * dy + 0.01, f = 900 / d2, d = Math.sqrt(d2);
+        nodes[i].vx += dx / d * f; nodes[i].vy += dy / d * f; nodes[j].vx -= dx / d * f; nodes[j].vy -= dy / d * f;
+      }
+      edges.forEach(function (e) { var a = nodes[idx[e.from]], b = nodes[idx[e.to]]; if (!a || !b) return; var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) + 0.01, f = (d - 55) * 0.02; a.vx += dx / d * f; a.vy += dy / d * f; b.vx -= dx / d * f; b.vy -= dy / d * f; });
+      nodes.forEach(function (d) { d.vx += (W / 2 - d.x) * 0.004; d.vy += (H / 2 - d.y) * 0.004; d.x = Math.max(24, Math.min(W - 24, d.x + d.vx * 0.6)); d.y = Math.max(20, Math.min(H - 20, d.y + d.vy * 0.6)); d.vx *= 0.6; d.vy *= 0.6; });
+    }
+  }
+  function drawMap() {
+    api('/graph').then(function (g) {
+      if (!g.nodes.length) { $('map').innerHTML = '<text x="180" y="260" text-anchor="middle">No notes yet</text>'; $('mapinfo').textContent = ''; return; }
+      layout(g.nodes, g.edges); var pos = {}; g.nodes.forEach(function (d) { pos[d.id] = d; });
+      var h = g.edges.map(function (e) { return '<line x1="' + pos[e.from].x.toFixed(1) + '" y1="' + pos[e.from].y.toFixed(1) + '" x2="' + pos[e.to].x.toFixed(1) + '" y2="' + pos[e.to].y.toFixed(1) + '"/>'; }).join('');
+      h += g.nodes.map(function (d) { var t = d.title.length > 16 ? d.title.slice(0, 15) + '…' : d.title; return '<circle class="' + (d.pinned ? 'pin' : '') + '" cx="' + d.x.toFixed(1) + '" cy="' + d.y.toFixed(1) + '" r="9" data-id="' + d.id + '"><title>' + esc(d.title) + '</title></circle><text x="' + d.x.toFixed(1) + '" y="' + (d.y + 21).toFixed(1) + '" text-anchor="middle">' + esc(t) + '</text>'; }).join('');
+      $('map').innerHTML = h; $('mapinfo').textContent = g.nodes.length + ' notes · ' + g.edges.length + ' links';
+    }).catch(function (e) { $('mapinfo').textContent = e.message; });
+  }
+  $('showmap').onclick = function () { show('map'); drawMap(); };
+  $('mapback').onclick = function () { show('list'); loadList(); };
+  $('map').onclick = function (e) { var c = e.target.closest('circle[data-id]'); if (c) openNote(c.dataset.id); };
 })();
 </script>
 </body>

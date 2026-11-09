@@ -52,6 +52,19 @@ router.get('/brain/notes', async (req, res) => {
   } catch (e) { console.error('[brain] list:', e.message); res.status(500).json({ error: 'Could not load notes' }); }
 });
 
+// Map: every live note and the links between them (resolved [[links]] only)
+router.get('/brain/graph', async (_req, res) => {
+  try {
+    const notes = await q('SELECT id, title, pinned FROM brain_notes WHERE archived = FALSE ORDER BY pinned DESC, updated_at DESC LIMIT 120');
+    const byKey = {}; notes.forEach(n => { byKey[keyOf(n.title)] = n.id; });
+    const ids = new Set(notes.map(n => Number(n.id)));
+    const links = await q('SELECT from_id, to_key FROM brain_links');
+    const seen = new Set(), edges = [];
+    links.forEach(l => { const a = Number(l.from_id), b = byKey[l.to_key]; if (b && a !== b && ids.has(a)) { const k = a + '>' + b; if (!seen.has(k)) { seen.add(k); edges.push({ from: a, to: b }); } } });
+    res.json({ nodes: notes.map(n => ({ id: n.id, title: n.title, pinned: n.pinned })), edges });
+  } catch (e) { console.error('[brain] graph:', e.message); res.status(500).json({ error: 'Could not build the map' }); }
+});
+
 router.get('/brain/tags', async (_req, res) => {
   try {
     const rows = await q('SELECT tags FROM brain_notes WHERE archived = FALSE');
