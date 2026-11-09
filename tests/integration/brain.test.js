@@ -91,3 +91,45 @@ describe('photos', () => {
     expect((await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: jpeg })).status).toBe(409);
   });
 });
+
+describe('shop record links (read-only)', () => {
+  const db = require('pg').__db.public;
+  let id;
+  beforeAll(async () => {
+    db.none(`CREATE TABLE products (id SERIAL PRIMARY KEY, item_code TEXT, name TEXT, stock_level NUMERIC DEFAULT 0, selling_price NUMERIC DEFAULT 0)`);
+    db.none(`CREATE TABLE vendor_bills (id SERIAL PRIMARY KEY, vendor_name TEXT, bill_no TEXT, bill_date DATE, due_date DATE, total NUMERIC, voided BOOLEAN DEFAULT FALSE)`);
+    db.none(`CREATE TABLE vendor_payments (id SERIAL PRIMARY KEY, bill_id INT, amount NUMERIC)`);
+    db.none(`CREATE TABLE vendor_credit_notes (id SERIAL PRIMARY KEY, bill_id INT, amount NUMERIC)`);
+    db.none(`CREATE TABLE cheque_register (id SERIAL PRIMARY KEY, cheque_no TEXT, payee TEXT, amount NUMERIC, due_date DATE, status TEXT DEFAULT 'pending')`);
+    db.none(`INSERT INTO products (item_code, name, stock_level, selling_price) VALUES ('A1','Wall Basin White',5,12500)`);
+    db.none(`INSERT INTO vendor_bills (vendor_name, bill_no, bill_date, due_date, total) VALUES ('Metro Tiles','M-1','2026-11-01','2026-11-20',100000),('Metro Tiles','M-2','2026-11-02','2026-11-25',50000)`);
+    db.none(`INSERT INTO vendor_payments (bill_id, amount) VALUES (1, 30000)`);
+    db.none(`INSERT INTO cheque_register (cheque_no, payee, amount, due_date) VALUES ('555','Metro Tiles',70000,'2026-11-20')`);
+    id = (await request(owner).post('/api/brain/notes').send({ title: 'Linked note' })).body.id;
+  });
+  test('staff refused', async () => { expect((await request(appAs('staff')).get('/api/brain/lookup?kind=item&q=ba')).status).toBe(403); });
+  test('bad kind refused', async () => { expect((await request(owner).get('/api/brain/lookup?kind=users&q=ba')).status).toBe(400); });
+  test('finds an item, vendor, bill and cheque', async () => {
+    const f = async (k, t) => (await request(owner).get('/api/brain/lookup?kind=' + k + '&q=' + t)).body.results;
+    expect((await f('item', 'basin'))[0].facts).toBe('Stock 5 · Price Rs 12,500');
+    expect((await f('vendor', 'metro'))[0].facts).toBe('2 bills · we owe Rs 120,000');
+    expect((await f('bill', 'M-2'))[0].label).toBe('Metro Tiles · M-2');
+    expect((await f('cheque', '555'))[0].facts).toMatch(/Rs 70,000 .* pending/);
+    expect(await f('item', '%')).toEqual([]);
+  });
+  test('link, no duplicate, shows live facts, unlink', async () => {
+    const a = await request(owner).post('/api/brain/notes/' + id + '/refs').send({ kind: 'item', key: 'A1' }); expect(a.status).toBe(201);
+    expect((await request(owner).post('/api/brain/notes/' + id + '/refs').send({ kind: 'item', key: 'A1' })).body.existed).toBe(true);
+    db.none(`UPDATE products SET stock_level = 2 WHERE item_code = 'A1'`);
+    const n = await request(owner).get('/api/brain/notes/' + id);
+    expect(n.body.records).toHaveLength(1); expect(n.body.records[0].facts).toBe('Stock 2 · Price Rs 12,500');
+    await request(owner).delete('/api/brain/refs/' + a.body.id);
+    expect((await request(owner).get('/api/brain/notes/' + id)).body.records).toEqual([]);
+  });
+  test('unknown record and bad kind are refused; shop tables untouched', async () => {
+    expect((await request(owner).post('/api/brain/notes/' + id + '/refs').send({ kind: 'item', key: 'NOPE' })).status).toBe(404);
+    expect((await request(owner).post('/api/brain/notes/' + id + '/refs').send({ kind: 'user', key: '1' })).status).toBe(400);
+    expect(db.many('SELECT stock_level FROM products')[0].stock_level).toBe(2);
+    expect(db.many('SELECT COUNT(*) AS n FROM vendor_bills')[0].n).toBe(2);
+  });
+});

@@ -29,6 +29,8 @@
   .mut{color:var(--mut);font-size:14px}.err{color:#b91c1c}
   .ph{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.ph div{position:relative}.ph img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd);display:block}.ph button{position:absolute;top:2px;right:2px;padding:0;width:26px;height:26px;border-radius:50%;background:#000a;font-size:14px}
   .big{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:9}.big img{max-width:96vw;max-height:92vh;border-radius:8px}
+  .rec{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px;margin:6px 0}.rec .k{font-size:12px;font-weight:700;color:var(--ac);text-transform:uppercase;min-width:52px}.rec small{display:block;color:var(--mut)}.rec button{padding:2px 9px;background:transparent;color:var(--mut);font-size:18px}
+  .pick{margin:8px 0;padding:10px;border:1px dashed var(--bd);border-radius:12px}.pick select{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);margin-bottom:8px}
   .back{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 </style>
 </head>
@@ -51,7 +53,7 @@
       <div class="row"><button class="ghost small" id="mic" hidden>🎤 Speak</button><span class="mut" id="mictip">Tip: use the 🎤 on your keyboard to speak.</span></div>
       <div class="row"><button id="save">Save</button><button class="ghost" id="cancel">Cancel</button><span class="grow"></span><button class="ghost small" id="del">Delete</button></div>
     </div>
-    <div id="viewer"><h2 id="vt"></h2><div class="view" id="vb"></div><div class="ph" id="ph"></div><div class="row"><button class="ghost small" id="addph">📷 Add photo</button><input type="file" id="file" accept="image/*" hidden></div><p class="mut" id="vm"></p><div id="bl" hidden><p class="mut">Linked from</p><div class="back" id="bls"></div></div></div>
+    <div id="viewer"><h2 id="vt"></h2><div class="view" id="vb"></div><div id="recs"></div><div class="row"><button class="ghost small" id="addrec">🔗 Link a shop record</button></div><div class="pick" id="pick" hidden><select id="kind"><option value="item">Item</option><option value="vendor">Vendor</option><option value="bill">Vendor bill</option><option value="cheque">Cheque</option></select><input id="rq" type="search" placeholder="Type a name or number" autocomplete="off"><div id="rres"></div></div><div class="ph" id="ph"></div><div class="row"><button class="ghost small" id="addph">📷 Add photo</button><input type="file" id="file" accept="image/*" hidden></div><p class="mut" id="vm"></p><div id="bl" hidden><p class="mut">Linked from</p><div class="back" id="bls"></div></div></div>
     <p class="err" id="msg"></p>
   </div>
 </div>
@@ -107,6 +109,7 @@
       $('vm').textContent = 'Updated ' + new Date(d.note.updated_at).toLocaleString();
       $('bl').hidden = !d.backlinks.length;
       $('bls').innerHTML = d.backlinks.map(function (b) { return '<button class="chip" data-id="' + b.id + '">' + esc(b.title) + '</button>'; }).join('');
+      $('recs').innerHTML = (d.records || []).map(function (r) { return '<div class="rec"><span class="k">' + esc(r.kind) + '</span><span class="grow"><b>' + esc(r.label) + '</b><small>' + esc(r.facts) + '</small></span><button data-delrec="' + r.ref_id + '" aria-label="Unlink">×</button></div>'; }).join(''); $('pick').hidden = true;
       $('ph').innerHTML = (d.photos || []).map(function (id) { return '<div><img src="/api/brain/photos/' + id + '" alt="note photo" data-big="' + id + '"><button data-delph="' + id + '" aria-label="Remove photo">×</button></div>'; }).join('');
       $('pin').textContent = d.note.pinned ? 'Unpin' : 'Pin';
       $('editor').hidden = true; $('viewer').hidden = false; $('edit').hidden = false; $('pin').hidden = false; show('note');
@@ -169,6 +172,19 @@
     };
   }
   loadList();
+  // link a shop record (read-only look-up on the server)
+  var rtimer = null;
+  function searchRec() {
+    var t = $('rq').value.trim(); if (t.length < 2) { $('rres').innerHTML = '<p class="mut">Type 2 letters or more</p>'; return; }
+    api('/lookup?kind=' + $('kind').value + '&q=' + encodeURIComponent(t)).then(function (d) {
+      $('rres').innerHTML = d.results.length ? d.results.map(function (r) { return '<div class="rec" data-k="' + esc(r.kind) + '" data-key="' + esc(r.key) + '" style="cursor:pointer"><span class="grow"><b>' + esc(r.label) + '</b><small>' + esc(r.facts) + '</small></span></div>'; }).join('') : '<p class="mut">Nothing found</p>';
+    }).catch(function (e) { $('rres').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+  }
+  $('addrec').onclick = function () { $('pick').hidden = !$('pick').hidden; $('rres').innerHTML = ''; $('rq').value = ''; if (!$('pick').hidden) $('rq').focus(); };
+  $('rq').oninput = function () { clearTimeout(rtimer); rtimer = setTimeout(searchRec, 300); };
+  $('kind').onchange = searchRec;
+  $('rres').onclick = function (e) { var r = e.target.closest('[data-key]'); if (!r) return; api('/notes/' + cur.note.id + '/refs', { method: 'POST', body: { kind: r.dataset.k, key: r.dataset.key } }).then(function () { openNote(cur.note.id); }).catch(function (er) { $('msg').textContent = er.message; }); };
+  $('recs').onclick = function (e) { var d = e.target.closest('[data-delrec]'); if (d) api('/refs/' + d.dataset.delrec, { method: 'DELETE' }).then(function () { openNote(cur.note.id); }).catch(function (er) { $('msg').textContent = er.message; }); };
 })();
 </script>
 </body>

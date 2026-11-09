@@ -3,6 +3,7 @@
 // Own tables only (brain_notes, brain_links), created IF NOT EXISTS. Never touches shop data.
 const express = require('express');
 const pool = require('../utils/pool');
+const refs = require('../utils/brainRefs');
 const router = express.Router();
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
@@ -17,6 +18,7 @@ function ensure() {
       pinned BOOLEAN NOT NULL DEFAULT FALSE, archived BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(), updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
     await pool.query(`CREATE TABLE IF NOT EXISTS brain_photos (id SERIAL PRIMARY KEY, note_id INTEGER NOT NULL, data TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())`);
+    await pool.query(`CREATE TABLE IF NOT EXISTS brain_refs (id SERIAL PRIMARY KEY, note_id INTEGER NOT NULL, kind TEXT NOT NULL, ref_key TEXT NOT NULL)`);
     await pool.query(`CREATE TABLE IF NOT EXISTS brain_links (from_id INTEGER NOT NULL, to_key TEXT NOT NULL)`);
   })().catch(e => { ready = null; throw e; });
   return ready;
@@ -70,7 +72,10 @@ router.get('/brain/notes/:id', async (req, res) => {
     const ids = new Set(from.map(r => Number(r.from_id)));
     const backlinks = live.filter(r => ids.has(Number(r.id)) && Number(r.id) !== id).map(r => ({ id: r.id, title: r.title }));
     const photos = (await q('SELECT id FROM brain_photos WHERE note_id = $1 ORDER BY id', [id])).map(r => r.id);
-    res.json({ note: { id: n.id, title: n.title, body: n.body, tags: n.tags ? n.tags.split(',') : [], pinned: n.pinned, updated_at: n.updated_at }, links, backlinks, photos });
+    const rr = await q('SELECT id, kind, ref_key FROM brain_refs WHERE note_id = $1 ORDER BY id', [id]);
+    const records = [];
+    for (const r of rr) { const x = await refs.one(r.kind, r.ref_key); records.push(x ? { ref_id: r.id, ...x } : { ref_id: r.id, kind: r.kind, key: r.ref_key, label: r.ref_key, facts: 'not found any more' }); }
+    res.json({ note: { id: n.id, title: n.title, body: n.body, tags: n.tags ? n.tags.split(',') : [], pinned: n.pinned, updated_at: n.updated_at }, links, backlinks, photos, records });
   } catch (e) { console.error('[brain] get:', e.message); res.status(500).json({ error: 'Could not open note' }); }
 });
 
@@ -120,6 +125,35 @@ router.post('/brain/open', async (req, res) => {
     const [n] = await q('INSERT INTO brain_notes (title, body, tags) VALUES ($1,$2,$3) RETURNING id', [title, '', '']);
     res.status(201).json({ id: n.id, created: true });
   } catch (e) { res.status(500).json({ error: 'Could not open link' }); }
+});
+
+// Shop records a note can point at (read-only lookups; see utils/brainRefs.js)
+router.get('/brain/lookup', async (req, res) => {
+  try {
+    const kind = String(req.query.kind || ''); if (!refs.KINDS.includes(kind)) return res.status(400).json({ error: 'Bad kind' });
+    res.json({ results: await refs.find(kind, req.query.q) });
+  } catch (e) { res.status(500).json({ error: 'Search failed' }); }
+});
+router.post('/brain/notes/:id/refs', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); if (!id) return res.status(400).json({ error: 'Bad id' });
+    const [n] = await q('SELECT id FROM brain_notes WHERE id = $1 AND archived = FALSE', [id]);
+    if (!n) return res.status(404).json({ error: 'Not found' });
+    const kind = String((req.body && req.body.kind) || ''); if (!refs.KINDS.includes(kind)) return res.status(400).json({ error: 'Bad kind' });
+    const rec = await refs.one(kind, (req.body && req.body.key) || '');
+    if (!rec) return res.status(404).json({ error: 'Record not found' });
+    const dup = await q('SELECT id FROM brain_refs WHERE note_id = $1 AND kind = $2 AND ref_key = $3', [id, kind, rec.key]);
+    if (dup[0]) return res.json({ id: dup[0].id, existed: true });
+    const cnt = await q('SELECT COUNT(*) AS n FROM brain_refs WHERE note_id = $1', [id]);
+    if (Number(cnt[0].n) >= 30) return res.status(409).json({ error: 'Up to 30 linked records per note' });
+    const [r] = await q('INSERT INTO brain_refs (note_id, kind, ref_key) VALUES ($1,$2,$3) RETURNING id', [id, kind, rec.key]);
+    await pool.query('UPDATE brain_notes SET updated_at = NOW() WHERE id = $1', [id]);
+    res.status(201).json({ id: r.id });
+  } catch (e) { console.error('[brain] ref:', e.message); res.status(500).json({ error: 'Could not link record' }); }
+});
+router.delete('/brain/refs/:rid', async (req, res) => {
+  try { const rid = parseInt(req.params.rid, 10); if (!rid) return res.status(400).json({ error: 'Bad id' }); await pool.query('DELETE FROM brain_refs WHERE id = $1', [rid]); res.json({ ok: true }); }
+  catch (e) { res.status(500).json({ error: 'Could not unlink' }); }
 });
 
 // Photos: the screen shrinks each photo to a JPEG first; the server checks it really is a JPEG and small.
