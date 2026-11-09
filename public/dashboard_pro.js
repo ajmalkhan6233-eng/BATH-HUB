@@ -13,6 +13,7 @@
     + '#dash-pro .dp-lab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);font-weight:700}'
     + '#dash-pro .dp-val{font-size:20px;font-weight:800;margin-top:2px;line-height:1.15;word-break:break-word}'
     + '#dash-pro .dp-note{font-size:12px;color:var(--text2);margin-top:4px}'
+    + '#dash-pro .dp-spark{display:block;width:100%;max-width:140px;height:32px;margin-top:6px}'
     + '#dash-pro .up{color:#22c55e}#dash-pro .down{color:#ef4444}#dash-pro .warn{color:#f59e0b}'
     + '#dash-pro h3{font-size:14px;font-weight:800;margin:0 0 6px}'
     + '#dash-pro .dp-bar{height:10px;border-radius:6px;background:rgba(127,127,127,.2);overflow:hidden;margin:6px 0 4px}'
@@ -39,7 +40,14 @@
     var d = ((now - before) / before) * 100, up = d >= 0;
     return '<span class="' + (up ? 'up' : 'down') + '">' + (up ? '▲ ' : '▼ ') + Math.abs(d).toFixed(0) + '%</span> <span class="dp-note">vs ' + label + '</span>';
   }
-  function tile(label, val, sub) { return '<div class="dp-card"><div class="dp-lab">' + label + '</div><div class="dp-val">' + val + '</div><div class="dp-note">' + (sub || '') + '</div></div>'; }
+  function tile(label, val, sub, extra) { return '<div class="dp-card"><div class="dp-lab">' + label + '</div><div class="dp-val">' + val + '</div><div class="dp-note">' + (sub || '') + '</div>' + (extra || '') + '</div>'; }
+  function spark(vals) {   // small line of the last days; plain SVG, colour from the theme, nothing to read if there is no data
+    vals = (vals || []).map(Number).filter(function (x) { return isFinite(x); });
+    if (vals.length < 2 || Math.max.apply(null, vals) <= 0) return '';
+    var w = 120, h = 32, mx = Math.max.apply(null, vals), n = vals.length;
+    var pts = vals.map(function (v, i) { return (i * (w / (n - 1))).toFixed(1) + ',' + (h - 3 - (v / mx) * (h - 6)).toFixed(1); }).join(' ');
+    return '<svg class="dp-spark" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="var(--v2c,#0a6b4a)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
   function goal(label, done, target, extra) {
     var p = target > 0 ? Math.min(100, (done / target) * 100) : 0, left = Math.max(0, target - done);
     return '<div class="dp-card"><div class="dp-lab">' + label + '</div><div class="dp-val">' + lkr(done) + '</div>'
@@ -62,11 +70,11 @@
   function render(d) {
     var S = d.sales, T = d.targets, P = d.profit, st = d.stock, V = d.vendors, C = d.cheques, CU = d.customers_owe, E = d.expenses, h = '';
     var now = new Date();
-    h += '<div class="dp-head"><div><div class="dp-title">Shop command centre</div><div class="dp-sub">' + now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    h += '<div class="dp-head"><div><div class="dp-title">Hi, AJ! What is the plan for today?</div><div class="dp-sub">' + now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       + ' · updated ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="dp-btn" id="dp-refresh">Refresh</button></div>';
     /* 1 money today */
     h += '<div class="dp-grid">'
-      + tile('Sales today', lkr(S.today), (function (x, y) { return x === y ? x : x + '<br>' + y; })(delta(S.today, S.yesterday, 'yesterday'), delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' }))))
+      + tile('Sales today', lkr(S.today), (function (x, y) { return x === y ? x : x + '<br>' + y; })(delta(S.today, S.yesterday, 'yesterday'), delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' }))), spark((d.daily || []).map(function (x) { return x.total; })))
       + tile('Bills today', S.bills_today, 'Average bill ' + lkr(S.avg_bill_today) + (S.discount_today > 0 ? '<br>Discount given ' + lkr(S.discount_today) : ''))
       + tile('Profit today (est.)', P.today.margin_pct == null ? '-' : lkr(P.today.gross_profit), P.today.margin_pct == null ? 'No costed items sold yet' : 'Margin ' + pct(P.today.margin_pct) + ' · costs known for ' + pct(P.today.coverage_pct) + ' of sales')
       + tile('Expenses today', lkr(E.today), 'This month ' + lkr(E.month))
