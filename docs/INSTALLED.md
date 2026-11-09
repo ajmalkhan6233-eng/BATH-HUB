@@ -28,3 +28,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-03: yt-dlp (pip, free, local, Ajmal YES) on the cloud box; PC install still needed for YouTube (cloud network blocks it).
 2026-11-04 design tools: ecc-cinematic-web skill added (own words, text only); 4 tool picks documented, not installed.
 2026-11-04 skill ecc-web-motion-pro (text + own recipes, tested). No third-party library installed yet (installed per website project when needed).
+- 2026-11-09 | defuddle 0.19.6 (MIT, kepano/defuddle) | AJ OK'd | scripts/dev/read_article.sh, run via npx pinned, NOT in package.json | cleans web articles to Markdown for research (tested on a sample page: menus, cookie banner, ads removed)
