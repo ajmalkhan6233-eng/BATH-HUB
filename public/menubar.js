@@ -12,7 +12,7 @@
   // [group, [[key, label, soon?], ...]]
   var MAP = [
     ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], ['agent-rules', 'Agent Rules'], ['agentreview', 'Agent Review'],
-      ['shoptools', 'Shop Tools'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
+      ['shoptools', 'Shop Tools'], ['brain', 'RBH Brain 🧠'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],

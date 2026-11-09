@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script>if (window.top === window.self) location.replace('/owner#/brain');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RBH Brain — Royal Bath Hub</title>
+<style>
+  :root{--bg:var(--bg-page,#f6f7f5);--card:var(--card,#fff);--tx:var(--text,#1c2a24);--mut:#6b7a73;--ac:#0a6b4a;--bd:#dfe5e1}
+  @media (prefers-color-scheme:dark){:root{--bg:var(--bg-page,#10181a);--card:var(--card,#1a2427);--tx:var(--text,#e8f0ec);--mut:#9db0a8;--bd:#2a3a3e}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:12px 16px 90px}
+  h1{font-size:20px;margin:6px 0 10px}
+  input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+  textarea{min-height:46vh;resize:vertical;line-height:1.55}
+  button{font:inherit;border:0;border-radius:12px;padding:11px 16px;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+  button.small{padding:7px 12px;font-size:14px}
+  .row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}.grow{flex:1;min-width:0}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px}.chip{white-space:nowrap;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:500}
+  .chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+  .note{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+  .note b{display:block}.note small{color:var(--mut)}
+  .view h2,.view h3,.view h4{margin:14px 0 6px}.view p{margin:8px 0}.view ul{padding-left:22px}
+  a.wl{color:var(--ac);font-weight:600;text-decoration:none;border-bottom:1px dashed var(--ac)}a.wl.new{color:#b45309;border-color:#b45309}
+  .tag{color:var(--ac);font-weight:600}
+  .fab{position:fixed;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;font-size:28px;padding:0;box-shadow:0 4px 14px #0004}
+  .mut{color:var(--mut);font-size:14px}.err{color:#b91c1c}
+  .back{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>RBH Brain 🧠</h1>
+  <div id="list">
+    <input id="q" type="search" placeholder="Search your notes" autocomplete="off">
+    <div class="chips" id="tags"></div>
+    <div id="notes"></div>
+    <p class="mut" id="empty" hidden>No notes yet. Tap + to write the first one.</p>
+    <div class="row"><a class="mut" href="/api/brain/export">Download all notes (Markdown)</a></div>
+    <button class="fab" id="add" aria-label="New note">+</button>
+  </div>
+  <div id="note" hidden>
+    <div class="row"><button class="ghost small" id="back">← Notes</button><span class="grow"></span><button class="ghost small" id="pin">Pin</button><button class="ghost small" id="edit">Edit</button></div>
+    <div id="editor" hidden>
+      <input id="title" placeholder="Title" maxlength="200">
+      <textarea id="body" placeholder="Write here. Link notes with [[Title]]. Add tags like #vendor"></textarea>
+      <div class="row"><button id="save">Save</button><button class="ghost" id="cancel">Cancel</button><span class="grow"></span><button class="ghost small" id="del">Delete</button></div>
+    </div>
+    <div id="viewer"><h2 id="vt"></h2><div class="view" id="vb"></div><p class="mut" id="vm"></p><div id="bl" hidden><p class="mut">Linked from</p><div class="back" id="bls"></div></div></div>
+    <p class="err" id="msg"></p>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var cur = null, curTag = '', timer = null, isNew = false;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function api(path, opt) {
+    opt = opt || {}; var o = { method: opt.method || 'GET', credentials: 'same-origin', headers: {} };
+    if (opt.body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(opt.body); }
+    return fetch('/api/brain' + path, o).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Something went wrong'); return j; }); });
+  }
+  // Safe markdown: everything is escaped first, then only a few patterns become tags.
+  function inline(s, links) {
+    s = esc(s);
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[\s(])\*([^*]+)\*/g, '$1<i>$2</i>');
+    s = s.replace(/\[\[([^\[\]]{1,200})\]\]/g, function (_m, t) {
+      var parts = t.split('|'), key = parts[0].trim().toLowerCase(), label = (parts[1] || parts[0]).trim();
+      var hit = links[key];
+      return '<a href="#" class="wl' + (hit ? '' : ' new') + '" data-t="' + esc(parts[0].trim()) + '">' + label + '</a>';
+    });
+    return s.replace(/(^|\s)#([\p{L}\p{N}_-]{1,40})/gu, '$1<span class="tag">#$2</span>');
+  }
+  function render(md, links) {
+    var out = [], ul = false;
+    String(md || '').split('\n').forEach(function (ln) {
+      var m;
+      if ((m = /^(#{1,3})\s+(.*)$/.exec(ln))) { if (ul) { out.push('</ul>'); ul = false; } out.push('<h' + (m[1].length + 1) + '>' + inline(m[2], links) + '</h' + (m[1].length + 1) + '>'); }
+      else if ((m = /^\s*[-*]\s+(.*)$/.exec(ln))) { if (!ul) { out.push('<ul>'); ul = true; } out.push('<li>' + inline(m[1], links) + '</li>'); }
+      else { if (ul) { out.push('</ul>'); ul = false; } if (ln.trim()) out.push('<p>' + inline(ln, links) + '</p>'); }
+    });
+    if (ul) out.push('</ul>');
+    return out.join('');
+  }
+  function show(which) { $('list').hidden = which !== 'list'; $('note').hidden = which !== 'note'; }
+  function loadList() {
+    var qs = '?q=' + encodeURIComponent($('q').value) + (curTag ? '&tag=' + encodeURIComponent(curTag) : '');
+    api('/notes' + qs).then(function (d) {
+      $('empty').hidden = d.notes.length > 0 || !!$('q').value || !!curTag;
+      $('notes').innerHTML = d.notes.map(function (n) { return '<div class="note" data-id="' + n.id + '"><b>' + (n.pinned ? '📌 ' : '') + esc(n.title) + '</b><small>' + esc(n.snippet) + '</small></div>'; }).join('');
+    }).catch(function (e) { $('notes').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+    api('/tags').then(function (d) {
+      $('tags').innerHTML = d.tags.map(function (t) { return '<button class="chip' + (t.tag === curTag ? ' on' : '') + '" data-tag="' + esc(t.tag) + '">#' + esc(t.tag) + ' ' + t.n + '</button>'; }).join('');
+    }).catch(function () {});
+  }
+  function openNote(id) {
+    $('msg').textContent = '';
+    api('/notes/' + id).then(function (d) {
+      cur = d; isNew = false; var links = {}; d.links.forEach(function (l) { if (l.id) links[l.key] = l; });
+      $('vt').textContent = d.note.title; $('vb').innerHTML = render(d.note.body, links) || '<p class="mut">Empty. Tap Edit.</p>';
+      $('vm').textContent = 'Updated ' + new Date(d.note.updated_at).toLocaleString();
+      $('bl').hidden = !d.backlinks.length;
+      $('bls').innerHTML = d.backlinks.map(function (b) { return '<button class="chip" data-id="' + b.id + '">' + esc(b.title) + '</button>'; }).join('');
+      $('pin').textContent = d.note.pinned ? 'Unpin' : 'Pin';
+      $('editor').hidden = true; $('viewer').hidden = false; $('edit').hidden = false; $('pin').hidden = false; show('note');
+    }).catch(function (e) { alert(e.message); });
+  }
+  function startEdit(n) {
+    isNew = !n; $('title').value = n ? n.note.title : ''; $('body').value = n ? n.note.body : '';
+    $('editor').hidden = false; $('viewer').hidden = true; $('edit').hidden = true; $('pin').hidden = true; $('del').hidden = isNew; show('note'); $('msg').textContent = '';
+    (isNew ? $('title') : $('body')).focus();
+  }
+  $('add').onclick = function () { cur = null; startEdit(null); };
+  $('back').onclick = function () { show('list'); loadList(); };
+  $('edit').onclick = function () { startEdit(cur); };
+  $('cancel').onclick = function () { if (isNew || !cur) { show('list'); } else { openNote(cur.note.id); } };
+  $('save').onclick = function () {
+    var body = { title: $('title').value, body: $('body').value };
+    var p = isNew ? api('/notes', { method: 'POST', body: body }) : api('/notes/' + cur.note.id, { method: 'PUT', body: body });
+    p.then(function (r) { openNote(isNew ? r.id : cur.note.id); }).catch(function (e) { $('msg').textContent = e.message; });
+  };
+  $('del').onclick = function () { if (!cur || !confirm('Delete this note? It stays in your backup.')) return; api('/notes/' + cur.note.id, { method: 'DELETE' }).then(function () { show('list'); loadList(); }).catch(function (e) { $('msg').textContent = e.message; }); };
+  $('pin').onclick = function () { api('/notes/' + cur.note.id, { method: 'PUT', body: { pinned: !cur.note.pinned } }).then(function () { openNote(cur.note.id); }).catch(function (e) { $('msg').textContent = e.message; }); };
+  $('q').oninput = function () { clearTimeout(timer); timer = setTimeout(loadList, 250); };
+  $('tags').onclick = function (e) { var t = e.target.closest('[data-tag]'); if (!t) return; curTag = curTag === t.dataset.tag ? '' : t.dataset.tag; loadList(); };
+  $('notes').onclick = function (e) { var n = e.target.closest('[data-id]'); if (n) openNote(n.dataset.id); };
+  $('bls').onclick = function (e) { var n = e.target.closest('[data-id]'); if (n) openNote(n.dataset.id); };
+  $('vb').onclick = function (e) {
+    var a = e.target.closest('a.wl'); if (!a) return; e.preventDefault();
+    api('/open', { method: 'POST', body: { title: a.dataset.t } }).then(function (r) { if (r.created) { openNote(r.id); setTimeout(function () { startEdit(cur); }, 400); } else openNote(r.id); }).catch(function (er) { $('msg').textContent = er.message; });
+  };
+  loadList();
+})();
+</script>
+</body>
+</html>
