@@ -4,6 +4,9 @@ jest.mock('pg', () => require('../helpers/pgmock')());
 
 const express = require('express');
 const request = require('supertest');
+const pg = require('pg');
+pg.__db.public.none(`CREATE TABLE IF NOT EXISTS customers (id SERIAL PRIMARY KEY, name VARCHAR(100), phone VARCHAR(30), whatsapp VARCHAR(30), source VARCHAR(40), notes TEXT)`);
+pg.__db.public.none(`CREATE TABLE IF NOT EXISTS credit_customers (id SERIAL PRIMARY KEY, customer_id INT, invoice_date DATE, invoice_no VARCHAR(60), amount NUMERIC(12,2), paid NUMERIC(12,2) DEFAULT 0, due_date DATE, notes TEXT)`);
 const posBills = require('../../routes/pos_bills');                 // creates the bill tables
 const corrections = require('../../routes/pos_bill_corrections');
 const pool = require('../../utils/pool');

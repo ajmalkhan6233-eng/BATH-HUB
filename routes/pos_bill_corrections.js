@@ -116,6 +116,10 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         const hasPayRows = await client.query(`SELECT 1 FROM pos_bill_payments WHERE bill_id = $1 LIMIT 1`, [bill.id]).then(r => r.rows.length > 0).catch(() => false);
         if (hasPayRows) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill was paid by cheque, credit or split payment. Void it and enter it again.', code: 'has_payment_rows' }); }
 
+        // A cash bill cannot be switched to credit/cheque/split by editing: that would show as credit with no debt recorded.
+        const pmEdit = String((req.body && req.body.payment_method) || 'cash').toLowerCase();
+        if (!['cash', 'card', 'online'].includes(pmEdit)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Credit, cheque or split bills cannot be set by editing. Void this bill and enter it again.', code: 'payment_change_blocked' }); }
+
         // Discount above the owner's cap needs the owner's explicit OK, same as creating a bill.
         let override = false;
         if (p.pct > 0) {

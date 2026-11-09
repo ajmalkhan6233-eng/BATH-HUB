@@ -311,6 +311,7 @@ async function narrateReport(report) {
             cheque_alerts: report.exceptions.cheque_alerts_7day.length,
         };
         const resp = await fetch(`${OLLAMA_BASE}/api/chat`, {
+            signal: AbortSignal.timeout(180000),   // local AI may be slow, but never forever
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: OLLAMA_MODEL, stream: false, keep_alive: '30m',

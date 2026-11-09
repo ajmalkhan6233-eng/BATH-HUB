@@ -29,6 +29,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const PDFDocument = require('pdfkit');
 const { todayLK } = require('../utils/lkTime');
+const { findBadPrice } = require('../utils/priceGuard');
 
 const router = express.Router();
 
@@ -196,6 +197,31 @@ router.post('/pos-bills', async (req, res) => {
                 });
             }
             override = true;
+        }
+
+        // Price guard: the server checks the price, not just the browser. Same approval flow as a big discount (the screen already asks the owner).
+        if (!override) {
+            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)));
+            if (bad) {
+                if (!(canOverride(req) && req.body.override === true)) {
+                    return res.status(409).json({
+                        error: bad.reason === 'zero'
+                            ? `${bad.line.item_name}: a price of 0 needs the owner's approval.`
+                            : `${bad.line.item_name}: price ${bad.price.toFixed(2)} is below the allowed ${bad.floor.toFixed(2)}` + (canOverride(req) ? '. You can approve it as the owner.' : '. Ask the owner to approve it.'),
+                        code: 'discount_over_cap', max_allowed: null, can_override: canOverride(req),
+                    });
+                }
+                override = true;
+            }
+        }
+
+        // Credit, cheque and split need payment rows (that is what records who owes what). Free-text methods are refused.
+        const pm = String(payment_method || 'cash').toLowerCase();
+        if (req.body.payments === undefined && ['credit', 'cheque', 'split'].includes(pm)) {
+            return res.status(400).json({ error: `Payment by ${pm} needs the payment details (who pays how much). Use the payment screen.`, code: 'payments_required' });
+        }
+        if (req.body.payments === undefined && !['cash', 'card', 'online'].includes(pm)) {
+            return res.status(400).json({ error: 'payment_method must be cash, card or online', code: 'bad_payment_method' });
         }
 
         let payInfo = null;
