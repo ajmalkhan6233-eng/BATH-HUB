@@ -16,6 +16,7 @@ function ensure() {
       id SERIAL PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '', tags TEXT NOT NULL DEFAULT '',
       pinned BOOLEAN NOT NULL DEFAULT FALSE, archived BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(), updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
+    await pool.query(`CREATE TABLE IF NOT EXISTS brain_photos (id SERIAL PRIMARY KEY, note_id INTEGER NOT NULL, data TEXT NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())`);
     await pool.query(`CREATE TABLE IF NOT EXISTS brain_links (from_id INTEGER NOT NULL, to_key TEXT NOT NULL)`);
   })().catch(e => { ready = null; throw e; });
   return ready;
@@ -68,7 +69,8 @@ router.get('/brain/notes/:id', async (req, res) => {
     const from = await q('SELECT from_id FROM brain_links WHERE to_key = $1', [keyOf(n.title)]);
     const ids = new Set(from.map(r => Number(r.from_id)));
     const backlinks = live.filter(r => ids.has(Number(r.id)) && Number(r.id) !== id).map(r => ({ id: r.id, title: r.title }));
-    res.json({ note: { id: n.id, title: n.title, body: n.body, tags: n.tags ? n.tags.split(',') : [], pinned: n.pinned, updated_at: n.updated_at }, links, backlinks });
+    const photos = (await q('SELECT id FROM brain_photos WHERE note_id = $1 ORDER BY id', [id])).map(r => r.id);
+    res.json({ note: { id: n.id, title: n.title, body: n.body, tags: n.tags ? n.tags.split(',') : [], pinned: n.pinned, updated_at: n.updated_at }, links, backlinks, photos });
   } catch (e) { console.error('[brain] get:', e.message); res.status(500).json({ error: 'Could not open note' }); }
 });
 
@@ -118,6 +120,41 @@ router.post('/brain/open', async (req, res) => {
     const [n] = await q('INSERT INTO brain_notes (title, body, tags) VALUES ($1,$2,$3) RETURNING id', [title, '', '']);
     res.status(201).json({ id: n.id, created: true });
   } catch (e) { res.status(500).json({ error: 'Could not open link' }); }
+});
+
+// Photos: the screen shrinks each photo to a JPEG first; the server checks it really is a JPEG and small.
+const MAX_PHOTO_B64 = 900000, MAX_PHOTOS = 12;
+router.post('/brain/notes/:id/photos', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); if (!id) return res.status(400).json({ error: 'Bad id' });
+    const [n] = await q('SELECT id FROM brain_notes WHERE id = $1 AND archived = FALSE', [id]);
+    if (!n) return res.status(404).json({ error: 'Not found' });
+    const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String((req.body && req.body.data) || ''));
+    if (!m) return res.status(400).json({ error: 'Photo must be a JPEG' });
+    if (m[1].length > MAX_PHOTO_B64) return res.status(413).json({ error: 'Photo is too big' });
+    const buf = Buffer.from(m[1], 'base64');
+    if (buf.length < 100 || buf[0] !== 0xff || buf[1] !== 0xd8 || buf[2] !== 0xff) return res.status(400).json({ error: 'Photo must be a JPEG' });
+    const have = await q('SELECT COUNT(*) AS n FROM brain_photos WHERE note_id = $1', [id]);
+    if (Number(have[0].n) >= MAX_PHOTOS) return res.status(409).json({ error: 'Up to ' + MAX_PHOTOS + ' photos per note' });
+    const [p] = await q('INSERT INTO brain_photos (note_id, data) VALUES ($1,$2) RETURNING id', [id, m[1]]);
+    await pool.query('UPDATE brain_notes SET updated_at = NOW() WHERE id = $1', [id]);
+    res.status(201).json({ id: p.id });
+  } catch (e) { console.error('[brain] photo:', e.message); res.status(500).json({ error: 'Could not save photo' }); }
+});
+router.get('/brain/photos/:pid', async (req, res) => {
+  try {
+    const pid = parseInt(req.params.pid, 10); if (!pid) return res.status(400).end();
+    const [p] = await q('SELECT data FROM brain_photos WHERE id = $1', [pid]);
+    if (!p) return res.status(404).end();
+    res.set({ 'Content-Type': 'image/jpeg', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; sandbox", 'Cache-Control': 'private, max-age=86400' }).send(Buffer.from(p.data, 'base64'));
+  } catch (e) { res.status(500).end(); }
+});
+router.delete('/brain/photos/:pid', async (req, res) => {
+  try {
+    const pid = parseInt(req.params.pid, 10); if (!pid) return res.status(400).json({ error: 'Bad id' });
+    await pool.query('DELETE FROM brain_photos WHERE id = $1', [pid]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: 'Could not delete photo' }); }
 });
 
 router.get('/brain/export', async (_req, res) => {

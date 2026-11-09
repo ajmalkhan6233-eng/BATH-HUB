@@ -66,3 +66,28 @@ describe('notes', () => {
     expect(e.headers['content-type']).toMatch(/markdown/); expect(e.text).toMatch(/# Metro Tiles/); expect(e.text).not.toMatch(/# Call list/);
   });
 });
+
+describe('photos', () => {
+  const jpeg = 'data:image/jpeg;base64,' + Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 1)]).toString('base64');
+  let id;
+  beforeAll(async () => { id = (await request(owner).post('/api/brain/notes').send({ title: 'Photo note' })).body.id; });
+  test('staff refused', async () => { expect((await request(appAs('staff')).post('/api/brain/notes/' + id + '/photos').send({ data: jpeg })).status).toBe(403); });
+  test('jpeg saved, listed, served as image, deleted', async () => {
+    const r = await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: jpeg }); expect(r.status).toBe(201);
+    expect((await request(owner).get('/api/brain/notes/' + id)).body.photos).toEqual([r.body.id]);
+    const g = await request(owner).get('/api/brain/photos/' + r.body.id);
+    expect(g.headers['content-type']).toBe('image/jpeg'); expect(g.headers['x-content-type-options']).toBe('nosniff');
+    await request(owner).delete('/api/brain/photos/' + r.body.id);
+    expect((await request(owner).get('/api/brain/notes/' + id)).body.photos).toEqual([]);
+  });
+  test('not a jpeg, wrong magic bytes, too big, missing note all refused', async () => {
+    expect((await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: 'data:image/svg+xml;base64,PHN2Zz4=' })).status).toBe(400);
+    expect((await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: 'data:image/jpeg;base64,' + Buffer.alloc(300, 7).toString('base64') })).status).toBe(400);
+    expect((await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: 'data:image/jpeg;base64,' + 'A'.repeat(900100) })).status).toBe(413);
+    expect((await request(owner).post('/api/brain/notes/99999/photos').send({ data: jpeg })).status).toBe(404);
+  });
+  test('max 12 photos per note', async () => {
+    for (let i = 0; i < 12; i++) await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: jpeg });
+    expect((await request(owner).post('/api/brain/notes/' + id + '/photos').send({ data: jpeg })).status).toBe(409);
+  });
+});

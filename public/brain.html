@@ -27,6 +27,8 @@
   .tag{color:var(--ac);font-weight:600}
   .fab{position:fixed;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;font-size:28px;padding:0;box-shadow:0 4px 14px #0004}
   .mut{color:var(--mut);font-size:14px}.err{color:#b91c1c}
+  .ph{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.ph div{position:relative}.ph img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd);display:block}.ph button{position:absolute;top:2px;right:2px;padding:0;width:26px;height:26px;border-radius:50%;background:#000a;font-size:14px}
+  .big{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:9}.big img{max-width:96vw;max-height:92vh;border-radius:8px}
   .back{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 </style>
 </head>
@@ -46,9 +48,10 @@
     <div id="editor" hidden>
       <input id="title" placeholder="Title" maxlength="200">
       <textarea id="body" placeholder="Write here. Link notes with [[Title]]. Add tags like #vendor"></textarea>
+      <div class="row"><button class="ghost small" id="mic" hidden>🎤 Speak</button><span class="mut" id="mictip">Tip: use the 🎤 on your keyboard to speak.</span></div>
       <div class="row"><button id="save">Save</button><button class="ghost" id="cancel">Cancel</button><span class="grow"></span><button class="ghost small" id="del">Delete</button></div>
     </div>
-    <div id="viewer"><h2 id="vt"></h2><div class="view" id="vb"></div><p class="mut" id="vm"></p><div id="bl" hidden><p class="mut">Linked from</p><div class="back" id="bls"></div></div></div>
+    <div id="viewer"><h2 id="vt"></h2><div class="view" id="vb"></div><div class="ph" id="ph"></div><div class="row"><button class="ghost small" id="addph">📷 Add photo</button><input type="file" id="file" accept="image/*" hidden></div><p class="mut" id="vm"></p><div id="bl" hidden><p class="mut">Linked from</p><div class="back" id="bls"></div></div></div>
     <p class="err" id="msg"></p>
   </div>
 </div>
@@ -104,6 +107,7 @@
       $('vm').textContent = 'Updated ' + new Date(d.note.updated_at).toLocaleString();
       $('bl').hidden = !d.backlinks.length;
       $('bls').innerHTML = d.backlinks.map(function (b) { return '<button class="chip" data-id="' + b.id + '">' + esc(b.title) + '</button>'; }).join('');
+      $('ph').innerHTML = (d.photos || []).map(function (id) { return '<div><img src="/api/brain/photos/' + id + '" alt="note photo" data-big="' + id + '"><button data-delph="' + id + '" aria-label="Remove photo">×</button></div>'; }).join('');
       $('pin').textContent = d.note.pinned ? 'Unpin' : 'Pin';
       $('editor').hidden = true; $('viewer').hidden = false; $('edit').hidden = false; $('pin').hidden = false; show('note');
     }).catch(function (e) { alert(e.message); });
@@ -132,6 +136,38 @@
     var a = e.target.closest('a.wl'); if (!a) return; e.preventDefault();
     api('/open', { method: 'POST', body: { title: a.dataset.t } }).then(function (r) { if (r.created) { openNote(r.id); setTimeout(function () { startEdit(cur); }, 400); } else openNote(r.id); }).catch(function (er) { $('msg').textContent = er.message; });
   };
+  // photos: shrink to a JPEG (max 1280 px) on the phone, then upload
+  $('addph').onclick = function () { $('file').click(); };
+  $('file').onchange = function () {
+    var f = this.files[0]; this.value = ''; if (!f || !cur) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      var k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      var q = 0.8, data = c.toDataURL('image/jpeg', q); while (data.length > 800000 && q > 0.3) { q -= 0.15; data = c.toDataURL('image/jpeg', q); }
+      api('/notes/' + cur.note.id + '/photos', { method: 'POST', body: { data: data } }).then(function () { openNote(cur.note.id); }).catch(function (e) { $('msg').textContent = e.message; });
+    };
+    img.onerror = function () { $('msg').textContent = 'Could not read that photo'; };
+    img.src = url;
+  };
+  $('ph').onclick = function (e) {
+    var d = e.target.closest('[data-delph]'), b = e.target.closest('[data-big]');
+    if (d) { if (confirm('Remove this photo?')) api('/photos/' + d.dataset.delph, { method: 'DELETE' }).then(function () { openNote(cur.note.id); }).catch(function (er) { $('msg').textContent = er.message; }); return; }
+    if (b) { var o = document.createElement('div'); o.className = 'big'; o.innerHTML = '<img src="/api/brain/photos/' + b.dataset.big + '" alt="note photo">'; o.onclick = function () { o.remove(); }; document.body.appendChild(o); }
+  };
+  // voice: browser speech where it exists (iPhone Safari does); otherwise the keyboard mic works anyway
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null;
+  if (SR) {
+    $('mic').hidden = false; $('mictip').hidden = true;
+    $('mic').onclick = function () {
+      if (rec) { rec.stop(); return; }
+      rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false; rec.continuous = true;
+      rec.onresult = function (ev) { var t = ''; for (var i = ev.resultIndex; i < ev.results.length; i++) if (ev.results[i].isFinal) t += ev.results[i][0].transcript + ' '; if (t) { var b = $('body'); b.value += (b.value && !/\s$/.test(b.value) ? ' ' : '') + t.trim(); } };
+      rec.onend = function () { rec = null; $('mic').textContent = '🎤 Speak'; };
+      rec.onerror = function () { rec = null; $('mic').textContent = '🎤 Speak'; };
+      $('mic').textContent = '⏹ Stop'; try { rec.start(); } catch (e) { rec = null; $('mic').textContent = '🎤 Speak'; }
+    };
+  }
   loadList();
 })();
 </script>
