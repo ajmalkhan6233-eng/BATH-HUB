@@ -99,6 +99,11 @@ router.post('/pos-bills/:id/void', ownerOnly, async (req, res) => {
         await client.query('SAVEPOINT void_oversold');
         try { await client.query(`UPDATE oversold_owed SET status='DONE', how='bill_voided', resolved_at=NOW() WHERE bill_number = $1 AND status = 'OPEN'`, [bill.bill_number]); await client.query('RELEASE SAVEPOINT void_oversold'); }
         catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_oversold').catch(() => {}); }
+        // a customer cheque already copied to the Cheques page is cancelled with the bill (own savepoint: the tables may not exist yet)
+        await client.query('SAVEPOINT void_cheque');
+        try { await client.query(`UPDATE cheque_register SET status='cancelled', notes = COALESCE(notes || ' | ', '') || $2, updated_at = CURRENT_TIMESTAMP
+            WHERE status IN ('pending','held') AND id IN (SELECT r.cheque_id FROM pos_cheque_registered r JOIN pos_bill_payments p ON p.id = r.payment_id WHERE p.bill_id = $1 AND r.cheque_id IS NOT NULL)`, [bill.id, 'bill ' + bill.bill_number + ' voided']); await client.query('RELEASE SAVEPOINT void_cheque'); }
+        catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_cheque').catch(() => {}); }
         await client.query('COMMIT');
         res.json({ ok: true, bill_id: bill.id, bill_number: bill.bill_number, status: 'VOID', reason, voided_by: whoOf(req), stock_restored: restored });
     } catch (e) {

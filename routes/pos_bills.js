@@ -62,6 +62,7 @@ pool.query(`
   // additive columns: which bills were given a discount above the cap (by the owner), and which catalogue item a line was
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS discount_override BOOLEAN NOT NULL DEFAULT FALSE`))
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
+  .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS unit_cost NUMERIC(14,4)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
   // was stock taken out for this bill? (NULL = older bill, unknown). Void and edit give back only what was taken.
@@ -203,12 +204,14 @@ router.post('/pos-bills', async (req, res) => {
 
         // Price guard: the server checks the price, not just the browser. Same approval flow as a big discount (the screen already asks the owner).
         if (!override) {
-            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)));
+            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)), { ownerSale: canOverride(req) || !(req.session && req.session.user) });
             if (bad) {
                 if (!(canOverride(req) && req.body.override === true)) {
                     return res.status(409).json({
                         error: bad.reason === 'zero'
                             ? `${bad.line.item_name}: a price of 0 needs the owner's approval.`
+                            : bad.reason === 'no_code'
+                            ? `${bad.line.item_name}: a big line with no item code needs the owner's approval` + (canOverride(req) ? '. You can approve it as the owner.' : '.')
                             : `${bad.line.item_name}: price ${bad.price.toFixed(2)} is below the allowed ${bad.floor.toFixed(2)}` + (canOverride(req) ? '. You can approve it as the owner.' : '. Ask the owner to approve it.'),
                         code: 'discount_over_cap', max_allowed: null, can_override: canOverride(req),
                     });
@@ -253,10 +256,17 @@ router.post('/pos-bills', async (req, res) => {
         }
 
         for (const l of lines) {
+            // Audit D: keep the item's average cost AT THE MOMENT OF SALE on the line, so past profit does not move when a later GRN changes the cost.
+            let unitCost = null;
+            if (l.item_code) {
+                await client.query('SAVEPOINT cost_read');
+                try { const c = await client.query(`SELECT avg_cost FROM products WHERE item_code = $1 AND active = true LIMIT 1`, [l.item_code]); if (c.rows[0] && c.rows[0].avg_cost != null) unitCost = c.rows[0].avg_cost; await client.query('RELEASE SAVEPOINT cost_read'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT cost_read').catch(() => {}); }
+            }
             await client.query(`
-                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total)
-                VALUES ($1,$2,$3,$4,$5,$6)
-            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
+                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total, unit_cost)
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
+            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total, unitCost]);
             // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
             // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
             // A side-check: if it fails it must not poison the bill's transaction, so it runs inside its own savepoint.
