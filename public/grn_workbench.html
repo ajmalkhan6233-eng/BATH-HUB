@@ -184,6 +184,8 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 .scroll.lines.fullpage .fsbar b{flex:1;color:var(--c-gold,#c9a227)}
 @media(min-width:641px){.scroll.lines.fullpage th{top:46px!important}}
 body.lines-full{overflow:hidden}
+/* AJ 10 Nov: show many more lines without clicking Full page: the lines box fills the screen height (desktop), header stays pinned */
+@media(min-width:641px){.scroll.lines:not(.fullpage){max-height:calc(100dvh - 150px)!important;min-height:420px;overflow:auto!important}.scroll.lines:not(.fullpage) th{position:sticky;top:0}.lines td input,.lines td select{min-height:28px!important;height:30px}}
 </style>
 <script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 <script src="/ui/fx-legacy.js" defer></script>
