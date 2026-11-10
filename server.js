@@ -658,6 +658,9 @@ app.use('/api', require('./routes/play'));            // green play buttons for 
 app.use('/api', require('./routes/pc_actions'));      // play buttons: update app, restart, backup (owner, fixed list)
 app.use('/api', require('./routes/item_codes_fix'));   // item codes: Metro auto, Leo as typed, others TBD (owner)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
+app.use('/api', require('./routes/brain'));   // /api/brain/* (RBH Brain: owner-only private notes, [[links]], #tags)
+app.use('/api', require('./routes/grn_match'));   // /api/grn-match (GRN: which shop item is each bill line; read-only on products)
+app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vendor bills and cheques by due date; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
@@ -698,6 +701,9 @@ app.use('/api', require('./routes/notifications'));       // routes are relative
 // see utils/whatsappBusinessApi.js). The in-app bell (routes/notifications.js)
 // works immediately either way.
 require('./scripts/notify_due_soon').start();
+// Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
+require('./utils/selfRun').start(require('./utils/pool'));
+app.use('/api', require('./routes/selfrun'));
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR

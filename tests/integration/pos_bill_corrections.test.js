@@ -111,3 +111,35 @@ describe('database failure', () => {
     expect(r.status).toBe(500); expect(r.body.error).toMatch(/db down/);
   });
 });
+
+// Audit fix A (10 Nov 2026): a void or edit gives back only the stock that THIS bill took, whatever the setting is today.
+describe('stock truth per bill', () => {
+  const db = pg.__db.public;
+  const stock = () => Number(db.many(`SELECT stock_level FROM products WHERE item_code = 'ST1'`)[0].stock_level);
+  const sell = async qty => (await admin.post('/api/pos-bills', { items: [{ item_name: 'Stock tap', item_code: 'ST1', qty, unit_price: 500 }], payment_method: 'Cash' })).body;
+  beforeAll(() => {
+    db.none(`CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, item_code TEXT, name TEXT, stock_level NUMERIC DEFAULT 0, selling_price NUMERIC DEFAULT 0, avg_cost NUMERIC DEFAULT 0, active BOOLEAN DEFAULT TRUE)`);
+    db.none(`INSERT INTO products (item_code, name, stock_level, selling_price) VALUES ('ST1','Stock tap',10,500)`);
+  });
+  afterAll(() => { delete process.env.POS_DEDUCT_STOCK; });
+  test('made with stock OFF, voided with stock ON: nothing is given back', async () => {
+    process.env.POS_DEDUCT_STOCK = 'false'; const b = await sell(2); expect(stock()).toBe(10); expect(b.stock_deducted).toBe(false);
+    process.env.POS_DEDUCT_STOCK = 'true';
+    const v = await admin.post(`/api/pos-bills/${b.id}/void`, { reason: 'test void' }); expect(v.status).toBe(200); expect(v.body.stock_restored).toEqual([]);
+    expect(stock()).toBe(10);
+  });
+  test('made with stock ON, voided with stock OFF: the stock comes back', async () => {
+    process.env.POS_DEDUCT_STOCK = 'true'; const b = await sell(3); expect(stock()).toBe(7);
+    process.env.POS_DEDUCT_STOCK = 'false';
+    await admin.post(`/api/pos-bills/${b.id}/void`, { reason: 'test void' }); expect(stock()).toBe(10);
+  });
+  test('edit of a bill made with stock ON follows the bill, not the setting', async () => {
+    process.env.POS_DEDUCT_STOCK = 'true'; const b = await sell(2); expect(stock()).toBe(8);
+    process.env.POS_DEDUCT_STOCK = 'false';
+    const e = await admin.put(`/api/pos-bills/${b.id}`, { items: [{ item_name: 'Stock tap', item_code: 'ST1', qty: 5, unit_price: 500 }], payment_method: 'CASH' });
+    expect(e.status).toBe(200); expect(stock()).toBe(5); expect(e.body.payment_method).toBe('cash');
+  });
+  test('payment method is saved in lower case', async () => {
+    const b = await sell(1); expect(b.payment_method).toBe('cash');
+  });
+});

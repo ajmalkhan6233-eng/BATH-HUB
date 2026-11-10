@@ -6,7 +6,7 @@
   'use strict';
   var css = ''
     + '#page-dashboard.dp-on{padding:8px 10px}#dash-pro{margin-bottom:6px;font-size:13px}'
-    + '#dash-pro .dp-head{margin-bottom:6px}#dash-pro .dp-title{font-size:18px;background:linear-gradient(90deg,#f5d77a,#c9a24b);-webkit-background-clip:text;background-clip:text;color:transparent}'
+    + '#dash-pro .dp-head{margin-bottom:6px}#dash-pro .dp-title{font-size:18px;color:var(--text,#1c2a24)}'
     + '#dash-pro .dp-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-bottom:6px}'
     + '#dash-pro .dp-grid2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px;margin-bottom:6px}'
     + '#dash-pro .dp-card{padding:6px 10px;border-radius:12px;border-left:4px solid var(--v2c,#c9a24b);background:linear-gradient(135deg,var(--v2g,rgba(201,162,75,.12)),var(--card) 62%);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 16px rgba(0,0,0,.14);transition:transform .15s,box-shadow .15s}'

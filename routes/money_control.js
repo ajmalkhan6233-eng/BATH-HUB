@@ -121,7 +121,7 @@ router.put('/bank-accounts/:id/balance', async (req, res) => {
 });
 
 // ═══════════════════════ CHEQUE HOLD (extends cheque_register) ═══════════════════════
-router.post('/cheque-register/:id/hold', async (req, res) => {
+router.post('/cheque-register/:id/hold', (req, res, next) => { const u = req.session && req.session.user; return u && !['admin', 'owner'].includes(u.role) ? res.status(403).json({ error: 'Owner only' }) : next(); }, async (req, res) => {
     try {
         const { new_due_date } = req.body;
         if (!new_due_date) return res.status(400).json({ error: 'new_due_date is required' });

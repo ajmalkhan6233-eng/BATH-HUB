@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script>if (window.top === window.self) location.replace('/owner#/shopcards');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop Cards — Royal Bath Hub</title>
+<style>
+  :root{--bg:var(--bg-page,#f6f7f5);--card:var(--card,#fff);--tx:var(--text,#1c2a24);--mut:#6b7a73;--ac:#0a6b4a;--bd:#dfe5e1;--gold:#c9a227}
+  @media (prefers-color-scheme:dark){:root{--bg:var(--bg-page,#10181a);--card:var(--card,#1a2427);--tx:var(--text,#e8f0ec);--mut:#9db0a8;--bd:#2a3a3e}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:12px 16px 40px}h1{font-size:20px;margin:6px 0 10px}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1}
+  button{font:inherit;border:0;border-radius:12px;padding:11px 14px;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ac);border:1px solid var(--ac)}button.on{background:var(--ac);color:#fff}
+  input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:11px;margin:4px 0 8px}
+  .panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+  .pick{max-height:34vh;overflow:auto}.it{display:flex;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--bd);cursor:pointer}.it b{flex:1}.it small{color:var(--mut)}
+  .mut{color:var(--mut);font-size:14px}
+  /* the cards (same on screen and on paper) */
+  .sheet{display:grid;gap:8px;margin:12px 0}
+  .c{background:#0d0d0d;color:#f5e6b3;border:2px solid var(--gold);border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;overflow:hidden}
+  .c .shop{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .c .big{font-size:22px;font-weight:800;line-height:1.15;color:#fff;overflow-wrap:anywhere}
+  .c .price{font-size:30px;font-weight:900;color:var(--gold)}
+  .c .sm{font-size:12px;color:#d9cfa8;line-height:1.35}
+  .sheet.info{grid-template-columns:repeat(2,1fr)}.sheet.info .c{min-height:130px}
+  .sheet.price,.sheet.offer{grid-template-columns:repeat(2,1fr)}.sheet.price .c,.sheet.offer .c{min-height:200px}
+  @media (max-width:480px){.sheet.info,.sheet.price,.sheet.offer{grid-template-columns:1fr}}
+  @media print{
+    @page{size:A4;margin:8mm}
+    body{background:#fff}.wrap{max-width:none;padding:0}.noprint{display:none!important}
+    .sheet{gap:4mm;margin:0}.sheet.info{grid-template-columns:repeat(2,89mm)}.sheet.info .c{height:51mm;min-height:0}
+    .sheet.price,.sheet.offer{grid-template-columns:repeat(2,96mm)}.sheet.price .c,.sheet.offer .c{height:132mm;min-height:0}
+    .c{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="noprint">
+    <h1>Shop Cards 🪪</h1>
+    <div class="tabs"><button class="on" data-t="info">Shop card</button><button class="ghost" data-t="price">Price cards</button><button class="ghost" data-t="offer">Offer card</button></div>
+    <div class="panel" id="p-info"><p class="mut">Name, address, hours, shop number. 10 cards on one A4 page.</p><label class="mut" for="copies">How many cards (1 to 10)</label><input id="copies" type="number" min="1" max="10" value="10"></div>
+    <div class="panel" id="p-price" hidden><input id="q" type="search" placeholder="Search an item to add" autocomplete="off"><div class="pick" id="pick"></div><p class="mut" id="chosen">No items yet.</p></div>
+    <div class="panel" id="p-offer" hidden><input id="oh" maxlength="60" placeholder="Headline, e.g. Opening week offer"><textarea id="ot" maxlength="240" rows="3" placeholder="Words on the card"></textarea><input id="ov" maxlength="40" placeholder="Valid until (optional)"></div>
+    <div class="panel"><button id="print">🖨 Print</button> <span class="mut">On iPhone: Share, then Print.</span></div>
+  </div>
+  <div id="sheet"></div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var SHOP = { name: 'Royal Bath Hub', addr: 'No. 173/1, Kandy Road, Thihariya', phone: '074 035 5536', hours: 'Open 8:30 AM – 8:00 PM', mail: 'Royalbathhub1@gmail.com' };
+  var $ = function (id) { return document.getElementById(id); }, tab = 'info', products = [], chosen = [];
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function rs(v) { return 'Rs ' + Math.round(Number(v) || 0).toLocaleString('en-LK'); }
+  function draw() {
+    var h = '';
+    if (tab === 'info') {
+      var n = Math.max(1, Math.min(10, parseInt($('copies').value, 10) || 10)), one = '<div class="c"><div class="shop">' + esc(SHOP.name) + '</div><div><div class="big">Bathroom fittings &amp; tiles</div></div><div class="sm">' + esc(SHOP.addr) + '<br>' + esc(SHOP.hours) + '<br><b>' + esc(SHOP.phone) + '</b> · ' + esc(SHOP.mail) + '</div></div>';
+      for (var i = 0; i < n; i++) h += one; h = '<div class="sheet info">' + h + '</div>';
+    } else if (tab === 'price') {
+      h = chosen.length ? '<div class="sheet price">' + chosen.map(function (p) { return '<div class="c"><div class="shop">' + esc(SHOP.name) + '</div><div class="big">' + esc(p.name) + '</div><div><div class="price">' + rs(p.selling_price) + '</div><div class="sm">Code ' + esc(p.item_code) + ' · ' + esc(SHOP.phone) + '</div></div></div>'; }).join('') + '</div>' : '<p class="mut noprint">Pick items above to see price cards.</p>';
+    } else {
+      var hd = $('oh').value.trim(), tx = $('ot').value.trim(), vu = $('ov').value.trim(), c = '<div class="c"><div class="shop">' + esc(SHOP.name) + '</div><div><div class="big">' + esc(hd || 'Your headline here') + '</div><div class="sm" style="font-size:14px;margin-top:8px">' + esc(tx).replace(/\n/g, '<br>') + '</div></div><div class="sm">' + (vu ? 'Valid until ' + esc(vu) + '<br>' : '') + esc(SHOP.addr) + '<br><b>' + esc(SHOP.phone) + '</b></div></div>';
+      h = '<div class="sheet offer">' + c + c + c + c + '</div>';
+    }
+    $('sheet').innerHTML = h;
+  }
+  function list() {
+    var t = $('q').value.trim().toLowerCase(); if (t.length < 2) { $('pick').innerHTML = '<p class="mut">Type 2 letters or more</p>'; return; }
+    var r = products.filter(function (p) { return String(p.name).toLowerCase().indexOf(t) > -1 || String(p.item_code).toLowerCase().indexOf(t) > -1; }).slice(0, 25);
+    $('pick').innerHTML = r.length ? r.map(function (p) { return '<div class="it" data-c="' + esc(p.item_code) + '"><b>' + esc(p.name) + '</b><small>' + rs(p.selling_price) + '</small></div>'; }).join('') : '<p class="mut">Nothing found</p>';
+  }
+  function chosenTxt() { $('chosen').innerHTML = chosen.length ? chosen.map(function (p) { return esc(p.name) + ' <a href="#" data-x="' + esc(p.item_code) + '">remove</a>'; }).join(' · ') : 'No items yet.'; }
+  document.querySelector('.tabs').onclick = function (e) {
+    var b = e.target.closest('[data-t]'); if (!b) return; tab = b.dataset.t;
+    [].forEach.call(document.querySelectorAll('.tabs button'), function (x) { x.className = x === b ? 'on' : 'ghost'; });
+    ['info', 'price', 'offer'].forEach(function (k) { $('p-' + k).hidden = k !== tab; }); draw();
+  };
+  $('copies').oninput = draw; ['oh', 'ot', 'ov'].forEach(function (k) { $(k).oninput = draw; });
+  $('q').oninput = list;
+  $('pick').onclick = function (e) { var r = e.target.closest('[data-c]'); if (!r) return; var p = products.filter(function (x) { return String(x.item_code) === r.dataset.c; })[0]; if (p && chosen.indexOf(p) < 0 && chosen.length < 8) chosen.push(p); chosenTxt(); draw(); };
+  $('chosen').onclick = function (e) { var a = e.target.closest('[data-x]'); if (!a) return; e.preventDefault(); chosen = chosen.filter(function (x) { return String(x.item_code) !== a.dataset.x; }); chosenTxt(); draw(); };
+  $('print').onclick = function () { window.print(); };
+  fetch('/api/products', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { products = Array.isArray(d) ? d : []; }).catch(function () { $('pick').innerHTML = '<p class="mut">Could not load items</p>'; });
+  draw();
+})();
+</script>
+</body>
+</html>

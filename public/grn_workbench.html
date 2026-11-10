@@ -210,6 +210,7 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 <div id="printArea"></div>
 <datalist id="vlist"></datalist>
 
+<script src="/grn_match.js"></script>
 <script>
 (function(){
 var CLOUD=location.protocol!=='file:';if(/[?&]embed=1/.test(location.search))document.body.classList.add('embed');
@@ -298,7 +299,7 @@ function applyRead(d,o){
  var usual=vinfo[String(d.vendor||'').toLowerCase()];
  if(o.credit_days!=null){d.credit_days=o.credit_days;got.push('credit days')}else if(usual!=null){d.credit_days=usual;got.push('credit days (vendor usual)')}else miss.push('credit days');
  if(o.total){d.paper=o.total;got.push('paper total')}else miss.push('paper total');
- if(d.kind==='GRN'){if(o.lines&&o.lines.length){d.lines=o.lines.map(function(l){l.sell=0;return l});got.push(o.lines.length+' lines')}else miss.push('lines')}
+ if(d.kind==='GRN'){if(o.lines&&o.lines.length){d.lines=o.lines.map(function(l){l.sell=0;return l});got.push(o.lines.length+' lines');if(window.GrnMatch)GrnMatch.run(d,render)}else miss.push('lines')}
  else if(o.total){d.amount=o.total}
  d.dup=null;if(d.status==='dup')d.status='draft';
  return{got:got,miss:miss}}
@@ -419,6 +420,7 @@ function mkRow(d,l,k){
   c(7,'Return',l.ret||'','number',function(v){l.ret=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
   c(8,'Damage',l.dmg||'','number',function(v){l.dmg=Number(v)||0;re()},{style:'width:64px',placeholder:'0'}),
   h('td',{},[h('button',{class:'d',text:'X',title:'Delete line','aria-label':'Delete line '+(k+1),style:'min-height:40px;padding:2px 12px',onclick:function(){d.lines.splice(k,1);if(!d.lines.length)d.lines.push(newLine());save();render()}})])].forEach(function(td){tr.appendChild(td)});
+ if(window.GrnMatch)GrnMatch.badge(tr,d,l,render);
  return tr}
 function focusCell(r,c){var e=$('right').querySelector('[data-r="'+r+'"][data-c="'+c+'"]');if(e){e.focus();try{e.select()}catch(_){}}}
 function focusFirst(){if(window.matchMedia&&matchMedia('(pointer:fine)').matches){var e=$('right').querySelector('input');if(e)e.focus()}}

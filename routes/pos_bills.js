@@ -62,8 +62,11 @@ pool.query(`
   // additive columns: which bills were given a discount above the cap (by the owner), and which catalogue item a line was
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS discount_override BOOLEAN NOT NULL DEFAULT FALSE`))
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
+  .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS unit_cost NUMERIC(14,4)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
+  // was stock taken out for this bill? (NULL = older bill, unknown). Void and edit give back only what was taken.
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN`))
   // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
   // payment types (cheque, credit, split): NEW table only, no ALTER. Bills without rows here read exactly as before.
   .then(() => pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_payments (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), method VARCHAR(20) NOT NULL, amount NUMERIC(12,2) NOT NULL, reference TEXT)`))
@@ -201,12 +204,14 @@ router.post('/pos-bills', async (req, res) => {
 
         // Price guard: the server checks the price, not just the browser. Same approval flow as a big discount (the screen already asks the owner).
         if (!override) {
-            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)));
+            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)), { ownerSale: canOverride(req) || !(req.session && req.session.user) });
             if (bad) {
                 if (!(canOverride(req) && req.body.override === true)) {
                     return res.status(409).json({
                         error: bad.reason === 'zero'
                             ? `${bad.line.item_name}: a price of 0 needs the owner's approval.`
+                            : bad.reason === 'no_code'
+                            ? `${bad.line.item_name}: a big line with no item code needs the owner's approval` + (canOverride(req) ? '. You can approve it as the owner.' : '.')
                             : `${bad.line.item_name}: price ${bad.price.toFixed(2)} is below the allowed ${bad.floor.toFixed(2)}` + (canOverride(req) ? '. You can approve it as the owner.' : '. Ask the owner to approve it.'),
                         code: 'discount_over_cap', max_allowed: null, can_override: canOverride(req),
                     });
@@ -234,10 +239,10 @@ router.post('/pos-bills', async (req, res) => {
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : (payment_method || 'cash'), notes || null, override]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock]);
         const billId = billRes.rows[0].id;
         if (payInfo) {
             for (const p of payInfo.rows) {
@@ -251,13 +256,25 @@ router.post('/pos-bills', async (req, res) => {
         }
 
         for (const l of lines) {
+            // Audit D: keep the item's average cost AT THE MOMENT OF SALE on the line, so past profit does not move when a later GRN changes the cost.
+            let unitCost = null;
+            if (l.item_code) {
+                await client.query('SAVEPOINT cost_read');
+                try { const c = await client.query(`SELECT avg_cost FROM products WHERE item_code = $1 AND active = true LIMIT 1`, [l.item_code]); if (c.rows[0] && c.rows[0].avg_cost != null) unitCost = c.rows[0].avg_cost; await client.query('RELEASE SAVEPOINT cost_read'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT cost_read').catch(() => {}); }
+            }
             await client.query(`
-                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total)
-                VALUES ($1,$2,$3,$4,$5,$6)
-            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
+                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total, unit_cost)
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
+            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total, unitCost]);
             // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
             // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
-            if (l.item_code) { try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); } catch (e) { console.error('[oversold]', e.message); } }
+            // A side-check: if it fails it must not poison the bill's transaction, so it runs inside its own savepoint.
+            if (l.item_code) {
+                await client.query('SAVEPOINT oversold_check');
+                try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); await client.query('RELEASE SAVEPOINT oversold_check'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT oversold_check').catch(() => {}); console.error('[oversold]', e.message); }
+            }
             if (deductStock && l.item_code) {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
             }
@@ -313,10 +330,20 @@ router.get('/pos-bills/summary', async (req, res) => {
         if (!isDay(from) || !isDay(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
         if (to < from) return res.status(400).json({ error: 'to cannot be before from' });
         const r = await pool.query(
-            `SELECT COALESCE(payment_method, 'cash') AS payment_method, COUNT(*) AS bills,
+            `SELECT lower(COALESCE(payment_method, 'cash')) AS payment_method, COUNT(*) AS bills,
                     SUM(subtotal) AS subtotal, SUM(discount_amount) AS discount, SUM(total) AS total
              FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE v.bill_id IS NULL AND created_at::date BETWEEN $1::date AND $2::date
-             GROUP BY COALESCE(payment_method, 'cash') ORDER BY 1`, [from, to]);
+             GROUP BY lower(COALESCE(payment_method, 'cash')) ORDER BY 1`, [from, to]);
+        // Money by what was really paid (split bills count under each part). Bills with no payment rows use their label.
+        const pm = await pool.query(
+            `SELECT method, COUNT(DISTINCT bill_id) AS bills, SUM(amount) AS amount FROM (
+               SELECT p.bill_id, lower(p.method) AS method, p.amount FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id
+                 LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date
+               UNION ALL
+               SELECT b.id, lower(COALESCE(b.payment_method,'cash')), b.total FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+                 LEFT JOIN (SELECT DISTINCT bill_id FROM pos_bill_payments) pp ON pp.bill_id = b.id
+                 WHERE v.bill_id IS NULL AND pp.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date) z GROUP BY method ORDER BY 1`, [from, to]).catch(() => ({ rows: [] }));
+        const by_method = pm.rows.map(x => ({ method: x.method, bills: Number(x.bills), amount: money2(x.amount) }));
         const by_payment = r.rows.map(x => ({
             payment_method: x.payment_method, bills: Number(x.bills),
             subtotal: money2(x.subtotal), discount: money2(x.discount), total: money2(x.total),
@@ -324,7 +351,7 @@ router.get('/pos-bills/summary', async (req, res) => {
         const sum = k => money2(by_payment.reduce((a, x) => a + x[k], 0));
         res.json({
             from, to, bills: by_payment.reduce((a, x) => a + x.bills, 0),
-            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment,
+            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment, by_method,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

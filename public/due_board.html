@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<script>if (window.top === window.self) location.replace('/owner#/dueboard');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Due Board — Royal Bath Hub</title>
+<style>
+  :root{--bg:var(--bg-page,#f6f7f5);--card:var(--card,#fff);--tx:var(--text,#1c2a24);--mut:#6b7a73;--ac:#0a6b4a;--bd:#dfe5e1;--red:#b91c1c;--amb:#b45309}
+  @media (prefers-color-scheme:dark){:root{--bg:var(--bg-page,#10181a);--card:var(--card,#1a2427);--tx:var(--text,#e8f0ec);--mut:#9db0a8;--bd:#2a3a3e;--red:#f87171;--amb:#fbbf24}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:12px 16px 40px}h1{font-size:20px;margin:6px 0 4px}.mut{color:var(--mut);font-size:14px}
+  .tot{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.tot div{flex:1;min-width:120px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}.tot b{display:block;font-size:20px}
+  .col{margin:14px 0}.col h2{font-size:15px;margin:0 0 6px;display:flex;justify-content:space-between}
+  .it{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--ac);border-radius:12px;padding:9px 12px;margin:6px 0;display:flex;gap:10px;align-items:center;box-shadow:0 1px 6px #0001}
+  .it .g{flex:1;min-width:0}.it b{display:block;overflow-wrap:anywhere}.it small{color:var(--mut)}.it .a{font-weight:800;white-space:nowrap}
+  .over .it{border-left-color:var(--red)}.week .it{border-left-color:var(--amb)}
+  .k{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mut)}
+  button{font:inherit;border:1px solid var(--ac);background:transparent;color:var(--ac);border-radius:12px;padding:8px 14px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Due Board 🗓</h1><p class="mut" id="sub">Vendor bills and cheques, by due date. View only.</p>
+  <div class="tot" id="tot"></div>
+  <div id="cols"></div>
+  <button id="re">Refresh</button>
+</div>
+<script>
+(function () {
+  'use strict';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function rs(v) { return 'Rs ' + Math.round(Number(v) || 0).toLocaleString('en-LK'); }
+  function dd(s) { return s ? new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'no date'; }
+  function days(a, b) { return Math.round((new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5); }
+  function load() {
+    fetch('/api/due-board', { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Could not load'); return j; }); }).then(function (d) {
+      var rows = d.bills.map(function (b) { return { k: 'Bill', t: b.vendor + (b.bill_no ? ' · ' + b.bill_no : ''), due: b.due, amount: b.amount }; })
+        .concat(d.cheques.map(function (c) { return { k: 'Cheque', t: c.payee + (c.cheque_no ? ' · #' + c.cheque_no : '') + (c.status === 'held' ? ' (held)' : ''), due: c.due, amount: c.amount }; }));
+      var G = { over: { n: 'Overdue', r: [] }, week: { n: 'Next 7 days', r: [] }, next: { n: 'Days 8 to 14', r: [] }, later: { n: 'Later or no date', r: [] } };
+      rows.forEach(function (r) { var x = r.due ? days(r.due, d.today) : 999; (x < 0 ? G.over : x <= 7 ? G.week : x <= 14 ? G.next : G.later).r.push(r); });
+      var sum = function (a) { return a.reduce(function (s, r) { return s + r.amount; }, 0); };
+      $t('tot', '<div><span class="k">Overdue</span><b style="color:var(--red)">' + rs(sum(G.over.r)) + '</b></div><div><span class="k">Next 7 days</span><b>' + rs(sum(G.week.r)) + '</b></div><div><span class="k">All due</span><b>' + rs(sum(rows)) + '</b></div>');
+      $t('cols', Object.keys(G).map(function (k) {
+        var g = G[k]; if (!g.r.length) return '';
+        return '<div class="col ' + k + '"><h2><span>' + g.n + '</span><span>' + rs(sum(g.r)) + '</span></h2>' + g.r.map(function (r) { return '<div class="it"><div class="g"><span class="k">' + r.k + '</span><b>' + esc(r.t) + '</b><small>due ' + esc(dd(r.due)) + (r.due && days(r.due, d.today) < 0 ? ' · ' + (-days(r.due, d.today)) + ' days late' : '') + '</small></div><div class="a">' + rs(r.amount) + '</div></div>'; }).join('') + '</div>';
+      }).join('') || '<p class="mut">Nothing due. All clear.</p>');
+    }).catch(function (e) { $t('cols', '<p style="color:var(--red)">' + esc(e.message) + '</p>'); });
+  }
+  function $t(id, h) { document.getElementById(id).innerHTML = h; }
+  document.getElementById('re').onclick = load; load();
+})();
+</script>
+</body>
+</html>

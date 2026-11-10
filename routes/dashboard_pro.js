@@ -40,11 +40,11 @@ router.get('/dashboard-pro', ownerOnly, async (req, res) => {
             AND NOT EXISTS (SELECT 1 FROM pos_bill_payments p WHERE p.bill_id = b.id)) z GROUP BY method ORDER BY 2 DESC`)),
     safe('profit', () => q(`SELECT
         COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date = CURRENT_DATE),0) AS rev_today,
-        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date = CURRENT_DATE AND p.avg_cost > 0),0) AS rev_cost_today,
-        COALESCE(SUM(i.qty * p.avg_cost) FILTER (WHERE b.created_at::date = CURRENT_DATE AND p.avg_cost > 0),0) AS cost_today,
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date = CURRENT_DATE AND COALESCE(NULLIF(i.unit_cost,0), p.avg_cost) > 0),0) AS rev_cost_today,
+        COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost)) FILTER (WHERE b.created_at::date = CURRENT_DATE AND COALESCE(NULLIF(i.unit_cost,0), p.avg_cost) > 0),0) AS cost_today,
         COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date),0) AS rev_month,
-        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND p.avg_cost > 0),0) AS rev_cost_month,
-        COALESCE(SUM(i.qty * p.avg_cost) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND p.avg_cost > 0),0) AS cost_month
+        COALESCE(SUM(i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND COALESCE(NULLIF(i.unit_cost,0), p.avg_cost) > 0),0) AS rev_cost_month,
+        COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost)) FILTER (WHERE b.created_at::date >= date_trunc('month', CURRENT_DATE)::date AND COALESCE(NULLIF(i.unit_cost,0), p.avg_cost) > 0),0) AS cost_month
       FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code
       JOIN pos_bills b ON b.id = i.bill_id ${NV} AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date`)),
     safe('top', () => q(`SELECT i.item_name AS name, SUM(i.qty) AS qty, SUM(i.line_total) AS revenue FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id ${NV}
