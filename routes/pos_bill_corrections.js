@@ -17,6 +17,8 @@ const roleOf = req => (req.session && req.session.user && req.session.user.role)
 const isOwner = req => roleOf(req) === 'admin';
 const whoOf = req => (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || 'unknown';
 const deductsStock = () => String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
+// Was stock taken out for THIS bill? Newer bills remember it (pos_bills.stock_deducted); older bills fall back to today's setting.
+const billDeducted = b => (b.stock_deducted === null || b.stock_deducted === undefined ? deductsStock() : !!b.stock_deducted);
 
 function ownerOnly(req, res, next) {
     if (!isOwner(req)) return res.status(403).json({ error: 'Only the admin (shop owner) can correct a bill.' });
@@ -87,12 +89,16 @@ router.post('/pos-bills/:id/void', ownerOnly, async (req, res) => {
         if (!bill) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }); }
         if (await isVoid(client, bill.id)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill is already void.' }); }
         const items = await itemsOf(client, bill.id);
-        const restored = deductsStock() ? await giveStockBack(client, items) : [];
+        const restored = billDeducted(bill) ? await giveStockBack(client, items) : [];
         await client.query(`INSERT INTO pos_bill_voids (bill_id, reason, voided_by, stock_restored) VALUES ($1,$2,$3,$4)`,
             [bill.id, reason, whoOf(req), JSON.stringify(restored)]);
         await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'void',$2,$3,$4)`,
             [bill.id, reason, whoOf(req), JSON.stringify({ bill, items })]);
         await require('../utils/posCredit').voidReceivable(client, bill.bill_number);   // a void takes back what the customer owed on it
+        // items still "owed to the customer" on this bill are no longer owed (own savepoint: the table may not exist yet)
+        await client.query('SAVEPOINT void_oversold');
+        try { await client.query(`UPDATE oversold_owed SET status='DONE', how='bill_voided', resolved_at=NOW() WHERE bill_number = $1 AND status = 'OPEN'`, [bill.bill_number]); await client.query('RELEASE SAVEPOINT void_oversold'); }
+        catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_oversold').catch(() => {}); }
         await client.query('COMMIT');
         res.json({ ok: true, bill_id: bill.id, bill_number: bill.bill_number, status: 'VOID', reason, voided_by: whoOf(req), stock_restored: restored });
     } catch (e) {
@@ -140,7 +146,7 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'edit',$2,$3,$4)`,
             [bill.id, reason, whoOf(req), JSON.stringify({ bill, items: oldItems })]);
 
-        if (deductsStock()) {
+        if (billDeducted(bill)) {
             await giveStockBack(client, oldItems);
             for (const l of p.lines) {
                 if (l.item_code) await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
@@ -154,12 +160,12 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         await client.query(
             `UPDATE pos_bills SET customer_name=$1, customer_phone=$2, subtotal=$3, discount_pct=$4, discount_amount=$5, total=$6,
                     payment_method=$7, notes=$8, discount_override=$9 WHERE id=$10`,
-            [p.customer_name, p.customer_phone, p.subtotal, p.pct, p.discount_amount, p.total, p.payment_method, p.notes, override || bill.discount_override, bill.id]);
+            [p.customer_name, p.customer_phone, p.subtotal, p.pct, p.discount_amount, p.total, pmEdit, p.notes, override || bill.discount_override, bill.id]);
         await client.query('COMMIT');
 
         const nb = (await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [bill.id])).rows[0];
         const ni = (await pool.query(`SELECT id, item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;
-        res.json({ ...nb, items: ni, edited_by: whoOf(req), stock_adjusted: deductsStock() });
+        res.json({ ...nb, items: ni, edited_by: whoOf(req), stock_adjusted: billDeducted(bill) });
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
         res.status(500).json({ error: `Could not edit the bill: ${e.message}` });

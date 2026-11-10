@@ -64,6 +64,8 @@ pool.query(`
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
+  // was stock taken out for this bill? (NULL = older bill, unknown). Void and edit give back only what was taken.
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN`))
   // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
   // payment types (cheque, credit, split): NEW table only, no ALTER. Bills without rows here read exactly as before.
   .then(() => pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_payments (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), method VARCHAR(20) NOT NULL, amount NUMERIC(12,2) NOT NULL, reference TEXT)`))
@@ -234,10 +236,10 @@ router.post('/pos-bills', async (req, res) => {
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : (payment_method || 'cash'), notes || null, override]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock]);
         const billId = billRes.rows[0].id;
         if (payInfo) {
             for (const p of payInfo.rows) {
@@ -257,7 +259,12 @@ router.post('/pos-bills', async (req, res) => {
             `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
             // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
             // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
-            if (l.item_code) { try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); } catch (e) { console.error('[oversold]', e.message); } }
+            // A side-check: if it fails it must not poison the bill's transaction, so it runs inside its own savepoint.
+            if (l.item_code) {
+                await client.query('SAVEPOINT oversold_check');
+                try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); await client.query('RELEASE SAVEPOINT oversold_check'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT oversold_check').catch(() => {}); console.error('[oversold]', e.message); }
+            }
             if (deductStock && l.item_code) {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
             }

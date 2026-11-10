@@ -16,6 +16,8 @@
 const { newDb, DataType } = require('pg-mem');
 
 const REWRITES = [
+    // pg-mem has no savepoints: make them no-ops (real Postgres behaviour is checked in scripts/dev/savepoint_realpg.js)
+    [/^\s*(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT)\s+\w+\s*;?\s*$/i, 'SELECT 1'],
     [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
     [/item_code ~ '\^\[0-9\]\{1,9\}\$'/g, 'item_code IS NOT NULL'],
     [/\(SELECT SUM\((?:pm|p)\.amount\) FROM investor_loan_payments (?:pm|p) WHERE (?:pm|p)\.loan_id = l\.id\)/g, '0'],
