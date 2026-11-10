@@ -2,7 +2,7 @@
 // no Meta Business API account needed). Bridges inbound messages to server.js's
 // /webhook/whatsapp, and exposes POST /send for outbound (matches layla.js's
 // WHATSAPP_API_URL default of http://localhost:3001/send).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 require('./utils/timezone');
 const { todayLK } = require('./utils/lkTime');
 const express = require('express');

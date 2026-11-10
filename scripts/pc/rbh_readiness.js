@@ -6,7 +6,7 @@ const home = path.join(os.homedir(), '.claude');
 const isPC = process.platform === 'win32';
 const rd = (p) => { try { return fs.readFileSync(p, 'utf8'); } catch (e) { return ''; } };
 const ex = (p) => fs.existsSync(p);
-const run = (c) => { try { return cp.execSync(c, { stdio: ['ignore', 'pipe', 'ignore'], timeout: 8000 }).toString(); } catch (e) { return null; } };
+const run = (c) => { try { return cp.execSync(c, { stdio: ['ignore', 'pipe', 'ignore'], timeout: 8000, windowsHide: true }).toString(); } catch (e) { return null; } };
 const ping = () => new Promise((res) => {
   const r = http.get('http://localhost:3100/health', { timeout: 2500 }, (x) => { res(x.statusCode === 200); x.resume(); });
   r.on('error', () => res(false)); r.on('timeout', () => { r.destroy(); res(false); });

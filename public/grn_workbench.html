@@ -173,7 +173,19 @@ html[data-theme="light"] .row.actions,html[data-theme="sand"] .row.actions,html[
 .scroll.lines{overflow-x:auto}
 /* column titles stay pinned while the lines scroll (AJ 8 Nov): the lines box scrolls inside itself so the sticky header has something to stick to */
 @media(min-width:641px){.scroll.lines{max-height:calc(100dvh - 330px)!important;min-height:240px;overflow:auto!important}.scroll.lines th{position:sticky;top:0;z-index:5;background:var(--c-surface-2,#eee);box-shadow:0 2px 0 var(--c-gold,#c9a24b)}}
-</style><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
+</style><style id="grn-polish">
+/* 10 Nov: photo box small until a photo is added; a bit less space around everything (desktop); lines get a full-page mode */
+.frame{height:84px}.frame.has{height:430px}
+@media(min-width:900px){.frame.has{height:300px}:root{--tap:32px;--s2:4px;--s3:7px;--s4:10px;--s5:12px}.wrap{padding:3px}.card{padding:6px 7px}.dr{padding:3px 7px;margin-bottom:3px}input,select,button{min-height:30px}.row{margin:3px 0}}
+@media(max-width:640px){.frame{height:84px}.frame.has{height:300px}}
+.fsbar{display:none}
+.scroll.lines.fullpage{position:fixed!important;inset:0;z-index:9999;max-height:none!important;height:100dvh;margin:0;border:0!important;border-radius:0;background:var(--c-surface,#fff);overflow:auto!important}
+.scroll.lines.fullpage .fsbar{display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:7;padding:6px 8px;background:var(--c-ink,#111);color:var(--c-ink-text,#fff);border-bottom:3px solid var(--c-gold,#c9a227)}
+.scroll.lines.fullpage .fsbar b{flex:1;color:var(--c-gold,#c9a227)}
+@media(min-width:641px){.scroll.lines.fullpage th{top:46px!important}}
+body.lines-full{overflow:hidden}
+</style>
+<script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 <script src="/ui/fx-legacy.js" defer></script>
 </head><body><h1 style="margin:8px 12px 0;font-size:1.4rem">GRN (goods received)</h1>
 <header><b>Royal Bath Hub</b><span>GRN workbench (build 69): photo, fix, press OK. Nothing is saved before that.</span></header>
@@ -280,7 +292,7 @@ function loadPhoto(file){
   var m=2200,s=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
   cur.photo=c.toDataURL('image/jpeg',0.88);idbPut(cur.id,cur.photo);drawFrame();gm('Photo added. Press Generate to read it, or type it yourself.','')};im.src=r.result};r.readAsDataURL(file)}
 function rotate(dir){if(!cur.photo)return;var im=new Image();im.onload=function(){var c=document.createElement('canvas');c.width=im.height;c.height=im.width;var x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(dir*Math.PI/2);x.drawImage(im,-im.width/2,-im.height/2);cur.photo=c.toDataURL('image/jpeg',0.88);idbPut(cur.id,cur.photo);drawFrame()};im.src=cur.photo}
-function drawFrame(){var f=$('frame');f.textContent='';if(cur.photo||cur.photoUrl){f.appendChild(h('img',{src:cur.photo||cur.photoUrl,alt:'bill'}))}else f.appendChild(h('span',{text:'Choose the bill photo below',style:'color:#4d5c53'}))}
+function drawFrame(){var f=$('frame');f.textContent='';f.classList.toggle('has',!!(cur.photo||cur.photoUrl));if(cur.photo||cur.photoUrl){f.appendChild(h('img',{src:cur.photo||cur.photoUrl,alt:'bill'}))}else f.appendChild(h('span',{text:'Choose the bill photo below',style:'color:#4d5c53'}))}
 function gm(t,cls,retry){var m=$('genmsg');m.style.display=t?'block':'none';m.textContent=t;m.className='msg '+(cls||'');if(t&&cls==='busy')m.appendChild(h('div',{class:'bar'}));if(t&&retry)m.appendChild(h('div',{class:'row'},[h('button',{class:'p',text:'Retry',onclick:retry})]))}
 $('photo').onchange=function(e){if(e.target.files[0])loadPhoto(e.target.files[0]);e.target.value=''};
 $('rotL').onclick=function(){rotate(-1)};$('rotR').onclick=function(){rotate(1)};
@@ -378,7 +390,16 @@ function drawRight(){
    var srAny=d.lines.some(function(l){return l.arrived===false||Number(l.short)>0||Number(l.ret)>0||Number(l.dmg)>0}),srOff=false;try{srOff=localStorage.getItem('grn_sr')==='1'}catch(e){}
    var linesBox=h('div',{class:'scroll lines'+((srAny||srOff)?'':' hide-sr')},[h('table',{},[h('thead',{},[h('tr',{},['#','Code','Item','Qty','Cost each','Discount','Received amount','Sell price','Margin','Arrived?','Short','Return','Damaged pcs',''].map(function(x){return h('th',{text:x})}))]),tb])]);
    var srBtn=h('button',{class:'srtog',text:linesBox.classList.contains('hide-sr')?'+ Short / Return':'- Hide Short / Return',onclick:function(){var on=linesBox.classList.toggle('hide-sr');srBtn.textContent=on?'+ Short / Return':'- Hide Short / Return';try{localStorage.setItem('grn_sr',on?'0':'1')}catch(e){}}});
-   R.appendChild(srBtn);R.appendChild(linesBox);
+   var fsBar=h('div',{class:'fsbar'},[h('button',{text:'\u2190 Back',onclick:function(){setFull(false)}}),h('b',{text:'Lines'}),h('button',{text:'Short / Return',onclick:function(){srBtn.click()}}),h('button',{class:'p',text:'Save',onclick:function(){var ok=document.getElementById('ok');if(ok)ok.click()}})]);
+   linesBox.insertBefore(fsBar,linesBox.firstChild);
+   var fsHome=null;
+   function setFull(on){
+    if(on&&!fsHome){fsHome={p:linesBox.parentNode,n:linesBox.nextSibling};document.body.appendChild(linesBox)}   // out of the card, so it can cover the whole screen
+    if(!on&&fsHome){fsHome.p.insertBefore(linesBox,fsHome.n&&fsHome.n.parentNode===fsHome.p?fsHome.n:null);fsHome=null}
+    linesBox.classList.toggle('fullpage',on);document.body.classList.toggle('lines-full',on)}
+   var fsBtn=h('button',{class:'srtog',text:'\u2922 Full page',title:'Fill the whole screen with the lines (Esc to go back)',onclick:function(){setFull(!linesBox.classList.contains('fullpage'))}});
+   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&linesBox.classList.contains('fullpage'))setFull(false)});
+   R.appendChild(srBtn);R.appendChild(fsBtn);R.appendChild(linesBox);
    R.appendChild(h('div',{class:'row'},[h('button',{text:'+ Add line',onclick:function(){addLine(d)}})]));
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
   }

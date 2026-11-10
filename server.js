@@ -703,6 +703,7 @@ app.use('/api', require('./routes/notifications'));       // routes are relative
 require('./scripts/notify_due_soon').start();
 // Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
 require('./utils/selfRun').start(require('./utils/pool'));
+require('./utils/pocketSnapshot').start(require('./utils/pool'));   // phone app snapshot (does nothing unless POCKET_* are in .env)
 app.use('/api', require('./routes/selfrun'));
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
@@ -1395,7 +1396,7 @@ app.post('/api/process-inbox', (req, res) => {
     if (!ingestScript) {
         return res.status(503).json({ error: 'LOCAL_INGEST_SCRIPT is not configured on this instance.' });
     }
-    execFile('python', [ingestScript], { timeout: 120000 }, (err, stdout, stderr) => {
+    execFile('python', [ingestScript], { timeout: 120000, windowsHide: true }, (err, stdout, stderr) => {
         if (err) return res.status(500).json({ error: err.message, stderr });
         try {
             const lastLine = stdout.trim().split('\n').pop();
