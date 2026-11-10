@@ -1,0 +1,7 @@
+# HANDOFF 10 Nov 2026 evening (chat builder -> next chat)
+Branch claude/layla-chat-8nov, head 5e21bba + docs. Bridge TASK 175 (STATUS: PLAYED) carries everything. PC step: `check bridge`.
+DONE (cloud, tested): Brain 1-5, Shop Cards, Due Board, dashboard; audit A stock per bill, B vendor payment guard, C till summary from payment parts, D cost on bill line (real-PG proof scripts/dev/cost_realpg.js), E price guard + void cancels cheque, F cheque register owner-only + duplicate guard; GRN smart match (grn_match_memory); self-run daily check (utils/selfRun.js, /api/selfrun) with audit + due + yesterday's cash line.
+Known: tests/integration/cheque_clear.test.js is slow (~5 min) on the unchanged code too.
+NEXT (in order): 1 phone-camera barcode scan in POS (ZXing local file, log in docs/INSTALLED.md; iPhone Safari has no BarcodeDetector). 2 reorder suggestions from sales history (owner approves). 3 vendor master table (additive, backfill by name). 4 stock_movements ledger (phased, last). Receipt print layout after printer chosen.
+OPEN FOR AJ: PC `check bridge`; backup password (BACKUP_PASSPHRASE in PC .env, then "run backup"); Google Maps listing + photos; task 157 permission; WhatsApp template approval (unknown); reorder minimums.
+Gemini: answers saved in docs/GEMINI_BLUEPRINT_VERDICT_10NOV2026.md. Do NOT adopt Gemini's server.js or unsourced prices. Brief for Gemini: docs/ARCHITECTURE_FOR_GEMINI_10NOV2026.md.
