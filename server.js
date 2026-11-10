@@ -1396,7 +1396,7 @@ app.post('/api/process-inbox', (req, res) => {
     if (!ingestScript) {
         return res.status(503).json({ error: 'LOCAL_INGEST_SCRIPT is not configured on this instance.' });
     }
-    execFile('python', [ingestScript], { timeout: 120000 }, (err, stdout, stderr) => {
+    execFile('python', [ingestScript], { timeout: 120000, windowsHide: true }, (err, stdout, stderr) => {
         if (err) return res.status(500).json({ error: err.message, stderr });
         try {
             const lastLine = stdout.trim().split('\n').pop();

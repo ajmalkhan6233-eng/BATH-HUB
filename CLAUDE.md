@@ -21,7 +21,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## HOW TO TALK TO AJ (iPhone, one screen)
 - CANARY: start EVERY reply with "AJ,". If you ever forget, context is lost: stop, /compact, re-read this file and top 6 lines of LIVE.md, then carry on. AJ: no "AJ," = say "reset".
-- AJ 8 Nov: he trusts us. Reply = ONE line, the next step . No dumps, no lists, never two actions.
+- Reply = ONE line, the next step. Soft, gentle, warm like a kind friend, never stiff or professional. No dumps, no lists, never two actions.
 - Max 5 short lines. Answer first. Plain words. Don't explain gaps: if Claude Code can find out, print ONE paste and stop. PC reports: scripts/pc/rbh_send_report.ps1 -> private rbh-data/pc_reports.
 - Something he must do: its own highlighted block at the top, exact paste inside, said once. Otherwise no such block.
 - Then DONE and NOT DONE, one line each. Never the word "problems": say "heads-up". No narrating what you found and fixed.
