@@ -320,10 +320,20 @@ router.get('/pos-bills/summary', async (req, res) => {
         if (!isDay(from) || !isDay(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
         if (to < from) return res.status(400).json({ error: 'to cannot be before from' });
         const r = await pool.query(
-            `SELECT COALESCE(payment_method, 'cash') AS payment_method, COUNT(*) AS bills,
+            `SELECT lower(COALESCE(payment_method, 'cash')) AS payment_method, COUNT(*) AS bills,
                     SUM(subtotal) AS subtotal, SUM(discount_amount) AS discount, SUM(total) AS total
              FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE v.bill_id IS NULL AND created_at::date BETWEEN $1::date AND $2::date
-             GROUP BY COALESCE(payment_method, 'cash') ORDER BY 1`, [from, to]);
+             GROUP BY lower(COALESCE(payment_method, 'cash')) ORDER BY 1`, [from, to]);
+        // Money by what was really paid (split bills count under each part). Bills with no payment rows use their label.
+        const pm = await pool.query(
+            `SELECT method, COUNT(DISTINCT bill_id) AS bills, SUM(amount) AS amount FROM (
+               SELECT p.bill_id, lower(p.method) AS method, p.amount FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id
+                 LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date
+               UNION ALL
+               SELECT b.id, lower(COALESCE(b.payment_method,'cash')), b.total FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+                 LEFT JOIN (SELECT DISTINCT bill_id FROM pos_bill_payments) pp ON pp.bill_id = b.id
+                 WHERE v.bill_id IS NULL AND pp.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date) z GROUP BY method ORDER BY 1`, [from, to]).catch(() => ({ rows: [] }));
+        const by_method = pm.rows.map(x => ({ method: x.method, bills: Number(x.bills), amount: money2(x.amount) }));
         const by_payment = r.rows.map(x => ({
             payment_method: x.payment_method, bills: Number(x.bills),
             subtotal: money2(x.subtotal), discount: money2(x.discount), total: money2(x.total),
@@ -331,7 +341,7 @@ router.get('/pos-bills/summary', async (req, res) => {
         const sum = k => money2(by_payment.reduce((a, x) => a + x[k], 0));
         res.json({
             from, to, bills: by_payment.reduce((a, x) => a + x.bills, 0),
-            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment,
+            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment, by_method,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

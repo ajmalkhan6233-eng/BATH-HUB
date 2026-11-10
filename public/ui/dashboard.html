@@ -23,7 +23,7 @@ function kp(p){var from=p==='today'?ago(0):p==='week'?ago(6):ago(29),to=ago(0);
  var calls=[RBH.api('/api/pos-bills/summary?from='+from+'&to='+to)];
  if(!RBH.isCashier()){calls.push(RBH.api('/api/vendor360/list').catch(function(){return{vendors:[]};}));}
  Promise.all(calls).then(function(r){var s=r[0],v=(r[1]&&r[1].vendors)||[],due=v.reduce(function(a,x){return a+(x.outstanding_balance||0);},0),chq=v.reduce(function(a,x){return a+(x.cheques_pending||0);},0);
-  var cash=0;(s.by_payment||[]).forEach(function(x){if(x.payment_method==='cash')cash=x.total;});
+  var cash=0;if(s.by_method){s.by_method.forEach(function(x){if(x.method==='cash')cash=x.amount;});}else{(s.by_payment||[]).forEach(function(x){if(x.payment_method==='cash')cash=x.total;});}
   var h='<div class="glass card"><div class="k">Sales</div><div class="v gold">'+M(s.total)+'</div><div class="sub">'+s.bills+' bills</div></div>'+
   '<div class="glass card"><div class="k">Cash in hand (sales)</div><div class="v">'+M(cash)+'</div><div class="sub">cash sales only</div></div>'+
   '<div class="glass card"><div class="k">Discounts given</div><div class="v">'+M(s.discount)+'</div></div>';

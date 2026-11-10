@@ -1391,7 +1391,7 @@ async function stTill() {
   const r = await fetch('/api/pos-bills/summary?date=' + day); const d = await r.json();
   if (!r.ok) { out.textContent = d.error; return; }
   out.innerHTML = `<b>${d.bills} bills</b> · sales ${stMoney(d.subtotal)} · discounts ${stMoney(d.discount)} · <b>total ${stMoney(d.total)}</b><br>` +
-    (d.by_payment.map(p => `${arEsc(p.payment_method)}: ${stMoney(p.total)} (${p.bills})`).join(' · ') || 'No bills that day');
+    ((d.by_method || []).map(p => `${arEsc(p.method)}: ${stMoney(p.amount)} (${p.bills})`).join(' · ') || d.by_payment.map(p => `${arEsc(p.payment_method)}: ${stMoney(p.total)} (${p.bills})`).join(' · ') || 'No bills that day');
 }
 async function loadShopTools() {
   const dEl = document.getElementById('st-day'); if (!dEl.value) { const n = new Date(); dEl.value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
