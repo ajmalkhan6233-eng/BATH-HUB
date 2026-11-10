@@ -39,6 +39,17 @@
   function card(title) { var c = el('div', 'card'); if (title) c.appendChild(el('h2', null, title)); return c; }
   function none() { return el('div', 'dim', 'No data yet'); }
 
+
+  // look only: numbers count up, bar shrinks on scroll
+  function countUp() {
+    document.querySelectorAll('#cards .big, #cards .grid .v').forEach(function (n) {
+      var m = /^Rs ([\d,]+)$/.exec(n.textContent); if (!m || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+      var to = Number(m[1].replace(/,/g, '')), t0 = performance.now(), D = 900;
+      (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = rs(to * e); if (k < 1) requestAnimationFrame(f); else n.textContent = rs(to); })(t0);
+    });
+  }
+  window.addEventListener('scroll', function () { document.body.classList.toggle('scrolled', window.scrollY > 24); }, { passive: true });
+
   function render(s) {
     var box = $('cards'); box.textContent = '';
     var c = card('Today');
@@ -82,6 +93,7 @@
     else t.appendChild(s.top_month ? el('div', 'dim', 'No sales yet') : none());
     box.appendChild(t);
 
+    countUp();
     var w = $('when'); w.textContent = 'Updated ' + ago(s.at);
     var stale = (Date.now() - Date.parse(s.at)) / 60000 > STALE_MIN;
     w.className = 'sub' + (stale ? ' stale' : '');
