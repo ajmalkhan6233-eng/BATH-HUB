@@ -10,3 +10,7 @@ General: sources were page names, not URLs; several numbers have no checkable so
 7 Self-monitoring: /health and backups exist. Missing and worth building: a monthly restore test of the backup into a throwaway database.
 8 Blueprint: ignore the order; our order is in docs/SELF_RUNNING_APP_PLAN_10NOV2026.md.
 Gemini's 5 questions: bills per day, till devices (shared or separate), WhatsApp template status, receipt format. Host is the shop PC (pm2 apex-server).
+
+## Gemini 100-point list + server.js (10 Nov, later)
+Not adopted. server.js replaces the whole app (exact-minute 06:00 trigger, database-clock dates, no login on routes, no Sri Lanka day). Its 100 points: most already exist here (ledger checks, idempotency, role guards, backups, restore test scripts/restore_test.ps1, health, PWA, receipts) or break our rules (Tailwind, Docker/Nginx, JWT/bcrypt, Twilio, Chart.js = new libraries or services, need AJ's OK). Draft GRN already exists in the GRN workbench (photo read -> draft -> Save commits in one transaction).
+Its answers to "5 questions" are Gemini's guesses, not AJ's facts.

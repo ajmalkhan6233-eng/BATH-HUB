@@ -40,6 +40,20 @@ async function dueLine(pool, day) {
   return `DUE: ${overdue ? overdue + ' overdue, ' : ''}${soon} in 3 days (${money(amount)})`;
 }
 
+/** Yesterday's day-close: was cash counted, and does the count match the daily sheet's own expected cash (totals.cash_in_hand)? Read-only. */
+async function closeLine(pool, day) {
+  const y = new Date(Date.parse(day) - 86400000).toISOString().slice(0, 10);
+  let row;
+  try { row = (await pool.query(`SELECT payload FROM daily_entry_live WHERE entry_date = $1`, [y])).rows[0]; } catch (_) { return null; }
+  if (!row) return `CLOSE: no day sheet for ${y}`;
+  const p = row.payload || {};
+  if (p.cash_counted == null || p.cash_counted === '') return `CLOSE: cash not counted on ${y}`;
+  const counted = Number(p.cash_counted), expected = Number(p.totals && p.totals.cash_in_hand);
+  if (!Number.isFinite(counted) || !Number.isFinite(expected)) return null;
+  const diff = Math.round((counted - expected) * 100) / 100;
+  return Math.abs(diff) < 1 ? `CLOSE: ${y} cash matches` : `CLOSE: ${y} cash ${diff > 0 ? 'over' : 'short'} by ${money(Math.abs(diff))} (counted ${money(counted)}, sheet ${money(expected)})`;
+}
+
 /** runOnce: returns { ran, reason?, line? }. runAudit is injectable for tests. */
 async function runOnce(pool, { now = new Date(), runAudit, enqueue } = {}) {
   await ensure(pool);
@@ -51,7 +65,8 @@ async function runOnce(pool, { now = new Date(), runAudit, enqueue } = {}) {
   try {
     const audit = await (runAudit || ((p) => require('./auditInvariants').runAll(p)))(pool);
     const due = await dueLine(pool, day);
-    const line = `${audit.line}\n${due}`;
+    const close = await closeLine(pool, day);
+    const line = [audit.line, due, close].filter(Boolean).join('\n');
     await (enqueue || ((p, t, s) => require('./notify').enqueue(p, t, s)))(pool, line, 'selfrun');
     await pool.query(`INSERT INTO selfrun_log (run_day, status, line, detail) VALUES ($1,'OK',$2,$3)`, [day, line, `red=${audit.red} warn=${audit.warn} ok=${audit.ok}`]);
     return { ran: true, line };
@@ -66,4 +81,4 @@ function start(pool, everyMs = 10 * 60 * 1000) {
   setTimeout(tick, 60 * 1000).unref();
   return setInterval(tick, everyMs).unref();
 }
-module.exports = { runOnce, start, dueLine, resetForTests };
+module.exports = { runOnce, start, dueLine, closeLine, resetForTests };
