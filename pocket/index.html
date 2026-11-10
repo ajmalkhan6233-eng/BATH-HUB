@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RBH Pocket">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>RBH Pocket</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section id="gate" class="gate" hidden>
+  <h1><span>RBH</span> Pocket</h1>
+  <p id="gateText">Enter your passcode</p>
+  <input id="pass" type="password" inputmode="text" autocomplete="current-password" aria-label="Passcode" placeholder="Passcode">
+  <button id="unlock" class="gold">Open</button>
+  <div id="gateMsg" class="msg" role="status"></div>
+</section>
+
+<main id="app" hidden>
+  <header>
+    <div><h1><span>RBH</span> Pocket</h1><div id="when" class="sub" role="status"></div></div>
+    <div class="btns"><button id="refresh" aria-label="Refresh">&#8635;</button><button id="lock" aria-label="Lock">Lock</button></div>
+  </header>
+  <div id="cards"></div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
