@@ -659,6 +659,7 @@ app.use('/api', require('./routes/pc_actions'));      // play buttons: update ap
 app.use('/api', require('./routes/item_codes_fix'));   // item codes: Metro auto, Leo as typed, others TBD (owner)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
 app.use('/api', require('./routes/brain'));   // /api/brain/* (RBH Brain: owner-only private notes, [[links]], #tags)
+app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vendor bills and cheques by due date; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
