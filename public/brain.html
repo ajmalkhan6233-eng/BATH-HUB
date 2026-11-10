@@ -40,7 +40,7 @@
   <h1>RBH Brain 🧠</h1>
   <div id="list">
     <input id="q" type="search" placeholder="Search your notes" autocomplete="off">
-    <div class="chips" id="tags"></div>
+    <div id="due"></div><div class="chips" id="tags"></div>
     <div id="notes"></div>
     <p class="mut" id="empty" hidden>No notes yet. Tap + to write the first one.</p>
     <div class="row"><button class="ghost small" id="showmap">🗺 Map of notes</button><a class="mut" href="/api/brain/export">Download all notes (Markdown)</a></div>
@@ -52,6 +52,7 @@
     <div id="editor" hidden>
       <input id="title" placeholder="Title" maxlength="200">
       <textarea id="body" placeholder="Write here. Link notes with [[Title]]. Add tags like #vendor"></textarea>
+      <div class="row"><label class="mut" for="rem">⏰ Remind me on</label><input id="rem" type="date" style="width:auto;margin:0"></div>
       <div class="row"><button class="ghost small" id="mic" hidden>🎤 Speak</button><span class="mut" id="mictip">Tip: use the 🎤 on your keyboard to speak.</span></div>
       <div class="row"><button id="save">Save</button><button class="ghost" id="cancel">Cancel</button><span class="grow"></span><button class="ghost small" id="del">Delete</button></div>
     </div>
@@ -99,6 +100,7 @@
       $('empty').hidden = d.notes.length > 0 || !!$('q').value || !!curTag;
       $('notes').innerHTML = d.notes.map(function (n) { return '<div class="note" data-id="' + n.id + '"><b>' + (n.pinned ? '📌 ' : '') + esc(n.title) + '</b><small>' + esc(n.snippet) + '</small></div>'; }).join('');
     }).catch(function (e) { $('notes').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+    api('/due').then(function (d) { $('due').innerHTML = d.notes.length ? '<p class="mut">⏰ Due now</p>' + d.notes.map(function (n) { return '<div class="note" data-id="' + n.id + '" style="border-color:#b45309"><b>' + esc(n.title) + '</b><small>' + (n.remind_on < d.today ? 'overdue since ' : 'today ') + esc(n.remind_on) + '</small></div>'; }).join('') : ''; }).catch(function () {});
     api('/tags').then(function (d) {
       $('tags').innerHTML = d.tags.map(function (t) { return '<button class="chip' + (t.tag === curTag ? ' on' : '') + '" data-tag="' + esc(t.tag) + '">#' + esc(t.tag) + ' ' + t.n + '</button>'; }).join('');
     }).catch(function () {});
@@ -108,7 +110,7 @@
     api('/notes/' + id).then(function (d) {
       cur = d; isNew = false; var links = {}; d.links.forEach(function (l) { if (l.id) links[l.key] = l; });
       $('vt').textContent = d.note.title; $('vb').innerHTML = render(d.note.body, links) || '<p class="mut">Empty. Tap Edit.</p>';
-      $('vm').textContent = 'Updated ' + new Date(d.note.updated_at).toLocaleString();
+      $('vm').textContent = 'Updated ' + new Date(d.note.updated_at).toLocaleString() + (d.note.remind_on ? ' · ⏰ remind ' + d.note.remind_on : '');
       $('bl').hidden = !d.backlinks.length;
       $('bls').innerHTML = d.backlinks.map(function (b) { return '<button class="chip" data-id="' + b.id + '">' + esc(b.title) + '</button>'; }).join('');
       $('recs').innerHTML = (d.records || []).map(function (r) { return '<div class="rec"><span class="k">' + esc(r.kind) + '</span><span class="grow"><b>' + esc(r.label) + '</b><small>' + esc(r.facts) + '</small></span><button data-delrec="' + r.ref_id + '" aria-label="Unlink">×</button></div>'; }).join(''); $('pick').hidden = true;
@@ -118,7 +120,7 @@
     }).catch(function (e) { alert(e.message); });
   }
   function startEdit(n) {
-    isNew = !n; $('title').value = n ? n.note.title : ''; $('body').value = n ? n.note.body : '';
+    isNew = !n; $('title').value = n ? n.note.title : ''; $('body').value = n ? n.note.body : ''; $('rem').value = n && n.note.remind_on ? n.note.remind_on : '';
     $('editor').hidden = false; $('viewer').hidden = true; $('edit').hidden = true; $('pin').hidden = true; $('del').hidden = isNew; show('note'); $('msg').textContent = '';
     (isNew ? $('title') : $('body')).focus();
   }
@@ -127,7 +129,7 @@
   $('edit').onclick = function () { startEdit(cur); };
   $('cancel').onclick = function () { if (isNew || !cur) { show('list'); } else { openNote(cur.note.id); } };
   $('save').onclick = function () {
-    var body = { title: $('title').value, body: $('body').value };
+    var body = { title: $('title').value, body: $('body').value, remind_on: $('rem').value || '' };
     var p = isNew ? api('/notes', { method: 'POST', body: body }) : api('/notes/' + cur.note.id, { method: 'PUT', body: body });
     p.then(function (r) { openNote(isNew ? r.id : cur.note.id); }).catch(function (e) { $('msg').textContent = e.message; });
   };

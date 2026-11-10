@@ -145,3 +145,19 @@ describe('map', () => {
     expect(g.edges.filter(e => e.from === a)).toHaveLength(1);
   });
 });
+
+describe('reminders', () => {
+  test('set, due list, clear, bad date refused', async () => {
+    const id = (await request(owner).post('/api/brain/notes').send({ title: 'Remind me' })).body.id;
+    const fut = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10), past = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+    expect((await request(owner).put('/api/brain/notes/' + id).send({ remind_on: 'tomorrow' })).status).toBe(400);
+    await request(owner).put('/api/brain/notes/' + id).send({ remind_on: fut });
+    expect((await request(owner).get('/api/brain/due')).body.notes.map(n => n.id)).not.toContain(id);
+    await request(owner).put('/api/brain/notes/' + id).send({ remind_on: past });
+    expect((await request(owner).get('/api/brain/due')).body.notes.map(n => n.id)).toContain(id);
+    expect((await request(owner).get('/api/brain/notes/' + id)).body.note.remind_on).toBe(past);
+    await request(owner).put('/api/brain/notes/' + id).send({ remind_on: '' });
+    expect((await request(owner).get('/api/brain/due')).body.notes.map(n => n.id)).not.toContain(id);
+    expect((await request(appAs('staff')).get('/api/brain/due')).status).toBe(403);
+  });
+});
