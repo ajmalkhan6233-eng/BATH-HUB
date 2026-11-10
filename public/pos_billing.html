@@ -214,7 +214,7 @@
     <div id="waCheck" class="wa-receipt-msg" role="status"></div>
 
     <div class="pos-tools" id="posTools">
-      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
+      <div class="scan-row"><input type="text" id="scanBox" placeholder="Scan or type code + Enter" autocomplete="off" aria-label="Scan barcode"><button type="button" id="camScanBtn" class="tools-btn" aria-label="Scan with phone camera">&#128247; Scan</button><button type="button" id="toolsBtn" class="tools-btn" aria-expanded="false" aria-controls="toolMenu">Bill tools &#9662;</button></div>
       <div class="scan-msg" id="scanMsg" role="status"></div>
       <div class="tool-row tool-menu" id="toolMenu">
         <button type="button" id="holdBtn" onclick="holdBill()">Hold bill</button>
@@ -318,6 +318,7 @@
 })();
 </script>
 <script src="/pos-cart.js"></script>
+<script src="/pos-camera-scan.js"></script>
 <script>
 let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: 'Everything for your bathroom, on Kandy Road', currency_symbol: 'Rs' };
 
@@ -769,6 +770,15 @@ async function scanCode() {
   box.focus();
 }
 document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
+// Phone camera: reads the code, then uses the SAME scanCode() as the scan box (one path, nothing new saves a bill).
+document.getElementById('camScanBtn').addEventListener('click', () => {
+  PosCameraScan.open(async (code, note) => {
+    if (code === null) { scanMsg(note || 'Camera scan needs https. Type the code instead.', 'err'); return; }
+    document.getElementById('scanBox').value = code;
+    await scanCode();
+    return document.getElementById('scanMsg').textContent;
+  });
+});
 
 function toggleTool(id) {
   ['heldPanel', 'findPanel', 'quotePanel'].forEach(p => { const el = document.getElementById(p); el.classList.toggle('open', p === id && !el.classList.contains('open')); });

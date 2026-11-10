@@ -1,3 +1,4 @@
+17:50 | CHAT | job 1 DONE: phone-camera barcode scan in POS (Scan button, ZXing local file). Decoder tested; live iPhone camera UNVERIFIED | AJ: after PC pull, open POS on iPhone, tap Scan, scan one item
 10:38 | PC | TASK 169 DONE | motion-fix (incl 166/167/168) fast-forwarded into work, 10/10 tests pass, apex-server restarted, health 200; real browser UNVERIFIED | AJ: Ctrl+F5, drag gold RBH logo down, palette > Show me the animations
 09:50 | PC | TASK 167 DONE | speed-pack fast-forwarded into work (9df0a97), staticFast 6/6 pass, apex-server restarted, health 200, gzip confirmed on /ui/ui.css; /owner is a server route so it is not gzipped (expected check on /owner was wrong for that URL) | AJ: Ctrl+F5 once
 10:25 | CHAT | queued bridge TASK 164 + 165 (PLAYED) in Universal-project- ; handover AI_BRIDGE/HANDOVER_8NOV.md ; old pages: motion off + no blur by default (bathhub-theme.js) ; GRN workbench + POS NOT changed (business day) | PC: check bridge | UNVERIFIED on PC
