@@ -65,3 +65,8 @@ button:disabled { opacity: .55; }
 [hidden] { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* crest on the lock screen (look only) */
+.gate::before { content: "RBH"; display: grid; place-items: center; width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 50%; font-weight: 800; letter-spacing: .08em; font-size: 1.15rem; color: #0a0a0b;
+  background: var(--gold-grad); box-shadow: 0 0 0 6px rgba(212, 175, 55, .10), 0 14px 34px rgba(212, 175, 55, .28); }
+.gate { padding-top: 11vh; }
