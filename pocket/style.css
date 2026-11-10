@@ -409,4 +409,4 @@ body.scrolled header h1 {
 
 /* fix: the catch-all .card > div rule above was shrinking the big numbers */
 #cards .card > .big { font-size: 38px; font-weight: 800; color: var(--text-main); line-height: 1.1; letter-spacing: -0.03em; }
-#cards .card > .v { font-size: 22px; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+#cards .card > .v { white-space: nowrap; font-size: 20px; font-weight: 700; color: var(--text-main); line-height: 1.2; }
