@@ -701,6 +701,9 @@ app.use('/api', require('./routes/notifications'));       // routes are relative
 // see utils/whatsappBusinessApi.js). The in-app bell (routes/notifications.js)
 // works immediately either way.
 require('./scripts/notify_due_soon').start();
+// Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
+require('./utils/selfRun').start(require('./utils/pool'));
+app.use('/api', require('./routes/selfrun'));
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
