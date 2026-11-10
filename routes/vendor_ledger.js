@@ -107,10 +107,26 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     if (!Number.isInteger(id)) return bad(res, 'bad bill id');
     if (!isNum(p.amount) || Number(p.amount) <= 0) return bad(res, 'amount must be a positive number');
     const paidAt = p.paid_at || today(); if (!L.isIso(paidAt)) return bad(res, 'paid_at must be YYYY-MM-DD');
-    const bill = (await pool.query('SELECT id FROM vendor_bills WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
-    if (!bill) return res.status(404).json({ error: 'bill not found' });
-    const { rows } = await pool.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, Number(p.amount), p.method || 'CASH', paidAt, p.note || null, userOf(req)]);
-    res.status(201).json(rows[0]);
+    // Payment guard (audit 10 Nov 2026): the bill row is locked, so two taps cannot both pass the checks.
+    const amount = Math.round((Number(p.amount) + Number.EPSILON) * 100) / 100, method = p.method || 'CASH';
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const bill = (await client.query('SELECT id, total, voided FROM vendor_bills WHERE id=$1 AND branch_id=$2 FOR UPDATE', [id, branchOf(req)])).rows[0];
+      if (!bill) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'bill not found' }); }
+      if (bill.voided) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill is voided. It cannot be paid.', code: 'bill_voided' }); }
+      const paid = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_payments WHERE bill_id=$1', [id])).rows[0].s);
+      const notes = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_credit_notes WHERE bill_id=$1', [id])).rows[0].s);
+      const owed = Math.round((Number(bill.total) - paid - notes + Number.EPSILON) * 100) / 100;
+      if (amount > owed + 0.005) { await client.query('ROLLBACK'); return res.status(409).json({ error: owed > 0 ? `Only ${owed.toFixed(2)} is still owed on this bill.` : 'This bill is already fully paid.', code: 'over_owed', owed: Math.max(0, owed) }); }
+      if (p.confirm_duplicate !== true) {
+        const same = (await client.query(`SELECT id FROM vendor_payments WHERE bill_id=$1 AND amount=$2 AND paid_at=$3 AND method=$4 AND created_at > NOW() - INTERVAL '2 minutes' LIMIT 1`, [id, amount, paidAt, method])).rows[0];
+        if (same) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'The same payment was saved a moment ago. It was not saved twice.', code: 'duplicate_payment', payment_id: same.id }); }
+      }
+      const { rows } = await client.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, amount, method, paidAt, p.note || null, userOf(req)]);
+      await client.query('COMMIT');
+      res.status(201).json(rows[0]);
+    } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
   }));
 
   r.post('/bills/:id/credit-notes', wrap(async (req, res) => {
