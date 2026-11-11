@@ -71,3 +71,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 17:03 | CLOUD | POS customer name/phone dropdown: Down/Up arrows + Enter on highlighted row, animated like the item list (public/suggest.js). Test-browser checked | PC: check bridge (task 187) | UNVERIFIED on PC
 
 17:07 | CLOUD | Shell fills the window on POS/GRN (public/shell-fit.js: slim title bar, frame height = rest of window, outer page never scrolls); GRN tabs + search on one line, status one line | PC: check bridge (task 188) | UNVERIFIED on PC
+
+17:19 | CLOUD | Item edit box (Stock & items): stock count, cost and last vendor big on top, rest small, one screen (stock_manager.html, routes/item_detail.js read-only vendor lookup) | PC: check bridge (task 189) | UNVERIFIED on PC

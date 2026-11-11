@@ -19,3 +19,5 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov: POS and GRN must each open on ONE screen, no page scroll; only inner lists scroll; customer/vendor lines small; item name+code gets the room; show which draft is open.
 
 - 11 Nov: every box in GRN lines must be small, numbers at the right edge; many rows visible; Down arrow in POS item box opens the code list; no bouncing animation.
+
+- 11 Nov: item edit box must show stock count, cost and vendor on top; everything else small.

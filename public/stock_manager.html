@@ -23,6 +23,16 @@ html body,html body *{font-family:"Segoe UI",Arial,Helvetica,sans-serif!importan
 .box.wide{max-width:1040px;max-height:96vh;padding:18px 24px}.box.wide h2{font-size:1.75rem}.box.wide .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;align-content:start}.box.wide .rgrid>div:not(.fld),.box.wide .rgrid>.msg{grid-column:1/-1}
 .box.wide label{font-size:1.05rem;font-weight:600;color:#333;margin-top:2px}.box.wide input,.box.wide select{font-size:1.3rem;min-height:48px;padding:4px 10px}.box.wide .ph{max-height:130px}.box.wide .mg div{padding:8px 12px}.box.wide .mg span,.box.wide .mg div>:first-child{font-size:1.05rem}.box.wide .mg b{font-size:1.5rem}.box.wide button{font-size:1.2rem;min-height:50px;padding:4px 22px}.box.wide .msg{font-size:1.1rem}
 @media(max-width:700px){.box.wide .rgrid{display:block}}
+
+/* 11 Nov 17:30 (AJ): item box = stock count, cost and vendor on top; everything else small, one screen */
+.box.wide{max-width:980px!important;padding:10px 16px!important;grid-template-columns:120px minmax(0,1fr)!important;gap:0 14px!important}
+.box.wide .hdr{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:0 0 6px;padding-bottom:6px;border-bottom:2px solid var(--c-gold)}
+.box.wide .hc{background:#f4efe0;border-radius:8px;padding:4px 10px;font-size:1rem}.box.wide .hc.big{font-size:1.45rem;font-weight:800;padding:3px 12px}
+.box.wide .rgrid{grid-template-columns:1fr 1fr 1fr!important;gap:2px 12px!important}
+.box.wide .rgrid>.fld:nth-child(2){grid-column:span 2}
+.box.wide label{font-size:.85rem!important;margin-top:0!important}.box.wide input,.box.wide select{font-size:1.05rem!important;min-height:34px!important;height:34px;padding:2px 8px!important}
+.box.wide .ph{max-height:90px!important}.box.wide .mg{margin-top:4px!important}.box.wide .mg div:nth-child(1),.box.wide .mg div:nth-child(2){display:none}.box.wide .mg div{padding:3px 10px!important}.box.wide .mg b{font-size:1rem!important;display:inline;margin-left:6px}
+.box.wide .msg{padding:3px 8px;margin:2px 0;font-size:.85rem}
 </style></head><body>
 <h1 style="margin:8px 12px 0;font-size:1.4rem">Stock &amp; items</h1><div style="margin:0 12px;color:#667;font-size:.9rem">Tap an item to change code, name, price or stock</div>
 <div class="bar"><input id="q" type="search" placeholder="Search: item code, name or anything. Tap an item to edit." autocomplete="off">
@@ -56,7 +66,7 @@ function edit(code){var B=$('box');B.className='box';B.textContent='Loading...';
   /* BLOCK: live check, the code must not already belong to another item */
   function dupchk(){var v=cd.value.trim().toUpperCase(),o=(typeof ALL!=='undefined'?ALL:[]).filter(function(r){return String(r.item_code).toUpperCase()===v&&String(r.item_code)!==String(code)})[0],sv=B.querySelector('button.p');if(o&&v){dm.style.display='block';dm.className='msg bad';dm.textContent='Code '+cd.value.trim()+' is already used by '+o.item_code+(o.name?' ('+o.name+')':'')+'. Choose another.';if(sv)sv.disabled=true}else{dm.style.display='none';if(sv)sv.disabled=false}}
   function marg(){var s=Number(pr.value)||0,c=it.avg_cost||0;mg.textContent='';[['Cost','Rs '+fmt(c)],['Selling','Rs '+fmt(s)],['Profit','Rs '+fmt(s-c)],['Margin',s>0?(Math.round((s-c)/s*1000)/10)+' %':'-']].forEach(function(a){mg.appendChild(h('div',{},[h('span',{text:a[0]}),h('b',{text:a[1]})]))})}
-  pr.oninput=marg;marg();cd.oninput=dupchk;B.className='box wide';var hd=h('h2',{text:'Item '+it.item_code+'   (in stock: '+Number(it.stock_level||0)+')',style:'grid-column:1/-1;margin:0 0 4px'});B.appendChild(hd);
+  pr.oninput=marg;marg();cd.oninput=dupchk;B.className='box wide';var hd=h('div',{class:'hdr',style:'grid-column:1/-1'},[h('b',{class:'hc',text:'Item '+it.item_code}),h('span',{class:'hc big',text:'In stock: '+Number(it.stock_level||0)}),h('span',{class:'hc big',text:'Cost: Rs '+fmt(it.avg_cost)}),h('span',{class:'hc',text:'Vendor: '+(it.vendor||'not recorded')})]);B.appendChild(hd);
   var L=h('div'),R=h('div');L.appendChild(img);L.appendChild(h('label',{text:'Picture (choose or take a photo)'}));L.appendChild(ph);
   [['Our item code (you can change it)',cd],['Name',nm],['',dm],['Category',ct],['Selling price (Rs)',pr],['',sg],['Stock in shop (pieces)',sk],['Reason if you change the stock',rs]].forEach(function(a){if(a[0]){var w=h('div',{class:'fld'});w.appendChild(h('label',{text:a[0]}));w.appendChild(a[1]);R.appendChild(w)}else R.appendChild(a[1])});R.className='rgrid';sugg();
   B.appendChild(L);B.appendChild(R);mg.style.gridColumn='1/-1';B.appendChild(mg);msg.style.gridColumn='1/-1';B.appendChild(msg);

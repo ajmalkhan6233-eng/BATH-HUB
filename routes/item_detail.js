@@ -20,7 +20,10 @@ router.get('/item-detail/:code', ownerOnly, async (req, res) => {
         await schemaReady;
         const r = await pool.query(`SELECT ${COLS} FROM products WHERE item_code = $1`, [String(req.params.code)]);
         if (!r.rows.length) return res.status(404).json({ error: 'Item not found' });
-        res.json(shape(r.rows[0]));
+        const out = shape(r.rows[0]);
+        // last vendor this item came from (read-only look at the GRN lines; never blocks the screen)
+        try { const v = await pool.query(`SELECT supplier_name FROM grn_records WHERE item_description LIKE $1 AND COALESCE(supplier_name,'') <> '' ORDER BY id DESC LIMIT 1`, [String(req.params.code).replace(/[%_\\]/g, '') + ' - %']); out.vendor = v.rows[0] ? v.rows[0].supplier_name : ''; } catch (e) { out.vendor = ''; }
+        res.json(out);
     } catch (e) { res.status(500).json({ error: 'Could not load the item: ' + e.message }); }
 });
 router.post('/item-detail/:code', ownerOnly, express.json({ limit: '8mb' }), async (req, res) => {
