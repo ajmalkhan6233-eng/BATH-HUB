@@ -11,3 +11,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 24 Oct HARD RULE (AJ): chat builds everything as completely as possible first (code, tests, scripts, files, checks), THEN puts it in the bridge, so Claude Code carries as little weight as possible (only pull, run, restart). When AJ says do it, chat and Claude Code do it together.
 - 10 Nov 2026: AJ said 'call me aj', named the notes module 'RBH Brain', and asked to keep every chat saved for later and for the builder's learning. See docs/BUILD_LOG_8_10NOV2026.md.
 - 10 Nov 2026: AJ asked to be spoken to softly and gently, like a kind friend, never stiff or professional; he works long hours at the shop. Rule is in CLAUDE.md (How to talk to AJ).
+- 11 Nov: AJ wants POS as one big immaculate page: Back/New bill, WhatsApp to the desktop app, real PDF download, item list never hidden, page scrolls a little
