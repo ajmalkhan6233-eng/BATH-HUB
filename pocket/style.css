@@ -71,3 +71,9 @@ button:focus-visible,input:focus-visible{outline:3px solid rgba(255,255,255,.6);
 button:active{transform:scale(.95)}
 button.spin{animation:spin .73s var(--spring)}
 @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* Lucide icons */
+.ic{width:1.15em;height:1.15em;flex:none;vertical-align:-.2em;margin-right:.45em}
+.card h2 .ic{width:15px;height:15px;margin-right:7px;vertical-align:-2px;opacity:.9}
+button .ic{width:20px;height:20px;margin:0}#lock .ic{margin-right:6px;width:17px;height:17px}
+header h1{white-space:nowrap}#lock span{white-space:nowrap}
