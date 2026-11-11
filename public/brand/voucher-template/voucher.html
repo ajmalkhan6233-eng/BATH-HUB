@@ -6,8 +6,9 @@
 html,body{margin:0}
 body{width:800px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#14213d;background:#0b1b3a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sheet{position:relative;overflow:hidden;background:#fbf6e9}
-.bgimg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(7px) saturate(1.1);transform:scale(1.08);opacity:.38}
-.bgfall{position:absolute;inset:0;background:radial-gradient(circle at 12% 8%,#2ea39b55 0,#0000 38%),radial-gradient(circle at 92% 30%,#e0b95a66 0,#0000 34%),radial-gradient(circle at 20% 95%,#3f7fd144 0,#0000 40%),linear-gradient(160deg,#eaf6f1,#fbf6e9 55%,#f6e7bd)}
+.bgimg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(3px) saturate(1.15);transform:scale(1.06);opacity:.9}
+.bgfall{z-index:0;position:absolute;inset:0;background:radial-gradient(circle at 12% 8%,#2ea39b55 0,#0000 38%),radial-gradient(circle at 92% 30%,#e0b95a66 0,#0000 34%),radial-gradient(circle at 20% 95%,#3f7fd144 0,#0000 40%),linear-gradient(160deg,#eaf6f1,#fbf6e9 55%,#f6e7bd)}
+.bgveil{position:absolute;inset:0;background:linear-gradient(180deg,#fbf6e900 0,#fbf6e955 45%,#fbf6e999 100%)}
 .top{position:relative;background:linear-gradient(120deg,#0b1b3a,#12455a 60%,#1c7a78);color:#e0b95a;padding:26px 34px;display:flex;justify-content:space-between;align-items:center}
 .top img{height:62px;max-width:300px;object-fit:contain}
 .top .t{text-align:right}
@@ -20,7 +21,7 @@ body{width:800px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-seri
 .card small{display:block;font-size:11px;letter-spacing:2px;color:#0f6a68;font-weight:700}
 .card b{display:block;font:700 20px Georgia,serif;margin-top:6px}
 .card span{display:block;font-size:13px;color:#46506a;margin-top:3px}
-h3{margin:22px 0 8px;font-size:12px;letter-spacing:3px;color:#0f6a68}
+h3{display:inline-block;margin:22px 0 8px;font-size:12px;letter-spacing:3px;color:#0b4f4d;background:#ffffffe6;padding:5px 12px;border-radius:99px;border:1px solid #e2d4a8}
 table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid #c9a24b;background:#ffffffe6}
 th{background:#0b1b3a;color:#e0b95a;font-size:11px;letter-spacing:2px;text-align:left;padding:10px 12px}
 td{padding:10px 12px;font-size:14px;border-bottom:1px solid #efe6c9}
@@ -40,7 +41,7 @@ tr.sum td{background:#14213d;color:#fff;font-weight:700;border:0}
 .foot{position:relative;background:#0b1b3a;color:#cfe9e6;text-align:center;font-size:12px;padding:12px;letter-spacing:1px}
 </style></head><body>
 <div class="sheet" id="sheet">
-<div class="bgfall"></div><div class="bgimg" id="bg"></div>
+<div class="bgfall"></div><div class="bgimg" id="bg"></div><div class="bgveil"></div>
 <div class="top"><img id="logo" alt="Royal Bath Hub"><div class="t"><small>PAYMENT VOUCHER</small><b id="vno"></b></div></div>
 <div class="gold"></div>
 <div class="body">
