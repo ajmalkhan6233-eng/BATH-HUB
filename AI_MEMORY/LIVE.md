@@ -69,3 +69,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 16:16 | CLOUD | GRN: small boxes (22px), numbers right-aligned, auto-fit lines box (grn-fit.js), OPEN badge; POS: Down arrow in item box lists items from lowest code, no bouncing; checked in test browser | PC: check bridge (task 186) | UNVERIFIED on PC
 
 17:03 | CLOUD | POS customer name/phone dropdown: Down/Up arrows + Enter on highlighted row, animated like the item list (public/suggest.js). Test-browser checked | PC: check bridge (task 187) | UNVERIFIED on PC
+
+17:07 | CLOUD | Shell fills the window on POS/GRN (public/shell-fit.js: slim title bar, frame height = rest of window, outer page never scrolls); GRN tabs + search on one line, status one line | PC: check bridge (task 188) | UNVERIFIED on PC
