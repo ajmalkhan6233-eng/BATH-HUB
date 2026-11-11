@@ -409,7 +409,14 @@ function attachPicker(row) {
       results = found; active = -1; draw();
     }, 200);
   });
-  nameEl.addEventListener('keydown', e => {
+  nameEl.addEventListener('keydown', async e => {
+    // AJ 11 Nov: Down arrow in an empty/any item box opens the catalogue list from the lowest code
+    if (e.key === 'ArrowDown' && !results.length) {
+      e.preventDefault(); const mine = ++seq, q = nameEl.value.trim();
+      try { const r = await fetch('/api/items?limit=60' + (q ? '&q=' + encodeURIComponent(q) : ''), { credentials: 'same-origin' }); const j = r.ok ? await r.json() : [];
+        if (mine !== seq) return; results = (Array.isArray(j) ? j : []).slice().sort((x, y) => String(x.item_code || '').localeCompare(String(y.item_code || ''), undefined, { numeric: true })); active = 0; draw(); } catch (err) {}
+      return;
+    }
     if (!results.length) return;
     if (e.key === 'ArrowDown') { active = (active + 1) % results.length; draw(); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { active = (active - 1 + results.length) % results.length; draw(); e.preventDefault(); }

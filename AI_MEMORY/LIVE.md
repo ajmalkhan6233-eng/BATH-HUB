@@ -65,3 +65,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 07:49 | CLOUD | new look + ledger phase 2 | UNVERIFIED on PC | soft theme (default once), 52 animations, SVG charts, modern dashboard panel, GRN/void/edit stock-ledger hooks, 21 tests pass | PC: check bridge
 
 15:45 | CLOUD | POS one page + GRN one screen (public/pos-onepage.css, public/grn-compact.css): no page scroll, slim top, wide item/code area, OPEN badge on the open draft, Layla button small. Screenshot-checked 1380x470 | PC: check bridge (task 185) | UNVERIFIED on PC
+
+16:16 | CLOUD | GRN: small boxes (22px), numbers right-aligned, auto-fit lines box (grn-fit.js), OPEN badge; POS: Down arrow in item box lists items from lowest code, no bouncing; checked in test browser | PC: check bridge (task 186) | UNVERIFIED on PC

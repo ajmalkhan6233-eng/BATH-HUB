@@ -50,3 +50,7 @@
   html body #custRow input { min-height:36px; font-size:16px; }
   html body #custRow { gap:6px !important; margin:0 0 4px !important; }
 }
+
+/* AJ 11 Nov: no bouncing up and down on the POS: rows and panels appear without moving */
+html body .item-row, html body .panel, html body #formPanel, html body #itemRows > *, html body .wrap { animation:none !important; transform:none !important; }
+html body .item-row { transition:none !important; }

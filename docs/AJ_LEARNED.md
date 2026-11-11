@@ -17,3 +17,5 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov: AJ says 'go' once, then wants everything built without more asking; new look = whole app, not too dark, modern charts (mirrored bars), keep old animations.
 
 - 11 Nov: POS and GRN must each open on ONE screen, no page scroll; only inner lists scroll; customer/vendor lines small; item name+code gets the room; show which draft is open.
+
+- 11 Nov: every box in GRN lines must be small, numbers at the right edge; many rows visible; Down arrow in POS item box opens the code list; no bouncing animation.
