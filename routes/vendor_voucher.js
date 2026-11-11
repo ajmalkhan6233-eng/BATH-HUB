@@ -94,8 +94,8 @@ router.post('/vendor-voucher/send', async (req, res) => {
   const b = req.body || {}; let d;
   try {
     d = await build(b.vendor, Array.isArray(b.bills) ? b.bills : only(b.bills));
-    const phone = inv.normalizePhone(b.phone || d.vendor.phone);   // throws a clear error on a bad or missing number
-    if (!phone) throw err(400, 'No phone number for ' + d.vendor.name + '. Type one.');
+    if (!(b.phone || d.vendor.phone)) throw err(400, 'No phone number saved for ' + d.vendor.name + '. Type one.');
+    const phone = inv.normalizePhone(b.phone || d.vendor.phone);   // throws a clear error on a bad number
     const prev = await pool.query(`SELECT created_at FROM vendor_voucher_log WHERE vendor=$1 AND voucher_no=$2 AND status='sent' ORDER BY id DESC LIMIT 1`, [d.vendor.name, d.voucher_no]);
     if (prev.rows.length && b.resend !== true) return res.status(409).json({ error: 'This voucher was already sent today. Send again?', code: 'already_sent' });
     if (await inv.isOnWhatsApp(phone) === false) throw err(422, `${phone} is not on WhatsApp. Check the number.`);
