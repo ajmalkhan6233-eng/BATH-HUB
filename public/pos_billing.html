@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/pos');   // one app: opened on its own -> open it inside /owner</script>
@@ -196,6 +197,7 @@
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
+<link rel="stylesheet" href="/pos-polish.css">
 </head>
 <body>
 
@@ -277,6 +279,8 @@
   </div>
 
   <div class="panel" id="billPanel">
+    <div class="bill-bar"><button type="button" onclick="resetForm()">&#8592; Back to POS &nbsp;/&nbsp; + New bill</button></div>
+    <div class="temp-note" role="status"></div>
     <div class="receipt" id="receipt">
       <div class="logo-row"><img src="/brand/logo-main-transparent.png" alt="Royal Bath Hub"></div>
       <div class="shop-name" id="rShopName">Royal Bath Hub Thihariya</div>
@@ -974,5 +978,6 @@ function clearCustomer() {
 <script src="/test-banner.js"></script>
 <script src="/layla-door.js"></script>
 <script src="/pos_extra.js"></script>
+<script src="/pos-polish.js"></script>
 </body>
 </html>

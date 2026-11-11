@@ -1,0 +1,45 @@
+/* POS polish (AJ 11 Nov 2026). One module for the bill screen: compact top, labelled item rows, item list that floats on top,
+   page that scrolls a little (not locked), a big bill page with Back / New bill. Colours come only from the theme variables. */
+
+/* the page may scroll a little again; only the item list scrolls by itself and never drags the page with it */
+@media (min-width:1000px) { html body { overflow-y:auto !important; } }
+#itemRows { overscroll-behavior:contain; }
+
+/* slim top: no big title, no empty message lines */
+.pos-h1 { display:none; }
+.scan-msg:empty { display:none; }
+.cust-row { align-items:end; }
+.pos-tools { margin:6px 0 0; }
+.panel label { margin:4px 0 2px; }
+
+/* item rows: Item | Qty | Price | Discount | x, with labels */
+.item-head, html body .item-row { grid-template-columns:minmax(0,1fr) 156px 100px 92px 40px !important; }
+.item-head { display:grid; gap:8px; font-size:12px; font-weight:700; color:var(--text-secondary); padding:2px 0 4px; }
+.item-head span:nth-child(2) { text-align:center; }
+.i-disc { width:100%; min-height:44px; }
+.i-qty::-webkit-outer-spin-button, .i-qty::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.i-qty { -moz-appearance:textfield; appearance:textfield; }
+@media (max-width:480px) {
+  .item-head, .i-disc { display:none; }
+  html body .item-row { grid-template-columns:136px minmax(0,1fr) 44px !important; }
+}
+
+/* the item list floats above everything (placed by pos-polish.js), so nothing hides it */
+.pick-list.open { position:fixed !important; z-index:9999 !important; max-height:min(320px, 50vh); overscroll-behavior:contain; }
+
+/* bill page: actions on top, receipt beside them on a big screen */
+#billPanel .bill-bar { display:flex; gap:10px; margin:0 0 12px; }
+#billPanel .bill-bar button { flex:1; min-height:52px; font-size:17px; font-weight:800; border:none; border-radius:10px; cursor:pointer; background:var(--gold-primary); color:var(--text-on-accent); }
+#billPanel .bill-bar button.ghost { background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-strong); }
+#billPanel .temp-note { display:none; background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius:8px; padding:10px 12px; margin:0 0 12px; font-size:14px; font-weight:600; }
+#billPanel .share-btn { min-height:52px; font-size:15px; }
+#billPanel .share-btn.is-off { opacity:.45; pointer-events:none; }
+.new-bill-btn { display:none; }
+@media (min-width:900px) {
+  .wrap.has-bill { grid-template-columns:minmax(0,1fr) !important; }
+  #billPanel[style*="block"] { display:grid !important; grid-template-columns:minmax(300px,480px) minmax(280px,440px); gap:6px 28px; justify-content:center; align-items:start; overflow-y:auto; }
+  #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, #billPanel #waReceiptMsg, #billPanel #billAttach { grid-column:2; }
+  #billPanel .receipt { grid-column:1; grid-row:1 / span 6; }
+}
+@media (max-width:899px) { #billPanel .bill-bar { position:sticky; top:0; z-index:5; background:var(--bg-surface); padding:6px 0; } }
+@media print { #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, .item-head { display:none !important; } }
