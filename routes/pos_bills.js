@@ -277,6 +277,7 @@ router.post('/pos-bills', async (req, res) => {
             }
             if (deductStock && l.item_code) {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
+                await require('../utils/stock_ledger').recordSafe(client, { item_code: l.item_code, qty_change: -Number(l.qty), reason: 'sale', ref_type: 'pos_bill', ref_id: billNumber });
             }
         }
         // Credit part of the bill becomes money the customer owes us, in the SAME transaction (all or nothing).
