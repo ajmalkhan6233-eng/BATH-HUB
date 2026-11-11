@@ -37,3 +37,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - POS polish: public/pos-polish.js + pos-polish.css (own code, no library): labelled rows, per-item discount, floating item list, big bill page
 
 - 11 Nov: no new packages. Added own files: public/rbh-modern.css, rbh-charts.js, dashboard_modern.js (free, local, no library).
+- 2026-11-11: build-stamp.js (display only, own code), pos-space.css (own code). No new libraries.

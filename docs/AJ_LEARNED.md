@@ -21,3 +21,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov: every box in GRN lines must be small, numbers at the right edge; many rows visible; Down arrow in POS item box opens the code list; no bouncing animation.
 
 - 11 Nov: item edit box must show stock count, cost and vendor on top; everything else small.
+- 11 Nov: AJ: the item list must stay BELOW its box with a short soft slide, same for the right side; use all empty space on the POS.

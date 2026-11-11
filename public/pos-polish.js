@@ -49,8 +49,7 @@
     var h = Math.min(320, Math.max(below, above), vh * 0.5);
     list.style.left = Math.max(4, r.left) + 'px'; list.style.width = Math.max(300, r.width) + 'px'; list.style.maxWidth = (window.innerWidth - 8) + 'px';
     list.style.maxHeight = h + 'px';
-    if (below >= Math.min(h, 160) || below >= above) { list.style.top = r.bottom + 2 + 'px'; list.style.bottom = 'auto'; }
-    else { list.style.top = 'auto'; list.style.bottom = (vh - r.top + 2) + 'px'; }
+    list.style.top = r.bottom + 2 + 'px'; list.style.bottom = 'auto'; list.style.maxHeight = Math.max(140, Math.min(320, below)) + 'px';   // AJ 11 Nov: always BELOW the box, never flips
   }
   function placeAll() { Array.prototype.forEach.call(document.querySelectorAll('.pick-list.open'), place); }
   if (host) {
