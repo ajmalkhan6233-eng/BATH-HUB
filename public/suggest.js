@@ -23,7 +23,10 @@
   function attach(input, opts) {
     var rows = [], loadedAt = 0, box = null, doc = input.ownerDocument;
     input.setAttribute('autocomplete', 'off'); input.setAttribute('autocorrect', 'off'); input.setAttribute('autocapitalize', 'words'); input.setAttribute('spellcheck', 'false');
-    function close() { if (box) { box.remove(); box = null; } }
+    var els = [], act = -1, data = [];
+    function close() { if (box) { box.remove(); box = null; } els = []; act = -1; }
+    function mark(i) { act = i; els.forEach(function (e, k) { e.style.background = k === i ? 'var(--bg-surface-elevated,#f2f2f2)' : ''; }); if (els[i] && els[i].scrollIntoView) els[i].scrollIntoView({ block: 'nearest' }); }
+    function styleOnce() { if (doc.getElementById('rbh-sug-css')) return; var st = doc.createElement('style'); st.id = 'rbh-sug-css'; st.textContent = '@keyframes rbhSugIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}@keyframes rbhSugRow{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}'; (doc.head || doc.body).appendChild(st); }
     function ensureLoaded() {
       if (Date.now() - loadedAt < 60000 && rows.length) return Promise.resolve();
       return Promise.resolve(opts.load()).then(function (r) { rows = Array.isArray(r) ? r : []; loadedAt = Date.now(); }).catch(function () { /* offline: keep what we have */ });
@@ -34,14 +37,17 @@
       close(); current = close;
       if (!list.length) return;
       box = doc.createElement('div'); box.className = 'suggest-box'; box.setAttribute('role', 'listbox');
-      box.style.cssText = 'position:absolute;z-index:50;background:#fff;color:#111;border:1px solid #bbb;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch';
-      list.forEach(function (row) {
+      styleOnce(); data = list;
+      box.style.cssText = 'position:absolute;z-index:9999;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border:1px solid var(--border-strong,#bbb);border-radius:8px;box-shadow:0 8px 22px rgba(0,0,0,.25);max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:rbhSugIn .16s ease-out both';
+      list.forEach(function (row, ix) {
         var b = doc.createElement('div'); b.className = 'suggest-row'; b.setAttribute('role', 'option');
-        b.style.cssText = 'padding:12px 14px;min-height:44px;box-sizing:border-box;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;gap:10px';
+        b.style.cssText = 'padding:8px 12px;min-height:38px;box-sizing:border-box;border-bottom:1px solid var(--border-subtle,#eee);cursor:pointer;display:flex;justify-content:space-between;gap:10px;animation:rbhSugRow .18s ease-out both;animation-delay:' + Math.min(ix, 8) * 20 + 'ms';
         var a = doc.createElement('span'); a.textContent = opts.text(row); var s = doc.createElement('span'); s.textContent = opts.sub ? opts.sub(row) : ''; s.style.opacity = '.65';
         b.appendChild(a); b.appendChild(s);
         // pointerdown + preventDefault keeps the box focused; the pick happens on the tap itself
         b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        b.addEventListener('mouseenter', function () { mark(ix); });
+        els.push(b);
         b.addEventListener('click', function (e) { e.preventDefault(); close(); opts.onPick(row); });
         box.appendChild(b);
       });
@@ -54,7 +60,17 @@
     input.addEventListener('click', open);
     input.addEventListener('input', function () { if (opts.onType) opts.onType(); open(); });
     // Enter / Tab / leaving: just close. NEVER pick, never change the typed text.
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape') close(); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var go = function () { if (!els.length) return; mark(e.key === 'ArrowDown' ? (act + 1) % els.length : (act - 1 + els.length) % els.length); };
+        if (!box) ensureLoaded().then(function () { show(); go(); }); else go();
+        return;
+      }
+      // Enter picks ONLY a row the arrow keys highlighted; with nothing highlighted it just closes (typed text is never changed)
+      if (e.key === 'Enter' && box && act >= 0 && data[act]) { e.preventDefault(); var row = data[act]; close(); opts.onPick(row); return; }
+      if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape') close();
+    });
     input.addEventListener('blur', function () { setTimeout(close, 150); });
     return { close: close, refresh: function () { loadedAt = 0; } };
   }

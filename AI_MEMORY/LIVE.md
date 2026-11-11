@@ -67,3 +67,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 15:45 | CLOUD | POS one page + GRN one screen (public/pos-onepage.css, public/grn-compact.css): no page scroll, slim top, wide item/code area, OPEN badge on the open draft, Layla button small. Screenshot-checked 1380x470 | PC: check bridge (task 185) | UNVERIFIED on PC
 
 16:16 | CLOUD | GRN: small boxes (22px), numbers right-aligned, auto-fit lines box (grn-fit.js), OPEN badge; POS: Down arrow in item box lists items from lowest code, no bouncing; checked in test browser | PC: check bridge (task 186) | UNVERIFIED on PC
+
+17:03 | CLOUD | POS customer name/phone dropdown: Down/Up arrows + Enter on highlighted row, animated like the item list (public/suggest.js). Test-browser checked | PC: check bridge (task 187) | UNVERIFIED on PC
