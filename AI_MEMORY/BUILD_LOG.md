@@ -40,7 +40,7 @@ Run by the CLOUD session on 2026-10-04 (no E: drive, no Downloads, no pm2, no li
 - Full tests on audit-fixes-2026-10-04: 104 suites, 1203 tests pass (one timing flake in documents.test.js on the first run, passes alone 104/104 and on re-run).
 - Merge to master, push, restart apex-server, /health: NOT DONE in the cloud (no apex-server here, and the laptop's master may differ; merging in two places would collide). Do it on the laptop.
 
-## Steps 4 to 6: NOT RUN (laptop only), see RESUME.md
+## Steps 4 to 6: NOT RUN (laptop only), see _archive/RESUME_2026-10-04.md
 - 2026-10-04 Builds 6+7: routes/money_plan.js, public/money-plan.html + morning-brief.html, menu entries, 3 tests. Merge bec9907 pushed, apex-server restarted, /health ok. Rollback: git revert -m 1 bec9907. Not done: Task Scheduler 05:25 morning job, festivals table, auto-pricing on GRN, item_prices, below-cost weekly report.
 - 2026-10-04 Build 2 (layla pack, 32 files): Layla owner chat, reminders, offline save + idempotency (vendor ledger wired), adapters stock/sales wired read-only, menu, SW v12, BathHub-OpenApp task. DB backed up bathco_owner-2026-10-04_2110. Full Jest 120/120. Merge 1a5fec8 pushed, apex-server restarted, /health ok, Layla DRY RUN. Rollback: git revert -m 1 1a5fec8 (tables: migrations/layla_owner_down.sql). Open: WhatsApp setup (owner, BUILD2 s5), offline Save on GRN/POS/expenses pages, local_ops is gitignored.
 - 2026-10-04 POS ledger side panel (public/lib/posSidePanel.js), Daily Ledger menu entry, SW v13; full Jest 121/121. Rollback: git revert -m 1 HEAD of merge build/03-pos-ledger-panel.
