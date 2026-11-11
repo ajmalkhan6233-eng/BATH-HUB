@@ -76,3 +76,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 11 Nov 19:10 chat: POS space block (pos-space.css), item list always below, SW v94-a, build stamp bottom-left. Needs PC task 190.
 - 11 Nov 20:20 chat: scripts/split_vendor_fazal.js built+tested on test DB (dry run default, --apply, --undo). Fazal keeps G1CR008312; 3 bills to 'Fawaz (Fazal Hardware Pvt Ltd)'; 6 HNB cheques to cheque register. Bridge task 191.
 - 11 Nov 20:40 chat: pos-look.css (new soft POS look), SW v94-b, stamp 20:35 POS look. Gemini POS file never reached chat; chat built the look itself. Bridge task 192.
+- 11 Nov 20:40 chat: split script fixed: vendor is spelled FAZAAL in the shop DB; new vendor 'Fawaz (Fazaal Hardware Pvt Ltd)'. Bridge task 193 replays 191.

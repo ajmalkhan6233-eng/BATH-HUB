@@ -1,7 +1,7 @@
 'use strict';
 // BLOCK: split-vendor-fazal (AJ 11 Nov 2026). Real-data change, so: dry run by default, ONE transaction, undo file.
 //  1) Fazal Hardware keeps bill G1CR008312 (the commode set). Bills G1CR008289, 8290, 8291 (cash memos 46221 to 46223, accessories)
-//     move to a NEW vendor "Fawaz (Fazal Hardware Pvt Ltd)". Moved in vendor_bills AND grn_records (supplier_name only; amounts untouched).
+//     move to a NEW vendor "Fawaz (Fazaal Hardware Pvt Ltd)". Moved in vendor_bills AND grn_records (supplier_name only; amounts untouched).
 //  2) The 6 HNB cheques AJ handed over are put on the cheque register (payee = Fazal group, due = date on the cheque). Bills are NOT marked
 //     paid: a bill drops only when its cheque clears (ledger rule). No bank account number is stored anywhere.
 //   node scripts/split_vendor_fazal.js           DRY RUN (changes nothing)
@@ -13,7 +13,7 @@ const pool = require('../utils/pool');
 
 const KEEP = 'G1CR008312';
 const MOVE = ['G1CR008289', 'G1CR008290', 'G1CR008291'];
-const NEW_VENDOR = 'Fawaz (Fazal Hardware Pvt Ltd)';
+const NEW_VENDOR = 'Fawaz (Fazaal Hardware Pvt Ltd)';   // AJ's spelling on the Vendors page is FAZAAL
 const TAG = '[fazal-split]';
 const PAYEE = 'Fazal Hardware (Pvt) Ltd';
 const BANK = 'Hatton National Bank, Nittambuwa';
@@ -33,10 +33,10 @@ const day = d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(d + 
 const clears = d => { const t = new Date(d + 'T00:00:00Z'); do { t.setUTCDate(t.getUTCDate() + 1); } while ([0, 6].includes(t.getUTCDay())); return t.toISOString().slice(0, 10); };
 
 async function find(db) {
-  const keep = (await db.query(`SELECT id, vendor_name, bill_no, total FROM vendor_bills WHERE voided=FALSE AND vendor_name ILIKE '%fazal%' AND bill_no LIKE ANY($1)`, [like([KEEP])])).rows;
+  const keep = (await db.query(`SELECT id, vendor_name, bill_no, total FROM vendor_bills WHERE voided=FALSE AND vendor_name ~* 'faz' AND bill_no LIKE ANY($1)`, [like([KEEP])])).rows;
   const done = (await db.query(`SELECT id FROM vendor_bills WHERE voided=FALSE AND vendor_name=$2 AND bill_no LIKE ANY($1)`, [like(MOVE), NEW_VENDOR])).rows.length;
-  const move = (await db.query(`SELECT id, vendor_name, bill_no, total, grn_id FROM vendor_bills WHERE voided=FALSE AND vendor_name ILIKE '%fazal%' AND vendor_name <> $2 AND bill_no LIKE ANY($1) ORDER BY bill_no`, [like(MOVE), NEW_VENDOR])).rows;
-  const grn = (await db.query(`SELECT id, supplier_name, grn_number FROM grn_records WHERE supplier_name ILIKE '%fazal%' AND supplier_name <> $2 AND (grn_number LIKE ANY($1) OR id = ANY($3::int[]))`,
+  const move = (await db.query(`SELECT id, vendor_name, bill_no, total, grn_id FROM vendor_bills WHERE voided=FALSE AND vendor_name ~* 'faz' AND vendor_name <> $2 AND bill_no LIKE ANY($1) ORDER BY bill_no`, [like(MOVE), NEW_VENDOR])).rows;
+  const grn = (await db.query(`SELECT id, supplier_name, grn_number FROM grn_records WHERE supplier_name ~* 'faz' AND supplier_name <> $2 AND (grn_number LIKE ANY($1) OR id = ANY($3::int[]))`,
     [like(MOVE), NEW_VENDOR, move.map(m => m.grn_id).filter(Boolean)])).rows;
   return { keep, move, grn, done };
 }
@@ -61,6 +61,10 @@ async function main() {
     CHEQUES.forEach(c => console.log('   ', c.no, c.due, day(c.due), 'Rs', c.amt, '-> money leaves about', clears(c.due), day(clears(c.due))));
     const tot = CHEQUES.reduce((s, c) => s + c.amt, 0), owed = [...f.keep, ...f.move].reduce((s, r) => s + Number(r.total), 0);
     console.log('Cheques total Rs', tot, '| these 4 bills Rs', owed, '| not covered Rs', owed - tot);
+    if (!f.keep.length && !f.move.length && !f.done) {
+      const near = (await client.query(`SELECT vendor_name, bill_no, total FROM vendor_bills WHERE bill_no ~* 'G1CR0083|G1CR0082|4622' OR vendor_name ~* 'faz' ORDER BY id DESC LIMIT 12`)).rows;
+      console.log('NOT FOUND. Closest rows in vendor_bills:'); near.forEach(r => console.log('   ', r.vendor_name, '|', r.bill_no, '|', r.total));
+    }
     if (f.done === MOVE.length) console.log('Bills are ALREADY split (nothing to move); only missing cheques will be added.');
     else if (f.move.length !== MOVE.length || f.keep.length !== 1) { console.log('STOP: expected 3 bills to move and 1 to keep. Nothing changed.'); process.exitCode = 2; return; }
     if (!apply) { console.log('DRY RUN: nothing was changed. Add --apply after a backup.'); return; }
