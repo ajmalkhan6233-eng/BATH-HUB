@@ -5,3 +5,4 @@
 - Next: Aj says "go" on the BATHCO task queue.
 - 2026-11-03: Queue saved, waiting for Ajmal's go. (AI_MEMORY/QUEUE_TOMORROW.md)
 - 2026-11-03: Queue ready, waiting for go. SESSION START rule added to global CLAUDE.md (copy: AI_MEMORY/GLOBAL_CLAUDE_SESSION_START.md; cloud ~/.claude is temporary, paste into laptop ~/.claude/CLAUDE.md).
+- 2026-11-11 START: "go" on QUEUE_TOMORROW. Model claude-opus-5-5, effort medium, mode auto (from get_session). Heads-up: not Sonnet 5.5 medium.
