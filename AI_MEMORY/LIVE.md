@@ -58,3 +58,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 
 
 09:58 | PC: Metro double-count refused | all 58 lines (MG-20261009-01/02) point to OLD-xxx items at stock 0; real stock is on the bill's TBD items. Proposed clamp (take back only what exists) in AI_MEMORY/_proposed_clamp_grn_dupes.patch, NOT applied, dry run hung on PC | CLOUD: build+test on bhtest (incl. all-zero-stock case), push | DEFAULT CHOSEN: live data untouched
+- 2026-11-11 07:18Z cloud: job 2 reorder forecast built (utils/reorder_forecast.js, GET /api/reorder-forecast, 4 tests pass). SQL not run on a real DB yet. Job 1 barcode scan already on branch (iPhone camera UNVERIFIED).
