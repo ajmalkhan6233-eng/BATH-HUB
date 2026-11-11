@@ -1,0 +1,42 @@
+/* BLOCK: pos-look (AJ 11 Nov 20:30). New POS LOOK: soft cards, pill fields, receipt-style bill, calm gold button. Look only, no layout moves.
+   Loaded LAST on pos_billing.html. Colours only through theme variables, so Light / Soft / Dark all follow. */
+html body { background:var(--bg-canvas) !important; font-family:var(--font-sans); }
+html body #formPanel { background:var(--bg-surface) !important; border:1px solid var(--border-subtle) !important; border-radius:18px !important; box-shadow:var(--shadow-md) !important; }
+
+/* fields: soft pills with a gold focus ring */
+html body #formPanel input[type=text], html body #formPanel input[type=tel], html body #formPanel input[type=number], html body #formPanel select {
+  background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:10px !important; color:var(--text-primary) !important; transition:border-color .15s, box-shadow .15s; }
+html body #formPanel input:focus, html body #formPanel select:focus { border-color:var(--gold-primary) !important; box-shadow:0 0 0 3px var(--gold-bg-subtle, rgba(212,175,55,.18)) !important; outline:none !important; }
+html body #posTools input#scanBox { border-radius:999px !important; padding-left:14px !important; }
+html body #posTools .tools-btn, html body #posTools #camScanBtn { border-radius:999px !important; background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; }
+
+/* item rows: each one a soft card */
+html body #formPanel .item-row { box-sizing:border-box !important; background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:12px !important; padding:6px 8px !important; transition:border-color .15s, background .15s; }
+html body #formPanel .item-row:focus-within { border-color:var(--gold-primary) !important; background:var(--bg-surface) !important; }
+html body #formPanel .item-row .i-name { background:transparent !important; border-color:transparent !important; font-weight:600; }
+html body #formPanel .item-row .i-name:focus { background:var(--bg-surface) !important; }
+html body #formPanel .item-head { color:var(--text-muted) !important; letter-spacing:.04em; text-transform:uppercase; font-weight:600; }
+html body #formPanel .qty-step button { border-radius:999px !important; background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; color:var(--text-primary) !important; }
+html body #formPanel .qty-step button:hover { background:var(--gold-primary) !important; color:var(--text-on-accent) !important; }
+html body #formPanel .remove-btn { border-radius:999px !important; width:28px !important; min-width:28px !important; max-width:28px !important; height:28px !important; min-height:28px !important; justify-self:center; display:flex; align-items:center; justify-content:center; padding:0 !important; background:var(--status-danger-bg) !important; color:var(--status-danger) !important; }
+html body #formPanel .stock-hint { color:var(--status-success) !important; font-weight:600; }
+
+/* add item: quiet dashed button, not a big gold bar */
+html body #formPanel .add-btn { background:transparent !important; color:var(--gold-text) !important; border:1.5px dashed var(--gold-primary) !important; border-radius:12px !important; font-weight:700; }
+html body #formPanel .add-btn:hover { background:var(--gold-bg-subtle, rgba(212,175,55,.14)) !important; }
+
+/* right side: the bill reads like a receipt */
+html body #formPanel .fp-right #liveBill { background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:14px !important; padding:10px 12px !important; }
+html body #liveBill .lb-h { text-transform:uppercase; letter-spacing:.05em; font-size:11px !important; color:var(--text-muted); }
+html body #liveBill td { border-bottom:1px dashed var(--border-subtle) !important; font-variant-numeric:tabular-nums; }
+html body #liveBill .lb-tot { color:var(--gold-text); border-top:2px solid var(--border-strong); margin-top:4px; font-variant-numeric:tabular-nums; }
+html body #formPanel .fp-right label { color:var(--text-muted) !important; text-transform:uppercase; letter-spacing:.04em; font-size:10px !important; font-weight:600; }
+
+/* main action: calm gold, soft lift on hover (no bounce) */
+html body #formPanel .generate-btn { background:linear-gradient(180deg, var(--gold-hover), var(--gold-primary)) !important; color:var(--text-on-accent) !important; border:none !important; border-radius:12px !important; font-weight:800; box-shadow:var(--shadow-md); transition:box-shadow .15s, filter .15s; }
+html body #formPanel .generate-btn:hover { filter:brightness(1.06); box-shadow:var(--shadow-lg); }
+html body #formPanel #quoteSaveBtn { background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; border-radius:10px !important; color:var(--text-primary) !important; font-weight:600; }
+
+/* item list: floating card */
+html body .pick-list.open { border-radius:12px !important; box-shadow:var(--shadow-lg) !important; border:1px solid var(--border-strong) !important; }
+html body .pick-opt.active, html body .pick-opt:hover { background:var(--gold-bg-subtle, rgba(212,175,55,.16)) !important; }
