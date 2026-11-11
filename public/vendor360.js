@@ -53,12 +53,13 @@
     $('detail').innerHTML = '<h2>' + esc(v.vendor_name) + '</h2>' +
       '<div class="kpis">' + kpi('We owe', rs(v.outstanding_balance), v.outstanding_balance > 0 ? 'bad' : 'good') + kpi('Overdue', rs(v.overdue), v.overdue > 0 ? 'bad' : '') + kpi('Total bought', rs(v.total_billed)) + kpi('Paid or credited', rs(v.total_paid), 'good') + '</div>' +
       (v.cheques_pending > 0 ? '<div class="sm">' + rs(v.cheques_pending) + ' is covered by cheques not cleared yet. It stays owed until the cheque clears.</div>' : '') +
-      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button></div>' +
+      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Payment voucher</button></div>' +
       '<div class="tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-t="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div>';
     $('nb').onclick = function () { openDrawer('bill'); };
     $('np').onclick = function () { openDrawer('pay'); };
     $('pr').onclick = function () { window.print(); };
+    $('vv').onclick = function () { window.openVendorVoucher(S.cur); };
   }
   function loadTab() {
     var name = S.cur, tab = S.tab, path = { statement: '/statement', bills: '/bills', pay: '/statement', grn: '/grns' }[tab];

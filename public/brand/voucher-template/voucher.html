@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Payment Voucher</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{width:800px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#14213d;background:#0b1b3a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet{position:relative;overflow:hidden;background:#fbf6e9}
+.bgimg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(7px) saturate(1.1);transform:scale(1.08);opacity:.38}
+.bgfall{position:absolute;inset:0;background:radial-gradient(circle at 12% 8%,#2ea39b55 0,#0000 38%),radial-gradient(circle at 92% 30%,#e0b95a66 0,#0000 34%),radial-gradient(circle at 20% 95%,#3f7fd144 0,#0000 40%),linear-gradient(160deg,#eaf6f1,#fbf6e9 55%,#f6e7bd)}
+.top{position:relative;background:linear-gradient(120deg,#0b1b3a,#12455a 60%,#1c7a78);color:#e0b95a;padding:26px 34px;display:flex;justify-content:space-between;align-items:center}
+.top img{height:62px;max-width:300px;object-fit:contain}
+.top .t{text-align:right}
+.top .t small{display:block;letter-spacing:4px;font-size:12px;color:#cfe9e6}
+.top .t b{display:block;font:700 28px Georgia,serif;margin-top:4px}
+.gold{position:relative;height:8px;background:linear-gradient(90deg,#c9a24b,#f2d98a,#c9a24b)}
+.body{position:relative;padding:24px 34px 30px}
+.row{display:flex;gap:16px}
+.card{flex:1;background:#ffffffd9;border:1px solid #e2d4a8;border-radius:14px;padding:14px 18px;box-shadow:0 6px 18px #0b1b3a22}
+.card small{display:block;font-size:11px;letter-spacing:2px;color:#0f6a68;font-weight:700}
+.card b{display:block;font:700 20px Georgia,serif;margin-top:6px}
+.card span{display:block;font-size:13px;color:#46506a;margin-top:3px}
+h3{margin:22px 0 8px;font-size:12px;letter-spacing:3px;color:#0f6a68}
+table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid #c9a24b;background:#ffffffe6}
+th{background:#0b1b3a;color:#e0b95a;font-size:11px;letter-spacing:2px;text-align:left;padding:10px 12px}
+td{padding:10px 12px;font-size:14px;border-bottom:1px solid #efe6c9}
+tr:nth-child(even) td{background:#fbf6e9cc}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.sum td{background:#14213d;color:#fff;font-weight:700;border:0}
+.totals{margin-top:20px;display:flex;gap:12px}
+.t3{flex:1;border-radius:14px;padding:14px 16px;color:#fff;box-shadow:0 8px 20px #0b1b3a33}
+.t3 small{display:block;font-size:11px;letter-spacing:2px;opacity:.85}
+.t3 b{display:block;font:700 22px Georgia,serif;margin-top:6px}
+.a{background:linear-gradient(135deg,#14213d,#254a7a)}
+.b{background:linear-gradient(135deg,#0f6a68,#2ea39b)}
+.c{background:linear-gradient(135deg,#a8741a,#e0b95a);color:#1a1405}
+.note{margin-top:14px;font-size:13px;color:#46506a}
+.sig{display:flex;gap:40px;margin-top:34px}
+.sig div{flex:1;border-top:2px solid #c9a24b;padding-top:7px;font-size:11px;letter-spacing:1px;color:#46506a}
+.foot{position:relative;background:#0b1b3a;color:#cfe9e6;text-align:center;font-size:12px;padding:12px;letter-spacing:1px}
+</style></head><body>
+<div class="sheet" id="sheet">
+<div class="bgfall"></div><div class="bgimg" id="bg"></div>
+<div class="top"><img id="logo" alt="Royal Bath Hub"><div class="t"><small>PAYMENT VOUCHER</small><b id="vno"></b></div></div>
+<div class="gold"></div>
+<div class="body">
+<div class="row">
+<div class="card"><small>PAID TO</small><b id="vendor"></b><span id="vphone"></span></div>
+<div class="card"><small>ISSUED BY</small><b id="shop"></b><span id="addr"></span><span id="date"></span></div>
+</div>
+<h3>GRN AND INVOICES</h3>
+<table><thead><tr><th>GRN NO.</th><th>INVOICE</th><th>DATE</th><th class="n">AMOUNT (RS.)</th></tr></thead><tbody id="bills"></tbody></table>
+<h3>CHEQUES ISSUED</h3>
+<table><thead><tr><th>CHEQUE NO.</th><th>BANK</th><th>CHEQUE DATE</th><th class="n">AMOUNT (RS.)</th></tr></thead><tbody id="chq"></tbody></table>
+<div class="totals">
+<div class="t3 a"><small>INVOICES TOTAL</small><b id="tb"></b></div>
+<div class="t3 b"><small>CHEQUES TOTAL</small><b id="tc"></b></div>
+<div class="t3 c"><small>REMAINING PAYMENT</small><b id="tr"></b></div>
+</div>
+<div class="note" id="note"></div>
+<div class="sig"><div>ISSUED BY, ROYAL BATH HUB</div><div>RECEIVED BY</div></div>
+</div>
+<div class="foot" id="foot"></div>
+</div>
+<script>
+// The server swaps the sample between the two markers. Designers: keep the markers and the field names.
+const VOUCHER = /*DATA*/{"voucher_no":"PV-SAMPLE","date":"11 Nov 2026","shop":{"name":"Royal Bath Hub","address":"No. 173/1, Kandy Road, Thihariya","phone":"074 035 5536"},"vendor":{"name":"Fawaz (Fazaal Hardware Pvt Ltd)","phone":""},"bills":[{"grn_no":"GRN-0001","bill_no":"G1CR008289","bill_date":"2026-10-20","total":292450}],"cheques":[{"no":"704927","bank":"HNB","date":"2027-02-04","amount":150000}],"bills_total":292450,"cheques_total":150000,"balance":142450,"logo":"","bg":""}/*END*/;
+const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const day=d=>{const x=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(x)?esc(d||''):x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})};
+const V=VOUCHER;
+if(V.logo)$('logo').src=V.logo;else $('logo').style.display='none';
+if(V.bg)$('bg').style.backgroundImage='url("'+V.bg+'")';
+$('vno').textContent=V.voucher_no;$('vendor').textContent=V.vendor.name;$('vphone').textContent=V.vendor.phone||'';
+$('shop').textContent=V.shop.name;$('addr').textContent=V.shop.address;$('date').textContent='Date: '+V.date;
+$('bills').innerHTML=V.bills.map(b=>'<tr><td>'+esc(b.grn_no||'-')+'</td><td>'+esc(b.bill_no)+'</td><td>'+day(b.bill_date)+'</td><td class="n">'+money(b.total)+'</td></tr>').join('');
+$('chq').innerHTML=V.cheques.map(c=>'<tr><td><b>'+esc(c.no)+'</b></td><td>'+esc(c.bank||'')+'</td><td>'+day(c.date)+'</td><td class="n">'+money(c.amount)+'</td></tr>').join('');
+$('tb').textContent='Rs. '+money(V.bills_total);$('tc').textContent='Rs. '+money(V.cheques_total);$('tr').textContent='Rs. '+money(V.balance);
+$('note').textContent=V.balance>0?'Cheques are dated as shown. The remaining payment is still to be paid.':'Paid in full by the cheques shown.';
+$('foot').textContent=V.shop.name+'  |  '+V.shop.address+'  |  '+V.shop.phone;
+</script></body></html>

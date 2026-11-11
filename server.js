@@ -680,6 +680,7 @@ app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo:
 app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)
 app.use('/api', require('./routes/grn_barcodes'));   // routes are relative (/grn-barcodes) -> /api/grn-barcodes: sticker PDF for the GRN screen
 app.use('/api', require('./routes/invoice_receipts'));   // routes are relative (/invoice-receipts*) -> /api/invoice-receipts*
+app.use('/api', require('./routes/vendor_voucher'));   // payment voucher for a vendor: preview + WhatsApp (/api/vendor-voucher*)
 app.use('/api', require('./routes/agent_rulebook'));       // M1 agent rulebook (owner-only) -> /api/agent/rules*, /api/agent/rulebook
 app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker (owner-only) -> /api/enquiries*
 app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
