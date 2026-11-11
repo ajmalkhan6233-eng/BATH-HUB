@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RBH UX demo</title>
+<link rel="stylesheet" href="/rbh-app.css"><link rel="stylesheet" href="/ux-extra.css"><style>body{font-family:-apple-system,system-ui,sans-serif;background:var(--c-bg,#f4f4f2);color:var(--c-text,#0b0b0c);padding:16px;max-width:560px;margin:auto}section{margin:0 0 20px}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#7a5c00;margin:0 0 8px}.c{background:#fff;border:1px solid #d4d4cf;border-radius:14px;padding:16px;min-height:90px}</style></head><body>
+<section><h2>Step line</h2><div class="stepper" style="--step:3;--of:4"><div class="stepper-progress"></div><div class="step-node completed"></div><div class="step-node completed"></div><div class="step-node active">3</div><div class="step-node">4</div></div></section>
+<section><h2>Inline alert</h2><div class="inline-alert warn">2 bills overdue, Rs 185,000<button>Open</button></div></section>
+<section><h2>Peek row</h2><div class="peek-row"><div class="c">Card 1</div><div class="c">Card 2</div><div class="c">Card 3</div></div></section>
+<section><h2>Curved input</h2><input class="curved-input" placeholder="Search item"></section>
+<section><h2>Depth card (touch it)</h2><div class="c depth-card">Tilts toward your finger</div></section>
+<section><h2>Spring accordion</h2><details class="spring-accordion"><summary>Tap me</summary><div>Opens with a bounce.</div></details></section>
+<section><h2>Particle text</h2><div id="pt" style="height:50px;color:#C9A227">Royal Bath Hub</div></section>
+<script src="/ux-extra.js"></script><script>RBH.particleText(document.getElementById('pt'))</script></body></html>

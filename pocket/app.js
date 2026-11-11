@@ -36,7 +36,10 @@
   // ---------- screen ----------
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function row(l, r, rcls) { var d = el('div', 'row'); d.appendChild(el('div', 'l', l)); d.appendChild(el('div', 'r' + (rcls ? ' ' + rcls : ''), r)); return d; }
-  function card(title) { var c = el('div', 'card'); if (title) c.appendChild(el('h2', null, title)); return c; }
+  // icons: Lucide (ISC licence), inline, fixed strings only
+  var ICONS = {"trend":"<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>","week":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/><path d=\"M8 14h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 18h.01\"/><path d=\"M12 18h.01\"/><path d=\"M16 18h.01\"/>","month":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>","cash":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","pay":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>","box":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>","top":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>"};
+  var TITLE_ICON = { 'Today': 'trend', 'This week': 'week', 'This month': 'month', 'Money in today': 'cash', 'To pay': 'pay', 'Stock': 'box', 'Best sellers this month': 'top' };
+  function card(title) { var c = el('div', 'card'); if (title) { var h = el('h2', null, title); var k = TITLE_ICON[title]; if (k) h.insertAdjacentHTML('afterbegin', '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>'); c.appendChild(h); } return c; }
   function none() { return el('div', 'dim', 'No data yet'); }
 
 
@@ -48,7 +51,11 @@
       (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = rs(to * e); if (k < 1) requestAnimationFrame(f); else n.textContent = rs(to); })(t0);
     });
   }
-  window.addEventListener('scroll', function () { document.body.classList.toggle('scrolled', window.scrollY > 24); }, { passive: true });
+  window.addEventListener('scroll', function () {   // title shrinks in step with the finger (0 to 1 over 80px)
+    var y = window.scrollY, p = Math.max(0, Math.min(1, y / 80));
+    document.documentElement.style.setProperty('--p', p.toFixed(3)); document.body.classList.toggle('scrolled', y > 24);
+  }, { passive: true });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('#refresh'); if (b) { b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin'); } });
 
   function render(s) {
     var box = $('cards'); box.textContent = '';

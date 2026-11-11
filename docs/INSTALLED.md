@@ -32,3 +32,5 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-10 | @zxing/library 0.21.3 (MIT, zxing-js) | AJ OK'd (handoff job 1) | public/lib/zxing.min.js, local file, no CDN, not in package.json | phone-camera barcode scan in POS (public/pos-camera-scan.js, Scan button). Decoder tested on generated Code128 + EAN13 images; live camera on iPhone UNVERIFIED
 - 2026-11-10 | RBH Pocket phone app (pocket/, utils/pocketSnapshot.js, cloudflare/pocket_worker.js) | AJ OK'd (free only) | no new library: WebCrypto + Node crypto + Cloudflare free Worker/KV (same free service as the WhatsApp queue). State: BUILT + tested (21 unit + real-PG scripts/dev/pocket_realpg.js PASS), NOT deployed, design to Gemini/Cindy (pocket/DESIGN_BRIEF.md). Setup: pocket/SETUP.md
 - 2026-11-10 | none | PC script scripts/pc/rbh_find_black_windows.ps1 (read only: lists who starts each black node window)
+- 2026-11-11: Lucide icons (ISC, 9 icons copied inline from lucide-static 0.468.0, no library) in pocket/app.js + index.html
+- 2026-11-11: public/ux-extra.css + ux-extra.js (Gemini-built, plain, no library) loaded in owner shell; public/ux-demo.html to preview

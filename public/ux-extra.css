@@ -1,0 +1,176 @@
+/* ux-extra.css - Zero-dependency UI micro-interactions & enhancements */
+:root {
+  --rbh-card: var(--c-surface, #fff); --rbh-ash: var(--c-muted, #55585d); --rbh-gold: #C9A227; --rbh-gold-glow: rgba(201,162,39,.35);
+  --rbh-text: var(--c-text, #0b0b0c); --rbh-border: var(--c-line, #d4d4cf);
+}
+@media (prefers-reduced-motion: reduce) {
+*, ::before, ::after {
+animation-duration: 0.01ms !important;
+animation-iteration-count: 1 !important;
+transition-duration: 0.01ms !important;
+scroll-behavior: auto !important;
+}
+}
+/* 1. Stepper */
+.stepper {
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: relative;
+padding: 12px 16px;
+background: var(--rbh-card);
+border-radius: 12px;
+border: 1px solid var(--rbh-border);
+}
+.stepper::before {
+content: '';
+position: absolute;
+top: 50%;
+left: 36px;
+right: 36px;
+height: 2px;
+background: var(--rbh-border);
+transform: translateY(-50%);
+z-index: 1;
+}
+.stepper-progress {
+position: absolute;
+top: 50%;
+left: 36px;
+height: 2px;
+background: var(--rbh-gold);
+transform: translateY(-50%);
+z-index: 1;
+transition: width 0.3s ease;
+width: calc((100% - 72px) * (var(--step, 1) - 1) / max(1, (var(--of, 4) - 1)));
+}
+.stepper .step-node {
+position: relative;
+z-index: 2;
+width: 28px;
+height: 28px;
+border-radius: 50%;
+background: var(--rbh-card);
+border: 2px solid var(--rbh-border);
+color: var(--rbh-ash);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 12px;
+font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.stepper .step-node.completed,
+.stepper .step-node.active {
+border-color: var(--rbh-gold);
+color: var(--rbh-gold);
+}
+.stepper .step-node.completed::after {
+content: '✓';
+}
+/* 2. Inline Alert */
+.inline-alert {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px 16px;
+background: var(--rbh-card);
+border: 1px solid var(--rbh-border);
+border-radius: 12px;
+color: var(--rbh-text);
+font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+font-size: 14px;
+}
+.inline-alert.warn { border-color: #f59e0b; }
+.inline-alert.bad { border-color: #ef4444; }
+.inline-alert.ok { border-color: #10b981; }
+.inline-alert button {
+margin-left: auto;
+background: var(--rbh-gold);
+color: #000;
+border: none;
+padding: 6px 12px;
+border-radius: 6px;
+font-weight: 600;
+cursor: pointer;
+}
+/* 3. Peek Row */
+.peek-row {
+display: flex;
+gap: 12px;
+overflow-x: auto;
+scroll-snap-type: x mandatory;
+padding-bottom: 8px;
+scrollbar-width: none;
+}
+.peek-row::-webkit-scrollbar { display: none; }
+.peek-row > * {
+flex: 0 0 calc(100% - 48px);
+scroll-snap-align: start;
+}
+/* 4. Curved Input */
+.curved-input {
+width: 100%;
+background: transparent;
+border: none;
+border-bottom: 2px solid var(--rbh-border);
+border-radius: 0 0 16px 16px;
+padding: 12px 8px;
+color: var(--rbh-text);
+font-size: 16px;
+font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+outline: none;
+transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.curved-input:focus {
+border-color: var(--rbh-gold);
+border-bottom-left-radius: 4px;
+border-bottom-right-radius: 4px;
+box-shadow: 0 4px 12px var(--rbh-gold-glow);
+}
+/* 5. Depth Card */
+.depth-card {
+transition: transform 0.1s ease-out;
+transform-style: preserve-3d;
+will-change: transform;
+}
+/* 7. Spring Accordion */
+.spring-accordion summary {
+list-style: none;
+cursor: pointer;
+padding: 12px;
+background: var(--rbh-card);
+border-radius: 8px;
+font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+font-weight: 600;
+color: var(--rbh-text);
+}
+.spring-accordion summary::-webkit-details-marker { display: none; }
+.spring-accordion[open] summary {
+border-bottom-left-radius: 0;
+border-bottom-right-radius: 0;
+}
+.spring-accordion > div {
+padding: 12px;
+background: var(--rbh-card);
+border-bottom-left-radius: 8px;
+border-bottom-right-radius: 8px;
+overflow: hidden;
+max-height: 0;
+opacity: 0;
+transition: max-height 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+}
+.spring-accordion[open] > div {
+max-height: 500px;
+opacity: 1;
+}
+/* 8. Side Push */
+body {
+transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+transform-origin: left center;
+}
+body.side-open {
+transform: scale(0.86) translateX(150px);
+overflow: hidden;
+}
+.stepper-progress{pointer-events:none}
+.inline-alert.warn{background:rgba(245,158,11,.08)}.inline-alert.bad{background:rgba(239,68,68,.08)}.inline-alert.ok{background:rgba(16,185,129,.08)}
