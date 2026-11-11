@@ -6,3 +6,4 @@
 - 2026-11-03: Queue saved, waiting for Ajmal's go. (AI_MEMORY/QUEUE_TOMORROW.md)
 - 2026-11-03: Queue ready, waiting for go. SESSION START rule added to global CLAUDE.md (copy: AI_MEMORY/GLOBAL_CLAUDE_SESSION_START.md; cloud ~/.claude is temporary, paste into laptop ~/.claude/CLAUDE.md).
 - 2026-11-11 START: "go" on QUEUE_TOMORROW. Model claude-opus-5-5, effort medium, mode auto (from get_session). Heads-up: not Sonnet 5.5 medium.
+- 2026-11-11 T2: 19 ecc-* skills copied to ~/.claude/skills on this box; fresh claude -p listed all 19. T3: settings write blocked by safety check; draft saved AI_MEMORY/PERMISSIONS_DRAFT.json (needs Ajmal).
