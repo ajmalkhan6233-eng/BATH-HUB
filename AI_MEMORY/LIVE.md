@@ -11,3 +11,4 @@
 - 2026-11-11 T5: Noor test NOT RUN: adding noor_app to this session was blocked by the safety check. Needs a new session started on noor_app.
 - 2026-11-11 END: T1-T4 done, T3 needs Ajmal to approve PERMISSIONS_DRAFT.json, T5 not run.
 - 2026-11-11: Ajmal voided today's bill by Jazeel himself (POS Billing > Void). Not checked by Claude (no access to the shop app).
+- 2026-11-11: Fixed package.json broken by dac6ca9 (Vite migration): server/bridge/test setup back, React UI kept as ui:* scripts on port 5173 (not 3000). Unit tests 473/473, UI build OK. On branch claude/go-otbm4z, NOT on master yet.
