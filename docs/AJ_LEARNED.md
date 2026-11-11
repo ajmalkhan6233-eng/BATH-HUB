@@ -13,3 +13,5 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 10 Nov 2026: AJ asked to be spoken to softly and gently, like a kind friend, never stiff or professional; he works long hours at the shop. Rule is in CLAUDE.md (How to talk to AJ).
 - 11 Nov: AJ wants POS as one big immaculate page: Back/New bill, WhatsApp to the desktop app, real PDF download, item list never hidden, page scrolls a little
 - 11 Nov 2026: AJ gets angry when a new window does not read CLAUDE.md first, does not start with "AJ,", or hands him many steps. One instruction per reply. If Gemini is out of limit, chat builds the design itself.
+
+- 11 Nov: AJ says 'go' once, then wants everything built without more asking; new look = whole app, not too dark, modern charts (mirrored bars), keep old animations.

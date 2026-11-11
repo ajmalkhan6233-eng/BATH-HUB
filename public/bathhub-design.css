@@ -247,3 +247,11 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
 .topbar-brand { display:flex; align-items:center; gap:12px; min-width:0; }
 .brand-logo { height:44px; width:auto; object-fit:contain; flex-shrink:0; }
 @media (max-width:640px) { .brand-logo { height:30px; width:auto; } .topbar > .topbar-brand { flex:1 1 auto; min-width:0; } }
+
+/* SOFT tone (11 Nov 2026, AJ: not too dark): same Gold look, lighter slate surfaces. Only variables change, so every dark rule still applies. */
+[data-theme="dark"][data-tone="soft"], [data-theme="gold"][data-tone="soft"] {
+  --bg-canvas:#2f3642; --bg-surface:#3a4250; --bg-surface-elevated:#444d5d; --bg-surface-subtle:#353d4a; --bg-surface-hover:#4f596b; --bg-input:#2f3642;
+  --bg-glass:rgba(58,66,80,.92); --bg-glass-fallback:#3a4250f5;
+  --border-subtle:#566074; --border-strong:#6b7790;
+  --text-primary:#f6f8fb; --text-secondary:#d6dce8; --text-muted:#a9b4c8; --text-on-accent:#1b1f26;
+}

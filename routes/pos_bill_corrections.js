@@ -64,6 +64,7 @@ async function giveStockBack(client, items) {
         if (!l.item_code) continue;
         await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) + $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
         restored.push({ item_code: l.item_code, qty: Number(l.qty) });
+        await require('../utils/stock_ledger').recordSafe(client, { item_code: l.item_code, qty_change: Number(l.qty), reason: 'sale_restore', ref_type: 'pos_bill', ref_id: String(l.bill_id || '') });
     }
     return restored;
 }
@@ -154,7 +155,7 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         if (billDeducted(bill)) {
             await giveStockBack(client, oldItems);
             for (const l of p.lines) {
-                if (l.item_code) await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
+                if (l.item_code) { await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]); await require('../utils/stock_ledger').recordSafe(client, { item_code: l.item_code, qty_change: -Number(l.qty), reason: 'sale_edit', ref_type: 'pos_bill', ref_id: String(bill.id) }); }
             }
         }
         await client.query(`DELETE FROM pos_bill_items WHERE bill_id = $1`, [bill.id]);

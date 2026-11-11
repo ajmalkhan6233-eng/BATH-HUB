@@ -1,0 +1,535 @@
+<!DOCTYPE html><html data-theme="dark" data-tone="soft"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RBH new look preview</title><style>/* ==========================================================================
+   ROYAL BATH HUB DESIGN LAYER  (public/bathhub-design.css)
+   Visual design only: colours, type, spacing, themes. No logic, no network.
+   Themes: Gold (default dark), Water, Light  ->  <html data-theme="dark|water|light">
+   Rules: every button/tab/toggle/nav item is at least 48 x 48 px; body text >= 14 px, labels >= 12 px; icons are inline SVG (no emoji).
+   Link this file LAST in <head> so it wins over a page's own <style>.
+   ========================================================================== */
+
+@import url("/design2_tokens.css");   /* Design 2 look in the shop colours (black, ash, gold); remove this line to go back to Design 3 */
+
+/* ---- 1. TOKENS (from the Royal Bath Hub design system) ---- */
+:root, [data-theme="dark"], [data-theme="gold"] {
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --text-xs:12px; --text-sm:14px; --text-base:15px; --text-md:16px; --text-lg:18px; --text-xl:20px; --text-2xl:24px; --text-3xl:30px;
+  --radius-xs:4px; --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:24px; --radius-full:9999px;
+  --touch-target:48px;
+  --shadow-sm:0 1px 2px 0 rgba(0,0,0,.25); --shadow-md:0 4px 12px 0 rgba(0,0,0,.35); --shadow-lg:0 10px 28px 0 rgba(0,0,0,.45); --shadow-gold:0 4px 16px 0 rgba(212,175,55,.2);
+
+  --bg-canvas:#0b0d10; --bg-surface:#14171d; --bg-surface-elevated:#1d2129; --bg-surface-subtle:#181b22; --bg-surface-hover:#262c37; --bg-input:#101216;
+  --bg-glass:rgba(20,23,29,.88); --bg-glass-fallback:#14171df5;
+  --border-subtle:#282f3a; --border-strong:#3b4554; --border-focus:#d4af37;
+  --text-primary:#f8fafc; --text-secondary:#cbd5e1; --text-muted:#94a3b8; --text-on-accent:#000000;
+  --gold-primary:#d4af37; --gold-hover:#e5c158; --gold-active:#bf9b2f; --gold-text:#f0ce64; --gold-bg-subtle:rgba(212,175,55,.12); --gold-border-subtle:rgba(212,175,55,.32);
+  --status-success:#34d399; --status-success-bg:rgba(52,211,153,.14);
+  --status-danger:#f87171;  --status-danger-bg:rgba(248,113,113,.14);
+  --status-warning:#fbbf24; --status-warning-bg:rgba(251,191,36,.14);
+  --status-info:#38bdf8;    --status-info-bg:rgba(56,189,248,.14);
+  --ceramic-white:#ffffff; --water-cyan:#38bdf8;
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg-canvas:#f8f9fa; --bg-surface:#ffffff; --bg-surface-elevated:#f1f3f7; --bg-surface-subtle:#f9fafb; --bg-surface-hover:#eaedf3; --bg-input:#ffffff;
+  --bg-glass:rgba(255,255,255,.9); --bg-glass-fallback:#fffffff5;
+  --border-subtle:#dbe0e8; --border-strong:#b2bcc9; --border-focus:#9e7415;
+  --text-primary:#0f172a; --text-secondary:#334155; --text-muted:#596577; --text-on-accent:#ffffff;
+  --gold-primary:#8f670a; --gold-hover:#755406; --gold-active:#5c4204; --gold-text:#785606; --gold-bg-subtle:rgba(143,103,10,.1); --gold-border-subtle:rgba(143,103,10,.28);
+  --shadow-sm:0 1px 3px 0 rgba(0,0,0,.08); --shadow-md:0 4px 12px 0 rgba(0,0,0,.08); --shadow-lg:0 10px 24px 0 rgba(0,0,0,.1); --shadow-gold:0 4px 16px 0 rgba(143,103,10,.18);
+  --status-success:#047857; --status-success-bg:rgba(4,120,87,.1);
+  --status-danger:#dc2626;  --status-danger-bg:rgba(220,38,38,.1);
+  --status-warning:#b45309; --status-warning-bg:rgba(180,83,9,.1);
+  --status-info:#0369a1;    --status-info-bg:rgba(3,105,161,.1);
+  color-scheme: light;
+}
+[data-theme="water"] {
+  --bg-canvas:#060e15; --bg-surface:#0c1822; --bg-surface-elevated:#132331; --bg-surface-subtle:#0f1c27; --bg-surface-hover:#1b2f42; --bg-input:#081119;
+  --bg-glass:rgba(12,24,34,.88); --bg-glass-fallback:#0c1822f0;
+  --border-subtle:#1e364a; --border-strong:#2f5370; --border-focus:#06b6d4;
+  --text-primary:#f0fdfa; --text-secondary:#99f6e4; --text-muted:#5eead4; --text-on-accent:#042f2e;
+  --gold-primary:#06b6d4; --gold-hover:#22d3ee; --gold-active:#0891b2; --gold-text:#67e8f9; --gold-bg-subtle:rgba(6,182,212,.14); --gold-border-subtle:rgba(6,182,212,.35);
+  --shadow-sm:0 1px 3px 0 rgba(0,0,0,.4); --shadow-md:0 4px 14px 0 rgba(4,30,45,.5); --shadow-lg:0 10px 30px 0 rgba(2,18,28,.6); --shadow-gold:0 4px 20px 0 rgba(6,182,212,.3);
+  --water-cyan:#22d3ee;
+  color-scheme: dark;
+}
+
+/* ---- 2. COMPATIBILITY: the colour names the existing pages already use now follow the design tokens ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  /* owner shell family */
+  --gold:var(--gold-primary); --gold-dark:var(--gold-active); --gold-light:var(--gold-hover);
+  --bg:var(--bg-canvas); --bg2:var(--bg-surface); --bg3:var(--bg-surface-elevated);
+  --card:var(--bg-surface); --card-border:var(--border-subtle); --card-hover:var(--bg-surface-hover);
+  --text:var(--text-primary); --text2:var(--text-secondary); --text3:var(--text-muted);
+  --green:var(--status-success); --red:var(--status-danger); --amber:var(--status-warning); --blue:var(--status-info); --purple:#a78bfa;
+  --radius:var(--radius-lg); --shadow:var(--shadow-md);
+  /* screens that use accent / ink / line names */
+  --accent:var(--gold-primary); --accent-ink:var(--text-on-accent); --ink:var(--text-primary); --txt:var(--text-primary);
+  --bad:var(--status-danger); --ok:var(--status-success); --muted:var(--text-muted);
+  --border:var(--border-subtle); --line:var(--border-subtle); --surface:var(--bg-surface);
+  --note:var(--status-warning-bg); --note-ink:var(--status-warning);
+  --wall:var(--bg-canvas); --wall2:var(--bg-surface); --sofa:var(--bg-surface-elevated); --sofa2:var(--bg-surface-hover);
+}
+
+/* ---- 3. BASE ---- */
+html { font-size:15px; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+body { font-family:var(--font-sans); font-size:var(--text-base); line-height:1.5; color:var(--text-primary); background-color:var(--bg-canvas); overflow-wrap:anywhere; }
+h1,h2,h3,h4 { color:var(--text-primary); letter-spacing:-0.01em; }
+a { color:var(--gold-text); }
+::placeholder { color:var(--text-muted); opacity:1; }
+::selection { background:var(--gold-bg-subtle); }
+:focus-visible { outline:2px solid var(--border-focus); outline-offset:2px; }
+.tabular-nums, .num, td.num, th.num, .money, .money-cell { font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
+::-webkit-scrollbar { width:8px; height:8px; } ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; }
+
+/* ---- 4. TOUCH TARGETS: at least 48 x 48 ---- */
+button, .btn, [role="button"], [role="tab"], .tab, .tab-btn, .nav-item, .nav-link, .mini-btn, .theme-toggle, summary,
+input[type="button"], input[type="submit"], a.btn, a.share-btn, .share-btn, .remove-btn, .generate-btn {
+  min-height:var(--touch-target) !important; min-width:var(--touch-target) !important;   /* hard rule: a page's own smaller size must not win */
+  font-family:inherit; font-size:max(14px, 1em);
+}
+select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="file"]) {
+  min-height:var(--touch-target) !important; font-family:inherit; font-size:max(15px, 1em);
+  color:var(--text-primary); background-color:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+}
+textarea { min-height:96px !important; }
+input[type="color"] { min-height:var(--touch-target) !important; min-width:var(--touch-target) !important; padding:4px; }
+select:focus, textarea:focus, input:focus { outline:none; border-color:var(--border-focus); box-shadow:0 0 0 3px var(--gold-bg-subtle); }
+input[type="checkbox"], input[type="radio"] { width:24px; height:24px; accent-color:var(--gold-primary); cursor:pointer; vertical-align:middle; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display:inline-flex; align-items:center; gap:var(--space-2); min-height:var(--touch-target); cursor:pointer; }
+button, .btn, [role="button"], .tab, .mini-btn { cursor:pointer; border-radius:var(--radius-md); }
+button:disabled, .btn:disabled { opacity:.55; cursor:not-allowed; }
+label, th, .label, .lbl, small { font-size:max(12px, 1em); }
+
+/* ---- 5. SHARED COMPONENT LOOK ---- */
+table { border-collapse:collapse; }
+th { color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--border-strong); }
+td { border-bottom:1px solid var(--border-subtle); }
+tbody tr:hover { background:var(--bg-surface-hover); }
+.card, .panel { background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); color:var(--text-primary); }
+dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-strong); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); }
+.modal-bg, .modal-overlay { background:rgba(0,0,0,.65); }
+
+/* design-system buttons, usable in any markup */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); border:1px solid transparent; font-weight:600; text-decoration:none; transition:background-color .15s, border-color .15s, transform .15s; }
+.btn:active { transform:scale(.98); }
+.btn-primary, .btn-p { background:var(--gold-primary); color:var(--text-on-accent); box-shadow:var(--shadow-gold); }
+.btn-primary:hover, .btn-p:hover { background:var(--gold-hover); }
+.btn-secondary, .btn-s { background:var(--bg-surface-elevated); color:var(--text-primary); border-color:var(--border-subtle); }
+.btn-secondary:hover, .btn-s:hover { background:var(--bg-surface-hover); border-color:var(--border-strong); }
+.btn-outline-gold { background:var(--gold-bg-subtle); color:var(--gold-text); border-color:var(--gold-border-subtle); }
+.btn-danger { background:var(--status-danger-bg); color:var(--status-danger); border-color:var(--status-danger); }
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:var(--radius-full); font-size:var(--text-xs); font-weight:600; background:var(--bg-surface-elevated); color:var(--text-secondary); }
+.badge-ok { background:var(--status-success-bg); color:var(--status-success); } .badge-warn { background:var(--status-warning-bg); color:var(--status-warning); } .badge-bad { background:var(--status-danger-bg); color:var(--status-danger); }
+
+/* inline SVG icons (replace every emoji) */
+.bh-icon { width:1.25em; height:1.25em; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; vertical-align:-.22em; flex-shrink:0; }
+.bh-icon.bh-fill { fill:currentColor; stroke:none; }
+
+/* ---- 6. PHONE ---- */
+@media (max-width:768px) { html { font-size:15px; } }
+/* ---- 7. OWNER SHELL (public/bathco_complete.html) ---- */
+#chip-slot { display:inline-flex; align-items:center; }
+#chip-slot > button { position:static !important; top:auto !important; right:auto !important; z-index:auto !important; min-height:48px; }
+.sidebar { background:var(--bg-glass-fallback); border-right:1px solid var(--border-subtle); }
+.sidebar .nav-item { border:1px solid transparent; border-radius:var(--radius-md); color:var(--text-secondary); padding-top:0; padding-bottom:0; align-items:center; }
+.sidebar .nav-item:hover { background:var(--bg-surface-hover); color:var(--text-primary); }
+.sidebar .nav-item.active { background:var(--gold-bg-subtle); color:var(--gold-text); border-color:var(--gold-border-subtle); font-weight:600; }
+.sidebar .nav-icon .bh-icon, .nav-icon svg { width:20px; height:20px; }
+.nav-label { font-size:var(--text-sm); }
+.nav-sep { font-size:var(--text-xs); color:var(--text-muted); }
+.topbar, header.topbar { background:var(--bg-glass-fallback); border-bottom:1px solid var(--border-subtle); }
+.theme-toggle { width:48px; height:48px; border-radius:var(--radius-full); color:var(--gold-text); }
+.logout-btn { border:1px solid var(--border-subtle); border-radius:var(--radius-md); color:var(--text-primary); background:var(--bg-surface-elevated); padding:0 var(--space-4); }
+.live-clock { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+#bottom-nav { background:var(--bg-glass-fallback); }
+#bottom-nav button .bi .bh-icon { width:22px; height:22px; }
+#bottom-nav button { font-size:var(--text-xs); }
+
+/* ---- 6b. older palette names (emerald / earth / gold-NNN) used by a few screens ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  --emerald-900:var(--text-primary); --emerald-800:var(--gold-primary); --emerald-700:var(--gold-primary);
+  --earth-800:var(--text-primary); --earth-700:var(--text-secondary); --earth-500:var(--text-muted);
+  --gold-500:var(--gold-primary); --gold-400:var(--gold-hover); --gold-300:var(--gold-text);
+}
+
+/* ---- 6c. PRINT: paper stays white with dark ink, whatever theme is on screen ---- */
+@media print {
+  :root, [data-theme] {
+    --bg-canvas:#fff; --bg-surface:#fff; --bg-surface-elevated:#f1f3f7; --bg-surface-hover:#eaedf3; --bg-input:#fff;
+    --border-subtle:#cfd6df; --border-strong:#9aa5b4; --text-primary:#000; --text-secondary:#222; --text-muted:#444;
+    --gold-primary:#6b4f08; --gold-text:#6b4f08; --text-on-accent:#fff; --shadow-sm:none; --shadow-md:none;
+  }
+  body { background:#fff !important; color:#000 !important; }
+}
+
+/* ---- 8. SCREEN-SPECIFIC ---- */
+/* POS billing */
+.share-btn.print { background:var(--bg-surface-elevated) !important; color:var(--text-primary) !important; border:1px solid var(--border-strong); }
+.receipt { background:#fff; color:#111; border-radius:var(--radius-md); }       /* the bill is paper: stays white and dark in every theme */
+.receipt { --text-primary:#111; --text-secondary:#333; --text-muted:#555; --border-subtle:#ddd; --border-strong:#999; --bg-surface:#fff; --gold-primary:#6b4f08; --gold-text:#6b4f08; }
+
+.item-row { grid-template-columns:1fr 84px 110px 48px !important; }
+
+/* ---- 9. PHONE FIT ---- */
+input, select, textarea { box-sizing:border-box; max-width:100%; min-width:0; }
+@media (max-width:480px) {
+  .item-row { grid-template-columns:1fr 1fr 48px !important; }          /* POS: name on its own line, then qty, price, remove */
+  .item-row .pick-wrap { grid-column:1 / -1; }
+}
+
+/* ---- 10. THEME PICKER (Settings) ---- */
+.bh-theme-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--space-3); }
+.bh-theme-btn { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:var(--space-3); text-align:left; background:var(--bg-surface-elevated); color:var(--text-primary); border:2px solid var(--border-subtle); border-radius:var(--radius-md); }
+.bh-theme-btn small { color:var(--text-muted); font-weight:400; }
+.bh-theme-btn.on { border-color:var(--gold-primary); background:var(--gold-bg-subtle); }
+.bh-theme-btn .bh-sw { width:56px; height:32px; border:2px solid; border-radius:var(--radius-sm); display:flex; align-items:flex-end; padding:4px; }
+.bh-theme-btn .bh-sw i { display:block; width:60%; height:6px; border-radius:3px; }
+
+/* ---- 11. PAGE HEADERS: neutral in every theme (readable text, no gold band) ---- */
+body > header:not(.topbar) { background:var(--bg-surface); color:var(--text-primary); border-bottom:1px solid var(--border-subtle); }
+body > header:not(.topbar) h1 { color:var(--text-primary); }
+body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header:not(.topbar) p { color:var(--text-muted); }
+
+/* ---- 6d. remaining older names some screens still use ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
+  --stone-50:var(--bg-surface-subtle); --stone-100:var(--bg-surface-elevated);
+  --green-100:var(--status-success-bg); --green-700:var(--status-success);
+  --red-100:var(--status-danger-bg); --red-600:var(--status-danger);
+  --em8:var(--gold-primary); --em9:var(--gold-active); --gold-hover:var(--gold-hover);
+}
+
+/* ---- 12. CONTRAST FIXES FOUND IN THE AUDIT ---- */
+:root, [data-theme="dark"], [data-theme="gold"], [data-theme="water"] { --text-on-danger:#000000; }
+[data-theme="light"] { --text-on-danger:#ffffff; }
+#sheet { background:var(--bg-surface-hover) !important; }
+
+[data-theme="light"] { --purple:#6d28d9; }
+
+/* ---- 13. PHONE TABLES: scroll inside the table, never squeeze columns into tall rows ---- */
+@media (max-width:640px) {
+  table { display:block; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  th, td { white-space:nowrap; }
+  td.wrap, td .wrap, td.note, td.notes { white-space:normal; min-width:180px; }
+}
+
+/* ---- 14. PHONE TOP BAR (owner shell) ---- */
+@media (max-width:640px) {
+  header.topbar, .topbar { gap:8px; padding-left:12px !important; padding-right:12px !important; }
+  .topbar > div:first-child { min-width:0; flex:1 1 auto; }
+  #page-title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #page-sub, .live-clock { display:none !important; }
+  /* 24 Oct: the page title ran over the Search button; let the title block shrink and cut with ... */
+  .topbar-brand > div { min-width:0; overflow:hidden; }
+  .topbar-brand .brand-logo { flex-shrink:0; max-width:64px; object-fit:contain; }
+  #chip-slot > * { font-size:11px !important; padding:5px 9px !important; min-height:36px !important; }
+  .theme-toggle { min-width:40px !important; width:40px !important; padding:0 !important; }
+  .logout-btn { padding:0 8px !important; font-size:12px !important; }
+  #toasts { bottom:84px !important; left:10px; right:10px; }          /* messages sit above the bottom bar, not over it */
+  #ld-float { bottom:132px !important; right:10px !important; transform:scale(.88); transform-origin:bottom right; }   /* Send to Layla no longer covers the cards */
+  #page-title { min-width:0; font-size:15px !important; }
+  .topbar-brand .brand-logo { max-width:38px; }
+  #pal-btn { font-size:0 !important; min-width:44px; padding:0 !important; }
+  #pal-btn:before { content:"\2315"; font-size:22px; line-height:1; }
+  .topbar-right { flex-shrink:0; gap:6px !important; }
+  #chip-slot > button { white-space:nowrap; padding:0 10px; font-size:12px; }
+  .logout-btn { white-space:nowrap; padding:0 12px; font-size:13px; }
+}
+
+/* ---- 15. POS: the single column must be allowed to shrink below its content ---- */
+@media (max-width:800px) { .wrap { grid-template-columns:minmax(0,1fr) !important; } .wrap > *, .panel { min-width:0; } .pick-list { min-width:0 !important; max-width:100% !important; } }
+
+/* ---- 16. LABELS: one column on phones must be allowed to shrink ---- */
+@media (max-width:899px) { .cols { grid-template-columns:minmax(0,1fr) !important; } .cols > * { min-width:0; } }
+
+
+/* ---- 17. BRAND LOGO IN THE HEADER ---- */
+.topbar-brand { display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-logo { height:44px; width:auto; object-fit:contain; flex-shrink:0; }
+@media (max-width:640px) { .brand-logo { height:30px; width:auto; } .topbar > .topbar-brand { flex:1 1 auto; min-width:0; } }
+
+/* SOFT tone (11 Nov 2026, AJ: not too dark): same Gold look, lighter slate surfaces. Only variables change, so every dark rule still applies. */
+[data-theme="dark"][data-tone="soft"], [data-theme="gold"][data-tone="soft"] {
+  --bg-canvas:#2f3642; --bg-surface:#3a4250; --bg-surface-elevated:#444d5d; --bg-surface-subtle:#353d4a; --bg-surface-hover:#4f596b; --bg-input:#2f3642;
+  --bg-glass:rgba(58,66,80,.92); --bg-glass-fallback:#3a4250f5;
+  --border-subtle:#566074; --border-strong:#6b7790;
+  --text-primary:#f6f8fb; --text-secondary:#d6dce8; --text-muted:#a9b4c8; --text-on-accent:#1b1f26;
+}
+
+/* RBH Modern: 50 calm animations (transform/opacity only, one run each, 150-450 ms). 11 Nov 2026.
+   Use: add class ra-NAME (and ra-d1..ra-d8 to stagger). No reduce-motion switch-off on purpose: the shop PC has Windows animations off. */
+:root{--ra-ease:cubic-bezier(.16,1,.3,1);--ra-spring:cubic-bezier(.34,1.56,.64,1)}
+@keyframes ra-fade-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ra-fade-up{animation:ra-fade-up .38s var(--ra-spring) both}
+@keyframes ra-fade-down{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.ra-fade-down{animation:ra-fade-down .38s var(--ra-spring) both}
+@keyframes ra-fade-left{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.ra-fade-left{animation:ra-fade-left .38s var(--ra-spring) both}
+@keyframes ra-fade-right{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.ra-fade-right{animation:ra-fade-right .38s var(--ra-spring) both}
+@keyframes ra-fade{from{opacity:0}to{opacity:1}}
+.ra-fade{animation:ra-fade .38s var(--ra-spring) both}
+@keyframes ra-zoom-in{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.ra-zoom-in{animation:ra-zoom-in .38s var(--ra-spring) both}
+@keyframes ra-zoom-out{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}
+.ra-zoom-out{animation:ra-zoom-out .38s var(--ra-spring) both}
+@keyframes ra-pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+.ra-pop{animation:ra-pop .38s var(--ra-spring) both}
+@keyframes ra-slide-up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.ra-slide-up{animation:ra-slide-up .38s var(--ra-spring) both}
+@keyframes ra-slide-down{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
+.ra-slide-down{animation:ra-slide-down .38s var(--ra-spring) both}
+@keyframes ra-slide-left{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+.ra-slide-left{animation:ra-slide-left .38s var(--ra-spring) both}
+@keyframes ra-slide-right{from{transform:translateX(-60px);opacity:0}to{transform:none;opacity:1}}
+.ra-slide-right{animation:ra-slide-right .38s var(--ra-spring) both}
+@keyframes ra-flip-x{from{opacity:0;transform:perspective(500px) rotateX(-70deg)}to{opacity:1;transform:none}}
+.ra-flip-x{animation:ra-flip-x .38s var(--ra-spring) both}
+@keyframes ra-flip-y{from{opacity:0;transform:perspective(500px) rotateY(-70deg)}to{opacity:1;transform:none}}
+.ra-flip-y{animation:ra-flip-y .38s var(--ra-spring) both}
+@keyframes ra-rotate-in{from{opacity:0;transform:rotate(-8deg) scale(.92)}to{opacity:1;transform:none}}
+.ra-rotate-in{animation:ra-rotate-in .38s var(--ra-spring) both}
+@keyframes ra-skew-in{from{opacity:0;transform:skewX(8deg) translateX(-12px)}to{opacity:1;transform:none}}
+.ra-skew-in{animation:ra-skew-in .38s var(--ra-spring) both}
+@keyframes ra-drop{from{opacity:0;transform:translateY(-30px) scale(.96)}to{opacity:1;transform:none}}
+.ra-drop{animation:ra-drop .38s var(--ra-spring) both}
+@keyframes ra-rise{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:none}}
+.ra-rise{animation:ra-rise .38s var(--ra-spring) both}
+@keyframes ra-stretch-x{from{transform:scaleX(.2);opacity:0}to{transform:none;opacity:1}}
+.ra-stretch-x{animation:ra-stretch-x .38s var(--ra-spring) both}
+@keyframes ra-stretch-y{from{transform:scaleY(.2);opacity:0}to{transform:none;opacity:1}}
+.ra-stretch-y{animation:ra-stretch-y .38s var(--ra-spring) both}
+@keyframes ra-grow-x{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ra-grow-x{animation:ra-grow-x .38s var(--ra-spring) both}
+@keyframes ra-grow-y{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.ra-grow-y{animation:ra-grow-y .38s var(--ra-spring) both}
+@keyframes ra-reveal-left{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.ra-reveal-left{animation:ra-reveal-left .38s var(--ra-spring) both}
+@keyframes ra-reveal-up{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+.ra-reveal-up{animation:ra-reveal-up .38s var(--ra-spring) both}
+@keyframes ra-blur-in{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:none}}
+.ra-blur-in{animation:ra-blur-in .38s var(--ra-spring) both}
+@keyframes ra-unblur-up{from{opacity:0;filter:blur(4px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+.ra-unblur-up{animation:ra-unblur-up .38s var(--ra-spring) both}
+@keyframes ra-spring{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.ra-spring{animation:ra-spring .38s var(--ra-spring) both}
+@keyframes ra-bounce-in{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:none}}
+.ra-bounce-in{animation:ra-bounce-in .38s var(--ra-spring) both}
+@keyframes ra-swing-in{from{opacity:0;transform:rotate(6deg) translateY(-10px)}to{opacity:1;transform:none}}
+.ra-swing-in{animation:ra-swing-in .38s var(--ra-spring) both}
+@keyframes ra-tilt-in{from{opacity:0;transform:perspective(600px) rotateX(10deg) translateY(16px)}to{opacity:1;transform:none}}
+.ra-tilt-in{animation:ra-tilt-in .38s var(--ra-spring) both}
+@keyframes ra-toast-in{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+.ra-toast-in{animation:ra-toast-in .38s var(--ra-spring) both}
+@keyframes ra-toast-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(24px) scale(.96)}}
+.ra-toast-out{animation:ra-toast-out .38s var(--ra-spring) both}
+@keyframes ra-modal-in{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+.ra-modal-in{animation:ra-modal-in .38s var(--ra-spring) both}
+@keyframes ra-sheet-up{from{transform:translateY(100%)}to{transform:none}}
+.ra-sheet-up{animation:ra-sheet-up .38s var(--ra-spring) both}
+@keyframes ra-backdrop{from{opacity:0}to{opacity:1}}
+.ra-backdrop{animation:ra-backdrop .38s var(--ra-spring) both}
+@keyframes ra-tab-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.ra-tab-in{animation:ra-tab-in .38s var(--ra-spring) both}
+@keyframes ra-badge-bump{from{transform:scale(.6)}to{transform:scale(1)}}
+.ra-badge-bump{animation:ra-badge-bump .38s var(--ra-spring) both}
+@keyframes ra-row-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.ra-row-in{animation:ra-row-in .38s var(--ra-spring) both}
+@keyframes ra-card-in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.ra-card-in{animation:ra-card-in .38s var(--ra-spring) both}
+@keyframes ra-count-pop{from{transform:scale(1.18)}to{transform:none}}
+.ra-count-pop{animation:ra-count-pop .38s var(--ra-spring) both}
+@keyframes ra-check-pop{from{transform:scale(0) rotate(-20deg)}to{transform:none}}
+.ra-check-pop{animation:ra-check-pop .38s var(--ra-spring) both}
+@keyframes ra-ring-pop{from{opacity:0;transform:scale(.6) rotate(-90deg)}to{opacity:1;transform:none}}
+.ra-ring-pop{animation:ra-ring-pop .38s var(--ra-spring) both}
+@keyframes ra-tube-rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.ra-tube-rise{animation:ra-tube-rise .38s var(--ra-spring) both}
+@keyframes ra-bar-rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.ra-bar-rise{animation:ra-bar-rise .38s var(--ra-spring) both}
+@keyframes ra-bar-slide{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ra-bar-slide{animation:ra-bar-slide .38s var(--ra-spring) both}
+@keyframes ra-dot-in{from{opacity:0;transform:scale(0)}to{opacity:1;transform:none}}
+.ra-dot-in{animation:ra-dot-in .38s var(--ra-spring) both}
+@keyframes ra-legend-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ra-legend-in{animation:ra-legend-in .38s var(--ra-spring) both}
+@keyframes ra-flash{from{opacity:.35}to{opacity:1}}
+.ra-flash{animation:ra-flash .38s var(--ra-spring) both}
+@keyframes ra-soft-glow{from{opacity:.6;transform:scale(.99)}to{opacity:1;transform:none}}
+.ra-soft-glow{animation:ra-soft-glow .38s var(--ra-spring) both}
+@keyframes ra-wiggle{from{transform:rotate(-2deg)}to{transform:none}}
+.ra-wiggle{animation:ra-wiggle .38s var(--ra-spring) both}
+@keyframes ra-nudge{from{transform:translateX(-6px)}to{transform:none}}
+.ra-nudge{animation:ra-nudge .38s var(--ra-spring) both}
+@keyframes ra-settle{from{transform:translateY(-6px)}to{transform:none}}
+.ra-settle{animation:ra-settle .38s var(--ra-spring) both}
+.ra-d1{animation-delay:.04s}.ra-d2{animation-delay:.08s}.ra-d3{animation-delay:.12s}.ra-d4{animation-delay:.16s}.ra-d5{animation-delay:.2s}.ra-d6{animation-delay:.24s}.ra-d7{animation-delay:.28s}.ra-d8{animation-delay:.32s}
+.ra-lift{transition:transform .22s var(--ra-spring),box-shadow .22s}.ra-lift:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px rgba(0,0,0,.35)}
+.ra-press{transition:transform .16s var(--ra-spring),opacity .16s}.ra-press:active{transform:scale(.95);opacity:.88}
+
+/* ===== modern dashboard panel (#dash-modern) ===== */
+#dash-modern{margin-bottom:16px;font-size:14px}
+#dash-modern .dm-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#dash-modern .dm-title{font-size:clamp(20px,3vw,28px);font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+#dash-modern .dm-sub{font-size:12px;color:var(--text2)}
+#dash-modern .dm-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-bottom:12px}
+#dash-modern .dm-grid.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+#dash-modern .dm-card{background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:14px 16px;min-width:0;position:relative;overflow:hidden}
+#dash-modern .dm-lab{font-size:12px;color:var(--text2);font-weight:600}
+#dash-modern .dm-val{font-size:clamp(20px,3.2vw,26px);font-weight:800;margin-top:6px;letter-spacing:-.01em;line-height:1.1;word-break:break-word}
+#dash-modern .dm-gold{color:var(--gold)}
+#dash-modern .dm-chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:8px}
+#dash-modern .dm-chip.up{background:rgba(52,211,153,.16);color:#34d399}#dash-modern .dm-chip.down{background:rgba(248,113,113,.16);color:#f87171}#dash-modern .dm-chip.flat{background:rgba(148,163,184,.18);color:var(--text2)}
+#dash-modern h3{font-size:15px;font-weight:800;margin:0 0 2px}
+#dash-modern .dm-note{font-size:12px;color:var(--text2);margin:0 0 10px}
+#dash-modern svg{display:block;width:100%;height:auto;overflow:visible}
+#dash-modern .dm-spark{position:absolute;right:10px;bottom:8px;width:84px;height:34px;opacity:.9}
+#dash-modern .rc-bar{transform-origin:50% 100%;animation:ra-bar-rise .7s var(--ra-spring) both;animation-delay:calc(var(--i,0)*35ms)}
+#dash-modern .rc-hbar{transform-origin:0 50%;animation:ra-bar-slide .7s var(--ra-spring) both;animation-delay:calc(var(--i,0)*60ms)}
+#dash-modern .rc-line{stroke-dasharray:1;stroke-dashoffset:1;animation:rcDraw 1.1s var(--ra-ease) forwards}
+@keyframes rcDraw{to{stroke-dashoffset:0}}
+#dash-modern .rc-ring{transition:stroke-dashoffset 1.1s var(--ra-ease)}
+#dash-modern .rc-seg{animation:ra-fade .6s ease both;animation-delay:calc(var(--i,0)*90ms)}
+#dash-modern .rc-heat{animation:ra-dot-in .45s var(--ra-spring) both;animation-delay:calc(var(--i,0)*18ms);transform-box:fill-box;transform-origin:center}
+#dash-modern .rc-tube{transform-origin:50% 100%;animation:ra-tube-rise .9s var(--ra-spring) both;animation-delay:calc(var(--i,0)*70ms)}
+#dash-modern .dm-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:8px}
+#dash-modern .dm-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+#dash-modern .dm-empty{padding:18px;text-align:center;color:var(--text2);font-size:13px}
+#dash-modern .dm-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0}
+#dash-modern button.dm-btn{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:inherit;font-size:13px;cursor:pointer}
+
+body{margin:0;padding:14px;background:var(--bg-canvas);color:var(--text-primary);font-family:system-ui,sans-serif;max-width:1100px;margin:auto}</style></head><body><button id="sw" style="min-height:44px;padding:0 14px;border-radius:12px;margin-bottom:10px">Switch Soft / Light</button><script>/* RBH charts: dependency-free SVG (rounded bars, diverging bars, ring, sparkline, donut, heatmap, tubes).
+   Pure string builders, no DOM needed, so Node can test them. 11 Nov 2026. */
+(function (root) {
+  'use strict';
+  var C = { gold: '#E8B04A', gold2: '#F5D08A', green: '#34d399', red: '#f87171', blue: '#60a5fa', violet: '#a78bfa', grey: '#8b97ad', track: 'rgba(148,163,184,.22)' };
+  function n(v) { v = Number(v); return isFinite(v) ? v : 0; }
+  function f(v) { return Math.round(v * 10) / 10; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function rs(v) { v = n(v); var a = Math.abs(v); if (a >= 1e6) return 'Rs ' + f(v / 1e6) + 'M'; if (a >= 1e3) return 'Rs ' + f(v / 1e3) + 'k'; return 'Rs ' + Math.round(v); }
+  function rsFull(v) { return 'Rs ' + Math.round(n(v)).toLocaleString('en-US'); }
+  function max(a) { var m = 0; for (var i = 0; i < a.length; i++) if (a[i] > m) m = a[i]; return m; }
+  /* geometry helpers (tested) */
+  function barRects(vals, w, h, gap) {
+    var m = max(vals) || 1, k = vals.length || 1, bw = Math.max(2, (w - gap * (k - 1)) / k), out = [];
+    for (var i = 0; i < k; i++) { var bh = n(vals[i]) / m * h; out.push({ x: f(i * (bw + gap)), y: f(h - bh), w: f(bw), h: f(bh) }); }
+    return out;
+  }
+  function diverge(vals, w, h) {
+    var k = vals.length || 1, avg = 0; for (var i = 0; i < k; i++) avg += n(vals[i]); avg = avg / k;
+    var dev = vals.map(function (v) { return n(v) - avg; }), m = 0; dev.forEach(function (d) { if (Math.abs(d) > m) m = Math.abs(d); }); m = m || 1;
+    var mid = h / 2, bw = Math.max(2, w / k - 3), out = [];
+    dev.forEach(function (d, i) { var bh = Math.abs(d) / m * (mid - 2); out.push({ x: f(i * (w / k) + 1.5), y: f(d >= 0 ? mid - bh : mid), w: f(bw), h: f(bh), up: d >= 0, dev: d }); });
+    return { avg: avg, mid: mid, bars: out };
+  }
+  function ringDash(pct, r) { var c = 2 * Math.PI * r, p = Math.max(0, Math.min(1, n(pct))); return { c: f(c), on: f(c * p), off: f(c * (1 - p)) }; }
+  function sparkPoints(vals, w, h) {
+    var m = max(vals) || 1, k = vals.length, pts = [];
+    for (var i = 0; i < k; i++) pts.push((k === 1 ? w / 2 : f(i * w / (k - 1))) + ',' + f(h - 2 - n(vals[i]) / m * (h - 4)));
+    return pts.join(' ');
+  }
+  function donutArcs(vals, r) {
+    var tot = 0; vals.forEach(function (v) { tot += Math.max(0, n(v)); }); var c = 2 * Math.PI * r, off = 0, out = [];
+    vals.forEach(function (v) { var l = tot ? Math.max(0, n(v)) / tot * c : 0; out.push({ len: f(l), gap: f(c - l), off: f(-off) }); off += l; });
+    return { total: tot, arcs: out };
+  }
+  /* svg builders */
+  function bars(vals, labels, o) {
+    o = o || {}; var w = o.w || 320, h = o.h || 120, g = 4, r = barRects(vals, w, h, g), hi = vals.indexOf(max(vals)), s = '<svg viewBox="0 0 ' + w + ' ' + (h + 16) + '" role="img" aria-label="' + esc(o.label || 'bars') + '">';
+    s += '<defs><linearGradient id="rcg' + (o.id || 'a') + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + C.gold2 + '"/><stop offset="1" stop-color="' + C.gold + '"/></linearGradient></defs>';
+    r.forEach(function (b, i) { s += '<rect class="rc-bar" style="--i:' + i + '" x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + Math.max(b.h, 1) + '" rx="' + f(Math.min(6, b.w / 2)) + '" fill="' + (i === hi ? 'url(#rcg' + (o.id || 'a') + ')' : 'rgba(232,176,74,.45)') + '"><title>' + esc((labels && labels[i]) || '') + ' ' + rsFull(vals[i]) + '</title></rect>'; });
+    if (labels) { var step = Math.ceil(labels.length / 7); labels.forEach(function (l, i) { if (i % step === 0) s += '<text x="' + f(r[i].x + r[i].w / 2) + '" y="' + (h + 12) + '" text-anchor="middle" font-size="9" fill="' + C.grey + '">' + esc(l) + '</text>'; }); }
+    return s + '</svg>';
+  }
+  function mirrored(vals, labels, o) {
+    o = o || {}; var w = o.w || 320, h = o.h || 150, d = diverge(vals, w, h), s = '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + esc(o.label || 'above and below average') + '">';
+    s += '<line x1="0" x2="' + w + '" y1="' + d.mid + '" y2="' + d.mid + '" stroke="' + C.grey + '" stroke-dasharray="3 3" opacity=".7"/>';
+    d.bars.forEach(function (b, i) { s += '<rect class="rc-bar" style="--i:' + i + ';transform-origin:50% ' + (b.up ? '100%' : '0') + '" x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + Math.max(b.h, 1) + '" rx="' + f(Math.min(5, b.w / 2)) + '" fill="' + (b.up ? C.green : C.red) + '"><title>' + esc((labels && labels[i]) || '') + ' ' + (b.up ? '+' : '-') + rs(Math.abs(b.dev)) + ' vs average</title></rect>'; });
+    s += '<text x="2" y="10" font-size="9" fill="' + C.green + '">above average</text><text x="2" y="' + (h - 3) + '" font-size="9" fill="' + C.red + '">below</text>';
+    return s + '</svg>';
+  }
+  function hbars(rows, o) { /* rows: [{name,value}] */
+    o = o || {}; var m = max(rows.map(function (r) { return n(r.value); })) || 1, s = '';
+    rows.forEach(function (r, i) { var p = Math.max(2, n(r.value) / m * 100); s += '<div style="margin:7px 0"><div class="dm-row" style="padding:0 0 3px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.name) + '</span><b>' + esc(r.text != null ? r.text : rsFull(r.value)) + '</b></div><div style="height:9px;border-radius:9px;background:' + C.track + ';overflow:hidden"><div class="rc-hbar" style="--i:' + i + ';width:' + f(p) + '%;height:100%;border-radius:9px;background:linear-gradient(90deg,' + C.gold + ',' + C.gold2 + ')"></div></div></div>'; });
+    return s;
+  }
+  function ring(pct, big, small, o) {
+    o = o || {}; var r = 46, d = ringDash(pct, r), col = o.color || C.gold;
+    return '<svg viewBox="0 0 120 120" role="img" aria-label="' + esc(small || 'progress') + '" style="max-width:180px;margin:0 auto"><circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + C.track + '" stroke-width="11"/><circle class="rc-ring" cx="60" cy="60" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="11" stroke-linecap="round" stroke-dasharray="' + d.c + '" stroke-dashoffset="' + d.c + '" transform="rotate(-90 60 60)" data-off="' + f(d.c - d.on) + '"/><text x="60" y="58" text-anchor="middle" font-size="19" font-weight="800" fill="currentColor">' + esc(big) + '</text><text x="60" y="74" text-anchor="middle" font-size="9" fill="' + C.grey + '">' + esc(small || '') + '</text></svg>';
+  }
+  function spark(vals, color) {
+    if (!vals || vals.length < 2) return '';
+    return '<svg class="dm-spark" viewBox="0 0 84 34" aria-hidden="true"><polyline class="rc-line" pathLength="1" fill="none" stroke="' + (color || C.gold) + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="' + sparkPoints(vals, 84, 34) + '"/></svg>';
+  }
+  var PAL = [C.gold, C.blue, C.green, C.violet, C.red, C.grey];
+  function donut(rows, o) { /* rows [{name,value}] */
+    o = o || {}; var r = 40, d = donutArcs(rows.map(function (x) { return x.value; }), r), s = '<svg viewBox="0 0 120 120" role="img" aria-label="' + esc(o.label || 'share') + '" style="max-width:170px;margin:0 auto"><circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + C.track + '" stroke-width="16"/>';
+    d.arcs.forEach(function (a, i) { if (a.len > 0) s += '<circle class="rc-seg" style="--i:' + i + '" cx="60" cy="60" r="' + r + '" fill="none" stroke="' + PAL[i % PAL.length] + '" stroke-width="16" stroke-dasharray="' + a.len + ' ' + a.gap + '" stroke-dashoffset="' + a.off + '" transform="rotate(-90 60 60)"/>'; });
+    s += '<text x="60" y="58" text-anchor="middle" font-size="12" font-weight="800" fill="currentColor">' + esc(rs(d.total)) + '</text><text x="60" y="72" text-anchor="middle" font-size="8" fill="' + C.grey + '">today</text></svg><div class="dm-legend">';
+    rows.forEach(function (x, i) { s += '<span><i style="background:' + PAL[i % PAL.length] + '"></i>' + esc(x.name) + ' ' + (d.total ? Math.round(n(x.value) / d.total * 100) : 0) + '%</span>'; });
+    return s + '</div>';
+  }
+  function heat(vals, labels, o) { /* 24 hourly cells */
+    o = o || {}; var m = max(vals) || 1, k = vals.length, cols = o.cols || 12, cw = 26, ch = 26, rows = Math.ceil(k / cols), s = '<svg viewBox="0 0 ' + (cols * cw) + ' ' + (rows * ch + 4) + '" role="img" aria-label="busy hours">';
+    vals.forEach(function (v, i) { var a = n(v) / m, x = (i % cols) * cw, y = Math.floor(i / cols) * ch; s += '<rect class="rc-heat" style="--i:' + i + '" x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cw - 3) + '" height="' + (ch - 3) + '" rx="6" fill="' + C.gold + '" fill-opacity="' + f(0.1 + a * 0.9) + '"><title>' + esc((labels && labels[i]) || i) + ' ' + rsFull(v) + '</title></rect><text x="' + (x + cw / 2) + '" y="' + (y + ch / 2 + 3) + '" text-anchor="middle" font-size="8" fill="' + (a > 0.55 ? '#1b1f26' : C.grey) + '" pointer-events="none">' + esc((labels && labels[i]) || i) + '</text>'; });
+    return s + '</svg>';
+  }
+  function tubes(rows) { /* [{name,level,max}] low stock: how full vs reorder level */
+    var s = '<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-start">';
+    rows.forEach(function (r, i) { var p = Math.max(0.04, Math.min(1, n(r.level) / (n(r.max) || 1))), col = p < 0.34 ? C.red : p < 0.67 ? C.gold : C.green; s += '<div style="width:54px;text-align:center"><svg viewBox="0 0 40 90" style="width:34px;margin:0 auto" role="img" aria-label="' + esc(r.name) + '"><rect x="6" y="4" width="28" height="82" rx="14" fill="none" stroke="' + C.track + '" stroke-width="3"/><clipPath id="tb' + i + '"><rect x="8" y="6" width="24" height="78" rx="12"/></clipPath><rect class="rc-tube" style="--i:' + i + '" clip-path="url(#tb' + i + ')" x="8" y="' + f(84 - p * 78) + '" width="24" height="' + f(p * 78) + '" fill="' + col + '"/></svg><div style="font-size:10px;line-height:1.2;margin-top:3px;word-break:break-word">' + esc(String(r.name).slice(0, 14)) + '</div><b style="font-size:11px">' + esc(r.level) + '</b></div>'; });
+    return s + '</div>';
+  }
+  var API = { C: C, rs: rs, rsFull: rsFull, barRects: barRects, diverge: diverge, ringDash: ringDash, sparkPoints: sparkPoints, donutArcs: donutArcs, bars: bars, mirrored: mirrored, hbars: hbars, ring: ring, spark: spark, donut: donut, heat: heat, tubes: tubes, esc: esc };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.RBHCharts = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script><script>/* BLOCK: dashboard_modern. Modern chart panel above #dash-pro. Reads /api/dashboard-pro (+ /api/reorder-forecast). Read-only. 11 Nov 2026 */
+(function () {
+  'use strict';
+  var Ch = window.RBHCharts; if (!Ch) return;
+  var CACHE = 'rbh_dm_cache';
+  function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
+  function chip(now, was) {
+    if (!was) return '<span class="dm-chip flat">new</span>';
+    var p = Math.round((now - was) / was * 100); if (p === 0) return '<span class="dm-chip flat">same as before</span>';
+    return '<span class="dm-chip ' + (p > 0 ? 'up' : 'down') + '">' + (p > 0 ? '+' : '') + p + '%</span>';
+  }
+  function card(lab, val, extra, sp) { return '<div class="dm-card ra-card-in ra-lift"><div class="dm-lab">' + lab + '</div><div class="dm-val">' + val + '</div>' + (extra || '') + (sp || '') + '</div>'; }
+  function build(d, fc) {
+    var s = d.sales || {}, t = d.targets || {}, daily = (d.daily || []).slice(-14), hourly = d.hourly || [], pay = (d.payments_today || []).filter(function (x) { return num(x.amount) > 0; });
+    var dv = daily.map(function (x) { return num(x.total); }), dl = daily.map(function (x) { return String(x.d || '').slice(8, 10); });
+    var hv = [], hl = []; for (var h = 6; h < 22; h++) { var row = hourly.filter(function (x) { return num(x.h) === h; })[0]; hv.push(row ? num(row.total) : 0); hl.push(h > 12 ? h - 12 : h); }
+    var goal = num(t.month) ? num(s.month) / num(t.month) : 0, weekGoal = num(t.week) ? num(s.week) / num(t.week) : 0;
+    var h1 = '<div class="dm-head"><div><div class="dm-title">Shop today</div><div class="dm-sub">Live numbers, soft look</div></div><button class="dm-btn ra-press" id="dm-hide" type="button">Hide</button></div>';
+    var k = '<div class="dm-grid">' +
+      card('Sales today', '<span class="dm-gold">' + Ch.rsFull(s.today) + '</span>', chip(num(s.today), num(s.same_day_last_week)) + ' <span class="dm-sub">vs last week</span>', Ch.spark(dv)) +
+      card('Bills today', String(num(s.bills_today)), '<div class="dm-sub" style="margin-top:8px">Average ' + Ch.rsFull(s.avg_bill_today) + '</div>') +
+      card('This week', Ch.rsFull(s.week), chip(num(s.week), num(s.last_week_same_point))) +
+      card('This month', Ch.rsFull(s.month), chip(num(s.month), num(s.last_month_same_point))) + '</div>';
+    var g = '<div class="dm-grid two">' +
+      '<div class="dm-card ra-card-in ra-d1"><h3>Month goal</h3><p class="dm-note">' + (num(t.month) ? Ch.rs(s.month) + ' of ' + Ch.rs(t.month) : 'No goal set yet') + '</p>' + Ch.ring(goal, Math.round(goal * 100) + '%', 'of month goal') + '</div>' +
+      '<div class="dm-card ra-card-in ra-d2"><h3>Last 14 days</h3><p class="dm-note">Each bar is one day</p>' + (dv.length ? Ch.bars(dv, dl, { id: 'd', label: 'daily sales' }) : '<div class="dm-empty">No sales yet. Make a bill and it shows here.</div>') + '</div>' +
+      '<div class="dm-card ra-card-in ra-d3"><h3>Above and below average</h3><p class="dm-note">Green days beat your average, red days fell short</p>' + (dv.length > 1 ? Ch.mirrored(dv, dl) : '<div class="dm-empty">Needs two days of sales.</div>') + '</div>' +
+      '<div class="dm-card ra-card-in ra-d4"><h3>Busy hours today</h3><p class="dm-note">Darker gold = more sales</p>' + (hv.some(Boolean) ? Ch.heat(hv, hl, { cols: 8 }) : '<div class="dm-empty">Quiet so far today.</div>') + '</div>' +
+      '<div class="dm-card ra-card-in ra-d5"><h3>How customers paid</h3>' + (pay.length ? Ch.donut(pay.map(function (x) { return { name: x.method, value: num(x.amount) }; })) : '<div class="dm-empty">No payments yet today.</div>') + '</div>' +
+      '<div class="dm-card ra-card-in ra-d6"><h3>Top items this month</h3>' + ((d.top_items_month || []).length ? Ch.hbars((d.top_items_month || []).slice(0, 6).map(function (x) { return { name: x.name, value: num(x.revenue) }; })) : '<div class="dm-empty">Top items appear after the first sales.</div>') + '</div></div>';
+    var low = (d.stock && d.stock.low_list || []).slice(0, 10);
+    var st = '<div class="dm-card ra-card-in ra-d7"><h3>Stock getting low</h3><p class="dm-note">Tube = how much is left</p>' + (low.length ? Ch.tubes(low.map(function (x) { return { name: x.name, level: num(x.stock_level), max: Math.max(num(x.reorder_threshold) * 2, 1) }; })) : '<div class="dm-empty">All stock above its reorder level.</div>') + '</div>';
+    var fo = '';
+    if (fc && fc.length) fo = '<div class="dm-card ra-card-in ra-d8" style="margin-top:12px"><h3>Order soon (suggestion only)</h3>' + Ch.hbars(fc.slice(0, 5).map(function (x) { return { name: x.name || x.item_code, value: num(x.order_qty || x.suggest_qty || 0), text: (x.days_left != null ? Math.round(x.days_left) + ' days left' : '') }; })) + '</div>';
+    return h1 + k + g + st + fo;
+  }
+  function paint(host, d, fc) {
+    host.innerHTML = build(d, fc);
+    var b = host.querySelector('#dm-hide'); if (b) b.onclick = function () { try { localStorage.setItem('rbh_dm_hidden', '1'); } catch (e) {} host.style.display = 'none'; };
+    Array.prototype.forEach.call(host.querySelectorAll('.rc-ring'), function (el) { requestAnimationFrame(function () { el.style.strokeDashoffset = el.getAttribute('data-off'); }); });
+  }
+  window.RBHDashModern={build:build};
+})();</script><script>var D={sales:{today:184500,bills_today:23,avg_bill_today:8022,same_day_last_week:161000,week:812000,last_week_same_point:770000,month:2950000,last_month_same_point:3120000},targets:{month:4000000,week:1000000,day:140000},
+daily:[152,138,171,95,203,188,121,166,149,210,132,177,161,184].map(function(v,i){return{d:'2026-11-'+String(i+1).padStart(2,'0'),total:v*1000}}),
+hourly:[[8,12000],[9,26000],[10,48000],[11,31000],[12,15000],[14,22000],[15,9000],[16,21500]].map(function(a){return{h:a[0],total:a[1]}}),
+payments_today:[{method:'Cash',amount:98000},{method:'Card',amount:61000},{method:'Bank',amount:25500}],
+top_items_month:[{name:'Wall tile 30x60',revenue:640000},{name:'Basin mixer tap',revenue:410000},{name:'Shower set',revenue:322000},{name:'WC suite',revenue:280000}],
+stock:{low_list:[{name:'Tile glue 20kg',stock_level:4,reorder_threshold:10},{name:'Silicone white',stock_level:12,reorder_threshold:15},{name:'Pipe 1/2 inch',stock_level:2,reorder_threshold:8}]}};
+var h=document.createElement('div');h.id='dash-modern';document.body.appendChild(h);h.innerHTML=RBHDashModern.build(D,[{name:'Tile glue 20kg',order_qty:30,days_left:5}]);
+Array.prototype.forEach.call(h.querySelectorAll('.rc-ring'),function(e){requestAnimationFrame(function(){e.style.strokeDashoffset=e.getAttribute('data-off')})});
+document.getElementById('sw').onclick=function(){var r=document.documentElement;if(r.getAttribute('data-tone')){r.removeAttribute('data-tone');r.setAttribute('data-theme','light')}else{r.setAttribute('data-theme','dark');r.setAttribute('data-tone','soft')}};</script></body></html>

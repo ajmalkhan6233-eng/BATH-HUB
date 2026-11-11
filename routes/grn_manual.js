@@ -116,6 +116,7 @@ router.post('/grn-manual', uploadMiddleware, async (req, res) => {
                             vendor_code = COALESCE(vendor_code, $5) WHERE id = $3 RETURNING *`,
                     [l.qty, photo_url, ex.rows[0].id, weightedAvgCost(ex.rows[0].stock_level, ex.rows[0].avg_cost, l.qty, l.cost), String(l.vendor_code || '').trim().slice(0, 60) || null]);
                 item = u.rows[0];
+                await require('../utils/stock_ledger').recordSafe(client, { item_code: item.item_code, qty_change: Number(l.qty), reason: 'grn', ref_type: 'grn_manual', ref_id: String(l.vendor_code || '') });
             } else {
                 isNew = true;
                 item = await catalog.createItem({

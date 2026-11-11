@@ -61,3 +61,5 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 - 2026-11-11 07:18Z cloud: job 2 reorder forecast built (utils/reorder_forecast.js, GET /api/reorder-forecast, 4 tests pass). SQL not run on a real DB yet. Job 1 barcode scan already on branch (iPhone camera UNVERIFIED).
 - 2026-11-11 07:33Z cloud: phone shows saved copy when PC/tunnel is off (service-worker v93-d, 4 tests pass). Gemini desktop+phone designs saved in docs/design_gemini_11nov/. Cloud-server option waits for Aj's decision. Not tried on a real phone.
 - 2026-11-11 07:41Z cloud: job 3 vendor master (utils/vendor_master.js, GET/POST /api/vendors-master, backfill by name) and job 4 PHASE 1 stock ledger (utils/stock_ledger.js, GET /api/stock-ledger/:code, POS sale hook in own savepoint). 6 tests pass with a fake DB; SQL not run on real Postgres. Phase 2 (GRN, void, manual) not done. AJ: no rented cloud. Pocket still needs the Cloudflare setup (pocket/SETUP.md).
+
+07:49 | CLOUD | new look + ledger phase 2 | UNVERIFIED on PC | soft theme (default once), 52 animations, SVG charts, modern dashboard panel, GRN/void/edit stock-ledger hooks, 21 tests pass | PC: check bridge

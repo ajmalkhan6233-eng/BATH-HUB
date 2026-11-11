@@ -308,6 +308,7 @@ async function applyLines(client, p, supplier_id, photo_url) {
                 `UPDATE products SET stock_level=COALESCE(stock_level,0)+$1, avg_cost=$2, selling_price=COALESCE($3, selling_price), photo_url=COALESCE(photo_url,$4) WHERE id=$5 RETURNING *`,
                 [l.qty, weightedAvgCost(ex.rows[0].stock_level, ex.rows[0].avg_cost, l.qty, l.cost), l.sp, photo_url, ex.rows[0].id]);
             item = u.rows[0];
+            await require('../utils/stock_ledger').recordSafe(client, { item_code: item.item_code, qty_change: Number(l.qty), reason: 'grn', ref_type: 'grn_workbench', ref_id: String(supplier_id || '') });
         } else {
             isNew = true;
             item = await catalog.createItem({ name: l.name, category: l.category, selling_price: l.sp || 0, avg_cost: l.cost, stock_level: l.qty, photo_url: null }, { client });
@@ -373,7 +374,8 @@ async function takeStockBack(client, recs, allowUnmatched) {
     for (const g of recs) {
         const desc = String(g.item_description || '').trim();
         const code = desc.split(' - ')[0].trim();
-        let u = code ? await client.query(`UPDATE products SET stock_level=COALESCE(stock_level,0)-$1 WHERE item_code=$2 RETURNING id`, [g.quantity, code]) : { rows: [] };
+        let u = code ? await client.query(`UPDATE products SET stock_level=COALESCE(stock_level,0)-$1 WHERE item_code=$2 RETURNING id, item_code`, [g.quantity, code]) : { rows: [] };
+        if (u.rows.length) await require('../utils/stock_ledger').recordSafe(client, { item_code: u.rows[0].item_code, qty_change: -Number(g.quantity), reason: 'grn_reverse', ref_type: 'grn_record', ref_id: String(g.id) });
         if (!u.rows.length && desc) u = await client.query(`UPDATE products SET stock_level=COALESCE(stock_level,0)-$1 WHERE id=(SELECT id FROM products WHERE LOWER(name)=LOWER($2) AND active=true LIMIT 1) RETURNING id`, [g.quantity, desc]);
         if (u.rows.length) ids.push(u.rows[0].id); else unmatched.push(desc || ('line ' + g.id));
     }

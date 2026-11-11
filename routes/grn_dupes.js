@@ -62,7 +62,7 @@ async function fixDupes(nums) {
             if (take < Number(l.quantity || 0) - 0.0001) clamped++;
             adj.push({ id: p.id, qty: take });
         }
-        for (const a of adj) await client.query(`UPDATE products SET stock_level = stock_level - $1 WHERE id=$2`, [a.qty, a.id]);
+        for (const a of adj) { const ur = await client.query(`UPDATE products SET stock_level = stock_level - $1 WHERE id=$2 RETURNING item_code`, [a.qty, a.id]); if (ur.rows[0]) await require('../utils/stock_ledger').recordSafe(client, { item_code: ur.rows[0].item_code, qty_change: -Number(a.qty), reason: 'grn_dupe_fix', ref_type: 'grn_dupes', ref_id: String(a.id) }); }
         await client.query(`INSERT INTO grn_records_archive SELECT g.*, NOW(), 'double-counted: same goods as a vendor bill' FROM grn_records g WHERE g.grn_number = ANY($1::text[])`, [nums]);
         await client.query(`DELETE FROM grn_records WHERE grn_number = ANY($1::text[])`, [nums]);
         await client.query('COMMIT');

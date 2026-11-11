@@ -28,3 +28,8 @@ test('a good ledger line is kept and the savepoint released', async () => {
   const calls = []; const client = { query: async (sql) => { calls.push(sql); return { rows: [{ id: 7 }] }; } };
   expect((await SL.recordSafe(client, { item_code: 'A', qty_change: -2, reason: 'sale', ref_id: 55 }))).toEqual({ id: 7 }); expect(calls).toContain('RELEASE SAVEPOINT stock_ledger');
 });
+
+test('ledger phase 2: hooks present at every stock-change path', () => {
+  const fs = require('fs');
+  for (const f of ['grn_workbench', 'grn_manual', 'grn_dupes', 'pos_bill_corrections', 'pos_bills']) expect(fs.readFileSync(__dirname + '/../routes/' + f + '.js', 'utf8')).toContain("stock_ledger').recordSafe");
+});

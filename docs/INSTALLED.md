@@ -35,3 +35,5 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-11: Lucide icons (ISC, 9 icons copied inline from lucide-static 0.468.0, no library) in pocket/app.js + index.html
 - 2026-11-11: public/ux-extra.css + ux-extra.js (Gemini-built, plain, no library) loaded in owner shell; public/ux-demo.html to preview
 - POS polish: public/pos-polish.js + pos-polish.css (own code, no library): labelled rows, per-item discount, floating item list, big bill page
+
+- 11 Nov: no new packages. Added own files: public/rbh-modern.css, rbh-charts.js, dashboard_modern.js (free, local, no library).
