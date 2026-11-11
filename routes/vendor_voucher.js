@@ -17,7 +17,7 @@ const inv = require('./invoice_receipts');
 
 const router = express.Router();
 const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'voucher-template', 'voucher.html');
-const LOGO = path.join(__dirname, '..', 'public', 'receipt-logo.png');
+const LOGO = path.join(__dirname, '..', 'public', 'brand', 'logo-rbh-full.webp');
 const BG = ['bg.jpg', 'bg.jpeg', 'bg.png', 'bg.webp'].map(f => path.join(__dirname, '..', 'public', 'brand', 'voucher-template', f));
 const CHROME = [process.env.CHROME_PATH, 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'].filter(Boolean);
@@ -61,7 +61,7 @@ async function build(vendor, only) {
 
 function html(data) {
   const bg = BG.find(f => fs.existsSync(f));
-  const full = { ...data, logo: dataUri(LOGO, 'image/png'), bg: bg ? dataUri(bg, mimeOf(bg)) : '' };
+  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '' };
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const json = JSON.stringify(full).replace(/</g, '\\u003c');
   return tpl.replace(/\/\*DATA\*\/[\s\S]*?\/\*END\*\//, () => '/*DATA*/' + json + '/*END*/');
