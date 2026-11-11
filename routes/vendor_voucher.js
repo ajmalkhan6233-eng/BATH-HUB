@@ -53,6 +53,7 @@ async function build(vendor, only) {
     voucher_no: `PV-${ymd.replace(/-/g, '')}-${key}`, date: today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
     shop: { name: process.env.SHOP_NAME || 'Royal Bath Hub', address: 'No. 173/1, Kandy Road, Thihariya', phone: '074 035 5536' },
     vendor: { name: vendor, phone: (vrow && vrow.phone) || '' },
+    received_by: (m => m ? `Mr. ${m[1].trim()}, ${m[2].trim().replace(/\bPvt\b/i, '(Pvt)')}` : vendor)(vendor.match(/^(.+?)\s*\((.+)\)$/)),
     bills: bills.map(b => ({ grn_no: b.grn_no || '', bill_no: b.bill_no, bill_date: iso(b.bill_date), total: Number(b.total) })),
     cheques: ch.map(c => ({ no: c.cheque_no, bank: String(c.bank || '').replace(/,.*$/, ''), date: iso(c.cheque_date), amount: Number(c.amount) })),
     bills_total, cheques_total, balance: Math.round((bills_total - cheques_total) * 100) / 100,
