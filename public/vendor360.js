@@ -52,7 +52,7 @@
     var tabs = [['statement', 'Statement'], ['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN']];
     $('detail').innerHTML = '<h2>' + esc(v.vendor_name) + '</h2>' +
       '<div class="kpis">' + kpi('We owe', rs(v.outstanding_balance), v.outstanding_balance > 0 ? 'bad' : 'good') + kpi('Overdue', rs(v.overdue), v.overdue > 0 ? 'bad' : '') + kpi('Total bought', rs(v.total_billed)) + kpi('Paid or credited', rs(v.total_paid), 'good') + '</div>' +
-      (v.cheques_pending > 0 ? '<div class="sm">' + rs(v.cheques_pending) + ' is covered by cheques not cleared yet. It stays owed until the cheque clears.</div>' : '') +
+      (v.cheques_pending > 0 ? '<div class="sm">' + rs(v.cheques_pending) + ' is covered by cheques not cleared yet (see the list below the statement). <b>After these cheques you still owe ' + rs(v.outstanding_balance - v.cheques_pending) + '.</b> A bill drops from We owe when its cheque clears.</div>' : '') +
       '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Payment voucher</button></div>' +
       '<div class="tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-t="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div>';
@@ -86,6 +86,15 @@
       body.innerHTML = table([['Date'], ['Ref'], ['Details'], ['Debit', 1], ['Credit', 1], ['Balance', 1]], st.rows.map(function (r) {
         return '<tr><td>' + day(r.tx_date) + '</td><td>' + esc(r.reference) + '</td><td>' + esc(r.description) + '</td><td class="n">' + (r.debit ? rs(r.debit) : '-') + '</td><td class="n good">' + (r.credit ? rs(r.credit) : '-') + '</td><td class="n"><b>' + rs(r.running_balance) + '</b></td></tr>';
       }), 'Nothing recorded for this vendor yet.');
+      var pc = {}, order = [];
+      (st.pending_cheques || []).forEach(function (c) { var k = c.cheque_no || '?'; if (!pc[k]) { pc[k] = { no: k, bank: c.bank, due: c.due_date, amt: 0, bills: [] }; order.push(k); } pc[k].amt += Number(c.amount || 0); if (c.bill_no && pc[k].bills.indexOf(c.bill_no) < 0) pc[k].bills.push(c.bill_no); });
+      if (order.length) {
+        order.sort(function (x, y) { return String(pc[x].due) < String(pc[y].due) ? -1 : 1; });
+        var tot = order.reduce(function (s2, k) { return s2 + pc[k].amt; }, 0);
+        body.innerHTML += '<h3 style="margin:18px 0 6px">Cheques issued, waiting to clear</h3>' + table([['Cheque'], ['Bank'], ['Clears about'], ['For bills'], ['Amount', 1]], order.map(function (k) {
+          var c = pc[k]; return '<tr><td><b>' + esc(c.no) + '</b></td><td>' + esc(String(c.bank || '').replace(/,.*$/, '')) + '</td><td>' + day(c.due) + '</td><td>' + esc(c.bills.join(', ')) + '</td><td class="n">' + rs(c.amt) + '</td></tr>';
+        }).concat(['<tr><td colspan="4"><b>Total of these cheques</b></td><td class="n"><b>' + rs(tot) + '</b></td></tr>']), '');
+      }
     } else if (t === 'bills') {
       body.innerHTML = table([['Bill'], ['Date'], ['Due'], ['Total', 1], ['Owed', 1], ['Status']], d.bills.bills.map(function (b) {
         var s = STATE[b.state] || [b.state, '']; return '<tr><td>' + esc(b.bill_no || '#' + b.id) + '</td><td>' + day(b.bill_date) + '</td><td class="' + (b.overdue ? 'bad' : '') + '">' + day(b.due_date) + '</td><td class="n">' + rs(b.total) + '</td><td class="n">' + rs(b.outstanding) + '</td><td><span class="chip ' + s[1] + '">' + s[0] + (b.overdue ? ' · overdue' : '') + '</span></td></tr>';
