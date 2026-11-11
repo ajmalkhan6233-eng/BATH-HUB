@@ -1,0 +1,45 @@
+/* BLOCK: grn-compact (AJ 11 Nov 15:50). GRN fits ONE screen on a computer: no page title/banner, thin tabs, small boxes,
+   vendor + bill number + dates in a slim top, the lines take ALL the free height. Only the inside lists scroll, never the page.
+   The open draft shows an OPEN badge. Loaded last so it wins. Phone untouched. */
+@media (min-width:900px) {
+  html, body { height:100%; overflow:hidden !important; overscroll-behavior:none; }
+  html body { display:flex; flex-direction:column; height:100dvh; }
+  html body > h1, html body > header { display:none !important; }
+  html body .tabs { flex:0 0 auto; padding:3px 6px !important; gap:4px !important; }
+  html body .tabs button { min-height:28px !important; padding:1px 10px !important; font-size:14px; }
+  html body .tabs button.on { box-shadow:inset 0 -3px 0 var(--c-gold,#c9a227); }
+  html body .isrch input { min-height:28px !important; height:28px; }
+
+  /* screen 1: left narrow, right takes the rest, each scrolls by itself */
+  html body #view1.wrap { flex:1 1 auto; min-height:0; overflow:hidden; align-items:stretch !important; padding:3px 6px !important; }
+  html body #view1 > section:first-child { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+  html body #view1 .frame { height:56px; } html body #view1 .frame.has { height:190px; }
+  html body #view1 .card h3 { font-size:13px; margin:0 0 2px; }
+  html body #view1 .card { padding:5px 6px; }
+  html body #genmsg { margin:2px 0; }
+  html body #view1 #right { display:flex; flex-direction:row; flex-wrap:wrap; align-content:flex-start; align-items:flex-end; gap:2px 8px; min-height:0; height:100%; overflow-y:auto; overscroll-behavior:contain; box-sizing:border-box; }
+  html body #view1 #right > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right > h3, html body #view1 #right > #dupbox:empty { display:none !important; }
+  /* top: vendor, bill no, dates, due, short/return, full page all share lines; the lines box is a full-width block under them */
+  html body #view1 #right > .scroll.lines:not(.fullpage) { order:5; flex:0 0 100% !important; height:calc(100dvh - 290px) !important; min-height:150px !important; max-height:none !important; overflow:auto !important; overscroll-behavior:contain; }
+  /* bottom: + Add line, totals and the OK / Print buttons share ONE line */
+  html body #view1 #right > .row:has(button:only-child), html body #view1 #right > .sum, html body #view1 #right > .actions, html body #view1 #right > #status { order:6; }
+  html body #view1 #right > #status:empty { display:none; }
+  html body #view1 #right > .actions { margin-left:auto !important; position:static !important; background:none !important; }
+  html body #view1 > section:first-child button { min-height:26px !important; padding:1px 8px !important; font-size:13px !important; }
+  html body #view1 > section:first-child .row { margin:2px 0 !important; gap:4px !important; }
+  html body #view1 #right .row { margin:2px 0 !important; gap:6px !important; }
+  html body #view1 #right label { margin:0 !important; font-size:12px !important; }
+  html body #view1 #right input, html body #view1 #right select { min-height:28px !important; height:28px; padding:1px 6px !important; }
+  html body #view1 #right .lines td input, html body #view1 #right .lines td select { height:28px !important; }
+  html body #view1 #right .sum { margin:3px 0 !important; }
+  html body #view1 #right .actions button { min-height:34px !important; padding:2px 14px !important; font-size:15px !important; }
+  html body #view1 #right .msg { margin:2px 0 !important; padding:3px 8px !important; }
+
+  /* which one is open: gold bar + OPEN badge on the draft in the list */
+  html body .dr.on { box-shadow:inset 5px 0 0 var(--c-gold,#c9a227); outline:2px solid var(--c-gold,#c9a227); outline-offset:-2px; font-weight:700; position:relative; }
+  html body .dr.on::before { content:"OPEN"; position:absolute; right:4px; top:3px; font-size:10px; font-weight:800; padding:0 5px; border-radius:6px; background:var(--c-gold,#c9a227); color:#111; }
+
+  /* other screens: they scroll inside, the page stays still */
+  html body #tools, html body #view2, html body #view3, html body #view4, html body #view5 { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+}

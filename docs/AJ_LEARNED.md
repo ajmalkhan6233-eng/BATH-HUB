@@ -15,3 +15,5 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov 2026: AJ gets angry when a new window does not read CLAUDE.md first, does not start with "AJ,", or hands him many steps. One instruction per reply. If Gemini is out of limit, chat builds the design itself.
 
 - 11 Nov: AJ says 'go' once, then wants everything built without more asking; new look = whole app, not too dark, modern charts (mirrored bars), keep old animations.
+
+- 11 Nov: POS and GRN must each open on ONE screen, no page scroll; only inner lists scroll; customer/vendor lines small; item name+code gets the room; show which draft is open.

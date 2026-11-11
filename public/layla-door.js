@@ -66,7 +66,8 @@
       addCss();
       var st = document.createElement('style');
       st.textContent = '#ld-float{position:fixed;right:14px;bottom:76px;z-index:9990;max-width:min(320px,calc(100vw - 28px));background:var(--card,#fff);color:var(--text,#222);border:1px solid var(--gold,#b8892b);border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.28);padding:4px 8px}' +
-        '#ld-float .ld{margin:2px 0}#ld-float .ld button{padding:10px 14px;font-size:15px;min-height:44px}';
+        '#ld-float .ld{margin:2px 0}#ld-float .ld button{padding:10px 14px;font-size:15px;min-height:44px}' +
+        '@media(min-width:1000px){#ld-float{bottom:6px;right:8px;padding:2px 4px;border-radius:10px}#ld-float .ld{margin:0}#ld-float .ld button{min-height:28px;padding:2px 10px;font-size:12px}}';
       document.head.appendChild(st);
       var box = document.createElement('div'); box.id = 'ld-float'; box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Send a paper to Layla');
       var slot = document.createElement('div'); box.appendChild(slot); document.body.appendChild(box);
