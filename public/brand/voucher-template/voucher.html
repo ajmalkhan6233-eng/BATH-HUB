@@ -50,6 +50,19 @@ tfoot td{font-size:14px}
 .sr b{font-variant-numeric:tabular-nums;font-size:16px}
 .sr.bal{border-bottom:0;margin:6px -18px 0;padding:14px 18px;background:linear-gradient(135deg,#f59e0bee,#fcd34dee);border-radius:0 0 13px 13px;font-size:16px;font-weight:700}
 .sr.bal b{font:700 24px Georgia,serif;border-bottom:4px double #14213d;padding-bottom:2px}
+
+/* 3D look: raised glass, bevel highlights, layered shadows */
+.card,table,.settle,.endcard{box-shadow:inset 0 2px 0 #ffffffcc,inset 0 -3px 0 #0b1b3a22,0 3px 0 #c9a24b66,0 20px 34px -10px #0b1b3a88,0 8px 12px #0b1b3a33}
+.card,.settle,.endcard{background-image:linear-gradient(180deg,#ffffff55,#ffffff00 45%)}
+th{background-image:linear-gradient(180deg,#ffffff33,#ffffff00 60%);box-shadow:inset 0 1px 0 #ffffff55}
+tr.sum td{background-image:linear-gradient(180deg,#ffffff2a,#ffffff00 70%);box-shadow:inset 0 1px 0 #ffffff44}
+td{box-shadow:inset 0 1px 0 #ffffff99}
+h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
+.gold{box-shadow:0 3px 0 #8a6a1c,0 8px 14px #0b1b3a66;background-image:linear-gradient(180deg,#fff6,#0002)}
+.top{box-shadow:inset 0 -3px 0 #0003,inset 0 2px 0 #ffffff44}
+.sr.bal{box-shadow:inset 0 2px 0 #ffffffaa,inset 0 -3px 0 #a8610022;background-image:linear-gradient(180deg,#fff7,#fff0 55%),linear-gradient(135deg,#f59e0bee,#fcd34dee)}
+.top img{filter:drop-shadow(0 6px 4px #000a) drop-shadow(0 0 2px #ffe08a88)}
+.foot{box-shadow:inset 0 2px 0 #ffffff33,0 -6px 14px #0b1b3a55}
 </style></head><body>
 <div class="sheet" id="sheet">
 <div class="bgfall"></div><div class="bgimg" id="bg"></div><div class="bgveil"></div>
@@ -58,7 +71,7 @@ tfoot td{font-size:14px}
 <div class="body">
 <div class="row">
 <div class="card"><small>PAY TO</small><b id="vendor"></b><span id="vphone"></span></div>
-<div class="card"><small>PAID BY</small><b id="shop"></b><span id="addr"></span><span id="date"></span></div>
+<div class="card"><small>PAID BY</small><b id="shop"></b><span id="date"></span></div>
 </div>
 <h3>A. PURCHASES (GRN AND INVOICES)</h3>
 <table><thead><tr><th>GRN NO.</th><th>INVOICE NO.</th><th>INVOICE DATE</th><th class="n">AMOUNT (RS.)</th></tr></thead><tbody id="bills"></tbody><tfoot><tr class="sum"><td colspan="3">SUB-TOTAL A</td><td class="n" id="ta"></td></tr></tfoot></table>
@@ -84,7 +97,7 @@ const V=VOUCHER;
 if(V.logo)$('logo').src=V.logo;else $('logo').style.display='none';
 if(V.bg)$('bg').style.backgroundImage='url("'+V.bg+'")';
 $('vno').textContent=V.voucher_no;$('vendor').textContent=V.vendor.name;$('vphone').textContent=V.vendor.phone||'';
-$('shop').textContent=V.shop.name;$('addr').textContent=V.shop.address;$('date').textContent='Date: '+V.date;
+$('shop').textContent=V.shop.name;$('date').textContent='Date: '+V.date;
 $('bills').innerHTML=V.bills.map(b=>'<tr><td>'+esc(b.grn_no||'-')+'</td><td><b>'+esc(b.bill_no)+'</b></td><td>'+day(b.bill_date)+'</td><td class="n">'+money(b.total)+'</td></tr>').join('');
 $('chq').innerHTML=V.cheques.map(c=>'<tr><td><b>'+esc(c.no)+'</b></td><td>'+esc(c.bank||'')+'</td><td>'+day(c.date)+'</td><td class="n">'+money(c.amount)+'</td></tr>').join('');
 $('ta').textContent=money(V.bills_total);$('tb2').textContent=money(V.cheques_total);
@@ -95,5 +108,5 @@ const words=x=>{x=Math.round(Number(x||0)*100);let r=Math.floor(x/100),c=x%100;i
 $('note').textContent='Being payment by cheque in settlement of the invoices listed in A. Cheques are dated as shown.';
 $('words').textContent='Paid by cheque: '+words(V.cheques_total)+(V.balance>0?'. Balance payable: '+words(V.balance)+'.':'. Paid in full.');
 $('sigA').textContent=V.shop.name;$('sigB').textContent=V.received_by||V.vendor.name;
-$('foot').textContent=V.shop.name+'  |  '+V.shop.address+'  |  '+V.shop.phone;
+$('foot').textContent=V.shop.name+'  |  '+V.shop.phone;
 </script></body></html>
