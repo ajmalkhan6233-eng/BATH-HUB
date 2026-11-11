@@ -73,7 +73,7 @@
       '.mb-item{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:transparent;color:inherit;border:0;font:inherit;font-size:14px;min-height:40px;padding:0 10px;border-radius:8px;cursor:pointer}' +
       '.mb-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.65;padding:8px 10px 2px;pointer-events:none}' +
       '.mb-item:hover{background:var(--gold-bg-subtle,rgba(201,162,75,.15))}.mb-item[disabled]{opacity:.5;cursor:default}.mb-item small{opacity:.7;font-size:11px}' +
-      '#rbh-drawer{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9996;display:none}#rbh-drawer.on{display:block}' +
+      '#rbh-drawer{position:fixed;inset:0;background:rgba(0,0,0,.7);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:9996;display:none}#rbh-drawer.on{display:block}' +
       '#rbh-drawer .dr{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border-radius:16px 16px 0 0;padding:8px 10px calc(16px + env(safe-area-inset-bottom))}' +
       '#rbh-drawer .dh{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;font-weight:800;font-size:16px}' +
       '#rbh-drawer .g>button.gh{display:flex;justify-content:space-between;width:100%;min-height:48px;background:transparent;color:inherit;border:0;border-bottom:1px solid var(--border-subtle,#ddd);font:inherit;font-size:15px;font-weight:700;padding:0 6px;cursor:pointer}' +
@@ -122,8 +122,8 @@
       });
     }
     function closeAll() { Array.prototype.forEach.call(bar.querySelectorAll('.mb-top.on'), function (t) { t.classList.remove('on'); t.firstChild.setAttribute('aria-expanded', 'false'); }); }
-    function closeDrawer() { drawer.classList.remove('on'); }
-    function openDrawer() { build(); drawer.classList.add('on'); var f = drawer.querySelector('.gh'); if (f) f.focus(); }
+    function closeDrawer() { drawer.classList.remove('on'); doc.documentElement.classList.remove('rbh-sheet'); }
+    function openDrawer() { build(); drawer.classList.add('on'); doc.documentElement.classList.add('rbh-sheet'); var f = drawer.querySelector('.gh'); if (f) f.focus(); }
     doc.addEventListener('click', function (e) { if (!bar.contains(e.target)) closeAll(); });
     // BLOCK: close on outside tap, also when the tap lands inside a screen frame (a click inside an iframe never reaches this page)
     win.addEventListener('blur', closeAll);
