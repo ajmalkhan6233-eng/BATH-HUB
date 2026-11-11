@@ -22,3 +22,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 
 - 11 Nov: item edit box must show stock count, cost and vendor on top; everything else small.
 - 11 Nov: AJ: the item list must stay BELOW its box with a short soft slide, same for the right side; use all empty space on the POS.
+- 11 Nov: AJ splits one supplier into two reps as two vendors, name style 'Fawaz (Fazal Hardware Pvt Ltd)'; both reps collect one company's cheques. Cheques are cash cheques on HNB; he lists them on an envelope.

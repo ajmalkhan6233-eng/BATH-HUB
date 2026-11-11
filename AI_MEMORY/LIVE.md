@@ -74,3 +74,4 @@ reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not 
 
 17:19 | CLOUD | Item edit box (Stock & items): stock count, cost and last vendor big on top, rest small, one screen (stock_manager.html, routes/item_detail.js read-only vendor lookup) | PC: check bridge (task 189) | UNVERIFIED on PC
 - 11 Nov 19:10 chat: POS space block (pos-space.css), item list always below, SW v94-a, build stamp bottom-left. Needs PC task 190.
+- 11 Nov 20:20 chat: scripts/split_vendor_fazal.js built+tested on test DB (dry run default, --apply, --undo). Fazal keeps G1CR008312; 3 bills to 'Fawaz (Fazal Hardware Pvt Ltd)'; 6 HNB cheques to cheque register. Bridge task 191.
