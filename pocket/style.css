@@ -18,8 +18,7 @@ body::before{content:"";position:fixed;inset:-20% -30%;z-index:-1;pointer-events
 header{position:sticky;top:0;z-index:20;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:0 -16px 12px;padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;
  background:linear-gradient(180deg,rgba(30,33,45,.55),rgba(30,33,45,.25));-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);border-bottom:1px solid transparent;transition:border-color .3s}
 body.scrolled header{border-bottom-color:var(--edge-lo)}
-h1{margin:0;font-size:34px;line-height:1.05;font-weight:800;letter-spacing:-.02em;transition:font-size .35s var(--ease);text-shadow:0 2px 18px rgba(0,0,0,.25)}
-body.scrolled header h1{font-size:22px}
+h1{margin:0;font-size:calc(34px - 16px * var(--p,0));line-height:1.05;font-weight:800;letter-spacing:-.02em;text-shadow:0 2px 18px rgba(0,0,0,.25)}
 h1 span{background:linear-gradient(180deg,#fff0c2,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .sub{color:var(--sub);font-size:13px;margin-top:3px;min-height:17px}.sub.stale{color:var(--warn)}
 .btns{display:flex;gap:8px;padding-bottom:4px}
@@ -65,3 +64,10 @@ button:focus-visible,input:focus-visible{outline:3px solid rgba(255,255,255,.6);
 .gate button.gold{width:100%;min-height:56px;font-size:18px;border-radius:20px}
 .msg{min-height:22px;margin-top:12px;color:#ffc4c4;font-size:15px}
 @media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+
+/* motion from AJ's spec: scroll-synced title, press sinks then springs back, refresh spins with overshoot */
+.card,.row{transition:transform .4s var(--spring)}
+.card:active{transform:scale(.97)}
+button:active{transform:scale(.95)}
+button.spin{animation:spin .73s var(--spring)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}

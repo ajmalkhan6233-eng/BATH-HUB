@@ -48,7 +48,11 @@
       (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = rs(to * e); if (k < 1) requestAnimationFrame(f); else n.textContent = rs(to); })(t0);
     });
   }
-  window.addEventListener('scroll', function () { document.body.classList.toggle('scrolled', window.scrollY > 24); }, { passive: true });
+  window.addEventListener('scroll', function () {   // title shrinks in step with the finger (0 to 1 over 80px)
+    var y = window.scrollY, p = Math.max(0, Math.min(1, y / 80));
+    document.documentElement.style.setProperty('--p', p.toFixed(3)); document.body.classList.toggle('scrolled', y > 24);
+  }, { passive: true });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('#refresh'); if (b) { b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin'); } });
 
   function render(s) {
     var box = $('cards'); box.textContent = '';
