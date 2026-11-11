@@ -1,0 +1,5 @@
+# Gemini brief: RBH POS Billing, desktop one-screen (AJ 11 Nov 17:00)
+Screen: shop all-in-one PC, Chrome. The POS iframe area is about 1100 x 480 CSS px (header + menu + browser bar already use the rest).
+Goal: ONE screen, no page scroll, almost no empty space. Item name + code is the most important part and gets the whole left.
+Parts to keep (ids): customerName, customerPhone, autoWa tick, scanBox + Scan + Bill tools, item rows (name/code box with dropdown, qty with - and +, price, discount Rs, remove x), + Add item, live bill list (liveBill), sellPrice, discountPct, discountAmt, paymentMethod (cash, card, online, cheque, credit, split), Generate Bill, Make quotation, Today's bills.
+Rules: customer name + phone are small, one thin line. Rows about 30 px high so 10+ rows show. Down arrow in the item box opens the code list. Right column about 320 px: bill list on top (fills free height), totals big, then price/discount, payment, Generate Bill. No bouncing animation. Colours only from CSS variables (Soft ash + gold). Plain HTML + CSS, no frameworks, no made-up data.
