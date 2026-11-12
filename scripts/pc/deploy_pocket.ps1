@@ -17,10 +17,15 @@ $kvid = ($m.Groups | Where-Object { $_.Success -and $_.Value.Length -eq 32 } | S
 # 3. worker
 $tmp = Join-Path $env:TEMP 'rbh-pocket-worker'; New-Item -ItemType Directory -Force $tmp | Out-Null
 Copy-Item cloudflare\pocket_worker.js $tmp\pocket_worker.js -Force
+Remove-Item $tmp\public -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item pocket $tmp\public -Recurse -Force
+Remove-Item $tmp\public\*.md -Force -ErrorAction SilentlyContinue
 @"
 name = "rbh-pocket"
 main = "pocket_worker.js"
 compatibility_date = "2025-01-01"
+[assets]
+directory = "./public"
 [[kv_namespaces]]
 binding = "SNAP"
 id = "$kvid"
@@ -33,10 +38,8 @@ $read | npx --yes wrangler@4 secret put READ_TOKEN | Out-Null
 Pop-Location
 $w = [regex]::Match($out, 'https://[a-z0-9.-]+\.workers\.dev').Value
 if (-not $w) { Write-Output 'BLOCKED: worker URL not found'; exit 1 }
-# 4. phone app shell (no shop numbers inside)
-npx --yes wrangler@4 pages project create rbh-pocket-app --production-branch main 2>&1 | Out-Null
-$po = (npx --yes wrangler@4 pages deploy pocket --project-name rbh-pocket-app --branch main 2>&1 | Out-String)
-$p = 'https://rbh-pocket-app.pages.dev'
+# 4. phone app shell is served by the same worker (Workers static assets; Pages is retired)
+$p = $w
 # 5. PC .env + private files (never printed)
 $pass = Rnd 14
 New-Item -ItemType Directory -Force data | Out-Null
@@ -47,4 +50,4 @@ Set-Clipboard -Value "$p/#t=$read&w=$w"
 pm2 restart apex-server --update-env | Out-Null
 Start-Sleep 5
 $h = try { (Invoke-WebRequest http://localhost:3100/health -UseBasicParsing).StatusCode } catch { 0 }
-Write-Output "POCKET: worker=$w pages=$p health=$h link copied to clipboard and saved in data\pocket_link.txt, passcode in data\pocket_passcode.txt"
+Write-Output "POCKET: worker=$w app=$p health=$h link copied to clipboard and saved in data\pocket_link.txt, passcode in data\pocket_passcode.txt"
