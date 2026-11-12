@@ -32,7 +32,7 @@
       return Promise.resolve(opts.load()).then(function (r) { rows = Array.isArray(r) ? r : []; loadedAt = Date.now(); }).catch(function () { /* offline: keep what we have */ });
     }
     function show() {
-      var list = filter(rows, input.value, opts.match || opts.text);
+      var list = filter(rows, input.value, opts.match || opts.text, opts.limit);
       if (current && current !== close) current();
       close(); current = close;
       if (!list.length) return;
@@ -42,8 +42,9 @@
       list.forEach(function (row, ix) {
         var b = doc.createElement('div'); b.className = 'suggest-row'; b.setAttribute('role', 'option');
         b.style.cssText = 'padding:8px 12px;min-height:38px;box-sizing:border-box;border-bottom:1px solid var(--border-subtle,#eee);cursor:pointer;display:flex;justify-content:space-between;gap:10px;animation:rbhSugRow .18s ease-out both;animation-delay:' + Math.min(ix, 8) * 20 + 'ms';
+        if (opts.render) { opts.render(b, row); } else {
         var a = doc.createElement('span'); a.textContent = opts.text(row); var s = doc.createElement('span'); s.textContent = opts.sub ? opts.sub(row) : ''; s.style.opacity = '.65';
-        b.appendChild(a); b.appendChild(s);
+        b.appendChild(a); b.appendChild(s); }
         // pointerdown + preventDefault keeps the box focused; the pick happens on the tap itself
         b.addEventListener('mousedown', function (e) { e.preventDefault(); });
         b.addEventListener('mouseenter', function () { mark(ix); });

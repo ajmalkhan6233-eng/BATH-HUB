@@ -388,10 +388,13 @@ function attachPicker(row) {
     results.forEach((item, i) => {
       const o = PosPicker.optionLabel(item), div = document.createElement('div');
       div.className = 'pick-opt' + (i === active ? ' active' : '');
+      // AJ 12 Nov: code on the left, name with stock below it, bigger price on the right
+      const cd = document.createElement('div'); cd.className = 'po-code'; cd.textContent = item.item_code || '';
       const b = document.createElement('b'); b.textContent = o.title;
-      const s = document.createElement('span'); s.textContent = o.detail;
-      const im = document.createElement('img'); im.className = 'pick-ico'; im.alt = ''; if (item.photo_url) im.src = item.photo_url; else im.style.visibility = 'hidden';
-      const tx = document.createElement('div'); tx.append(b, s); div.append(im, tx);
+      const s = document.createElement('span'); s.textContent = 'stock ' + Number(item.stock_level || 0);
+      const tx = document.createElement('div'); tx.className = 'po-mid'; tx.append(b, s);
+      const pr = document.createElement('div'); pr.className = 'po-price'; pr.textContent = PosPicker.money(item.selling_price);
+      div.append(cd, tx, pr);
       div.addEventListener('mousedown', e => { e.preventDefault(); choose(item); });      // before the field loses focus
       listEl.appendChild(div);
     });
@@ -942,11 +945,17 @@ function clearCustomer() {
   const nameBox = document.getElementById('customerName'), phoneBox = document.getElementById('customerPhone');
   clearCustomer();   // opening the screen starts empty
   let pickedPhone = '';   // the phone a TAP filled in; if the name is then retyped, that phone is dropped with it
-  const base = { load: () => fetch('/api/customers').then(r => (r.ok ? r.json() : [])), text: c => c.name || c.phone || '', sub: c => c.phone || '', match: c => (c.name || '') + ' ' + (c.phone || ''),
-    onPick: c => { nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
+  const base = { load: () => fetch('/api/customers').then(r => (r.ok ? r.json() : [])).then(a => [{ name: 'Walk-in customer', phone: '', walkin: true }].concat(Array.isArray(a) ? a : [])), text: c => c.name || c.phone || '', sub: c => c.phone || '', match: c => (c.name || '') + ' ' + (c.phone || ''),
+    onPick: c => { if (c.walkin) { nameBox.value = ''; phoneBox.value = ''; pickedPhone = ''; _custId = null; return; } nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
   const nameOpts = Object.assign({}, base, { onType: () => { if (_custId && phoneBox.value === pickedPhone) { phoneBox.value = ''; waCheckSoon(); } _custId = null; } });
   const phoneOpts = Object.assign({}, base, { onType: () => { _custId = null; } });
-  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); }
+  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts);
+    // AJ 12 Nov: the scan / type-code box also drops a list (Down arrow = from the lowest code); picking one adds it like a scan.
+    const scanBox = document.getElementById('scanBox');
+    Suggest.attach(scanBox, { limit: 60, load: () => fetch('/api/items?limit=300', { credentials: 'same-origin' }).then(r => (r.ok ? r.json() : [])).then(a => (Array.isArray(a) ? a : []).slice().sort((x, y) => String(x.item_code || '').localeCompare(String(y.item_code || ''), undefined, { numeric: true }))),
+      match: i => (i.item_code || '') + ' ' + (i.name || ''), text: i => i.name || '', sub: i => '',
+      render: (el, i) => { el.className += ' po-sug'; el.textContent = ''; const c = document.createElement('div'); c.className = 'po-code'; c.textContent = i.item_code || ''; const m = document.createElement('div'); m.className = 'po-mid'; const b = document.createElement('b'); b.textContent = i.name || ''; const t = document.createElement('span'); t.textContent = 'stock ' + Number(i.stock_level || 0); m.append(b, t); const p = document.createElement('div'); p.className = 'po-price'; p.textContent = PosPicker.money(i.selling_price); el.append(c, m, p); },
+      onPick: i => { scanBox.value = i.item_code || ''; scanCode(); } }); }
 })();
 
 
