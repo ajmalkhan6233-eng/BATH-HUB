@@ -119,6 +119,7 @@ body.lt .glass-card{background:rgba(255,255,255,.75)!important;border-color:#dfe
 <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4"><h3>Month goal</h3><div class="big" id="mp">-</div><div class="bar"><i id="mb" style="width:0"></i></div><div class="row" style="margin-top:8px"><span>Booked</span><span id="mm">-</span></div><div class="row"><span>Needed a day</span><span id="md">-</span></div><div class="row"><span>On pace for</span><span id="mpace">-</span></div></div>
 <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4"><h3>How customers paid today</h3><div id="pay"></div></div></div>
 <div class="g c3" style="margin-top:14px;grid-template-columns:1fr"><style>@media(min-width:1024px){.g.two{grid-template-columns:1fr 1fr!important}}</style></div>
+<div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4" style="margin-top:14px"><h3>Top items this month</h3><small class="n">By sales value</small><div id="top"></div></div>
 <div class="g two" style="margin-top:14px"><div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4"><h3>Running low</h3><small class="n" id="lown"></small><div id="low"></div></div>
 <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4"><h3>We owe vendors</h3><small class="n" id="vn"></small><div id="vend"></div></div></div></div></div>
 <script>
@@ -151,6 +152,10 @@ function draw(d){
  $('low').innerHTML=low.length?low.slice(0,8).map(i=>'<div class="row"><span>'+(i.name||i.item_code)+'<br><small class="n">'+(i.item_code||'')+' · reorder at '+(i.reorder_threshold??'')+'</small></span><span class="'+((+i.stock_level)<=0?'bad':'warn')+'">'+(i.stock_level??'')+'</span></div>').join(''):'<small class="n ok">Nothing low. All good.</small>';
  const v=d.vendors||{};$('vn').textContent='Total '+R(v.owed)+' across '+(v.bills||0)+' bills'+((d.cheques&&d.cheques.pending)?' · '+R(d.cheques.pending)+' covered by cheques not cleared yet':'');
  $('vend').innerHTML=(v.list||[]).slice(0,6).map(x=>'<div class="row"><span>'+x.vendor_name+'</span><span>'+R(x.owed)+'</span></div>').join('')||'<small class="n">Nothing owed.</small>';
+ const tp=(d.top_items_month||[]).slice(0,6),tm=Math.max.apply(null,tp.map(x=>+x.revenue||0).concat([1]));
+ $('top').innerHTML=tp.length?tp.map(x=>'<div style="margin:7px 0"><div class="row" style="padding:0"><span>'+x.name+'</span><span>'+R(x.revenue)+'</span></div><div style="height:8px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:3px"><i style="display:block;height:8px;border-radius:5px;background:linear-gradient(90deg,#b8892b,#f1d98a);width:'+Math.max(3,Math.round(100*(+x.revenue||0)/tm))+'%;transition:width .9s ease"></i></div></div>').join(''):'<small class="n">No sales this month yet.</small>';
+ var vl=(v.list||[]).slice(0,6),vm=Math.max.apply(null,vl.map(x=>+x.owed||0).concat([1]));
+ $('vend').innerHTML=vl.map(x=>'<div style="margin:7px 0"><div class="row" style="padding:0"><span>'+x.vendor_name+'</span><span>'+R(x.owed)+'</span></div><div style="height:7px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:3px"><i style="display:block;height:7px;border-radius:5px;background:#e34948;width:'+Math.max(3,Math.round(100*(+x.owed||0)/vm))+'%;transition:width .9s ease"></i></div></div>').join('')||'<small class="n">Nothing owed.</small>';
 }
 
 function countUp(el,to,fmt){const t0=performance.now(),d=900;(function f(n){const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(f)})(t0)}
