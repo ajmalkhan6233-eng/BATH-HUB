@@ -690,4 +690,18 @@ function buildTools(){if(toolsBuilt)return;toolsBuilt=true;var T=$('tools'),card
    box.appendChild(h('button',{class:'p',style:'margin-top:8px',text:'▶ Yes, remove the extra copy and fix stock',onclick:function(){ask('Fix stock?',['The extra GRN lines are kept in an archive (not lost). Stock goes down by those quantities. If anything does not match, nothing changes.'],'Yes, fix it',function(){jf('/api/grn-dupes/fix','POST',{numbers:p.duplicate_numbers}).then(function(r){modal(r.ok?'Fixed':'Not changed',r.ok?(r.j.lines+' lines archived, '+r.j.items+' items corrected.'):(r.j.error||'Error'));if(r.ok){box.remove();toolsBuilt=false}})})}}));dout.appendChild(box)})})};}
 })();
 </script><style>/* AJ 12 Nov: more lines visible */@media(min-width:900px){.scroll.lines{max-height:calc(100dvh - 235px)!important;min-height:min(440px,calc(100dvh - 235px))!important}.lines td input,.lines td select{height:30px!important;min-height:28px!important}}</style>
+<style>/* AJ 12 Nov: app layout. The page never scrolls; the left side and the right side scroll on their own. */
+@media(min-width:900px){
+ html:has(body.embed),body.embed{height:100dvh;overflow:hidden}
+ body.embed{display:flex;flex-direction:column}
+ body.embed>h1{display:none}
+ body.embed .tabs{flex:0 0 auto}
+ body.embed #view1{flex:1 1 auto;min-height:0;align-items:stretch!important;overflow:hidden}
+ body.embed #view1>section:first-child{overflow-y:auto;overscroll-behavior:contain;min-height:0}
+ body.embed #view1>#right{overflow-y:auto;overscroll-behavior:contain;min-height:0;max-height:none}
+ body.embed #view1 .scroll.lines{max-height:none!important;overflow:visible!important;min-height:0!important}
+ body.embed #view1 .scroll.lines th{top:0}
+ body.embed #view2,body.embed #view3,body.embed #view4,body.embed #view5{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+ body.embed #tools{flex:0 0 auto}
+}</style>
 </body></html>

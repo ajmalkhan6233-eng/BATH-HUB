@@ -2172,7 +2172,8 @@ async function openGRNPage() {
   if (pg && !document.getElementById('frame-grn')) {
     [...pg.children].forEach(c => { c.style.display = 'none'; c.dataset.oldgrn = '1'; });
     const f = document.createElement('iframe'); f.id = 'frame-grn'; f.title = 'GRN';
-    f.style.cssText = 'width:100%;height:calc(100vh - 130px);min-height:560px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)';
+    f.style.cssText = 'display:block;width:100%;height:calc(100dvh - 128px);min-height:0;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)';
+    pg.style.overflow = 'hidden'; pg.style.overscrollBehavior = 'contain';
     f.src = '/grn_workbench.html?embed=1'; pg.appendChild(f);
     return;
   }
