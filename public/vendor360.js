@@ -80,10 +80,10 @@
   }
   var STATE = { PAID: ['Paid', 'good'], CHEQUE_ISSUED: ['Cheque issued', ''], PART_COVERED: ['Part covered', ''], UNPAID: ['Unpaid', 'bad'] };
   // AJ 12 Nov: a picture of debit (bought) against credit (paid) and how the balance moved. No switches.
-  function chart(rows, v) {
+  function chart(rows, v, pend) {
     if (!rows || !rows.length) return '';
     var deb = rows.reduce(function (a, r) { return a + Number(r.debit || 0); }, 0), cre = rows.reduce(function (a, r) { return a + Number(r.credit || 0); }, 0);
-    var mx = Math.max(deb, cre, 1), W = 700, H = 150, bw = 250;
+    var cre0 = cre; cre = cre + Number(pend || 0); var mx = Math.max(deb, cre, 1), W = 700, H = 150, bw = 250;
     var dW = Math.max(3, Math.round(bw * deb / mx)), cW = Math.max(cre > 0 ? 3 : 0, Math.round(bw * cre / mx));
     var bal = rows.map(function (r) { return Number(r.running_balance || 0); }), hi = Math.max.apply(null, bal.concat([1])), lo = Math.min.apply(null, bal.concat([0]));
     var x0 = 330, x1 = 680, y0 = 28, y1 = 118, n = bal.length;
@@ -96,30 +96,38 @@
       '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Debit and credit chart" style="display:block;max-height:190px">' +
       '<text x="6" y="16" font-size="13" fill="var(--muted,#888)">We bought (Debit)</text>' +
       '<rect x="6" y="22" width="' + dW + '" height="26" rx="8" fill="var(--red,#c0392b)" class="v3b"/><text x="' + (dW + 12 > 220 ? dW - 8 : dW + 12) + '" y="41" font-size="14" font-weight="700" text-anchor="' + (dW + 12 > 220 ? 'end' : 'start') + '" fill="' + (dW + 12 > 220 ? '#fff' : 'var(--text,#222)') + '">' + rs(deb) + '</text>' +
-      '<text x="6" y="72" font-size="13" fill="var(--muted,#888)">We paid (Credit)</text>' +
-      '<rect x="6" y="78" width="' + cW + '" height="26" rx="8" fill="var(--green,#2e8b57)" class="v3b"/><text x="' + (cW + 12 > 220 ? cW - 8 : cW + 12) + '" y="97" font-size="14" font-weight="700" text-anchor="' + (cW + 12 > 220 ? 'end' : 'start') + '" fill="' + (cW + 12 > 220 ? '#fff' : 'var(--text,#222)') + '">' + rs(cre) + '</text>' +
+      '<text x="6" y="72" font-size="13" fill="var(--muted,#888)">We paid (Credit)' + (pend ? ' - cheques lighter' : '') + '</text>' +
+      '<rect x="6" y="78" width="' + cW + '" height="26" rx="8" fill="var(--green,#2e8b57)" opacity="' + (pend ? '.5' : '1') + '" class="v3b"/><rect x="6" y="78" width="' + Math.round(bw * cre0 / mx) + '" height="26" rx="8" fill="var(--green,#2e8b57)"/><text x="' + (cW + 12 > 220 ? cW - 8 : cW + 12) + '" y="97" font-size="14" font-weight="700" text-anchor="' + (cW + 12 > 220 ? 'end' : 'start') + '" fill="' + (cW + 12 > 220 ? '#fff' : 'var(--text,#222)') + '">' + rs(cre) + '</text>' +
       '<text x="6" y="134" font-size="14" font-weight="800" fill="' + (deb - cre > 0 ? 'var(--red,#c0392b)' : 'var(--green,#2e8b57)') + '">Balance ' + rs(deb - cre) + (deb - cre > 0 ? ' (we owe)' : '') + '</text>' +
       '<text x="' + x0 + '" y="16" font-size="13" fill="var(--muted,#888)">How the balance moved</text>' +
       '<line x1="' + x0 + '" y1="' + y1 + '" x2="' + x1 + '" y2="' + y1 + '" stroke="var(--line,#ccc)"/>' +
       '<path d="' + area + '" fill="rgba(212,175,55,.18)"/><polyline points="' + line + '" fill="none" stroke="var(--gold,#c9a24b)" stroke-width="3" stroke-linejoin="round" class="v3l"/>' + dots +
       '<text x="' + x0 + '" y="' + (H - 8) + '" font-size="12" fill="var(--muted,#888)">' + day(rows[0].tx_date) + '</text><text x="' + x1 + '" y="' + (H - 8) + '" font-size="12" text-anchor="end" fill="var(--muted,#888)">' + day(rows[n - 1].tx_date) + '</text></svg></div>';
   }
+  // AJ 12 Nov: "hara bara" ledger, Debit on the left and Credit on the right, cheques inside the credit side.
+  function tAccount(st) {
+    var rows = st.rows || [], debs = rows.filter(function (r) { return Number(r.debit) > 0; }), crs = rows.filter(function (r) { return Number(r.credit) > 0; });
+    var pc = {}, order = [];
+    (st.pending_cheques || []).forEach(function (c) { var k = c.cheque_no || '?'; if (!pc[k]) { pc[k] = { no: k, bank: c.bank, due: c.due_date, amt: 0 }; order.push(k); } pc[k].amt += Number(c.amount || 0); });
+    order.sort(function (x, y) { return String(pc[x].due) < String(pc[y].due) ? -1 : 1; });
+    var dT = debs.reduce(function (a, r) { return a + Number(r.debit); }, 0), cT = crs.reduce(function (a, r) { return a + Number(r.credit); }, 0), pT = order.reduce(function (a, k) { return a + pc[k].amt; }, 0);
+    var line = function (a, b, c, cls) { return '<div class="tl ' + (cls || '') + '"><span>' + a + '</span><span class="tm">' + b + '</span><b>' + c + '</b></div>'; };
+    var L = debs.map(function (r) { return line(day(r.tx_date), esc(r.reference || r.description), rs(r.debit)); }).join('') || '<div class="state">No bills yet.</div>';
+    var R = crs.map(function (r) { return line(day(r.tx_date), esc(r.reference || r.description) + ' (paid)', rs(r.credit), 'good'); }).join('') +
+      order.map(function (k) { var c = pc[k]; return line(day(c.due), 'Cheque ' + esc(c.no) + ' <i class="wt">waiting to clear</i>', rs(c.amt), 'chq'); }).join('');
+    if (!R) R = '<div class="state">Nothing paid yet.</div>';
+    var bal = dT - cT - pT;
+    return '<style>.ta{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--gold,#c9a24b);border-radius:14px;overflow:hidden;margin:6px 0}.ta>div{padding:0 0 4px}.ta>div+div{border-left:2px solid var(--gold,#c9a24b)}.ta h4{margin:0;padding:6px 10px;font-size:15px;text-align:center}.ta .dh{background:rgba(192,57,43,.16);color:var(--red,#c0392b)}.ta .ch{background:rgba(46,139,87,.16);color:var(--green,#2e8b57)}.tl{display:flex;gap:8px;padding:4px 10px;border-bottom:1px solid var(--line,#ddd);font-size:14px;align-items:baseline}.tl .tm{flex:1;min-width:0;color:var(--muted,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tl.chq b{opacity:.85}.wt{font-style:normal;font-size:11px;background:rgba(212,175,55,.25);border-radius:8px;padding:0 6px}.tt{display:flex;justify-content:space-between;padding:6px 10px;font-weight:800;border-top:2px solid var(--gold,#c9a24b);margin-top:2px}.tb{text-align:center;font-weight:800;font-size:16px;padding:6px;border-top:2px solid var(--gold,#c9a24b);grid-column:1/-1}@media(max-width:700px){.ta{grid-template-columns:1fr}.ta>div+div{border-left:0;border-top:2px solid var(--gold,#c9a24b)}}</style>' +
+      '<div class="ta"><div><h4 class="dh">DEBIT (Dr) - bills we owe</h4>' + L + '<div class="tt"><span>Total</span><span>' + rs(dT) + '</span></div></div>' +
+      '<div><h4 class="ch">CREDIT (Cr) - paid and cheques</h4>' + R + '<div class="tt"><span>Total</span><span>' + rs(cT + pT) + '</span></div></div>' +
+      '<div class="tb" style="color:' + (bal > 0 ? 'var(--red,#c0392b)' : 'var(--green,#2e8b57)') + '">' + (bal > 0 ? 'Still to pay: ' : bal < 0 ? 'Paid extra: ' : 'Balanced: ') + rs(Math.abs(bal)) + (pT ? '  (cheques waiting to clear are counted as paid here)' : '') + '</div></div>';
+  }
   function drawBody() {
     var body = $('tabbody'); if (!body) return; var t = S.tab, d = S.data;
     if (t === 'statement') {
       var st = d.statement;
-      body.innerHTML = chart(st.rows, S.vendors.filter(function (x) { return x.vendor_name === S.cur; })[0]) + table([['Date'], ['Ref'], ['Details'], ['Debit', 1], ['Credit', 1], ['Balance', 1]], st.rows.map(function (r) {
-        return '<tr><td>' + day(r.tx_date) + '</td><td>' + esc(r.reference) + '</td><td>' + esc(r.description) + '</td><td class="n">' + (r.debit ? rs(r.debit) : '-') + '</td><td class="n good">' + (r.credit ? rs(r.credit) : '-') + '</td><td class="n"><b>' + rs(r.running_balance) + '</b></td></tr>';
-      }), 'Nothing recorded for this vendor yet.');
-      var pc = {}, order = [];
-      (st.pending_cheques || []).forEach(function (c) { var k = c.cheque_no || '?'; if (!pc[k]) { pc[k] = { no: k, bank: c.bank, due: c.due_date, amt: 0, bills: [] }; order.push(k); } pc[k].amt += Number(c.amount || 0); if (c.bill_no && pc[k].bills.indexOf(c.bill_no) < 0) pc[k].bills.push(c.bill_no); });
-      if (order.length) {
-        order.sort(function (x, y) { return String(pc[x].due) < String(pc[y].due) ? -1 : 1; });
-        var tot = order.reduce(function (s2, k) { return s2 + pc[k].amt; }, 0);
-        body.innerHTML += '<h3 style="margin:18px 0 6px">Cheques issued, waiting to clear</h3>' + table([['Cheque'], ['Bank'], ['Clears about'], ['For bills'], ['Amount', 1]], order.map(function (k) {
-          var c = pc[k]; return '<tr><td><b>' + esc(c.no) + '</b></td><td>' + esc(String(c.bank || '').replace(/,.*$/, '')) + '</td><td>' + day(c.due) + '</td><td>' + esc(c.bills.join(', ')) + '</td><td class="n">' + rs(c.amt) + '</td></tr>';
-        }).concat(['<tr><td colspan="4"><b>Total of these cheques</b></td><td class="n"><b>' + rs(tot) + '</b></td></tr>']), '');
-      }
+      var pend = (st.pending_cheques || []).reduce(function (q, c) { return q + Number(c.amount || 0); }, 0);
+      body.innerHTML = chart(st.rows, null, pend) + tAccount(st);
     } else if (t === 'bills') {
       body.innerHTML = table([['Bill'], ['Date'], ['Due'], ['Total', 1], ['Owed', 1], ['Status']], d.bills.bills.map(function (b) {
         var s = STATE[b.state] || [b.state, '']; return '<tr><td>' + esc(b.bill_no || '#' + b.id) + '</td><td>' + day(b.bill_date) + '</td><td class="' + (b.overdue ? 'bad' : '') + '">' + day(b.due_date) + '</td><td class="n">' + rs(b.total) + '</td><td class="n">' + rs(b.outstanding) + '</td><td><span class="chip ' + s[1] + '">' + s[0] + (b.overdue ? ' · overdue' : '') + '</span></td></tr>';
