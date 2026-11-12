@@ -40,3 +40,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-11: build-stamp.js (display only, own code), pos-space.css (own code). No new libraries.
 - 2026-11-11: scripts/split_vendor_fazal.js (own code, no library).
 - 2026-11-11: pos-look.css (own code).
+12 Nov 2026 | Context7 MCP (upstash/context7) | docs helper | claude mcp remove context7
