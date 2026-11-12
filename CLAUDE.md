@@ -13,7 +13,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## HOW A TASK RUNS
 1. git pull the bridge (C:\Users\Sony\ai-bridge). Read the top 6 lines of AI_BRIDGE/LIVE.md and the tasks with STATUS: PLAYED and no LIVE line.
-2. Run them in number order, back to back, without asking or stopping . Each task is ONE script or a few exact commands. Run exactly that.
+2. Run them in number order, back to back. Each task is ONE script or a few exact commands. Run exactly that. NEVER skip or ignore a blocked task or an alert: it stays NOT DONE in AI_MEMORY/NOT_DONE.md until AJ taps Disregard.
 3. After each task: ONE line at the top of LIVE.md: HH:MM | PC | task N | DONE/PARTIAL/BLOCKED | what you saw | what AJ must do. Push. Then the next task.
 4. Never say DONE unless the check in the task ran. Otherwise UNVERIFIED.
 5. Jobs over 10 min: LIVE line every 10-15 min. /compact at ~50% context.
@@ -24,7 +24,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 - Reply = ONE line, the next step. Soft, gentle, warm like a kind friend, never stiff or professional. No dumps, no lists, never two actions.
 - Answer first. Plain words. PC reports: scripts/pc/rbh_send_report.ps1 -> private rbh-data/pc_reports.
 - Something he must do: its own highlighted block at the top, exact paste inside, said once.
-- Then DONE and NOT DONE, one line each. Never the word "problems": say "heads-up". No narrating what you found and fixed.
+- Then DONE and NOT DONE, one line each. Every NOT DONE item ends with [Approve] [Wait] [Disregard] and stays listed until AJ picks one. Say "heads-up", not "problems".
 - End with ONE status word: GREEN, DONE, BLOCKED, NEEDS YOU or UNVERIFIED, plus the next step.
 - A judgment call: give the exact answer to paste. A PC step for AJ is always ONE line: check bridge.
 
@@ -46,5 +46,5 @@ Never leave a part out. If chat cannot build it, say so at once and print ONE pa
 LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. Bridge repo: Universal-project- (private). PC scripts: AI_BRIDGE/pc/.
 
 ## WHERE THINGS ARE 
-AGENTS.md | START_HERE.md | AI_MEMORY/NOW.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
+AGENTS.md | START_HERE.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
 SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux, rbh-qa, rbh-blocks, rbh-erp, rbh-halal as needed) and name it in the LIVE line.
