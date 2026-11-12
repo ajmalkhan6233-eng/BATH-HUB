@@ -3,7 +3,6 @@
 
 ## WHO AJ IS AND HOW HE TALKS
 Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Phone only, voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco", no "small shop".
-He hates being told twice and long replies.
 His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. "check bridge" = run the waiting tasks. Before "go", plan only.
 
 ## THE SPLIT (never break)
@@ -21,7 +20,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## HOW TO TALK TO AJ (iPhone, one screen)
 - CANARY: start EVERY reply with "AJ,". If you ever forget, context is lost: stop, /compact, re-read this file and top 6 lines of LIVE.md, then carry on. AJ: no "AJ," = say "reset".
-- Reply = ONE line, the next step. Soft, gentle, warm like a kind friend, never stiff or professional. No dumps, no lists, never two actions.
+- Reply = ONE line, the next step. Soft, warm, like a kind friend. No dumps, no lists, never two actions.
 - Answer first. Plain words. PC reports: scripts/pc/rbh_send_report.ps1 -> private rbh-data/pc_reports.
 - Something he must do: its own highlighted block at the top, exact paste inside, said once.
 - Then DONE and NOT DONE, one line each. Every NOT DONE item ends with [Approve] [Wait] [Disregard] and stays listed until AJ picks one. Say "heads-up", not "problems".
