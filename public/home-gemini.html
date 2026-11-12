@@ -89,7 +89,24 @@
 .g{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:640px){.g.c4{grid-template-columns:1fr 1fr}}@media(min-width:1024px){.g.c4{grid-template-columns:repeat(4,1fr)}.g.c3{grid-template-columns:2fr 1fr 1fr}}
 .warn{color:#fbbf24}.ok{color:#34d399}.bad{color:#f87171}h3{margin:0 0 8px;font-size:15px;font-weight:700;color:#f3f5f9}small.n{color:#8a94a6;font-size:12px}
 .err{padding:30px;text-align:center;color:#8a94a6}.err a{color:#dcc166}
-</style></head><body class="aura-bg-dark antialiased">
+</style><style>
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes drift{0%,100%{background-position:0 0,100% 100%,0 0}50%{background-position:30px 20px,calc(100% - 30px) calc(100% - 20px),0 0}}
+@keyframes drawl{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+@keyframes shim{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+body.aura-bg-dark{background-attachment:fixed;animation:drift 18s ease-in-out infinite}
+.glass-card{position:relative;overflow:hidden;animation:rise .6s cubic-bezier(.34,1.56,.64,1) both;-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);box-shadow:0 8px 28px -12px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
+.glass-card:hover{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 24px -4px rgba(212,175,55,.35)}
+.glass-card::after{content:"";position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.06),transparent);transform:translateX(-120%);pointer-events:none}
+.glass-card:hover::after{animation:shim .9s ease}
+.bar i{box-shadow:0 0 12px rgba(212,175,55,.6)}
+.chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(212,175,55,.14);color:#dcc166;border:1px solid rgba(212,175,55,.3);margin-top:6px}
+body.lt{background:radial-gradient(circle at 20% 20%,rgba(212,175,55,.14),transparent 45%),#F3F5F9!important;color:#22252a}
+body.lt .glass-card{background:rgba(255,255,255,.75)!important;border-color:#dfe3ec!important}body.lt .row span:last-child,body.lt h3,body.lt #hi{color:#121417}body.lt .bn{background:rgba(255,255,255,.9)}
+#th{position:fixed;right:12px;top:10px;z-index:50;border:1px solid #2e3239;background:rgba(18,20,23,.7);color:#dcc166;border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer}
+</style>
+<button id="th" onclick="document.body.classList.toggle('lt');try{localStorage.rbhTheme=document.body.classList.contains('lt')?'l':'d'}catch(e){}">Theme</button>
+</head><body class="aura-bg-dark antialiased">
 <nav class="bn"><a class="on" href="/home-gemini.html">Home</a><a href="/owner#/pos">POS</a><a href="/owner#/grn">GRN</a><a href="/vendor360.html">Vendors</a><a href="/owner">Full app</a></nav>
 <div class="wrap"><div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:14px"><div><div class="kv">Royal Bath Hub</div><div id="hi" style="font-size:24px;font-weight:800;color:#fff">Hi, AJ</div></div><small class="n" id="stamp">loading...</small></div>
 <div id="err" class="err" style="display:none">Could not load. <a href="/owner">Sign in</a> and open this page again.</div>
@@ -116,14 +133,14 @@ function draw(d){
  const s=d.sales,t=d.targets,h=new Date().getHours();
  $('hi').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+', AJ';
  $('stamp').textContent='updated '+new Date(d.generated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
- $('t').textContent=R(s.today);$('tv').textContent=vs(s.today,s.same_day_last_week,'vs same day last week');
- $('w').textContent=R(s.week);$('wv').textContent=vs(s.week,s.last_week_same_point,'vs last week');
- $('b').textContent=s.bills_today;$('bv').textContent=s.bills_week+' this week';
- $('a').textContent=R(s.avg_bill_today);
+ if(!window._cu){window._cu=1;countUp($('t'),+s.today||0,R);countUp($('w'),+s.week||0,R);countUp($('b'),+s.bills_today||0,x=>Math.round(x));countUp($('a'),+s.avg_bill_today||0,R)}else{$('t').textContent=R(s.today);$('w').textContent=R(s.week);$('b').textContent=s.bills_today;$('a').textContent=R(s.avg_bill_today)}$('tv').innerHTML=vs(s.today,s.same_day_last_week,'vs same day last week')?'<span class=chip>'+vs(s.today,s.same_day_last_week,'vs same day last week')+'</span>':'';
+ $('wv').textContent=vs(s.week,s.last_week_same_point,'vs last week');
+ $('bv').textContent=s.bills_week+' this week';
+ 
  const days=d.daily||[],mx=Math.max(1,...days.map(x=>+x.total||0)),W=600,H=150;
  const pts=days.map((x,i)=>[days.length>1?i*W/(days.length-1):0,H-(+x.total||0)/mx*H+10]);
  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
- $('ch').innerHTML='<defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4af37" stop-opacity=".35"/><stop offset="1" stop-color="#d4af37" stop-opacity="0"/></linearGradient></defs><path d="'+line+' L'+W+',170 L0,170 Z" fill="url(#gg)"/><path d="'+line+'" fill="none" stroke="#dcc166" stroke-width="3" stroke-linecap="round"/>';
+ $('ch').innerHTML='<defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4af37" stop-opacity=".35"/><stop offset="1" stop-color="#d4af37" stop-opacity="0"/></linearGradient></defs><path d="'+line+' L'+W+',170 L0,170 Z" fill="url(#gg)"/><path d="'+line+'" fill="none" stroke="#dcc166" stroke-width="3" stroke-linecap="round" id="ln"/>';var ln=$('ln');if(ln&&ln.getTotalLength){var L=ln.getTotalLength();ln.style.setProperty('--len',L);ln.style.strokeDasharray=L;ln.style.animation='drawl 1.4s ease-out both'}
  const tot=days.reduce((a,x)=>a+(+x.total||0),0);$('chn').textContent='14-day total '+R(tot);
  const mp=t.month>0?Math.min(100,Math.round(s.month/t.month*100)):0;
  $('mp').textContent=mp+'% of '+R(t.month);$('mb').style.width=mp+'%';$('mm').textContent=R(s.month);
@@ -135,5 +152,9 @@ function draw(d){
  const v=d.vendors||{};$('vn').textContent='Total '+R(v.owed)+' across '+(v.bills||0)+' bills'+((d.cheques&&d.cheques.pending)?' · '+R(d.cheques.pending)+' covered by cheques not cleared yet':'');
  $('vend').innerHTML=(v.list||[]).slice(0,6).map(x=>'<div class="row"><span>'+x.vendor_name+'</span><span>'+R(x.owed)+'</span></div>').join('')||'<small class="n">Nothing owed.</small>';
 }
+
+function countUp(el,to,fmt){const t0=performance.now(),d=900;(function f(n){const k=Math.min(1,(n-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(f)})(t0)}
+document.querySelectorAll('.glass-card').forEach((c,i)=>c.style.animationDelay=(i*70)+'ms');
+try{if(localStorage.rbhTheme==='l')document.body.classList.add('lt')}catch(e){}
 load();setInterval(load,120000);
 </script></body></html>

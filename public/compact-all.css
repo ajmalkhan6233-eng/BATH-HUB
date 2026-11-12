@@ -1,0 +1,21 @@
+/* BLOCK: compact-all (AJ 12 Nov). Squeeze every screen on a computer so more fits on one page: smaller text, boxes, tabs, buttons, tables. Computer screens only (phones untouched). Remove the link line to undo. Loaded LAST. */
+@media (min-width:900px){
+  :root{--touch-target:28px;--space-1:2px;--space-2:4px;--space-3:6px;--space-4:8px;--space-5:10px;--space-6:12px;--space-8:14px;--text-xs:10.5px;--text-sm:11.5px;--text-base:12.5px;--text-lg:14px;--text-xl:16px;--text-2xl:19px;--text-3xl:22px;--radius-md:8px;--radius-lg:10px}
+  html body{font-size:12.5px !important;line-height:1.3 !important}
+  html body h1{font-size:18px !important;margin:4px 0 !important}html body h2{font-size:15px !important;margin:4px 0 !important}html body h3,html body h4{font-size:13px !important;margin:3px 0 !important}
+  html body button,html body .btn,html body a.btn,html body [role=button],html body input[type=button],html body input[type=submit]{min-height:26px !important;height:auto !important;padding:3px 10px !important;font-size:12px !important;border-radius:8px !important}
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),html body select,html body textarea{min-height:26px !important;height:auto !important;padding:3px 8px !important;font-size:12.5px !important;border-radius:8px !important}
+  html body input[type=checkbox],html body input[type=radio]{width:14px;height:14px}
+  html body label{font-size:11px !important;margin-bottom:1px !important}
+  html body .card,html body .panel,html body .box,html body .section,html body .kpi-card,html body fieldset{padding:8px 10px !important;margin-bottom:6px !important;border-radius:10px !important}
+  html body .tab,html body .tabs button,html body [class*=tab-]:not(table),html body nav button{min-height:24px !important;padding:3px 10px !important;font-size:12px !important}
+  html body table th,html body table td{padding:3px 6px !important;font-size:12px !important;line-height:1.25 !important}
+  html body .modal,html body .modal-content,html body dialog{padding:10px !important}
+  html body .grid,html body [class*=grid]{gap:6px !important}
+  html body hr{margin:5px 0 !important}html body p{margin:3px 0 !important}
+  html body .bh-strip{padding:2px 10px !important}html body .bh-strip img,html body .bh-strip .bh-lockup img{height:26px !important;max-height:26px !important}
+  html body header img[src*=logo],html body .brandbar img,html body .top img[src*=logo]{max-height:30px !important;height:auto}
+  html body main,html body .page,html body .container,html body .wrap,html body .content{max-width:1240px !important;padding:6px 10px !important}
+  html body main .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
+  html body .big{font-size:17px !important}html body .sm{font-size:11px !important}
+}
