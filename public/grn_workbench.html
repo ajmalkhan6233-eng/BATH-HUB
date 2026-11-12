@@ -689,4 +689,5 @@ function buildTools(){if(toolsBuilt)return;toolsBuilt=true;var T=$('tools'),card
   f.forEach(function(p){var box=h('div',{class:'msg warn',style:'margin-top:8px'});box.appendChild(h('div',{text:'Bill '+p.bill_no+' ('+p.vendor+', Rs '+fmt(p.total)+') was also entered as GRN '+p.duplicate_numbers.join(' + ')+' ('+p.lines+' lines). The same goods are in stock twice.'}));
    box.appendChild(h('button',{class:'p',style:'margin-top:8px',text:'▶ Yes, remove the extra copy and fix stock',onclick:function(){ask('Fix stock?',['The extra GRN lines are kept in an archive (not lost). Stock goes down by those quantities. If anything does not match, nothing changes.'],'Yes, fix it',function(){jf('/api/grn-dupes/fix','POST',{numbers:p.duplicate_numbers}).then(function(r){modal(r.ok?'Fixed':'Not changed',r.ok?(r.j.lines+' lines archived, '+r.j.items+' items corrected.'):(r.j.error||'Error'));if(r.ok){box.remove();toolsBuilt=false}})})}}));dout.appendChild(box)})})};}
 })();
-</script></body></html>
+</script><style>/* AJ 12 Nov: more lines visible */@media(min-width:900px){.scroll.lines{max-height:calc(100dvh - 235px)!important;min-height:min(440px,calc(100dvh - 235px))!important}.lines td input,.lines td select{height:30px!important;min-height:28px!important}}</style>
+</body></html>

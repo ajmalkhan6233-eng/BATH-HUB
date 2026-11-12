@@ -135,7 +135,7 @@
 /* ---- theme palette: tap the theme icon, pick a look ---- */
 (function () {
   'use strict';
-  var T = [['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)']];
+  var T = [['light', 'Light', 'linear-gradient(135deg,#ffffff,#e6e9ee)'], ['dark', 'Gold', 'linear-gradient(135deg,#0d0d0d,#3a2e10)'], ['gemini', 'Gemini', 'linear-gradient(135deg,#1b2540,#d4af37)']];
   var css = document.createElement('style');
   css.textContent = '#bh-pal{position:fixed;z-index:100001;background:rgba(16,24,36,.96);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:4px;max-width:min(430px,calc(100vw - 16px));max-height:calc(100vh - 70px);overflow:auto;gap:10px;animation:moSpring .3s cubic-bezier(.34,1.56,.64,1) both}' +
     '#bh-pal.on{display:grid}#bh-pal button{border:2px solid transparent !important;border-radius:10px !important;background:transparent !important;color:#fff !important;padding:3px 4px !important;min-height:0 !important;height:auto !important;box-shadow:none !important;backdrop-filter:none !important;cursor:pointer;font:600 14px "Segoe UI",Arial,sans-serif !important;text-align:center;line-height:1.2}#bh-pal button:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}' +

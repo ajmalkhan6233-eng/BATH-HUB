@@ -100,6 +100,7 @@
         box.style.setProperty('transform', 'none', 'important');
         return { x: x, y: y };
       };
+      try { if (!localStorage.getItem('rbh-ld-v2')) { localStorage.removeItem('rbh-ld-pos'); localStorage.setItem('rbh-ld-v2', '1'); } } catch (e) {}
       try { var saved = JSON.parse(localStorage.getItem('rbh-ld-pos') || 'null'); if (saved && isFinite(saved.x) && isFinite(saved.y)) place(saved.x, saved.y); } catch (e) { /* no saved place */ }
       var dx = 0, dy = 0, drag = false;
       grip.addEventListener('pointerdown', function (e) { var r = box.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; drag = true; try { grip.setPointerCapture(e.pointerId); } catch (x) { /* ok */ } e.preventDefault(); });
