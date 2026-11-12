@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Bath Hub · Command HUD</title>
+<style>
+  :root {
+    --bg: #050b14;
+    --bg-grid: rgba(34, 211, 238, 0.035);
+    --panel: rgba(9, 20, 36, 0.72);
+    --border: rgba(34, 211, 238, 0.28);
+    --bracket: #22d3ee;
+    --cyan: #22d3ee;
+    --blue: #38bdf8;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --glow: 0 0 18px rgba(34, 211, 238, 0.14);
+    --scan: rgba(34, 211, 238, 0.03);
+  }
+  [data-theme="light"] {
+    --bg: #f0f7ff;
+    --bg-grid: rgba(2, 132, 199, 0.05);
+    --panel: rgba(255, 255, 255, 0.85);
+    --border: rgba(2, 132, 199, 0.25);
+    --bracket: #0284c7;
+    --cyan: #0284c7;
+    --blue: #2563eb;
+    --amber: #d97706;
+    --red: #dc2626;
+    --text: #0f172a;
+    --muted: #475569;
+    --glow: 0 4px 20px rgba(2, 132, 199, 0.1);
+    --scan: rgba(2, 132, 199, 0.02);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    min-height: 100vh;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  @media (min-width: 900px) {
+    body { height: 100vh; overflow: hidden; }
+  }
+  .hud-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--glow);
+    backdrop-filter: blur(10px);
+    position: relative;
+  }
+  .brand-orb { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .orb-svg { width: 42px; height: 42px; flex-shrink: 0; }
+  .orb-ring-1 { transform-origin: 25px 25px; animation: spinCw 16s linear infinite; }
+  .orb-ring-2 { transform-origin: 25px 25px; animation: spinCcw 22s linear infinite; }
+  .greeting-wrap { min-width: 0; flex: 1; }
+  .shop-tag { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cyan); font-weight: 600; }
+  #hi { font-size: 15px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cursor { display: inline-block; width: 7px; height: 14px; background: var(--cyan); margin-left: 3px; vertical-align: middle; animation: blink 4s infinite; }
+  .controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  #stamp { font-size: 11px; color: var(--muted); }
+  .offline-badge { color: var(--amber) !important; font-weight: 600; }
+  .btn-hud {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s, border-color 0.2s;
+  }
+  .btn-hud:hover { border-color: var(--cyan); }
+  .btn-hud.active { border-color: var(--cyan); color: var(--cyan); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+  }
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto 1fr 1fr;
+    }
+    .kpi-1 { grid-column: span 3; }
+    .kpi-2 { grid-column: span 3; }
+    .kpi-3 { grid-column: span 3; }
+    .kpi-4 { grid-column: span 3; }
+    .panel-sales { grid-column: span 7; }
+    .panel-top { grid-column: span 5; }
+    .panel-pay { grid-column: span 4; }
+    .panel-low { grid-column: span 4; }
+    .panel-vend { grid-column: span 4; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--glow);
+    backdrop-filter: blur(8px);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.6s ease forwards;
+  }
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scan) 4px);
+    pointer-events: none;
+  }
+  .panel::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 10px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--bracket), var(--bracket)) top left / 10px 1.5px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) top left / 1.5px 10px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) top right / 10px 1.5px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) top right / 1.5px 10px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) bottom left / 10px 1.5px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) bottom left / 1.5px 10px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) bottom right / 10px 1.5px no-repeat,
+      linear-gradient(var(--bracket), var(--bracket)) bottom right / 1.5px 10px no-repeat;
+  }
+  .p-title { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .kpi-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .big-num { font-size: 26px; font-weight: 300; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; }
+  .sub-stat { font-size: 11px; color: var(--cyan); margin-top: 3px; }
+  .live-pulse { animation: pulseOpacity 5s ease-in-out infinite; }
+  .spark { width: 76px; height: 28px; flex-shrink: 0; }
+
+  /* Goal Ring */
+  .goal-wrap { display: flex; align-items: center; gap: 12px; }
+  .ring-svg { width: 48px; height: 48px; transform: rotate(-90deg); flex-shrink: 0; }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
+  .ring-fg { fill: none; stroke: var(--cyan); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease; }
+
+  /* Charts & Lists */
+  .chart-box { position: relative; flex: 1; min-height: 130px; width: 100%; }
+  .chart-box svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .radar-sweep { transform-origin: 50% 50%; animation: spinCw 14s linear infinite; opacity: 0.14; }
+  .tooltip {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--cyan);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+  .list-stack { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; flex: 1; justify-content: center; }
+  .bar-item { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+  .bar-head { display: flex; justify-content: space-between; gap: 8px; }
+  .bar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-val { color: var(--cyan); flex-shrink: 0; }
+  .track { height: 6px; background: rgba(148, 163, 184, 0.14); border-radius: 99px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--cyan)); transform-origin: left; animation: growX 1s ease forwards; }
+  .fill.amber { background: var(--amber); }
+  .fill.red { background: var(--red); }
+
+  /* Stacked Pay Bar */
+  .stack-bar { display: flex; height: 14px; border-radius: 99px; overflow: hidden; gap: 2px; margin: 10px 0; }
+  .stack-seg { height: 100%; transform-origin: left; animation: growX 1s ease forwards; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Motion & Calm Mode */
+  body.calm .orb-ring-1, body.calm .orb-ring-2, body.calm .radar-sweep, body.calm .live-pulse, body.calm .cursor,
+  body.paused .orb-ring-1, body.paused .orb-ring-2, body.paused .radar-sweep, body.paused .live-pulse, body.paused .cursor {
+    animation-play-state: paused !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @keyframes spinCw { to { transform: rotate(360deg); } }
+  @keyframes spinCcw { to { transform: rotate(-360deg); } }
+  @keyframes pulseOpacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
+  @keyframes blink { 0%, 49%, 100% { opacity: 1; } 50%, 99% { opacity: 0; } }
+  @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+  @keyframes growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (max-width:600px){
+    .hud-header{flex-direction:column;align-items:stretch;gap:8px}
+    .controls{justify-content:space-between}
+    .shop-tag{white-space:nowrap;font-size:10px}
+    #hi{white-space:normal;overflow:visible;text-overflow:clip;font-size:14px;line-height:1.35}
+    .greeting-wrap{min-width:0;max-width:100%}
+    html,body{overflow-x:hidden}
+  }
+</style>
+</head>
+<body>
+  <header class="hud-header">
+    <div class="brand-orb">
+      <svg class="orb-svg" viewBox="0 0 50 50" aria-hidden="true">
+        <circle cx="25" cy="25" r="21" fill="none" stroke="var(--border)" stroke-width="1" />
+        <circle class="orb-ring-1" cx="25" cy="25" r="17" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-dasharray="28 14 8 14" />
+        <circle class="orb-ring-2" cx="25" cy="25" r="12" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-dasharray="18 10" />
+        <circle cx="25" cy="25" r="5" fill="var(--cyan)" opacity="0.85" />
+      </svg>
+      <div class="greeting-wrap">
+        <div class="shop-tag">Royal Bath Hub · Command Centre</div>
+        <div><span id="hi">Initialising systems...</span><span class="cursor"></span></div>
+      </div>
+    </div>
+    <div class="controls">
+      <span id="stamp">Syncing...</span>
+      <button id="calmBtn" class="btn-hud" type="button">Calm mode</button>
+      <button id="themeBtn" class="btn-hud" type="button" aria-label="Toggle theme">☀</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- KPI 1: Sales Today -->
+    <section class="panel kpi-1" style="animation-delay:0.05s">
+      <div class="p-title"><span>Sales today</span><span id="wv">This week: Rs. 0</span></div>
+      <div class="kpi-row">
+        <div>
+          <div id="t" class="big-num live-pulse">Rs. 0</div>
+          <div id="tv" class="sub-stat">Ready</div>
+        </div>
+        <svg id="w" class="spark" viewBox="0 0 80 30"></svg>
+      </div>
+    </section>
+
+    <!-- KPI 2: Profit Today -->
+    <section class="panel kpi-2" style="animation-delay:0.1s">
+      <div class="p-title"><span>Profit today</span><span id="bv">Month: Rs. 0</span></div>
+      <div class="kpi-row">
+        <div>
+          <div id="b" class="big-num live-pulse">Rs. 0</div>
+          <div id="a" class="sub-stat">Margin steady</div>
+        </div>
+        <svg class="spark" viewBox="0 0 80 30"><polyline id="sparkProfit" fill="none" stroke="var(--blue)" stroke-width="2" points="0,22 20,18 40,20 60,10 80,8"/></svg>
+      </div>
+    </section>
+
+    <!-- KPI 3: Month Goal -->
+    <section class="panel kpi-3" style="animation-delay:0.15s">
+      <div class="p-title"><span>Month goal</span><span id="mpace">On track</span></div>
+      <div class="goal-wrap">
+        <svg class="ring-svg" viewBox="0 0 50 50">
+          <circle class="ring-bg" cx="25" cy="25" r="20" />
+          <circle id="goalRing" class="ring-fg" cx="25" cy="25" r="20" stroke-dasharray="125.6" stroke-dashoffset="125.6" />
+        </svg>
+        <div>
+          <div id="mp" class="big-num">0%</div>
+          <div class="sub-stat"><span id="mm">Rs. 0</span> of <span id="md">Rs. 0</span></div>
+        </div>
+      </div>
+      <span id="mb" style="display:none"></span>
+    </section>
+
+    <!-- KPI 4: Cheques Waiting -->
+    <section class="panel kpi-4" style="animation-delay:0.2s">
+      <div class="p-title"><span>Cheques waiting</span><span id="chn">0 cheques</span></div>
+      <div class="kpi-row">
+        <div>
+          <div id="ch" class="big-num">Rs. 0</div>
+          <div class="sub-stat">Pending clearance</div>
+        </div>
+        <svg class="spark" viewBox="0 0 80 30"><rect x="10" y="14" width="10" height="14" rx="2" fill="var(--blue)" opacity="0.5"/><rect x="28" y="8" width="10" height="20" rx="2" fill="var(--cyan)" opacity="0.8"/><rect x="46" y="12" width="10" height="16" rx="2" fill="var(--blue)" opacity="0.6"/><rect x="64" y="6" width="10" height="22" rx="2" fill="var(--cyan)"/></svg>
+      </div>
+    </section>
+
+    <!-- Panel 3: Sales Last 14 Days -->
+    <section class="panel panel-sales" style="animation-delay:0.25s">
+      <div class="p-title"><span>Sales last 14 days</span><span>Daily trend</span></div>
+      <div class="chart-box" id="salesWrap">
+        <div id="tip" class="tooltip"></div>
+        <svg id="salesChart" viewBox="0 0 500 150" preserveAspectRatio="none"></svg>
+      </div>
+    </section>
+
+    <!-- Panel 4: Top Items This Month -->
+    <section class="panel panel-top" style="animation-delay:0.3s">
+      <div class="p-title"><span>Top items this month</span><span>By revenue</span></div>
+      <div id="top" class="list-stack"></div>
+    </section>
+
+    <!-- Panel 5: How Customers Paid Today -->
+    <section class="panel panel-pay" style="animation-delay:0.35s">
+      <div class="p-title"><span>How customers paid today</span><span>Share of total</span></div>
+      <div id="pay" style="display:flex;flex-direction:column;justify-content:center;flex:1;"></div>
+    </section>
+
+    <!-- Panel 6: Running Low -->
+    <section class="panel panel-low" style="animation-delay:0.4s">
+      <div class="p-title"><span>Running low</span><span id="lown" style="color:var(--amber)">0 heads-up</span></div>
+      <div id="low" class="list-stack"></div>
+    </section>
+
+    <!-- Panel 7: We Owe Vendors -->
+    <section class="panel panel-vend" style="animation-delay:0.45s">
+      <div class="p-title"><span>We owe vendors</span><span id="vn">0 bills</span></div>
+      <div id="vend" class="list-stack"></div>
+      <div class="note">Covered by cheques not yet cleared</div>
+    </section>
+  </main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtRs = n => 'Rs. ' + Math.round(Number(n) || 0).toLocaleString('en-US');
+let greeted = false;
+
+// Theme setup
+const savedTheme = localStorage.getItem('rbhTheme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+$('themeBtn').textContent = savedTheme === 'light' ? '☾' : '☀';
+$('themeBtn').onclick = () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('rbhTheme', next);
+  $('themeBtn').textContent = next === 'light' ? '☾' : '☀';
+};
+
+// Calm mode setup (default ON for desktop >= 900px, OFF for phone)
+let calm = window.innerWidth >= 900;
+const syncCalm = () => {
+  document.body.classList.toggle('calm', calm);
+  $('calmBtn').classList.toggle('active', calm);
+  $('calmBtn').textContent = calm ? 'Calm mode: ON' : 'Calm mode: OFF';
+};
+syncCalm();
+$('calmBtn').onclick = () => { calm = !calm; syncCalm(); };
+
+// Pause animations when tab hidden
+document.addEventListener('visibilitychange', () => {
+  document.body.classList.toggle('paused', document.hidden);
+});
+
+function countUp(el, target, prefix = 'Rs. ', suffix = '') {
+  const end = Math.round(Number(target) || 0);
+  const start = parseInt((el.dataset.val || '0'), 10);
+  el.dataset.val = end;
+  const dur = 700, t0 = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    const val = Math.round(start + (end - start) * (1 - Math.pow(1 - p, 3)));
+    el.textContent = prefix + val.toLocaleString('en-US') + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function typeGreeting(text) {
+  if (greeted) { $('hi').textContent = text; return; }
+  greeted = true;
+  $('hi').textContent = '';
+  let i = 0;
+  const timer = setInterval(() => {
+    $('hi').textContent += text[i++] || '';
+    if (i >= text.length) clearInterval(timer);
+  }, 24);
+}
+
+function renderSalesChart(daily = []) {
+  const svg = $('salesChart');
+  if (!daily.length) return;
+  const W = 500, H = 150, pad = 12;
+  const vals = daily.map(d => Number(d.total) || 0);
+  const max = Math.max(...vals, 1);
+  const pts = vals.map((v, i) => {
+    const x = pad + (i / Math.max(1, vals.length - 1)) * (W - pad * 2);
+    const y = H - pad - (v / max) * (H - pad * 2.4);
+    return { x, y, v, date: daily[i].date };
+  });
+  const poly = pts.map(p => `${p.x},${p.y}`).join(' ');
+  const area = `${pts[0].x},${H - pad} ${poly} ${pts[pts.length - 1].x},${H - pad}`;
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.32"/>
+        <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g class="radar-sweep">
+      <circle cx="250" cy="75" r="110" fill="none" stroke="var(--cyan)" stroke-dasharray="4 6"/>
+      <line x1="250" y1="75" x2="360" y2="75" stroke="var(--cyan)" stroke-width="2"/>
+    </g>
+    <polygon points="${area}" fill="url(#areaGrad)"/>
+    <polyline id="salesLine" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${poly}"/>
+    ${pts.map((p, i) => `<circle class="pt" data-i="${i}" cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="var(--cyan)" stroke-width="2" style="cursor:pointer"/>`).join('')}
+  `;
+  const line = $('salesLine');
+  const len = line.getTotalLength ? line.getTotalLength() : 600;
+  line.style.strokeDasharray = len;
+  line.style.strokeDashoffset = len;
+  requestAnimationFrame(() => { line.style.transition = 'stroke-dashoffset 1.1s ease'; line.style.strokeDashoffset = 0; });
+
+  const tip = $('tip');
+  svg.querySelectorAll('.pt').forEach(c => {
+    c.onmouseenter = e => {
+      const d = pts[c.dataset.i];
+      tip.textContent = `${d.date}: ${fmtRs(d.v)}`;
+      tip.style.left = Math.min(svg.clientWidth - 130, Math.max(6, (d.x / W) * svg.clientWidth - 40)) + 'px';
+      tip.style.top = Math.max(4, (d.y / H) * svg.clientHeight - 32) + 'px';
+      tip.style.opacity = 1;
+    };
+    c.onmouseleave = () => { tip.style.opacity = 0; };
+  });
+}
+
+function render(d) {
+  const s = d.sales || {}, p = d.profit || {}, tg = d.targets || {}, st = d.stock || {}, v = d.vendors || {}, ch = d.cheques || {};
+  const daily = d.daily || [];
+  const yest = daily.length > 1 ? Number(daily[daily.length - 2].total) || 0 : 0;
+  const pctUp = yest > 0 ? Math.round(((s.today - yest) / yest) * 100) : 0;
+  const attn = (Number(st.low_stock) || 0) + (Number(st.out_of_stock) || 0);
+
+  var hr=new Date().getHours(),gm=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
+  typeGreeting(`${gm}, Ajmal. Sales today are ${fmtRs(s.today)}, ${pctUp >= 0 ? 'up' : 'down'} ${Math.abs(pctUp)}% on yesterday. ${attn} items need attention.`);
+
+  countUp($('t'), s.today);
+  $('tv').textContent = `${pctUp >= 0 ? '▲' : '▼'} ${Math.abs(pctUp)}% vs yesterday`;
+  $('wv').textContent = `Week: ${fmtRs(s.week)}`;
+
+  // Sparkline on #w
+  const sp = daily.slice(-7).map(x => Number(x.total) || 0);
+  if (sp.length > 1) {
+    const mx = Math.max(...sp, 1);
+    const pts = sp.map((val, idx) => `${(idx / (sp.length - 1)) * 80},${28 - (val / mx) * 24}`).join(' ');
+    $('w').innerHTML = `<polyline fill="none" stroke="var(--cyan)" stroke-width="2" points="${pts}"/>`;
+  }
+
+  countUp($('b'), p.today);
+  $('bv').textContent = `Month: ${fmtRs(p.month)}`;
+  const margin = s.today > 0 ? Math.round((p.today / s.today) * 100) : 0;
+  $('a').textContent = `${margin}% margin today`;
+
+  const goalPct = tg.month > 0 ? Math.min(100, Math.round((s.month / tg.month) * 100)) : 0;
+  $('mp').textContent = goalPct + '%';
+  $('mm').textContent = fmtRs(s.month);
+  $('md').textContent = fmtRs(tg.month);
+  $('mb').textContent = fmtRs(Math.max(0, (tg.month || 0) - (s.month || 0)));
+  $('mpace').textContent = goalPct >= 75 ? 'Strong pace' : 'In progress';
+  $('goalRing').style.strokeDashoffset = 125.6 - (125.6 * goalPct) / 100;
+
+  countUp($('ch'), ch.pending);
+  $('chn').textContent = `${ch.n || 0} cheques`;
+
+  renderSalesChart(daily);
+
+  // Top items
+  const tops = (d.top_items_month || []).slice(0, 5);
+  const maxTop = Math.max(...tops.map(x => Number(x.revenue) || 0), 1);
+  $('top').innerHTML = tops.map(item => `
+    <div class="bar-item">
+      <div class="bar-head"><span class="bar-name">${esc(item.name)} (${esc(item.qty)})</span><span class="bar-val">${fmtRs(item.revenue)}</span></div>
+      <div class="track"><div class="fill" style="width:${Math.round((item.revenue / maxTop) * 100)}%"></div></div>
+    </div>`).join('');
+
+  // Payments stacked bar
+  const pays = d.payments_today || [];
+  const totPay = pays.reduce((sum, x) => sum + (Number(x.amount) || 0), 0) || 1;
+  const cols = ['var(--cyan)', 'var(--blue)', '#818cf8', 'var(--amber)'];
+  $('pay').innerHTML = `
+    <div class="stack-bar">
+      ${pays.map((x, i) => `<div class="stack-seg" style="width:${(x.amount / totPay) * 100}%;background:${cols[i % cols.length]}"></div>`).join('')}
+    </div>
+    <div class="legend">
+      ${pays.map((x, i) => `<div class="leg-item"><span class="dot" style="background:${cols[i % cols.length]}"></span><span>${esc(x.method)}: <b>${Math.round((x.amount / totPay) * 100)}%</b> (${fmtRs(x.amount)})</span></div>`).join('')}
+    </div>`;
+
+  // Running low
+  $('lown').textContent = `${attn} heads-up`;
+  const lows = (st.low_list || []).slice(0, 5);
+  $('low').innerHTML = lows.map(item => {
+    const out = Number(item.stock_level) <= 0;
+    const ratio = item.reorder_threshold > 0 ? Math.min(100, Math.round((item.stock_level / item.reorder_threshold) * 100)) : 0;
+    return `<div class="bar-item">
+      <div class="bar-head"><span class="bar-name">${esc(item.name)}</span><span class="bar-val" style="color:${out ? 'var(--red)' : 'var(--amber)'}">${out ? 'Out of stock' : item.stock_level + ' / ' + item.reorder_threshold}</span></div>
+      <div class="track"><div class="fill ${out ? 'red' : 'amber'}" style="width:${out ? 100 : Math.max(8, ratio)}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Vendors
+  $('vn').textContent = `${v.bills || 0} bills · ${fmtRs(v.owed)}`;
+  const vList = (v.list || []).slice(0, 4);
+  const maxV = Math.max(...vList.map(x => Number(x.owed) || 0), 1);
+  $('vend').innerHTML = vList.map(x => `
+    <div class="bar-item">
+      <div class="bar-head"><span class="bar-name">${esc(x.vendor_name)}</span><span class="bar-val">${fmtRs(x.owed)}</span></div>
+      <div class="track"><div class="fill" style="width:${Math.round((x.owed / maxV) * 100)}%"></div></div>
+    </div>`).join('');
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/dashboard-pro', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    localStorage.setItem('rbhDashCache', JSON.stringify(data));
+    render(data);
+    $('stamp').classList.remove('offline-badge');
+    $('stamp').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (err) {
+    const cached = localStorage.getItem('rbhDashCache');
+    if (cached && !$('t').dataset.val) render(JSON.parse(cached));
+    $('stamp').classList.add('offline-badge');
+    $('stamp').textContent = 'Offline: showing last saved numbers';
+  }
+}
+
+load();
+setInterval(load, 120000);
+</script>
+</body>
+</html>
