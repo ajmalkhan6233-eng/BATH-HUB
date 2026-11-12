@@ -87,6 +87,10 @@
     var topbar = doc.querySelector('header.topbar');
     if (!topbar || !topbar.parentNode) return;
     topbar.parentNode.insertBefore(bar, topbar.nextSibling); doc.body.appendChild(drawer);
+    // Stick the menu bar right under the real top bar (its height changes with screen size and zoom); a fixed 60px made it slide over the page heading.
+    function fitBar() { try { bar.style.top = Math.round(topbar.getBoundingClientRect().height) + 'px'; } catch (e) {} }
+    fitBar(); win.addEventListener('resize', fitBar); win.addEventListener('load', fitBar);
+    try { if (win.ResizeObserver) new win.ResizeObserver(fitBar).observe(topbar); } catch (e) {}
 
     function itemBtn(k, label, soon) {
       if (k === '--') { var h = doc.createElement('div'); h.className = 'mb-head'; h.setAttribute('role', 'presentation'); h.textContent = label; return h; }
