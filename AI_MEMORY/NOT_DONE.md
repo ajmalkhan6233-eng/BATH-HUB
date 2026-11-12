@@ -10,3 +10,4 @@
 | N7 | Real-number check of Home, Vendor 360 voucher send, WhatsApp send | UNVERIFIED | AJ opens and says what he sees |
 | N8 | Voucher button on GRN screen | OPEN | chat builds |
 - 12 Nov 12:20 | N9 Pocket task 202 waits on PC (check bridge) | N10 Accounting screen Debit|Credit ledger (not built) | N11 tunnel restart (PC has none; Pocket may replace) | N12 screenshots of all 12 Nov screens on real data UNVERIFIED | N13 Gemini full animation code (needs Gemini paste)
+- 12 Nov 14:45 | AJ approved: Home=Jarvis HUD (done, UNVERIFIED on real data). N9 Pocket, N11 tunnel, N12 real-number check, N1 Context7 all folded into bridge task 203 (waits on PC: check bridge). N10 Accounting ledger, N13 Gemini animation code still OPEN
