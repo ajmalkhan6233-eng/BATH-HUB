@@ -2,7 +2,7 @@
 **FIRST, ALWAYS: SYNC.** Before any work, pull bridge + branch, read LIVE.md top, compare heads (chat branch vs `work`). Never work half-way off a stale picture. AJ has paid: find the shortest safe route yourself; never hand AJ the work.
 
 ## WHO AJ IS AND HOW HE TALKS
-Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Phone only, voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco", no "small shop".
+Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco".
 His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. "check bridge" = run the waiting tasks. Before "go", plan only.
 
 ## THE SPLIT (never break)
