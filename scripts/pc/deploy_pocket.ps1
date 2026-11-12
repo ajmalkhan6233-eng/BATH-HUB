@@ -43,6 +43,7 @@ $p = $w
 # 5. PC .env + private files (never printed)
 $pass = Rnd 14
 New-Item -ItemType Directory -Force data | Out-Null
+(Get-Content .env | Where-Object { $_ -notmatch "^\s*POCKET_(URL|PUSH_SECRET|PASSCODE)=" }) | Set-Content .env
 Add-Content .env "`nPOCKET_URL=$w`nPOCKET_PUSH_SECRET=$push`nPOCKET_PASSCODE=$pass"
 "$p/#t=$read&w=$w" | Set-Content data\pocket_link.txt -Encoding ascii
 $pass | Set-Content data\pocket_passcode.txt -Encoding ascii
