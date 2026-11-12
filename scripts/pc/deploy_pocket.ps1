@@ -7,9 +7,11 @@ function Rnd($n){ -join ((48..57)+(65..90)+(97..122) | Get-Random -Count $n | Fo
 $who = (npx --yes wrangler@4 whoami 2>&1 | Out-String)
 if ($who -notmatch 'logged in|associated with') { npx --yes wrangler@4 login }
 # 2. KV store
-$kv = (npx --yes wrangler@4 kv namespace create SNAP 2>&1 | Out-String)
-$m = [regex]::Match($kv, '"?id"?\s*[:=]\s*"([0-9a-f]{32})"')
-if (-not $m.Success) { $ls = (npx --yes wrangler@4 kv namespace list 2>&1 | Out-String); $m = [regex]::Match($ls, '"id":\s*"([0-9a-f]{32})"[^}]*"title":\s*"[^"]*SNAP"|"title":\s*"[^"]*SNAP"[^}]*"id":\s*"([0-9a-f]{32})"') }
+$ErrorActionPreference = 'Continue'
+$ls = (npx --yes wrangler@4 kv namespace list 2>&1 | Out-String)
+$m = [regex]::Match($ls, '"id":\s*"([0-9a-f]{32})"[^}]*"title":\s*"[^"]*SNAP"|"title":\s*"[^"]*SNAP"[^}]*"id":\s*"([0-9a-f]{32})"')
+if (-not $m.Success) { $kv = (npx --yes wrangler@4 kv namespace create SNAP 2>&1 | Out-String); $m = [regex]::Match($kv, '"?id"?\s*[:=]\s*"([0-9a-f]{32})"') }
+$ErrorActionPreference = 'Stop'
 if (-not $m.Success) { Write-Output 'BLOCKED: could not read the KV id'; exit 1 }
 $kvid = ($m.Groups | Where-Object { $_.Success -and $_.Value.Length -eq 32 } | Select-Object -First 1).Value
 # 3. worker
