@@ -57,7 +57,7 @@
 /* ---- 2. COMPATIBILITY: the colour names the existing pages already use now follow the design tokens ---- */
 :root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
   /* owner shell family */
-  --gold:var(--gold-primary); --gold-dark:var(--gold-active); --gold-light:var(--gold-hover);
+  --gold:var(--gold-primary); --gold-dark:var(--gold-active); --gold-light:var(--gold-hover, #a07a12);
   --bg:var(--bg-canvas); --bg2:var(--bg-surface); --bg3:var(--bg-surface-elevated);
   --card:var(--bg-surface); --card-border:var(--border-subtle); --card-hover:var(--bg-surface-hover);
   --text:var(--text-primary); --text2:var(--text-secondary); --text3:var(--text-muted);
@@ -114,7 +114,7 @@ dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-prim
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2); padding:var(--space-3) var(--space-5); border:1px solid transparent; font-weight:600; text-decoration:none; transition:background-color .15s, border-color .15s, transform .15s; }
 .btn:active { transform:scale(.98); }
 .btn-primary, .btn-p { background:var(--gold-primary); color:var(--text-on-accent); box-shadow:var(--shadow-gold); }
-.btn-primary:hover, .btn-p:hover { background:var(--gold-hover); }
+.btn-primary:hover, .btn-p:hover { background:var(--gold-hover, #a07a12); }
 .btn-secondary, .btn-s { background:var(--bg-surface-elevated); color:var(--text-primary); border-color:var(--border-subtle); }
 .btn-secondary:hover, .btn-s:hover { background:var(--bg-surface-hover); border-color:var(--border-strong); }
 .btn-outline-gold { background:var(--gold-bg-subtle); color:var(--gold-text); border-color:var(--gold-border-subtle); }
@@ -150,7 +150,7 @@ dialog, .modal, .modal-box { background:var(--bg-surface); color:var(--text-prim
 :root, [data-theme="dark"], [data-theme="gold"], [data-theme="light"], [data-theme="water"] {
   --emerald-900:var(--text-primary); --emerald-800:var(--gold-primary); --emerald-700:var(--gold-primary);
   --earth-800:var(--text-primary); --earth-700:var(--text-secondary); --earth-500:var(--text-muted);
-  --gold-500:var(--gold-primary); --gold-400:var(--gold-hover); --gold-300:var(--gold-text);
+  --gold-500:var(--gold-primary); --gold-400:var(--gold-hover, #a07a12); --gold-300:var(--gold-text);
 }
 
 /* ---- 6c. PRINT: paper stays white with dark ink, whatever theme is on screen ---- */
@@ -196,7 +196,7 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
   --stone-50:var(--bg-surface-subtle); --stone-100:var(--bg-surface-elevated);
   --green-100:var(--status-success-bg); --green-700:var(--status-success);
   --red-100:var(--status-danger-bg); --red-600:var(--status-danger);
-  --em8:var(--gold-primary); --em9:var(--gold-active); --gold-hover:var(--gold-hover);
+  --em8:var(--gold-primary); --em9:var(--gold-active); --gold-hover:var(--gold-hover, #a07a12);
 }
 
 /* ---- 12. CONTRAST FIXES FOUND IN THE AUDIT ---- */

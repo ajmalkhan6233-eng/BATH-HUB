@@ -87,7 +87,7 @@ html .kpi-label, html .pay-label { color: var(--color-text-muted); }
 html .kpi-value { color: var(--color-text-main); font-variant-numeric: tabular-nums; }
 html .section-title { color: var(--color-text-main); }
 html .prog-wrap { background: var(--color-bg-surface-alt); }
-html .prog-bar { background: linear-gradient(90deg, var(--color-accent), var(--gold-hover)); }
+html .prog-bar { background: linear-gradient(90deg, var(--color-accent), var(--gold-hover, #a07a12)); }
 html .skeleton { background: linear-gradient(90deg, #ECECEA 25%, #F4F4F2 50%, #ECECEA 75%); background-size: 200% 100%; }
 
 /* ---- 6. BUTTONS (guide: primary = black, secondary = white with border, danger/success solid) ---- */
@@ -151,7 +151,7 @@ html .report-row.total, html .login-title { color: var(--gold-text); }
 /* ---- LIGHT and WATER themes: the rules above read --color-* names, but those names are only defined for the default look.
    Without these aliases the top bar, side menu, login box and every gold button turned see-through (Sign In vanished, cards showed through the header, 23 Oct). ---- */
 html[data-theme="light"], html[data-theme="water"] {
-  --color-primary: var(--gold-primary); --color-primary-hover: var(--gold-hover); --color-primary-light: var(--gold-bg-subtle);
+  --color-primary: var(--gold-primary); --color-primary-hover: var(--gold-hover, #a07a12); --color-primary-light: var(--gold-bg-subtle);
   --color-accent: var(--gold-primary); --color-accent-hover: var(--gold-active);
   --color-success: var(--status-success); --color-success-bg: var(--status-success-bg);
   --color-warning: var(--status-warning); --color-warning-bg: var(--status-warning-bg);

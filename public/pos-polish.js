@@ -94,13 +94,56 @@
     var sym = 'Rs', sub = Number(bill.subtotal), disc = Number(bill.discount_amount) || 0;
     var text = ($('rShopName') ? $('rShopName').textContent : 'Royal Bath Hub Thihariya') + '\nBill: ' + bill.bill_number + '\nTotal: ' + sym + ' ' + Number(bill.total).toFixed(2) +
       (disc > 0 ? '\nReal price: ' + sym + ' ' + sub.toFixed(2) + '\nYou saved: ' + sym + ' ' + disc.toFixed(2) : '') + '\nThank you for shopping with us!';
+    var temp0 = !!bill.temp;
     var wa = $('waBtn'), em = $('emailBtn'), dl = $('downloadBtn'), msg = $('waReceiptMsg'), num = waNumber(bill.customer_phone);
-    if (wa) { wa.removeAttribute('target'); wa.href = 'whatsapp://send?' + (num ? 'phone=' + num + '&' : '') + 'text=' + encodeURIComponent(text); wa.title = 'Opens the WhatsApp app on this computer. You press Send.'; }
+    // WhatsApp = the receipt as a PICTURE through the shop WhatsApp (not typed text). The text link only shows if the picture fails.
+    if (wa) {
+      wa.removeAttribute('target'); wa.href = '#'; wa.title = 'Sends the bill as a picture on WhatsApp';
+      wa.onclick = function (ev) {
+        ev.preventDefault(); if (temp0 || typeof window.sendWhatsAppReceipt !== 'function') return;
+        window.sendWhatsAppReceipt(false).then(function () {
+          if (msg && /not sent/i.test(msg.textContent)) {
+            var a = document.createElement('a'); a.textContent = ' Send as text instead'; a.href = 'whatsapp://send?' + (num ? 'phone=' + num + '&' : '') + 'text=' + encodeURIComponent(text); a.style.fontWeight = '700';
+            msg.appendChild(a);
+          }
+        });
+      };
+    }
     if (em) { em.target = '_blank'; em.rel = 'noopener'; em.href = 'https://mail.google.com/mail/?view=cm&fs=1&su=' + encodeURIComponent('Your bill from Royal Bath Hub Thihariya') + '&body=' + encodeURIComponent(text); }
     var temp = !!bill.temp;
     var note = panel.querySelector('.temp-note');
     if (note) { note.style.display = temp ? 'block' : 'none'; note.textContent = temp ? 'Not saved on the server yet: the app was signed out. Sign in again and this bill sends by itself. Download and the WhatsApp image wait until then.' : ''; }
     [dl, $('waReceiptBtn')].forEach(function (b) { if (b) { b.classList.toggle('is-off', temp); if (b.tagName === 'BUTTON') b.disabled = temp; } });
+    // Void (saved bill, owner only) or Discard (offline bill not yet on the server). One tap, asks a reason.
+    var vb = $('voidBtn');
+    if (vb) {
+      if (bill.voided) { vb.style.display = 'none'; }
+      else if (temp || (typeof isOwner !== 'undefined' && isOwner)) {
+        vb.style.display = ''; vb.textContent = temp ? 'Discard this offline bill' : 'Void this bill';
+        vb.onclick = function () {
+          var reason = prompt(temp ? 'Why discard this bill? (it was never saved)' : 'Why void this bill? (stock goes back, cash total drops)', 'dummy bill');
+          if (!reason || reason.trim().length < 3) return;
+          msg.className = 'wa-receipt-msg'; msg.textContent = 'Working…';
+          var done = function (t) { msg.className = 'wa-receipt-msg ok'; msg.textContent = t; vb.style.display = 'none'; if (typeof window.loadToday === 'function') window.loadToday(); };
+          var fail = function (t) { msg.className = 'wa-receipt-msg err'; msg.textContent = t; };
+          if (temp) {
+            var q = window.OfflineQueue && window.OfflineQueue.instance;
+            if (!q) return fail('Offline queue not found.');
+            q.discardTempBill(bill.bill_number).then(function (ok) { ok ? done('Discarded. It was never saved, nothing to undo.') : fail('Already sent to the server: open Edit & Void and void it there.'); });
+          } else {
+            fetch('/api/pos-bills/' + encodeURIComponent(bill.id) + '/void', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) })
+              .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('error ' + r.status)); return d; }); })
+              .then(function () { done('Bill voided. Stock is back and the till total dropped.'); }).catch(function (e) { fail('Could not void: ' + e.message); });
+          }
+        };
+      } else { vb.style.display = 'none'; }
+    }
+    // A bill made just now with a customer number: send the picture by itself when the box is ticked. Never for an old bill opened again.
+    if (!temp && num && window.__freshBillId === bill.id) {
+      window.__freshBillId = null;
+      var aw = $('autoWa');
+      if (aw && aw.checked && typeof window.sendWhatsAppReceipt === 'function') setTimeout(function () { window.sendWhatsAppReceipt(true); }, 400);
+    }
     if (dl) {
       dl.removeAttribute('target');
       dl.onclick = function (ev) {

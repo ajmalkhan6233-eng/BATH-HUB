@@ -106,7 +106,7 @@
   .share-btn.wa-receipt { grid-column: 1 / -1; background: #128C7E; }
   .share-btn:disabled { opacity: .6; cursor: default; }
   .wa-receipt-msg { margin-top: 8px; font-size:14px; min-height: 16px; color:var(--text-secondary); }
-  .wa-receipt-msg.err { color: #b42318; }
+  .wa-receipt-msg.err { color: #b42318; display: block; }   /* a plain .err rule elsewhere hides things: this message must show */
   .wa-receipt-msg.ok { color: #067647; }
 
   .new-bill-btn {
@@ -295,12 +295,13 @@
     </div>
 
     <div class="share-buttons">
-      <a class="share-btn whatsapp" id="waBtn" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="share-btn whatsapp" id="waBtn" href="#">WhatsApp (picture)</a>
       <a class="share-btn" id="vcfBtn" href="#" style="display:none">Save contact</a>
       <a class="share-btn email" id="emailBtn" href="#">Email</a>
       <a class="share-btn download" id="downloadBtn" href="#" target="_blank" rel="noopener">Download PDF</a>
       <button class="share-btn print" onclick="printBill()">Print</button>
-      <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()">Send WhatsApp Receipt (image)</button>
+      <button class="share-btn wa-receipt" id="waReceiptBtn" onclick="sendWhatsAppReceipt()" style="display:none">Send WhatsApp Receipt (image)</button>
+      <button class="share-btn" id="voidBtn" type="button" style="display:none;background:#b42318">Void this bill</button>
     </div>
     <div id="waReceiptMsg" class="wa-receipt-msg" role="status"></div>
     <div id="billAttach" style="margin-top:8px"></div>
@@ -495,6 +496,7 @@ async function generateBill() {
     const wasEdit = !!editingId;
     editingId = null; document.getElementById('editBanner').style.display = 'none'; document.getElementById('cancelEditBtn').style.display = 'none';
     _quoteId = null;   // the marker was saved with the bill
+    window.__freshBillId = data.id;   // the bill page sends the WhatsApp picture by itself for a bill made just now
     renderBill(data);
     clearCustomer();   // the bill is saved: the next customer starts from an empty name and phone
     if (wasEdit) loadToday();

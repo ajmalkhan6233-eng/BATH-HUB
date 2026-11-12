@@ -33,7 +33,7 @@ html body #liveBill .lb-tot { color:var(--gold-text); border-top:2px solid var(-
 html body #formPanel .fp-right label { color:var(--text-muted) !important; text-transform:uppercase; letter-spacing:.04em; font-size:10px !important; font-weight:600; }
 
 /* main action: calm gold, soft lift on hover (no bounce) */
-html body #formPanel .generate-btn { background:linear-gradient(180deg, var(--gold-hover), var(--gold-primary)) !important; color:var(--text-on-accent) !important; border:none !important; border-radius:12px !important; font-weight:800; box-shadow:var(--shadow-md); transition:box-shadow .15s, filter .15s; }
+html body #formPanel .generate-btn { background:linear-gradient(180deg, var(--gold-hover, #a07a12), var(--gold-primary)) !important; color:var(--text-on-accent) !important; border:none !important; border-radius:12px !important; font-weight:800; box-shadow:var(--shadow-md); transition:box-shadow .15s, filter .15s; }
 html body #formPanel .generate-btn:hover { filter:brightness(1.06); box-shadow:var(--shadow-lg); }
 html body #formPanel #quoteSaveBtn { background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; border-radius:10px !important; color:var(--text-primary) !important; font-weight:600; }
 

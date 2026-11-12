@@ -413,6 +413,14 @@
             }).then(function () { return refresh(); });
         }
 
+        // Throw away ONE offline bill that has not reached the server yet (a test or dummy bill), found by its OFF- number.
+        function discardTempBill(billNumber) {
+            return adapter.all().then(function (items) {
+                var it = items.filter(function (i) { return i.temp && i.temp.bill_number === billNumber && i.state !== 'sending'; })[0];
+                return it ? adapter.remove(it.seq).then(function () { return true; }) : false;
+            }).then(function (ok) { return refresh().then(function () { return ok; }); });
+        }
+
         var ready = refresh().then(function () {
             return adapter.all().then(function (items) {      // crash recovery on start-up
                 return Promise.all(items.filter(function (i) { return i.state === 'sending'; }).map(function (i) { i.state = 'waiting'; return adapter.update(i); }));
@@ -439,7 +447,7 @@
 
         return {
             deviceId: deviceId, adapter: adapter, ready: ready, clearError: clearError, discardAllRejected: discardAllRejected,
-            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected, discardRejected: discardRejected,
+            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected, discardRejected: discardRejected, discardTempBill: discardTempBill,
             status: status, on: on, list: function () { return adapter.all(); }, results: function () { return adapter.results(); },
             refresh: refresh, refreshServerCounts: refreshServerCounts, backoffMs: backoffMs,
             isQueueable: function (u) { var p = pathOf(u); return !!p && !NEVER_QUEUE.test(p) && isQueueable(p); }

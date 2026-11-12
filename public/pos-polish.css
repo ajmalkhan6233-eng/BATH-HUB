@@ -35,11 +35,14 @@
 #billPanel .share-btn { min-height:52px; font-size:15px; }
 #billPanel .share-btn.is-off { opacity:.45; pointer-events:none; }
 .new-bill-btn { display:none; }
-@media (min-width:900px) {
+@media (min-width:760px) {
   .wrap.has-bill { grid-template-columns:minmax(0,1fr) !important; }
-  #billPanel[style*="block"] { display:grid !important; grid-template-columns:minmax(300px,480px) minmax(280px,440px); gap:6px 28px; justify-content:center; align-items:start; overflow-y:auto; }
+  #billPanel[style*="block"] { display:grid !important; grid-template-columns:minmax(260px,460px) minmax(260px,1fr); gap:6px 24px; justify-content:center; max-width:100%; overflow-x:hidden; align-items:start; overflow-y:auto; }
   #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, #billPanel #waReceiptMsg, #billPanel #billAttach { grid-column:2; }
   #billPanel .receipt { grid-column:1; grid-row:1 / span 6; }
 }
 @media (max-width:899px) { #billPanel .bill-bar { position:sticky; top:0; z-index:5; background:var(--bg-surface); padding:6px 0; } }
 @media print { #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, .item-head { display:none !important; } }
+
+#billPanel .share-btn.whatsapp { grid-column:1 / -1; }
+#billPanel #waReceiptMsg { display:block; min-height:20px; }
