@@ -19,3 +19,6 @@
   html body main .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
   html body .big{font-size:17px !important}html body .sm{font-size:11px !important}
 }
+
+/* AJ 12 Nov: list screens keep columns close together, not spread across the whole width */
+@media(min-width:900px){body.tight-cols table{width:auto !important;min-width:min(720px,100%)}body.tight-cols td,body.tight-cols th{padding-right:18px}}

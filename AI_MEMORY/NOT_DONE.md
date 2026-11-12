@@ -9,3 +9,4 @@
 | N6 | Install more of the 40 repos (scan first done for 8) | OPEN | AJ picks |
 | N7 | Real-number check of Home, Vendor 360 voucher send, WhatsApp send | UNVERIFIED | AJ opens and says what he sees |
 | N8 | Voucher button on GRN screen | OPEN | chat builds |
+- 12 Nov 12:20 | N9 Pocket task 202 waits on PC (check bridge) | N10 Accounting screen Debit|Credit ledger (not built) | N11 tunnel restart (PC has none; Pocket may replace) | N12 screenshots of all 12 Nov screens on real data UNVERIFIED | N13 Gemini full animation code (needs Gemini paste)
