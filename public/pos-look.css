@@ -40,3 +40,13 @@ html body #formPanel #quoteSaveBtn { background:var(--bg-surface-elevated) !impo
 /* item list: floating card */
 html body .pick-list.open { border-radius:12px !important; box-shadow:var(--shadow-lg) !important; border:1px solid var(--border-strong) !important; }
 html body .pick-opt.active, html body .pick-opt:hover { background:var(--gold-bg-subtle, rgba(212,175,55,.16)) !important; }
+
+/* BLOCK: pos-preview-match (AJ 12 Nov, approved N4): match the approved preview. Look only, same ids. */
+@media (min-width:900px){
+  html body #formPanel .item-row{min-height:32px !important;padding:2px 6px !important;border-radius:10px !important}
+  html body #formPanel .item-row input{min-height:26px !important}
+  html body #formPanel .generate-btn{box-shadow:0 0 16px -4px rgba(212,175,55,.5) !important;font-weight:700}
+  html body #liveBill{font-size:12.5px}
+  html body #rTotals{font-size:15px;font-weight:700;color:var(--gold-primary)}
+  html body #formPanel #customerName,html body #formPanel #customerPhone,html body #formPanel #scanBox{min-height:26px !important;border-radius:10px !important}
+}
