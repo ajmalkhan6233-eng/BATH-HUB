@@ -79,11 +79,36 @@
     return '<table><thead><tr>' + head.map(function (h) { return '<th' + (h[1] ? ' class="n"' : '') + '>' + h[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>';
   }
   var STATE = { PAID: ['Paid', 'good'], CHEQUE_ISSUED: ['Cheque issued', ''], PART_COVERED: ['Part covered', ''], UNPAID: ['Unpaid', 'bad'] };
+  // AJ 12 Nov: a picture of debit (bought) against credit (paid) and how the balance moved. No switches.
+  function chart(rows, v) {
+    if (!rows || !rows.length) return '';
+    var deb = rows.reduce(function (a, r) { return a + Number(r.debit || 0); }, 0), cre = rows.reduce(function (a, r) { return a + Number(r.credit || 0); }, 0);
+    var mx = Math.max(deb, cre, 1), W = 700, H = 150, bw = 250;
+    var dW = Math.max(3, Math.round(bw * deb / mx)), cW = Math.max(cre > 0 ? 3 : 0, Math.round(bw * cre / mx));
+    var bal = rows.map(function (r) { return Number(r.running_balance || 0); }), hi = Math.max.apply(null, bal.concat([1])), lo = Math.min.apply(null, bal.concat([0]));
+    var x0 = 330, x1 = 680, y0 = 28, y1 = 118, n = bal.length;
+    var px = function (i) { return n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (n - 1); }, py = function (b) { return y1 - (y1 - y0) * (b - lo) / ((hi - lo) || 1); };
+    var pts = bal.map(function (b, i) { return px(i).toFixed(1) + ',' + py(b).toFixed(1); }), line = pts.join(' ');
+    var area = 'M' + px(0).toFixed(1) + ',' + y1 + ' L' + pts.join(' L') + ' L' + px(n - 1).toFixed(1) + ',' + y1 + ' Z';
+    var dots = bal.map(function (b, i) { return '<circle cx="' + px(i).toFixed(1) + '" cy="' + py(b).toFixed(1) + '" r="4" fill="var(--gold,#c9a24b)"><title>' + day(rows[i].tx_date) + ': ' + rs(b) + '</title></circle>'; }).join('');
+    return '<div class="v360chart" style="margin:6px 0 10px;border:1px solid var(--line,#ddd);border-radius:14px;padding:8px 10px;background:linear-gradient(180deg,rgba(212,175,55,.08),transparent)">' +
+      '<style>@keyframes v3grow{from{width:0}}@keyframes v3draw{from{stroke-dashoffset:900}to{stroke-dashoffset:0}}.v3b{animation:v3grow .9s ease-out both}.v3l{stroke-dasharray:900;animation:v3draw 1.2s ease-out both}</style>' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Debit and credit chart" style="display:block;max-height:190px">' +
+      '<text x="6" y="16" font-size="13" fill="var(--muted,#888)">We bought (Debit)</text>' +
+      '<rect x="6" y="22" width="' + dW + '" height="26" rx="8" fill="var(--red,#c0392b)" class="v3b"/><text x="' + (dW + 12 > 220 ? dW - 8 : dW + 12) + '" y="41" font-size="14" font-weight="700" text-anchor="' + (dW + 12 > 220 ? 'end' : 'start') + '" fill="' + (dW + 12 > 220 ? '#fff' : 'var(--text,#222)') + '">' + rs(deb) + '</text>' +
+      '<text x="6" y="72" font-size="13" fill="var(--muted,#888)">We paid (Credit)</text>' +
+      '<rect x="6" y="78" width="' + cW + '" height="26" rx="8" fill="var(--green,#2e8b57)" class="v3b"/><text x="' + (cW + 12 > 220 ? cW - 8 : cW + 12) + '" y="97" font-size="14" font-weight="700" text-anchor="' + (cW + 12 > 220 ? 'end' : 'start') + '" fill="' + (cW + 12 > 220 ? '#fff' : 'var(--text,#222)') + '">' + rs(cre) + '</text>' +
+      '<text x="6" y="134" font-size="14" font-weight="800" fill="' + (deb - cre > 0 ? 'var(--red,#c0392b)' : 'var(--green,#2e8b57)') + '">Balance ' + rs(deb - cre) + (deb - cre > 0 ? ' (we owe)' : '') + '</text>' +
+      '<text x="' + x0 + '" y="16" font-size="13" fill="var(--muted,#888)">How the balance moved</text>' +
+      '<line x1="' + x0 + '" y1="' + y1 + '" x2="' + x1 + '" y2="' + y1 + '" stroke="var(--line,#ccc)"/>' +
+      '<path d="' + area + '" fill="rgba(212,175,55,.18)"/><polyline points="' + line + '" fill="none" stroke="var(--gold,#c9a24b)" stroke-width="3" stroke-linejoin="round" class="v3l"/>' + dots +
+      '<text x="' + x0 + '" y="' + (H - 8) + '" font-size="12" fill="var(--muted,#888)">' + day(rows[0].tx_date) + '</text><text x="' + x1 + '" y="' + (H - 8) + '" font-size="12" text-anchor="end" fill="var(--muted,#888)">' + day(rows[n - 1].tx_date) + '</text></svg></div>';
+  }
   function drawBody() {
     var body = $('tabbody'); if (!body) return; var t = S.tab, d = S.data;
     if (t === 'statement') {
       var st = d.statement;
-      body.innerHTML = table([['Date'], ['Ref'], ['Details'], ['Debit', 1], ['Credit', 1], ['Balance', 1]], st.rows.map(function (r) {
+      body.innerHTML = chart(st.rows, S.vendors.filter(function (x) { return x.vendor_name === S.cur; })[0]) + table([['Date'], ['Ref'], ['Details'], ['Debit', 1], ['Credit', 1], ['Balance', 1]], st.rows.map(function (r) {
         return '<tr><td>' + day(r.tx_date) + '</td><td>' + esc(r.reference) + '</td><td>' + esc(r.description) + '</td><td class="n">' + (r.debit ? rs(r.debit) : '-') + '</td><td class="n good">' + (r.credit ? rs(r.credit) : '-') + '</td><td class="n"><b>' + rs(r.running_balance) + '</b></td></tr>';
       }), 'Nothing recorded for this vendor yet.');
       var pc = {}, order = [];
