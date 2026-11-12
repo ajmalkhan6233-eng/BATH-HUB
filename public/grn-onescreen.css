@@ -1,0 +1,24 @@
+/* GRN ONE-SCREEN, part 2 (AJ 12 Nov, task 205). Loaded after grn-compact.css.
+   Right side = form on top (.g-hdr), lines in the middle (take ALL the free height, own scroll), totals + buttons pinned at the bottom (.g-ftr).
+   The old fixed height calc(100dvh - 290px) let the buttons slide under the lines whenever a note or message added a row. Layout only. */
+@media (min-width:900px) {
+  html body #view1 > section:first-child { display:flex; flex-direction:column; gap:6px; }
+  html body #view1 > section:first-child > .card { margin:0 !important; flex:none; }
+  html body #view1 > section:first-child > .card:nth-child(2) { order:-1; }     /* drafts first, photo below: ONE scroll on the left */
+  html body #view1 #right.has-lines { display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; align-items:stretch !important; overflow:hidden !important; height:100% !important; gap:3px !important; }
+  html body #view1 #right.has-lines > .g-hdr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:flex-end; gap:2px 8px; }
+  html body #view1 #right.has-lines > .g-hdr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-hdr .row, html body #view1 #right.has-lines > .g-ftr .row { display:contents; }
+  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:1 1 0 !important; height:auto !important; min-height:110px !important; max-height:none !important; order:0 !important; }
+  html body #view1 #right.has-lines > .g-ftr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:center; gap:3px 10px; padding-top:3px; border-top:1px solid var(--c-line,#ddd); background:var(--c-surface,#fff); }
+  html body #view1 #right.has-lines > .g-ftr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-ftr .msg { flex:1 1 100%; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:auto !important; display:flex; flex-wrap:wrap; gap:6px; }
+  html body #view1 #right.has-lines > .g-ftr #status:empty { display:none; }
+}
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .row:first-child h3, html body #view1 #right.has-lines > .g-hdr > .row:first-child .badge { display:none !important; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:0 !important; }                 /* left side: the Layla chat button sits bottom right */
+  html body #view1 #right.has-lines > .g-ftr #status { max-height:42px; overflow:auto; font-size:13px; }
+  html body #view1 #right.has-lines > .g-ftr > .row:has(button:only-child) { display:block; }
+}
