@@ -41,6 +41,7 @@ DONE: backup-live-21oct pushed; DB backup OK; main folder on work; apex-server r
 NEXT: AJ decides step 4 wipe (clean) + step 5 drill (both denied by auto-mode classifier), plugins, push work.
 STUCK ON: classifier denial on rbh_wipe.ps1 and pm2 stop apex-server.
 reference/ suites vs jest ignore override: NO (fail on missing ../../layla, not the override).
+- 2026-11-12 07:30 chat AUDIT: 11 Nov builds (POS look, shell-fit, GRN fit, soft theme, build stamp, vendor 360 cheques, voucher) are all on work and render in a clean browser (checked 1366x768: Home soft cards + 'Build 11 Nov 20:35 POS look' stamp, POS soft look). SW is network-first, static files revalidate (max-age=0), so caching is not the cause. NOT in app: Gemini full desktop+phone designs (docs/design_gemini_11nov, Tailwind mock, never converted) and Gemini POS preview (waits for AJ approval). Pocket not deployed (Cloudflare). Task 196 (read-only Vendor 360 check) and 197 (Context7) still PLAYED, PC has not run them. AJ: say 'check bridge'.
 - 2026-11-03: Correction applied: Ajmal is NOT owner of old shop. Profile/global replaced, wording fixed, old rules archived (_archive/former-workplace.md). Renames NOT done: see RENAME_PLAN_WAITING_GO.md. Waiting for Ajmal's go + 5 answers.
 - 2026-11-03: PC health check script ready (scripts/pc/rbh_health_check.ps1, read-only, not run: cloud box cannot see Ajmal's PC). Light RAM rule added to profile/global CLAUDE.md.
 - 2026-11-03: QUEUE_SIMPLIFY saved (6-module simplify plan). Waiting for Ajmal's go; QUEUE_TOMORROW runs first.
