@@ -28,7 +28,8 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 - A judgment call: give the exact answer to paste. A PC step for AJ is always ONE line: check bridge.
 
 ## NEVER ASK AJ
-Do not ask AJ anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers for him in AI_BRIDGE/ANSWERS.md. Re-check every 5 min; no answer = safe default (never delete, never push main, never spend money) and carry on. When AJ gives a task, finish ALL of it, then report once.
+STANDING OK (AJ, 12 Nov): every safe, free, non-destructive step a task needs is pre-approved, incl. replays and retries. Don't stop for approval: take the safe default, log it, carry on. Never: spend money, delete, push main.
+Do not ask AJ anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers in AI_BRIDGE/ANSWERS.md; no answer = safe default, carry on. When AJ gives a task, finish ALL of it, then report once.
 
 ## BUILD EVERYTHING
 Never leave a part out. If chat cannot build it, say so and print ONE paste block for Gemini plus where to paste the reply. For pasted references, say in 3 lines what was taken and what not.
