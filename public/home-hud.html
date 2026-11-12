@@ -222,6 +222,26 @@
     .greeting-wrap{min-width:0;max-width:100%}
     html,body{overflow-x:hidden}
   }
+  .bn{display:flex;justify-content:space-around;gap:4px;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--glow)}
+  .bn a{color:var(--muted);text-decoration:none;font-size:12px;font-weight:600;padding:6px 10px;border-radius:10px}.bn a.on{color:var(--cyan)}
+  @media (max-width:600px){
+    html,body{height:100dvh;overflow:hidden}
+    body{padding:8px;gap:6px}
+    .hud-header{padding:6px 10px;gap:4px}
+    .orb-svg{width:30px;height:30px}
+    #hi{font-size:12.5px!important;line-height:1.3!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden!important}
+    .controls{gap:6px}.controls button{padding:3px 8px;font-size:11px}
+    .grid{flex:1;min-height:0;grid-template-columns:1fr 1fr!important;grid-template-rows:auto auto minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important}
+    .grid>.panel{padding:8px 10px!important;min-height:0;overflow:hidden}
+    .panel-sales{grid-column:span 2!important}
+    .kpi-row .spark,.kpi-row svg.spark{display:none}
+    .big-num{font-size:20px!important}
+    .p-title{font-size:11px;margin-bottom:2px}
+    .list-stack{overflow:auto;min-height:0}
+    .panel .note{display:none}
+    .panel-vend,.panel-low,.panel-top,.panel-pay{overflow:auto!important}
+    .panel-top .p-title span:last-child,.panel-pay .p-title span:last-child{display:none}
+  }
 </style>
 </head>
 <body>
@@ -332,6 +352,7 @@
       <div class="note">Covered by cheques not yet cleared</div>
     </section>
   </main>
+  <nav class="bn"><a class="on" href="/home-hud.html">Home</a><a href="/owner#/pos">POS</a><a href="/owner#/grn">GRN</a><a href="/vendor360.html">Vendors</a><a href="/owner">Full app</a></nav>
 
 <script>
 const $ = id => document.getElementById(id);
