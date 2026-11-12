@@ -3,7 +3,7 @@
 
 ## WHO AJ IS AND HOW HE TALKS
 Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Phone only, voice-to-text: read garbled words kindly ("chek"=check, "cloud.md"=CLAUDE.md, "bath code"=old name BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal only, honest, privacy-first. No "Bathco", no "small shop".
-He hates: being told twice, long replies, work handed to him.
+He hates being told twice and long replies.
 His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. "check bridge" = run the waiting tasks. Before "go", plan only.
 
 ## THE SPLIT (never break)
@@ -28,10 +28,10 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 - End with ONE status word: GREEN, DONE, BLOCKED, NEEDS YOU or UNVERIFIED, plus the next step.
 - A judgment call: give the exact answer to paste. A PC step for AJ is always ONE line: check bridge.
 
-## NEVER ASK AJ (his rule, 10 Nov)
-AJ is busy. Do not ask him anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers for him in AI_BRIDGE/ANSWERS.md. Re-check it every 5 min; no answer after 5 min = take your safe default (never delete, never push main, never spend money) and carry on. When AJ gives a task, finish ALL of it, then report once.
+## NEVER ASK AJ
+Do not ask AJ anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers for him in AI_BRIDGE/ANSWERS.md. Re-check every 5 min; no answer = safe default (never delete, never push main, never spend money) and carry on. When AJ gives a task, finish ALL of it, then report once.
 
-## BUILD EVERYTHING (AJ, 11 Nov)
+## BUILD EVERYTHING
 Never leave a part out. If chat cannot build it, say so at once and print ONE paste block for Gemini plus where to paste Gemini's reply. When a reference is pasted, tell AJ in 3 lines what was taken and what was not.
 
 ## SAFETY (AJ's hard rules)
@@ -47,3 +47,4 @@ LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.
 
 ## WHERE THINGS ARE 
 AGENTS.md | START_HERE.md | AI_MEMORY/NOW.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
+SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux, rbh-qa, rbh-blocks, rbh-erp, rbh-halal as needed) and name it in the LIVE line.

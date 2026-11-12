@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>POS preview (fake rows)</title>
+<link rel="stylesheet" href="/bathhub-design.css"><link rel="stylesheet" href="/gemini-look.css">
+<style>
+html,body{margin:0;height:100%;font-family:var(--font-sans);color:var(--text-primary)}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;height:100vh;padding:10px;box-sizing:border-box}
+.card{padding:10px;display:flex;flex-direction:column;min-height:0}
+.line{display:flex;gap:8px;margin-bottom:6px}.line input,.line select{flex:1;min-width:0;height:30px;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-surface-subtle,rgba(255,255,255,.06));color:inherit;padding:0 10px;font-size:13px}
+.thin input{height:26px}.rows{flex:1;overflow:auto}
+.r{display:grid;grid-template-columns:1fr 92px 84px 64px 22px;gap:6px;align-items:center;height:30px;font-size:13px;border-bottom:1px solid var(--border-subtle)}
+.r b{font-weight:600}.r small{opacity:.6;margin-left:6px}.q{display:flex;align-items:center;gap:4px}.q i{font-style:normal;border:1px solid var(--border-subtle);border-radius:50%;width:18px;height:18px;text-align:center;line-height:16px}
+.h{opacity:.6;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.add{border:1px dashed var(--gold-primary);border-radius:10px;text-align:center;padding:5px;color:var(--gold-primary);font-size:13px;margin-top:6px}
+.bill{flex:1;overflow:auto;font-size:12.5px}.bill div{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dotted var(--border-subtle)}
+.tot{font-size:26px;font-weight:700;color:var(--gold-primary);display:flex;justify-content:space-between;margin:6px 0}
+.go{background:linear-gradient(180deg,#e6c85a,#c9a02a);color:#1a1405;border:0;border-radius:12px;height:40px;font-weight:700;margin-top:8px;box-shadow:0 0 16px -4px rgba(212,175,55,.5)}
+.tag{position:fixed;right:14px;top:6px;font-size:11px;background:var(--gold-primary);color:#111;border-radius:99px;padding:2px 10px;z-index:9}
+</style></head><body><div class="tag">PREVIEW: fake rows, nothing saved</div>
+<div class="wrap"><div class="card"><div class="line thin"><input placeholder="Walk-in customer"><input placeholder="Phone"><input style="flex:.6" placeholder="Scan or type code + Enter"></div>
+<div class="r h"><span>Item name + code</span><span>Qty</span><span>Price (Rs)</span><span>Disc</span><span></span></div><div class="rows">
+<div class="r"><span><b>Basin mixer chrome</b><small>MG-0412</small></span><span class="q"><i>-</i>2<i>+</i></span><span>8,500</span><span>0</span><span>x</span></div>
+<div class="r"><span><b>Wall tile 30x60 grey</b><small>TL-0087</small></span><span class="q"><i>-</i>14<i>+</i></span><span>1,950</span><span>200</span><span>x</span></div>
+<div class="r"><span><b>PVC pipe 1/2 in</b><small>PV-0031</small></span><span class="q"><i>-</i>6<i>+</i></span><span>640</span><span>0</span><span>x</span></div>
+<div class="r"><span><b>Shower rose round</b><small>SH-0019</small></span><span class="q"><i>-</i>1<i>+</i></span><span>4,200</span><span>0</span><span>x</span></div>
+<div class="r"><span><b>Silicon sealant white</b><small>SL-0008</small></span><span class="q"><i>-</i>3<i>+</i></span><span>1,150</span><span>0</span><span>x</span></div>
+<div class="r"><span><b>Item name or code</b></span><span class="q"><i>-</i>1<i>+</i></span><span>Unit price</span><span>0</span><span></span></div></div>
+<div class="add">+ Add item</div></div>
+<div class="card"><div class="h">Bill so far</div><div class="bill"><div><span>Basin mixer chrome x2</span><span>17,000</span></div><div><span>Wall tile x14</span><span>27,100</span></div><div><span>PVC pipe x6</span><span>3,840</span></div><div><span>Shower rose x1</span><span>4,200</span></div><div><span>Sealant x3</span><span>3,450</span></div></div>
+<div class="tot"><span>Total</span><span>Rs 55,590</span></div>
+<div class="line"><input placeholder="Selling price"><input style="flex:.6" placeholder="Disc %"><input style="flex:.6" placeholder="Disc Rs"></div>
+<div class="line"><select><option>Cash</option><option>Card</option><option>Online</option><option>Cheque</option><option>Credit</option><option>Split</option></select></div>
+<button class="go">Generate Bill</button><div class="add" style="margin-top:8px">Make quotation · Today's bills</div></div></div></body></html>
