@@ -61,3 +61,8 @@ html body .pick-list { min-width:440px !important; max-width:92vw !important; }
 html body .po-code { flex:0 0 auto !important; min-width:70px; white-space:nowrap; padding-right:6px; }
 html body .po-price { flex:0 0 auto !important; white-space:nowrap; min-width:96px; }
 html body .po-mid b { white-space:normal; }
+
+/* 13 Nov 16:15 (AJ): stock is its own column between name and price; same Segoe font as the rest of the app */
+.po-stock{flex:0 0 auto;min-width:74px;text-align:right;font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.1}
+.po-stock small{display:block;font-size:11px;font-weight:500;color:var(--text-muted)}
+html body, html body input, html body button, html body select, html body .pick-opt, html body .pick-opt *{font-family:'RBH Sans','Segoe UI',system-ui,'Noto Sans Sinhala','Noto Sans Tamil',sans-serif !important}
