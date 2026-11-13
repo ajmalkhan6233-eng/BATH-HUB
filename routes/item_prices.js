@@ -9,7 +9,14 @@ const roleOf = req => (req.session && req.session.user && req.session.user.role)
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 router.get('/item-prices', ownerOnly, async (req, res) => {
   try {
-    const r = await pool.query(`SELECT item_code, name, category, stock_level, avg_cost, selling_price, vendor_code FROM products WHERE active = true ORDER BY item_code`);
+    let r;
+    try {   // supplier = who sent the item on its latest GRN (read-only look, nothing is changed)
+      r = await pool.query(`SELECT p.item_code, p.name, p.category, p.stock_level, p.avg_cost, p.selling_price, p.vendor_code, g.supplier_name AS supplier
+        FROM products p LEFT JOIN LATERAL (SELECT supplier_name FROM grn_records WHERE split_part(item_description, ' - ', 1) = p.item_code AND COALESCE(supplier_name,'') <> '' ORDER BY grn_date DESC NULLS LAST, id DESC LIMIT 1) g ON true
+        WHERE p.active = true ORDER BY p.item_code`);
+    } catch (e2) {
+      r = await pool.query(`SELECT item_code, name, category, stock_level, avg_cost, selling_price, vendor_code FROM products WHERE active = true ORDER BY item_code`);
+    }
     res.json(r.rows);
   } catch (e) { res.status(500).json({ error: 'could not load items' }); }
 });
