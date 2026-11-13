@@ -762,6 +762,12 @@ document.getElementById('paymentMethod').addEventListener('change', payModeChang
 document.getElementById('discountPct').addEventListener('input', () => { if (document.getElementById('paymentMethod').value === 'split') splitHintUpdate(); });
 
 // ───────── SCAN, HOLD, REPRINT (screen only: nothing here saves a bill) ─────────
+// An "Added ..." note must never outlive its line: clear it when the bill has no item left.
+(function(){ const box = document.getElementById('itemRows'); if (!box) return;
+  const chk = () => { const el = document.getElementById('scanMsg');
+    if (el && /^Added /.test(el.textContent) && !cartRows().some(r => r.name)) scanMsg(''); };
+  new MutationObserver(chk).observe(box, {childList:true});
+  box.addEventListener('input', chk); })();
 function cartRows() {
   return [...document.querySelectorAll('#itemRows .item-row')].map(r => ({
     item_code: r.dataset.itemCode || '', name: r.querySelector('.i-name').value.trim(),
@@ -784,7 +790,9 @@ async function scanCode() {
   const rows = cartRows().filter(r => r.name);                 // the empty starter row is dropped
   const before = rows.find(r => r.item_code === String(found.item_code));
   setCartRows(PosCart.addScanned(rows, found));
-  scanMsg('Added ' + found.name + ' (qty ' + ((before ? before.qty : 0) + 1) + ')', 'ok');
+  const now = cartRows().find(r => r.item_code === String(found.item_code));
+  if (!now) { scanMsg('Could not add ' + found.name + '. Nothing added.', 'err'); box.focus(); return; }
+  scanMsg('Added ' + found.name + ' (qty ' + now.qty + ')', 'ok');
   box.focus();
 }
 document.getElementById('scanBox').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); scanCode(); } });
