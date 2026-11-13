@@ -16,7 +16,7 @@
     '.main-content>.page.active{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px!important}.main-content>.page.active:has(>iframe){display:flex;flex-direction:column;overflow:hidden;padding:6px 8px!important}' +
     'html body .main-content>.page.active>iframe{flex:1 1 auto;height:auto!important;min-height:0!important}.topbar-right .sm-modebtn{display:none!important}}' +
     /* clear sans-serif font everywhere, darker text, bigger small print */
-    'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}' +
+    '@font-face{font-family:"RBH Sans";font-style:normal;font-weight:300 800;font-display:swap;src:url("/fonts/inter-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}' +
     'html body{font-size:17px}html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     '.main-content{font-size:17px;color:var(--text)}.main-content td,.main-content th,.main-content label,.main-content p,.main-content li{font-size:16px}' +
     '.main-content small,.main-content .sub,.main-content .dp-note,.main-content [class*="sub"],.main-content [style*="font-size:11px"],.main-content [style*="font-size:12px"],.main-content [style*="font-size:13px"]{font-size:15px!important}' +
@@ -51,7 +51,7 @@
 (function () {
   'use strict';
   var MINPX = 15;
-  var FRAME_CSS = 'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
+  var FRAME_CSS = '@font-face{font-family:"RBH Sans";font-style:normal;font-weight:300 800;font-display:swap;src:url("/fonts/inter-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
     'html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     'body>.wrap,body>.container,body>main,body>.page,body>.content,.container,.wrap{max-width:none!important}body{padding-left:12px!important;padding-right:12px!important}' +
     '@media(min-width:900px){h1,h2,h3{margin-top:0!important;margin-bottom:6px!important}td,th{padding-top:2px!important;padding-bottom:2px!important}input,select,textarea{padding:1px 6px!important;min-height:28px!important;border-radius:6px!important}button{min-height:30px!important;padding-top:2px!important;padding-bottom:2px!important;border-radius:8px!important}.card,.panel,.dp-card,[class*="-card"]{padding:6px 10px!important;margin-bottom:6px!important;border-radius:8px!important}[class*="grid"]{gap:8px!important}p{margin:4px 0!important}}' +

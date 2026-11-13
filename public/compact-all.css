@@ -29,3 +29,9 @@ html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=ra
 @media (min-width:900px){ html body header.topbar, html body #rbh-menubar{flex:0 0 auto !important} }
 /* 13 Nov (AJ: mouse on a list scrolled the whole page): a list that reaches its end no longer hands the wheel to the page. */
 body :where(.scroll,.lines,[class*="scroll"],[class*="list"],[class*="wrap"],[class*="table"],[class*="tbl"],[style*="overflow"],pre,textarea,#tools,#left,#right){overscroll-behavior:contain}
+
+/* 13 Nov (AJ: the font looks ugly and fatty, change it in the complete app). Windows drew bold headings in Segoe UI BLACK. The whole app now uses Inter (already saved in /fonts, works with no internet): clean, lighter, same on every device. "RBH Sans" = Inter. Sinhala and Tamil letters fall through to their own fonts as before. To undo: delete this block and the "RBH Sans" names added in ui_comfort.js and the 3 pages. */
+@font-face{font-family:'RBH Sans';font-style:normal;font-weight:300 800;font-display:swap;src:url('/fonts/inter-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+html body,html body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
+html body .bh-lockup .bh-name,html body h1,html body h2{font-weight:700 !important}
+html body .live-clock,html body code,html body pre,html body .mono{font-family:ui-monospace,Consolas,monospace !important}
