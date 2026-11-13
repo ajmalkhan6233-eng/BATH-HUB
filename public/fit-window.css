@@ -21,3 +21,9 @@
   html.in-frame body .big{font-size:15px !important}
   html.in-frame body table thead th{position:sticky;top:0;background:inherit;z-index:2}
 }
+
+/* 13 Nov: top menu buttons are always readable (dark text on light gold) when hovered, pressed, focused or open. Never black. */
+html body #rbh-menubar button.mb-btn:hover,html body #rbh-menubar button.mb-btn:active,html body #rbh-menubar button.mb-btn:focus,html body #rbh-menubar button.mb-btn[aria-expanded=true]{
+  background:#f1e2b0 !important;background-image:none !important;color:#0b0b0b !important;-webkit-text-fill-color:#0b0b0b !important;filter:none !important;opacity:1 !important}
+html body #rbh-menubar .mb-top.on > button.mb-btn{background:#f1e2b0 !important;color:#0b0b0b !important;-webkit-text-fill-color:#0b0b0b !important}
+html body #rbh-menubar .mb-item,html body #rbh-menubar .mb-item:hover{color:#0b0b0b !important;-webkit-text-fill-color:#0b0b0b !important}

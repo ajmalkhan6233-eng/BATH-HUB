@@ -22,3 +22,8 @@
   html body #view1 #right.has-lines > .g-ftr #status { max-height:42px; overflow:auto; font-size:13px; }
   html body #view1 #right.has-lines > .g-ftr > .row:has(button:only-child) { display:block; }
 }
+
+/* 13 Nov: Cheques tab. Header always solid (rows never show through it), dates and buttons never wrap or get cut off. */
+html body #view3 thead th{background:#ece8dc !important;position:sticky;top:0;z-index:5;white-space:nowrap}
+html body #view3 table td:nth-child(5),html body #view3 table td:nth-child(6),html body #view3 table td:nth-child(7),html body #view3 table td:last-child{white-space:nowrap}
+html body #view3 .scroll{overflow-x:auto}
