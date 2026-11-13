@@ -50,3 +50,8 @@ html body #view3 .scroll{overflow-x:auto}
 @media (min-width:900px) {
   html body #view1 #right.has-lines > .g-hdr > .msg.warn { display:none !important; }
 }
+
+/* 13 Nov 17:20 (AJ: only 6 lines were visible, he wants at least 20): the lines box is tall enough for 20 rows; the right panel scrolls if the screen is short; totals and buttons stay pinned at the bottom. Layout only. */
+html body #view1 #right.has-lines { overflow-y:auto !important; overflow-x:hidden !important; }
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:0 0 auto !important; min-height:var(--grn20,640px) !important; }
+html body #view1 #right.has-lines > .g-ftr { position:sticky !important; bottom:0 !important; z-index:6 !important; }
