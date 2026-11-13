@@ -75,7 +75,7 @@
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
-      var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); doc.documentElement.setAttribute('data-theme', (t === 'gold' || t === 'dark') ? 'dark' : 'light'); doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
+      var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); var dk = (t === 'gold' || t === 'dark' || t === 'soft' || t === 'gemini'); doc.documentElement.setAttribute('data-theme', dk ? 'dark' : 'light'); if (t === 'soft' || t === 'gemini') doc.documentElement.setAttribute('data-tone', t); else doc.documentElement.removeAttribute('data-tone'); /* 13 Nov: same mapping as bathhub-theme.js. Before, soft/gemini became LIGHT here a few seconds after load and fought the saved look (login page flashed dark then gold) */ doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
       var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
       run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });

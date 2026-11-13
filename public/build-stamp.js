@@ -1,7 +1,7 @@
 /* BLOCK: build-stamp (11 Nov 19:10). Tiny label bottom-left of the owner screen: which build this browser really loaded.
    Change BUILD each release. If it shows an old time, press Ctrl+F5. Display only, no data, no network. */
 (function () {
-  var BUILD = 'Build 13 Nov 11:00 · GRN rows, title bar steady, lists keep their scroll';
+  var BUILD = 'Build 13 Nov 11:15 · login look steady, GRN rows, title bar steady';
   try {
     var d = document.createElement('div'); d.id = 'rbh-build'; d.textContent = BUILD;
     d.style.cssText = 'position:fixed;left:6px;bottom:2px;z-index:99998;font:10px/1 system-ui,sans-serif;color:var(--text-muted,#888);opacity:.8;pointer-events:none';
