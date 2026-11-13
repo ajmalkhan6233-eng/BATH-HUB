@@ -2,7 +2,7 @@
    Pure string builders, no DOM needed, so Node can test them. 11 Nov 2026. */
 (function (root) {
   'use strict';
-  var C = { gold: '#E8B04A', gold2: '#F5D08A', green: '#34d399', red: '#f87171', blue: '#60a5fa', violet: '#a78bfa', grey: '#8b97ad', track: 'rgba(148,163,184,.22)' };
+  var C = { gold: '#E8B04A', gold2: '#F5D08A', green: '#b8934a', red: '#6b5a3a', blue: '#8a8f98', violet: '#a8895a', grey: '#8b97ad', track: 'rgba(148,163,184,.22)' };
   function n(v) { v = Number(v); return isFinite(v) ? v : 0; }
   function f(v) { return Math.round(v * 10) / 10; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }

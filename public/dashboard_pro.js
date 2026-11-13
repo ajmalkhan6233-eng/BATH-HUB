@@ -14,15 +14,15 @@
     + '#dash-pro .dp-val{font-size:20px;font-weight:800;margin-top:2px;line-height:1.15;word-break:break-word}'
     + '#dash-pro .dp-note{font-size:12px;color:var(--text2);margin-top:4px}'
     + '#dash-pro .dp-spark{display:block;width:100%;max-width:140px;height:32px;margin-top:6px}'
-    + '#dash-pro .up{color:#22c55e}#dash-pro .down{color:#ef4444}#dash-pro .warn{color:#f59e0b}'
+    + '#dash-pro .up,#dash-pro .down,#dash-pro .warn{color:var(--text2,#555)}'
     + '#dash-pro h3{font-size:14px;font-weight:800;margin:0 0 6px}'
     + '#dash-pro .dp-bar{height:10px;border-radius:6px;background:rgba(127,127,127,.2);overflow:hidden;margin:6px 0 4px}'
     + '#dash-pro .dp-bar>i{display:block;height:100%;border-radius:6px;background:var(--gold)}'
     + '#dash-pro .dp-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--card-border);font-size:13px}'
     + '#dash-pro .dp-row:last-child{border-bottom:0}#dash-pro .dp-row span:first-child{color:var(--text2);min-width:0;overflow:hidden;text-overflow:ellipsis}'
     + '#dash-pro .dp-row b{white-space:nowrap}'
-    + '#dash-pro .dp-alert{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35)}'
-    + '#dash-pro .dp-alert.red{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4)}#dash-pro .dp-alert.ok{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.35)}'
+    + '#dash-pro .dp-alert{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;background:rgba(201,162,75,.08);border:1px solid rgba(201,162,75,.35)}'
+    + '#dash-pro .dp-alert.red{background:rgba(201,162,75,.10);border-color:rgba(201,162,75,.45)}#dash-pro .dp-alert.ok{background:rgba(120,120,120,.08);border-color:rgba(120,120,120,.3)}'
     + '#dash-pro button.dp-btn{background:var(--card);color:inherit;border:1px solid var(--card-border);border-radius:10px;padding:7px 12px;font-size:12px;cursor:pointer}'
     + '#dash-pro svg{display:block;width:100%;height:auto}';
 
