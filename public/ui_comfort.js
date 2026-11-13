@@ -72,6 +72,7 @@
   function lift(doc) {
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
+      if (doc.documentElement && doc.documentElement.hasAttribute('data-keepfont')) return;   // 13 Nov: stable screens (Stock) get no late styles, so nothing jumps after load
       var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
