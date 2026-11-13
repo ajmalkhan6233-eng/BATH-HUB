@@ -26,7 +26,7 @@
     /* life: menus slide open, screens fade in, cards lift, buttons press */
     '@keyframes bhPop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}@keyframes bhFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
     '#rbh-menubar .mb-top.on .mb-list{animation:bhPop .16s ease-out;box-shadow:0 14px 34px rgba(0,0,0,.28);border-radius:12px}' +
-    '.page.active{animation:bhFade .75s ease-out}.modal.on .box,.modal-overlay .modal-box{animation:bhPop .18s ease-out}' +
+    '.page.active{animation:none}.modal.on .box,.modal-overlay .modal-box{animation:bhPop .18s ease-out}' +
     '.main-content [class*="card"],.main-content .dp-card,.main-content [class*="tile"]{transition:transform .15s,box-shadow .15s}.main-content [class*="card"]:hover,.main-content .dp-card:hover,.main-content [class*="tile"]:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.14)}' +
     'button:active{transform:scale(.97)}button{transition:transform .08s,background .15s}' +
     '@media(min-width:900px){h1,h2,h3{margin-top:0!important;margin-bottom:6px!important}td,th{padding-top:2px!important;padding-bottom:2px!important}input,select,textarea{padding:1px 6px!important;min-height:28px!important;border-radius:6px!important}button{min-height:30px!important;padding-top:2px!important;padding-bottom:2px!important;border-radius:8px!important}.card,.panel,.dp-card,[class*="-card"]{padding:6px 10px!important;margin-bottom:6px!important;border-radius:8px!important}[class*="grid"]{gap:8px!important}p{margin:4px 0!important}}' +

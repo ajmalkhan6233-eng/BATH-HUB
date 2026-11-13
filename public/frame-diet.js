@@ -1,6 +1,6 @@
 /* 13 Nov: frame diet. Screens you left more than 40 s ago are emptied (they reload fresh when you open them again), so the browser stays light after many clicks. POS and GRN are kept (unsaved bill / lines). Own module: touches only hidden iframes. */
 (function () {
-  var seen = {}, KEEP = /pos|grn/i, IDLE = 40000;
+  var seen = {}, KEEP = /pos|grn|stock/i, IDLE = 40000;
   function tick() {
     try {
       var now = Date.now();
