@@ -22,3 +22,8 @@
 
 /* AJ 12 Nov: list screens keep columns close together, not spread across the whole width */
 @media(min-width:900px){body.tight-cols table{width:auto !important;min-width:min(720px,100%)}body.tight-cols td,body.tight-cols th{padding-right:18px}}
+
+/* 13 Nov (AJ: two rules fought, keep the latest). 1) The compact input padding (8px, !important) beat the search box icon room (34px), so the magnifier sat ON the placeholder text. The search box now wins again.
+   2) The page title bar was squeezed by the page below it (flex shrink): its height jumped 41 / 45 / 60 px from screen to screen and the menu moved. It now keeps one fixed height. */
+html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){padding-left:34px !important}
+@media (min-width:900px){ html body header.topbar, html body #rbh-menubar{flex:0 0 auto !important} }
