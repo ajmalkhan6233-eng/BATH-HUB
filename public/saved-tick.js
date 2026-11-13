@@ -4,7 +4,7 @@
   function pill(doc) {
     var el = doc.getElementById('rbh-saved-tick');
     if (!el) { el = doc.createElement('div'); el.id = 'rbh-saved-tick';
-      el.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:99999;background:#2b2b2b;color:#e8d9a8;font:600 13px "RBH Sans","Segoe UI",sans-serif;padding:7px 14px;border-radius:18px;opacity:0;transition:opacity .15s;pointer-events:none';
+      el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:99999;background:#2b2b2b;color:#e8d9a8;font:600 13px "RBH Sans","Segoe UI",sans-serif;padding:7px 14px;border-radius:18px;opacity:0;transition:opacity .15s;pointer-events:none';
       (doc.body || doc.documentElement).appendChild(el); }
     return el;
   }
