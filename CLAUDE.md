@@ -1,5 +1,5 @@
 # CLAUDE.md for Royal Bath Hub (under 5 KB: trim, never grow)
-**FIRST, ALWAYS: read this file, then SYNC** (pull bridge + branch, LIVE.md top, compare heads). Then read docs/HANDOFF_LATEST.md. Never work off a stale picture. Never hand AJ the work.
+**FIRST, ALWAYS: read docs/AJ_NEEDS.md (AJ's own words, mandatory every new window), then this file, then SYNC** (pull bridge + branch, LIVE.md top, compare heads). Then read docs/HANDOFF_LATEST.md. Never work off a stale picture. Never hand AJ the work.
 
 ## WHO AJ IS AND HOW HE TALKS
 Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco".
@@ -42,10 +42,7 @@ Never leave a part out. If chat cannot build it, say so and print ONE paste bloc
 - Everything installed or added: one line in docs/INSTALLED.md the same task. AJ's new words and ways: one line in docs/AJ_LEARNED.md.
 
 ## SYNC (chat and PC see the same picture)
-LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. Bridge repo: Universal-project- (private). PC scripts: AI_BRIDGE/pc/.
-
-## OPEN NOW (13 Nov)
-GRN lines flip fixed in cloud (Build 10:50, task 219): needs PC check. Cheque day-ask + tab colour need PC check.
+LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. PC scripts: AI_BRIDGE/pc/.
 
 ## WHERE THINGS ARE 
 AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.

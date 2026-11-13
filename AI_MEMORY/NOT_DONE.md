@@ -1,6 +1,10 @@
 # NOT DONE register (AJ's hard rule, 12 Nov 09:17): nothing here is skipped or dropped until AJ taps Disregard. Each item: Approve / Wait / Disregard.
 | # | Item | Status | Needs |
 |---|---|---|---|
+| N20 | 13 Nov leftovers: Name/Category gap on old Stock view (unverified) | OPEN | chat checks on PC screenshot |
+| N21 | 13 Nov leftovers: GRN 15 lines + 'GRN tab on top' (wording unclear) | OPEN | AJ sends one picture of what he wants |
+| N22 | 13 Nov leftovers: black menu tab, Face ID, WhatsApp receipt image, dummy bill OFF-86BG-3 | OPEN | chat re-checks one by one |
+| N23 | 13 Nov: renumber items 001-onward (tasks 220, 221) | PLAYED, waiting for PC | PC check bridge |
 | N1 | Task 197: install Context7 (claude mcp add refused by PC permission guard) | DONE 12 Nov (already registered; INSTALLED line added) | AJ allows 'claude mcp add' on the PC, then 'run 197' |
 | N2 | Task 199: Pocket deploy (Cloudflare login tap + backup first) | DONE 12 Nov (task 202, worker rbh-pocket) | AJ at the PC: 'run 199', tap Allow |
 | N3 | Phone link: apex-tunnel not running in pm2, no tunnel config found | OPEN | chat builds tunnel task or Pocket (N2) replaces it |
