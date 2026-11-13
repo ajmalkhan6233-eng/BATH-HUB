@@ -1,0 +1,23 @@
+/* BLOCK: fit-window (AJ 13 Nov). Same look. Every screen uses the whole window: no wasted side or bottom space, less stacked header, tables fill the rest.
+   Loaded by the owner shell and pushed into every embedded screen (except POS and GRN, which have their own fit). Computer screens only. Remove the link to undo. */
+@media (min-width:900px){
+  /* owner shell pages: use the full width, last card grows to the bottom */
+  html body .main-content .page{max-width:none !important}
+  html body .main-content .page.active{display:flex;flex-direction:column;min-height:calc(100dvh - 96px)}
+  html body .main-content .page.active > .card:last-of-type,html body .main-content .page.active > .table-card:last-of-type{flex:1 1 auto}
+  #pos-frame, iframe[id^="frame-"]{height:calc(100dvh - 100px) !important;min-height:420px !important}
+}
+/* inside embedded screens (class set by the shell) */
+@media (min-width:900px){
+  html.in-frame body .bh-strip{display:none !important}
+  html.in-frame body main,html.in-frame body .page,html.in-frame body .container,html.in-frame body .wrap,html.in-frame body .content{max-width:none !important;padding:4px 8px !important}
+  html.in-frame body .card,html.in-frame body .panel,html.in-frame body .box,html.in-frame body .section,html.in-frame body fieldset{padding:6px 8px !important;margin-bottom:4px !important}
+  html.in-frame body h1{font-size:16px !important;margin:2px 0 !important}html.in-frame body h2{font-size:14px !important;margin:2px 0 !important}
+  html.in-frame body .sub,html.in-frame body .subtitle{margin:0 0 2px !important}
+  html.in-frame body table th,html.in-frame body table td{padding:2px 6px !important}
+  html.in-frame body .grid,html.in-frame body [class*=grid]{gap:4px !important}
+  html.in-frame body main .grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important}
+  html.in-frame body .kpi-card,html.in-frame body .stat,html.in-frame body .metric{padding:4px 8px !important}
+  html.in-frame body .big{font-size:15px !important}
+  html.in-frame body table thead th{position:sticky;top:0;background:inherit;z-index:2}
+}

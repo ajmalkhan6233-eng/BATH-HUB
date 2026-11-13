@@ -245,7 +245,7 @@ table tr:last-child td{border-bottom:none}
 </style>
 <link rel="stylesheet" href="/bathhub-design.css"><link rel="stylesheet" href="/motion.css"><link rel="stylesheet" href="/ux-extra.css"><link rel="stylesheet" href="/rbh-modern.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
-<link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"></head>
+<link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"><link rel="stylesheet" href="/fit-window.css"></head>
 <body>
 <script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
 <canvas id="confetti-canvas"></canvas>
@@ -2798,5 +2798,12 @@ async function initApp() {
 <script src="/lib/palette.js"></script>
 <script src="/lib/grn_import.js"></script>
 <script src="/test-banner.js"></script>
+<script>
+/* fit-window: push fit-window.css into every embedded screen except POS and GRN (own fit). Same origin only; any failure is ignored. */
+(function(){function fit(f){try{var d=f.contentDocument;if(!d||!d.head||d.__fw)return;var u=String(f.src||'');if(/pos_billing|grn_workbench|layla-owner/.test(u))return;d.__fw=1;d.documentElement.classList.add('in-frame');var l=d.createElement('link');l.rel='stylesheet';l.href='/fit-window.css';d.head.appendChild(l);}catch(e){}}
+function wire(f){if(f.__fw)return;f.__fw=1;f.addEventListener('load',function(){fit(f)});fit(f)}
+function scan(){document.querySelectorAll('iframe').forEach(wire)}
+document.addEventListener('DOMContentLoaded',scan);setInterval(scan,1500);})();
+</script>
 </body>
 </html>
