@@ -8,7 +8,7 @@ input,select,button{font:inherit;min-height:44px;border:1.5px solid var(--c-line
 button{cursor:pointer;font-weight:600}button.p{background:var(--c-gold);border-color:var(--c-gold)}
 #q{flex:1 1 260px}.sum{padding:0 12px 6px;color:#333}
 table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:10px 12px;border-bottom:1px solid var(--c-line);text-align:left}
-th{background:#ececE8}td.r,th.r{text-align:right}tr.row{cursor:pointer}tr.row:hover{background:#f4efe0}
+th{background:#ececE8;position:sticky;top:var(--barh,68px);z-index:4}tr.pend td{background:#fff6d6}#savebar{display:none;gap:8px;align-items:center}#savebar.on{display:flex}td.r,th.r{text-align:right}tr.row{cursor:pointer}tr.row:hover{background:#f4efe0}
 td select{min-height:36px;padding:2px 6px;max-width:150px}.none{color:#b00020}
 .modal{position:fixed;inset:0;background:rgba(10,10,10,.6);display:none;align-items:center;justify-content:center;z-index:9;padding:12px}.modal.on{display:flex}
 .box{background:#fff;border-radius:14px;padding:16px 20px;max-width:460px;width:100%;max-height:92vh;overflow:auto;border-top:6px solid var(--c-gold)}
@@ -37,14 +37,15 @@ td select{min-height:36px;padding:2px 6px;max-width:150px}.none{color:#b00020}
 </head><body>
 <h1 style="margin:8px 12px 0;font-size:1.4rem">Stock &amp; items</h1><div style="margin:0 12px;color:#667;font-size:.9rem">Tap an item to change code, name, price or stock</div>
 <div class="bar"><input id="q" type="search" placeholder="Search: item code, name or anything. Tap an item to edit." autocomplete="off">
-<select id="cat"></select><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="nocat" style="min-height:auto;width:20px;height:20px"> No category only</label></div>
+<select id="cat"></select><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="nocat" style="min-height:auto;width:20px;height:20px"> No category only</label>
+<span id="savebar"><button class="p" id="savebtn" type="button">Save changes</button><button id="discbtn" type="button">Cancel</button></span></div>
 <div class="sum" id="sum">Loading...</div>
-<div style="overflow:auto"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th class="r">In stock</th><th class="r">Cost</th><th class="r">Selling</th><th class="r">Margin</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th class="r">In stock</th><th class="r">Cost</th><th class="r">Selling</th><th class="r">Margin</th></tr></thead><tbody id="tb"></tbody></table></div>
 <datalist id="cats"></datalist>
 <div class="modal" id="m"><div class="box" id="box"></div></div>
 <script>
 (function(){
-var ALL=[],$=function(i){return document.getElementById(i)};
+var ALL=[],PEND={},$=function(i){return document.getElementById(i)};
 function fmt(n){return Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function h(t,p,k){var e=document.createElement(t);for(var a in(p||{})){if(a==='text')e.textContent=p[a];else if(a==='class')e.className=p[a];else if(a.slice(0,2)==='on')e[a]=p[a];else e.setAttribute(a,p[a])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
 function jf(u,m,b){return fetch(u,{method:m||'GET',credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}},function(){return{ok:false,j:{error:'Unexpected reply'}}})})}
@@ -53,12 +54,17 @@ function cats(){var s={};BASE.forEach(function(c){s[c]=1});ALL.forEach(function(
 function load(){jf('/api/item-prices').then(function(x){if(!x.ok){$('sum').textContent=x.j.error||'Could not load (owner only)';return}ALL=x.j.map(function(r){return{item_code:r.item_code,vcode:r.vendor_code||'',name:r.name,category:r.category||'',stock:Number(r.stock_level)||0,cost:Number(r.avg_cost)||0,sell:Number(r.selling_price)||0}});ALL.sort(function(a,b){return String(a.item_code).localeCompare(String(b.item_code),undefined,{numeric:true})});
  var c=cats();$('cats').textContent='';c.forEach(function(v){$('cats').appendChild(h('option',{value:v}))});
  var sel=$('cat'),cur=sel.value;sel.textContent='';sel.appendChild(h('option',{value:'',text:'All categories'}));c.forEach(function(v){sel.appendChild(h('option',{value:v,text:v}))});sel.value=cur;draw()})}
+function pendUI(){var n=Object.keys(PEND).length;$('savebar').className=n?'on':'';$('savebtn').textContent='Save changes ('+n+')'}
+function savePend(){var ch=Object.keys(PEND).map(function(c){return{item_code:c,category:PEND[c]}});if(!ch.length)return;$('savebtn').disabled=true;
+ jf('/api/item-prices/save','POST',{changes:ch}).then(function(x){$('savebtn').disabled=false;if(!x.ok){alert(x.j.error||'Not saved');return}
+  ch.forEach(function(c){ALL.forEach(function(r){if(r.item_code===c.item_code)r.category=c.category})});PEND={};pendUI();draw()})}
+function discard(){PEND={};pendUI();draw()}
 function draw(){var q=$('q').value.trim().toLowerCase(),cat=$('cat').value,nc=$('nocat').checked,tb=$('tb');tb.textContent='';var n=0,pcs=0,cv=0,sv=0;
  ALL.forEach(function(r){if(q&&(r.item_code+' '+r.vcode+' '+r.name+' '+r.category).toLowerCase().indexOf(q)<0)return;if(cat&&r.category!==cat)return;if(nc&&r.category)return;n++;pcs+=r.stock;cv+=r.stock*r.cost;sv+=r.stock*r.sell;
-  var s=h('select',{onclick:function(e){e.stopPropagation()},ondblclick:function(e){e.stopPropagation()},onchange:function(){var v=s.value;jf('/api/item-detail/'+encodeURIComponent(r.item_code),'POST',{category:v}).then(function(x){if(x.ok){r.category=v;draw()}else alert(x.j.error||'Not saved')})}},[h('option',{value:'',text:'(choose)'})].concat(cats().map(function(v){return h('option',{value:v,text:v})})));s.value=r.category;
-  var tr=h('tr',{class:'row',title:'Tap to edit',onclick:function(){edit(r.item_code)}},[h('td',{text:r.item_code}),h('td',{text:r.name}),h('td',{class:r.category?'':'none'},[s]),h('td',{class:'r',text:String(r.stock)}),h('td',{class:'r',text:fmt(r.cost)}),h('td',{class:'r',text:r.sell?fmt(r.sell):'-'}),h('td',{class:'r',text:r.sell?(Math.round((r.sell-r.cost)/r.sell*1000)/10)+' %':'-'})]);tb.appendChild(tr)});
+  var s=h('select',{onclick:function(e){e.stopPropagation()},ondblclick:function(e){e.stopPropagation()},onchange:function(){var v=s.value;if(v===r.category)delete PEND[r.item_code];else PEND[r.item_code]=v;tr.classList.toggle('pend',r.item_code in PEND);pendUI()}},[h('option',{value:'',text:'(choose)'})].concat(cats().map(function(v){return h('option',{value:v,text:v})})));s.value=(r.item_code in PEND)?PEND[r.item_code]:r.category;
+  var tr=h('tr',{class:'row',title:'Tap to edit',onclick:function(){edit(r.item_code)}},[h('td',{text:r.item_code}),h('td',{text:r.name}),h('td',{class:r.category?'':'none'},[s]),h('td',{class:'r',text:String(r.stock)}),h('td',{class:'r',text:fmt(r.cost)}),h('td',{class:'r',text:r.sell?fmt(r.sell):'-'}),h('td',{class:'r',text:r.sell?(Math.round((r.sell-r.cost)/r.sell*1000)/10)+' %':'-'})]);if(r.item_code in PEND)tr.classList.add('pend');tb.appendChild(tr)});
  $('sum').textContent=n+' items, '+pcs.toLocaleString('en-LK')+' pieces. (Stock value is on the Dashboard.)'}
-$('q').oninput=draw;$('cat').onchange=draw;$('nocat').onchange=draw;
+$('savebtn').onclick=savePend;$('discbtn').onclick=discard;(function(){var b=document.querySelector('.bar');function m(){document.documentElement.style.setProperty('--barh',b.offsetHeight+'px')}m();window.addEventListener('resize',m);setTimeout(m,600)})();$('q').oninput=draw;$('cat').onchange=draw;$('nocat').onchange=draw;
 function edit(code){var B=$('box');B.className='box';B.textContent='Loading...';$('m').classList.add('on');
  jf('/api/item-detail/'+encodeURIComponent(code)).then(function(x){if(!x.ok){B.textContent=x.j.error||'Could not open';return}var it=x.j;B.textContent='';
   var cd=h('input',{value:it.item_code}),nm=h('input',{value:it.name}),ct=h('input',{value:it.category||'',list:'cats'}),pr=h('input',{type:'number',step:'0.01',value:it.selling_price||''}),ph=h('input',{type:'file',accept:'image/*'}),msg=h('div',{style:'display:none'}),img=h('img',{class:'ph',src:it.photo_url||'',alt:'',style:it.photo_url?'':'display:none'}),mg=h('div',{class:'mg'}),sk=h('input',{type:'number',step:'any',inputmode:'decimal',value:String(Number(it.stock_level||0))}),rs=h('select',{},['count fix','damage','loss','found','other'].map(function(v){return h('option',{value:v,text:v})})),dm=h('div',{style:'display:none'}),sg=h('div',{class:'msg ok',style:'display:none'});
