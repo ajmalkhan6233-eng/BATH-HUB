@@ -23,30 +23,7 @@
   html body #view1 #right.has-lines > .g-ftr > .row:has(button:only-child) { display:block; }
 }
 
-/* 13 Nov (task: GRN lines box too short on the shop screen): more rows. Header, totals and buttons take less height. Layout only. */
-@media (min-width:900px) {
-  html body #view1 #right.has-lines { gap:2px !important; }
-  html body #view1 #right.has-lines > .g-ftr { gap:1px 10px; padding-top:2px; }
-  html body #view1 #right.has-lines > .g-ftr .sum { margin:0 !important; }
-  html body #view1 #right.has-lines > .g-ftr .actions button { min-height:30px !important; padding:1px 12px !important; font-size:14px !important; }
-  html body #view1 #right.has-lines > .g-ftr #status { max-height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:1px 8px !important; margin:0 !important; }
-  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { min-height:150px !important; }
-}
 /* 13 Nov: Cheques tab. Header always solid (rows never show through it), dates and buttons never wrap or get cut off. */
 html body #view3 thead th{background:#ece8dc !important;position:sticky;top:0;z-index:5;white-space:nowrap}
 html body #view3 table td:nth-child(5),html body #view3 table td:nth-child(6),html body #view3 table td:nth-child(7),html body #view3 table td:last-child{white-space:nowrap}
 html body #view3 .scroll{overflow-x:auto}
-
-/* 13 Nov (AJ: more lines, ~15): inputs sat on the text baseline, so each row grew 22 -> 29px. Top-align them: rows are 24px and more fit. */
-@media (min-width:900px) {
-  html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td > button, html body #view1 #right .lines td .dsel { vertical-align:top !important; margin-top:0 !important; margin-bottom:0 !important; }
-  html body #view1 #right .lines td { vertical-align:top !important; }
-  html body #view1 #right .lines td input[type=checkbox] { margin:3px auto 0 !important; display:block; }
-}
-@media (min-width:900px) { html body #view1 #right .lines tr, html body #view1 #right .lines td { height:22px !important; } }
-@media (min-width:900px) { html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td .dsel { box-sizing:border-box !important; } }
-
-/* 13 Nov (AJ: 15 lines): spend the height on lines, not on notices. The "you are editing" note and the idle SAVED note go; the status chip stays. */
-@media (min-width:900px) {
-  html body #view1 #right.has-lines > .g-hdr > .msg.warn { display:none !important; }
-}

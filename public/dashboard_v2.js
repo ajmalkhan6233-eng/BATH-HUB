@@ -9,15 +9,15 @@
     + '#dash-pro .dp-head{margin-bottom:6px}#dash-pro .dp-title{font-size:18px;color:var(--text,#1c2a24)}'
     + '#dash-pro .dp-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-bottom:6px}'
     + '#dash-pro .dp-grid2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px;margin-bottom:6px}'
-    + '#dash-pro .dp-card{padding:6px 10px;border-radius:12px;border-left:2px solid #c9a24b;background:var(--card);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 16px rgba(0,0,0,.14);transition:transform .15s,box-shadow .15s}'
+    + '#dash-pro .dp-card{padding:6px 10px;border-radius:12px;border-left:4px solid var(--v2c,#c9a24b);background:linear-gradient(135deg,var(--v2g,rgba(201,162,75,.12)),var(--card) 62%);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 16px rgba(0,0,0,.14);transition:transform .15s,box-shadow .15s}'
     + '#dash-pro .dp-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.24)}'
-    + '#dash-pro .dp-val{font-size:22px;color:var(--text,#222)}#dash-pro .dp-lab{font-size:10.5px;color:var(--text2,#666)}#dash-pro h3{font-size:13px;margin-bottom:3px}'
+    + '#dash-pro .dp-val{font-size:22px;color:var(--v2c,inherit)}#dash-pro .dp-lab{font-size:10.5px;color:var(--v2c,var(--text2))}#dash-pro h3{font-size:13px;margin-bottom:3px}'
     + '#dash-pro .dp-note{font-size:11.5px;margin-top:2px}#dash-pro .dp-row{padding:4px 0;font-size:12.5px}'
-    + '#dash-pro .v2-m{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}#dash-pro .v2-p{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}#dash-pro .v2-e{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}'
-    + '#dash-pro .v2-s{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}#dash-pro .v2-o{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}#dash-pro .v2-c{--v2c:#c9a24b;--v2g:rgba(201,162,75,.14)}'
+    + '#dash-pro .v2-m{--v2c:#22c55e;--v2g:rgba(34,197,94,.14)}#dash-pro .v2-p{--v2c:#e0b43c;--v2g:rgba(224,180,60,.16)}#dash-pro .v2-e{--v2c:#ef4444;--v2g:rgba(239,68,68,.13)}'
+    + '#dash-pro .v2-s{--v2c:#3b82f6;--v2g:rgba(59,130,246,.14)}#dash-pro .v2-o{--v2c:#a855f7;--v2g:rgba(168,85,247,.14)}#dash-pro .v2-c{--v2c:#14b8a6;--v2g:rgba(20,184,166,.14)}'
     + '#dash-pro .dp-alert{display:inline-flex;width:auto;max-width:100%;padding:5px 10px;margin:0 6px 6px 0;font-size:12.5px;border-radius:99px}'
     + '#dash-pro .v2-link{cursor:pointer}#dash-pro .v2-link:hover{background:rgba(201,162,75,.12);border-radius:6px}#dash-pro .v2-link:after{content:" \\203A";opacity:.5}'
-    + '#dash-pro .v2-more{display:block;width:100%;margin-top:2px;padding:3px 0;border:0;background:transparent;color:var(--text2,#666);font:600 12px inherit;cursor:pointer}'
+    + '#dash-pro .v2-more{display:block;width:100%;margin-top:2px;padding:3px 0;border:0;background:transparent;color:var(--v2c,var(--gold,#c9a24b));font:700 12px inherit;cursor:pointer}'
     + '#dash-pro .v2-hid{display:none!important}#dash-pro .v2-fold h3{cursor:pointer}#dash-pro .v2-fold h3:after{content:" \\25BE";opacity:.6}#dash-pro .v2-fold.v2-shut h3:after{content:" \\25B8"}#dash-pro .v2-fold.v2-shut>:not(h3){display:none!important}'
     + '#dash-pro .v2-donut{display:flex;align-items:center;gap:10px}#dash-pro .v2-donut svg{width:96px;height:96px;flex:none}#dash-pro .v2-leg{flex:1;font-size:12px}#dash-pro .v2-leg div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}#dash-pro .v2-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}'
     + 'html:not(.mo-off) #dash-pro svg rect{transform-box:fill-box;transform-origin:bottom;animation:v2grow .8s cubic-bezier(.2,.8,.2,1) both}'
@@ -30,8 +30,8 @@
     + '#dash-pro .dp-val{font-size:26px;font-weight:800;letter-spacing:.2px;text-shadow:none}'
     + '#dash-pro .dp-lab{text-transform:uppercase;letter-spacing:.08em;font-size:10px}'
     + '#dash-pro .dp-bar{height:8px;border-radius:99px;background:var(--bg3,#e5e7eb);overflow:hidden}#dash-pro .dp-bar>i{background:linear-gradient(90deg,var(--v2c,#c9a24b),color-mix(in srgb,var(--v2c,#c9a24b) 55%,#fff));box-shadow:0 0 12px var(--v2c,#c9a24b);border-radius:99px}'
-    + '#dash-pro .v3-ring{position:absolute;right:12px;top:32px;width:54px;height:54px}#dash-pro .dp-card:has(.v3-ring) .dp-note{padding-right:68px}#dash-pro .v3-ring svg{width:54px;height:54px;transform:rotate(-90deg);filter:drop-shadow(0 0 0 var(--v2c,#c9a24b))}'
-    + '#dash-pro .v3-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text,#333)}'
+    + '#dash-pro .v3-ring{position:absolute;right:12px;top:32px;width:54px;height:54px}#dash-pro .dp-card:has(.v3-ring) .dp-note{padding-right:68px}#dash-pro .v3-ring svg{width:54px;height:54px;transform:rotate(-90deg);filter:drop-shadow(0 0 6px var(--v2c,#c9a24b))}'
+    + '#dash-pro .v3-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--v2c,#333)}'
     + '#dash-pro .dp-title:after{content:" \\25CF live";font-size:11px;color:#22c55e;-webkit-text-fill-color:#22c55e;margin-left:8px}'
     + 'html:not(.mo-off) #dash-pro .dp-title:after{animation:v3pulse 1.8s ease-in-out infinite}'
     /* floating = a slow, tiny lift in place. Cards never change position in the layout, nothing slides around. */
@@ -49,7 +49,7 @@
     ['v2-c', /^(enquiries|open quotations|pieces|average sales|sales by|busy|bank|money in)/]];
   var GO = { 'vendors we owe': 'vendorsum', 'next cheques': 'chequereg', 'stock by category (cost)': 'stockmgr', 'reorder soon': 'helper', 'top sellers this month': 'stockmgr', 'latest grns': 'grn' };
   var FOLD = ['if we sell all stock with a discount', 'latest grns', 'average sales by weekday (8 weeks)'];
-  var COLORS = ['#c9a24b', '#8a6d2f', '#e0c27a', '#a8895a', '#6b5a3a', '#d9b866'];   // 13 Nov: calm gold shades only (AJ: no red, green, blue)
+  var COLORS = ['#e0b43c', '#22c55e', '#3b82f6', '#a855f7', '#ef4444', '#14b8a6'];
   var box = null, obs = null, last = {};
   var calm = function () { try { return localStorage.getItem('bh_motion') === 'off'; } catch (e) { return false; } };
   var low = function (s) { return String(s || '').trim().toLowerCase(); };
@@ -64,7 +64,7 @@
   function ring(card, val) {   // a card whose number is a percent (margin, target) gets a live ring that fills to that percent
     var note = card.querySelector('.dp-note'), m = /^(\d{1,3})%$/.exec(val.textContent.trim()) || /^Margin (\d{1,3})%/.exec(note ? note.textContent.trim() : ''); if (!m || card.querySelector('.v3-ring')) return;
     var p = Math.min(100, parseInt(m[1], 10)), R = 15.9, d = document.createElement('div'); d.className = 'v3-ring';
-    d.innerHTML = '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="' + R + '" fill="none" stroke="rgba(120,120,120,.22)" stroke-width="4"/><circle class="v3-arc" cx="18" cy="18" r="' + R + '" fill="none" stroke="#c9a24b" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + p + ' ' + (100 - p) + '"/></svg><b>' + p + '</b>';
+    d.innerHTML = '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="' + R + '" fill="none" stroke="rgba(120,120,120,.22)" stroke-width="4"/><circle class="v3-arc" cx="18" cy="18" r="' + R + '" fill="none" stroke="var(--v2c,#e0b43c)" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + p + ' ' + (100 - p) + '"/></svg><b>' + p + '</b>';
     card.appendChild(d);
   }
   function donut(card) {

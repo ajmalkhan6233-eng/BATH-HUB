@@ -105,7 +105,7 @@ tr.pend td:first-child,tr.part td:first-child{box-shadow:inset 4px 0 0 var(--c-g
 #ibox .ph{width:100%;max-height:220px;object-fit:contain;background:#f4f4f1;border-radius:var(--r1)}#ibox .mg{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#ibox .mg div{flex:1 1 90px;background:#f4efe0;border-radius:var(--r1);padding:8px}#ibox .mg b{display:block;font-size:var(--t-l)}
 body.embed header{display:none}
 html{font-size:17px}body{color:#111}.tabs button{font-weight:600}.lines input,.lines select{font-size:1rem}
-@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html body,html body *{font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}.modal.on .box{animation:pop .18s ease-out}.stat,.card{transition:transform .15s,box-shadow .15s}.stat:hover,.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.14)}button:active{transform:scale(.97)}
+html body,html body *{font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}.modal.on .box{animation:pop .18s ease-out}.stat,.card{transition:transform .15s,box-shadow .15s}.stat:hover,.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.14)}button:active{transform:scale(.97)}
 /* compact desktop spacing (Ajmal 4 Nov: letters fine, boxes and gaps too big) */
 @media(min-width:900px){:root{--tap:36px;--s2:5px;--s3:8px;--s4:12px;--s5:14px}
 input,select{padding:2px 8px;min-height:36px}button{padding:3px 12px;min-height:36px}
@@ -406,7 +406,7 @@ function drawRight(){
    R.appendChild(h('div',{class:'sum'},[h('span',{},[document.createTextNode('Lines total: '),h('b',{id:'calc',text:fmt(total(d))})]),h('span',{},[document.createTextNode('Paper total: '),inp(d.paper,'number',function(v){d.paper=Number(v)||0;sums();save()},{style:'width:140px',id:'paper'})]),h('span',{id:'match'})]));
   }
  }
- R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?(d.note||'Change what you need, then press Save changes.'):((d.note?d.note+' ':'')+'Waiting for OK. Nothing is saved yet.'),style:(d.status!=='saved'&&d.status!=='cancelled'&&d.status!=='editing'&&!d.note)?'display:none':''}));
+ R.appendChild(h('div',{id:'status',class:'msg',text:d.status==='saved'?(d.note||'Saved.'):d.status==='cancelled'?(d.note||'Cancelled.'):d.status==='editing'?(d.note||'Change what you need, then press Save changes.'):((d.note?d.note+' ':'')+'Waiting for OK. Nothing is saved yet.'),style:d.status==='saved'?'':''}));
  var isSaved=(d.status==='saved'||d.status==='editing')&&d.billId&&d.kind!=='CHEQUE';
  var btns=[h('button',{class:'p',id:'ok',text:d.status==='editing'?'Save changes':'OK: save this to the app',style:'font-size:17px;padding:10px 20px',onclick:doSave})];
  if(d.status==='saved'&&d.billId&&d.kind!=='CHEQUE')btns.push(h('button',{id:'editbtn',text:'Edit this bill',style:'font-size:17px;padding:10px 20px',onclick:function(){d.status='editing';render()}}));
