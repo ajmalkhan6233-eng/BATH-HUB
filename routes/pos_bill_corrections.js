@@ -79,6 +79,27 @@ const itemsOf = async (client, id) => (await client.query(
     `SELECT item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [id])).rows;
 
 // ───────────── VOID ─────────────
+// one bill voided inside an open transaction (used by the single void and by 'void all test bills')
+async function voidInside(client, bill, reason, req) {
+    const items = await itemsOf(client, bill.id);
+    const restored = billDeducted(bill) ? await giveStockBack(client, items) : [];
+    await client.query(`INSERT INTO pos_bill_voids (bill_id, reason, voided_by, stock_restored) VALUES ($1,$2,$3,$4)`,
+        [bill.id, reason, whoOf(req), JSON.stringify(restored)]);
+    await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'void',$2,$3,$4)`,
+        [bill.id, reason, whoOf(req), JSON.stringify({ bill, items })]);
+    await require('../utils/posCredit').voidReceivable(client, bill.bill_number);   // a void takes back what the customer owed on it
+    // items still "owed to the customer" on this bill are no longer owed (own savepoint: the table may not exist yet)
+    await client.query('SAVEPOINT void_oversold');
+    try { await client.query(`UPDATE oversold_owed SET status='DONE', how='bill_voided', resolved_at=NOW() WHERE bill_number = $1 AND status = 'OPEN'`, [bill.bill_number]); await client.query('RELEASE SAVEPOINT void_oversold'); }
+    catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_oversold').catch(() => {}); }
+    // a customer cheque already copied to the Cheques page is cancelled with the bill (own savepoint: the tables may not exist yet)
+    await client.query('SAVEPOINT void_cheque');
+    try { await client.query(`UPDATE cheque_register SET status='cancelled', notes = COALESCE(notes || ' | ', '') || $2, updated_at = CURRENT_TIMESTAMP
+        WHERE status IN ('pending','held') AND id IN (SELECT r.cheque_id FROM pos_cheque_registered r JOIN pos_bill_payments p ON p.id = r.payment_id WHERE p.bill_id = $1 AND r.cheque_id IS NOT NULL)`, [bill.id, 'bill ' + bill.bill_number + ' voided']); await client.query('RELEASE SAVEPOINT void_cheque'); }
+    catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_cheque').catch(() => {}); }
+    return restored;
+}
+
 router.post('/pos-bills/:id/void', ownerOnly, async (req, res) => {
     const reason = String((req.body && req.body.reason) || '').trim();
     if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to void a bill.' });
@@ -89,27 +110,30 @@ router.post('/pos-bills/:id/void', ownerOnly, async (req, res) => {
         const bill = await lockBill(client, req.params.id);
         if (!bill) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }); }
         if (await isVoid(client, bill.id)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill is already void.' }); }
-        const items = await itemsOf(client, bill.id);
-        const restored = billDeducted(bill) ? await giveStockBack(client, items) : [];
-        await client.query(`INSERT INTO pos_bill_voids (bill_id, reason, voided_by, stock_restored) VALUES ($1,$2,$3,$4)`,
-            [bill.id, reason, whoOf(req), JSON.stringify(restored)]);
-        await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'void',$2,$3,$4)`,
-            [bill.id, reason, whoOf(req), JSON.stringify({ bill, items })]);
-        await require('../utils/posCredit').voidReceivable(client, bill.bill_number);   // a void takes back what the customer owed on it
-        // items still "owed to the customer" on this bill are no longer owed (own savepoint: the table may not exist yet)
-        await client.query('SAVEPOINT void_oversold');
-        try { await client.query(`UPDATE oversold_owed SET status='DONE', how='bill_voided', resolved_at=NOW() WHERE bill_number = $1 AND status = 'OPEN'`, [bill.bill_number]); await client.query('RELEASE SAVEPOINT void_oversold'); }
-        catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_oversold').catch(() => {}); }
-        // a customer cheque already copied to the Cheques page is cancelled with the bill (own savepoint: the tables may not exist yet)
-        await client.query('SAVEPOINT void_cheque');
-        try { await client.query(`UPDATE cheque_register SET status='cancelled', notes = COALESCE(notes || ' | ', '') || $2, updated_at = CURRENT_TIMESTAMP
-            WHERE status IN ('pending','held') AND id IN (SELECT r.cheque_id FROM pos_cheque_registered r JOIN pos_bill_payments p ON p.id = r.payment_id WHERE p.bill_id = $1 AND r.cheque_id IS NOT NULL)`, [bill.id, 'bill ' + bill.bill_number + ' voided']); await client.query('RELEASE SAVEPOINT void_cheque'); }
-        catch (e) { await client.query('ROLLBACK TO SAVEPOINT void_cheque').catch(() => {}); }
+        const restored = await voidInside(client, bill, reason, req);
         await client.query('COMMIT');
         res.json({ ok: true, bill_id: bill.id, bill_number: bill.bill_number, status: 'VOID', reason, voided_by: whoOf(req), stock_restored: restored });
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
         res.status(500).json({ error: `Could not void the bill: ${e.message}` });
+    } finally { client.release(); }
+});
+
+// 13 Nov: owner clears all test bills in one go: every open bill is voided with the same code as a single void (stock goes back, nothing is deleted)
+router.post('/pos-bills-void-all', ownerOnly, async (req, res) => {
+    if (String((req.body && req.body.confirm) || '') !== 'CLEAR') return res.status(400).json({ error: 'Type CLEAR to confirm.' });
+    const reason = String((req.body && req.body.reason) || 'Test bills cleared before real billing').trim().slice(0, 500);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const ids = (await client.query(`SELECT id FROM pos_bills WHERE id NOT IN (SELECT bill_id FROM pos_bill_voids) ORDER BY id`)).rows.map(r => r.id);
+        let n = 0;
+        for (const id of ids) { const bill = await lockBill(client, id); if (bill && !(await isVoid(client, bill.id))) { await voidInside(client, bill, reason, req); n++; } }
+        await client.query('COMMIT');
+        res.json({ ok: true, voided: n });
+    } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        res.status(500).json({ error: 'Nothing was changed: ' + e.message });
     } finally { client.release(); }
 });
 
