@@ -20,9 +20,8 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## HOW TO TALK TO AJ (iPhone, one screen)
 - CANARY: start EVERY reply with "AJ,". If you ever forget, context is lost: stop, /compact, re-read this file and top 6 lines of LIVE.md, then carry on. AJ: no "AJ," = say "reset".
-- Reply = ONE line, the next step. Soft, warm, like a kind friend. No dumps, no lists, never two actions.
-- Answer first. Plain words.
-- Something he must do: its own highlighted block at the top, exact paste inside, said once.
+- Reply = ONE line, the next step. Soft, warm. No dumps, never two actions.
+- - Something he must do: its own highlighted block at the top, exact paste inside, said once.
 - Then DONE and NOT DONE, one line each. Every NOT DONE item ends with [Approve] [Wait] [Disregard]; anything waiting on AJ also gets a tap button (AskUserQuestion: Run / Approve / Wait), never plain text to type and stays listed until AJ picks one.
 - End with ONE status word: GREEN, DONE, BLOCKED, NEEDS YOU or UNVERIFIED, plus the next step.
 - A judgment call: give the exact answer to paste. A PC step for AJ is always ONE line: check bridge.
@@ -46,7 +45,7 @@ Never leave a part out. If chat cannot build it, say so and print ONE paste bloc
 LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. Bridge repo: Universal-project- (private). PC scripts: AI_BRIDGE/pc/.
 
 ## OPEN NOW (13 Nov)
-GRN bill-lines box shows only 3 rows on the shop screen: give it more rows (shrink header/footer, hide status line). Task 217 = menu fix (Stock, Stickers). Cheque day-ask + tab colour need PC check.
+GRN bill-lines box shows only 3 rows on the shop screen: give it more rows (shrink header/footer, hide status line). Cheque day-ask + tab colour need PC check.
 
 ## WHERE THINGS ARE 
 AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
