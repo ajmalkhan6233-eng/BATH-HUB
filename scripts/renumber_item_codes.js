@@ -9,7 +9,7 @@
 // Updated everywhere a code is stored: every table with a column named item_code, and the "CODE - name" text in grn_records.item_description.
 const fs = require('fs');
 const path = require('path');
-const ORDER = [['Metro', /metro/i], ['Fazal Hardware (Fawaz)', /fazal|fawaz/i], ['Cool Water', /cool\s*water/i], ['Maheshan Hardware', /mahesh/i], ['Afam', /afam/i], ['Imran', /imran/i], ['Leo', /\bleo\b/i]];
+const ORDER = [['Metro', /metro/i], ['Fazal Hardware (Fawaz)', /faz+a+l|fawaz/i], ['Cool Water / Cool Lanka', /cool/i], ['Maheshan Hardware', /mahesh/i], ['Afam', /afh?am/i], ['Imran', /imran/i], ['Leo', /\bleo\b/i]];
 const pad = (n) => String(n).padStart(3, '0');
 const isNum = (c) => /^[0-9]{1,9}$/.test(String(c || ''));
 
