@@ -11,13 +11,14 @@
   'use strict';
   // [group, [[key, label, soon?], ...]]
   var MAP = [
-    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], ['agent-rules', 'Agent Rules'], ['agentreview', 'Agent Review'],
-      ['shoptools', 'Shop Tools'], ['brain', 'RBH Brain 🧠'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminaudit', 'Audit log'], ['adminsystem', 'System']]],
+    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
+      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
-    ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
+    ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
-    ['Banking & Money', [['cheques', 'Cheques'], ['dueboard', 'Due Board'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Layla', [['layla', 'Layla (WhatsApp)'], ['assistant', 'AI Assistant'], ['brain', 'RBH Brain 🧠'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['morningbrief', 'Morning brief'], ['dueboard', 'Due Board'], ['adminaudit', 'Audit log']]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
       ['--', 'Sales'], ['rep:sday', 'Sales by day'], ['rep:sweek', 'Sales by week'], ['rep:smonth', 'Sales by month'], ['reports', 'Daily summary and investor report'],

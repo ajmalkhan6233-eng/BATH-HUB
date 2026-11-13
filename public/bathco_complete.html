@@ -449,7 +449,7 @@ table tr:last-child td{border-bottom:none}
           <input type="text" class="fi" placeholder="Search code or name..." id="stk-search" oninput="filterStock()">
         </div>
         <select class="fs" style="width:160px" id="stk-cat" onchange="filterStock()"><option value="">All Categories</option></select>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;min-width:0">
           <button class="btn btn-p" onclick="toggleItemForm()">+ Add Item</button>
           <button class="btn btn-p" onclick="toggleGRNForm()">+ GRN Entry</button>
           <button class="btn btn-s" onclick="loadStock()">↺ Refresh</button>
@@ -2822,6 +2822,7 @@ async function initApp() {
 <script src="/menu-simple.js"></script>
 <script src="/frame-diet.js"></script>
 <script src="/saved-tick.js"></script>
+<script src="/saved-dropdown.js"></script>
 <script src="/rbh-charts.js"></script><script src="/build-stamp.js" defer></script><script src="/dashboard_modern.js"></script>
 <script src="/dashboard_breakdown.js"></script><script src="/dashboard_v2.js"></script>
 <script src="/lib/palette.js"></script>
