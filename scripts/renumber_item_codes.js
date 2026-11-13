@@ -87,6 +87,10 @@ if (require.main === module) {
             if (process.argv.includes('--undo')) { console.log('UNDO:', await undo(client)); return; }
             const p = await plan(client);
             const ch = p.map.filter(m => m.changed);
+            const seenNum = {}; let fights = 0;   // two codes with the same number (like 070 and 0070) = "fighting"
+            (await client.query(`SELECT item_code FROM products WHERE item_code ~ '^[0-9]+$'`)).rows.forEach(r => { const k = String(Number(r.item_code)); seenNum[k] = (seenNum[k] || 0) + 1; });
+            Object.keys(seenNum).forEach(k => { if (seenNum[k] > 1) fights++; });
+            console.log('Fighting code pairs now (same number, different zeros, like 070 and 0070):', fights);
             const dir = path.join(__dirname, '..', 'data'); fs.mkdirSync(dir, { recursive: true });
             const f = path.join(dir, 'item_renumber_plan.csv');
             fs.writeFileSync(f, 'vendor,old_code,new_code,name,changed\n' + p.map.map(m => [m.vendor, m.old, m.new, m.name, m.changed ? 'YES' : 'same'].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n') + '\n');
