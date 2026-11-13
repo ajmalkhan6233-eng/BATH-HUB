@@ -1,5 +1,6 @@
 'use strict';
-// Re-number item codes in VENDOR ARRIVAL ORDER (Ajmal 2026-11-04): Metro first (its codes stay as they are),
+// Re-number item codes in VENDOR ARRIVAL ORDER (Ajmal 2026-11-13: Metro, Fazal Hardware = Fawaz, Cool Water, Maheshan Hardware; one 001-onward series, no 4-digit codes like 0070).
+// (older note) Metro first (its codes stay as they are),
 // then Fazal Hardware, Maheshan, Afam, Imran, Leo. Inside a vendor: order of the first GRN that brought the item.
 //   node scripts/renumber_item_codes.js              DRY RUN (default): prints + writes data/item_renumber_plan.csv, changes NOTHING
 //   node scripts/renumber_item_codes.js --apply      does it (ONE transaction, all or nothing). Take a backup first (scripts/backup_owner_db.ps1).
@@ -8,7 +9,7 @@
 // Updated everywhere a code is stored: every table with a column named item_code, and the "CODE - name" text in grn_records.item_description.
 const fs = require('fs');
 const path = require('path');
-const ORDER = [['Metro', /metro/i], ['Fazal Hardware', /fazal/i], ['Maheshan', /mahesh/i], ['Afam', /afam/i], ['Imran', /imran/i], ['Leo', /\bleo\b/i]];
+const ORDER = [['Metro', /metro/i], ['Fazal Hardware (Fawaz)', /fazal|fawaz/i], ['Cool Water', /cool\s*water/i], ['Maheshan Hardware', /mahesh/i], ['Afam', /afam/i], ['Imran', /imran/i], ['Leo', /\bleo\b/i]];
 const pad = (n) => String(n).padStart(3, '0');
 const isNum = (c) => /^[0-9]{1,9}$/.test(String(c || ''));
 
