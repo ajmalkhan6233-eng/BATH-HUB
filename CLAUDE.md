@@ -1,5 +1,5 @@
 # CLAUDE.md for Royal Bath Hub (under 5 KB: trim, never grow)
-**FIRST, ALWAYS: SYNC.** Before any work, pull bridge + branch, read LIVE.md top, compare heads (chat branch vs `work`). Never work half-way off a stale picture. AJ has paid: find the shortest safe route yourself; never hand AJ the work.
+**FIRST, ALWAYS: read this file, then SYNC** (pull bridge + branch, LIVE.md top, compare heads). Then read docs/HANDOFF_LATEST.md. Never work off a stale picture. Never hand AJ the work.
 
 ## WHO AJ IS AND HOW HE TALKS
 Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco".
@@ -45,6 +45,9 @@ Never leave a part out. If chat cannot build it, say so and print ONE paste bloc
 ## SYNC (chat and PC see the same picture)
 LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. Bridge repo: Universal-project- (private). PC scripts: AI_BRIDGE/pc/.
 
+## OPEN NOW (13 Nov)
+GRN bill-lines box shows only 3 rows on the shop screen: give it more rows (shrink header/footer, hide status line). Task 217 = menu fix (Stock, Stickers). Cheque day-ask + tab colour need PC check.
+
 ## WHERE THINGS ARE 
-AGENTS.md | START_HERE.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
+AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
 SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux, rbh-qa, rbh-blocks, rbh-erp, rbh-halal as needed) and name it in the LIVE line.

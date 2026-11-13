@@ -1,0 +1,4 @@
+# HANDOFF 13 Nov 09:55 (read CLAUDE.md first)
+DONE (cloud-tested): Pocket v3; fit-window.css; cheque due-day ask (public/cheque-dayask.js); Cheques table header; menu tab colours; menu fix: Stock & items + Stickers were hidden (key 'stockmgr' -> 'stock', ensureStickers in public/menubar.js). Build 13 Nov 09:55, SW v95-g.
+NOT DONE: (1) GRN bill-lines box too short (3 rows) on 1366x650-type screen: edit public/grn-onescreen.css #right.has-lines rules; compact g-hdr/g-ftr, hide status line, test with cloud_rig + Playwright at 1366x650. (2) Black menu tab UNVERIFIED. (3) Bridge task 217 to add (pull, restart apex-server, check label). (4) Face ID, WhatsApp receipt image, dummy bill OFF-86BG-3 unverified. (5) Tamil line "ஒரு 60,000 கிடைக்குதா?" never clarified.
+STYLE: reply starts "AJ,", one screen, NEEDS YOUR ATTENTION block, one status word, no popup questions.

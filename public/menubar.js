@@ -16,7 +16,7 @@
     ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['layla', 'Layla (WhatsApp)'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ['competitors', 'Competitors']]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
-    ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stock', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['dueboard', 'Due Board'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
@@ -34,7 +34,7 @@
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
     var labelOf = function (k, fallback) { if (k === '--' || k === 'reports' || k === 'reportshub' || k.indexOf(':') > 0) return fallback; var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
     function go(k) {
       closeAll(); closeDrawer();
@@ -43,6 +43,7 @@
       if (k === 'pending') { ensurePending(); }
       if (k === 'helper') { ensureHelper(); }
       if (k === 'logins') { ensureLogins(); }
+      if (k === 'stickers') { ensureStickers(); }
       try { win.navigate(k); } catch (e) {}
     }
     win.rbhGo = go;   // the dashboard alerts use this to open a screen
@@ -53,6 +54,10 @@
     function ensureHelper() {
       if (doc.getElementById('page-helper') || typeof win.addFramePage !== 'function') return;
       try { win.addFramePage({ key: 'helper', label: 'Prices and reorder', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/stock_helper.html', sub: 'Set missing selling prices, reorder low stock by vendor', after: 'stock' }); } catch (e) {}
+    }
+    function ensureStickers() {
+      if (doc.getElementById('page-stickers') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'stock' }); } catch (e) {}
     }
     function ensurePending() {
       if (doc.getElementById('page-pending') || typeof win.addFramePage !== 'function') return;
