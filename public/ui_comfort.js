@@ -59,9 +59,10 @@
   function bump(doc) {
     try {
       var win = doc.defaultView; if (!win || !doc.body) return;
+      var seen = doc.__bhSeen || (doc.__bhSeen = new WeakSet());   // 13 Nov: each element is measured once, not on every change (was slowing the app after many clicks)
       var els = doc.body.querySelectorAll('*'), n = els.length, i, e, cs, fs;
       for (i = 0; i < n && i < 6000; i++) {
-        e = els[i]; if (e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'svg' || e.tagName === 'path' || e.tagName === 'IFRAME') continue;
+        e = els[i]; if (seen.has(e)) continue; seen.add(e); if (e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'svg' || e.tagName === 'path' || e.tagName === 'IFRAME') continue;
         if (!e.firstChild || !Array.prototype.some.call(e.childNodes, function (c) { return c.nodeType === 3 && c.nodeValue.trim(); })) continue;
         cs = win.getComputedStyle(e); fs = parseFloat(cs.fontSize);
         if (fs && fs < MINPX) e.style.setProperty('font-size', MINPX + 'px', 'important');
@@ -77,8 +78,8 @@
       ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
       var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); var dk = (t === 'gold' || t === 'dark'); doc.documentElement.setAttribute('data-theme', dk ? 'dark' : 'light'); if (t === 'soft' || t === 'gemini') doc.documentElement.setAttribute('data-tone', t); else doc.documentElement.removeAttribute('data-tone'); /* 13 Nov: same mapping as bathhub-theme.js. Before, soft/gemini became LIGHT here a few seconds after load and fought the saved look (login page flashed dark then gold) */ doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
-      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
-      run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });
+      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 900); };
+      run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true });
     } catch (x) { /* ignore */ }
   }
   function watchFrames() {
