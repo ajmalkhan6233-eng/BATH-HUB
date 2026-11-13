@@ -1,22 +1,37 @@
-/* BLOCK: grn-fit. Sizes the GRN lines box so it fills the free height of the screen (works at any Windows scaling or browser zoom).
-   Pure layout: reads sizes, sets one height. Re-runs when the card redraws or the window changes. 11 Nov 2026 */
+/* BLOCK: grn-fit (rewritten 13 Nov). ONE layout rule only: keep the GRN card grouped as header / lines / footer so the CSS flex layout
+   (grn-onescreen.css) gives the lines every free row. Old fixed-height code removed: it fought the CSS and made two layouts flip on load. */
 (function () {
   'use strict';
-  function fit() {
-    if (window.innerWidth < 900) return;
-    var r = document.getElementById('right'); if (!r) return;
-    var box = r.querySelector(':scope > .scroll.lines:not(.fullpage)'); if (!box) return;
-    box.style.height = '150px';                                   // measure everything else with a small box
-    var other = r.scrollHeight - box.offsetHeight;                // top rows + bottom rows
-    var h = Math.max(150, r.clientHeight - other - 6);
-    box.style.setProperty('height', h + 'px', 'important');
+  var busy = false;
+  function ensure() {
+    if (busy) return; var r = document.getElementById('right'); if (!r) return;
+    var box = null, i, k;
+    for (i = 0; i < r.children.length; i++) { k = r.children[i]; if (k.classList.contains('scroll') && k.classList.contains('lines')) { box = k; break; } }
+    if (!box) { r.classList.remove('has-lines'); return; }
+    busy = true;
+    try {
+      var hdr = r.querySelector(':scope > .g-hdr'), ftr = r.querySelector(':scope > .g-ftr');
+      if (!hdr) { hdr = document.createElement('div'); hdr.className = 'g-hdr'; r.insertBefore(hdr, box); }
+      if (!ftr) { ftr = document.createElement('div'); ftr.className = 'g-ftr'; r.appendChild(ftr); }
+      var kids = [].slice.call(r.children), seen = false;
+      kids.forEach(function (c) {
+        if (c === box) { seen = true; return; }
+        if (c === hdr || c === ftr) return;
+        (seen ? ftr : hdr).appendChild(c);
+      });
+      if (hdr.nextSibling !== box) r.insertBefore(hdr, box);
+      if (ftr.previousSibling !== box) r.insertBefore(ftr, box.nextSibling);
+      r.classList.add('has-lines');
+      box.style.removeProperty('height');
+    } catch (e) {}
+    busy = false;
   }
-  var t = null; function soon() { clearTimeout(t); t = setTimeout(fit, 60); }
+  var t = null; function soon() { clearTimeout(t); t = setTimeout(ensure, 30); }
   window.addEventListener('resize', soon);
   function start() {
     var r = document.getElementById('right'); if (!r) return setTimeout(start, 300);
-    new MutationObserver(soon).observe(r, { childList: true, subtree: false });
-    soon();
+    new MutationObserver(soon).observe(r, { childList: true });
+    ensure();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

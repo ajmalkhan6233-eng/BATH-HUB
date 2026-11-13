@@ -2500,6 +2500,8 @@ app.get('/api/staff/:id/loans', async (req, res) => {
 app.get('/api/suppliers', async (req, res) => {
     try {
         await ensureVoids(pool);
+        // 13 Nov: vendors that exist only on bills (e.g. Fawaz) get a directory row, so they show and can be paid
+        try { await pool.query(`INSERT INTO suppliers (name, active, notes) SELECT DISTINCT TRIM(v.vendor_name), true, 'added from bills' FROM vendor_bills v WHERE v.voided=FALSE AND COALESCE(TRIM(v.vendor_name),'')<>'' AND NOT EXISTS (SELECT 1 FROM suppliers s WHERE LOWER(TRIM(s.name))=LOWER(TRIM(v.vendor_name)))`); } catch (e2) { /* keep list working */ }
         const r = await pool.query(`
             SELECT s.*, COALESCE(SUM(p.amount),0) as total_paid,
                    TO_CHAR(MAX(p.pay_date),'YYYY-MM-DD') as last_payment,

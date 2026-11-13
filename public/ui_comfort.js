@@ -16,7 +16,7 @@
     '.main-content>.page.active{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px!important}.main-content>.page.active:has(>iframe){display:flex;flex-direction:column;overflow:hidden;padding:6px 8px!important}' +
     'html body .main-content>.page.active>iframe{flex:1 1 auto;height:auto!important;min-height:0!important}.topbar-right .sm-modebtn{display:none!important}}' +
     /* clear sans-serif font everywhere, darker text, bigger small print */
-    'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}' +
+    '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}' +
     'html body{font-size:17px}html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     '.main-content{font-size:17px;color:var(--text)}.main-content td,.main-content th,.main-content label,.main-content p,.main-content li{font-size:16px}' +
     '.main-content small,.main-content .sub,.main-content .dp-note,.main-content [class*="sub"],.main-content [style*="font-size:11px"],.main-content [style*="font-size:12px"],.main-content [style*="font-size:13px"]{font-size:15px!important}' +
@@ -51,7 +51,7 @@
 (function () {
   'use strict';
   var MINPX = 15;
-  var FRAME_CSS = 'html body,html body *:not(svg):not(path){font-family:"Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
+  var FRAME_CSS = '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
     'html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     'body>.wrap,body>.container,body>main,body>.page,body>.content,.container,.wrap{max-width:none!important}body{padding-left:12px!important;padding-right:12px!important}' +
     '@media(min-width:900px){h1,h2,h3{margin-top:0!important;margin-bottom:6px!important}td,th{padding-top:2px!important;padding-bottom:2px!important}input,select,textarea{padding:1px 6px!important;min-height:28px!important;border-radius:6px!important}button{min-height:30px!important;padding-top:2px!important;padding-bottom:2px!important;border-radius:8px!important}.card,.panel,.dp-card,[class*="-card"]{padding:6px 10px!important;margin-bottom:6px!important;border-radius:8px!important}[class*="grid"]{gap:8px!important}p{margin:4px 0!important}}' +
@@ -59,9 +59,10 @@
   function bump(doc) {
     try {
       var win = doc.defaultView; if (!win || !doc.body) return;
+      var seen = doc.__bhSeen || (doc.__bhSeen = new WeakSet());   // 13 Nov: each element is measured once, not on every change (was slowing the app after many clicks)
       var els = doc.body.querySelectorAll('*'), n = els.length, i, e, cs, fs;
       for (i = 0; i < n && i < 6000; i++) {
-        e = els[i]; if (e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'svg' || e.tagName === 'path' || e.tagName === 'IFRAME') continue;
+        e = els[i]; if (seen.has(e)) continue; seen.add(e); if (e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || e.tagName === 'svg' || e.tagName === 'path' || e.tagName === 'IFRAME') continue;
         if (!e.firstChild || !Array.prototype.some.call(e.childNodes, function (c) { return c.nodeType === 3 && c.nodeValue.trim(); })) continue;
         cs = win.getComputedStyle(e); fs = parseFloat(cs.fontSize);
         if (fs && fs < MINPX) e.style.setProperty('font-size', MINPX + 'px', 'important');
@@ -75,10 +76,10 @@
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
-      var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); doc.documentElement.setAttribute('data-theme', (t === 'gold' || t === 'dark') ? 'dark' : 'light'); doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
+      var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); var dk = (t === 'gold' || t === 'dark'); doc.documentElement.setAttribute('data-theme', dk ? 'dark' : 'light'); if (t === 'soft' || t === 'gemini') doc.documentElement.setAttribute('data-tone', t); else doc.documentElement.removeAttribute('data-tone'); /* 13 Nov: same mapping as bathhub-theme.js. Before, soft/gemini became LIGHT here a few seconds after load and fought the saved look (login page flashed dark then gold) */ doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
-      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 350); };
-      run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true, characterData: true });
+      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 900); };
+      run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true });
     } catch (x) { /* ignore */ }
   }
   function watchFrames() {

@@ -2048,7 +2048,7 @@ function renderStock() {
   const rows = _stock.filter(r =>
     (!search || r.item_code?.toLowerCase().includes(search) || r.name?.toLowerCase().includes(search)) &&
     (!cat || r.category === cat)
-  );
+  ).sort((a, b) => String(a.item_code || '').localeCompare(String(b.item_code || ''), undefined, { numeric: true }));   // 13 Nov: stock list starts at code 001
   const tbody = document.getElementById('stk-tbody');
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">No items found</td></tr>'; return; }
 
