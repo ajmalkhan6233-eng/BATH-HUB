@@ -85,3 +85,26 @@ body>*{transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
 button:active,.btn:active{animation:none!important;transform:scale(.95);transition:transform .15s}
 .peek-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-right:48px;-webkit-overflow-scrolling:touch}.peek-row>*{flex:0 0 calc(100% - 48px);scroll-snap-align:start}
 @media(prefers-reduced-motion:reduce){html.rbh-sheet body>*:not(#rbh-drawer){transition:none}}
+
+/* CALM layer (13 Nov, AJ "go"): quieter and faster. Later rules win over the big pack above. Same switch: localStorage bh_motion = off.
+   Removes: endless floating tiles, endless logo glow, blur on page entry, per-row animation on long tables, body-wide transition.
+   Adds: short fade on page change, gold edge on hover, smooth toggle. Stock page (data-keepfont) gets none. */
+@keyframes moCalm{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.main-content>.page.active{animation:moCalm .22s ease-out both!important}
+.mo-in{animation:moCalm .22s ease-out both!important}
+.page.active .dp-card,.page.active .stat{animation:moCalm .25s ease-out backwards}
+.page.active .dp-card:nth-child(n){animation-delay:0s}
+body.mo-alive .dp-card:nth-child(n){animation:moCalm .25s ease-out backwards}
+header.topbar img{animation:none}
+#rbh-menubar::after{display:none}
+tbody tr{animation:none}
+tbody tr:nth-child(-n+12){animation:moCalm .2s ease-out both}
+.modal.on .box,#qModal>div{animation-duration:.25s!important}
+body>*{transition:none}
+html.rbh-sheet body>*:not(#rbh-drawer){transition:transform .3s ease-out}
+.dp-card,.stat,.card{transition:border-color .2s,transform .2s}
+.dp-card:hover,.stat:hover,.card:hover{border-color:var(--c-gold,#C9A24B);transform:translateY(-2px)}
+.switch,.toggle,.tgl{transition:background .25s}
+.switch::after,.toggle::after,.tgl::after,.switch>span,.toggle>span{transition:transform .25s}
+html[data-keepfont] *,html[data-keepfont] tbody tr{animation:none!important;transition:none!important}
+html.mo-off *{animation:none!important;transition:none!important}
