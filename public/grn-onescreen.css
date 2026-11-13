@@ -45,3 +45,8 @@ html body #view3 .scroll{overflow-x:auto}
 }
 @media (min-width:900px) { html body #view1 #right .lines tr, html body #view1 #right .lines td { height:22px !important; } }
 @media (min-width:900px) { html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td .dsel { box-sizing:border-box !important; } }
+
+/* 13 Nov (AJ: 15 lines): spend the height on lines, not on notices. The "you are editing" note and the idle SAVED note go; the status chip stays. */
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .msg.warn { display:none !important; }
+}
