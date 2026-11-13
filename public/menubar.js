@@ -108,7 +108,7 @@
     function visible(g) { return g[1].filter(function (i) { return i[0] === '--' || i[2] || i[0].indexOf('profit:') === 0 || exists(i[0]); }); }
     function build() {
       bar.innerHTML = '';
-      var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home);
+      var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home); var posb = doc.createElement('button'); posb.type = 'button'; posb.className = 'mb-btn'; posb.textContent = 'POS'; posb.style.fontWeight = '700'; posb.onclick = function () { go('pos'); }; bar.appendChild(posb);
       MAP.forEach(function (g) {
         var items = visible(g); if (!items.length) return;
         var top = doc.createElement('div'); top.className = 'mb-top';
