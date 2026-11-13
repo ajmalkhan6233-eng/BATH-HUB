@@ -32,7 +32,7 @@ html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=ra
 
 /* 13 Nov (AJ: the font looks ugly and fatty, change it in the complete app). Windows drew bold headings in Segoe UI BLACK. (14 Nov fix: back to AJ's own Segoe UI, NOT Inter.) "RBH Sans" = Segoe UI, every bold weight uses Semibold. Sinhala and Tamil letters fall through to their own fonts as before. To undo: delete this block and the "RBH Sans" names added in ui_comfort.js and the 3 pages. */
 @font-face{font-family:'RBH Sans';font-weight:100 500;src:local('Segoe UI')}@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}
-html body,html body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
+html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
 html body .bh-lockup .bh-name,html body h1,html body h2{font-weight:700 !important}
 html body .live-clock,html body code,html body pre,html body .mono{font-family:ui-monospace,Consolas,monospace !important}
 /* 13 Nov: page change is slow and clearly visible (AJ asked) */

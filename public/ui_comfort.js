@@ -16,7 +16,7 @@
     '.main-content>.page.active{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 12px!important}.main-content>.page.active:has(>iframe){display:flex;flex-direction:column;overflow:hidden;padding:6px 8px!important}' +
     'html body .main-content>.page.active>iframe{flex:1 1 auto;height:auto!important;min-height:0!important}.topbar-right .sm-modebtn{display:none!important}}' +
     /* clear sans-serif font everywhere, darker text, bigger small print */
-    '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}' +
+    '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}' +
     'html body{font-size:17px}html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     '.main-content{font-size:17px;color:var(--text)}.main-content td,.main-content th,.main-content label,.main-content p,.main-content li{font-size:16px}' +
     '.main-content small,.main-content .sub,.main-content .dp-note,.main-content [class*="sub"],.main-content [style*="font-size:11px"],.main-content [style*="font-size:12px"],.main-content [style*="font-size:13px"]{font-size:15px!important}' +
@@ -51,7 +51,7 @@
 (function () {
   'use strict';
   var MINPX = 15;
-  var FRAME_CSS = '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html body,html body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
+  var FRAME_CSS = '@font-face{font-family:"RBH Sans";font-weight:100 500;src:local("Segoe UI")}@font-face{font-family:"RBH Sans";font-weight:600 900;src:local("Segoe UI Semibold"),local("SegoeUI-Semibold")}html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:"RBH Sans","Segoe UI",Arial,Helvetica,sans-serif!important}html body{font-size:17px}' +
     'html[data-theme="light"] body{--text:#0b0b0b;--text2:#2a2a2a;--text3:#444}' +
     'body>.wrap,body>.container,body>main,body>.page,body>.content,.container,.wrap{max-width:none!important}body{padding-left:12px!important;padding-right:12px!important}' +
     '@media(min-width:900px){h1,h2,h3{margin-top:0!important;margin-bottom:6px!important}td,th{padding-top:2px!important;padding-bottom:2px!important}input,select,textarea{padding:1px 6px!important;min-height:28px!important;border-radius:6px!important}button{min-height:30px!important;padding-top:2px!important;padding-bottom:2px!important;border-radius:8px!important}.card,.panel,.dp-card,[class*="-card"]{padding:6px 10px!important;margin-bottom:6px!important;border-radius:8px!important}[class*="grid"]{gap:8px!important}p{margin:4px 0!important}}' +
