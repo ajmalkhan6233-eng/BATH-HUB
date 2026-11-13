@@ -45,7 +45,7 @@ Never leave a part out. If chat cannot build it, say so and print ONE paste bloc
 LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.md every reply. Bridge repo: Universal-project- (private). PC scripts: AI_BRIDGE/pc/.
 
 ## OPEN NOW (13 Nov)
-GRN bill-lines box shows only 3 rows on the shop screen: give it more rows (shrink header/footer, hide status line). Cheque day-ask + tab colour need PC check.
+GRN lines flip fixed in cloud (grn-fit.js rewritten, Build 10:05): needs PC check. Cheque day-ask + tab colour need PC check.
 
 ## WHERE THINGS ARE 
 AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
