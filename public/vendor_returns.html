@@ -10,22 +10,23 @@ label{display:block;font-size:13px;color:var(--tx2);margin:8px 0 3px}
 select,input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;min-height:44px}
 button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:11px 14px;font:inherit;cursor:pointer;min-height:44px}
 button.big{width:100%;background:var(--gold);color:#000;font-weight:700;border:0;margin-top:12px}
-.tabs{display:flex;gap:8px}.tabs button{flex:1}.tabs button.on{border-color:var(--gold);color:var(--gold)}
+.vtabs{display:flex;gap:8px}.vtabs button{flex:1}.vtabs button.on{border-color:var(--gold);color:var(--gold)}
 .row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:6px;margin-bottom:6px}.msg{margin-top:10px;font-size:15px}.ok{color:var(--green)}.err{color:var(--red)}
 .hint{color:var(--tx2);font-size:13px}.list div{padding:7px 0;border-bottom:1px solid var(--bd);font-size:14px}
 
 .hit{border:1px solid var(--bd);border-radius:10px;padding:9px;margin-top:8px;font-size:14px}.hit b{color:var(--gold)}
 .opt{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--bd);border-radius:8px;margin-top:6px;cursor:pointer;font-size:14px}.opt input{width:20px;min-height:20px;margin-top:2px}.opt.on{border-color:var(--gold)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chips button{min-height:36px;padding:6px 10px;font-size:13px}
+html body{max-width:760px;margin-left:auto!important;margin-right:auto!important}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 </style><link rel="stylesheet" href="/compact-all.css"></head><body>
 <h1>Vendor return</h1>
 <div class="sub">Pay less to the vendor. Stock and cost change with it, together. Owner or admin only.</div>
 <div class="card">
   <div id="billBox" hidden><label for="bill">Vendor bill</label><select id="bill"></select></div>
-  <div class="tabs" style="margin-top:10px"><button id="tr" class="on" type="button">Return goods</button><button id="td" type="button">Discount</button></div>
+  <div class="vtabs" style="margin-top:10px"><button id="tr" class="on" type="button">Return goods</button><button id="td" type="button">Discount</button></div>
   <div id="retBox"><label for="code">Item code</label><input id="code" inputmode="numeric" autocomplete="off" placeholder="Type the code and press Enter">
-  <div id="found"></div></div>
+  <div id="found"><div class="hint" style="margin-top:8px">Vendor, bill and cost show here after you type the code.</div></div></div>
   <div id="disBox" hidden><label for="amt">Discount amount (Rs.)</label><input id="amt" type="number" inputmode="decimal" min="0" step="0.01"></div>
   <label for="why">Reason (needed)</label><input id="why" maxlength="120"><div class="chips"><button type="button">Damaged</button><button type="button">Wrong item</button><button type="button">Not ordered</button><button type="button">Quality problem</button></div>
   <button class="big" id="go" type="button">Confirm</button>
@@ -43,7 +44,7 @@ $('tr').onclick=function(){pick('RETURN')};$('td').onclick=function(){pick('DISC
 /* BLOCK: code lookup (type the code, vendor and cost come by themselves) */
 function look(){
   var c=$('code').value.trim();cur=null;$('found').innerHTML='';say('');
-  if(!c)return;
+  if(!c){$('found').innerHTML='<div class="hint" style="margin-top:8px">Vendor, bill and cost show here after you type the code.</div>';return}
   fetch('/api/vendor-returns/lookup?code='+encodeURIComponent(c),{credentials:'include'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
     if(!x.ok){say(x.j.error||'Not found',1);return}
     cur=x.j;sel=0;draw();$('qty').focus();
