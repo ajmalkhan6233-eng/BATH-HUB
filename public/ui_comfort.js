@@ -73,13 +73,13 @@
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
       if (doc.documentElement && doc.documentElement.hasAttribute('data-keepfont')) return;   // 13 Nov: stable screens (Stock) get no late styles, so nothing jumps after load
-      var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = FRAME_CSS; doc.head.appendChild(st);
+      var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = doc.documentElement.hasAttribute('data-fc') ? '' : FRAME_CSS; doc.head.appendChild(st);   // 14 Nov: data-fc = frame-comfort.css already loaded at first paint
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
       var ms = doc.createElement('script'); ms.src = '/motion.js'; doc.head.appendChild(ms);
       ['/rubber.js', '/fitwin.js'].forEach(function (u) { var q = doc.createElement('script'); q.src = u; doc.head.appendChild(q); });   // squeeze-and-spring at the end of a window; pop-ups fit one window
       var theme = function () { try { var t = localStorage.getItem('rbh_theme') || localStorage.getItem('bathhub-theme'); var dk = (t === 'gold' || t === 'dark'); doc.documentElement.setAttribute('data-theme', dk ? 'dark' : 'light'); if (t === 'soft' || t === 'gemini') doc.documentElement.setAttribute('data-tone', t); else doc.documentElement.removeAttribute('data-tone'); /* 13 Nov: same mapping as bathhub-theme.js. Before, soft/gemini became LIGHT here a few seconds after load and fought the saved look (login page flashed dark then gold) */ doc.documentElement.removeAttribute('data-style'); } catch (x) { /* ignore */ } };
       theme(); try { doc.defaultView.addEventListener('storage', theme); } catch (x) { /* ignore */ }
-      var t = null, run = function () { clearTimeout(t); t = setTimeout(function () { bump(doc); }, 900); };
+      var t = 0, run = function () { if (t) return; t = (doc.defaultView.requestAnimationFrame || setTimeout)(function () { t = 0; bump(doc); }); };   // 14 Nov: next frame, not 900 ms later (that late jump was the fight)
       run(); new MutationObserver(run).observe(doc.body, { childList: true, subtree: true });
     } catch (x) { /* ignore */ }
   }

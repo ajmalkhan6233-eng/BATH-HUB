@@ -2824,6 +2824,11 @@ async function initApp() {
 <script src="/saved-tick.js"></script>
 <script src="/saved-dropdown.js"></script>
 <script src="/rbh-charts.js"></script><script src="/build-stamp.js" defer></script><script src="/dashboard_modern.js"></script>
+<style>/* 14 Nov: Home builds its cards one by one after load (shifts 0.8). Hidden (space kept) until it settles, then shown once: nothing visibly jumps. */
+#page-dashboard:not(.dash-ready){visibility:hidden}</style>
+<script>/* BLOCK: home settle. Shows Home 300 ms after its cards are in and quiet; never later than 2 s. */
+(function(){var d=document.getElementById('page-dashboard');if(!d)return;var done=false,t=null;function show(){if(done)return;done=true;d.classList.add('dash-ready');try{mo.disconnect()}catch(e){}}
+var mo=new MutationObserver(function(){clearTimeout(t);if(d.querySelector('.kpi-grid')&&d.querySelector('#home-play-card'))t=setTimeout(show,300)});mo.observe(d,{childList:true,subtree:true});setTimeout(show,2000);})();</script>
 <script src="/home-play.js" defer></script><script src="/dashboard_breakdown.js"></script><script src="/dashboard_v2.js"></script>
 <script src="/lib/palette.js"></script>
 <script src="/lib/grn_import.js"></script>
