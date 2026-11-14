@@ -45,3 +45,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-12 | Pocket v3: tabs (Home/Sales/Stock/Money/Cheques), Face ID (WebAuthn, no new library), 15-min grace lock. Worker limit 256 KB. Nothing new installed.
 - 2026-11-14 pocket/nav.js: own-module Pocket navigation (back button, swipe-down sheet, per-tab scroll, skeleton). No libraries.
 - 2026-11-14 scripts/pc/update_pocket_app.ps1: app-only Pocket redeploy that keeps link/passcode. pocket/nav.js left slide menu.
+- 2026-11-14 AJ asked: UI skills added to .claude/skills (ui-ux-pro-max, emil-design-eng, gestures, animation-performance, apple-design, mobile-native, animate; MIT, from nextlevelbuilder + emilkowalski). docs/UI_UX_MASTER.md = AJ's 100-pattern file.

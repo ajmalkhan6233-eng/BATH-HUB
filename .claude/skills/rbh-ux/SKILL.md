@@ -38,3 +38,5 @@ AJ on an iPhone in a busy shop, voice-to-text, not a developer. Staff use the PO
 
 ## Before saying "done"
 Open at 390 px wide, tap every button, check all 6 states, no console errors, Jest baseline not grown, run docs/SHIP_CHECK.md. Anything not run is UNVERIFIED.
+
+**Also read docs/UI_UX_MASTER.md (100 patterns) and use ui-ux-pro-max, gestures, animation-performance, apple-design for any screen.**
