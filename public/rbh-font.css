@@ -1,0 +1,5 @@
+/* rbh-font.css (14 Nov, AJ: letters change 3 times after Ctrl+F5). ONE font from the first paint: AJ's own Segoe UI. Loaded FIRST in every screen's <head>,
+   so no screen starts in another font and swaps later. Same rule as compact-all.css (kept there as a backup). Stock page (data-keepfont) is left alone. */
+@font-face{font-family:'RBH Sans';font-weight:100 500;src:local('Segoe UI')}
+@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}
+html:not([data-keepfont]),html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/perf-guard.js"></script><script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,6 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon-180.png">
 <script src="/lib/errorlog.js"></script><script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.getElementById("chip-slot") || document.body)); }</script>
 <meta name="theme-color" content="#0B1B3A">
-<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin><link href="/fonts/inter.css" rel="stylesheet">
 <script src="/vendor/chart.umd.min.js"></script>
 <style>
 /* ── VARIABLES ── */
@@ -29,7 +28,7 @@
   --text:#1a1a1a;--text2:#555;--text3:#888;--shadow:0 4px 20px rgba(0,0,0,0.1)
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
+body{font-family:'RBH Sans','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
 input,select,textarea,button{font-family:inherit}
 ul{list-style:none}
 button{cursor:pointer;border:none;background:none}
@@ -2831,7 +2830,7 @@ async function initApp() {
 <script src="/test-banner.js"></script>
 <script>
 /* fit-window: push fit-window.css into every embedded screen except POS and GRN (own fit). Same origin only; any failure is ignored. */
-(function(){function fit(f){try{var d=f.contentDocument;if(!d||!d.head||d.__fw)return;var u=String(f.src||'');if(/pos_billing|grn_workbench|layla-owner/.test(u))return;d.__fw=1;if(d.documentElement.hasAttribute('data-keepfont'))return;d.documentElement.classList.add('in-frame');var l=d.createElement('link');l.rel='stylesheet';l.href='/fit-window.css';d.head.appendChild(l);}catch(e){}}
+(function(){function fit(f){try{var d=f.contentDocument;if(!d||!d.head||d.__fw)return;var u=String(f.src||'');if(/pos_billing|grn_workbench|layla-owner/.test(u))return;d.__fw=1;if(d.documentElement.hasAttribute('data-keepfont')||d.documentElement.classList.contains('in-frame'))return;d.documentElement.classList.add('in-frame');var l=d.createElement('link');l.rel='stylesheet';l.href='/fit-window.css';d.head.appendChild(l);}catch(e){}}
 function wire(f){if(f.__fw)return;f.__fw=1;f.addEventListener('load',function(){fit(f)});fit(f)}
 function scan(){document.querySelectorAll('iframe').forEach(wire)}
 document.addEventListener('DOMContentLoaded',scan);setInterval(scan,1500);})();
