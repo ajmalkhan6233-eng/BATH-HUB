@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
+<script>if (window.top === window.self) location.replace('/owner#/chequecal');   // one app: opened on its own -> open it inside /owner</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheque Calendar — Royal Bath Hub</title>
+<!-- BLOCK: cheque calendar. Read-only. Data: GET /api/grn-cheques (vendor_bill_cheques). Big numbers on purpose (uncle reads it). -->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#fffdf7;color:#111;font-size:22px}
+  .wrap{padding:12px 14px 40px;max-width:1900px;margin:0 auto}
+  .ttl{font-size:36px;font-weight:800;margin:4px 0 10px}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .bar b{font-size:24px}
+  .btn{font:inherit;font-size:26px;font-weight:700;min-height:60px;min-width:60px;padding:6px 18px;border:3px solid #111;border-radius:12px;background:#fff;color:#111;cursor:pointer}
+  .btn.on{background:#111;color:#fff}
+  .sum{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 14px}
+  .sum div{border:3px solid #111;border-radius:12px;padding:8px 16px;font-size:24px;background:#fff}
+  .sum b{font-size:34px;display:block}
+  .months{display:grid;gap:14px}
+  .m{border:3px solid #111;border-radius:14px;background:#fff;padding:8px}
+  .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .mh .mt{margin:0;font-size:clamp(20px,2.2vw,38px);font-weight:800}
+  .mh span{font-size:clamp(16px,1.6vw,26px);font-weight:700}
+  .g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+  .dow{text-align:center;font-weight:800;font-size:clamp(14px,1.4vw,22px);background:#eee;border-radius:6px;padding:3px 0}
+  .d{min-width:0;min-height:var(--ch,86px);border:2px solid #bbb;border-radius:8px;padding:2px 4px;background:#fff;cursor:default;overflow:hidden}
+  .d .n{font-size:var(--dn,30px);font-weight:800;line-height:1.05}
+  .d .a{font-size:var(--am,20px);font-weight:800;line-height:1.1;margin-top:2px}
+  .d .w{font-size:calc(var(--am,20px) - 4px);font-weight:700;color:#0b4a8f}
+  .d.out{background:#f4f4f4;border-color:#e2e2e2;color:#aaa}
+  .d.today{border-color:#d00;box-shadow:0 0 0 3px #d00 inset}
+  .d.due{background:#ffe9a8;border-color:#a87a00;cursor:pointer}
+  .d.clr{background:#c9f0cf;border-color:#1c7a2e;cursor:pointer}
+  .d.bnc{background:#ffc9c9;border-color:#b00;cursor:pointer}
+  .d.sel{outline:5px solid #111}
+  .key{display:flex;flex-wrap:wrap;gap:12px;font-size:22px;margin:6px 0 14px;font-weight:700}
+  .key i{display:inline-block;width:30px;height:22px;border:2px solid #111;border-radius:5px;vertical-align:middle;margin-right:6px}
+  .lt{font-size:32px;font-weight:800;margin:20px 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:24px;background:#fff}
+  th,td{border:2px solid #999;padding:8px 10px;text-align:left}
+  th{background:#eee;font-size:22px}
+  td.r,th.r{text-align:right;white-space:nowrap}
+  .st{font-weight:800;padding:2px 10px;border-radius:8px;border:2px solid #111;white-space:nowrap}
+  .st.W{background:#ffe9a8}.st.C{background:#c9f0cf}.st.B{background:#ffc9c9}
+  tr.dayhead td{background:#222;color:#fff;font-size:26px;font-weight:800}
+  #list{overflow-x:auto}
+  .msg{font-size:26px;padding:20px;border:3px dashed #999;border-radius:12px}
+  @media (max-width:700px){.btn{font-size:22px;min-height:54px;padding:4px 12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="ttl">Cheque Calendar</div>
+  <div class="bar">
+    <b>Show</b>
+    <button class="btn" data-n="1">1 month</button><button class="btn" data-n="2">2</button><button class="btn" data-n="3">3</button><button class="btn" data-n="4">4</button><button class="btn" data-n="5">5</button>
+    <span style="width:14px"></span>
+    <button class="btn" id="prev" aria-label="Earlier">◀ Back</button>
+    <button class="btn" id="today">Today</button>
+    <button class="btn" id="next" aria-label="Later">Next ▶</button>
+  </div>
+  <div class="sum" id="sum"></div>
+  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">✎ = day we wrote it</span><span id="kn"></span></div>
+  <div id="msg"></div>
+  <div class="months" id="months"></div>
+  <div class="lt" id="lt">All cheques in these months</div>
+  <div id="list"></div>
+</div>
+<script>
+// BLOCK: state and helpers
+var N = 3, base = new Date(); base.setDate(1); base.setHours(0,0,0,0);
+var ALL = [], SEL = null;
+var MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+try { var s = parseInt(localStorage.getItem('bh_chqcal_n'), 10); if (s >= 1 && s <= 5) N = s; } catch (e) {}
+function pad(x){ return (x < 10 ? '0' : '') + x; }
+function key(y, m, d){ return y + '-' + pad(m + 1) + '-' + pad(d); }
+function todayKey(){ var t = new Date(); return key(t.getFullYear(), t.getMonth(), t.getDate()); }
+function money(v){ return Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+function short(v){ v = Number(v || 0); if (N <= 2 || v < 1000) return money(v); var k = v / 1000; return (Math.round(k * 10) / 10) + (N >= 4 ? '' : 'K'); }
+function nice(k){ if (!k) return '-'; var p = k.split('-'); return parseInt(p[2], 10) + ' ' + MN[parseInt(p[1], 10) - 1].slice(0, 3) + ' ' + p[0]; }
+function el(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+function stOf(c){ return c.status === 'CLEARED' ? 'C' : c.status === 'BOUNCED' ? 'B' : 'W'; }
+function stWord(c){ return c.status === 'CLEARED' ? 'CLEARED' : c.status === 'BOUNCED' ? 'BOUNCED' : 'WAITING'; }
+function daysLeft(k){ var a = new Date(k + 'T00:00:00'), b = new Date(todayKey() + 'T00:00:00'); var n = Math.round((a - b) / 86400000);
+  return n === 0 ? 'TODAY' : n > 0 ? 'in ' + n + ' days' : Math.abs(n) + ' days ago'; }
+
+// BLOCK: load (read-only)
+function load(){
+  fetch('/api/grn-cheques', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j || !j.cheques) throw new Error((j && j.error) || 'No cheque list');
+    ALL = j.cheques.filter(function(c){ return c.status !== 'CANCELLED'; });
+    if (ALL.length) { // open on the month of the first waiting cheque if nothing is waiting this month
+      document.getElementById('msg').textContent = '';
+    } else {
+      var m = el('div', 'msg', 'No cheques written yet. When a cheque is saved with its date, it shows here.'); document.getElementById('msg').appendChild(m);
+    }
+    draw();
+  }).catch(function(e){ var m = document.getElementById('msg'); m.textContent = ''; m.appendChild(el('div', 'msg', 'Could not load cheques: ' + e.message)); });
+}
+
+// BLOCK: draw
+function bucket(){ // per date: due list, written list
+  var due = {}, wr = {};
+  ALL.forEach(function(c){
+    if (c.due_date) (due[c.due_date] = due[c.due_date] || []).push(c);
+    if (c.cheque_date) (wr[c.cheque_date] = wr[c.cheque_date] || []).push(c);
+  });
+  return { due: due, wr: wr };
+}
+function sum(a){ return a.reduce(function(s, c){ return s + Number(c.amount || 0); }, 0); }
+function draw(){
+  var bk = bucket(), tk = todayKey(), box = document.getElementById('months');
+  box.textContent = '';
+  var W = window.innerWidth, cols = W < 700 ? 1 : W < 1100 ? Math.min(N, 2) : N;
+  box.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0,1fr))';
+  var dn = N === 1 ? 44 : N === 2 ? 38 : N === 3 ? 28 : N === 4 ? 22 : 18, am = N === 1 ? 30 : N === 2 ? 26 : N === 3 ? 20 : N === 4 ? 15 : 13, ch = N === 1 ? 110 : N === 2 ? 96 : N === 3 ? 82 : N === 4 ? 66 : 58;
+  box.style.setProperty('--dn', dn + 'px'); box.style.setProperty('--am', am + 'px'); box.style.setProperty('--ch', ch + 'px');
+  var first = null, last = null, rangeCh = [];
+  for (var i = 0; i < N; i++) {
+    var d0 = new Date(base.getFullYear(), base.getMonth() + i, 1), y = d0.getFullYear(), m = d0.getMonth();
+    var days = new Date(y, m + 1, 0).getDate(), lead = d0.getDay();
+    if (i === 0) first = key(y, m, 1); last = key(y, m, days);
+    var mm = el('div', 'm'), mh = el('div', 'mh'); mh.appendChild(el('div', 'mt', (N >= 4 ? MN[m].slice(0, 3) : MN[m]) + ' ' + y));
+    var mTot = 0, mCnt = 0;
+    for (var dd = 1; dd <= days; dd++) { var L = bk.due[key(y, m, dd)]; if (L) { L.forEach(function(c){ if (c.status === 'ISSUED') { mTot += Number(c.amount || 0); mCnt++; } }); } }
+    mh.appendChild(el('span', null, mCnt ? (N >= 4 ? 'Rs ' + short(mTot) : 'Waiting: Rs ' + money(mTot) + ' (' + mCnt + ')') : (N >= 4 ? '-' : 'Nothing waiting')));
+    mm.appendChild(mh);
+    var g = el('div', 'g');
+    DW.forEach(function(w){ g.appendChild(el('div', 'dow', N >= 4 ? w.charAt(0) : w)); });
+    for (var b = 0; b < lead; b++) g.appendChild(el('div', 'd out'));
+    for (var day = 1; day <= days; day++) {
+      var k = key(y, m, day), du = bk.due[k] || [], wv = bk.wr[k] || [];
+      var cls = 'd', st = null;
+      if (du.length) { st = du.some(function(c){ return c.status === 'BOUNCED'; }) ? 'bnc' : du.some(function(c){ return c.status === 'ISSUED'; }) ? 'due' : 'clr'; cls += ' ' + st; }
+      if (k === tk) cls += ' today';
+      if (SEL === k) cls += ' sel';
+      var cell = el('div', cls);
+      cell.appendChild(el('div', 'n', day));
+      if (du.length) cell.appendChild(el('div', 'a', short(sum(du))));
+      if (wv.length) cell.appendChild(el('div', 'w', N <= 3 ? '✎ ' + short(sum(wv)) : '✎'));
+      if (du.length || wv.length) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
+      g.appendChild(cell);
+    }
+    mm.appendChild(g); box.appendChild(mm);
+  }
+  // summary for the months on screen
+  var inR = ALL.filter(function(c){ return c.due_date && c.due_date >= first && c.due_date <= last; });
+  var wait = inR.filter(function(c){ return c.status === 'ISSUED'; }), clr = inR.filter(function(c){ return c.status === 'CLEARED'; });
+  var s = document.getElementById('sum'); s.textContent = '';
+  [['Waiting to clear', 'Rs ' + money(sum(wait)), wait.length + ' cheques'], ['Already cleared', 'Rs ' + money(sum(clr)), clr.length + ' cheques'], ['Total written (all time, waiting)', 'Rs ' + money(sum(ALL.filter(function(c){ return c.status === 'ISSUED'; }))), '']].forEach(function(a){
+    var dv = el('div'); var bb = el('b', null, a[1]); dv.appendChild(bb); dv.appendChild(document.createTextNode(a[0] + (a[2] ? ' · ' + a[2] : ''))); s.appendChild(dv); });
+  // list
+  var shown = SEL ? ALL.filter(function(c){ return c.due_date === SEL || c.cheque_date === SEL; }) : inR;
+  document.getElementById('lt').textContent = SEL ? 'Cheques on ' + nice(SEL) + ' (tap the day again to see all)' : 'All cheques in these months';
+  drawList(shown);
+  document.getElementById('kn').textContent = N >= 4 ? 'Small numbers are thousands: 120 = Rs 120,000' : '';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-n]'), function(b){ b.classList.toggle('on', Number(b.getAttribute('data-n')) === N); });
+}
+function drawList(rows){
+  var box = document.getElementById('list'); box.textContent = '';
+  if (!rows.length) { box.appendChild(el('div', 'msg', 'No cheques in this view.')); return; }
+  rows = rows.slice().sort(function(a, b){ return (a.due_date || '').localeCompare(b.due_date || '') || a.id - b.id; });
+  var t = el('table'), hd = el('tr');
+  [['Comes to bank', ''], ['Vendor', ''], ['Cheque no', ''], ['Amount (Rs)', 'r'], ['We wrote it', ''], ['Status', '']].forEach(function(h){ var th = el('th', h[1], h[0]); hd.appendChild(th); });
+  t.appendChild(hd);
+  var lastD = null;
+  rows.forEach(function(c){
+    if (c.due_date !== lastD) { lastD = c.due_date; var dr = el('tr', 'dayhead'), td = el('td', null, nice(c.due_date) + '  ·  ' + daysLeft(c.due_date) + '  ·  Rs ' + money(sum(rows.filter(function(x){ return x.due_date === c.due_date; })))); td.colSpan = 6; dr.appendChild(td); t.appendChild(dr); }
+    var tr = el('tr');
+    tr.appendChild(el('td', null, nice(c.due_date))); tr.appendChild(el('td', null, c.vendor_name || c.payee || '')); tr.appendChild(el('td', null, c.cheque_no || '-'));
+    tr.appendChild(el('td', 'r', money(c.amount))); tr.appendChild(el('td', null, nice(c.cheque_date)));
+    var sc = el('td'); sc.appendChild(el('span', 'st ' + stOf(c), stWord(c))); tr.appendChild(sc); t.appendChild(tr);
+  });
+  box.appendChild(t);
+}
+
+// BLOCK: buttons
+Array.prototype.forEach.call(document.querySelectorAll('[data-n]'), function(b){ b.addEventListener('click', function(){ N = Number(b.getAttribute('data-n')); try { localStorage.setItem('bh_chqcal_n', String(N)); } catch (e) {} SEL = null; draw(); }); });
+document.getElementById('prev').addEventListener('click', function(){ base.setMonth(base.getMonth() - Math.max(1, N === 1 ? 1 : N - 1)); SEL = null; draw(); });
+document.getElementById('next').addEventListener('click', function(){ base.setMonth(base.getMonth() + Math.max(1, N === 1 ? 1 : N - 1)); SEL = null; draw(); });
+document.getElementById('today').addEventListener('click', function(){ base = new Date(); base.setDate(1); base.setHours(0,0,0,0); SEL = null; draw(); });
+window.addEventListener('resize', function(){ draw(); });
+draw(); load();
+</script>
+</body>
+</html>
