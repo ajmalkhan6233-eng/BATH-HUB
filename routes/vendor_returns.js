@@ -69,4 +69,22 @@ router.post('/vendor-returns', async (req, res) => {
     res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not save (nothing was changed)' });
   } finally { if (c) c.release(); }
 });
+// BLOCK: lookup (14 Nov, AJ: "type the code, vendor and everything comes"). READ ONLY. Item + the open vendor bills that carried it, newest first.
+router.get('/vendor-returns/lookup', async (req, res) => {
+  try {
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner or admin can record a return' });
+    const code = String(req.query.code || '').trim();
+    if (!code) return res.status(400).json({ error: 'Type an item code' });
+    const p = (await pool.query('SELECT item_code, name, stock_level, avg_cost FROM products WHERE item_code=$1 AND active=true', [code])).rows[0];
+    if (!p) return res.status(404).json({ error: 'No item with code ' + code });
+    const bills = (await pool.query(
+      `SELECT b.id AS bill_id, b.vendor_name, b.bill_no, TO_CHAR(b.bill_date,'YYYY-MM-DD') AS bill_date, g.quantity AS bought, g.unit_cost,
+              (b.total - COALESCE((SELECT SUM(amount) FROM vendor_credit_notes n WHERE n.bill_id=b.id),0)) AS room
+         FROM grn_records g JOIN vendor_bills b ON b.bill_no = g.grn_number AND b.vendor_name ILIKE g.supplier_name AND NOT b.voided
+        WHERE split_part(g.item_description,' - ',1) = $1
+        ORDER BY b.bill_date DESC, b.id DESC LIMIT 6`, [code])).rows;
+    res.json({ item: p, bills });
+  } catch (e) { res.status(500).json({ error: 'Could not look that up' }); }
+});
+
 module.exports = router;
