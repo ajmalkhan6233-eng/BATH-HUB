@@ -95,3 +95,11 @@ body{padding-bottom:calc(env(safe-area-inset-bottom) + 96px)}
  background:linear-gradient(160deg,rgba(60,66,90,.96),rgba(34,37,52,.98));border:1px solid var(--edge);animation:float .35s var(--spring) both}
 .sheet .panel h2{margin:0 0 8px;font-size:18px}.sheet .panel .foot{margin-top:8px;font-size:14px}.sheet .panel button{width:100%;margin-top:14px}
 .gate button+button{margin-top:10px}#face .ic{margin-right:8px}
+/* nav.js: sheet grab handle, swipe, skeleton */
+.sheet .panel{will-change:transform;transition:transform .22s var(--spring,cubic-bezier(.32,.72,0,1))}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin:-6px auto 12px}
+.card.sk{height:88px;position:relative;overflow:hidden}
+.card.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.08) 50%,transparent 70%);animation:rbhsk 1.3s linear infinite}
+@keyframes rbhsk{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.tabs .tab{transition:color .18s,background .18s}
+.tabs .tab:active{transform:scale(.94)}
