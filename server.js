@@ -612,6 +612,8 @@ const sync = require('./routes/sync');
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-cache'); next(); });
 app.use('/api', require('./middleware/apiGzip')());   // SPEED: /api answers gzip (middleware/apiGzip.js); remove this line to turn off
 app.use('/api', sync.idempotency());   // same key twice = one record (offline queue replays)
+// NEAR-LIVE phone copy: after any saved change (bill, stock, payment) refresh the Pocket numbers within seconds (utils/pocketSnapshot.js kick). Remove this block to turn off.
+app.use('/api', (req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') res.on('finish', () => { if (res.statusCode < 400) { try { require('./utils/pocketSnapshot').kick(); } catch (e) {} } }); next(); });
 app.use('/api', sync);                 // /api/sync/status, needs-review, review
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
 app.use('/api', require('./routes/client_errors'));       // FIX 3: screens report their own errors (POST /client-error public+limited, GET /client-errors owner)

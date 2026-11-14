@@ -122,11 +122,32 @@ async function runOnce(pool, env = process.env, deps = {}) {
   return { ran: true, at: snap.at };
 }
 
+// NEAR-LIVE: after any saved change (bill, stock, payment) the phone copy is refreshed within seconds, not 10 minutes.
+// Debounced (one send per 10 s at most) and capped at 700 sends a day, so it stays inside Cloudflare's free storage limit (1,000 writes a day).
+const KICK_GAP_MS = 10 * 1000, KICK_DELAY_MS = 1500, KICK_DAY_MAX = 700;
+const live = { pool: null, last: 0, timer: null, day: '', n: 0 };
+function count() { const d = new Date().toISOString().slice(0, 10); if (live.day !== d) { live.day = d; live.n = 0; } live.n++; }
+function kick(deps = {}) {
+  const env = deps.env || process.env, run = deps.run || runOnce, now = deps.now ? deps.now() : Date.now();
+  if (!live.pool && !deps.pool) return false;
+  if (!configured(env) || live.timer) return false;
+  const d = new Date(now).toISOString().slice(0, 10); if (live.day !== d) { live.day = d; live.n = 0; }
+  if (live.n >= KICK_DAY_MAX) return false;
+  const wait = Math.max(KICK_DELAY_MS, KICK_GAP_MS - (now - live.last));
+  live.timer = setTimeout(() => {
+    live.timer = null; live.last = Date.now(); live.n++;
+    Promise.resolve(run(deps.pool || live.pool, env)).catch((e) => console.error('[pocket]', e.message));
+  }, wait); if (live.timer.unref) live.timer.unref();
+  return true;
+}
+function _reset() { clearTimeout(live.timer); live.timer = null; live.last = 0; live.n = 0; live.day = ''; live.pool = null; }
+
 function start(pool, everyMs = 10 * 60 * 1000) {
   if (!configured()) return null;
-  const tick = () => runOnce(pool).catch((e) => console.error('[pocket]', e.message));
+  live.pool = pool;
+  const tick = () => { live.last = Date.now(); count(); return runOnce(pool).catch((e) => console.error('[pocket]', e.message)); };
   setTimeout(tick, 45 * 1000).unref();
   return setInterval(tick, everyMs).unref();
 }
 
-module.exports = { build, lock, push, runOnce, start, configured, ITER };
+module.exports = { build, lock, push, runOnce, start, configured, ITER, kick, _reset };
