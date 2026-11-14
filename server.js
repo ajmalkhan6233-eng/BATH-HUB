@@ -666,6 +666,7 @@ app.use('/api', require('./routes/grn_match'));   // /api/grn-match (GRN: which 
 app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vendor bills and cheques by due date; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
+app.use('/api/sale-profit', require('./routes/sale_profit')); // live profit of the sale on screen (owner only, read-only) -> /api/sale-profit
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
 app.use('/api', require('./routes/staff_logins'));         // /staff-logins (admin only: create cashier + PIN)
 app.use('/api', require('./routes/stock_helper'));        // /price-helper, /reorder

@@ -46,3 +46,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 - 2026-11-14 pocket/nav.js: own-module Pocket navigation (back button, swipe-down sheet, per-tab scroll, skeleton). No libraries.
 - 2026-11-14 scripts/pc/update_pocket_app.ps1: app-only Pocket redeploy that keeps link/passcode. pocket/nav.js left slide menu.
 - 2026-11-14 AJ asked: UI skills added to .claude/skills (ui-ux-pro-max, emil-design-eng, gestures, animation-performance, apple-design, mobile-native, animate; MIT, from nextlevelbuilder + emilkowalski). docs/UI_UX_MASTER.md = AJ's 100-pattern file.
+- 2026-11-14: POS Quotation tab (public/pos-quote.js/.css), /api/sale-profit (routes/sale_profit.js), Sales menu items in public/menubar.js. No new libraries.

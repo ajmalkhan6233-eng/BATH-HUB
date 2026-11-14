@@ -13,7 +13,7 @@
   var MAP = [
     ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
       ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
-    ['Sales', [['pos', 'POS Billing'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sales tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
+    ['Sales', [['pos', 'POS Billing'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
@@ -35,10 +35,21 @@
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var exists = function (k) { return k.indexOf('sale:') === 0 ? (!!nav('pos') || !!doc.getElementById('page-pos')) : (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
     var labelOf = function (k, fallback) { if (k === '--' || k === 'reports' || k === 'reportshub' || k.indexOf(':') > 0) return fallback; var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
+    // Quotation and Building Packages open the POS screen in Quotation mode (public/pos-quote.js listens for the message).
+    function openPos(m) {
+      var f = doc.getElementById('pos-frame');
+      if (f) {
+        if (!f.getAttribute('src')) { f.setAttribute('src', '/pos_billing.html' + (m === 'bill' ? '' : '#quote')); if (m === 'package') f.addEventListener('load', function once() { f.removeEventListener('load', once); try { f.contentWindow.postMessage({ pq: 'package' }, win.location.origin); } catch (e) {} }); }
+        else { try { f.contentWindow.postMessage({ pq: m }, win.location.origin); } catch (e) {} }
+      }
+      try { win.navigate('pos'); } catch (e) {}
+    }
     function go(k) {
       closeAll(); closeDrawer();
+      if (k.indexOf('sale:') === 0) { openPos(k.slice(5)); return; }
+      if (k === 'pos') { openPos('bill'); return; }
       if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
       if (k.indexOf('rep:') === 0) { var id = k.slice(4); win.__rbhPick = id; try { win.navigate('reportshub'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-reportshub'); try { f && f.contentWindow.postMessage({ type: 'report-pick', id: id }, win.location.origin); } catch (e) {} }, 300); setTimeout(function () { win.__rbhPick = ''; }, 3000); return; }
       if (k === 'pending') { ensurePending(); }

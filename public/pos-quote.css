@@ -1,0 +1,47 @@
+/* POS: Quotation tab, invoice view, hidden golden dot + profit window. Calm: no animation except one short slide. */
+#pqTabs{display:flex;gap:6px;margin:0 0 10px}
+#pqTabs button{flex:0 0 auto;min-height:38px;padding:6px 18px;border:1.5px solid #bbb;border-radius:9px;background:#fff;color:#222;font:600 15px/1.2 inherit;cursor:pointer}
+#pqTabs button[aria-selected="true"]{background:#C9A24B;border-color:#C9A24B;color:#111}
+body[data-pq="quote"] .pq-hide,.pq-gone{display:none !important}
+#pqDot{position:fixed;top:5px;right:5px;width:10px;height:10px;padding:0;border:0;border-radius:50%;background:#C9A24B;opacity:.55;cursor:pointer;z-index:40;display:none}
+#pqDot:hover,#pqDot:focus{opacity:1;outline:2px solid #C9A24B;outline-offset:2px}
+#pqSide{position:fixed;top:0;right:0;bottom:0;width:min(310px,92vw);background:#fff;color:#111;border-left:4px solid #C9A24B;box-shadow:-6px 0 18px rgba(0,0,0,.18);z-index:45;padding:16px 14px;display:none;overflow:auto;font:15px/1.4 inherit}
+#pqSide.on{display:block;animation:pqIn .14s ease-out}
+@keyframes pqIn{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){#pqSide.on{animation:none}}
+#pqSide h3{margin:0 0 10px;font-size:16px}
+#pqSide .pq-r{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #eee}
+#pqSide .pq-r b{font-variant-numeric:tabular-nums}
+#pqSide .pq-big{font-size:22px;font-weight:800;margin-top:10px}
+#pqSide input{width:100%;box-sizing:border-box;min-height:40px;font-size:16px;margin:4px 0 8px;padding:6px 8px}
+#pqSide .pq-warn{margin-top:8px;font-size:13px;color:#8a6d2f}
+#pqSide .pq-x{position:absolute;top:8px;right:10px;border:0;background:none;font-size:22px;cursor:pointer;color:#555}
+#pqInv{position:fixed;inset:0;background:rgba(10,10,10,.62);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:12px;overflow:auto}
+#pqInv .pq-paper{background:#fff;color:#1a1a1a;width:min(640px,100%);border-radius:12px;padding:22px 22px 16px;border-top:7px solid #C9A24B;box-sizing:border-box}
+#pqInv .pq-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #C9A24B;padding-bottom:10px}
+#pqInv .pq-head img{height:46px}
+#pqInv .pq-ttl{text-align:right}
+#pqInv .pq-ttl b{display:block;font-size:22px;letter-spacing:.14em;color:#8a6d2f}
+#pqInv .pq-meta{display:flex;justify-content:space-between;gap:10px;margin:12px 0;font-size:14px}
+#pqInv table{width:100%;border-collapse:collapse;font-size:14px}
+#pqInv th{background:#faf5e8;text-align:left;padding:7px 6px;border-bottom:1px solid #C9A24B}
+#pqInv td{padding:7px 6px;border-bottom:1px solid #eee;vertical-align:top}
+#pqInv .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#pqInv .pq-sum{margin:10px 0 0 auto;width:min(280px,100%)}
+#pqInv .pq-sum div{display:flex;justify-content:space-between;padding:3px 0}
+#pqInv .pq-tot{border-top:2px solid #C9A24B;margin-top:4px;padding-top:6px !important;font-size:19px;font-weight:800}
+#pqInv .pq-foot{margin-top:14px;font-size:12.5px;color:#555;border-top:1px solid #eee;padding-top:8px}
+#pqInv .pq-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#pqInv .pq-act button{min-height:42px;padding:8px 16px;border-radius:9px;border:1.5px solid #888;background:#fff;font:600 15px inherit;cursor:pointer}
+#pqInv .pq-act .gold{background:#C9A24B;border-color:#C9A24B}
+#pqInv .pq-note{font-size:13px;margin-top:8px;color:#8a6d2f}
+@media print{body>*:not(#pqInv){display:none !important}#pqInv{position:static;background:none;padding:0;display:block}#pqInv .pq-act,#pqInv .pq-note{display:none}#pqInv .pq-paper{border-radius:0;width:100%}#pqDot,#pqSide{display:none !important}}
+@media (max-width:520px){
+#pqInv{padding:6px}#pqInv .pq-paper{padding:14px 12px 12px}
+#pqInv .pq-head{flex-direction:column;align-items:flex-start}#pqInv .pq-head img{display:none}
+#pqInv .pq-ttl{text-align:left}#pqInv .pq-ttl b{font-size:18px;letter-spacing:.08em}
+#pqInv .pq-meta{flex-direction:column;gap:6px}#pqInv .pq-meta div:last-child{text-align:left !important}
+#pqInv table{font-size:12.5px}#pqInv th,#pqInv td{padding:5px 3px}#pqInv th:first-child,#pqInv td:first-child{display:none}
+#pqInv .pq-act button{flex:1 1 45%}
+#pqTabs button{flex:1}
+}
