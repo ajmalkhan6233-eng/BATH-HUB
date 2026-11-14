@@ -18,6 +18,8 @@ button.big{width:100%;background:var(--gold);color:#000;font-weight:700;border:0
 .opt{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--bd);border-radius:8px;margin-top:6px;cursor:pointer;font-size:14px}.opt input{width:20px;min-height:20px;margin-top:2px}.opt.on{border-color:var(--gold)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chips button{min-height:36px;padding:6px 10px;font-size:13px}
 html body{max-width:760px;margin-left:auto!important;margin-right:auto!important}
+.ln{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-top:6px;display:grid;grid-template-columns:1fr 92px;gap:8px;align-items:center;font-size:14px}.ln.hit2{border-color:var(--gold)}.ln small{color:var(--tx2);display:block}.ln input{min-height:40px;text-align:center}
+.tot{margin-top:10px;font-size:15px}.acts{display:flex;gap:8px;margin-top:10px}.acts button{flex:1}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 </style><link rel="stylesheet" href="/compact-all.css"></head><body>
 <h1>Vendor return</h1>
@@ -25,8 +27,10 @@ html body{max-width:760px;margin-left:auto!important;margin-right:auto!important
 <div class="card">
   <div id="billBox" hidden><label for="bill">Vendor bill</label><select id="bill"></select></div>
   <div class="vtabs" style="margin-top:10px"><button id="tr" class="on" type="button">Return goods</button><button id="td" type="button">Discount</button></div>
-  <div id="retBox"><label for="code">Item code</label><input id="code" inputmode="numeric" autocomplete="off" placeholder="Type the code and press Enter">
-  <div id="found"><div class="hint" style="margin-top:8px">Vendor, bill and cost show here after you type the code.</div></div></div>
+  <div id="retBox"><label for="ven">Vendor</label><select id="ven"></select>
+  <label for="rb">Vendor bill</label><select id="rb"></select>
+  <label for="code">Or type an item code to jump to its bill</label><input id="code" inputmode="numeric" autocomplete="off" placeholder="Item code, Enter">
+  <div id="found"><div class="hint" style="margin-top:8px">Pick the vendor, then put pieces on the items going back.</div></div></div>
   <div id="disBox" hidden><label for="amt">Discount amount (Rs.)</label><input id="amt" type="number" inputmode="decimal" min="0" step="0.01"></div>
   <label for="why">Reason (needed)</label><input id="why" maxlength="120"><div class="chips"><button type="button">Damaged</button><button type="button">Wrong item</button><button type="button">Not ordered</button><button type="button">Quality problem</button></div>
   <button class="big" id="go" type="button">Confirm</button>
@@ -34,50 +38,65 @@ html body{max-width:760px;margin-left:auto!important;margin-right:auto!important
 </div>
 <div class="card"><b>Saved today in this session</b><div class="list" id="done"><div class="hint">Nothing yet.</div></div></div>
 <script>
-var kind='RETURN',cur=null,sel=0;
+var kind='RETURN',BILLS=[],cur=null,focusCode='';
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function money(n){return Number(n).toLocaleString('en-LK',{maximumFractionDigits:2})}
 function say(t,bad){var m=$('msg');m.textContent=t;m.className='msg '+(bad?'err':'ok')}
 function pick(k){kind=k;$('tr').className=k==='RETURN'?'on':'';$('td').className=k==='DISCOUNT'?'on':'';$('retBox').hidden=k!=='RETURN';$('disBox').hidden=k!=='DISCOUNT';$('billBox').hidden=k!=='DISCOUNT';$('go').textContent=k==='RETURN'?'Deduct':'Confirm'}
 $('tr').onclick=function(){pick('RETURN')};$('td').onclick=function(){pick('DISCOUNT')};pick('RETURN');
-/* BLOCK: code lookup (type the code, vendor and cost come by themselves) */
-function look(){
-  var c=$('code').value.trim();cur=null;$('found').innerHTML='';say('');
-  if(!c){$('found').innerHTML='<div class="hint" style="margin-top:8px">Vendor, bill and cost show here after you type the code.</div>';return}
-  fetch('/api/vendor-returns/lookup?code='+encodeURIComponent(c),{credentials:'include'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
-    if(!x.ok){say(x.j.error||'Not found',1);return}
-    cur=x.j;sel=0;draw();$('qty').focus();
+/* BLOCK: vendor then bill then every item on it (vendor by vendor, not item by item) */
+function vendors(){var seen={},v=[];BILLS.forEach(function(b){if(!seen[b.vendor_name]){seen[b.vendor_name]=1;v.push(b.vendor_name)}});v.sort();return v}
+function fillVen(sel){$('ven').innerHTML=vendors().map(function(n){return '<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>'}).join('')||'<option value="">No open bills</option>';fillBill()}
+function fillBill(sel){var n=$('ven').value;$('rb').innerHTML=BILLS.filter(function(b){return b.vendor_name===n}).map(function(b){return '<option value="'+b.id+'"'+(String(b.id)===String(sel)?' selected':'')+'>'+esc(b.bill_no||'-')+' · owed Rs. '+money(b.outstanding)+'</option>'}).join('');loadBill()}
+function loadBill(){
+  cur=null;var id=$('rb').value;if(!id){return}
+  fetch('/api/vendor-returns/bill/'+id,{credentials:'include'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
+    if(!x.ok){say(x.j.error||'Could not load',1);return}
+    cur=x.j;draw();
   }).catch(function(){say('No connection.',1)});
 }
 function draw(){
-  var it=cur.item,h='<div class="hit"><b>'+esc(it.item_code)+'</b> '+esc(it.name)+'<br>In stock now: <b>'+money(it.stock_level)+'</b></div>';
-  if(!cur.bills.length){h+='<div class="hint" style="margin-top:8px">No open vendor bill carries this item. Use Discount, or check the GRN.</div>';$('found').innerHTML=h;return}
-  h+='<label>Which vendor bill</label>';
-  cur.bills.forEach(function(b,i){h+='<label class="opt'+(i===sel?' on':'')+'"><input type="radio" name="bl" value="'+i+'"'+(i===sel?' checked':'')+'><span><b>'+esc(b.vendor_name)+'</b> · bill '+esc(b.bill_no||'-')+' · '+esc(b.bill_date)+'<br>Bought '+money(b.bought)+' at Rs. '+money(b.unit_cost)+' each · bill still owes Rs. '+money(b.room)+'</span></label>'});
-  h+='<div class="two"><div><label for="qty">Pieces going back</label><input id="qty" type="number" inputmode="decimal" min="0" step="any"></div><div><label for="rate">Credit per piece (Rs.)</label><input id="rate" type="number" inputmode="decimal" min="0" step="0.01" value="'+esc(cur.bills[sel].unit_cost)+'"></div></div><div class="hint" id="tot"></div>';
+  var b=cur.bill,h='<div class="hit"><b>'+esc(b.vendor_name)+'</b> · bill '+esc(b.bill_no||'-')+' · '+esc(b.bill_date)+'<br>Bill Rs. '+money(b.total)+' · still owed Rs. '+money(b.room)+'</div>';
+  if(!cur.lines.length){h+='<div class="hint" style="margin-top:8px">No item lines found for this bill. Use Discount.</div>';$('found').innerHTML=h;return}
+  h+='<label>Pieces going back, per item (leave empty = keep)</label>';
+  cur.lines.forEach(function(l,i){
+    var max=Math.min(Number(l.bought),Number(l.stock||0));
+    h+='<div class="ln'+(l.item_code===focusCode?' hit2':'')+'"><div><b>'+esc(l.item_code)+'</b> '+esc(l.name||'')+'<small>Bought '+money(l.bought)+' at Rs. '+money(l.unit_cost)+' · in stock '+money(l.stock||0)+'</small></div><input class="q" data-i="'+i+'" type="number" inputmode="decimal" min="0" max="'+max+'" step="any" placeholder="0"></div>'});
+  h+='<div class="tot" id="tot"></div>';
   $('found').innerHTML=h;
-  Array.prototype.forEach.call(document.getElementsByName('bl'),function(r){r.onchange=function(){sel=Number(r.value);draw();$('qty').focus()}});
-  $('qty').oninput=$('rate').oninput=tot;
+  Array.prototype.forEach.call(document.querySelectorAll('.q'),function(q){q.oninput=tot});
+  if(focusCode){var f=document.querySelector('.hit2 .q');if(f){f.scrollIntoView({block:'center'});f.focus()}focusCode=''}
 }
-function tot(){var q=Number($('qty').value)||0,r=Number($('rate').value)||0;$('tot').textContent=q>0?'Vendor credit: Rs. '+money(q*r)+'  ·  stock after: '+money(cur.item.stock_level-q):''}
+function lines(){var out=[];Array.prototype.forEach.call(document.querySelectorAll('.q'),function(q){var n=Number(q.value);if(n>0){var l=cur.lines[Number(q.dataset.i)];out.push({l:l,qty:n})}});return out}
+function tot(){var t=0,n=0;lines().forEach(function(x){t+=x.qty*Number(x.l.unit_cost);n++});$('tot').innerHTML=n?'Returning <b>'+n+'</b> item'+(n>1?'s':'')+' · credit <b>Rs. '+money(t)+'</b><br>You still owe the vendor: <b>Rs. '+money(Number(cur.bill.room)-t)+'</b> (pay this by cheque)':''}
+$('ven').onchange=function(){fillBill()};$('rb').onchange=loadBill;
+function look(){var c=$('code').value.trim();if(!c)return;
+  fetch('/api/vendor-returns/lookup?code='+encodeURIComponent(c),{credentials:'include'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
+    if(!x.ok){say(x.j.error||'Not found',1);return}
+    if(!x.j.bills.length){say('No open vendor bill carries '+c+'.',1);return}
+    say('');var b=x.j.bills[0];focusCode=c;fillVen(b.vendor_name);fillBill(b.bill_id);$('code').value='';
+  }).catch(function(){say('No connection.',1)});
+}
 $('code').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();look()}});
-$('code').addEventListener('change',look);
 Array.prototype.forEach.call(document.querySelectorAll('.chips button'),function(b){b.onclick=function(){$('why').value=b.textContent;$('why').focus()}});
-fetch('/api/vendor-ledger/bills',{credentials:'include'}).then(function(r){return r.json()}).then(function(b){
-  var open=b.filter(function(x){return !x.voided&&x.outstanding>0});
-  $('bill').innerHTML=open.length?open.map(function(x){return '<option value="'+x.id+'">'+esc(x.vendor_name)+' - '+esc(x.bill_no)+' - owed Rs. '+money(x.outstanding)+'</option>'}).join(''):'<option value="">No open bills</option>'
-}).catch(function(){$('bill').innerHTML='<option value="">Could not load bills</option>'});
+function loadBills(after){fetch('/api/vendor-ledger/bills',{credentials:'include'}).then(function(r){return r.json()}).then(function(b){
+  BILLS=b.filter(function(x){return !x.voided&&x.outstanding>0});
+  $('bill').innerHTML=BILLS.length?BILLS.map(function(x){return '<option value="'+x.id+'">'+esc(x.vendor_name)+' - '+esc(x.bill_no)+' - owed Rs. '+money(x.outstanding)+'</option>'}).join(''):'<option value="">No open bills</option>';
+  fillVen(after&&after.v);if(after&&after.b){fillBill(after.b)}
+}).catch(function(){$('ven').innerHTML='<option value="">Could not load bills</option>'})}
+loadBills();
 $('go').onclick=function(){
   var body={kind:kind,reason:$('why').value.trim()},ask;
   if(kind==='RETURN'){
-    if(!cur||!cur.bills.length){say('Type an item code first.',1);return}
-    var b=cur.bills[sel],q=Number($('qty').value),r=Number($('rate').value);
-    if(!(q>0)){say('Put how many pieces go back.',1);return}
-    if(q>Number(cur.item.stock_level)){say('Only '+money(cur.item.stock_level)+' in stock.',1);return}
-    if(q>Number(b.bought)){say('That bill only had '+money(b.bought)+' of this item.',1);return}
-    body.bill_id=b.bill_id;body.lines=[{item_code:cur.item.item_code,qty:q,rate:r}];
-    ask='Send '+money(q)+' x '+cur.item.item_code+' back to '+b.vendor_name+'? Stock goes down and the bill drops by Rs. '+money(q*r)+'.';
+    if(!cur){say('Pick the vendor and bill first.',1);return}
+    var ls=lines();if(!ls.length){say('Put pieces on at least one item.',1);return}
+    for(var i=0;i<ls.length;i++){var l=ls[i].l;
+      if(ls[i].qty>Number(l.stock||0)){say(l.item_code+': only '+money(l.stock||0)+' in stock.',1);return}
+      if(ls[i].qty>Number(l.bought)){say(l.item_code+': this bill only had '+money(l.bought)+'.',1);return}}
+    body.bill_id=cur.bill.id;body.lines=ls.map(function(x){return{item_code:x.l.item_code,qty:x.qty,rate:Number(x.l.unit_cost)}});
+    var t=0;ls.forEach(function(x){t+=x.qty*Number(x.l.unit_cost)});
+    ask='Send '+ls.length+' item(s) back to '+cur.bill.vendor_name+'? Stock goes down and the bill drops by Rs. '+money(t)+'.';
   } else { body.bill_id=Number($('bill').value);body.amount=Number($('amt').value);if(!body.bill_id){say('Pick a bill first.',1);return}ask='Take Rs. '+money(body.amount||0)+' off this bill?' }
   if(!body.reason){say('Write a short reason.',1);$('why').focus();return}
   if(!confirm(ask))return;
@@ -86,10 +105,14 @@ $('go').onclick=function(){
    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
      $('go').disabled=false;
      if(!x.ok){say(x.j.error||'Not saved. Nothing changed.',1);return}
-     say('Saved. Credited Rs. '+money(x.j.credited)+'. Still owed: Rs. '+money(x.j.owed_after)+'.',0);
+     var left=x.j.owed_after;
+     say('Saved. Credited Rs. '+money(x.j.credited)+'. Still owed to the vendor: Rs. '+money(left)+'.',0);
      var d=$('done');if(d.firstChild&&d.firstChild.className==='hint')d.innerHTML='';
      var e=document.createElement('div');e.textContent=x.j.credit_note.note_no+' - Rs. '+money(x.j.credited);d.insertBefore(e,d.firstChild);
-     if(kind==='RETURN'){$('code').value='';$('why').value='';cur=null;$('found').innerHTML='';$('code').focus()}
+     if(kind==='RETURN'){$('why').value='';var v=cur.bill.vendor_name,bid=cur.bill.id;cur=null;
+       $('found').innerHTML='<div class="tot">Next: pay the remaining <b>Rs. '+money(left)+'</b> to the vendor by cheque.</div><div class="acts"><button type="button" id="chq">Pay remaining by cheque</button><button type="button" id="more">Return more</button></div>';
+       $('chq').onclick=function(){try{parent.navigate('vendor360')}catch(e){say('Open Vendors > Vendor 360 to write the cheque.',0)}};
+       $('more').onclick=function(){loadBills({v:v,b:bid})};}
    }).catch(function(){$('go').disabled=false;say('No connection. Nothing was saved.',1)});
 };
 </script></body></html>

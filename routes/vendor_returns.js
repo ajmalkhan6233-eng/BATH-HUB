@@ -87,4 +87,25 @@ router.get('/vendor-returns/lookup', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Could not look that up' }); }
 });
 
+// BLOCK: bill lines (14 Nov, AJ: "we return vendor by vendor, not item by item"). READ ONLY. One bill with all its items, for the return screen.
+router.get('/vendor-returns/bill/:id', async (req, res) => {
+  try {
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner or admin can record a return' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad bill' });
+    const bill = (await pool.query(
+      `SELECT b.id, b.vendor_name, b.bill_no, TO_CHAR(b.bill_date,'YYYY-MM-DD') AS bill_date, b.total,
+              (b.total - COALESCE((SELECT SUM(amount) FROM vendor_credit_notes n WHERE n.bill_id=b.id),0)) AS room
+         FROM vendor_bills b WHERE b.id=$1 AND NOT b.voided`, [id])).rows[0];
+    if (!bill) return res.status(404).json({ error: 'Bill not found' });
+    const lines = (await pool.query(
+      `SELECT split_part(g.item_description,' - ',1) AS item_code, MAX(p.name) AS name, SUM(g.quantity) AS bought,
+              CASE WHEN SUM(g.quantity) > 0 THEN SUM(g.total_amount) / SUM(g.quantity) ELSE 0 END AS unit_cost, MAX(p.stock_level) AS stock
+         FROM grn_records g LEFT JOIN products p ON p.item_code = split_part(g.item_description,' - ',1)
+        WHERE g.grn_number = $1 AND g.supplier_name ILIKE $2
+        GROUP BY 1 ORDER BY 1`, [bill.bill_no, bill.vendor_name])).rows;
+    res.json({ bill, lines });
+  } catch (e) { res.status(500).json({ error: 'Could not load the bill' }); }
+});
+
 module.exports = router;
