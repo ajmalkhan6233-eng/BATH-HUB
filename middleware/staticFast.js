@@ -45,7 +45,8 @@ function staticFast(dir) {
       res.setHeader('Content-Encoding', 'gzip');
       res.setHeader('Vary', 'Accept-Encoding');
       res.setHeader('ETag', etag);
-      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');   // always checks, but answers 304 fast
+      // big vendor libraries never change in place: keep them 1 day on the phone (no round trip at all)
+      res.setHeader('Cache-Control', (/^\/(vendor|lib)\/.*\.min\.js$/.test(p) || /\.min\.js$/.test(p)) ? 'public, max-age=86400' : 'public, max-age=0, must-revalidate');
       if (req.headers['if-none-match'] === etag) { res.statusCode = 304; return res.end(); }
 
       let ent = cache.get(file);
