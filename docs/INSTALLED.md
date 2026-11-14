@@ -43,3 +43,4 @@ Rule (AJ 23 Oct): whenever anything is installed or added (tool, plugin, skill, 
 12 Nov 2026 | Context7 MCP (upstash/context7) | docs helper | claude mcp remove context7
 12 Nov 2026 | Cloudflare Wrangler (npx wrangler@4) + Pocket worker | phone app | remove: delete worker rbh-pocket (it serves the app) and KV namespace SNAP in Cloudflare
 - 2026-11-12 | Pocket v3: tabs (Home/Sales/Stock/Money/Cheques), Face ID (WebAuthn, no new library), 15-min grace lock. Worker limit 256 KB. Nothing new installed.
+- 2026-11-14 pocket/nav.js: own-module Pocket navigation (back button, swipe-down sheet, per-tab scroll, skeleton). No libraries.
