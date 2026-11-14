@@ -29,8 +29,19 @@ const recent=document.createElement('button');recent.type='button';recent.classN
   d.done.forEach(t=>{const w=document.createElement('div');w.className='m bot';w.textContent='#'+t.id+' '+t.title+'  ';const u=document.createElement('button');u.type='button';u.textContent='Undo';u.style.cssText='min-height:36px;padding:2px 12px;margin-top:4px';u.onclick=async()=>{const x=await fetch('/api/layla-owner/reopen',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Idempotency-Key':'ru'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)},body:JSON.stringify({id:t.id})});u.replaceWith(document.createTextNode(x.ok?'Put back.':'Could not undo.'))};w.appendChild(u);log.append(w)});log.scrollTop=log.scrollHeight}catch(e){add('sys','Could not load.')}};
 $('chips').appendChild(recent);
 ['cheques tomorrow','cash gap',"what's pending",'how much do we owe','help'].forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;b.onclick=()=>send(t);$('chips').append(b)});
+let diaryMode=false;
+const dBtn=document.createElement('button');dBtn.type='button';dBtn.className='chip';dBtn.textContent='\uD83D\uDCD3 Diary mode: off';
+dBtn.onclick=()=>{diaryMode=!diaryMode;dBtn.textContent='\uD83D\uDCD3 Diary mode: '+(diaryMode?'ON':'off');$('t').placeholder=diaryMode?'Write anything, like a diary...':'Talk to Layla: a bill, a cheque, a question';add('bot',diaryMode?'Diary mode. Just write: it is saved. Say "remind me ..." for a reminder, "find ...", "on this day", "keep in mind", "mood 😊", "clear".':'Back to normal Layla.')};
+$('chips').prepend(dBtn);
+async function diarySend(text){
+  try{const r=await fetch('/api/layla-diary/send',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({text})});const d=await r.json().catch(()=>({}));
+    if(!r.ok){add('sys',d.error||'Diary not saved');return}
+    if(d.clear){log.querySelectorAll('.m').forEach(x=>x.remove());add('bot',d.reply);return}
+    if(d.forward){const x=await OfflineSave.post('/api/layla-owner/message',{text:d.forward},{label:'chat'});add('bot',x.ok&&x.response?x.response.reply:(x.queued?'Saved on this phone, I will set it when the internet is back.':d.reply));return}
+    add('bot',d.reply)}catch(e){add('sys','Not saved: '+e.message)}}
 async function send(text){
   text=(text||'').trim(); if(!text)return; add('me',text);
+  if(diaryMode){await diarySend(text);return}
   const r=await OfflineSave.post('/api/layla-owner/message',{text},{label:'chat'});
   if(r.queued)add('sys','No internet. Saved on this phone, I will answer when it is back.');
   else if(r.ok&&r.response)add('bot',r.response.reply);

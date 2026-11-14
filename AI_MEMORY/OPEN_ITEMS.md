@@ -20,3 +20,5 @@
 - Link public/sync-review.html from an owner menu (page exists, no menu link yet).
 - Website draft for logo: Aj to look and say publish.
 - LATER (Aj, free time): GRN photo scan on the GRN screen itself + connect Tesseract (installed) to Layla. Preview, then Go / Fix / Cancel. Not urgent.
+
+- 14 Nov: Notepad button + logo 25% bigger + owner diary inside Layla chat built on branch claude/notepad-in-app (public/bathco_complete.html, bathhub-design.css, public/layla-owner.html, routes/layla_diary.js, layla_owner/diary/). UNVERIFIED in a browser. Diary file: data/owner-diary/state.json (git-ignored).

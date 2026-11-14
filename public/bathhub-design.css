@@ -221,14 +221,14 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
   #page-sub, .live-clock { display:none !important; }
   /* 24 Oct: the page title ran over the Search button; let the title block shrink and cut with ... */
   .topbar-brand > div { min-width:0; overflow:hidden; }
-  .topbar-brand .brand-logo { flex-shrink:0; max-width:64px; object-fit:contain; }
+  .topbar-brand .brand-logo { flex-shrink:0; max-width:80px; object-fit:contain; }
   #chip-slot > * { font-size:11px !important; padding:5px 9px !important; min-height:36px !important; }
   .theme-toggle { min-width:40px !important; width:40px !important; padding:0 !important; }
   .logout-btn { padding:0 8px !important; font-size:12px !important; }
   #toasts { bottom:84px !important; left:10px; right:10px; }          /* messages sit above the bottom bar, not over it */
   #ld-float { bottom:132px !important; right:10px !important; transform:scale(.88); transform-origin:bottom right; }   /* Send to Layla no longer covers the cards */
   #page-title { min-width:0; font-size:15px !important; }
-  .topbar-brand .brand-logo { max-width:38px; }
+  .topbar-brand .brand-logo { max-width:48px; }
   #pal-btn { font-size:0 !important; min-width:44px; padding:0 !important; }
   #pal-btn:before { content:"\2315"; font-size:22px; line-height:1; }
   .topbar-right { flex-shrink:0; gap:6px !important; }
@@ -245,8 +245,8 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
 
 /* ---- 17. BRAND LOGO IN THE HEADER ---- */
 .topbar-brand { display:flex; align-items:center; gap:12px; min-width:0; }
-.brand-logo { height:44px; width:auto; object-fit:contain; flex-shrink:0; }
-@media (max-width:640px) { .brand-logo { height:30px; width:auto; } .topbar > .topbar-brand { flex:1 1 auto; min-width:0; } }
+.brand-logo { height:55px; width:auto; object-fit:contain; flex-shrink:0; }
+@media (max-width:640px) { .brand-logo { height:38px; width:auto; } .topbar > .topbar-brand { flex:1 1 auto; min-width:0; } }
 
 /* SOFT tone (11 Nov 2026, AJ: not too dark): same Gold look, lighter slate surfaces. Only variables change, so every dark rule still applies. */
 [data-theme="dark"][data-tone="soft"], [data-theme="gold"][data-tone="soft"] {
@@ -255,3 +255,6 @@ body > header:not(.topbar) .sub, body > header:not(.topbar) .date, body > header
   --border-subtle:#566074; --border-strong:#6b7790;
   --text-primary:#f6f8fb; --text-secondary:#d6dce8; --text-muted:#a9b4c8; --text-on-accent:#1b1f26;
 }
+
+/* 14 Nov: Notepad button opens the Windows desk notepad (layla://), so it is hidden on phones */
+@media (max-width:767px) { #notepad-btn { display:none !important; } }
