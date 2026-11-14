@@ -1,4 +1,15 @@
-# HANDOFF 13 Nov 09:55 (read CLAUDE.md first)
-DONE (cloud-tested): Pocket v3; fit-window.css; cheque due-day ask (public/cheque-dayask.js); Cheques table header; menu tab colours; menu fix: Stock & items + Stickers were hidden (key 'stockmgr' -> 'stock', ensureStickers in public/menubar.js). Build 13 Nov 09:55, SW v95-g.
-NOT DONE: (1) GRN bill-lines box too short (3 rows) on 1366x650-type screen: edit public/grn-onescreen.css #right.has-lines rules; compact g-hdr/g-ftr, hide status line, test with cloud_rig + Playwright at 1366x650. (2) Black menu tab UNVERIFIED. (3) Bridge task 217 to add (pull, restart apex-server, check label). (4) Face ID, WhatsApp receipt image, dummy bill OFF-86BG-3 unverified. (5) Tamil line "ஒரு 60,000 கிடைக்குதா?" never clarified.
-STYLE: reply starts "AJ,", one screen, NEEDS YOUR ATTENTION block, one status word, no popup questions.
+# HANDOFF 14 Nov 14:10 (chat to chat). Read AJ_NEEDS.md first.
+## Pushed to branch work (all UNVERIFIED on AJ's PC)
+- Stock & items: columns In stock, Cost, Selling, Supplier (pick+save), Category, Margin; no late style injection.
+- Price recovery: scripts/recover_selling_prices.js --suggest (Maheshan label estimate, others by cost band). Bridge TASK 225 PLAYED.
+- Calm motion (motion.css CALM layer): no endless loops, no blur, no per-row animation; Stock page gets none.
+- Home: play button "Run day close" + activity log (public/home-play.js, read-only).
+- One font from first paint: public/rbh-font.css + rbh-early.js in 60 pages; Inter removed; fit-window at first paint. SW v98-a. Build 14 Nov 14:20.
+## Open
+- PC: AJ types "check bridge" (go 221, 225, CLAUDE line), then Ctrl+F5 twice; report if letters still change.
+- 43 empty frames each get 5 injected files at start (speed). Needs AJ approve.
+- 8 CSS files with 20-40 !important each (grn-compact, pos-look, pos-onepage, compact-all) fight; merge one screen at a time.
+- Gemini signboard pictures awaited; compare with ours (/tmp/sb2 set, sent to AJ).
+- Task 222 checks, Task 223 (global CLAUDE.md line, HELD), GRN "tab on top", Face ID, WhatsApp receipt image, dummy bill OFF-86BG-3, 120 non-digit item codes.
+## Rig
+pg_ctlcluster 16 main start; pkill -f "node server.js"; bash scripts/dev/cloud_rig.sh; curl localhost:3199/health. Tests in /tmp/t (may be gone).
