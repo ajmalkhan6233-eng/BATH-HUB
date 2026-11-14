@@ -610,6 +610,7 @@ app.patch('/api/feature-flags/:key', async (req, res) => {
 const sync = require('./routes/sync');
 // Live shop data is private: browsers and shared proxies must not keep a copy of any /api answer.
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-cache'); next(); });
+app.use('/api', require('./middleware/apiGzip')());   // SPEED: /api answers gzip (middleware/apiGzip.js); remove this line to turn off
 app.use('/api', sync.idempotency());   // same key twice = one record (offline queue replays)
 app.use('/api', sync);                 // /api/sync/status, needs-review, review
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
