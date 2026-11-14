@@ -56,7 +56,7 @@ function parseWhen(input, now = new Date()) {
   }
 
   // clock time: "at 3pm", "3:30 pm", "15:00", "at 5"
-  if ((m = cut(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b/i))) {
+  if ((m = cut(/\b(?:at\s+)?(\d{1,2})(?:[:.](\d{1,2}))?\s*(am|pm|a\.m\.?|p\.m\.?)(?!\w)/i))) {
     hh = parseInt(m[1], 10) % 12 + (/^p/i.test(m[3]) ? 12 : 0); mm = parseInt(m[2] || '0', 10);
   } else if ((m = cut(/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/))) {
     hh = parseInt(m[1], 10); mm = parseInt(m[2], 10);
