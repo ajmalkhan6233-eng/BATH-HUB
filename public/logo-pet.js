@@ -137,7 +137,7 @@
   setInterval(function () { if (box && !dragging && !loopOn && Date.now() - idleAt > 8000) box.classList.add('breathe'); }, 2000);
 
   /* update spinner: watch the gold Update button text */
-  setInterval(function () { var b = doc.getElementById('bh-upd'); if (!box) return; var on = b && /Updating|Restarting/i.test(b.textContent || ''); box.classList.toggle('spin', !!on); }, 700);
+  setInterval(function () { var b = doc.getElementById('bh-upd'); if (!box) return; var on = b && /Updating|Restarting/i.test(b.textContent || ''); box.classList.toggle('spin', !!on); }, 1400);
 
   function start() {
     orig = logoEl(); if (!orig) { if ((start.n = (start.n || 0) + 1) < 20) setTimeout(start, 700); return; }
@@ -145,7 +145,7 @@
     orig.style.touchAction = 'none'; orig.setAttribute('draggable', 'false'); orig.addEventListener('dragstart', function (e) { e.preventDefault(); });
     var s = null; try { s = JSON.parse(localStorage.getItem('bh_logo_pos') || 'null'); } catch (e) { s = null; }
     if (s && typeof s.x === 'number' && typeof s.y === 'number' && window.innerWidth >= 768) { var b = bounds(), h = homeRect(); if (Math.abs(s.x - h.x) > 26 || Math.abs(s.y - h.y) > 26) detach(Math.max(0, Math.min(b.maxX, s.x)), Math.max(0, Math.min(b.maxY, s.y)), true); }
-    scanFrames(); setInterval(scanFrames, 2500);
+    scanFrames(); setInterval(function () { if (!document.hidden) scanFrames(); }, 5000);   // SPEED 14 Nov: skip while hidden
     window.addEventListener('resize', function () { if (!box || dragging) return; var b = bounds(); x = Math.max(0, Math.min(b.maxX, x)); y = Math.max(0, Math.min(b.maxY, y)); paint(); });
   }
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();

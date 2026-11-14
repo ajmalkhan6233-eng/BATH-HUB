@@ -16,5 +16,5 @@
   var t = null; function soon() { clearTimeout(t); t = setTimeout(fit, 80); }
   window.addEventListener('resize', soon); window.addEventListener('hashchange', function () { setTimeout(fit, 150); setTimeout(fit, 600); });
   document.addEventListener('click', function () { setTimeout(fit, 200); });
-  setInterval(fit, 1500); setTimeout(fit, 400);
+  setInterval(function () { if (!document.hidden) fit(); }, 5000); setTimeout(fit, 400);   // SPEED 14 Nov: was every 1.5 s even when hidden; resize, click and hash changes still fit at once
 })();

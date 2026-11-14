@@ -1,4 +1,4 @@
-# SPEED AUDIT (14 Nov 2026, chat, read from the code + a cloud test copy). Real findings only: 28 found, 5 fixed in this pack.
+# SPEED AUDIT (14 Nov 2026, chat). CORRECTED 10:15: item 7 was wrong (the service worker already has an 8 s timeout) and items 16-21 were wrong (no page loads those print pictures, they only sit on disk). Real findings: 21. Fixed in this pack: 8 (items 1-5 and 13-15).
 ## FIXED in branch claude/speed-pack (task 230)
 1. /api answers had no gzip -> middleware/apiGzip.js (built-in zlib, tested 3/3).
 2. Big .min.js libraries re-checked every visit -> kept 1 day (staticFast.js).

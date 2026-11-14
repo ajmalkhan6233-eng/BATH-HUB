@@ -16,5 +16,5 @@
       });
     } catch (e) { /* never break the app */ }
   }
-  setInterval(tick, 8000);
+  setInterval(tick, 15000);   // SPEED 14 Nov: was 8 s
 })();
