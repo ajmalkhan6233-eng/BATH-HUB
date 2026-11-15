@@ -112,7 +112,22 @@
     };
     right.insertBefore(b, right.firstChild);
   }
-  function start() { lift(document); watchFrames(); updateButton(); new MutationObserver(function () { watchFrames(); updateButton(); }).observe(document.body, { childList: true, subtree: true }); }
+  // 15 Nov (AJ: "make the refresh button a hard refresh, easier than pressing keys, until we finish building"): one tap = clear the app's saved copies, drop the service worker, reload fresh. Drafts live in this browser's storage and are kept.
+  function hardButton() {
+    var right = document.querySelector('.topbar-right'); if (!right || document.getElementById('bh-hard')) return;
+    var b = document.createElement('button'); b.id = 'bh-hard'; b.type = 'button'; b.className = 'sm-pill'; b.textContent = '\u27F3 Refresh';
+    b.title = 'Hard refresh: clears saved copies and loads the newest screens (same as Ctrl+F5 twice)'; b.setAttribute('aria-label', 'Hard refresh');
+    b.style.cssText = 'height:36px;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid rgba(201,162,75,.7);background:transparent;color:#C9A24B;font-size:13px;font-weight:700;cursor:pointer;margin-right:6px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap';
+    b.onclick = function () {
+      b.disabled = true; b.textContent = '...';
+      var go = function () { var u = location.pathname + '?hr=' + Date.now() + (location.hash || ''); location.replace(u); }, jobs = [];
+      try { if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) { /* ignore */ }
+      try { if (navigator.serviceWorker) jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) { /* ignore */ }
+      Promise.all(jobs).then(go, go); setTimeout(go, 3000);
+    };
+    var upd = document.getElementById('bh-upd'); right.insertBefore(b, upd || right.firstChild);
+  }
+  function start() { lift(document); watchFrames(); updateButton(); hardButton(); new MutationObserver(function () { watchFrames(); updateButton(); hardButton(); }).observe(document.body, { childList: true, subtree: true }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 

@@ -21,6 +21,7 @@ router.post('/vendor-returns', async (req, res) => {
     if (!['RETURN', 'DISCOUNT'].includes(kind)) throw bad('kind must be RETURN or DISCOUNT');
     if (!audit.reasonOk(reason)) throw bad('Give a reason (at least 3 letters)');
     const noteDate = b.note_date || todayLK();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(noteDate) || isNaN(Date.parse(noteDate)) || noteDate > todayLK()) throw bad('Date must be a real day, not in the future');
     c = await pool.connect();
     await c.query('BEGIN');
     const bill = (await c.query('SELECT id, vendor_name, bill_no, total, voided FROM vendor_bills WHERE id=$1 FOR UPDATE', [billId])).rows[0];
