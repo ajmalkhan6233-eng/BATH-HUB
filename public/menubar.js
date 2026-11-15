@@ -16,7 +16,7 @@
     ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
-    ['Layla', [['layla', 'Layla (WhatsApp)'], ['assistant', 'AI Assistant'], ['brain', 'RBH Brain 🧠'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['morningbrief', 'Morning brief'], ['dueboard', 'Due Board'], ['adminaudit', 'Audit log']]],
+    ['Layla', [['layla', 'Layla (all AI in one place)']]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
       ['--', 'Sales'], ['rep:sday', 'Sales by day'], ['rep:sweek', 'Sales by week'], ['rep:smonth', 'Sales by month'], ['reports', 'Daily summary and investor report'],
