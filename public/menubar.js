@@ -16,7 +16,7 @@
     ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
-    ['Layla', [['layla', 'Layla (WhatsApp)'], ['assistant', 'AI Assistant'], ['brain', 'RBH Brain 🧠'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['morningbrief', 'Morning brief'], ['dueboard', 'Due Board'], ['adminaudit', 'Audit log']]],
+    ['Layla', [['laylahub', 'Layla']]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
       ['--', 'Sales'], ['rep:sday', 'Sales by day'], ['rep:sweek', 'Sales by week'], ['rep:smonth', 'Sales by month'], ['reports', 'Daily summary and investor report'],
@@ -127,7 +127,7 @@
         var b = doc.createElement('button'); b.type = 'button'; b.className = 'mb-btn'; b.setAttribute('role', 'menuitem'); b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false'); b.textContent = g[0] + ' ▾';
         var list = doc.createElement('div'); list.className = 'mb-list'; list.setAttribute('role', 'menu');
         items.forEach(function (i) { list.appendChild(itemBtn(i[0], labelOf(i[0], i[1]), i[2])); });
-        b.onclick = function (e) { e.stopPropagation(); var on = top.classList.contains('on'); closeAll(); if (!on) { top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } };
+        b.onclick = function (e) { e.stopPropagation(); var on = top.classList.contains('on'); closeAll(); if (!on) { top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } }; if (items.length === 1) { b.textContent = g[0]; b.onclick = function (e) { e.stopPropagation(); go(items[0][0]); }; }
         top.appendChild(b); top.appendChild(list); bar.appendChild(top);
       });
       var body = doc.getElementById('rbh-dbody'); body.innerHTML = '';
@@ -138,7 +138,7 @@
         var gh = doc.createElement('button'); gh.type = 'button'; gh.className = 'gh'; gh.textContent = g[0]; gh.setAttribute('aria-expanded', 'false');
         var gl = doc.createElement('div'); gl.className = 'gl';
         items.forEach(function (i) { gl.appendChild(itemBtn(i[0], labelOf(i[0], i[1]), i[2])); });
-        gh.onclick = function () { var on = w.classList.contains('on'); Array.prototype.forEach.call(body.querySelectorAll('.g.on'), function (x) { x.classList.remove('on'); x.firstChild.setAttribute('aria-expanded', 'false'); }); if (!on) { w.classList.add('on'); gh.setAttribute('aria-expanded', 'true'); } };
+        if (items.length === 1) { gh.onclick = function () { go(items[0][0]); }; } else gh.onclick = function () { var on = w.classList.contains('on'); Array.prototype.forEach.call(body.querySelectorAll('.g.on'), function (x) { x.classList.remove('on'); x.firstChild.setAttribute('aria-expanded', 'false'); }); if (!on) { w.classList.add('on'); gh.setAttribute('aria-expanded', 'true'); } };
         w.appendChild(gh); w.appendChild(gl); body.appendChild(w);
       });
     }
