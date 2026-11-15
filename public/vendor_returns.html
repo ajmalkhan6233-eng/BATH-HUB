@@ -28,7 +28,7 @@ html body{max-width:760px;margin-left:auto!important;margin-right:auto!important
   <div id="retBox"><label for="code">Item code</label><input id="code" inputmode="numeric" autocomplete="off" placeholder="Type the code and press Enter">
   <div id="found"><div class="hint" style="margin-top:8px">Vendor, bill and cost show here after you type the code.</div></div></div>
   <div id="disBox" hidden><label for="amt">Discount amount (Rs.)</label><input id="amt" type="number" inputmode="decimal" min="0" step="0.01"></div>
-  <label for="why">Reason (needed)</label><input id="why" maxlength="120"><div class="chips"><button type="button">Damaged</button><button type="button">Wrong item</button><button type="button">Not ordered</button><button type="button">Quality problem</button></div>
+  <label for="ndate">Date (change it to enter an older return or discount)</label><input id="ndate" type="date"><label for="why">Reason (needed)</label><input id="why" maxlength="120"><div class="chips"><button type="button">Damaged</button><button type="button">Wrong item</button><button type="button">Not ordered</button><button type="button">Quality problem</button></div>
   <button class="big" id="go" type="button">Confirm</button>
   <div class="msg" id="msg"></div>
 </div>
@@ -68,8 +68,9 @@ fetch('/api/vendor-ledger/bills',{credentials:'include'}).then(function(r){retur
   var open=b.filter(function(x){return !x.voided&&x.outstanding>0});
   $('bill').innerHTML=open.length?open.map(function(x){return '<option value="'+x.id+'">'+esc(x.vendor_name)+' - '+esc(x.bill_no)+' - owed Rs. '+money(x.outstanding)+'</option>'}).join(''):'<option value="">No open bills</option>'
 }).catch(function(){$('bill').innerHTML='<option value="">Could not load bills</option>'});
+$('ndate').value=new Date(Date.now()+19800000).toISOString().slice(0,10);
 $('go').onclick=function(){
-  var body={kind:kind,reason:$('why').value.trim()},ask;
+  var body={kind:kind,reason:$('why').value.trim()},ask;var nd=$('ndate').value;if(nd){if(nd>new Date(Date.now()+19800000).toISOString().slice(0,10)){say('That date is in the future.',1);return}body.note_date=nd}
   if(kind==='RETURN'){
     if(!cur||!cur.bills.length){say('Type an item code first.',1);return}
     var b=cur.bills[sel],q=Number($('qty').value),r=Number($('rate').value);
