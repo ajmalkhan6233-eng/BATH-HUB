@@ -2,7 +2,7 @@
    slim title bar, frame height = what is left of the window, so the OUTER page never scrolls and the inside gets every pixel. */
 (function () {
   'use strict';
-  var css = '@media(min-width:900px){body.rbh-framepage .topbar{padding-top:2px!important;padding-bottom:2px!important}body.rbh-framepage .topbar .brand-logo{height:30px!important;max-width:none!important}body.rbh-framepage #page-sub{display:none}body.rbh-framepage #page-title{font-size:14px!important}body.rbh-framepage .live-clock{font-size:13px;padding:2px 8px}html.rbh-nopage,body.rbh-framepage{overflow:hidden!important}body.rbh-framepage .main-content{padding-bottom:0!important}}';
+  var css = '@media(min-width:900px){body.rbh-framepage .topbar{padding-top:2px!important;padding-bottom:2px!important}body.rbh-framepage .topbar .brand-logo{height:48px!important;max-width:none!important}body.rbh-framepage #page-sub{display:none}body.rbh-framepage #page-title{font-size:14px!important}body.rbh-framepage .live-clock{font-size:13px;padding:2px 8px}html.rbh-nopage,body.rbh-framepage{overflow:hidden!important}body.rbh-framepage .main-content{padding-bottom:0!important}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   function visFrame() { var f = document.querySelectorAll('.page.active iframe, #pos-frame, iframe[id^="frame-"]'); for (var i = 0; i < f.length; i++) { var r = f[i].getBoundingClientRect(); if (r.width > 200 && r.height > 50 && f[i].offsetParent) return f[i]; } return null; }
   function fit() {
