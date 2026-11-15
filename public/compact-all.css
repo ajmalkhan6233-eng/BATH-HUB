@@ -15,6 +15,7 @@
   html body hr{margin:5px 0 !important}html body p{margin:3px 0 !important}
   html body .bh-strip{padding:2px 10px !important}html body .bh-strip img,html body .bh-strip .bh-lockup img{height:26px !important;max-height:26px !important}
   html body header img[src*=logo],html body .brandbar img,html body .top img[src*=logo]{max-height:30px !important;height:auto}
+  html body header.topbar img.brand-logo{max-height:48px !important;height:48px !important;width:auto !important}   /* 15 Nov (AJ): RBH logo a little bigger */
   html body main,html body .page,html body .container,html body .wrap,html body .content{max-width:1240px !important;padding:6px 10px !important}
   html body main .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
   html body .big{font-size:17px !important}html body .sm{font-size:11px !important}
@@ -31,7 +32,7 @@ html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=ra
 /* removed 13 Nov: overscroll-behavior:contain on every list/table stopped the mouse wheel on Stock and other screens (AJ: cannot scroll). GRN keeps its own in grn-compact.css. */
 
 /* 13 Nov (AJ: the font looks ugly and fatty, change it in the complete app). Windows drew bold headings in Segoe UI BLACK. (14 Nov fix: back to AJ's own Segoe UI, NOT Inter.) "RBH Sans" = Segoe UI, every bold weight uses Semibold. Sinhala and Tamil letters fall through to their own fonts as before. To undo: delete this block and the "RBH Sans" names added in ui_comfort.js and the 3 pages. */
-@font-face{font-family:'RBH Sans';font-weight:100 500;src:local('Segoe UI')}@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}
+@font-face{font-family:'RBH Sans';font-weight:100 300;src:local('Segoe UI')}@font-face{font-family:'RBH Sans';font-weight:400 500;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Bold'),local('SegoeUI-Bold')}
 html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
 html body .bh-lockup .bh-name,html body h1,html body h2{font-weight:700 !important}
 html body .live-clock,html body code,html body pre,html body .mono{font-family:ui-monospace,Consolas,monospace !important}
