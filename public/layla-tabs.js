@@ -1,7 +1,7 @@
 /* layla-tabs.js (15 Nov, AJ: "One Layla: AI assistant, agent review, agent rules, morning brief, audit log, everything under Layla").
    One strip of tabs under the top menu, shown on every Layla screen. Own module: touches only this strip; every screen keeps its own code. Roll back: delete the script line. */
 (function () {
-  var TABS = [['layla', 'Layla (WhatsApp)'], ['assistant', 'AI Assistant'], ['brain', 'Brain'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['morningbrief', 'Morning Brief'], ['dueboard', 'Due Board'], ['adminaudit', 'Audit Log']];
+  var TABS = [['layla', 'Chat with Layla'], ['assistant', 'AI Assistant'], ['brain', 'Brain'], ['morningbrief', 'Morning Brief'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules']];
   var KEYS = TABS.map(function (t) { return t[0]; });
   var bar;
   function css() {

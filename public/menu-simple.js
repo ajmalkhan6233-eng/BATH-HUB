@@ -1,7 +1,7 @@
 /* 13 Nov: simple left menu. Main 10 always visible; Layla's helpers and everything else sit in two folded groups. Own module: only reorders/hides sidebar items. */
 (function () {
   var MAIN = ['dashboard', 'pos', 'dailyledger', 'daily-sales', 'stock', 'grn', 'purchasing', 'expenses', 'cheques', 'layla'];
-  var LAYLA = ['brain', 'assistant', 'agentreview', 'agent-rules', 'morningbrief', 'reports', 'reports2', 'documents', 'dueboard', 'auditacc', 'adminaudit', 'moneyplan'];
+  var LAYLA = ['brain', 'assistant', 'agentreview', 'agent-rules', 'morningbrief'];
   var GONE = ['posledger', 'competitors'];
   function item(ul, k) { return ul.querySelector('.nav-item[data-page="' + k + '"]'); }
   function head(id, text, ul) {
