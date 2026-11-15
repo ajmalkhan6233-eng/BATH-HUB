@@ -13,6 +13,6 @@
   }
   function run() { if (busy) return; busy = true; try { Array.prototype.forEach.call(doc.querySelectorAll(SEL), fit); } catch (e) { /* never break a screen */ } busy = false; }
   function later() { clearTimeout(t); t = setTimeout(run, 120); }
-  try { new MutationObserver(function (m) { if (!busy) later(); }).observe(doc.body || doc.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] }); } catch (e) { /* ignore */ }
+  try { new MutationObserver(function (m) { if (!busy) later(); }).observe(doc.body || doc.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); } catch (e) { /* ignore */ }
   window.addEventListener('resize', later); later();
 })();

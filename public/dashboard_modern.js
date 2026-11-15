@@ -39,7 +39,7 @@
     var b = host.querySelector('#dm-hide'); if (b) b.onclick = function () { try { localStorage.setItem('rbh_dm_hidden', '1'); } catch (e) {} host.style.display = 'none'; };
     Array.prototype.forEach.call(host.querySelectorAll('.rc-ring'), function (el) { requestAnimationFrame(function () { el.style.strokeDashoffset = el.getAttribute('data-off'); }); });
   }
-  function get(u) { return fetch(u, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+  function get(u) { return fetch(u, { credentials: 'same-origin' }).then(function (r) { if (!r.ok || r.headers.get('X-Saved-Copy')) throw new Error(r.status); return r.json(); }); }
   function run() {
     var pro = document.getElementById('dash-pro'), page = document.getElementById('page-dashboard'); if (!page) return;
     var host = document.getElementById('dash-modern');

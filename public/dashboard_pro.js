@@ -189,8 +189,8 @@
     var b = box(); if (!b || busy) return;
     if (!manual && Date.now() - lastLoad < 8000) return;   // never hammer the server (a failed load used to re-trigger itself in a loop)
     manual = false; lastLoad = Date.now(); busy = true;
-    fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      busy = false; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
+    fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? (r.headers.get('X-Saved-Copy') ? 'keep' : r.json()) : null; }).then(function (d) {
+      busy = false; if (d === 'keep') return; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
       try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
     }).catch(function () { busy = false; var pg3 = el('page-dashboard'); if (pg3) pg3.classList.remove('dp-on'); });
   }

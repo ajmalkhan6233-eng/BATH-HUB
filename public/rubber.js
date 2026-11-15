@@ -3,7 +3,7 @@
 (function () {
   if (window.__bhRubber) return; window.__bhRubber = 1;
   var doc = document, MAX = 80, st = null, timer = null, ty = null;
-  function off() { try { return localStorage.getItem('bh_motion') === 'off'; } catch (e) { return false; } }
+  function off() { try { if (doc.documentElement.hasAttribute('data-nobounce')) return true;  return localStorage.getItem('bh_motion') === 'off'; } catch (e) { return false; } }
   function scrollerAt(el) { var cs; for (; el && el.nodeType === 1 && el !== doc.body && el !== doc.documentElement; el = el.parentElement) { cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el; } return null; }
   function canMove(el, dy) { return dy < 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1; }
   function rootEl() { return doc.querySelector('.page.active') || doc.querySelector('main') || doc.body; }

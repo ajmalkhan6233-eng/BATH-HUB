@@ -12,7 +12,7 @@
   // [group, [[key, label, soon?], ...]]
   var MAP = [
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
-    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
+    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['dueboard', 'Due Board (bills and cheques by due date)'], ['purchasing', 'Purchasing']]],
     ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
@@ -25,7 +25,7 @@
       ['--', 'All in one place'], ['reportshub', 'Report list (show, download, print)']
     ]],
     ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
-      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
+      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminaudit', 'Audit Log (who changed what)'], ['auditacc', 'Accounting audit'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
   ];
   var HOME = ['dashboard', 'Home'];
 
