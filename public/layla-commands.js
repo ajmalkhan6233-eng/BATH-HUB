@@ -30,6 +30,7 @@
     }
     return false;
   }
-  var api = { match: match, handle: handle };
+  var HINT = 'Ask me for anything. To open a tool say: open morning brief, open agent review, open agent rules, open brain, open assistant.';
+  var api = { match: match, handle: handle, hint: HINT };
   if (typeof module === 'object' && module.exports) module.exports = api; else root.LaylaCmd = api;
 })(typeof window !== 'undefined' ? window : this);

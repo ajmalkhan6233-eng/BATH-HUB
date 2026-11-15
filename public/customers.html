@@ -28,6 +28,9 @@ label{display:block;margin:8px 0 3px;color:var(--text2);font-size:12px}input,tex
 <div class="bar"><input id="q" placeholder="Search name, phone, location" style="max-width:280px"><button class="gold" id="add">+ Add customer</button><button id="reload">Refresh</button><span class="meta" id="cnt"></span></div>
 <div id="msg"></div>
 <div class="card wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>WhatsApp</th><th>Location</th><th>Source</th><th>Last contact</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="card" id="crcard"><b>Credit limits</b> <span class="meta">the most a customer may owe on credit</span>
+<div id="crlist" class="meta" style="margin:8px 0"></div>
+<div class="bar" style="margin:0" data-enter-next><input id="cr_n" list="cr_names" placeholder="Customer name" style="max-width:220px"><datalist id="cr_names"></datalist><input id="cr_l" type="number" inputmode="decimal" placeholder="Limit (LKR)" style="max-width:150px"><button class="gold" id="cr_go">Set limit</button><span class="meta" id="cr_msg"></span></div></div>
 <div class="modal" id="m"><div class="box" id="mb"></div></div>
 <script>
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -57,7 +60,11 @@ function form(c){
 $('add').onclick=()=>form();$('reload').onclick=load;$('q').oninput=render;
 $('m').addEventListener('click',e=>{if(e.target.id==='m')close();});
 $('tb').addEventListener('click',e=>{const tr=e.target.closest('tr[data-id]');if(!tr)return;form(ROWS.find(x=>String(x.id)===tr.dataset.id));});
-load();
+async function crLoad(){try{const L=await api('/api/credit-limits');$('crlist').innerHTML=L.length?L.map(c=>E(c.customer_name)+' <b>LKR '+Number(c.credit_limit||0).toLocaleString()+'</b>').join(' &nbsp;·&nbsp; '):'No limits set yet.';}catch(e){$('crlist').textContent=e.message}
+  $('cr_names').innerHTML=ROWS.map(c=>'<option value="'+E(c.name)+'">').join('');}
+$('cr_go').onclick=async()=>{const n=$('cr_n').value.trim(),l=$('cr_l').value;if(!n||l===''){$('cr_msg').textContent='Enter name and limit.';return}
+  try{await api('/api/credit-limits','POST',{customer_name:n,credit_limit:Number(l)});$('cr_msg').textContent='Saved.';$('cr_n').value='';$('cr_l').value='';crLoad();}catch(e){$('cr_msg').textContent='Not saved: '+e.message}};
+load().then(crLoad);
 </script><script src="/bathhub-logo.js"></script>
 <script src="/layla-door.js"></script>
 </body></html>
