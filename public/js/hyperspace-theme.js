@@ -22,7 +22,7 @@
   const CLEAR = '5,7,10';   // near-black navy clear color
   const WARM = '212,162,78'; // brass accent, matches the existing UI palette
 
-  function isEnabled(){ return localStorage.getItem(KEY) !== 'off'; }
+  function isEnabled(){ return localStorage.getItem(KEY) === 'on'; }   // 15 Nov (AJ): off by default, the black background was covering the page
   // Host pages with their OWN richer background on certain views (e.g.
   // BATHCO_NATURE.html's WebGL nature/kim_forest scene, home page + login
   // screen only) can call setPageActive(false) there so the two don't

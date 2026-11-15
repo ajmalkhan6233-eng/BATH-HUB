@@ -11,13 +11,11 @@
   'use strict';
   // [group, [[key, label, soon?], ...]]
   var MAP = [
-    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
-      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
-    ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
-    ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
-    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
+    ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
     ['Layla', [['layla', 'Layla (WhatsApp)'], ['assistant', 'AI Assistant'], ['brain', 'RBH Brain 🧠'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules'], ['morningbrief', 'Morning brief'], ['dueboard', 'Due Board'], ['adminaudit', 'Audit log']]],
     ['Reports', [
       ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
@@ -25,7 +23,9 @@
       ['--', 'Stock and items'], ['rep:items', 'Items: cost, price, profit'], ['rep:svalue', 'Stock value by category'], ['rep:lowstock', 'Low stock (5 or less)'], ['rep:zero', 'Out of stock'], ['rep:noprice', 'Items with no price'], ['rep:nocost', 'Items with no cost'],
       ['--', 'Vendors and cheques'], ['rep:vsum', 'Vendors: bought, paid, pending'], ['rep:vbills', 'Vendor bills: every bill'], ['rep:vone', 'One vendor: all bills'], ['rep:vcheq', 'Cheques given, not cleared'], ['rep:vdue', 'Bills still to pay, by due date'], ['rep:grn', 'GRN history: every goods-in line'],
       ['--', 'All in one place'], ['reportshub', 'Report list (show, download, print)']
-    ]]
+    ]],
+    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
+      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
   ];
   var HOME = ['dashboard', 'Home'];
 
