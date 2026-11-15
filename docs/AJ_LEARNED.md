@@ -25,3 +25,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov: AJ splits one supplier into two reps as two vendors, name style 'Fawaz (Fazal Hardware Pvt Ltd)'; both reps collect one company's cheques. Cheques are cash cheques on HNB; he lists them on an envelope.
 - 12 Nov: HARD RULE: never skip or ignore an alert or blocked task. Every NOT DONE item stays listed (AI_MEMORY/NOT_DONE.md) with Approve / Wait / Disregard until AJ picks one.
 - 2026-11-12 | AJ wants Pocket to stay open when he changes page, open with Face ID, and show sales, stock, money, cheques (view only).
+- 2026-11-15 | AJ: "Cool Water" = brand; the shop/vendor name in the app is COOL LANKA IMPEX (Pvt) Ltd. Under Cool Water there are different makes (Delta, Maval). His 3 cheques (704933/34/35) are on that one vendor.
