@@ -159,6 +159,14 @@ router.post('/pos-bills', async (req, res) => {
     const client = await pool.connect();
     try {
         const { customer_name, customer_phone, items, discount_pct, payment_method, notes } = req.body;
+        // 15 Nov (AJ: back-date a sale). Optional sale_date: owner/admin only, a real day, not in the future. Reports read created_at::date, so every report follows. Normal sales are untouched.
+        let backTs = null;
+        if (req.body.sale_date) {
+            const sd = String(req.body.sale_date);
+            if (!canOverride(req)) return res.status(403).json({ error: 'Only the owner or admin can enter a bill for an earlier day' });
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || isNaN(Date.parse(sd)) || sd > todayLK()) return res.status(400).json({ error: 'Bill date must be a real day, not in the future' });
+            if (sd < todayLK()) backTs = sd + ' ' + new Date(Date.now() + 19800000).toISOString().slice(11, 19);
+        }
         if (!Array.isArray(items) || !items.length) {
             return res.status(400).json({ error: 'items (non-empty array) is required' });
         }
@@ -239,10 +247,10 @@ router.post('/pos-bills', async (req, res) => {
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client);
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted, created_at)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12::timestamp, CURRENT_TIMESTAMP))
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock, backTs]);
         const billId = billRes.rows[0].id;
         if (payInfo) {
             for (const p of payInfo.rows) {

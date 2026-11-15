@@ -208,6 +208,8 @@
     <div class="cust-row" id="custRow">
       <div><label for="customerName">Customer name</label>
         <input type="text" id="customerName" placeholder="Walk-in customer" autocomplete="off" enterkeyhint="next"></div>
+      <div><label for="saleDate">Bill date (owner: pick an earlier day)</label>
+        <input type="date" id="saleDate"></div>
       <div><label for="customerPhone">Phone (WhatsApp)</label>
         <input type="tel" id="customerPhone" placeholder="e.g. 077 123 4567" oninput="waCheckSoon()" autocomplete="off" enterkeyhint="next"></div>
       <label class="wa-line" style="align-self:end;margin:0 0 8px;white-space:nowrap"><input type="checkbox" id="autoWa" checked onchange="try{localStorage.setItem('pos_auto_wa', this.checked ? '1' : '0')}catch(e){}" style="width:auto"> WhatsApp receipt</label>
@@ -474,6 +476,7 @@ async function generateBill() {
       discount_pct,
       payment_method: document.getElementById('paymentMethod').value,
     };
+    { const sdv = document.getElementById('saleDate'); if (sdv && sdv.value && !editingId) payload.sale_date = sdv.value; }
     if (_quoteId && !editingId) payload.quotation_id = _quoteId;
     // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
     const mode = payload.payment_method;
@@ -949,7 +952,7 @@ function resetForm() {
 // ---- customer name / phone: drop-down list, no stale value (Task 30) ----
 let _custId = null;   // set only when a row is TAPPED in the list
 function clearCustomer() {
-  document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = '';
+  document.getElementById('customerName').value = ''; { const sd0 = document.getElementById('saleDate'); if (sd0) sd0.value = ''; } document.getElementById('customerPhone').value = '';
   _custId = null; const w = document.getElementById('waCheck'); if (w) { w.textContent = ''; w.className = 'wa-receipt-msg'; }
 }
 (function () {
