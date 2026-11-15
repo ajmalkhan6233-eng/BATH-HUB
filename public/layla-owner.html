@@ -19,7 +19,7 @@ button,.btn{min-width:44px;min-height:44px;border-radius:12px;border:0;backgroun
 <button type="button" class="ghost" id="cam" aria-label="Take a photo">&#128247;</button><button type="button" class="ghost" id="clip" aria-label="Attach a bill, PDF, photo or voice note">&#128206;</button>
 <textarea id="t" rows="1" placeholder="Talk to Layla: a bill, a cheque, a question" enterkeyhint="send"></textarea>
 <button type="button" class="ghost" id="mic" aria-label="Speak">&#127908;</button><button type="submit" id="go">Send</button></form>
-<script src="/lib/offlineSave.js"></script>
+<script src="/lib/offlineSave.js"></script><script src="/layla-commands.js"></script>
 <script>
 const $=(i)=>document.getElementById(i), log=$('log');
 const add=(cls,txt)=>{const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;log.append(d);log.scrollTop=log.scrollHeight};
@@ -41,6 +41,7 @@ async function diarySend(text){
     add('bot',d.reply)}catch(e){add('sys','Not saved: '+e.message)}}
 async function send(text){
   text=(text||'').trim(); if(!text)return; add('me',text);
+  try{if(window.LaylaCmd&&!diaryMode&&window.LaylaCmd.handle(text,(m)=>add('bot',m)))return}catch(e){}
   if(diaryMode){await diarySend(text);return}
   const r=await OfflineSave.post('/api/layla-owner/message',{text},{label:'chat'});
   if(r.queued)add('sys','No internet. Saved on this phone, I will answer when it is back.');
