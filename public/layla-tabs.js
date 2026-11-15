@@ -1,7 +1,7 @@
 /* layla-tabs.js (15 Nov, AJ: "One Layla: AI assistant, agent review, agent rules, morning brief, audit log, everything under Layla").
    One strip of tabs under the top menu, shown on every Layla screen. Own module: touches only this strip; every screen keeps its own code. Roll back: delete the script line. */
 (function () {
-  var TABS = [['layla', 'Chat with Layla'], ['assistant', 'AI Assistant'], ['brain', 'Brain'], ['morningbrief', 'Morning Brief'], ['agentreview', 'Agent Review'], ['agent-rules', 'Agent Rules']];
+  var TABS = [['layla', '\u2190 Back to Layla']];   // 15 Nov: ONE Layla. The other tools open by talking to her (layla-commands.js); only a Back button shows on them.
   var KEYS = TABS.map(function (t) { return t[0]; });
   var bar;
   function css() {
@@ -26,7 +26,7 @@
   function current() { var p = document.querySelector('.page.active'); return p && p.id ? p.id.replace(/^page-/, '') : ''; }
   function sync() {
     if (!build()) return;
-    var k = current(), on = KEYS.indexOf(k) >= 0;
+    var k = current(), on = ['assistant', 'brain', 'morningbrief', 'agentreview', 'agent-rules'].indexOf(k) >= 0;
     bar.classList.toggle('on', on);
     Array.prototype.forEach.call(bar.children, function (b) { b.classList.toggle('sel', b.dataset.k === k); b.setAttribute('aria-selected', b.dataset.k === k ? 'true' : 'false'); });
   }

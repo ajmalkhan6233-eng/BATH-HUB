@@ -38,10 +38,17 @@
     if ((ty === 'text' || ty === 'search') && HINT.test(t.value)) { t.value = ''; t.dispatchEvent(new Event('input', { bubbles: true })); return; }
     if (ty === 'number' && /^0(\.0+)?$/.test(t.value)) { try { t.select(); } catch (x) {} }
   });
+  /* Enter = Tab on every form (Ajmal 2026-11-15). Skips search/scan boxes, chat boxes, textareas, buttons, and anything a page already handled itself. */
+  var SKIP = /search|scan|barcode|chat|ask|message/i;
   document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
-    var t = e.target; if (!t || t.tagName !== 'INPUT' || !t.closest || !t.closest('[data-enter-next]')) return;
-    var box = t.closest('[data-enter-next]'), all = [].slice.call(box.querySelectorAll('input:not([type=hidden]):not([disabled]):not([readonly]),select,textarea')).filter(function (x) { return x.offsetParent; });
+    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
+    var t = e.target; if (!t || !t.closest || (t.tagName !== 'INPUT' && t.tagName !== 'SELECT')) return;
+    var ty = (t.type || 'text').toLowerCase();
+    if (/^(button|submit|checkbox|radio|file|hidden|search|reset|image|range|color)$/.test(ty)) return;
+    if (t.closest('[data-no-enter-next]') || t.getAttribute('role') === 'combobox' || t.getAttribute('aria-autocomplete')) return;
+    if (SKIP.test((t.placeholder || '') + ' ' + (t.id || '') + ' ' + (t.name || ''))) return;
+    var box = t.closest('[data-enter-next],form,.modal,.box,.card,main,body') || document.body;
+    var all = [].slice.call(box.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button]):not([type=submit]):not([disabled]):not([readonly]),select,textarea')).filter(function (x) { return x.offsetParent && x.tabIndex !== -1; });
     var i = all.indexOf(t); if (i < 0 || i === all.length - 1) return;
     e.preventDefault(); if (typeof t.onchange === 'function') try { t.onchange(); } catch (x) {}
     var n = all[i + 1]; n.focus(); try { n.select(); } catch (x) {}

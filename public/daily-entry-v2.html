@@ -3102,6 +3102,9 @@
      independent of Hyperspace below, not a replacement for it — both persist
      side by side per the owner's explicit instruction) ═══════════ */
   const THEMES = [
+    { id:"plain", label:"Plain (like other pages)",
+      bg:"#f4f4f2",
+      g0:"#2b2b27", g1:"#34342f", g2:"#3d3d37", em:"#c9a227", emD:"#8a6d1a", emI:"#4a4a42", br:"#c9a227", brS:"#f4f4f2" },
     { id:"nature", label:"Nature (Default)",
       bg:"radial-gradient(1100px 500px at 75% -10%, rgba(47,191,143,.10), transparent 60%), radial-gradient(800px 420px at 8% 0%, rgba(212,162,78,.07), transparent 55%), linear-gradient(180deg, #132019, #0C1412 480px)",
       g0:"#0C1412", g1:"#132019", g2:"#1A2B22", em:"#2FBF8F", emD:"#17594A", emI:"#0F3D33", br:"#D4A24E", brS:"#F3E3C3" },
@@ -3163,7 +3166,9 @@
   document.getElementById("themeBtn").addEventListener("click", (e)=>{
     e.stopPropagation(); themeMenu.classList.toggle("open"); sendMenu.classList.remove("open");
   });
-  applyTheme(localStorage.getItem(THEME_KEY) || "nature");
+  // 15 Nov (AJ: "opens in a vivid colour, make it plain"): everyone starts on Plain once; a swatch he picks afterwards is kept.
+  if (!localStorage.getItem("bathco-theme-plain-v1")) { localStorage.setItem("bathco-theme-plain-v1", "1"); localStorage.setItem(THEME_KEY, "plain"); }
+  applyTheme(localStorage.getItem(THEME_KEY) || "plain");
 
   /* ═══════════ THEME SYSTEM #2 — Hyperspace animated background (Task Batch D) ═══════════
      A SEPARATE, independent on/off toggle — not a replacement for the color
@@ -4631,6 +4636,8 @@
   syncTopbarHeight();
 })();
 </script>
+<script src="/ledger-fixed.js" defer></script>
+<script src="/bathhub-a11y.js" defer></script>
 <script src="/bathhub-logo.js"></script>
 <script src="/layla-door.js"></script>
 </body>
