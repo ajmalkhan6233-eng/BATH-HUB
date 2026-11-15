@@ -57,6 +57,7 @@
   function count(el, key) {   // "LKR 12,345" or "12": count up from the last shown value (or 0)
     var t = el.textContent, m = /^(LKR )?([\d,]+)(%?)$/.exec(t.trim()); if (!m) return;
     var to = parseInt(m[2].replace(/,/g, ''), 10), pre = m[1] || '', suf = m[3] || '', from = last[key] != null ? last[key] : 0; last[key] = to;
+    return;   /* 16 Nov: numbers show final value at once, no count-up (Ajmal: numbers changed while loading) */
     if (calm() || from === to || !isFinite(to)) return;
     var t0 = performance.now(), dur = 800;
     (function step(now) { var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3), v = Math.round(from + (to - from) * e); el.textContent = pre + v.toLocaleString('en-LK') + suf; if (p < 1) requestAnimationFrame(step); else el.textContent = t; })(t0);
