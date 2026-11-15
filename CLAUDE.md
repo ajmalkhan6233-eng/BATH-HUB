@@ -7,7 +7,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## THE SPLIT (never break)
 - CHAT (cloud) plans, BUILDS, TESTS (copy DB, never real data) and PUSHES everything: code, scripts, checks. It also writes the exact PC script.
-- YOU (Claude Code on the PC) only RUN what chat built: pull, run the named script, merge, restart, report. You never write feature code. You never explore or decide scope. If a task has no ready script or exact command, write "NEEDS CHAT: <what is missing>" in LIVE.md and stop. Do not improvise.
+- YOU (Claude Code on the PC) only RUN what chat built: pull, run the named script, merge, restart, report. LIVE EDIT ALLOWED (AJ 15 Nov, replaces the old never-edit rule): edit public/ screens directly, one screen at a time, scoped edits, backup first, branch work only, never main. Restart only apex-server, only for server files.
 - If a command fails: put the EXACT error (last 15 lines, no secrets) in LIVE.md, push, stop. Chat fixes it.
 
 ## HOW A TASK RUNS
