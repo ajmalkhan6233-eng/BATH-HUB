@@ -72,6 +72,7 @@
   function lift(doc) {
     try {
       if (!doc || !doc.head || doc.getElementById('bh-lift')) return;
+      try { if (!doc.location || doc.location.href === 'about:blank' || !doc.body || !doc.body.firstChild) return; } catch (x) { return; }   // 15 Nov: empty frames get nothing injected (was 5 files x 43 frames at start)
       if (doc.documentElement && doc.documentElement.hasAttribute('data-keepfont')) return;   // 13 Nov: stable screens (Stock) get no late styles, so nothing jumps after load
       var st = doc.createElement('style'); st.id = 'bh-lift'; st.textContent = doc.documentElement.hasAttribute('data-fc') ? '' : FRAME_CSS; doc.head.appendChild(st);   // 14 Nov: data-fc = frame-comfort.css already loaded at first paint
       var mc = doc.createElement('link'); mc.rel = 'stylesheet'; mc.href = '/motion.css'; doc.head.appendChild(mc);
@@ -86,7 +87,7 @@
   function watchFrames() {
     Array.prototype.forEach.call(document.querySelectorAll('iframe'), function (f) {
       if (f.dataset.bhLift) return; f.dataset.bhLift = '1';
-      var go = function () { try { if (f.contentDocument && f.contentDocument.body) lift(f.contentDocument); } catch (x) { /* other origin */ } };
+      var go = function () { try { if (!f.getAttribute('src') || f.getAttribute('src') === 'about:blank') return; if (f.contentDocument && f.contentDocument.body) lift(f.contentDocument); } catch (x) { /* other origin */ } };
       f.addEventListener('load', go); go();
     });
   }
