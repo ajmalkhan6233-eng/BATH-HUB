@@ -3,6 +3,6 @@
 try {
   if (top !== self && !/pos_billing|grn_workbench|layla-owner/.test(location.pathname)) {
     var h = document.documentElement;
-    if (!h.hasAttribute('data-keepfont')) { h.classList.add('in-frame'); document.write('<link rel="stylesheet" href="/fit-window.css">'); }
+    if (!h.hasAttribute('data-keepfont')) { h.classList.add('in-frame'); h.setAttribute('data-fc','1'); document.write('<link rel="stylesheet" href="/fit-window.css"><link rel="stylesheet" href="/frame-comfort.css">'); }
   }
 } catch (e) { /* ignore */ }
