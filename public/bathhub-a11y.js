@@ -22,7 +22,7 @@
     (root || document).querySelectorAll('input:not([type=hidden]),select,textarea').forEach(nameField);
     (root || document).querySelectorAll('button,[role=button],a[href]').forEach(nameButton);
   }
-  function start() { run(); if (window.MutationObserver) { var t; new MutationObserver(function () { clearTimeout(t); t = setTimeout(run, 150); }).observe(document.body, { childList: true, subtree: true }); } }
+  function start() { run(); if (window.MutationObserver) { var t; var q = []; new MutationObserver(function (m) { m.forEach(function (r) { [].forEach.call(r.addedNodes, function (n) { if (n.nodeType === 1) q.push(n); }); }); clearTimeout(t); t = setTimeout(function () { var l = q.splice(0); l.forEach(function (n) { if (n.isConnected) { run(n); if (n.matches && n.matches('input,select,textarea')) nameField(n); if (n.matches && n.matches('button,[role=button],a[href]')) nameButton(n); } }); }, 150); }).observe(document.body, { childList: true, subtree: true }); } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 /* INPUT HELP (Ajmal 2026-11-04), shared by every page that loads this file:

@@ -55,3 +55,7 @@ html body #view3 .scroll{overflow-x:auto}
 html body #view1 #right.has-lines { overflow-y:auto !important; overflow-x:hidden !important; }
 html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:0 0 auto !important; min-height:var(--grn20,640px) !important; }
 html body #view1 #right.has-lines > .g-ftr { position:sticky !important; bottom:0 !important; z-index:6 !important; }
+
+/* 15 Nov SPEED: the GRN lines box scrolls on its own layer; rows never repaint the rest of the page while scrolling. Layout/paint only. */
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { contain: layout style; overscroll-behavior: contain; will-change: scroll-position; }
+html body #view1 .card, html body #view1 .dr { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; transition: none !important; }
