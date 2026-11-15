@@ -13,7 +13,7 @@
   var MAP = [
     ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
       ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
-    ['Sales', [['pos', 'POS Billing'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
+    ['Sales', [['pos', 'POS Billing'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['posledger', 'POS + Ledger side by side'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown'], ['commissions', 'Sale Commissions']]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['purchasing', 'Purchasing']]],
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
@@ -120,7 +120,7 @@
     function visible(g) { return g[1].filter(function (i) { return i[0] === '--' || i[2] || i[0].indexOf('profit:') === 0 || exists(i[0]); }); }
     function build() {
       bar.innerHTML = '';
-      var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home); var posb = doc.createElement('button'); posb.type = 'button'; posb.className = 'mb-btn'; posb.textContent = 'POS'; posb.style.fontWeight = '700'; posb.onclick = function () { go('pos'); }; bar.appendChild(posb);
+      var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home); var posb = doc.createElement('button'); posb.type = 'button'; posb.className = 'mb-btn'; posb.textContent = 'POS'; posb.style.fontWeight = '700'; posb.onclick = function () { go('pos'); }; bar.appendChild(posb); var dlb = doc.createElement('button'); dlb.type = 'button'; dlb.className = 'mb-btn'; dlb.textContent = 'Daily Ledger'; dlb.style.fontWeight = '700'; dlb.onclick = function () { go('dailyledger'); }; bar.appendChild(dlb);
       MAP.forEach(function (g) {
         var items = visible(g); if (!items.length) return;
         var top = doc.createElement('div'); top.className = 'mb-top';
