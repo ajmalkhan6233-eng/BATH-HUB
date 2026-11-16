@@ -185,14 +185,15 @@
     if (!b && page) { b = document.createElement('div'); b.id = BOX_ID; b.innerHTML = '<div class="dp-note" style="padding:10px">Loading your dashboard…</div>'; page.insertBefore(b, page.firstChild); page.classList.add('dp-on'); }
     return b;
   }
-  var retries = 0;
+  var retries = 0, errTry = 0;
   function load() {
     var b = box(); if (!b || busy) return;
     if (!manual && Date.now() - lastLoad < 8000) return;   // never hammer the server (a failed load used to re-trigger itself in a loop)
     manual = false; lastLoad = Date.now(); busy = true;
     fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? (r.headers.get('X-Saved-Copy') ? 'keep' : r.json()) : null; }).then(function (d) {
       busy = false; retries = 0; if (d === 'keep') return; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
-      try { var html = render(d); if (b.getAttribute('data-h') === html) return; var hh = b.offsetHeight; if (hh) b.style.minHeight = hh + 'px'; b.setAttribute('data-h', html); b.innerHTML = html; var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
+      try { if (!(d.block_errors && d.block_errors.length)) errTry = 0; else if (errTry < 3) { errTry++; setTimeout(function () { manual = true; load(); }, 4000); }   /* some blocks failed on the server: ask again in 4 s (3 times) */
+        var html = render(d) + (d.block_errors && d.block_errors.length ? '<div class="dp-note" style="padding:6px">Some numbers did not load (' + esc(d.block_errors.join(', ')) + '). Trying again.</div>' : ''); if (b.getAttribute('data-h') === html) return; var hh = b.offsetHeight; if (hh) b.style.minHeight = hh + 'px'; b.setAttribute('data-h', html); b.innerHTML = html; var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
     }).catch(function () { busy = false; var pg3 = el('page-dashboard'); if (pg3) pg3.classList.remove('dp-on'); if (++retries <= 6) setTimeout(function () { manual = true; load(); }, 5000); });   /* 16 Nov: a failed load tries again by itself (6 times, 5 s apart) */
   }
   function visible() { var p = el('page-dashboard'); return p && p.classList.contains('active') && !document.hidden; }
