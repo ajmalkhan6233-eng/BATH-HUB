@@ -17,3 +17,4 @@
 - 12 Nov 14:45 | AJ approved: Home=Jarvis HUD (done, UNVERIFIED on real data). N9 Pocket, N11 tunnel, N12 real-number check, N1 Context7 all folded into bridge task 203 (waits on PC: check bridge). N10 Accounting ledger, N13 Gemini animation code still OPEN
 
 - task 209 step 5 (Pocket deploy) held 2026-11-12: script resets passcode/secrets; needs chat fix.
+| N24 | 16 Nov: close code gap 136+ to 059+ (scripts/close_code_gap.js, tested on copy) | PLAYED, waiting for PC | PC check bridge |
