@@ -29,6 +29,8 @@
   function refresh(row) {
     var l = row.querySelector('.i-line'), sell = row.querySelector('.i-sell'), pe = row.querySelector('.i-price'), p = num(pe && pe.value);
     if (p && p !== num(row.dataset.priceSet)) { row.dataset.list = p; row.dataset.priceSet = p; delete row.dataset.sell; }   // a new price came from the picker: that is the list price
+    var cd = row.querySelector('.i-code'), cv = row.dataset.itemCode ? 'Code ' + row.dataset.itemCode : '';      // the shop item code, visible under the name
+    if (cd && cd.textContent !== cv) cd.textContent = cv;
     var q = num(row.querySelector('.i-qty').value), g = gross(row);
     var lv = g ? money(r2(g - cash(row))) : '';
     if (l && l.textContent !== lv) l.textContent = lv;     // only when changed: writing the same text again would wake the observer forever
@@ -48,6 +50,7 @@
     if (!disc || !price) return; row.dataset.lined = '1';
     var b = document.createElement('input'); b.className = 'i-sell'; b.type = 'number'; b.step = 'any'; b.min = '0'; b.placeholder = 'Selling'; b.setAttribute('inputmode', 'decimal'); b.setAttribute('aria-label', 'Selling price'); b.onfocus = function () { this.select(); };
     row.insertBefore(b, price);
+    var sh = row.querySelector('.stock-hint'); if (sh && sh.parentNode) { var cs = document.createElement('div'); cs.className = 'i-code'; sh.parentNode.insertBefore(cs, sh); }
     disc.type = 'text'; disc.setAttribute('inputmode', 'decimal'); disc.placeholder = '0 or 10%'; disc.removeAttribute('min');
     var l = document.createElement('div'); l.className = 'i-line'; row.insertBefore(l, rm);
     refresh(row);

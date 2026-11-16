@@ -82,16 +82,13 @@ pool.query(`
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
 router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.status(404).json({ error: 'not found' }));
 
-// Sequential per day (BHT-YYYYMMDD-0001, -0002 ...). Must run inside the bill's transaction:
-// the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
-// suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
+// 16 Nov (AJ): short bill numbers RBH-S301, RBH-S302 ... one running count, starting at 301. Old BHT- numbers stay as they are.
+// Must run inside the bill's transaction: the advisory lock stops two cashiers being handed the same number.
 async function nextBillNumber(client) {
-    const prefix = `BHT-${todayLK().replace(/-/g, '')}-`;
     await client.query('SELECT pg_advisory_xact_lock(774413)');
     const r = await client.query(
-        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '-([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number LIKE $1`,
-        [prefix + '%']);
-    return prefix + String(r.rows[0].n).padStart(4, '0');
+        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '^RBH-S([0-9]+)$')::int), 300) + 1 AS n FROM pos_bills WHERE bill_number LIKE 'RBH-S%'`);
+    return 'RBH-S' + String(r.rows[0].n);
 }
 
 // Round to 2 decimals (money). Adding Number.EPSILON stops 1.005 -> 1.00.

@@ -14,3 +14,5 @@ html body #formPanel .fp-right #liveBill, html body #formPanel .fp-right > #live
 html body #formPanel .fp-right { justify-content:flex-start !important; }
 html body #formPanel .fp-right { align-content:start !important; grid-auto-rows:min-content !important; grid-template-rows:none !important; }
 html body #formPanel .fp-right #liveBill { align-self:start !important; }
+html body #formPanel .i-code { font-size:12px; font-weight:600; color:var(--gold-text,#8a6a1f); line-height:1.2; display:inline-block; margin-right:10px; }
+html body #formPanel .i-code + .stock-hint { display:inline-block; }
