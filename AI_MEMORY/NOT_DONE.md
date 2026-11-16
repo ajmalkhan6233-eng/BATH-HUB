@@ -18,3 +18,4 @@
 
 - task 209 step 5 (Pocket deploy) held 2026-11-12: script resets passcode/secrets; needs chat fix.
 | N24 | 16 Nov: close code gap 136+ to 059+ (scripts/close_code_gap.js, tested on copy) | PLAYED, waiting for PC | PC check bridge |
+| N25 | 16 Nov: POS-first loading (pos-frame preloads at start, Home shows by 0.8s, SW v98-r). Needs one look on PC | PLAYED, waiting for PC | AJ reloads /owner once |
