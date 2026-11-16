@@ -7,7 +7,7 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 
 ## THE SPLIT (never break)
 - CHAT (cloud) plans, BUILDS, TESTS (copy DB, never real data) and PUSHES everything: code, scripts, checks. It also writes the exact PC script.
-- YOU (Claude Code on the PC) only RUN what chat built: pull, run the named script, merge, restart, report. LIVE EDIT ALLOWED (AJ 15 Nov, replaces the old never-edit rule): edit public/ screens directly, one screen at a time, scoped edits, backup first, branch work only, never main. Restart only apex-server, only for server files.
+- YOU (Claude Code on the PC) only RUN what chat built: pull, run the named script, merge, restart, report. LIVE EDIT ALLOWED: edit public/ screens directly, one screen at a time, scoped edits, backup first, branch work only, never main. Restart only apex-server, only for server files.
 - If a command fails: put the EXACT error (last 15 lines, no secrets) in LIVE.md, push, stop. Chat fixes it.
 
 ## HOW A TASK RUNS
@@ -29,11 +29,11 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 - INVOICE CHECK (AJ 16 Nov, hard rule): before loading ANY vendor invoice/GRN, compare with every earlier one: same invoice no.? same vendor (no duplicate vendor names)? same item codes/prices already in? Already loaded = STOP and say so; never load twice.
 
 ## NEVER ASK AJ
-STANDING OK (AJ, 12 Nov): every safe, free, non-destructive step a task needs is pre-approved, incl. replays and retries. Don't stop for approval: take the safe default, log it, carry on. Never: spend money, delete, push main.
+STANDING OK: every safe, free, non-destructive step a task needs is pre-approved, incl. replays and retries. Take the safe default, log it, carry on. Never: spend money, delete, push main.
 Do not ask AJ anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers in AI_BRIDGE/ANSWERS.md; no answer = safe default, carry on. When AJ gives a task, finish ALL of it, then report once.
 
 ## BUILD EVERYTHING
-Never leave a part out. If chat cannot build it, say so and print ONE paste block for Gemini plus where to paste the reply. For pasted references, say in 3 lines what was taken and what not.
+Never leave a part out. If chat cannot build it, give ONE Gemini paste block. Pasted references: 3 lines on what was taken.
 
 ## SAFETY (AJ's hard rules)
 - App branch `work` only. Never push main, never force-push, merge only when a task says so.
