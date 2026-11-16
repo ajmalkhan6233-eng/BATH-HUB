@@ -202,7 +202,7 @@
     var lo = el('login-overlay'); if (lo) new MutationObserver(function () { if (lo.style.display === 'none' && visible()) setTimeout(load, 400); }).observe(lo, { attributes: true, attributeFilter: ['style', 'class'] });
     document.addEventListener('visibilitychange', function () { if (visible()) load(); });
     timer = setInterval(function () { if (visible()) load(); }, 60000);
-    setTimeout(function () { wasVis = !!visible(); if (wasVis) load(); }, 1500);
+    setTimeout(function () { wasVis = !!visible(); if (wasVis) load(); }, 250);   /* 16 Nov: was 1500, Home numbers now start loading sooner */
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   window.BHDashboardPro = { reload: load };
