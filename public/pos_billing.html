@@ -964,7 +964,7 @@ function clearCustomer() {
     onPick: c => { if (c.walkin) { nameBox.value = ''; phoneBox.value = ''; pickedPhone = ''; _custId = null; return; } nameBox.value = c.name || ''; phoneBox.value = c.phone || ''; pickedPhone = phoneBox.value; _custId = c.id || null; waCheckSoon(); } };
   const nameOpts = Object.assign({}, base, { onType: () => { if (_custId && phoneBox.value === pickedPhone) { phoneBox.value = ''; waCheckSoon(); } _custId = null; } });
   const phoneOpts = Object.assign({}, base, { onType: () => { _custId = null; } });
-  if (window.Suggest) { Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts);
+  if (window.Suggest) { /* 16 Nov AJ: no customer name/phone drop-down (it got in the way). Re-enable: Suggest.attach(nameBox, nameOpts); Suggest.attach(phoneBox, phoneOpts); */
     // AJ 12 Nov: the scan / type-code box also drops a list (Down arrow = from the lowest code); picking one adds it like a scan.
     const scanBox = document.getElementById('scanBox');
     Suggest.attach(scanBox, { limit: 60, load: () => fetch('/api/items?limit=300', { credentials: 'same-origin' }).then(r => (r.ok ? r.json() : [])).then(a => (Array.isArray(a) ? a : []).slice().sort((x, y) => String(x.item_code || '').localeCompare(String(y.item_code || ''), undefined, { numeric: true }))),

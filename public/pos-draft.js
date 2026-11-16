@@ -21,7 +21,7 @@
       set('customerName', s.c); set('customerPhone', s.p); set('discountPct', s.d); set('paymentMethod', s.m);
       if (typeof payModeChanged === 'function') payModeChanged();
       if (typeof updateCapHint === 'function') updateCapHint();
-      if (typeof scanMsg === 'function') scanMsg('Your unsaved bill was put back.', 'ok');
+      /* 16 Nov AJ: the bill is put back silently, no banner */
     } catch (e) { /* ignore */ }
   }
   try {
