@@ -26,6 +26,8 @@ His words: "go" = build now. "hold" = do nothing. "wrap up" = give the handoff. 
 - End with ONE status word: GREEN, DONE, BLOCKED, NEEDS YOU or UNVERIFIED, plus the next step.
 - A judgment call: give the exact answer to paste. A PC step for AJ is always ONE line: check bridge.
 
+- INVOICE CHECK (AJ 16 Nov, hard rule): before loading ANY vendor invoice/GRN, compare with every earlier one: same invoice no.? same vendor (no duplicate vendor names)? same item codes/prices already in? Already loaded = STOP and say so; never load twice.
+
 ## NEVER ASK AJ
 STANDING OK (AJ, 12 Nov): every safe, free, non-destructive step a task needs is pre-approved, incl. replays and retries. Don't stop for approval: take the safe default, log it, carry on. Never: spend money, delete, push main.
 Do not ask AJ anything. Write each question or concern in AI_BRIDGE/QUESTIONS.md: HH:MM | Q# | question | your safe default. Chat answers in AI_BRIDGE/ANSWERS.md; no answer = safe default, carry on. When AJ gives a task, finish ALL of it, then report once.

@@ -29,3 +29,5 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 16 Nov: Rent is solid 70,000 a month; the 20,000 he mentioned is the ADVANCE (deposit), not rent.
 - 16 Nov: Cool Lanka Impex is the COMPANY (vendor); Cool Water is its BRAND; Delta and Marvel are categories below the brand. Do not ask again.
 - 16 Nov: When AJ says "done" it is done: do not keep saying UNVERIFIED or ask him to double-check. Gaps get closed later. He wants everything pushed at once and one paste: check bridge.
+
+- 16 Nov: every invoice is checked against earlier ones first (invoice no., vendor, codes, prices) before loading. Vendor list must have one row per vendor.
