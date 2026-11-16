@@ -34,7 +34,7 @@
   // double-click a bill row -> open it in POS, ready to edit
   document.addEventListener('dblclick', function (e) {
     var tr = e.target && e.target.closest && e.target.closest('tr'); if (!tr) return;
-    var m = /BHT-\d{8}-\d{3,5}/.exec(tr.textContent || ''); if (!m) return;
+    var m = /(?:RBH-(?:S|HS)\d{3,6}|BHT-\d{8}-\d{3,5})/.exec(tr.textContent || ''); if (!m) return;
     e.preventDefault(); openForEdit(m[0]);
   });
   async function openForEdit(no) {

@@ -1492,7 +1492,7 @@ app.post('/api/quotations', async (req, res) => {
             [customer_id, quote_date||todayLK(), valid_until||null,
              subtotal, disc, total, notes||null, req.session.user.id]);
         const quotation = qr.rows[0];
-        await client.query(`UPDATE quotations SET quote_no='Q-'||LPAD(id::text,4,'0') WHERE id=$1`, [quotation.id]);
+        await client.query(`UPDATE quotations SET quote_no='RBH-Q'||LPAD(id::text,3,'0') WHERE id=$1`, [quotation.id]);
         for (const [i, it] of items.entries()) {
             const lineTotal = (+it.qty||0)*(+it.unit_price||0);
             await client.query(

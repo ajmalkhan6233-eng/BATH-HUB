@@ -82,16 +82,15 @@ pool.query(`
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
 router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.status(404).json({ error: 'not found' }));
 
-// Sequential per day (BHT-YYYYMMDD-0001, -0002 ...). Must run inside the bill's transaction:
-// the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
-// suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
-async function nextBillNumber(client) {
-    const prefix = `BHT-${todayLK().replace(/-/g, '')}-`;
+// 16 Nov (AJ): short bill numbers. Retail: RBH-S001, RBH-S002 ... Wholesale (to shops): RBH-HS001 ... Each has its own running count.
+// Old BHT- numbers stay as they are (scripts/renumber_bills.js renames them once). Must run inside the bill's transaction:
+// the advisory lock stops two cashiers being handed the same number.
+async function nextBillNumber(client, type) {
+    const pre = type === 'wholesale' ? 'RBH-HS' : 'RBH-S';
     await client.query('SELECT pg_advisory_xact_lock(774413)');
     const r = await client.query(
-        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '-([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number LIKE $1`,
-        [prefix + '%']);
-    return prefix + String(r.rows[0].n).padStart(4, '0');
+        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '^' || $1 || '([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number ~ ('^' || $1 || '[0-9]+$')`, [pre]);
+    return pre + String(r.rows[0].n).padStart(3, '0');
 }
 
 // Round to 2 decimals (money). Adding Number.EPSILON stops 1.005 -> 1.00.
@@ -245,7 +244,7 @@ router.post('/pos-bills', async (req, res) => {
 
         const deductStock = String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
         await client.query('BEGIN');
-        const billNumber = await nextBillNumber(client);
+        const billNumber = await nextBillNumber(client, req.body.bill_type === 'wholesale' ? 'wholesale' : 'retail');
         const billRes = await client.query(`
             INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted, created_at)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12::timestamp, CURRENT_TIMESTAMP))

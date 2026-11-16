@@ -94,7 +94,7 @@
     var panel = $('billPanel'); if (!panel || !bill) return;
     var sym = 'Rs', sub = Number(bill.subtotal), disc = Number(bill.discount_amount) || 0;
     var text = ($('rShopName') ? $('rShopName').textContent : 'Royal Bath Hub Thihariya') + '\nBill: ' + bill.bill_number + '\nTotal: ' + sym + ' ' + Number(bill.total).toFixed(2) +
-      (disc > 0 ? '\nReal price: ' + sym + ' ' + sub.toFixed(2) + '\nYou saved: ' + sym + ' ' + disc.toFixed(2) : '') + '\nThank you for shopping with us!';
+      (disc > 0 ? '\nMarked price: ' + sym + ' ' + sub.toFixed(2) + '\nYou saved: ' + sym + ' ' + disc.toFixed(2) : '') + '\nThank you for shopping with us!';
     var temp0 = !!bill.temp;
     var wa = $('waBtn'), em = $('emailBtn'), dl = $('downloadBtn'), msg = $('waReceiptMsg'), num = waNumber(bill.customer_phone);
     // WhatsApp = the receipt as a PICTURE through the shop WhatsApp (not typed text). The text link only shows if the picture fails.
