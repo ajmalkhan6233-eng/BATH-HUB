@@ -1,7 +1,7 @@
 'use strict';
 // 16 Nov (AJ, from his handwritten paper codes): Metro 001-064 stays. Leo Marketing = 065-103 by the paper. Fazal = 104-143 and 153-157 by the paper (144-152 stay EMPTY on purpose).
 // Items are found by NAME (and the vendor of their first GRN), so it does not matter what code they hold today.
-// Cool Lanka = 158-170, Maheshan = 171-208 by the paper. Not on a paper yet (Afham, Imran) are PARKED in the corner after the last code until AJ gives their paper codes. Returned Leo items with no paper code (BIDAY SPRAY BK, TOWEL BAR SINGLE 164) go first in the corner.
+// Cool Lanka = 158-170, Maheshan = 171-208, Imran door 209, Afham fan lights 210-211 by the paper. Not on a paper yet (Afham, Imran) are PARKED in the corner after the last code until AJ gives their paper codes. Returned Leo items with no paper code (BIDAY SPRAY BK, TOWEL BAR SINGLE 164) go first in the corner.
 // 3 Leo items on the paper (305 hand shower, black square, 006 KD) already sit among the no-GRN leftovers: they get their paper code (created only if missing). BIDAY SPRAY COLOUR (returned) goes to the corner. Their GRN lines are listed at the end for AJ to enter (cost is on the invoice).
 //   node scripts/set_vendor_codes.js            DRY RUN (nothing changes)
 //   node scripts/set_vendor_codes.js --apply    does it. Undo: node scripts/renumber_item_codes.js --undo   (first delete the 3 new items 065, 071, 072 by name, otherwise undo shows two items on 065)
@@ -13,6 +13,8 @@ const FAZ = [["FH108-73 GLASS SHELF 50CM", "104"], ["1001 MIRROR FH HY [70x50]",
 const COOL = [["SENTRO COMMODE", "158"], ["AQUA COMMODE", "159"], ["MARVEL COMMODE", "160"], ["HACTOR COMMODE", "161"], ["DELTA BASIN", "162"], ["Shower set (N)", "163"], ["Shower set (P)", "164"], ["Accessories (N)", "165"], ["Wall hung basin JIM", "166"], ["Wall hung basin ETHAN", "167"], ["7019 Table top", "168"], ["4003 Small basin", "169"], ["REPOSE BASIN", "170"]];
 // Maheshan Hardware by paper (vendor code at the start of the item name -> our code, selling price written on the paper; null = price not clear, left as it is). PR7554 was NOT delivered (2 owed): code reserved, stock stays 0.
 const MAH = [["PR7531-L", "187", 7950], ["PR7531-R", "188", 7950], ["PR7554", "189", null], ["WT00052", "190", 890], ["WT00167", "191", 5650], ["WT00176", "192", 3460], ["WT00179", "193", 1200], ["WT00180", "194", 1200], ["WT00181", "195", 1200], ["WT00182", "196", null], ["WT14585", "171", 1200], ["WT14586", "172", 1200], ["WT14587", "173", 1200], ["WT14633", "174", 1250], ["WT14636", "175", 1950], ["WT14638", "176", 2175], ["WT14640", "177", 2990], ["WT6814", "178", 2290], ["WT6872", "179", 690], ["WT6923", "180", 650], ["WT6924", "181", null], ["CR7533-L", "182", null], ["CR7533-R", "183", null], ["PR7544-L", "184", 11550], ["PR7544-R", "185", 11550], ["PR7548", "186", null], ["WT00198", "197", 1890], ["WT00234", "198", 2150], ["WT00519", "199", 975], ["WT00534", "200", 2750], ["WT14524", "201", 3995], ["WT14545", "202", 1650], ["WT14546", "203", 980], ["WT14555", "204", null], ["WT14557", "205", null], ["WT14558", "206", null], ["WT14565", "207", null], ["WT14584", "208", 1200]];
+// Afham (fan lights, GRN-001 04/11/26) and Imran (normal door, 02/10/26): codes from AJ's papers. Selling price left empty except the door (10,500).
+const AI = [['Bathroom Door Normal', '209', 10500], ['Fan Light Big', '210', null], ['Fan Light Small', '211', null]];
 const NEW_LEO = [['065', ['HAND SHOWER 305', '305 HAND SHOWER'], 3], ['071', ['BIDAY SPRAY LEO BLACK SQUARE'], 10], ['072', ['BIDAY SPRAY LEO 006 C.P. (KD)', '006 BIDAY SPRAY LEO', '006 BIDAY SPRAY LE0'], 10]];
 const RET_FREE = ['BIDAY SPRAY COLOUR'];   // returned Leo item, no paper code, sits among the no-GRN leftovers
 const RE = { leo: /\bleo\b/i, faz: /faz+a+l|fawaz/i, cool: /cool/i, park: /afh?am|imran/i };
@@ -37,6 +39,11 @@ async function plan(db) {
         else if (vc === 'PR7554') create.push([code, 'PR7554 PRINCE H5238R SS SINK MATT DRAINER - 110', 0]);
         else errs.push(vc + ' (Maheshan, not found)');
     }
+    for (const [name, code, price] of AI) {
+        const p = prods.find(q => !used.has(q.id) && RE.park.test(ven.get(String(q.item_code)) || '') && norm(q.name) === norm(name));
+        if (!p) { errs.push(name + ' (Afham/Imran, not found)'); continue; }
+        used.add(p.id); moved.set(p.id, { p, new: code }); if (price) prices.push({ id: p.id, price, name: p.name });
+    }
     const parked = prods.filter(p => !used.has(p.id) && RE.park.test(ven.get(String(p.item_code)) || ''));
     if (errs.length) throw new Error('could not match: ' + errs.join(' | '));
     const tg = new Set([...moved.values()].map(m => m.new));
@@ -59,8 +66,8 @@ if (require.main === module) {
         const c = await pool.connect();
         try {
             const p = await plan(c), ch = p.map.filter(x => x.changed);
-            console.log('items to change:', ch.length, '| returned Leo to corner:', p.rets, '| parked (Afham/Imran):', p.parked, '| moved off paper codes:', p.displaced, '| corner starts:', p.corner, '| new items:', p.create.length, '| prices to set:', p.prices.length);
-            const keys = ['066', '070', '073', '077', '088', '103', '104', '109', '110', '127', '158', '170', '171', '189', '208', '128', '143', '153', '157'];
+            console.log('items to change:', ch.length, '| returned Leo to corner:', p.rets, '| still parked:', p.parked, '| moved off paper codes:', p.displaced, '| corner starts:', p.corner, '| new items:', p.create.length, '| prices to set:', p.prices.length);
+            const keys = ['066', '070', '073', '077', '088', '103', '104', '109', '110', '127', '158', '170', '171', '189', '208', '209', '210', '211', '128', '143', '153', '157'];
             ch.slice().sort((a, b) => Number(a.new) - Number(b.new)).filter((x, i) => i < 2 || keys.includes(x.new) || Number(x.new) >= Number(p.corner)).forEach(x => console.log('  ', x.old, '->', x.new, x.name));
             if (!process.argv.includes('--apply')) { console.log('DRY RUN: nothing changed.'); return; }
             const r = await apply(c, p.map); console.log('APPLIED:', r.changed, 'changed');
