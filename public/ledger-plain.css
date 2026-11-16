@@ -1,0 +1,20 @@
+/* ledger-plain.css (16 Nov, AJ: "Daily Ledger: plain like other pages, no colours, no graphics; keep Hyperspace for later").
+   Loaded last on daily-entry-v2.html. Look only: ash page, white bars, thin lines. Hyperspace button and canvas stay (off by default). */
+html body{background:#f4f4f2!important;color:#0b0b0c!important}
+html body .bh-strip{height:34px!important;min-height:0!important;overflow:hidden;background:#fff!important;border-bottom:1px solid #d4d4cf!important}
+html body .bh-strip img{max-height:30px!important;width:auto!important}
+html body header,html body .tabbar,html body #rightPanel,html body .savebar{background:#fff!important;background-image:none!important;border:0!important;border-bottom:1px solid #d4d4cf!important;box-shadow:none!important;color:#0b0b0c!important}
+html body .savebar{border-top:1px solid #d4d4cf!important;border-bottom:0!important}
+html body header *,html body .tabbar *,html body #rightPanel *,html body .savebar *{color:#0b0b0c!important;text-shadow:none!important}
+html body header button,html body .tabbar button,html body .savebar button,html body #rightPanel button,html body header .pill,html body header input{background:#fff!important;background-image:none!important;border:1.5px solid #9a9a93!important;border-radius:8px!important;box-shadow:none!important}
+html body .tabbar button.on,html body .tabbar button.active,html body .tabbar button[aria-selected=true]{background:#ecece8!important;border-color:#0b0b0c!important}
+html body #saveBtn,html body .savebar #saveBtn{background:#c9a227!important;border-color:#c9a227!important}
+html body table th,html body table thead th{background:#ecece8!important;background-image:none!important;color:#0b0b0c!important;text-shadow:none!important;border-bottom:1px solid #d4d4cf!important}
+html body table tfoot td,html body #tSales,html body #tCash,html body #tCard,html body #tOnline,html body td.col-option,html body tr.totals td{background:#ecece8!important;background-image:none!important;color:#0b0b0c!important}
+html body table td{background-color:#fff;color:#0b0b0c}
+html body .cell,html body .kpi,html body .minisheet{background:#fff!important;border:1px solid #d4d4cf!important;box-shadow:none!important;color:#0b0b0c!important}
+html body .cell *,html body .minisheet *{color:#0b0b0c!important}
+html body *{animation:none!important;transition:none!important}
+html body table th *,html body table th span,html body th.col-option *{color:#0b0b0c!important}
+html body table th,html body .tabbar,html body header,html body .minisheet{box-shadow:none!important}
+html body td.col-option,html body th.col-option{background:#f4f4f2!important}

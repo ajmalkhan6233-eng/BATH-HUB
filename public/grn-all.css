@@ -1,0 +1,230 @@
+/* grn-all.css 16 Nov: the five GRN style files in their old order, one file */
+/* --- grn-compact --- */
+/* BLOCK: grn-compact (AJ 11 Nov 15:50). GRN fits ONE screen on a computer: no page title/banner, thin tabs, small boxes,
+   vendor + bill number + dates in a slim top, the lines take ALL the free height. Only the inside lists scroll, never the page.
+   The open draft shows an OPEN badge. Loaded last so it wins. Phone untouched. */
+@media (min-width:900px) {
+  html, body { height:100%; overflow:hidden !important; overscroll-behavior:none; }
+  html body { display:flex; flex-direction:column; height:100dvh; }
+  html body > h1, html body > header { display:none !important; }
+  html body .tabs { flex:0 0 auto; padding:3px 6px !important; gap:4px !important; }
+  html body .tabs button { min-height:28px !important; padding:1px 10px !important; font-size:14px; }
+  html body .tabs button.on { box-shadow:inset 0 -3px 0 var(--c-gold,#c9a227); }
+  html body .isrch input { min-height:28px !important; height:28px; }
+
+  /* screen 1: left narrow, right takes the rest, each scrolls by itself */
+  html body #view1.wrap { flex:1 1 auto; min-height:0; overflow:hidden; align-items:stretch !important; padding:3px 6px !important; }
+  html body #view1 > section:first-child { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+  html body #view1 .frame { height:56px; } html body #view1 .frame.has { height:190px; }
+  html body #view1 .card h3 { font-size:13px; margin:0 0 2px; }
+  html body #view1 .card { padding:5px 6px; }
+  html body #genmsg { margin:2px 0; }
+  html body #view1 #right { display:flex; flex-direction:row; flex-wrap:wrap; align-content:flex-start; align-items:flex-end; gap:2px 8px; min-height:0; height:100%; overflow-y:auto; overscroll-behavior:contain; box-sizing:border-box; }
+  html body #view1 #right > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right > h3, html body #view1 #right > #dupbox:empty { display:none !important; }
+  /* top: vendor, bill no, dates, due, short/return, full page all share lines; the lines box is a full-width block under them */
+  html body #view1 #right > .scroll.lines:not(.fullpage) { order:5; flex:0 0 100% !important; height:calc(100dvh - 290px) !important; min-height:150px !important; max-height:none !important; overflow:auto !important; overscroll-behavior:contain; }
+  /* bottom: + Add line, totals and the OK / Print buttons share ONE line */
+  html body #view1 #right > .row:has(button:only-child), html body #view1 #right > .sum, html body #view1 #right > .actions, html body #view1 #right > #status { order:6; }
+  html body #view1 #right > #status:empty { display:none; }
+  html body #view1 #right > .actions { margin-left:auto !important; position:static !important; background:none !important; }
+  html body #view1 > section:first-child button { min-height:26px !important; padding:1px 8px !important; font-size:13px !important; }
+  html body #view1 > section:first-child .row { margin:2px 0 !important; gap:4px !important; }
+  html body #view1 #right .row { margin:2px 0 !important; gap:6px !important; }
+  html body #view1 #right label { margin:0 !important; font-size:12px !important; }
+  html body #view1 #right input, html body #view1 #right select { min-height:28px !important; height:28px; padding:1px 6px !important; }
+  html body #view1 #right .lines td input, html body #view1 #right .lines td select { height:28px !important; }
+  html body #view1 #right .sum { margin:3px 0 !important; }
+  html body #view1 #right .actions button { min-height:34px !important; padding:2px 14px !important; font-size:15px !important; }
+  html body #view1 #right .msg { margin:2px 0 !important; padding:3px 8px !important; }
+
+  /* which one is open: gold bar + OPEN badge on the draft in the list */
+  html body .dr.on { box-shadow:inset 5px 0 0 var(--c-gold,#c9a227); outline:2px solid var(--c-gold,#c9a227); outline-offset:-2px; font-weight:700; position:relative; }
+  html body .dr.on::before { content:"OPEN"; position:absolute; right:4px; top:3px; font-size:10px; font-weight:800; padding:0 5px; border-radius:6px; background:var(--c-gold,#c9a227); color:#111; }
+
+  /* other screens: they scroll inside, the page stays still */
+  html body #tools, html body #view2, html body #view3, html body #view4, html body #view5 { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+}
+
+/* AJ 11 Nov 16:15: SMALLER boxes in the lines; numbers sit at the right edge, not floating in the middle; more rows visible */
+@media (min-width:900px) {
+  html body #view1 #right .lines td input, html body #view1 #right .lines td select { height:22px !important; min-height:22px !important; font-size:13px !important; padding:0 3px !important; border-radius:4px !important; line-height:1 !important; }
+  html body #view1 #right .lines td { padding:0 1px !important; height:24px !important; line-height:1 !important; font-size:13px !important; }
+  html body #view1 #right .lines td.n input, html body #view1 #right .lines td input[type=number] { text-align:right !important; }
+  html body #view1 #right .lines td.dcell .dsel { height:22px !important; }
+  html body #view1 #right .lines th { padding:1px 2px !important; font-size:11px !important; line-height:1.05 !important; }
+  html body #view1 #right .lines td button.d { height:20px !important; min-height:20px !important; padding:0 5px !important; }
+  html body #view1 #right .lines td input[type=checkbox] { width:15px !important; height:15px !important; }
+  html body .tabs button { min-height:26px !important; font-size:13px !important; }
+  html body #view1 #right .lines td:nth-child(7) { font-size:13px !important; }
+}
+html body *, html body *::before, html body *::after { animation-duration:.01s !important; }
+/* top fields kept short so vendor, bill number and dates share lines */
+@media (min-width:900px) {
+  html body #view1 #right > .row:nth-child(2) input { width:250px !important; }
+  html body #view1 #right > .row:nth-child(2) > div:last-child input { width:190px !important; }
+  html body #view1 #right > .row:nth-child(4) input[type=date] { width:128px !important; }
+  html body #view1 #right > .row:nth-child(4) input[type=number] { width:60px !important; }
+  html body #view1 #right > .row:nth-child(4) select { width:140px !important; }
+  html body #view1 #right > .row:nth-child(1) { flex:0 0 auto; font-size:12px; }
+  html body #view1 #right > .srtog { min-height:24px !important; height:24px; padding:0 8px !important; font-size:12px !important; }
+  html body #view1 #right .lines tr { height:24px !important; }
+}
+/* 17:10: tabs + search on ONE line; long status messages shrink to one line (hover shows all) */
+@media (min-width:900px) {
+  html body .tabs { flex-wrap:nowrap !important; }
+  html body .tabs button { white-space:nowrap; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; padding:1px 7px !important; font-size:12px !important; }
+  html body .isrch { flex:0 1 160px !important; min-width:120px; margin-left:auto; }
+  html body #view1 #right > #status, html body #view1 #right > .msg { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:46vw; font-size:12px !important; }
+  html body #view1 #right > .sum { font-size:13px !important; gap:10px !important; }
+  html body #view1 #right > .sum .msg, html body #view1 #right > .sum span.bad, html body #view1 #right > .sum span { font-size:12px; }
+}
+
+/* --- gemini-look --- */
+/* BLOCK: gemini-look (AJ 12 Nov). Gemini's design language only (aura background, glass cards, gold glow, thin scrollbar, soft hover lift). Look only, no layout moves. Remove the link line to go back. Colours only from theme variables. */
+html body{background:radial-gradient(circle at 15% 12%,rgba(212,175,55,.09) 0%,transparent 42%),radial-gradient(circle at 85% 80%,rgba(120,130,150,.16) 0%,transparent 50%),var(--bg-canvas) !important;background-attachment:fixed}
+html body .card,html body .kpi-card{background:var(--bg-glass) !important;border:1px solid var(--border-subtle) !important;border-radius:16px !important;box-shadow:0 6px 24px -10px rgba(0,0,0,.35);transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s ease}
+html body .card:hover,html body .kpi-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px -10px rgba(0,0,0,.4),0 0 18px -6px rgba(212,175,55,.35)}
+html body button:focus-visible,html body input:focus,html body select:focus{outline:none;box-shadow:0 0 0 2px rgba(212,175,55,.45),0 0 14px -2px rgba(212,175,55,.35) !important}
+html body .btn-primary,html body button.primary{box-shadow:0 0 16px -4px rgba(212,175,55,.45)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(140,140,140,.3);border-radius:9999px}
+
+/* --- compact-all --- */
+/* BLOCK: compact-all (AJ 12 Nov). Squeeze every screen on a computer so more fits on one page: smaller text, boxes, tabs, buttons, tables. Computer screens only (phones untouched). Remove the link line to undo. Loaded LAST. */
+@media (min-width:900px){
+  :root{--touch-target:28px;--space-1:2px;--space-2:4px;--space-3:6px;--space-4:8px;--space-5:10px;--space-6:12px;--space-8:14px;--text-xs:10.5px;--text-sm:11.5px;--text-base:12.5px;--text-lg:14px;--text-xl:16px;--text-2xl:19px;--text-3xl:22px;--radius-md:8px;--radius-lg:10px}
+  html body{font-size:12.5px !important;line-height:1.3 !important}
+  html body h1{font-size:18px !important;margin:4px 0 !important}html body h2{font-size:15px !important;margin:4px 0 !important}html body h3,html body h4{font-size:13px !important;margin:3px 0 !important}
+  html body button,html body .btn,html body a.btn,html body [role=button],html body input[type=button],html body input[type=submit]{min-height:26px !important;height:auto !important;padding:3px 10px !important;font-size:12px !important;border-radius:8px !important}
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),html body select,html body textarea{min-height:26px !important;height:auto !important;padding:3px 8px !important;font-size:12.5px !important;border-radius:8px !important}
+  html body input[type=checkbox],html body input[type=radio]{width:14px;height:14px}
+  html body label{font-size:11px !important;margin-bottom:1px !important}
+  html body .card,html body .panel,html body .box,html body .section,html body .kpi-card,html body fieldset{padding:8px 10px !important;margin-bottom:6px !important;border-radius:10px !important}
+  html body .tab,html body .tabs button,html body [class*=tab-]:not(table),html body nav button{min-height:24px !important;padding:3px 10px !important;font-size:12px !important}
+  html body table th,html body table td{padding:3px 6px !important;font-size:12px !important;line-height:1.25 !important}
+  html body .modal,html body .modal-content,html body dialog{padding:10px !important}
+  html body .grid,html body [class*=grid]{gap:6px !important}
+  html body hr{margin:5px 0 !important}html body p{margin:3px 0 !important}
+  html body .bh-strip{padding:2px 10px !important}html body .bh-strip img,html body .bh-strip .bh-lockup img{height:26px !important;max-height:26px !important}
+  html body header img[src*=logo],html body .brandbar img,html body .top img[src*=logo]{max-height:30px !important;height:auto}
+  html body header.topbar img.brand-logo{max-height:48px !important;height:48px !important;width:auto !important}   /* 15 Nov (AJ): RBH logo a little bigger */
+  html body main,html body .page,html body .container,html body .wrap,html body .content{max-width:1240px !important;padding:6px 10px !important}
+  html body main .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
+  html body .big{font-size:17px !important}html body .sm{font-size:11px !important}
+}
+
+/* AJ 12 Nov: list screens keep columns close together, not spread across the whole width */
+@media(min-width:900px){body.tight-cols table{width:auto !important;min-width:min(720px,100%)}body.tight-cols td,body.tight-cols th{padding-right:18px}}
+
+/* 13 Nov (AJ: two rules fought, keep the latest). 1) The compact input padding (8px, !important) beat the search box icon room (34px), so the magnifier sat ON the placeholder text. The search box now wins again.
+   2) The page title bar was squeezed by the page below it (flex shrink): its height jumped 41 / 45 / 60 px from screen to screen and the menu moved. It now keeps one fixed height. */
+html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){padding-left:34px !important}
+@media (min-width:900px){ html body header.topbar, html body #rbh-menubar{flex:0 0 auto !important} }
+/* 13 Nov (AJ: mouse on a list scrolled the whole page): a list that reaches its end no longer hands the wheel to the page. */
+/* removed 13 Nov: overscroll-behavior:contain on every list/table stopped the mouse wheel on Stock and other screens (AJ: cannot scroll). GRN keeps its own in grn-compact.css. */
+
+/* 13 Nov (AJ: the font looks ugly and fatty, change it in the complete app). Windows drew bold headings in Segoe UI BLACK. (14 Nov fix: back to AJ's own Segoe UI, NOT Inter.) "RBH Sans" = Segoe UI, every bold weight uses Semibold. Sinhala and Tamil letters fall through to their own fonts as before. To undo: delete this block and the "RBH Sans" names added in ui_comfort.js and the 3 pages. */
+@font-face{font-family:'RBH Sans';font-weight:100 300;src:local('Segoe UI')}@font-face{font-family:'RBH Sans';font-weight:400 500;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Bold'),local('SegoeUI-Bold')}
+html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
+html body .bh-lockup .bh-name,html body h1,html body h2{font-weight:700 !important}
+html body .live-clock,html body code,html body pre,html body .mono{font-family:ui-monospace,Consolas,monospace !important}
+/* 13 Nov: page change is slow and clearly visible (AJ asked) */
+@keyframes rbhPageIn{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:translateX(0)}}
+html body .page.active{animation:none !important}
+html body .main-content>.page.active,html body .page.active,html .mo-in{animation:none!important;transition:none!important;filter:none!important;transform:none!important}
+html.mo-lite body .main-content>.page.active,html.mo-lite .mo-in,html body.mo-lite .main-content>.page.active{animation:none!important}
+
+/* --- grn-onescreen --- */
+/* GRN ONE-SCREEN, part 2 (AJ 12 Nov, task 205). Loaded after grn-compact.css.
+   Right side = form on top (.g-hdr), lines in the middle (take ALL the free height, own scroll), totals + buttons pinned at the bottom (.g-ftr).
+   The old fixed height calc(100dvh - 290px) let the buttons slide under the lines whenever a note or message added a row. Layout only. */
+@media (min-width:900px) {
+  html body #view1 > section:first-child { display:flex; flex-direction:column; gap:6px; }
+  html body #view1 > section:first-child > .card { margin:0 !important; flex:none; }
+  html body #view1 > section:first-child > .card:nth-child(2) { order:-1; }     /* drafts first, photo below: ONE scroll on the left */
+  html body #view1 #right.has-lines { display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; align-items:stretch !important; overflow:hidden !important; height:100% !important; gap:3px !important; }
+  html body #view1 #right.has-lines > .g-hdr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:flex-end; gap:2px 8px; }
+  html body #view1 #right.has-lines > .g-hdr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-hdr .row, html body #view1 #right.has-lines > .g-ftr .row { display:contents; }
+  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:1 1 0 !important; height:auto !important; min-height:110px !important; max-height:none !important; order:0 !important; }
+  html body #view1 #right.has-lines > .g-ftr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:center; gap:3px 10px; padding-top:3px; border-top:1px solid var(--c-line,#ddd); background:var(--c-surface,#fff); }
+  html body #view1 #right.has-lines > .g-ftr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-ftr .msg { flex:1 1 100%; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:auto !important; display:flex; flex-wrap:wrap; gap:6px; }
+  html body #view1 #right.has-lines > .g-ftr #status:empty { display:none; }
+}
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .row:first-child h3, html body #view1 #right.has-lines > .g-hdr > .row:first-child .badge { display:none !important; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:0 !important; }                 /* left side: the Layla chat button sits bottom right */
+  html body #view1 #right.has-lines > .g-ftr #status { max-height:42px; overflow:auto; font-size:13px; }
+  html body #view1 #right.has-lines > .g-ftr > .row:has(button:only-child) { display:block; }
+}
+
+/* 13 Nov (task: GRN lines box too short on the shop screen): more rows. Header, totals and buttons take less height. Layout only. */
+@media (min-width:900px) {
+  html body #view1 #right.has-lines { gap:2px !important; }
+  html body #view1 #right.has-lines > .g-ftr { gap:1px 10px; padding-top:2px; }
+  html body #view1 #right.has-lines > .g-ftr .sum { margin:0 !important; }
+  html body #view1 #right.has-lines > .g-ftr .actions button { min-height:30px !important; padding:1px 12px !important; font-size:14px !important; }
+  html body #view1 #right.has-lines > .g-ftr #status { max-height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:1px 8px !important; margin:0 !important; }
+  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { min-height:150px !important; }
+}
+/* 13 Nov: Cheques tab. Header always solid (rows never show through it), dates and buttons never wrap or get cut off. */
+html body #view3 thead th{background:#ece8dc !important;position:sticky;top:0;z-index:5;white-space:nowrap}
+html body #view3 table td:nth-child(5),html body #view3 table td:nth-child(6),html body #view3 table td:nth-child(7),html body #view3 table td:last-child{white-space:nowrap}
+html body #view3 .scroll{overflow-x:auto}
+
+/* 13 Nov (AJ: more lines, ~15): inputs sat on the text baseline, so each row grew 22 -> 29px. Top-align them: rows are 24px and more fit. */
+@media (min-width:900px) {
+  html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td > button, html body #view1 #right .lines td .dsel { vertical-align:top !important; margin-top:0 !important; margin-bottom:0 !important; }
+  html body #view1 #right .lines td { vertical-align:top !important; }
+  html body #view1 #right .lines td input[type=checkbox] { margin:3px auto 0 !important; display:block; }
+}
+@media (min-width:900px) { html body #view1 #right .lines tr, html body #view1 #right .lines td { height:22px !important; } }
+@media (min-width:900px) { html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td .dsel { box-sizing:border-box !important; } }
+
+/* 13 Nov (AJ: 15 lines): spend the height on lines, not on notices. The "you are editing" note and the idle SAVED note go; the status chip stays. */
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .msg.warn { display:none !important; }
+}
+
+/* 13 Nov 17:20 (AJ: only 6 lines were visible, he wants at least 20): the lines box is tall enough for 20 rows; the right panel scrolls if the screen is short; totals and buttons stay pinned at the bottom. Layout only. */
+html body #view1 #right.has-lines { overflow-y:auto !important; overflow-x:hidden !important; }
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:0 0 auto !important; min-height:var(--grn20,640px) !important; }
+html body #view1 #right.has-lines > .g-ftr { position:sticky !important; bottom:0 !important; z-index:6 !important; }
+
+/* 15 Nov SPEED: the GRN lines box scrolls on its own layer; rows never repaint the rest of the page while scrolling. Layout/paint only. */
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { contain: layout style; overscroll-behavior: contain; will-change: scroll-position; }
+html body #view1 .card, html body #view1 .dr { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; transition: none !important; }
+
+/* --- grn-plain --- */
+/* grn-plain.css (16 Nov, AJ: "completely change this design: small headline, upload picture, no preview, no left panel, plain colours, must scroll").
+   Loaded LAST on the GRN page. One page scroll, no inner scrollers, no coloured strips. Layout and colour only, no logic. Roll back: delete the link in grn_workbench.html. */
+html,body{height:auto!important;min-height:100%;overflow:auto!important;overscroll-behavior:auto!important;background:#f4f4f2!important;color:#0b0b0c}
+html body #view1.wrap{display:block!important;overflow:visible!important;height:auto!important;padding:6px 10px!important}
+html body #grnbar{display:block!important;overflow:visible!important;margin:0 0 6px}
+html body #grnbar .tb{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+html body #grnbar .up{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #9a9a93;border-radius:8px;background:#fff;min-height:34px;padding:0 10px;font-weight:600;cursor:pointer}
+html body #grnbar .up input{max-width:150px;font-size:12px}
+html body #frame{display:inline-block!important;width:auto!important;height:auto!important;min-height:0!important;border:0!important;background:none!important;padding:0!important}
+html body #frame img{display:none!important}
+html body #frame.has::after{content:"Picture added";color:#2f6b2f;font-weight:600;font-size:13px}
+html body #draftsmenu{position:relative}
+html body #draftsmenu summary{cursor:pointer;border:1.5px solid #9a9a93;border-radius:8px;background:#fff;min-height:34px;padding:5px 12px;font-weight:600;list-style:none}
+html body #draftsmenu .dd{position:absolute;z-index:30;top:38px;left:0;width:min(420px,92vw);max-height:60vh;overflow:auto;background:#fff;border:1px solid #bdbdb6;border-radius:8px;padding:8px}
+html body #view1 > #right,html body #view1 #right.has-lines{display:block!important;overflow:visible!important;height:auto!important;max-height:none!important;background:#fff;border:1px solid #d4d4cf;border-radius:8px;padding:8px!important}
+html body #view1 #right.has-lines > .g-hdr{display:flex!important;flex-wrap:wrap;gap:4px 10px;align-items:flex-end;margin-bottom:6px}
+html body #view1 #right.has-lines > .scroll.lines,html body #view1 #right.has-lines > .scroll.lines:not(.fullpage),html body #view1 #right > .scroll.lines:not(.fullpage){display:block!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;contain:none!important;will-change:auto!important}
+html body #view1 .lines thead th{position:sticky;top:0;z-index:5;background:#ecece8!important;color:#0b0b0c!important}
+html body #view1 #right.has-lines > .g-ftr{position:sticky!important;bottom:0!important;z-index:6;background:#fff!important;color:#0b0b0c!important;border-top:1px solid #d4d4cf!important;padding:6px 0!important}
+html body #view1 .g-ftr .actions button.p,html body #view1 .g-ftr .actions button:first-child{background:#c9a227;border-color:#c9a227;color:#0b0b0c}
+html body #view1 .badge,html body #view1 .dr.open,html body #view1 .dr .tag{background:#ecece8!important;color:#0b0b0c!important;border:1px solid #bdbdb6!important}
+html body #view1 .dr{background:#fff!important;border:1px solid #d4d4cf!important}
+html body #view1 .dr.on,html body #view1 .dr.cur{border:2px solid #c9a227!important}
+html body #tools,html body #view2,html body #view3,html body #view4,html body #view5{overflow:visible!important;flex:none!important;height:auto!important}
+html body .tabs{background:none!important}
+html body .tabs button,html body .tabs button.on{background:#fff!important;color:#0b0b0c!important;border:1.5px solid #9a9a93!important;box-shadow:none!important}
+html body .tabs button.on{background:#ecece8!important;border-color:#0b0b0c!important}
+html body #view1 .tag,html body #view1 .tag.t-new{background:#ecece8!important;color:#0b0b0c!important;border:1px solid #bdbdb6!important}
+html body #view1 .g-ftr,html body #view1 .g-ftr .actions,html body #view1 .g-ftr .row,html body #view1 .g-ftr .sum{background:#fff!important;color:#0b0b0c!important}
+

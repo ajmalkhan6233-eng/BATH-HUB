@@ -35,7 +35,8 @@
     return h1 + k + g + st + fo;
   }
   function paint(host, d, fc) {
-    host.innerHTML = build(d, fc);
+    var html = build(d, fc); if (host.getAttribute('data-h') === html) return;   /* 16 Nov: same numbers = no repaint, nothing moves */
+    host.setAttribute('data-h', html); host.innerHTML = html;
     var b = host.querySelector('#dm-hide'); if (b) b.onclick = function () { try { localStorage.setItem('rbh_dm_hidden', '1'); } catch (e) {} host.style.display = 'none'; };
     Array.prototype.forEach.call(host.querySelectorAll('.rc-ring'), function (el) { requestAnimationFrame(function () { el.style.strokeDashoffset = el.getAttribute('data-off'); }); });
   }

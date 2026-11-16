@@ -18,5 +18,6 @@ n=$(curl -s $B/api/money-control/fixed-overheads | node -e "let s='';process.std
 c=$(curl -s -o /dev/null -w %{http_code} $J -d '{"customer_name":"QA Customer","credit_limit":50000}' $B/api/credit-limits); [ "$c" = 200 ] && ok "8a credit limit set" || no "8a ($c)"
 c=$(curl -s -o /dev/null -w %{http_code} $J -d '{"customer_name":"QA Customer","credit_limit":-5}' $B/api/credit-limits); [ "$c" = 400 ] && ok "8b negative refused" || no "8b ($c)"
 c=$(curl -s -o /dev/null -w %{http_code} $J -d '{"role":"all","max_discount_pct":10}' $B/api/discount-rules); [ "$c" = 200 ] && ok "9 staff discount" || no "9 ($c)"
-echo "Steps 10-16 are screen flows (Playwright), not in this script yet."
-[ $F = 0 ] && echo "GREEN (A+B only)" || echo "BLOCKED: $F failed"
+python3 scripts/qa/rbh_flows.py 2>&1 | grep -E "^(PASS|FAIL)" || { echo "FAIL 10-16 flows did not run"; F=$((F+1)); }
+grep -q "FAIL" /dev/null
+[ $F = 0 ] && echo "GREEN" || echo "BLOCKED: $F failed"

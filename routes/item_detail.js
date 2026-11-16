@@ -39,6 +39,7 @@ router.post('/item-detail/:code', ownerOnly, express.json({ limit: '8mb' }), asy
             const buf = Buffer.from(m[2], 'base64'); if (buf.length > 5 * 1024 * 1024) return res.status(400).json({ error: 'Photo too large (max 5 MB)' });
             vals.push(savePhoto(buf)); sets.push(`photo_url = $${vals.length}`);
         }
+        if (b.avg_cost !== undefined && b.avg_cost !== '') { const c = Number(b.avg_cost); if (!Number.isFinite(c) || c < 0 || c > 99999999) return res.status(400).json({ error: 'Cost must be a number, 0 or more' }); vals.push(c); sets.push(`avg_cost = $${vals.length}`); }
         if (b.vendor_code !== undefined) { vals.push(String(b.vendor_code).trim().slice(0, 60) || null); sets.push(`vendor_code = $${vals.length}`); }
         let newStock; const reason = STOCK_REASONS.includes(String(b.stock_reason || '').toLowerCase()) ? String(b.stock_reason).toLowerCase() : 'count fix';
         if (b.stock_level !== undefined && b.stock_level !== '' && b.stock_level !== null) {

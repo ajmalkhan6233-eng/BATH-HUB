@@ -6,3 +6,5 @@ try {
     if (!h.hasAttribute('data-keepfont')) { h.classList.add('in-frame'); h.setAttribute('data-fc','1'); document.write('<link rel="stylesheet" href="/fit-window.css"><link rel="stylesheet" href="/frame-comfort.css">'); if (!/stock_manager|daily-entry-v2|pos-ledger|home_simple|home-hud|home-gemini/.test(location.pathname)) { h.classList.add('stock-look'); document.write('<link rel="stylesheet" href="/stock-look.css">'); } }
   }
 } catch (e) { /* ignore */ }
+/* 16 Nov: Layla gets the Stock & items colours too (its own font stays). */
+try { if (top !== self && /layla-owner/.test(location.pathname)) { document.documentElement.classList.add('stock-look'); document.write('<link rel="stylesheet" href="/stock-look.css">'); } } catch (e) { /* ignore */ }

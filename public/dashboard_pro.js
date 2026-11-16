@@ -191,7 +191,7 @@
     manual = false; lastLoad = Date.now(); busy = true;
     fetch('/api/dashboard-pro', { credentials: 'include' }).then(function (r) { return r.ok ? (r.headers.get('X-Saved-Copy') ? 'keep' : r.json()) : null; }).then(function (d) {
       busy = false; if (d === 'keep') return; if (!d) { b.innerHTML = ''; var pg = el('page-dashboard'); if (pg) pg.classList.remove('dp-on'); return; }
-      try { b.innerHTML = render(d); var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
+      try { var html = render(d); if (b.getAttribute('data-h') === html) return; var hh = b.offsetHeight; if (hh) b.style.minHeight = hh + 'px'; b.setAttribute('data-h', html); b.innerHTML = html; var rb = el('dp-refresh'); if (rb) rb.onclick = function () { manual = true; load(); }; } catch (e) { console.error('[dashboard_pro]', e); b.innerHTML = ''; var pg2 = el('page-dashboard'); if (pg2) pg2.classList.remove('dp-on'); }
     }).catch(function () { busy = false; var pg3 = el('page-dashboard'); if (pg3) pg3.classList.remove('dp-on'); });
   }
   function visible() { var p = el('page-dashboard'); return p && p.classList.contains('active') && !document.hidden; }
