@@ -3,7 +3,7 @@
   'use strict';
   var doc = document, win = window;
   if (win.__bhMotion) return; win.__bhMotion = 1;
-  try { if (localStorage.getItem('bh_motion') === 'off') { doc.documentElement.classList.add('mo-off'); return; } } catch (e) { /* ignore */ }
+  try { if (localStorage.getItem('bh_motion') !== 'on') {   /* 16 Nov (AJ): motion is OFF unless switched on: faster app */ doc.documentElement.classList.add('mo-off'); return; } } catch (e) { /* ignore */ }
   if (doc.documentElement && doc.documentElement.hasAttribute('data-keepfont')) return;
   var fine = win.matchMedia && win.matchMedia('(pointer:fine)').matches;
 
