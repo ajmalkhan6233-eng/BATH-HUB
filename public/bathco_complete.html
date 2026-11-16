@@ -2832,7 +2832,7 @@ async function initApp() {
 <script>/* BLOCK: home settle. Shows Home 300 ms after its cards are in and quiet; never later than 0.8 s. */
 (function(){var d=document.getElementById('page-dashboard');if(!d)return;var done=false,t=null;function show(){if(done)return;done=true;d.classList.add('dash-ready');try{mo.disconnect()}catch(e){}}
 var mo=new MutationObserver(function(){clearTimeout(t);if(d.querySelector('.kpi-grid')&&d.querySelector('#home-play-card'))t=setTimeout(show,300)});mo.observe(d,{childList:true,subtree:true});setTimeout(show,800);})();</script>
-<script src="/home-play.js" defer></script><script src="/dashboard_breakdown.js"></script><script src="/dashboard_v2.js?v=98q"></script>
+<script src="/home-play.js" defer></script><script src="/dashboard_breakdown.js"></script><script src="/dashboard_v2.js?v=98q"></script><script src="/dashboard_lite.js?v=98s"></script>
 <script src="/lib/palette.js"></script>
 <script src="/lib/grn_import.js"></script>
 <script src="/test-banner.js"></script>

@@ -196,7 +196,7 @@
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
-<link rel="stylesheet" href="/pos-all.css">
+<link rel="stylesheet" href="/pos-all.css"><link rel="stylesheet" href="/pos-line.css">
 <link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"></head>
 <body>
 
@@ -718,7 +718,7 @@ async function editBill(id) {
   document.getElementById('genBtn').textContent = 'Save changes';
   document.getElementById('cancelEditBtn').style.display = 'inline-block';
   updateCapHint();
-  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('formPanel').style.display = '';
   document.getElementById('billPanel').style.display = 'none';
   window.scrollTo(0, 0);
 }
@@ -946,8 +946,9 @@ function resetForm() {
   if (arguments[0] !== true) scanMsg('');   // resetForm(true) keeps the scan message (used by Hold and Resume)
   document.getElementById('discountPct').value = 0; if (window.posClearSell) window.posClearSell();
   updateCapHint();
-  document.getElementById('formPanel').style.display = 'block';
+  document.getElementById('formPanel').style.display = '';
   document.getElementById('billPanel').style.display = 'none';
+  try { window.scrollTo(0, 0); var sb = document.getElementById('scanBox'); if (sb) sb.focus(); } catch (e) { /* ignore */ }
 }
 // ---- customer name / phone: drop-down list, no stale value (Task 30) ----
 let _custId = null;   // set only when a row is TAPPED in the list
@@ -1010,7 +1011,9 @@ function clearCustomer() {
 <link rel="stylesheet" href="/pos-quote.css">
 <script src="/pos_extra.js"></script>
 <script src="/pos-quote.js"></script>
-<script src="/pos-polish.js">
+<script src="/pos-polish.js"></script>
+<script src="/pos-line.js"></script>
+<script>
 // 13 Nov: owner clears every open test bill (voided with a reason, stock goes back, nothing deleted). Needs the word CLEAR.
 async function clearAllBills() {
   var w = window.prompt('This voids EVERY open bill and puts the stock back. Type CLEAR to confirm.');

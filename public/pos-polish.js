@@ -17,11 +17,12 @@
   }
 
   // ---- per item discount: the sum of the line discounts becomes the bill discount (the bill already works that out) ----
-  function sumDisc() { return rows().reduce(function (s, r) { var d = r.querySelector('.i-disc'); return s + (d ? Math.max(0, parseFloat(d.value) || 0) : 0); }, 0); }
+  function sumDisc() { return rows().reduce(function (s, r) { var d = r.querySelector('.i-disc'); return s + (d ? (window.PosLine ? window.PosLine.cash(r) : Math.max(0, parseFloat(d.value) || 0)) : 0); }, 0); }
   function applyDisc() {
     var amt = $('discountAmt'); if (!amt) return;
     var s = Math.round(sumDisc() * 100) / 100;
     if (s <= 0 && !amt.dataset.fromLines) return;          // never touch a discount the cashier typed by hand
+    var pc0 = $('discountPct'); if (pc0 && s > 0) pc0.value = 0; if (s > 0 && window.posClearSell) window.posClearSell();     // 16 Nov: a changed line discount must not be overruled by the old percent
     amt.dataset.fromLines = s > 0 ? '1' : '';
     amt.value = s > 0 ? s : '';
     amt.dispatchEvent(new Event('input', { bubbles: true }));

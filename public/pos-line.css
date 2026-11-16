@@ -1,0 +1,8 @@
+/* POS item line (AJ 16 Nov). Loaded last; wins over the older layers. */
+html body #formPanel .item-head, html body #formPanel #itemRows .item-row { grid-template-columns:minmax(0,1fr) 150px 84px 96px 96px 96px 36px !important; }
+.i-base { color:var(--text-muted,#9a9a9a) !important; font-weight:400 !important; background:transparent !important; border-color:transparent !important; text-align:right; width:100%; min-height:34px; font-size:13px !important; }
+.hide-base .i-base { filter:blur(6px); }
+.i-line { text-align:right; font-weight:700; padding-right:4px; white-space:nowrap; }
+html body .item-head .h-base { text-align:right; font-weight:500; opacity:.7; }
+html body .item-head span:nth-child(n+4) { text-align:right; }
+@media (max-width:480px) { .i-base, .i-line { display:none !important; } }
