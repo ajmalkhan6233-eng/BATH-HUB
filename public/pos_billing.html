@@ -224,6 +224,7 @@
         <button type="button" id="heldBtn" onclick="toggleTool('heldPanel')">Held bills (0)</button>
         <button type="button" id="lastBtn" onclick="openLastBill()">Last bill</button>
         <button type="button" id="findBtn" onclick="toggleTool('findPanel')">Find bill</button>
+        <button type="button" id="wholesaleBtn">Wholesale bill: off</button>
         <button type="button" id="quoteBtn" onclick="toggleTool('quotePanel')">Load quotation</button>
         <button type="button" id="clearAllBtn" onclick="clearAllBills()" style="color:#8a6d2f">Clear all test bills</button>
       </div>
@@ -233,7 +234,7 @@
         <div id="quoteResults"></div>
       </div>
       <div class="tool-panel" id="findPanel">
-        <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 305 or RBH-S305" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
+        <div class="find-row"><input type="text" id="findBox" placeholder="Bill number, e.g. 5 or RBH-S005" autocomplete="off"><button type="button" class="mini-btn" onclick="findBills()">Find</button></div>
         <div id="findResults"></div>
       </div>
     </div>
@@ -477,6 +478,7 @@ async function generateBill() {
       payment_method: document.getElementById('paymentMethod').value,
     };
     { const sdv = document.getElementById('saleDate'); if (sdv && sdv.value && !editingId) payload.sale_date = sdv.value; }
+    if (window.PosWholesale && PosWholesale.on() && !editingId) payload.bill_type = 'wholesale';   // 16 Nov: bill to a shop, number RBH-HS###
     if (_quoteId && !editingId) payload.quotation_id = _quoteId;
     // Cheque, credit and split send a list of payments that must add up to the total (the server checks it again).
     const mode = payload.payment_method;
@@ -1012,7 +1014,7 @@ function clearCustomer() {
 <script src="/pos_extra.js"></script>
 <script src="/pos-quote.js"></script>
 <script src="/pos-polish.js"></script>
-<script src="/pos-line.js"></script><script src="/pos-customer.js"></script><script src="/pos-flow.js"></script><script src="/pos-compact.js"></script><script src="/pos-profit.js"></script><script src="/pos-tools.js"></script>
+<script src="/pos-line.js"></script><script src="/pos-customer.js"></script><script src="/pos-flow.js"></script><script src="/pos-compact.js"></script><script src="/pos-profit.js"></script><script src="/pos-tools.js"></script><script src="/pos-wholesale.js"></script>
 <script>
 // 13 Nov: owner clears every open test bill (voided with a reason, stock goes back, nothing deleted). Needs the word CLEAR.
 async function clearAllBills() {
