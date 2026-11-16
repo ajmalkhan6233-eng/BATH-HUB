@@ -32,7 +32,15 @@ async function plan(db) {
         if (r.rank === 0) { map.push({ ...r, new: r.old, changed: false }); continue; }
         n++; map.push({ ...r, new: pad(n), changed: r.old !== pad(n) });
     }
-    return { map, skipped, metroCount: metro.length, nextFree: pad(n + 1) };
+    // 16 Nov (Ajmal: "all shop codes only 001 numbers"): items whose code has letters also get the next numbers in the same series (id order).
+    // The old text code is archived in item_code_renumber_log, so --undo puts it back. A code shared by two items keeps only the first (the rest are listed, not changed).
+    const seenOld = new Set(), left = [];
+    for (const p of skipped.slice().sort((a, b) => a.id - b.id)) {
+        if (seenOld.has(p.item_code)) { left.push({ ...p, why: 'same code as another item' }); continue; }
+        seenOld.add(p.item_code); n++;
+        map.push({ id: p.id, old: p.item_code, name: p.name, active: p.active, vendor: '(letter code)', new: pad(n), changed: true });
+    }
+    return { map, skipped: left, metroCount: metro.length, nextFree: pad(n + 1) };
 }
 async function codeTables(db) {
     return (await db.query(`SELECT table_name FROM information_schema.columns WHERE table_schema='public' AND column_name='item_code' AND table_name<>'products' AND table_name NOT IN ('item_code_renumber_log','item_name_fix_log','audit_baseline') AND table_name NOT LIKE '%\\_bak\\_%' AND table_name NOT LIKE '%\\_bak' ORDER BY 1`)).rows.map(r => r.table_name);
