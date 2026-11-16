@@ -27,7 +27,7 @@ function createRouter(pool, { publicPerHour = 5 } = {}) {
     const router = express.Router();
 
     const publicLimiter = rateLimit({
-        windowMs: 60 * 60 * 1000, limit: publicPerHour, standardHeaders: false, legacyHeaders: false,
+        windowMs: 60 * 60 * 1000, limit: publicPerHour, standardHeaders: false, legacyHeaders: false, validate: { creationStack: false },   // router is built once on first use and cached, so the per-request warning is a false alarm
         message: { error: 'Too many messages from this device. Please WhatsApp us instead.' },
     });
     router.post('/public/enquiry', publicLimiter, async (req, res) => {
