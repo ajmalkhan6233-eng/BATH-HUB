@@ -12,6 +12,7 @@ TASK: POS screen update (16 Nov 20:20). Chat built and tested on the copy. PC on
 5. Report in LIVE.md: DONE only after step 4 health answers.
 WHAT CHANGED (tell AJ to Ctrl+F5 twice):
 - POS line: no Base column; Item code -> Qty -> Enter -> Selling -> Enter; Selling typed below list fills Discount and Total; live profit number under the bill; bigger close button; small bill window; shop item code shown under the item name.
+- Screen fits any window height now: item list scrolls inside, Generate Bill never pushed off, item drop-down opens upward when low, Layla button no longer covers Generate.
 - Scan and Bill tools moved beside "+ Add item"; the scan bar is gone.
 - No customer name/phone drop-down; no "unsaved bill was put back" banner.
 - New numbers: retail RBH-S001.., wholesale RBH-HS001.., quotations RBH-Q001.. (server files, need the restart).

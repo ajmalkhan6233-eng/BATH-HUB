@@ -196,7 +196,7 @@
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
 <link rel="stylesheet" href="/bathhub-logo.css">
-<link rel="stylesheet" href="/pos-all.css"><link rel="stylesheet" href="/pos-line.css"><link rel="stylesheet" href="/pos-compact.css">
+<link rel="stylesheet" href="/pos-all.css"><link rel="stylesheet" href="/pos-line.css"><link rel="stylesheet" href="/pos-compact.css"><link rel="stylesheet" href="/pos-fit.css">
 <link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"></head>
 <body>
 
@@ -662,7 +662,7 @@ let discountCap = { max_allowed: null, can_override: false };
 fetch('/api/pos-bills/discount-cap').then(r => r.ok ? r.json() : null).then(c => { if (c) { discountCap = c; updateCapHint(); } }).catch(() => {});
 function updateCapHint() {
   const el = document.getElementById('capHint');
-  if (discountCap.max_allowed === null) { el.textContent = ''; el.className = 'cap-hint'; return; }
+  if (discountCap.max_allowed == null) { el.textContent = ''; el.className = 'cap-hint'; return; }
   const pct = parseFloat(document.getElementById('discountPct').value) || 0, over = pct > discountCap.max_allowed;
   el.className = 'cap-hint' + (over ? ' warn' : '');
   el.textContent = over
@@ -1014,7 +1014,7 @@ function clearCustomer() {
 <script src="/pos_extra.js"></script>
 <script src="/pos-quote.js"></script>
 <script src="/pos-polish.js"></script>
-<script src="/pos-line.js"></script><script src="/pos-customer.js"></script><script src="/pos-flow.js"></script><script src="/pos-compact.js"></script><script src="/pos-profit.js"></script><script src="/pos-tools.js"></script><script src="/pos-wholesale.js"></script>
+<script src="/pos-line.js"></script><script src="/pos-customer.js"></script><script src="/pos-flow.js"></script><script src="/pos-compact.js"></script><script src="/pos-profit.js"></script><script src="/pos-tools.js"></script><script src="/pos-wholesale.js"></script><script src="/pos-fit.js"></script>
 <script>
 // 13 Nov: owner clears every open test bill (voided with a reason, stock goes back, nothing deleted). Needs the word CLEAR.
 async function clearAllBills() {
