@@ -51,7 +51,7 @@
   var FOLD = ['if we sell all stock with a discount', 'latest grns', 'average sales by weekday (8 weeks)'];
   var COLORS = ['#c9a24b', '#8a6d2f', '#e0c27a', '#a8895a', '#6b5a3a', '#d9b866'];   // 13 Nov: calm gold shades only (AJ: no red, green, blue)
   var box = null, obs = null, last = {};
-  var calm = function () { try { return localStorage.getItem('bh_motion') === 'off'; } catch (e) { return false; } };
+  var calm = function () { try { return localStorage.getItem('bh_motion') !== 'on'; } catch (e) { return false; } };
   var low = function (s) { return String(s || '').trim().toLowerCase(); };
 
   function count(el, key) {   // "LKR 12,345" or "12": count up from the last shown value (or 0)
