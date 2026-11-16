@@ -1,0 +1,13 @@
+/* POS: more room for items (AJ 16 Nov). Loaded last. */
+html body #formPanel { grid-template-columns:minmax(0,1fr) clamp(290px,23vw,330px) !important; gap:12px !important; }
+html body #formPanel .fp-right .generate-btn, html body #formPanel .fp-right label { margin-top:2px !important; }
+html body #formPanel .item-row { min-height:44px !important; margin:0 0 3px !important; }
+html body #formPanel .item-head, html body #formPanel #itemRows .item-row { grid-template-columns:minmax(0,1fr) 128px 70px 88px 88px 88px 30px !important; }
+html body #formPanel .qty-step button { width:24px !important; min-width:24px !important; }
+/* customer line folds into one slim line once filled */
+#custRow.cust-done > div:not(#custSum) { display:none !important; }
+#custRow.cust-done { display:flex !important; gap:10px; align-items:center; margin:0 0 4px !important; min-height:0; }
+#custRow.cust-done #custSum { display:block !important; } #custSum { flex:1 1 auto; font-weight:600; font-size:14px; padding:4px 10px; border:1px solid var(--border-subtle,#ccc); border-radius:999px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#custRow:not(.cust-done) #custSum { display:none; }
+#custRow.cust-done ~ #waCheck:empty, #custRow.cust-done + #waCheck { display:none !important; }
+@media (max-width:480px) { html body #formPanel { grid-template-columns:1fr !important; } }
