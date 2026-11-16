@@ -9,7 +9,7 @@ TASK: POS screen update (16 Nov 20:20). Chat built and tested on the copy. PC on
    a) node scripts/renumber_bills.js          (rehearsal; put the list in LIVE.md)
    b) node scripts/renumber_bills.js --yes    (backup must have passed). If it says an RBH-S bill already exists: STOP, QUESTIONS.md.
 4. pm2 restart apex-server --only apex-server  (health http://localhost:3100/health must answer). Restart only AFTER step 3.
-5. Report in LIVE.md: DONE only after step 2 health answers.
+5. Report in LIVE.md: DONE only after step 4 health answers.
 WHAT CHANGED (tell AJ to Ctrl+F5 twice):
 - POS line: no Base column; Item code -> Qty -> Enter -> Selling -> Enter; Selling typed below list fills Discount and Total; live profit number under the bill; bigger close button; small bill window; shop item code shown under the item name.
 - Scan and Bill tools moved beside "+ Add item"; the scan bar is gone.
