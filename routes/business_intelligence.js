@@ -122,7 +122,7 @@ router.get('/non-moving-stock', async (req, res) => {
                   WHERE a.stock_item_id = s.id AND a.reason = 'sale'
                     AND a.created_at >= CURRENT_DATE - $1::int
               )
-            ORDER BY last_sale_at ASC NULLS FIRST
+            ORDER BY last_sale_at ASC NULLS FIRST LIMIT 5000
         `, [days]);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
