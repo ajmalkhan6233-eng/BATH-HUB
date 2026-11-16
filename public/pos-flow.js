@@ -1,5 +1,5 @@
 /* POS keyboard flow (AJ 16 Nov). Own module; remove the tag and the page works as before.
-   item added (scan box, code or name) -> cursor goes to the bill's Selling price.
+   item added (scan box, code or name) -> cursor goes to that line's Qty; Enter -> its Selling price (pos-line.js).
    Selling price + Enter -> discount % and Rs work themselves out -> cursor goes to Generate Bill.
    Selling price empty + Enter (same price, no change) -> cursor jumps to Discount Rs.
    Discount Rs or % + Enter -> Generate Bill. */
@@ -9,10 +9,11 @@
   var host = $('itemRows'), sp = $('sellPrice'); if (!host || !sp) return;
   var timer = null;
   function toSell() {
-    var a = document.activeElement, ok = !a || a === document.body || a.id === 'scanBox' || (a.classList && (a.classList.contains('i-name') || a.classList.contains('i-qty')));
+    var a = document.activeElement, ok = !a || a === document.body || a.id === 'scanBox' || (a.classList && a.classList.contains('i-name'));
     if (!ok) return;
-    var named = Array.prototype.some.call(host.querySelectorAll('.item-row'), function (r) { return r.dataset.itemCode; });
-    if (named) { sp.focus(); if (sp.select) sp.select(); }
+    var named = Array.prototype.filter.call(host.querySelectorAll('.item-row'), function (r) { return r.dataset.itemCode; });
+    var last = named[named.length - 1], q = last && last.querySelector('.i-qty');     // AJ: item code, then quantity, Enter, then Selling
+    if (q) { q.focus(); if (q.select) q.select(); }
   }
   new MutationObserver(function (m) {
     var picked = m.some(function (x) { return (x.type === 'attributes' && x.attributeName === 'data-item-code' && x.target.dataset.itemCode) || (x.type === 'childList' && x.addedNodes.length && Array.prototype.some.call(x.addedNodes, function (n) { return n.dataset && n.dataset.itemCode; })); });
