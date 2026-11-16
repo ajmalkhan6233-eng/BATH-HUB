@@ -27,7 +27,7 @@
     box.appendChild(tb);
     var lastTr = tb.lastElementChild; if (lastTr && ls.length > (live.n || 0)) { lastTr.classList.add('mo-flash'); var rows = document.querySelectorAll('.item-row'), src = rows.length > 1 ? rows[rows.length - 2] : rows[0]; if (window.bhFly && src) window.bhFly(src.querySelector('.i-name'), lastTr); } live.n = ls.length;
     var gb = $('genBtn'); if (gb) gb.classList.toggle('btn-gold-ready', ls.length > 0);
-    if (t.disc > 0) { var rp = document.createElement('div'); rp.className = 'lb-tot'; rp.style.fontSize = '14px'; rp.style.fontWeight = '600'; rp.innerHTML = '<span></span><span></span>'; rp.children[0].textContent = 'Real price'; rp.children[1].textContent = fmt(t.sub); box.appendChild(rp); }
+    if (t.disc > 0) { var rp = document.createElement('div'); rp.className = 'lb-tot'; rp.style.fontSize = '14px'; rp.style.fontWeight = '600'; rp.innerHTML = '<span></span><span></span>'; rp.children[0].textContent = 'Marked price'; rp.children[1].textContent = fmt(t.sub); box.appendChild(rp); }
     if (t.disc > 0) { var d = document.createElement('div'); d.className = 'lb-tot'; d.style.fontSize = '14px'; d.style.fontWeight = '600'; d.innerHTML = '<span></span><span></span>'; d.children[0].textContent = 'Discount ' + (Math.round(t.pct * 100) / 100) + '%'; d.children[1].textContent = '- ' + fmt(t.disc); box.appendChild(d); }
     var tot = document.createElement('div'); tot.className = 'lb-tot'; tot.innerHTML = '<span>' + (t.disc > 0 ? 'Price given' : 'Total') + '</span><span></span>'; tot.children[1].textContent = 'Rs ' + fmt(t.total); box.appendChild(tot);
     if (t.disc > 0) { var sv = document.createElement('div'); sv.style.cssText = 'font-weight:700;color:#8b6f47;text-align:right;font-size:14px'; sv.textContent = 'Customer saves Rs ' + fmt(t.disc); box.appendChild(sv); }
@@ -56,13 +56,13 @@
       if (!(s > 0)) { say('Add the items first.'); return; }
       if (v >= s) { pct.value = 0; amt.value = ''; fire(); say(v > s ? 'That is above the real price (Rs ' + fmt(s) + '): no discount.' : 'Full price: no discount.'); return; }
       var d = r2(s - v); amt.value = d; pct.value = Math.round(d / s * 1e10) / 1e8; fire();
-      say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(d / s * 1e4) / 100) + '%). Real price Rs ' + fmt(s) + '.');
+      say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(d / s * 1e4) / 100) + '%). Marked price Rs ' + fmt(s) + '.');
     }
     function toSell() {
       if (document.activeElement === sp) return;
       var s = sub(), p = parseFloat(pct.value) || 0;
       if (!(s > 0) || !(p > 0)) { sp.value = ''; say(''); return; }
-      var d = r2(s * p / 100); sp.value = r2(s - d); say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(p * 100) / 100) + '%). Real price Rs ' + fmt(s) + '.');
+      var d = r2(s * p / 100); sp.value = r2(s - d); say('Customer saves Rs ' + fmt(d) + ' (' + (Math.round(p * 100) / 100) + '%). Marked price Rs ' + fmt(s) + '.');
     }
     sp.addEventListener('input', fromSell);
     pct.addEventListener('input', function () { setTimeout(toSell, 0); });

@@ -21,3 +21,5 @@ html body #posTools .scan-row { display:none !important; }
 html body #itemTools { display:flex; align-items:stretch; gap:8px; margin:0; }
 html body #itemTools .add-btn { flex:1 1 auto; margin:0 !important; }
 html body #itemTools .tools-btn { min-height:40px; padding:4px 16px; white-space:nowrap; }
+#posExtra { margin:0 4px 2px; text-align:right; font-size:12px; color:var(--text-muted,#8a8a8a); }
+#posExtra:empty { display:none; }

@@ -604,7 +604,7 @@ function renderBill(bill) {
     <div class="row"><span>${escapeHtml(it.item_name)} × ${it.qty}</span><span>${sym} ${Number(it.line_total).toFixed(2)}</span></div>
   `).join('');
   const hasDisc = Number(bill.discount_amount) > 0;
-  let totalsHtml = `<div class="row"><span>${hasDisc ? 'Real price' : 'Subtotal'}</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
+  let totalsHtml = `<div class="row"><span>${hasDisc ? 'Marked price' : 'Subtotal'}</span><span>${sym} ${Number(bill.subtotal).toFixed(2)}</span></div>`;
   if (hasDisc) {
     totalsHtml += `<div class="row discount-line"><span>Discount (${Number(bill.discount_pct)}%)</span><span>-${sym} ${Number(bill.discount_amount).toFixed(2)}</span></div>`;
   }
@@ -619,7 +619,7 @@ function renderBill(bill) {
   }
   document.getElementById('rTotals').innerHTML = totalsHtml;
 
-  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` \nReal price: ${sym} ${Number(bill.subtotal).toFixed(2)}\nYou saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)` : ''}\nThank you for shopping with us!`;
+  const summaryText = `${branding.company_name || 'Royal Bath Hub Thihariya'}\nBill: ${bill.bill_number}\nTotal: ${sym} ${Number(bill.total).toFixed(2)}${Number(bill.discount_amount) > 0 ? ` \nMarked price: ${sym} ${Number(bill.subtotal).toFixed(2)}\nYou saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)` : ''}\nThank you for shopping with us!`;
   document.getElementById('waBtn').href = `https://wa.me/${toWhatsAppNumber(bill.customer_phone)}?text=${encodeURIComponent(summaryText)}`;
   document.getElementById('emailBtn').href = `mailto:?subject=${encodeURIComponent('Your bill from ' + (branding.company_name || 'Royal Bath Hub Thihariya'))}&body=${encodeURIComponent(summaryText)}`;
   document.getElementById('downloadBtn').href = `/api/pos-bills/${bill.id}/pdf`;

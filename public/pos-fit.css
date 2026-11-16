@@ -44,3 +44,5 @@ html body #formPanel .fp-right > #editBanner, html body #formPanel .fp-right > #
 html body #formPanel .fp-right > #payRow { order:7 !important; }
 html body #formPanel .fp-right > #cancelEditBtn { order:8 !important; }
 html body #formPanel .fp-right > .today-d { order:9 !important; }
+html body #formPanel .fp-right > #posExtra { order:1 !important; }
+html body #formPanel .fp-right > #posProfit { order:1 !important; }
