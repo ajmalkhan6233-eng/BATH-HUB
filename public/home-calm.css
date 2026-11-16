@@ -10,3 +10,6 @@
 #page-dashboard th{background:#ecece8;color:#0b0b0c;text-align:left;padding:6px 10px;border-bottom:1px solid #d4d4cf}
 #page-dashboard td{padding:6px 10px;border-bottom:1px solid #d4d4cf}
 #page-dashboard button,#page-dashboard .btn{border:1.5px solid #9a9a93;border-radius:8px;background:#fff;color:#111;font-weight:600;box-shadow:none}
+/* 16 Nov: when the real numbers did not load, never show the old zero cards (TOTAL SALE LKR 0 ...): they look like real numbers. One calm line instead. */
+#page-dashboard:not(.dp-on)>*:not(#dash-pro):not(#dash-modern){display:none!important}
+#page-dashboard:not(.dp-on)::before{content:"Numbers are loading. If this stays, press Refresh at the top.";display:block;padding:16px;margin:12px;background:#fff;border:1px solid #d4d4cf;border-radius:8px;font-weight:600}
