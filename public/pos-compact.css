@@ -2,7 +2,7 @@
 html body #formPanel { grid-template-columns:minmax(0,1fr) clamp(290px,23vw,330px) !important; gap:12px !important; }
 html body #formPanel .fp-right .generate-btn, html body #formPanel .fp-right label { margin-top:2px !important; }
 html body #formPanel .item-row { min-height:44px !important; margin:0 0 3px !important; }
-html body #formPanel .item-head, html body #formPanel #itemRows .item-row { grid-template-columns:minmax(0,1fr) 128px 88px 88px 88px 30px !important; }
+html body #formPanel .item-head, html body #formPanel #itemRows .item-row { grid-template-columns:minmax(0,1fr) 128px 88px 88px 88px 44px !important; }
 html body #formPanel .qty-step button { width:24px !important; min-width:24px !important; }
 /* customer line folds into one slim line once filled */
 #custRow.cust-done > div:not(#custSum) { display:none !important; }
