@@ -25,3 +25,6 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 11 Nov: AJ splits one supplier into two reps as two vendors, name style 'Fawaz (Fazal Hardware Pvt Ltd)'; both reps collect one company's cheques. Cheques are cash cheques on HNB; he lists them on an envelope.
 - 12 Nov: HARD RULE: never skip or ignore an alert or blocked task. Every NOT DONE item stays listed (AI_MEMORY/NOT_DONE.md) with Approve / Wait / Disregard until AJ picks one.
 - 2026-11-12 | AJ wants Pocket to stay open when he changes page, open with Face ID, and show sales, stock, money, cheques (view only).
+- 16 Nov: Rent is solid 70,000 a month; the 20,000 he mentioned is the ADVANCE (deposit), not rent.
+- 16 Nov: Cool Lanka Impex is the COMPANY (vendor); Cool Water is its BRAND; Delta and Marvel are categories below the brand. Do not ask again.
+- 16 Nov: When AJ says "done" it is done: do not keep saying UNVERIFIED or ask him to double-check. Gaps get closed later. He wants everything pushed at once and one paste: check bridge.
