@@ -224,3 +224,12 @@ html body .po-mid b { white-space:normal; }
 .po-stock small{display:block;font-size:11px;font-weight:500;color:var(--text-muted)}
 html body, html body input, html body button, html body select, html body .pick-opt, html body .pick-opt *{font-family:'RBH Sans','Segoe UI',system-ui,'Noto Sans Sinhala','Noto Sans Tamil',sans-serif !important}
 
+
+/* 16 Nov: Stock & items look for POS (colours, borders, no motion). Layout untouched. */
+html,body{background:#f4f4f2!important}
+*{animation:none!important;transition:none!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{border:1.5px solid #9a9a93!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important}
+input:focus,select:focus,textarea:focus{outline:2px solid #c9a227!important;outline-offset:0}
+button{border:1.5px solid #9a9a93;border-radius:8px;box-shadow:none!important;background-image:none!important}
+th{background:#ecece8!important;color:#0b0b0c!important}
+td{border-bottom:1px solid #d4d4cf!important}
