@@ -189,29 +189,23 @@ body.lines-full{overflow:hidden}
 </style>
 <link rel="stylesheet" href="/grn-compact.css"><script src="/grn-fit.js" defer></script><script src="/bathhub-a11y.js" defer></script><script src="/bathhub-logo.js" defer></script>
 <script src="/ui/fx-legacy.js" defer></script>
-<link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"><link rel="stylesheet" href="/grn-onescreen.css"></head><body><h1 style="margin:8px 12px 0;font-size:1.4rem">GRN (goods received)</h1>
+<link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"><link rel="stylesheet" href="/grn-onescreen.css"><link rel="stylesheet" href="/grn-plain.css"></head><body><h1 style="margin:8px 12px 0;font-size:1.4rem">GRN (goods received)</h1>
 <header><b>Royal Bath Hub</b><span>GRN workbench (build 69): photo, fix, press OK. Nothing is saved before that.</span></header>
 <div class="tabs"><button class="on" id="tab1">1. Enter a GRN / bill / cheque</button><button id="tab2">2. Vendors &amp; summary</button><button id="tab3">3. Cheques &amp; what I owe</button><button id="tab4">4. Customer bills (sales)</button><button id="tab5">5. More (purchasing, documents)</button>
 <span class="isrch"><input id="isq" type="search" placeholder="Search item: code, name or anything" autocomplete="off"><div id="isr"></div></span></div>
 <div class="wrap" id="view1">
- <section>
-  <div class="card">
-   <h3>1. Bill photo</h3>
-   <div class="row"><button class="p" data-new="GRN">+ New GRN</button><button data-new="BILL">+ New bill (money only)</button><button data-new="CHEQUE">+ New cheque</button></div>
+ <section id="grnbar">
+  <div class="row tb">
+   <button class="p" data-new="GRN">+ New GRN</button><button data-new="BILL">+ New bill (money only)</button><button data-new="CHEQUE">+ New cheque</button>
+   <label class="up">Upload picture <input type="file" id="photo" accept="image/*"></label>
    <div class="frame" id="frame"></div>
-   <div class="row">
-    <button id="rotL" title="Turn left">&#10226; Left</button><button id="rotR" title="Turn right">Right &#10227;</button><button id="zoom">Zoom in</button>
-    <input type="file" id="photo" accept="image/*" style="flex:1 1 100%;min-width:0">
-   </div>
-   <div class="row"><button class="p" id="gen" style="flex:1">Generate: read the photo and fill the right side</button></div>
-   <div id="genmsg" class="msg" role="status" aria-live="polite" style="display:none"></div>
+   <button class="p" id="gen">Read the picture and fill the form</button>
+   <details id="draftsmenu"><summary>Drafts</summary><div class="dd"><button id="clearEmpty">Delete empty drafts</button><div class="drafts" id="drafts"></div></div></details>
+   <span style="display:none"><button id="rotL"></button><button id="rotR"></button><button id="zoom"></button></span>
   </div>
-  <div class="card" style="margin-top:14px">
-   <h3>Your drafts <button id="clearEmpty" style="float:right;min-height:30px;padding:2px 10px">Delete empty drafts</button></h3>
-   <div class="drafts" id="drafts"></div>
-  </div>
+  <div id="genmsg" class="msg" role="status" aria-live="polite" style="display:none"></div>
  </section>
- <div id="split" class="split" title="Drag to make the left or right side bigger. Double-click to reset."></div>
+ <div id="split" class="split" style="display:none"></div>
  <section class="card" id="right"></section>
 </div>
 <div id="tools" style="display:none;padding:var(--s3) var(--s3) 0"></div>

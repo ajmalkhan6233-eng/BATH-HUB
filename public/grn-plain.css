@@ -1,0 +1,29 @@
+/* grn-plain.css (16 Nov, AJ: "completely change this design: small headline, upload picture, no preview, no left panel, plain colours, must scroll").
+   Loaded LAST on the GRN page. One page scroll, no inner scrollers, no coloured strips. Layout and colour only, no logic. Roll back: delete the link in grn_workbench.html. */
+html,body{height:auto!important;min-height:100%;overflow:auto!important;overscroll-behavior:auto!important;background:#f4f4f2!important;color:#0b0b0c}
+html body #view1.wrap{display:block!important;overflow:visible!important;height:auto!important;padding:6px 10px!important}
+html body #grnbar{display:block!important;overflow:visible!important;margin:0 0 6px}
+html body #grnbar .tb{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+html body #grnbar .up{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #9a9a93;border-radius:8px;background:#fff;min-height:34px;padding:0 10px;font-weight:600;cursor:pointer}
+html body #grnbar .up input{max-width:150px;font-size:12px}
+html body #frame{display:inline-block!important;width:auto!important;height:auto!important;min-height:0!important;border:0!important;background:none!important;padding:0!important}
+html body #frame img{display:none!important}
+html body #frame.has::after{content:"Picture added";color:#2f6b2f;font-weight:600;font-size:13px}
+html body #draftsmenu{position:relative}
+html body #draftsmenu summary{cursor:pointer;border:1.5px solid #9a9a93;border-radius:8px;background:#fff;min-height:34px;padding:5px 12px;font-weight:600;list-style:none}
+html body #draftsmenu .dd{position:absolute;z-index:30;top:38px;left:0;width:min(420px,92vw);max-height:60vh;overflow:auto;background:#fff;border:1px solid #bdbdb6;border-radius:8px;padding:8px}
+html body #view1 > #right,html body #view1 #right.has-lines{display:block!important;overflow:visible!important;height:auto!important;max-height:none!important;background:#fff;border:1px solid #d4d4cf;border-radius:8px;padding:8px!important}
+html body #view1 #right.has-lines > .g-hdr{display:flex!important;flex-wrap:wrap;gap:4px 10px;align-items:flex-end;margin-bottom:6px}
+html body #view1 #right.has-lines > .scroll.lines,html body #view1 #right.has-lines > .scroll.lines:not(.fullpage),html body #view1 #right > .scroll.lines:not(.fullpage){display:block!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;contain:none!important;will-change:auto!important}
+html body #view1 .lines thead th{position:sticky;top:0;z-index:5;background:#ecece8!important;color:#0b0b0c!important}
+html body #view1 #right.has-lines > .g-ftr{position:sticky!important;bottom:0!important;z-index:6;background:#fff!important;color:#0b0b0c!important;border-top:1px solid #d4d4cf!important;padding:6px 0!important}
+html body #view1 .g-ftr .actions button.p,html body #view1 .g-ftr .actions button:first-child{background:#c9a227;border-color:#c9a227;color:#0b0b0c}
+html body #view1 .badge,html body #view1 .dr.open,html body #view1 .dr .tag{background:#ecece8!important;color:#0b0b0c!important;border:1px solid #bdbdb6!important}
+html body #view1 .dr{background:#fff!important;border:1px solid #d4d4cf!important}
+html body #view1 .dr.on,html body #view1 .dr.cur{border:2px solid #c9a227!important}
+html body #tools,html body #view2,html body #view3,html body #view4,html body #view5{overflow:visible!important;flex:none!important;height:auto!important}
+html body .tabs{background:none!important}
+html body .tabs button,html body .tabs button.on{background:#fff!important;color:#0b0b0c!important;border:1.5px solid #9a9a93!important;box-shadow:none!important}
+html body .tabs button.on{background:#ecece8!important;border-color:#0b0b0c!important}
+html body #view1 .tag,html body #view1 .tag.t-new{background:#ecece8!important;color:#0b0b0c!important;border:1px solid #bdbdb6!important}
+html body #view1 .g-ftr,html body #view1 .g-ftr .actions,html body #view1 .g-ftr .row,html body #view1 .g-ftr .sum{background:#fff!important;color:#0b0b0c!important}
