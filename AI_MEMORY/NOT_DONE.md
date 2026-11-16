@@ -20,3 +20,4 @@
 | N24 | 16 Nov: close code gap 136+ to 059+ (scripts/close_code_gap.js, tested on copy) | PLAYED, waiting for PC | PC check bridge |
 | N25 | 16 Nov: POS-first loading (pos-frame preloads at start, Home shows by 0.8s, SW v98-r). Needs one look on PC | PLAYED, waiting for PC | AJ reloads /owner once |
 | N26 | 16 Nov: soap dish to 032, black soap and after shift up (scripts/place_soap_dish.js, tested both ways) | PLAYED, waiting for PC | PC run, then AJ checks 032 and 058-064 |
+| N27 | 16 Nov: Leo Marketing second vendor, 065-101 (scripts/move_leo_second.js, tested). Heads-up: 163-324 have no GRN, some look like duplicates (322-324 = mirrors 068-070) | PLAYED, waiting for PC | PC run; AJ decides on 163-324 |
