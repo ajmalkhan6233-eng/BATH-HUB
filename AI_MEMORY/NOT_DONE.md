@@ -24,3 +24,5 @@
 | N28 | 16 Nov: vendor codes from AJ papers: Leo 065-103, Fazal 104-143 + 153-157 (144-152 empty), Cool Lanka 158-170, Maheshan 171-208 (PR7554 not delivered, 189 reserved), Afham/Imran parked, Leo returns in corner; 28 selling prices from papers; 9 prices unclear (181,182,183,186,196,204-207); 4 free units to add by GRN (scripts/set_vendor_codes.js, tested) | PLAYED, waiting for PC | PC run; AJ confirms 9 prices and sends Afham/Imran codes 
 
 N29: vendor codes 001-211 ready (Imran door 209 sell 10,500; Afham fan lights 210-211, no price). Waiting: PC run set_vendor_codes.js. Heads-up: 9 unclear prices (181,182,183,186,196,204,205,206,207); GRN entries for 065, 071, 072; 4 free units; 'colleague missed GRN items' to the last codes [Approve] [Wait] [Disregard]
+W1: WAITING (AJ fixes on the PC): 4 free units (PR7531-R, CR7533-R, CR7533-L, PR7544-L at cost 0) and 9 unclear selling prices (181,182,183,186,196,204,205,206,207).
+W2: first bill (mirror, 9,650 less 3,150 = 6,500 cash) re-entered backdated 29/10/2026 by scripts/rebill_first_bill.js (date is a safe default, change with --date).
