@@ -26,7 +26,7 @@ async function queueReceiptForBill(pool, bill, opts = {}) {
         const have = await pool.query(`SELECT id FROM receipt_queue WHERE sale_reference = $1 LIMIT 1`, [ref]);
         if (have.rows.length) return { status: 'already_queued', queue_id: have.rows[0].id };
 
-        const phone = sender.normalizeSriLankaPhone(bill.customer_phone);
+        const phone = sender.normalizeWhatsappPhone(bill.customer_phone);
         const ins = await pool.query(
             `INSERT INTO receipt_queue (customer_phone, sale_reference, amount, status) VALUES ($1,$2,$3,$4) RETURNING id`,
             [String(bill.customer_phone || '').slice(0, 30), ref, Number(bill.total) || null, phone ? 'queued' : 'no phone']);

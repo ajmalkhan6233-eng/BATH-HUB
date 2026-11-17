@@ -30,3 +30,11 @@ SPEED-STYLE-MEMORY (17 Nov)
 - D scripts/autosave_live.js + Task Scheduler "RBH_Autosave_LIVE" every 15 min: one AUTOSAVE state line at the top of AI_MEMORY/LIVE.md, commits ONLY that file, pull --rebase, push work. Skips if checkout is not on work or git is busy. Log: AI_MEMORY/autosave.log.
 - E CLAUDE.md updated (rules, Leo, Lucky, return/Reason rule, Cool Lanka return). Note: "Marunal" written as Marvel.
 - I could not see POS itself (it needs the owner login, which I do not enter), so "match POS" uses POS's own theme values from bathhub-design.css.
+
+PHONE RULE + DESIGN PACK (17 Nov, later)
+- POS phone box (public/pos-customer.js): Sri Lanka as before; any other country accepted when it starts with + or 00 (also "009 " with a space), 8 to 15 digits; saved as +CCNNN. "009" typed WITHOUT a space is read as 00 + 9..., because 0096... could be Lebanon; type a space after 009.
+- WhatsApp receipt (utils/whatsappReceiptSender.js new normalizeWhatsappPhone, used only by utils/autoReceipt.js): same rule. The old Sri Lanka-only function and its tests are unchanged (36 tests pass). Foreign receipts go through the same WhatsApp bridge; not tried with a real foreign number.
+- Test: scripts/test_phone_rules.js (24 cases). Backups of the three changed files in AI_MEMORY/archive/.
+- docs/POS_DESIGN_PACK.md = one file for ChatGPT: problems, layout, all 26 buttons and 15 fields, 15 extra pos-*.js modules, CSS order, what a standard POS lacks. The customer's name and number from the screenshot were left out.
+- POS congestion after 4-5 lines is NOT changed yet: waiting for the ERP picture from Aj.
+- Heads-up: POS has a "Clear all test bills" button (clearAllBills) visible in the Bill tools menu. Owner-only on the server, but it is a risky button next to live tools.

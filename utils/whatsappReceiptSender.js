@@ -31,6 +31,15 @@ function normalizeSriLankaPhone(raw) {
     if (!/^947\d{8}$/.test(d)) return null;
     return '+' + d;
 }
+// 17 Nov (AJ): POS receipts only. Sri Lanka numbers as before, PLUS any other country when the number starts with + or 00 (8 to 15 digits). Never guesses: no + / 00 and not Sri Lanka = null.
+function normalizeWhatsappPhone(raw) {
+    const t = String(raw == null ? "" : raw).trim().replace(/^009[\s-]/, "00");   // "009 61..." typed with a space = 00 61...
+    const sl = normalizeSriLankaPhone(t);
+    if (sl) return sl;
+    if (!/^(\+|00)/.test(t)) return null;
+    const d = t.replace(/\D/g, "").replace(/^00/, "");
+    return /^[1-9]\d{7,14}$/.test(d) && !d.startsWith("94") ? "+" + d : null;
+}
 const last3 = p => (p ? String(p).replace(/\D/g, '').slice(-3) : '???');
 const mask = p => '***' + last3(p);
 
@@ -191,4 +200,4 @@ async function sendAllQueued(pool, opts = {}) {
     return out;
 }
 
-module.exports = { sendViaBridge, viaBridge, CAPTION, normalizeSriLankaPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };
+module.exports = { sendViaBridge, viaBridge, CAPTION, normalizeSriLankaPhone, normalizeWhatsappPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };
