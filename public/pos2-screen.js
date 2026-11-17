@@ -186,14 +186,31 @@
   $('cancelEditBtn').onclick = function () { endEdit(); clearForNext(); };
   $('backPosBtn').onclick = backToPOS; $('newBillBtn').onclick = function () { backToPOS(); clearForNext(); };
 
-  // ---------- held (this device only) ----------
-  function loadHeld() { try { return JSON.parse(localStorage.getItem(HELD) || '[]'); } catch (e) { return []; } }
-  function saveHeld(a) { try { localStorage.setItem(HELD, JSON.stringify(a.slice(0, 10))); } catch (e) { /* ignore */ } }
-  function holdBill() { if (!rows.length) { showError('Add at least one item before holding.'); return; } var h = loadHeld(); h.unshift({ rows: rows, extra: extra, name: $('customerName').value, phone: $('customerPhone').value, date: sd.value, at: Date.now() }); saveHeld(h); clearForNext(); $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + loadHeld().length + '</strong> · Last held bill saved.'; render(); }
+  // ---------- held bills: the SAME store as the old POS (this browser, key pos_held_bills), so held bills carry over both ways ----------
+  function loadHeld() { return PosCart.loadHeld(); }
+  function holdBill() {
+    if (!rows.length) { showError('Add at least one item before holding.'); return; }
+    var t = totals(), pct = t.gross ? Math.round(t.disc / t.gross * 1e8) / 1e6 : 0;   // item discounts + extra become one bill discount %
+    var r = PosCart.holdAdd(loadHeld(), PosCart.makeHeld({ customer_name: $('customerName').value, customer_phone: $('customerPhone').value, discount_pct: pct, payment_method: $('paymentMethod').value.toLowerCase(),
+      rows: rows.map(function (x) { return { item_code: x.code, name: x.name, qty: x.qty, unit_price: x.price }; }) }));
+    if (!r.ok) { showError(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.'); return; }
+    PosCart.saveHeld(undefined, r.list); clearForNext(); $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + loadHeld().length + '</strong> · Last held bill saved on this device.'; render();
+  }
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
-    modal('Held bills', h.map(function (x, i) { return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.name || 'Walk-in') + ' · ' + x.rows.length + ' lines <button class="secondary small" data-r="' + i + '">Resume</button> <button class="secondary small" data-d="' + i + '">Delete</button></p>'; }).join(''));
-    $('modalBody').onclick = function (e) { var r = e.target.dataset.r, d = e.target.dataset.d, a = loadHeld(); if (d != null) { a.splice(+d, 1); saveHeld(a); closeModal(null); render(); return; } if (r != null) { var x = a.splice(+r, 1)[0]; saveHeld(a); rows = x.rows; extra = x.extra || 0; $('customerName').value = x.name; $('customerPhone').value = x.phone; sd.value = x.date; closeModal(null); render(); } };
+    modal('Held bills', h.map(function (x) { var tt = PosCart.totals(x.rows, x.discount_pct).total; return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.customer_name || 'Walk-in') + ' · ' + x.rows.length + ' item(s) · ' + money(tt) + ' <button class="secondary small" data-r="' + esc(x.id) + '">Resume</button> <button class="secondary small" data-d="' + esc(x.id) + '">Delete</button></p>'; }).join(''));
+    $('modalBody').onclick = function (e) {
+      var r = e.target.dataset.r, d = e.target.dataset.d;
+      if (d) { PosCart.saveHeld(undefined, PosCart.holdRemove(loadHeld(), d)); closeModal(null); render(); return; }
+      if (!r) return; var x = PosCart.holdGet(loadHeld(), r); if (!x) return;
+      if (rows.length && !confirm('Replace the items on the screen with this held bill?')) return;
+      PosCart.saveHeld(undefined, PosCart.holdRemove(loadHeld(), r)); closeModal(null);
+      rows = x.rows.map(function (y) { return { code: y.item_code, name: y.name, qty: y.qty, price: y.unit_price, disc: '0', stock: null, cost: null, unit: '' }; });
+      var sub = rows.reduce(function (a, y) { return a + y.qty * y.price; }, 0); extra = sub * (x.discount_pct || 0) / 100;
+      $('customerName').value = x.customer_name || ''; $('customerPhone').value = x.customer_phone || '';
+      var pm = { cash: 'Cash', card: 'Card', online: 'Online transfer', cheque: 'Cheque', credit: 'Credit', split: 'Split' }[x.payment_method]; if (pm) $('paymentMethod').value = pm; paymentUI(); render();
+      rows.forEach(function (y) { if (y.code) api.itemByCode(y.code).then(function (it) { if (it) { y.stock = it.stock; y.cost = it.cost; y.unit = it.unit; render(); } }); });
+    };
   }
 
   // ---------- find bill / last bill ----------
@@ -242,6 +259,11 @@
   $('paymentMethod').onchange = paymentUI; $('genBtn').onclick = generateBill;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { $('picker').classList.add('hidden'); $('toolMenu').classList.add('hidden'); closeModal(null); } if (e.key === 'F2') { e.preventDefault(); openPicker(); } if (e.key === 'F4') { e.preventDefault(); $('customerName').focus(); } });
   setInterval(function () { $('clock').textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Colombo' }); }, 1000);
+
+  // ---------- inside the owner app: no second menu; Quotation / Bill modes from the menu bar ----------
+  try { if (window.self !== window.top) document.documentElement.classList.add('in-frame'); } catch (e) { document.documentElement.classList.add('in-frame'); }
+  if (location.hash === '#quote') setMode(true);
+  window.addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.pq === 'quote') setMode(true); if (e.data.pq === 'bill') setMode(false); });
 
   // ---------- start ----------
   api.me().then(function (u) { isOwner = !!(u && u.role === 'admin'); });
