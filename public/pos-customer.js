@@ -8,7 +8,9 @@
   var WALK = /^(|cash|walk[- ]?in|walk[- ]?in customer|cash customer)$/i;
   function slPhone(raw) {            // returns "0XXXXXXXXX" or '' (empty input) or null (not a Sri Lankan number)
     if (/[A-Za-z]/.test(String(raw || ''))) return null;
-    var d = String(raw || '').replace(/[^\d+]/g, ''); if (!d) return '';
+    var d = String(raw || '').trim().replace(/^009[\s-]/, '00').replace(/[^\d+]/g, ''); if (!d) return '';   // "009 61..." (Sri Lanka's old dialling prefix, typed with a space) = 00 61...
+    // 17 Nov (AJ): a number with + or 00 in front from any other country is accepted as an international number (8 to 15 digits). Sri Lanka rules below are unchanged.
+    if (/^(\+|00)/.test(d) && !/^(\+94|0094)/.test(d)) { var c = d.replace(/^(\+|00)/, ''); return /^[1-9]\d{7,14}$/.test(c) ? '+' + c : null; }
     d = d.replace(/^\+/, '').replace(/^0094/, '94');
     if (/^94\d{9}$/.test(d)) d = '0' + d.slice(2); else if (/^[1-9]\d{8}$/.test(d)) d = '0' + d;
     return /^0[1-9]\d{8}$/.test(d) ? d : null;
@@ -19,7 +21,7 @@
     window.generateBill = function () {
       var n = $('customerName'), p = $('customerPhone'); if (!n || !p) return orig.apply(this, arguments);
       var ph = slPhone(p.value);
-      if (ph === null) { if (typeof window.showError === 'function') window.showError('Phone must be a Sri Lankan number, like 077 123 4567. Check it and try again.'); p.focus(); return; }
+      if (ph === null) { if (typeof window.showError === 'function') window.showError('Phone must be a Sri Lankan number like 077 123 4567, or an international number starting with + or 00. Check it and try again.'); p.focus(); return; }
       p.value = ph;
       var walk = WALK.test(n.value.trim()) && !ph;
       if (walk) {
