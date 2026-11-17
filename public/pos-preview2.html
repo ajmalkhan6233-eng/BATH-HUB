@@ -102,6 +102,36 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 .picker{right:400px}
 .bill-summary .message:empty{display:none}.bill-summary{flex:none}.last-pill-fix{}
 #lastBillLabel{border:0;background:transparent;color:#62696e;padding:5px 4px}
+
+/* 17 Nov (AJ): receipt screen shows the real receipt picture; buttons readable; New bill visible */
+.receipt-card.img-ok{width:min(760px,96vw)}
+.receipt-card.img-ok>*:not(.receipt-actions):not(#rImgWrap):not(#waReceiptMsg):not(#billAttach){display:none}
+#rImgWrap{text-align:center}#rImg{max-width:100%;max-height:60vh;object-fit:contain;border-radius:6px;box-shadow:0 3px 14px #0003}
+.receipt-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.receipt-actions button{background:#fff;color:#222;border:1px solid #c8cdd0;padding:8px 12px;border-radius:4px;font-weight:600}
+.receipt-actions button.primary{background:#292929;color:#fff;border-color:#292929}
+.receipt-actions .ra-side{margin-left:auto;display:flex;gap:6px}.receipt-actions .ra-side button{font-weight:500;font-size:12px;padding:6px 9px}
+@media print{#rImgWrap{display:block!important}.receipt-card.img-ok{width:100%}#rImg{max-height:none;box-shadow:none}}
+/* 17 Nov (AJ): calmer layout. Items get the whole width; totals + payment + Generate sit in ONE bar underneath */
+.workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) auto}
+.right-work{display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;overflow:visible;padding:0;align-items:stretch}
+.right-work .bill-summary{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 12px;padding:6px 9px}
+.bill-summary .panel-title,.bill-summary .mini-list{display:none}
+.bill-summary .total-row{display:block;padding:0}.bill-summary .total-row span{display:block;font-size:11px;font-weight:600;color:#62696e}.bill-summary .total-row strong{font-size:23px}
+.price-control{margin:0;grid-template-columns:1.3fr .8fr 1fr .6fr!important}.price-control .field:nth-child(4){grid-column:auto!important}
+.bill-summary .message{grid-column:1/-1}
+.payment-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;align-items:end;padding:6px 9px}
+.payment-card>.field{grid-column:1;grid-row:1}.payment-card>.gen-row{grid-column:2;grid-row:1}.payment-card>*:not(.field):not(.gen-row){grid-column:1/-1}
+.gen-row button{min-height:34px;padding:0 22px;white-space:nowrap}
+#todayBox{display:none}.item-foot #holdBtn,.item-foot #heldBtn,.item-foot #toolsBtnBottom{display:none}
+.bottom-status{display:none}
+.picker{left:10px;right:10px!important}.tool-menu{top:44px}
+.findbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.findbar input{height:30px}
+.dayhead{background:#f4f1e6;padding:4px 8px;font-size:12px;font-weight:700;margin-top:6px;border-radius:3px;display:flex;justify-content:space-between}
+.billrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #eceeef;font-size:13px}
+@media(max-width:1000px){.right-work{grid-template-columns:1fr}}
+.item-foot .gen-row{margin-left:6px}.item-foot .gen-row button{min-height:36px;padding:0 28px;font-size:15px;flex:none}.item-foot .status-note{margin-left:8px}
+.payment-card{grid-template-columns:minmax(0,1fr)!important}
 </style>
 </head>
 <body>
@@ -111,15 +141,15 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
   <nav class="appnav" aria-label="Application navigation">
     <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
   </nav>
-  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><button class="secondary small" id="recallTop">Recall held (<span id="recallN">0</span>)</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" id="signOutBtn" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><button class="secondary small" id="findTop">Bills · find</button><button class="secondary small" id="recallTop">Recall held (<span id="recallN">0</span>)</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" id="signOutBtn" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
   <main id="formPanel">
     <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
     <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
-      <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="off"></div>
+      <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
-      <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="off"></div>
+      <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
       <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
     </section>
@@ -186,13 +216,13 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 
 <!-- 08 — Generated receipt -->
 <div class="receipt-wrap hidden" id="receipt">
-  <div class="receipt-card" id="billPanel">
+  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><img id="rImg" alt="Receipt"></div>
     <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
     <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
     <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>
     <div id="rTotals" style="text-align:right;font-size:13px;line-height:1.8"></div>
     <div style="text-align:center;border-top:1px dashed #999;margin-top:12px;padding-top:10px;font-size:11px">Thank you for your business. Honest trade, lasting value.</div>
-    <div class="receipt-actions"><button onclick="window.print()">Print receipt</button><button id="waBtn">Send WhatsApp</button><button id="waReceiptBtn">Send receipt image</button><button id="downloadBtn">Download receipt</button><button id="emailBtn">Email</button><button id="vcfBtn">Customer contact</button><button id="editReceiptBtn">Edit</button><button id="voidBtn">Void this bill</button><button id="newBillBtn" class="primary">New bill</button><button id="backPosBtn">Back to POS</button></div>
+    <div class="receipt-actions"><button id="printBtn">Print receipt</button><button id="waBtn">Send WhatsApp</button><button id="waReceiptBtn">Receipt image</button><button id="newBillBtn" class="primary">New bill</button><button id="backPosBtn">Back to POS</button><span class="ra-side"><button id="editReceiptBtn">Edit</button><button id="voidBtn">Void</button><button id="emailBtn" class="small">Email</button></span></div>
     <div id="waReceiptMsg" class="message"></div><div id="billAttach" class="muted" style="font-size:10px"></div>
   </div>
 </div>
