@@ -32,11 +32,11 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .tot-row.grand { background:linear-gradient(90deg,var(--hdr,#0b0b0c),rgba(var(--hdr-rgb,11,11,12),.82)); font-size:38px; font-weight:800; padding:10px 20px; border-radius:10px; margin:8px 0; border:2px solid #c9a24b; }
 .tot-row.grand span:first-child { color:#c9a24b; } .tot-row.grand span:last-child { color:#fff; }
 .balance-row { background:#e8cf8a; font-weight:800; padding:8px 16px; border-radius:8px; font-size:26px; }
-.foot { display:flex; align-items:center; gap:30px; margin:0 -56px; padding:26px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.12) 0%,rgba(var(--hdr-rgb,11,11,12),.3) 28%,rgba(var(--hdr-rgb,11,11,12),.82) 55%,rgba(var(--hdr-rgb,11,11,12),.92) 100%),var(--bg-foot,url('../receipt-foot.jpg')) center/cover no-repeat; }
-.qrbox { flex:0 0 auto; width:236px; height:236px; border-radius:30px; background:rgba(255,255,255,.9); box-shadow:0 4px 14px rgba(0,0,0,.28); display:flex; align-items:center; justify-content:center; }
-.qrbox svg { width:214px; height:214px; display:block; }
+.foot { display:flex; align-items:center; gap:24px; margin:0 -56px; padding:12px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.12) 0%,rgba(var(--hdr-rgb,11,11,12),.3) 28%,rgba(var(--hdr-rgb,11,11,12),.82) 55%,rgba(var(--hdr-rgb,11,11,12),.92) 100%),var(--bg-foot,url('../receipt-foot.jpg')) center/cover no-repeat; }
+.qrbox { flex:0 0 auto; width:150px; height:150px; border-radius:20px; background:rgba(255,255,255,.9); box-shadow:0 4px 14px rgba(0,0,0,.28); display:flex; align-items:center; justify-content:center; }
+.qrbox svg { width:134px; height:134px; display:block; }
 .fr { flex:1; text-align:right; }
-.thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:10px; color:#fff; }
+.thanks { font-weight:700; font-style:italic; font-size:30px; margin-bottom:6px; color:#fff; }
 .wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 22px; border-radius:999px; }
 .shop-info { font-size:21px; color:#e8cf8a; margin-top:10px; line-height:1.35; }
 .bar { height:12px; margin:0 -56px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
@@ -182,7 +182,7 @@ function renderReceipt(d) {
 
   $('thanks').textContent = d.thanks || 'Thank you for choosing Royal Bath Hub';
   
-  const shopInfo = 'Halal tiles and bathroom fittings<br>Royal Bath Hub, Kandy Road, Thihariya';
+  const shopInfo = 'Tiles and bathroom fittings';
   $('shopInfo').innerHTML = shopInfo;
 
   if (d.qrSvg) {
