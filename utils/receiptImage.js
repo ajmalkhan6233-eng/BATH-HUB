@@ -93,7 +93,7 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   const data = cleanBill(bill);
   
   // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
-  const th = require('./receiptTheme').pick(); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = th.rgb;
+  const th = require('./receiptTheme').pickFor(data.billNo); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = (bill && bill.hdr) ? [1, 3, 5].map(i => parseInt(String(bill.hdr).slice(i, i + 2), 16)).join(',') : th.rgb;
   try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
 
   const puppeteer = require('puppeteer');

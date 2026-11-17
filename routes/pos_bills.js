@@ -430,7 +430,7 @@ router.get('/pos-bills/:id/receipt.png', async (req, res) => {
             customer: bill.customer_name || 'Walk-in customer', customerPhone: bill.customer_phone || '', paymentMethod: String(pay), total: Number(bill.total),
         };
         if (req.query.json) return res.json(payload);
-        const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pick();
+        const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pickFor(bill.bill_number);
         const fs0 = require('fs'), tp = require('path').join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html'), tv = (() => { try { return Math.floor(fs0.statSync(tp).mtimeMs / 1000).toString(36); } catch { return '0'; } })();
         const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}-v${tv}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
         if (!require('fs').existsSync(full)) await receiptImage.renderReceiptPng(payload, { fileName });

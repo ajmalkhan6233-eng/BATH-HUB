@@ -171,7 +171,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 #picker .pick-row.selected{background:#e8dcc0;outline:1px solid #c9a24b}
 @media(min-width:701px){#priceRow{grid-template-columns:repeat(4,1fr)!important}#priceRow .field:nth-child(4){grid-column:auto!important}#priceRow .field:nth-child(5){grid-column:1/-1}}
 </style>
-</head>
+<style id="rload">#rImgWrap .rload{display:none;padding:60px 0;color:#8a6a1c;font-weight:700;font-size:18px}#rImgWrap.loading .rload{display:block}#rImgWrap.loading #rImg,#rImgWrap.loading #rImgDl{display:none}</style></head>
 <body>
 <div class="shell">
   <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
@@ -255,7 +255,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 
 <!-- 08 — Generated receipt -->
 <div class="receipt-wrap hidden" id="receipt">
-  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><img id="rImg" alt="Receipt"><div><button id="rImgDl" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px">&#8681; Download</button></div></div>
+  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><div class="rload">Drawing your receipt…</div><img id="rImg" alt="Receipt"><div><button id="rImgDl" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px">&#8681; Download</button></div></div>
     <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
     <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
     <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>

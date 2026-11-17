@@ -174,9 +174,9 @@
     $('waReceiptMsg').textContent = ''; $('billAttach').textContent = '';
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
-    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.add('img-ok'); $('rImgWrap').classList.add('hidden');
-    img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); };
-    img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden'); };
+    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); $('rImgWrap').classList.add('loading');
+    img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('loading'); };
+    img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.remove('loading'); $('rImgWrap').classList.add('hidden'); };
     img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now();
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
