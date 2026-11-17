@@ -83,6 +83,25 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 html.in-frame .shell{min-height:0;height:100vh}
 @media(max-height:560px){.mini-list{max-height:48px}.price-control{margin-top:0}.right-work{gap:4px}}
 html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #clock+button{display:none}
+
+/* 17 Nov (AJ): save height. One top line, customer details fold up once typed, bigger/neater right side */
+.toolbar{display:none}
+.docline{gap:8px}.docline .doc-tabs{flex:1;min-width:0}.docline #posTools{display:flex;align-items:center;gap:6px;margin-left:auto}
+.docline #modeLabel,.docline #docRef,.docline .clock,.docline #posTools #signOutBtn{display:none}
+.customer-row.folded{height:30px;padding:2px 9px;grid-template-columns:1fr}
+.customer-row.folded .field,.customer-row.folded .check{display:none}
+.cust-sum{width:100%;text-align:left;border:0;background:transparent;padding:3px 2px;font-size:13px;color:#2e3336;cursor:pointer}
+.cust-sum b{font-weight:700}.cust-sum span{color:#62696e}.cust-sum em{font-style:normal;color:#7d6125;float:right;font-size:12px}
+.held-strip{display:none}
+.workspace{grid-template-columns:minmax(0,1fr) 380px}
+.price-control{grid-template-columns:1.25fr .75fr 1fr;gap:5px}.price-control .field:nth-child(4){grid-column:1/-1}
+.price-control .field input{height:28px;padding:4px 6px}.price-control label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profit-secret{padding:0}.mini-list{min-height:46px;max-height:96px}
+.total-row{padding:4px 0 3px}.bill-summary{padding:7px 9px}
+@media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 430px}.picker{right:450px}}
+.picker{right:400px}
+.bill-summary .message:empty{display:none}.bill-summary{flex:none}.last-pill-fix{}
+#lastBillLabel{border:0;background:transparent;color:#62696e;padding:5px 4px}
 </style>
 </head>
 <body>
@@ -97,7 +116,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
     <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
     <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
-    <section class="card customer-row" id="custRow">
+    <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
       <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="off"></div>
       <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="off"></div>

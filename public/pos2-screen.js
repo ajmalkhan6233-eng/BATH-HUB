@@ -198,6 +198,30 @@
   }
   function heldCountSync() { try { var n = loadHeld().length; $('recallN').textContent = n; $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + n + '</strong> · ' + (n ? 'Tap here or Recall held to bring one back' : 'No held bills'); $('heldBtn').textContent = 'Held (' + n + ')'; } catch (e) {} }
   setInterval(heldCountSync, 1500); setTimeout(heldCountSync, 300);
+
+  // ---------- 17 Nov: one top line + customer details fold up once typed ----------
+  (function layoutTidy() {
+    try {
+      var dl = document.querySelector('.docline'), tabs = dl && dl.querySelector('.doc-tabs');
+      if (dl && tabs) { tabs.appendChild($('lastBillLabel')); dl.appendChild($('posTools')); }
+    } catch (e) {}
+    var row = $('custRow'), sum = $('custSum'), open = false;
+    function inside() { return row.contains(document.activeElement); }
+    function label() {
+      var n = $('customerName').value.trim(), ph = $('customerPhone').value.trim(), d = $('saleDate').value.trim();
+      sum.innerHTML = '<b>' + esc(n || 'Walk-in customer') + '</b> <span>· ' + esc(ph || 'no phone') + ' · ' + esc(d) + ($('waCheck').checked && ph ? ' · WhatsApp receipt' : '') + '</span><em>Change ✎</em>';
+    }
+    function tick() {
+      var both = $('customerName').value.trim() && $('customerPhone').value.trim(), any = $('customerName').value.trim() || $('customerPhone').value.trim();
+      var fold = both && !inside() && !open;
+      if (!any) open = false;
+      row.classList.toggle('folded', !!fold); sum.classList.toggle('hidden', !fold);
+      if (fold) label();
+    }
+    sum.onclick = function () { open = true; row.classList.remove('folded'); sum.classList.add('hidden'); $('customerName').focus(); };
+    row.addEventListener('focusout', function () { setTimeout(function () { if (!inside()) { open = false; tick(); } }, 150); });
+    setInterval(tick, 700); setTimeout(tick, 300);
+  })();
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
     modal('Held bills', h.map(function (x) { var tt = PosCart.totals(x.rows, x.discount_pct).total; return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.customer_name || 'Walk-in') + ' · ' + x.rows.length + ' item(s) · ' + money(tt) + ' <button class="secondary small" data-r="' + esc(x.id) + '">Resume</button> <button class="secondary small" data-d="' + esc(x.id) + '">Delete</button></p>'; }).join(''));
