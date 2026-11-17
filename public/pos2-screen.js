@@ -10,12 +10,23 @@
 
   // ---------- date: dd/mm/yyyy ----------
   var sd = $('saleDate'); sd.value = api.isoToDMY(api.todayISO());
-  sd.addEventListener('input', function () { var d = sd.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 2); if (d.length > 2) o += '/' + d.slice(2, 4); if (d.length > 4) o += '/' + d.slice(4); if (sd.value !== o) sd.value = o; });
+  sd.addEventListener('input', function () {
+    var pos = sd.selectionStart == null ? sd.value.length : sd.selectionStart, before = sd.value.slice(0, pos).replace(/\D/g, '').length;
+    var d = sd.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 2); if (d.length > 2) o += '/' + d.slice(2, 4); if (d.length > 4) o += '/' + d.slice(4);
+    if (sd.value !== o) { sd.value = o; var np = 0, cnt = 0; while (np < o.length && cnt < before) { if (/\d/.test(o[np])) cnt++; np++; } try { sd.setSelectionRange(np, np); } catch (e) {} }
+  });
+  // click anywhere in a field = caret goes exactly there (the anti-autofill readonly is lifted BEFORE the click lands)
+  ['customerName', 'customerPhone', 'saleDate'].forEach(function (id) { var e = $(id); if (e) { e.addEventListener('pointerdown', function () { e.removeAttribute('readonly'); }); e.addEventListener('mousedown', function () { e.removeAttribute('readonly'); }); } });
   function saleISO() { return api.dmyToISO(sd.value); }
   function dmyOf(ts) { try { return new Date(ts).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo' }); } catch (e) { return ''; } }
 
   // ---------- numbers ----------
   function lineDiscount(r) { var raw = String(r.disc == null ? '0' : r.disc).trim(); if (/%$/.test(raw)) return r.qty * r.price * Math.max(0, parseFloat(raw) || 0) / 100; return Math.max(0, parseFloat(raw) || 0) * r.qty; }
+  function effPrice(r) { return r.qty > 0 ? Math.max(0, r.price - lineDiscount(r) / r.qty) : r.price; }
+  function setPrice(r, typed) {   // list price stays permanent; a lower typed price becomes a per-unit discount automatically
+    typed = Math.max(0, Number(typed) || 0); if (r.list == null) r.list = r.price;
+    if (typed <= r.list) { r.price = r.list; r.disc = String(Math.round((r.list - typed) * 100) / 100); } else { r.price = typed; r.disc = '0'; }
+  }
   function lineTotal(r) { return Math.max(0, r.qty * r.price - lineDiscount(r)); }
   function totals() {
     var gross = 0, ld = 0, cost = 0, known = rows.length > 0;
@@ -32,7 +43,7 @@
     $('itemRows').innerHTML = rows.map(function (r, i) {
       return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong>' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div></div>' +
         '<div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="' + r.qty + '" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>' +
-        '<input class="price-input" data-field="price" value="' + Number(r.price).toFixed(2) + '" inputmode="decimal" aria-label="Selling price"><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
+        '<input class="price-input" data-field="price" value="' + effPrice(r).toFixed(2) + '" inputmode="decimal" aria-label="Selling price"><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
         '<div class="line-total">' + money(lineTotal(r)).replace('Rs ', '') + '</div><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>';
     }).join('');
     var t = totals();
@@ -56,12 +67,14 @@
 
   // ---------- items ----------
   function addItem(item) {
-    var ex = rows.filter(function (r) { return r.code && r.code === item.code; })[0];
-    if (ex) ex.qty += 1; else rows.push(Object.assign({}, item, { qty: 1, disc: '0' }));
-    render(); $('scanBox').value = ''; renderPicker(); $('scanBox').focus(); scanMsg('');
+    var ex = rows.filter(function (r) { return r.code && r.code === item.code; })[0], idx;
+    if (ex) { ex.qty += 1; idx = rows.indexOf(ex); } else { rows.push(Object.assign({}, item, { qty: 1, disc: '0', list: item.price })); idx = rows.length - 1; }
+    render(); $('scanBox').value = ''; $('picker').classList.remove('open'); renderPicker(); scanMsg('');
+    focusField(idx, 'qty');
   }
+  function focusField(i, f) { setTimeout(function () { var row = $('itemRows').querySelector('.item-row[data-index="' + i + '"]'), el = row && row.querySelector('[data-field="' + f + '"]'); if (el) { el.focus(); el.select(); } else $('scanBox').focus(); }, 30); }
   var seq = 0;
-  function openPicker() { $('picker').classList.remove('hidden'); $('scanBox').value = ''; $('scanBox').focus(); renderPicker(); }
+  function openPicker() { $('picker').classList.remove('hidden'); $('picker').classList.add('open'); $('scanBox').value = ''; $('scanBox').focus(); renderPicker(); }
   function renderPicker() {
     var mine = ++seq, q = $('scanBox').value.trim();
     api.items(q, 60).then(function (found) {
@@ -70,7 +83,7 @@
       $('pickerResults')._found = found;
     });
   }
-  var pt; $('scanBox').addEventListener('input', function () { clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
+  var pt; $('scanBox').addEventListener('input', function () { $('picker').classList.add('open'); clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
   $('scanBox').addEventListener('keydown', function (e) {   // a scanner or typed exact code + Enter adds the item
     if (e.key !== 'Enter') return; e.preventDefault(); var v = $('scanBox').value.trim(); if (!v) return;
     api.itemByCode(v).then(function (it) { if (it) addItem(it); else { var f = $('pickerResults')._found || []; if (f.length === 1) addItem(f[0]); else scanMsg('No item with that code.', true); } });
@@ -80,18 +93,18 @@
   $('itemRows').addEventListener('click', function (e) { var row = e.target.closest('.item-row'); if (!row) return; var i = +row.dataset.index, a = e.target.dataset.act; if (a === 'remove') rows.splice(i, 1); if (a === 'plus') rows[i].qty += 1; if (a === 'minus') rows[i].qty = Math.max(0.01, rows[i].qty - 1); if (a) render(); });
   $('itemRows').addEventListener('change', function (e) {
     var row = e.target.closest('.item-row'); if (!row) return; var r = rows[+row.dataset.index], f = e.target.dataset.field;
-    if (f === 'code') { api.itemByCode(e.target.value).then(function (it) { if (it) { r.code = it.code; r.name = it.name; r.stock = it.stock; r.price = it.price; r.cost = it.cost; r.unit = it.unit; r.sqm = it.sqm; scanMsg(''); } else scanMsg('Item code not found. Use Down arrow to browse.', true); render(); }); return; }
+    if (f === 'code') { api.itemByCode(e.target.value).then(function (it) { if (it) { r.code = it.code; r.name = it.name; r.stock = it.stock; r.price = it.price; r.list = it.price; r.disc = '0'; r.cost = it.cost; r.unit = it.unit; r.sqm = it.sqm; scanMsg(''); } else scanMsg('Item code not found. Use Down arrow to browse.', true); render(); }); return; }
     if (f === 'qty') r.qty = Math.max(0.01, Number(e.target.value) || 1);
-    if (f === 'price') r.price = Math.max(0, Number(e.target.value) || 0);
+    if (f === 'price') setPrice(r, e.target.value);
     if (f === 'disc') r.disc = e.target.value || '0';
     render();
   });
   $('itemRows').addEventListener('keydown', function (e) {
     if (e.key === 'ArrowDown' && e.target.dataset.field === 'code') { e.preventDefault(); openPicker(); return; }
     if (e.key !== 'Enter') return; e.preventDefault();
-    var row = e.target.closest('.item-row'), i = +row.dataset.index, inputs = [].slice.call(row.querySelectorAll('input')), n = inputs.indexOf(e.target);
-    e.target.dispatchEvent(new Event('change', { bubbles: true }));
-    if (n < 3) inputs[n + 1].focus(); else { var all = $('itemRows').querySelectorAll('.item-row'); if (all[i + 1]) all[i + 1].querySelector('input').focus(); else openPicker(); }
+    var row = e.target.closest('.item-row'), i = +row.dataset.index, f = e.target.dataset.field;
+    e.target.dispatchEvent(new Event('change', { bubbles: true }));   // commits (and redraws) first
+    if (f === 'code') focusField(i, 'qty'); else if (f === 'qty') focusField(i, 'price'); else { $('scanBox').value = ''; setTimeout(function () { $('scanBox').focus(); }, 30); }
   });
 
   // ---------- overall price / discount ----------
@@ -305,9 +318,21 @@
     if (id === 'wholesaleBtn') { wholesale = !wholesale; wsTag(); } if (id === 'clearAllBtn') clearBill(); });
   $('toolsBtn').onclick = $('toolsBtnBottom').onclick = function () { $('toolMenu').classList.toggle('hidden'); };
   $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld; $('recallTop').onclick = showHeld; $('findTop').onclick = function () { findBill(true); }; $('heldPanel').onclick = showHeld;
-  $('addItemBtn').onclick = $('scanBtn').onclick = openPicker; $('pickerClose').onclick = function () { $('picker').classList.add('hidden'); };
+  $('addItemBtn').onclick = $('scanBtn').onclick = openPicker; $('pickerClose').onclick = function () { $('picker').classList.remove('open'); $('scanBox').value = ''; };
   $('camScanBtn').onclick = function () { if (window.PosCamScan && PosCamScan.open) PosCamScan.open(function (code) { api.itemByCode(code).then(function (it) { if (it) addItem(it); else scanMsg('No item with that code.', true); }); }); else modal('Camera scan', 'The camera scanner is on the old POS screen for now.'); };
   $('paymentMethod').onchange = paymentUI; $('genBtn').onclick = generateBill;
+  document.addEventListener('keydown', function (e) {
+    if ($('receipt') && !$('receipt').classList.contains('hidden')) return;
+    var k = e.key, rowsEl = $('itemRows'), last = rowsEl && rowsEl.querySelector('.item-row:last-child');
+    function go(el) { if (el) { e.preventDefault(); el.removeAttribute && el.removeAttribute('readonly'); el.focus(); if (el.select) el.select(); } }
+    function fld(n) { return last && last.querySelector('[data-field="' + n + '"]'); }
+    if (k === 'F2') { go($('scanBox')); }
+    else if (k === 'F3') { e.preventDefault(); openPicker(); }
+    else if (k === 'F4') { e.preventDefault(); $('custRow').classList.remove('folded'); $('custSum').classList.add('hidden'); $('customerName').focus(); }
+    else if (k === 'F6') { go(fld('qty')); } else if (k === 'F7') { go(fld('price')); } else if (k === 'F8') { go(fld('disc')); }
+    else if (k === 'F9') { go($('paymentMethod')); } else if (k === 'F10') { go($('genBtn')); }
+    else if (k === 'Enter' && e.ctrlKey && $('genBtn') && !$('genBtn').disabled) { e.preventDefault(); $('genBtn').click(); }
+  });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { $('picker').classList.add('hidden'); $('toolMenu').classList.add('hidden'); closeModal(null); } if (e.key === 'F2') { e.preventDefault(); openPicker(); } if (e.key === 'F4') { e.preventDefault(); $('customerName').focus(); } });
   setInterval(function () { $('clock').textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Colombo' }); }, 1000);
 
