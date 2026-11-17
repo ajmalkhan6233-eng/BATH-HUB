@@ -162,7 +162,16 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
   .right-work{position:sticky;bottom:0;background:var(--panel,#fff);z-index:5}
 }
 </style>
-<style id="oneprice">@media(min-width:701px){.customer-row{grid-template-columns:145px minmax(170px,1.1fr) minmax(175px,1fr) auto auto!important}}#priceRow .field:first-child{display:none}</style></head>
+<style id="oneprice">@media(min-width:701px){.customer-row{grid-template-columns:145px minmax(170px,1.1fr) minmax(175px,1fr) auto auto!important}}#priceRow .field:first-child{display:none}</style><style id="pickmore">
+#picker{max-height:330px!important}
+#picker .picker-results{max-height:224px!important}
+#picker .pick-row{padding:3px 7px;white-space:nowrap}
+#picker .pick-name{overflow:hidden;text-overflow:ellipsis}
+#picker .pick-name strong,#picker .pick-name small{display:inline!important}#picker .pick-name small{margin-left:8px;color:#737a7f}
+#picker .pick-row.selected{background:#e8dcc0;outline:1px solid #c9a24b}
+@media(min-width:701px){#priceRow{grid-template-columns:repeat(4,1fr)!important}#priceRow .field:nth-child(4){grid-column:auto!important}#priceRow .field:nth-child(5){grid-column:1/-1}}
+</style>
+</head>
 <body>
 <div class="shell">
   <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
@@ -207,6 +216,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
             <div class="field"><label for="sellPrice">Agreed selling price (Rs)</label><input id="sellPrice" inputmode="decimal" placeholder="Auto total"></div>
             <div class="field"><label for="discountPct">Discount (%)</label><input id="discountPct" inputmode="decimal" value="0"></div>
             <div class="field"><label for="discountAmt">Discount (Rs)</label><input id="discountAmt" inputmode="decimal" value="0"></div>
+            <div class="field"><label for="lessAmt">Less from total (Rs)</label><input id="lessAmt" inputmode="decimal" placeholder="0"></div>
             <div class="field"><label>&nbsp;</label><div class="profit-secret" id="profitValue">0.00</div></div>
           </div>
           <div class="message" id="capHint" style="color:#62696e"></div>

@@ -52,6 +52,7 @@
     $('miniList').innerHTML = rows.map(function (r) { return '<div class="mini-line"><span>' + esc(r.code) + ' · ' + esc(r.name) + ' × ' + r.qty + '</span><strong>' + money(lineTotal(r)) + '</strong></div>'; }).join('') || '<div class="muted" style="padding:12px 0">No items added</div>';
     if (document.activeElement !== $('sellPrice')) $('sellPrice').value = t.net.toFixed(2);
     if (document.activeElement !== $('discountAmt')) $('discountAmt').value = t.disc.toFixed(2);
+    if ($('lessAmt') && document.activeElement !== $('lessAmt')) $('lessAmt').value = extra > 0 ? extra.toFixed(2) : '';
     if (document.activeElement !== $('discountPct')) $('discountPct').value = t.gross ? (t.disc / t.gross * 100).toFixed(2) : '0';
     var held = loadHeld(); $('heldCount').textContent = held.length; $('heldBtn').textContent = 'Held (' + held.length + ')';
     $('todayCount').textContent = '(' + bills.filter(function (b) { return !b.voided; }).length + ')';
@@ -80,10 +81,17 @@
     api.items(q, 60).then(function (found) {
       if (mine !== seq) return;
       $('pickerResults').innerHTML = found.map(function (x) { return '<div class="pick-row" data-code="' + esc(x.code) + '"><span class="pick-code">' + esc(x.code) + '</span><span class="pick-name"><strong>' + esc(x.name) + '</strong><small>' + esc(x.unit) + (x.sqm ? ' · ' + x.sqm + ' sqm/box' : '') + '</small></span><span class="pick-stock">' + x.stock + '</span><span class="pick-price">' + money(x.price) + '</span></div>'; }).join('') || '<div class="muted" style="padding:12px">No matching items</div>';
-      $('pickerResults')._found = found;
+      $('pickerResults')._found = found; sel = -1;
     });
   }
   var pt; $('scanBox').addEventListener('input', function () { $('picker').classList.add('open'); clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
+  var sel = -1;
+  function pickRows() { return [].slice.call($('pickerResults').querySelectorAll('.pick-row')); }
+  function pickMark(n) { var r = pickRows(); if (!r.length) { sel = -1; return; } sel = Math.max(0, Math.min(r.length - 1, n)); r.forEach(function (x, i) { x.classList.toggle('selected', i === sel); }); r[sel].scrollIntoView({ block: 'nearest' }); }
+  $('scanBox').addEventListener('keydown', function (e) {   // arrows walk the list, Enter picks the highlighted item
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); $('picker').classList.add('open'); pickMark(sel < 0 ? 0 : sel + (e.key === 'ArrowDown' ? 1 : -1)); return; }
+    if (e.key === 'Enter' && sel >= 0) { var f0 = $('pickerResults')._found || [], r0 = pickRows()[sel], it0 = r0 && f0.filter(function (x) { return x.code === r0.dataset.code; })[0]; if (it0) { e.preventDefault(); sel = -1; addItem(it0); return; } }
+  });
   $('scanBox').addEventListener('keydown', function (e) {   // a scanner or typed exact code + Enter adds the item
     if (e.key !== 'Enter') return; e.preventDefault(); var v = $('scanBox').value.trim(); if (!v) return;
     api.itemByCode(v).then(function (it) { if (it) addItem(it); else { var f = $('pickerResults')._found || []; if (f.length === 1) addItem(f[0]); else scanMsg('No item with that code.', true); } });
@@ -243,6 +251,12 @@
     setInterval(tick, 700); setTimeout(tick, 300);
   })();
   ['customerName', 'customerPhone'].forEach(function (id) { var e = $(id); if (e) { e.setAttribute('autocomplete', 'nope'); e.setAttribute('data-lpignore', 'true'); } });
+  var cn = $('customerName'); if (cn) cn.addEventListener('input', function () {
+    var v = cn.value, o = v.replace(/(^|[\s.\-'])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); });
+    if (o !== v) { var st = cn.selectionStart; cn.value = o; try { cn.setSelectionRange(st, st); } catch (e) {} }
+  });
+  // total-bill reduction: 'Less (Rs)' takes an amount off the final total
+  var la = $('lessAmt'); if (la) la.addEventListener('change', function () { extra = Math.max(0, Number(la.value) || 0); render(); capHint(); });
   // Enter walks the top row: date -> customer -> WhatsApp phone -> item box (no mouse needed)
   [['saleDate', 'customerName'], ['customerName', 'customerPhone'], ['customerPhone', 'scanBox']].forEach(function (p2) {
     var a = $(p2[0]); if (!a) return;
