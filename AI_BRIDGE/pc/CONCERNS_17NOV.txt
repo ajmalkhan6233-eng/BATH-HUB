@@ -38,3 +38,9 @@ PHONE RULE + DESIGN PACK (17 Nov, later)
 - docs/POS_DESIGN_PACK.md = one file for ChatGPT: problems, layout, all 26 buttons and 15 fields, 15 extra pos-*.js modules, CSS order, what a standard POS lacks. The customer's name and number from the screenshot were left out.
 - POS congestion after 4-5 lines is NOT changed yet: waiting for the ERP picture from Aj.
 - Heads-up: POS has a "Clear all test bills" button (clearAllBills) visible in the Bill tools menu. Owner-only on the server, but it is a risky button next to live tools.
+
+PHONE-INTL (17 Nov)
+- Done in: public/pos-customer.js (screen), utils/billChecks.js normalisePhone, utils/whatsappReceiptSender.js (new normalizeWhatsappPhone used by the queue sender and autoReceipt). Old normalizeSriLankaPhone kept (still used by utils/documents/sender.js, which stays Sri Lanka only).
+- Heads-up: tests/integration/bill_sale_pos.test.js fails with "operator does not exist: character varying ~ text" (the fake test database cannot do a regex operator). Not phone related; it was not run before my change, so treat as a known baseline failure.
+- Sending to a real foreign number was NOT tried live (only a fake sender in the test).
+- Landline 011 2345678 is accepted on the screen and by billChecks, but the WhatsApp sender only sends to mobiles (07x) as before.
