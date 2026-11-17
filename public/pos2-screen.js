@@ -196,6 +196,8 @@
     if (!r.ok) { showError(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.'); return; }
     PosCart.saveHeld(undefined, r.list); clearForNext(); $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + loadHeld().length + '</strong> · Last held bill saved on this device.'; render();
   }
+  function heldCountSync() { try { var n = loadHeld().length; $('recallN').textContent = n; $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + n + '</strong> · ' + (n ? 'Tap here or Recall held to bring one back' : 'No held bills'); $('heldBtn').textContent = 'Held (' + n + ')'; } catch (e) {} }
+  setInterval(heldCountSync, 1500); setTimeout(heldCountSync, 300);
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
     modal('Held bills', h.map(function (x) { var tt = PosCart.totals(x.rows, x.discount_pct).total; return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.customer_name || 'Walk-in') + ' · ' + x.rows.length + ' item(s) · ' + money(tt) + ' <button class="secondary small" data-r="' + esc(x.id) + '">Resume</button> <button class="secondary small" data-d="' + esc(x.id) + '">Delete</button></p>'; }).join(''));
@@ -253,7 +255,7 @@
     if (id === 'findBtn') findBill(); if (id === 'lastBtn') lastBill(); if (id === 'quoteBtn') loadQuotes(); if (id === 'quoteSaveBtn') { if (!rows.length) showError('Add at least one item first.'); else saveQuotation(); }
     if (id === 'wholesaleBtn') { wholesale = !wholesale; wsTag(); } if (id === 'clearAllBtn') clearBill(); });
   $('toolsBtn').onclick = $('toolsBtnBottom').onclick = function () { $('toolMenu').classList.toggle('hidden'); };
-  $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld;
+  $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld; $('recallTop').onclick = showHeld; $('heldPanel').onclick = showHeld;
   $('addItemBtn').onclick = $('scanBtn').onclick = openPicker; $('pickerClose').onclick = function () { $('picker').classList.add('hidden'); };
   $('camScanBtn').onclick = function () { if (window.PosCamScan && PosCamScan.open) PosCamScan.open(function (code) { api.itemByCode(code).then(function (it) { if (it) addItem(it); else scanMsg('No item with that code.', true); }); }); else modal('Camera scan', 'The camera scanner is on the old POS screen for now.'); };
   $('paymentMethod').onchange = paymentUI; $('genBtn').onclick = generateBill;

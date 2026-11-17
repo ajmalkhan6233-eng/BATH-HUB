@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" data-keepfont>
 <head>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add("in-frame")}catch(e){document.documentElement.classList.add("in-frame")}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Royal Bath Hub — POS Billing</title>
@@ -81,7 +82,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .right-work{overflow-y:auto;overflow-x:hidden;padding-right:2px}.right-work>*{flex:none}.right-work .bill-summary{flex:none}
 html.in-frame .shell{min-height:0;height:100vh}
 @media(max-height:560px){.mini-list{max-height:48px}.price-control{margin-top:0}.right-work{gap:4px}}
-html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #clock+button{display:none}
+html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #clock+button{display:none}
 </style>
 </head>
 <body>
@@ -91,7 +92,7 @@ html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #
   <nav class="appnav" aria-label="Application navigation">
     <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
   </nav>
-  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><button class="secondary small" id="recallTop">Recall held (<span id="recallN">0</span>)</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" id="signOutBtn" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
   <main id="formPanel">
     <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
@@ -104,7 +105,7 @@ html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #
       <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
     </section>
     <!-- 03 — Held bill status -->
-    <div class="held-strip" id="heldPanel">Held bills: <strong id="heldCount">0</strong> · No held bills</div>
+    <div class="held-strip" id="heldPanel" style="cursor:pointer" title="Tap to recall a held bill">Held bills: <strong id="heldCount">0</strong> · No held bills</div>
     <!-- 04 — Item entry and live bill summary -->
     <section class="workspace">
       <div class="left-work">
