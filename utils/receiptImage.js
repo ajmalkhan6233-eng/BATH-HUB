@@ -76,27 +76,42 @@ function renderReceiptPng(bill, opts = {}) {
   return run;
 }
 
+
+let _browserP = null, _idle = null;
+async function getBrowser(puppeteer) {
+  if (_browserP) { try { const b = await _browserP; if (!b.isConnected || b.isConnected()) { if (_idle) clearTimeout(_idle); return b; } } catch (e) {} _browserP = null; }
+  _browserP = puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--allow-file-access-from-files'] });
+  _browserP.catch(() => { _browserP = null; });
+  return _browserP;
+}
+function idleSoon() {
+  if (_idle) clearTimeout(_idle);
+  _idle = setTimeout(async () => { const p = _browserP; _browserP = null; try { const b = await p; await b.close(); } catch (e) {} }, 90000);
+  if (_idle.unref) _idle.unref();
+}
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
   const data = cleanBill(bill);
   
   // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
-  const th = require('./receiptTheme').pick(); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = th.rgb;
+  const th = require('./receiptTheme').pickFor(data.billNo); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = (bill && bill.hdr) ? [1, 3, 5].map(i => parseInt(String(bill.hdr).slice(i, i + 2), 16)).join(',') : th.rgb;
   try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
 
   const puppeteer = require('puppeteer');
   fs.mkdirSync(outDir, { recursive: true });
   const safeBill = String(data.billNo || 'bill').replace(/[^\w.-]+/g, '_').slice(0, 30);
   const file = path.join(outDir, fileName || (safeBill + '-' + Date.now() + '.png'));
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--allow-file-access-from-files'] });
+  // ONE shared browser (starting Chrome was the 2-3 second wait); closed after 90 s idle
+  const browser = await getBrowser(puppeteer);
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
     page.setDefaultTimeout(timeoutMs);
     await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: SCALE });
     await page.evaluateOnNewDocument(d => { window.RECEIPT_DATA = d; }, data);
     await page.goto(pathToFileURL(TEMPLATE).href, { waitUntil: 'load' });
     await page.waitForSelector('body[data-ready="1"]');
     await page.screenshot({ path: file, type: 'png', fullPage: true });
-  } finally { await browser.close().catch(() => {}); }
+  } finally { try { if (page) await page.close(); } catch (e) {} idleSoon(); }
   const buf = fs.readFileSync(file);
   return { file, bytes: buf.length, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), items: data.items.length };
 }

@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { width: 1122px; background:#0b0b0c; color:#111; font-family: Arial, Helvetica, sans-serif; font-size: 27px; line-height: 1.3; }
 .sheet { width:1122px; position:relative; overflow:hidden; background:#fffdf7; padding:0 56px 0; }
-.mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.5),rgba(255,253,247,.5)),var(--bg-mid,url('../receipt-mid.jpg')) center/cover no-repeat; }
+.mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.4),rgba(255,253,247,.4)),var(--bg-mid,url('../receipt-mid.jpg')) center/cover no-repeat; }
 .top { margin:0 -56px; height:236px; background-color:var(--hdr,#0b0b0c); background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.92) 0%,rgba(var(--hdr-rgb,11,11,12),.8) 40%,rgba(var(--hdr-rgb,11,11,12),.3) 72%,rgba(var(--hdr-rgb,11,11,12),.08) 100%),var(--bg-top,url('../receipt-top.jpg')); background-size:cover,cover; background-position:center; background-repeat:no-repeat; border-bottom:5px solid #c9a24b; padding:26px 56px 0; text-align:left; }
 .logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:122px; width:auto; display:block; }
 .addr { color:#e8cf8a; font-size:22px; letter-spacing:.03em; margin-top:14px; line-height:1.45; }
@@ -40,6 +40,16 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 22px; border-radius:999px; }
 .shop-info { font-size:21px; color:#e8cf8a; margin-top:10px; line-height:1.35; }
 .bar { height:12px; margin:0 -56px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
+
+.top{position:relative}
+.tub{position:absolute;right:56px;top:18px;width:196px;height:196px}
+.tub .rim{position:absolute;left:0;right:0;top:34px;height:14px;border-radius:8px;background:linear-gradient(#f4ead0,#c9a24b);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.tub .tubbody{position:absolute;left:8px;right:8px;top:46px;height:140px;border-radius:10px 10px 70px 70px/10px 10px 60px 60px;background:rgba(255,255,255,.9);border:3px solid #c9a24b;display:flex;align-items:center;justify-content:center;padding-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.tub .qrbox{width:112px;height:112px;border-radius:8px;background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.tub .qrbox svg{width:112px;height:112px;display:block}
+.tub .ft{position:absolute;bottom:0;width:20px;height:12px;border-radius:0 0 10px 10px;background:#c9a24b}.tub .ft.l{left:34px}.tub .ft.r{right:34px}
+.tub .tap{position:absolute;left:84px;top:0;width:12px;height:36px;border-radius:6px 6px 0 0;background:#c9a24b}.tub .tap:after{content:"";position:absolute;left:0;top:0;width:34px;height:10px;border-radius:6px;background:#c9a24b}
+.thanks{text-align:center;font-weight:700;font-style:italic;font-size:22px;color:#6b5114;padding:8px 0 10px;background:rgba(255,253,247,.35)}
 </style>
 </head>
 <body>
@@ -47,6 +57,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
   <div class="top">
     <img src="../receipt-logo-t.png" alt="RBH" class="logo-img">
     <div class="addr" id="addr"></div>
+    <div class="tub"><i class="tap"></i><div class="rim"></div><div class="tubbody"><div class="qrbox" id="qrContainer"></div></div><i class="ft l"></i><i class="ft r"></i></div>
   </div>
   <div class="mid">
   <div class="rbar"><span class="rc">RECEIPT</span><span class="rb" id="rbNo"></span></div>
@@ -63,12 +74,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
     <div class="tot-row balance-row" id="balRow" style="display:none;"><span id="balLabel">Balance Due</span><span id="balVal"></span></div>
   </div>
   </div>
-  <div class="foot">
-    <div class="qrbox" id="qrContainer"></div>
-    <div class="fr">
-      <div class="thanks" id="thanks"></div>
-    </div>
-  </div>
+  <div class="thanks" id="thanks"></div>
   <div class="bar"></div>
 </div>
 

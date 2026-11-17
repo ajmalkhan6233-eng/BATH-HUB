@@ -37,4 +37,12 @@ function pick(now) {
     return { set: a.set, color: p.name, hex: p.hex, rgb: rgbOf(p.hex) };
   } catch (e) { return { set: null, color: PALETTE[0].name, hex: PALETTE[0].hex, rgb: rgbOf(PALETTE[0].hex) }; }
 }
-module.exports = { pick, sets, PALETTE, DIR };
+// A NEW look for EVERY bill: the bill number picks it (same bill = same look everywhere, next bill never repeats the one before).
+function pickFor(billNo) {
+  const m = String(billNo == null ? '' : billNo).match(/(\d+)\s*$/); if (!m) return pick();
+  try {
+    const list = sets(), a = lookOf(Number(m[1]) + 1000, list), p = PALETTE[a.color];
+    return { set: a.set, color: p.name, hex: p.hex, rgb: rgbOf(p.hex) };
+  } catch (e) { return pick(); }
+}
+module.exports = { pick, pickFor, sets, PALETTE, DIR };

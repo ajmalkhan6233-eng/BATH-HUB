@@ -63,7 +63,7 @@ async function build(vendor, only) {
 
 function html(data) {
   // 17 Nov: same picture + colour of the 2-day window as the customer receipt (utils/receiptTheme.js)
-  const th = require('../utils/receiptTheme').pick();
+  const th = require('../utils/receiptTheme').pickFor('v' + Math.floor(Math.random() * 1000000));
   const setBg = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_bg.jpg') : null;
   const bg = setBg && fs.existsSync(setBg) ? setBg : BG.find(f => fs.existsSync(f));
   const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
