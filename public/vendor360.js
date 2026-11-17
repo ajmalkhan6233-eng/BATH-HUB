@@ -144,8 +144,10 @@
       }), 'No payments or cheques yet.');
     } else if (t === 'grn') {
       body.innerHTML = table([['GRN'], ['Date'], ['Lines', 1], ['Total', 1]], (d.grn.grns || []).map(function (g) {
-        return '<tr><td>' + esc(g.grn_number) + '</td><td>' + day(g.grn_date) + '</td><td class="n">' + g.lines + '</td><td class="n">' + rs(g.total) + '</td></tr>';
+        return '<tr class="grnrow" tabindex="0" role="button" data-grn="' + esc(g.grn_number) + '" style="cursor:pointer"><td>' + esc(g.grn_number) + '</td><td>' + day(g.grn_date) + '</td><td class="n">' + g.lines + '</td><td class="n">' + rs(g.total) + '</td></tr>';
       }), 'No goods received from this vendor yet.');
+      var openG = function (tr) { var n = tr.getAttribute('data-grn'); window.openGrnInvoice(S.cur, n, refresh); };
+      Array.prototype.forEach.call(body.querySelectorAll('tr.grnrow'), function (tr) { tr.onclick = function () { openG(tr); }; tr.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openG(tr); } }; });
     }
   }
 

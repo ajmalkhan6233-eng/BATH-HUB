@@ -127,14 +127,10 @@ router.get('/grn-workbench/bills', async (req, res) => {
             for (const b of JSON.parse(fs.readFileSync(path.join(INBOX, f), 'utf8'))) list.push(b);
         }
     } catch (e) { /* no inbox folder: fine */ }
-    const gone = readDismissed(), out = [];
-    for (const b of list) {   // a bill already saved in the app, or one Ajmal deleted, is not offered again
-        if (gone.has(String(b.id))) continue;
-        let saved = false;
-        try { saved = await billExists(pool, b.vendor, b.no); } catch (_) { /* keep it */ }
-        if (!saved) out.push(b);
-    }
-    res.json(out);
+    const gone = readDismissed();
+    // 17 Nov: all the "already saved?" checks run together (was one database round trip per bill, one after another, and the page waited for it).
+    const keep = await Promise.all(list.filter(b => !gone.has(String(b.id))).map(async b => { try { return (await billExists(pool, b.vendor, b.no)) ? null : b; } catch (_) { return b; } }));
+    res.json(keep.filter(Boolean));
 });
 
 // Next free number for a vendor. Looks at the vendor's own numbers (saved bills + GRN records), read only.
@@ -478,10 +474,11 @@ router.delete('/grn-workbench/bill/:id', async (req, res) => {
 // Extra vendor details. Additive only (ADD COLUMN IF NOT EXISTS), runs once, never drops or changes anything.
 let colsReady = null;
 function ensureSupplierCols() {
-    if (!colsReady) colsReady = pool.query(`ALTER TABLE suppliers
+    // 17 Nov: ALTER TABLE takes a table lock even when the columns exist, which could make the page wait. Only alter when a column is really missing.
+    if (!colsReady) colsReady = pool.query("SELECT COUNT(*)::int AS n FROM information_schema.columns WHERE table_name='suppliers' AND column_name IN ('contact_person','whatsapp','email','address','city','tin','default_credit_days','pay_note')").then(r => (r.rows[0].n === 8 ? null : pool.query(`ALTER TABLE suppliers
         ADD COLUMN IF NOT EXISTS contact_person TEXT, ADD COLUMN IF NOT EXISTS whatsapp TEXT, ADD COLUMN IF NOT EXISTS email TEXT,
         ADD COLUMN IF NOT EXISTS address TEXT, ADD COLUMN IF NOT EXISTS city TEXT, ADD COLUMN IF NOT EXISTS tin TEXT,
-        ADD COLUMN IF NOT EXISTS default_credit_days INTEGER, ADD COLUMN IF NOT EXISTS pay_note TEXT`).catch(e => { colsReady = null; throw e; });
+        ADD COLUMN IF NOT EXISTS default_credit_days INTEGER, ADD COLUMN IF NOT EXISTS pay_note TEXT`))).catch(e => { colsReady = null; throw e; });
     return colsReady;
 }
 router.get('/grn-workbench/vendors', async (req, res) => {

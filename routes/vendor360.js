@@ -89,7 +89,7 @@ function createVendor360Router({ pool, requireAuth } = {}) {
   // GRN (goods received) from this vendor: matches the name typed on the GRN, or the supplier record with the same name.
   router.get('/:vendor/grns', async (req, res) => {
     try {
-      const r = await pool.query(`SELECT g.grn_number, MAX(g.grn_date) AS grn_date, COUNT(*)::int AS lines, COALESCE(SUM(g.total_amount),0) AS total
+      const r = await pool.query(`SELECT g.grn_number, to_char(MAX(g.grn_date),'YYYY-MM-DD') AS grn_date, COUNT(*)::int AS lines, COALESCE(SUM(g.total_amount),0) AS total
         FROM grn_records g WHERE LOWER(g.supplier_name) = LOWER($1) OR g.supplier_id IN (SELECT id FROM suppliers WHERE LOWER(name) = LOWER($1))
         GROUP BY g.grn_number ORDER BY MAX(g.grn_date) DESC NULLS LAST, g.grn_number DESC LIMIT 200`, [req.params.vendor]);
       res.json({ vendor: req.params.vendor, grns: r.rows });
