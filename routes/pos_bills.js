@@ -431,7 +431,8 @@ router.get('/pos-bills/:id/receipt.png', async (req, res) => {
         };
         if (req.query.json) return res.json(payload);
         const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pick();
-        const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
+        const fs0 = require('fs'), tp = require('path').join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html'), tv = (() => { try { return Math.floor(fs0.statSync(tp).mtimeMs / 1000).toString(36); } catch { return '0'; } })();
+        const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}-v${tv}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
         if (!require('fs').existsSync(full)) await receiptImage.renderReceiptPng(payload, { fileName });
         if (req.query.download) res.setHeader('Content-Disposition', `attachment; filename="${bill.bill_number}.png"`);
         res.type('png').sendFile(fileName, { root: receiptImage.DEFAULT_DIR });

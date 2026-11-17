@@ -153,7 +153,7 @@
     $('waReceiptMsg').textContent = ''; $('billAttach').textContent = '';
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
-    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden');
+    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.add('img-ok'); $('rImgWrap').classList.add('hidden');
     img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); };
     img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden'); };
     img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now();
@@ -171,7 +171,8 @@
     }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = 'Receipt not sent: ' + e.message; });
   }
   $('waBtn').onclick = function () { sendWa(false); };
-  $('waReceiptBtn').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  $('waReceiptBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/receipt.png', '_blank'); };
+  $('rImgDl').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
   $('printBtn').onclick = function () { window.print(); };
   $('emailBtn').onclick = function () { if (this.dataset.href) location.href = this.dataset.href; };
   $('voidBtn').onclick = function () {
