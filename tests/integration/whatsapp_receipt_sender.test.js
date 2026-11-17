@@ -33,6 +33,16 @@ describe('Sri Lanka number clean-up', () => {
   test.each([[''], [null], ['abc'], ['12345'], ['0112345678'], ['07779992'], ['+1 415 555 2671'], ['07779992199999']])('bad number %p is refused, never guessed', a => expect(S.normalizeSriLankaPhone(a)).toBeNull());
 });
 
+describe('international numbers (17 Nov)', () => {
+  test.each([['+61400000000', '+61400000000'], ['0061400000000', '+61400000000'], ['009 61400000000', '+61400000000'], ['0777999219', '+94777999219']])('%s -> %s', (a, b) => expect(S.normalizeWhatsappPhone(a)).toBe(b));
+  test.each([[''], ['12345'], ['abc'], ['61400000000'], ['+1234']])('bad number %p still refused', a => expect(S.normalizeWhatsappPhone(a)).toBeNull());
+  test('a +61 number is sent to +61..., not refused', async () => {
+    const send = jest.fn().mockResolvedValue({ id: 'm1' }); const id = await add('+61400000000', 'B-INTL');
+    const r = await S.sendReceiptForQueueItem(pool, id, { env: LIVE, send, dir, retryWaitMs: 0 });
+    expect(r.status).toBe('sent'); expect(send).toHaveBeenCalledTimes(1); expect(send.mock.calls[0][0].to).toBe('+61400000000');
+  });
+});
+
 describe('sending', () => {
   test('bad number: queue item becomes "no phone", nothing sent', async () => {
     const send = jest.fn(); const id = await add('12345', 'B-BAD');
