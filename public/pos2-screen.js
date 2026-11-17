@@ -153,6 +153,10 @@
     $('waReceiptMsg').textContent = ''; $('billAttach').textContent = '';
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
+    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden');
+    img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); };
+    img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden'); };
+    img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now();
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
   }
@@ -166,10 +170,10 @@
       return r.ok ? 'Receipt sent to ' + r.d.to + '.' : 'Receipt not sent: ' + ((r.d && r.d.error) || r.status);
     }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = 'Receipt not sent: ' + e.message; });
   }
-  $('waBtn').onclick = $('waReceiptBtn').onclick = function () { sendWa(false); };
+  $('waBtn').onclick = function () { sendWa(false); };
+  $('waReceiptBtn').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  $('printBtn').onclick = function () { window.print(); };
   $('emailBtn').onclick = function () { if (this.dataset.href) location.href = this.dataset.href; };
-  $('vcfBtn').onclick = function () { if (!currentBill) return; var n = currentBill.customer_name || 'Customer', ph = (currentBill.customer_phone || '').trim(); if (!ph) { $('waReceiptMsg').textContent = 'This bill has no phone number.'; return; } var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['BEGIN:VCARD\nVERSION:3.0\nFN:' + n + '\nTEL:' + ph + '\nEND:VCARD'], { type: 'text/vcard' })); a.download = n + '.vcf'; a.click(); URL.revokeObjectURL(a.href); };
-  $('downloadBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/pdf', '_blank'); };
   $('voidBtn').onclick = function () {
     if (!currentBill) return; askReason('Void this bill', 'Reason (stock goes back, the bill stays on record as VOID)', 'Void bill').then(function (rs) {
       if (!rs) return; api.voidBill(currentBill.id, rs).then(function (r) { if (!r.ok) { $('waReceiptMsg').textContent = (r.d && r.d.error) || 'Could not void.'; return; } api.bill(currentBill.id).then(function (b) { showReceipt(b, false); loadToday(); }); });
@@ -198,6 +202,32 @@
   }
   function heldCountSync() { try { var n = loadHeld().length; $('recallN').textContent = n; $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + n + '</strong> · ' + (n ? 'Tap here or Recall held to bring one back' : 'No held bills'); $('heldBtn').textContent = 'Held (' + n + ')'; } catch (e) {} }
   setInterval(heldCountSync, 1500); setTimeout(heldCountSync, 300);
+
+  // ---------- 17 Nov: one top line + customer details fold up once typed ----------
+  (function layoutTidy() {
+    try {
+      var dl = document.querySelector('.docline'), tabs = dl && dl.querySelector('.doc-tabs');
+      if (dl && tabs) { tabs.appendChild($('lastBillLabel')); dl.appendChild($('posTools')); }
+      var foot = document.querySelector('.item-foot'), gr = document.querySelector('.gen-row'); if (foot && gr) foot.appendChild(gr);
+    } catch (e) {}
+    var row = $('custRow'), sum = $('custSum'), open = false;
+    function inside() { return row.contains(document.activeElement); }
+    function label() {
+      var n = $('customerName').value.trim(), ph = $('customerPhone').value.trim(), d = $('saleDate').value.trim();
+      sum.innerHTML = '<b>' + esc(n || 'Walk-in customer') + '</b> <span>· ' + esc(ph || 'no phone') + ' · ' + esc(d) + ($('waCheck').checked && ph ? ' · WhatsApp receipt' : '') + '</span><em>Change ✎</em>';
+    }
+    function tick() {
+      var both = $('customerName').value.trim() && $('customerPhone').value.trim(), any = $('customerName').value.trim() || $('customerPhone').value.trim();
+      var fold = both && !inside() && !open;
+      if (!any) open = false;
+      row.classList.toggle('folded', !!fold); sum.classList.toggle('hidden', !fold);
+      if (fold) label();
+    }
+    sum.onclick = function () { open = true; row.classList.remove('folded'); sum.classList.add('hidden'); $('customerName').focus(); };
+    row.addEventListener('focusout', function () { setTimeout(function () { if (!inside()) { open = false; tick(); } }, 150); });
+    setInterval(tick, 700); setTimeout(tick, 300);
+  })();
+  ['customerName', 'customerPhone'].forEach(function (id) { var e = $(id); if (e) { e.setAttribute('autocomplete', 'nope'); e.setAttribute('data-lpignore', 'true'); } });
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
     modal('Held bills', h.map(function (x) { var tt = PosCart.totals(x.rows, x.discount_pct).total; return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.customer_name || 'Walk-in') + ' · ' + x.rows.length + ' item(s) · ' + money(tt) + ' <button class="secondary small" data-r="' + esc(x.id) + '">Resume</button> <button class="secondary small" data-d="' + esc(x.id) + '">Delete</button></p>'; }).join(''));
@@ -217,11 +247,28 @@
 
   // ---------- find bill / last bill ----------
   function openBill(id) { api.bill(id).then(function (b) { if (b) { closeModal(null); showReceipt(b, false); } }); }
-  function findBill() {
-    modal('Find bill', '<div id="findPanel"><label>Invoice number, customer or phone</label><input id="findBox" style="width:100%" placeholder="RBH-S012 or customer name" autocomplete="off"><div id="findResults" style="margin-top:10px"></div></div>');
-    var inp = $('findBox'), out = $('findResults'), tm;
-    function run() { api.find(inp.value).then(function (a) { out.innerHTML = a.slice(0, 20).map(function (b) { return '<p>' + esc(b.bill_number) + ' · ' + esc(b.customer_name || 'Walk-in') + ' · ' + money(b.total) + (b.voided ? ' · VOID' : '') + ' <button class="secondary small" data-open="' + b.id + '">Open</button></p>'; }).join('') || 'No matches'; }); }
-    inp.oninput = function () { clearTimeout(tm); tm = setTimeout(run, 200); }; out.onclick = function (e) { if (e.target.dataset.open) openBill(e.target.dataset.open); }; inp.focus(); run();
+  function findBill(openToday) {
+    modal('Find bill', '<div class="findbar"><label>Date</label><input id="findDate" style="width:110px" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" autocomplete="nope"><button class="secondary small" id="fdToday">Today</button><button class="secondary small" id="fdYest">Yesterday</button><button class="secondary small" id="fdAll">All days</button></div>' +
+      '<div class="findbar"><input id="findBox" style="flex:1" placeholder="Bill number, customer or phone (e.g. RBH-S012)" autocomplete="nope"></div><div id="findResults"></div>');
+    var inp = $('findBox'), out = $('findResults'), dt = $('findDate'), tm;
+    function iso(off) { var d = new Date(Date.now() + 19800000 - (off || 0) * 86400000); return d.toISOString().slice(0, 10); }
+    function setDay(off) { dt.value = api.isoToDMY(iso(off)); run(); }
+    function day(b) { return dmyOf(b.created_at); }
+    function rowHtml(b) { return '<div class="billrow"><span><b>' + esc(b.bill_number) + '</b> · ' + esc(b.customer_name || 'Walk-in') + ' · ' + money(b.total) + (b.voided ? ' · <b style="color:var(--warn)">VOID</b>' : '') + '</span><button class="secondary small" data-open="' + b.id + '">Open</button></div>'; }
+    function run() {
+      var d = dt.value.trim(), isoD = d ? api.dmyToISO(d) : '';
+      if (d && !isoD) { out.innerHTML = '<p class="muted">Type the date as dd/mm/yyyy</p>'; return; }
+      (isoD ? api.findDay(isoD, inp.value) : api.find(inp.value)).then(function (a) {
+        if (!a.length) { out.innerHTML = '<p class="muted">No bills found' + (isoD ? ' on ' + esc(d) : '') + '.</p>'; return; }
+        if (isoD) { var tot = a.filter(function (b) { return !b.voided; }).reduce(function (x, b) { return x + Number(b.total); }, 0); out.innerHTML = '<div class="dayhead"><span>' + esc(d) + ' · ' + a.length + ' bills</span><span>' + money(tot) + '</span></div>' + a.map(rowHtml).join(''); return; }
+        var cur = '', h = ''; a.slice(0, 60).forEach(function (b) { var dd = day(b); if (dd !== cur) { cur = dd; h += '<div class="dayhead"><span>' + esc(dd) + '</span></div>'; } h += rowHtml(b); }); out.innerHTML = h;
+      });
+    }
+    dt.oninput = function () { var v = dt.value.replace(/[^0-9]/g, '').slice(0, 8); if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4); else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2); dt.value = v; clearTimeout(tm); tm = setTimeout(run, 250); };
+    inp.oninput = function () { clearTimeout(tm); tm = setTimeout(run, 200); };
+    $('fdToday').onclick = function () { setDay(0); }; $('fdYest').onclick = function () { setDay(1); }; $('fdAll').onclick = function () { dt.value = ''; run(); };
+    out.onclick = function (e) { if (e.target.dataset.open) openBill(e.target.dataset.open); };
+    setDay(0); inp.focus();
   }
   function lastBill() { api.today().then(function (d) { var b = (d.bills || [])[0]; if (b) openBill(b.id); else modal('Last bill', 'No bill has been made today.'); }); }
 
@@ -255,7 +302,7 @@
     if (id === 'findBtn') findBill(); if (id === 'lastBtn') lastBill(); if (id === 'quoteBtn') loadQuotes(); if (id === 'quoteSaveBtn') { if (!rows.length) showError('Add at least one item first.'); else saveQuotation(); }
     if (id === 'wholesaleBtn') { wholesale = !wholesale; wsTag(); } if (id === 'clearAllBtn') clearBill(); });
   $('toolsBtn').onclick = $('toolsBtnBottom').onclick = function () { $('toolMenu').classList.toggle('hidden'); };
-  $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld; $('recallTop').onclick = showHeld; $('heldPanel').onclick = showHeld;
+  $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld; $('recallTop').onclick = showHeld; $('findTop').onclick = function () { findBill(true); }; $('heldPanel').onclick = showHeld;
   $('addItemBtn').onclick = $('scanBtn').onclick = openPicker; $('pickerClose').onclick = function () { $('picker').classList.add('hidden'); };
   $('camScanBtn').onclick = function () { if (window.PosCamScan && PosCamScan.open) PosCamScan.open(function (code) { api.itemByCode(code).then(function (it) { if (it) addItem(it); else scanMsg('No item with that code.', true); }); }); else modal('Camera scan', 'The camera scanner is on the old POS screen for now.'); };
   $('paymentMethod').onchange = paymentUI; $('genBtn').onclick = generateBill;

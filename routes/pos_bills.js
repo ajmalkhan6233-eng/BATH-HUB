@@ -416,6 +416,28 @@ router.get('/pos-bills/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═══════════════════════ the receipt PICTURE of a bill (same design as the WhatsApp one) ═══════════════════════
+// GET /api/pos-bills/:id/receipt.png            shows it    ?download=1  saves it    ?json=1  shows what would be drawn (no picture)
+router.get('/pos-bills/:id/receipt.png', async (req, res) => {
+    try {
+        const bill = await loadBill(req.params.id);
+        if (!bill) return res.status(404).json({ error: 'not found' });
+        const dmy = new Date(bill.created_at).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const pay = bill.payments && bill.payments.length > 1 ? 'split' : (bill.payments && bill.payments[0] ? bill.payments[0].method : (bill.payment_method || 'cash'));
+        const payload = {
+            items: bill.items.map(i => ({ name: i.item_name, code: i.item_code || null, qty: Number(i.qty), price: Number(i.unit_price) })),
+            discount: Number(bill.discount_amount || 0), billNo: bill.bill_number, date: dmy,
+            customer: bill.customer_name || 'Walk-in customer', customerPhone: bill.customer_phone || '', paymentMethod: String(pay), total: Number(bill.total),
+        };
+        if (req.query.json) return res.json(payload);
+        const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pick();
+        const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
+        if (!require('fs').existsSync(full)) await receiptImage.renderReceiptPng(payload, { fileName });
+        if (req.query.download) res.setHeader('Content-Disposition', `attachment; filename="${bill.bill_number}.png"`);
+        res.type('png').sendFile(fileName, { root: receiptImage.DEFAULT_DIR });
+    } catch (e) { res.status(e.status || 500).json({ error: `Could not draw the receipt picture: ${e.message}` }); }
+});
+
 // ═══════════════════════ DOWNLOAD bill as PDF ═══════════════════════
 router.get('/pos-bills/:id/pdf', async (req, res) => {
     try {

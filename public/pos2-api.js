@@ -81,6 +81,7 @@
     cap: function () { return j('/api/pos-bills/discount-cap').then(function (r) { return r.ok && r.d ? r.d : null; }).catch(function () { return null; }); },
     me: function () { return j('/api/me').then(function (r) { return r.ok ? r.d : null; }).catch(function () { return null; }); },
     today: function () { return j('/api/pos-bills/today').then(function (r) { return r.ok && r.d ? r.d : { bills: [], count: 0, total: 0 }; }).catch(function () { return { bills: [], count: 0, total: 0 }; }); },
+    findDay: function (iso, q) { return j('/api/pos-bills?date=' + encodeURIComponent(iso || '') + '&q=' + encodeURIComponent(q || '')).then(function (r) { return r.ok && Array.isArray(r.d) ? r.d : []; }).catch(function () { return []; }); },
     find: function (q) { return j('/api/pos-bills?q=' + encodeURIComponent(q || '')).then(function (r) { return r.ok && Array.isArray(r.d) ? r.d : []; }).catch(function () { return []; }); },
     bill: function (id) { return j('/api/pos-bills/' + id).then(function (r) { return r.ok ? r.d : null; }).catch(function () { return null; }); },
     voidBill: function (id, reason) { return j('/api/pos-bills/' + id + '/void', { method: 'POST', body: { reason: reason } }); },

@@ -634,6 +634,7 @@ app.use('/api/system', require('./routes/backup_status'));      // admin-only: b
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
+app.use('/api', require('./routes/daily_ledger_sheet'));   // READ-ONLY one-click daily balancing sheet (xlsx) -> /api/daily-ledger-sheet/:date.xlsx
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/cheque_clearing'));      // owed / in transit / cleared + alert dates -> /api/cheque-clearing* (additive, own tables)
 app.use('/api', require('./routes/payment_planner'));      // vendor cheque schedule -> /api/payment-planner* (additive; writes only cheque_register)
