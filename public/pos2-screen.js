@@ -173,7 +173,7 @@
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
   }
-  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); $('picker').classList.remove('hidden'); renderPicker(); }
+  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); $('picker').classList.remove('hidden'); renderPicker(); setTimeout(function () { var d = $('saleDate'); if (d) { d.removeAttribute('readonly'); d.focus(); d.select(); } }, 60); }
   function sendWa(auto) {
     if (!currentBill) return; var phone = (currentBill.customer_phone || '').trim();
     if (!phone) { if (auto) return; phone = (prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):') || '').trim(); if (!phone) return; }
@@ -243,6 +243,12 @@
     setInterval(tick, 700); setTimeout(tick, 300);
   })();
   ['customerName', 'customerPhone'].forEach(function (id) { var e = $(id); if (e) { e.setAttribute('autocomplete', 'nope'); e.setAttribute('data-lpignore', 'true'); } });
+  // Enter walks the top row: date -> customer -> WhatsApp phone -> item box (no mouse needed)
+  [['saleDate', 'customerName'], ['customerName', 'customerPhone'], ['customerPhone', 'scanBox']].forEach(function (p2) {
+    var a = $(p2[0]); if (!a) return;
+    a.addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; e.preventDefault(); var b = $(p2[1]); if (b) { b.removeAttribute('readonly'); b.focus(); if (b.select && p2[1] !== 'scanBox') b.select(); } });
+  });
+  setTimeout(function () { if (document.activeElement === document.body && $('saleDate')) { $('saleDate').focus(); $('saleDate').select(); } }, 900);
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
     modal('Held bills', h.map(function (x) { var tt = PosCart.totals(x.rows, x.discount_pct).total; return '<p><b>' + new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</b> · ' + esc(x.customer_name || 'Walk-in') + ' · ' + x.rows.length + ' item(s) · ' + money(tt) + ' <button class="secondary small" data-r="' + esc(x.id) + '">Resume</button> <button class="secondary small" data-d="' + esc(x.id) + '">Delete</button></p>'; }).join(''));
