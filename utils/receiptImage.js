@@ -59,7 +59,7 @@ function cleanBill(d) {
 }
 
 // Background set of the day: sets live in public/brand/receipt-sets/setN_{top,mid,foot}.jpg (N = 1,2,3...). One set for 2 days, then the next; no sets saved = the usual look.
-function currentSet(now) {
+function currentSet(now) { try { return require('./receiptTheme').pick(now).set; } catch (e) {}
   try {
     const dir = path.join(__dirname, '..', 'public', 'brand', 'receipt-sets'), ok = [];
     for (let n = 1; n <= 20; n++) if (['top', 'mid', 'foot'].every(p => fs.existsSync(path.join(dir, 'set' + n + '_' + p + '.jpg')))) ok.push(n);
@@ -80,7 +80,7 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   const data = cleanBill(bill);
   
   // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
-  data.set = (bill && bill.set) || currentSet();
+  const th = require('./receiptTheme').pick(); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = th.rgb;
   try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
 
   const puppeteer = require('puppeteer');
