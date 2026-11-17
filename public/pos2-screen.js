@@ -58,7 +58,7 @@
   function addItem(item) {
     var ex = rows.filter(function (r) { return r.code && r.code === item.code; })[0];
     if (ex) ex.qty += 1; else rows.push(Object.assign({}, item, { qty: 1, disc: '0' }));
-    render(); $('picker').classList.add('hidden'); scanMsg('');
+    render(); $('scanBox').value = ''; renderPicker(); $('scanBox').focus(); scanMsg('');
   }
   var seq = 0;
   function openPicker() { $('picker').classList.remove('hidden'); $('scanBox').value = ''; $('scanBox').focus(); renderPicker(); }
@@ -153,14 +153,14 @@
     $('waReceiptMsg').textContent = ''; $('billAttach').textContent = '';
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
-    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden');
+    var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.add('img-ok'); $('rImgWrap').classList.add('hidden');
     img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); };
     img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.add('hidden'); };
     img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now();
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
   }
-  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); }
+  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); $('picker').classList.remove('hidden'); renderPicker(); }
   function sendWa(auto) {
     if (!currentBill) return; var phone = (currentBill.customer_phone || '').trim();
     if (!phone) { if (auto) return; phone = (prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):') || '').trim(); if (!phone) return; }
@@ -171,7 +171,8 @@
     }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = 'Receipt not sent: ' + e.message; });
   }
   $('waBtn').onclick = function () { sendWa(false); };
-  $('waReceiptBtn').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  $('waReceiptBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/receipt.png', '_blank'); };
+  $('rImgDl').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
   $('printBtn').onclick = function () { window.print(); };
   $('emailBtn').onclick = function () { if (this.dataset.href) location.href = this.dataset.href; };
   $('voidBtn').onclick = function () {
@@ -208,6 +209,7 @@
     try {
       var dl = document.querySelector('.docline'), tabs = dl && dl.querySelector('.doc-tabs');
       if (dl && tabs) { tabs.appendChild($('lastBillLabel')); dl.appendChild($('posTools')); }
+      var ih = document.querySelector('.item-head'); if (ih && $('picker') && ih.parentNode) { ih.parentNode.insertBefore($('picker'), ih); $('picker').classList.remove('hidden'); renderPicker(); }
       var foot = document.querySelector('.item-foot'), gr = document.querySelector('.gen-row'); if (foot && gr) foot.appendChild(gr);
     } catch (e) {}
     var row = $('custRow'), sum = $('custSum'), open = false;
@@ -217,7 +219,7 @@
       sum.innerHTML = '<b>' + esc(n || 'Walk-in customer') + '</b> <span>· ' + esc(ph || 'no phone') + ' · ' + esc(d) + ($('waCheck').checked && ph ? ' · WhatsApp receipt' : '') + '</span><em>Change ✎</em>';
     }
     function tick() {
-      var both = $('customerName').value.trim() && $('customerPhone').value.trim(), any = $('customerName').value.trim() || $('customerPhone').value.trim();
+      var nm = $('customerName').value.trim(), both = $('customerPhone').value.trim() || (nm && nm.toLowerCase() !== 'cash'), any = $('customerName').value.trim() || $('customerPhone').value.trim();
       var fold = both && !inside() && !open;
       if (!any) open = false;
       row.classList.toggle('folded', !!fold); sum.classList.toggle('hidden', !fold);
