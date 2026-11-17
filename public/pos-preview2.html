@@ -87,15 +87,16 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
   <nav class="appnav" aria-label="Application navigation">
     <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
   </nav>
-  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: RBH-S011</span></div><div class="toolbar-right"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop" onclick="holdBill()">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
   <main id="formPanel">
+    <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
-    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last RBH-S011</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
+    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow">
       <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="off"></div>
-      <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="date"></div>
+      <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="off"></div>
-      <label class="check"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
+      <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
       <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
     </section>
     <!-- 03 — Held bill status -->
@@ -111,7 +112,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
           <button class="secondary" id="heldBtn">Held (0)</button>
           <button class="secondary" id="scanBtn">Scan</button>
           <button class="secondary" id="toolsBtnBottom">Bill tools ▾</button>
-          <span class="status-note" id="stockWarning"></span>
+          <span class="status-note" id="stockWarning"></span><span class="status-note" id="scanMsg"></span>
         </div>
       </div>
       <aside class="right-work">
@@ -161,7 +162,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 
 <!-- 08 — Generated receipt -->
 <div class="receipt-wrap hidden" id="receipt">
-  <div class="receipt-card">
+  <div class="receipt-card" id="billPanel">
     <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
     <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
     <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>
@@ -172,97 +173,8 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
   </div>
 </div>
 
-<script>
-/* 09 — Demo catalogue and local POS state; replace with API-backed modules in integration */
-const catalogue=[
- {code:"001",name:"SS ANGLE VALVE MONO",stock:34,price:2650,cost:1720,unit:"PCS"},
- {code:"021",name:"SS ANGLE VALVE MONO",stock:21,price:2650,cost:1700,unit:"PCS"},
- {code:"069",name:"GULLY COVER POP UP HEAVY",stock:8,price:4250,cost:2950,unit:"PCS"},
- {code:"073",name:"BIDAY SPRAY LEO 002 SQUARE",stock:16,price:6250,cost:4100,unit:"PCS"},
- {code:"119",name:"FH 1240S BASIN TAP SQ SILVER",stock:11,price:6250,cost:4300,unit:"PCS"},
- {code:"164",name:"SHOWER SET (P)",stock:5,price:33950,cost:26000,unit:"SET"},
- {code:"205",name:"WALL TILE GLOSS WHITE 300×600",stock:240,price:3850,cost:2950,unit:"BOX",sqm:1.44},
- {code:"212",name:"FLOOR TILE GREY MATT 600×600",stock:82,price:5650,cost:4300,unit:"BOX",sqm:1.44},
- {code:"310",name:"BASIN CERAMIC WHITE",stock:7,price:18500,cost:13200,unit:"PCS"},
- {code:"415",name:"MIRROR LED 600 MM",stock:4,price:24500,cost:17800,unit:"PCS"},
- {code:"502",name:"WALL HUNG COMMODE",stock:3,price:48500,cost:36000,unit:"PCS"},
- {code:"610",name:"VANITY CABINET 600 MM",stock:2,price:67500,cost:51000,unit:"SET"}
-].sort((a,b)=>a.code.localeCompare(b.code));
-let rows=[],held=[],bills=[],currentReceipt=null,quotationMode=false,wholesale=false,discountLimit=10;
-const $=id=>document.getElementById(id), money=n=>"Rs "+Number(n||0).toLocaleString("en-LK",{minimumFractionDigits:2,maximumFractionDigits:2});
-const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
-$("saleDate").value=todayISO();
-function dateDMY(v){if(!v)return "";const [y,m,d]=v.split("-");return `${d}/${m}/${y}`}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function lineDiscount(r){const raw=String(r.disc??"0").trim();if(raw.endsWith("%"))return r.qty*r.price*Math.max(0,parseFloat(raw)||0)/100;return Math.max(0,parseFloat(raw)||0)*r.qty}
-function lineTotal(r){return Math.max(0,r.qty*r.price-lineDiscount(r))}
-function totals(){const gross=rows.reduce((s,r)=>s+r.qty*r.price,0),disc=rows.reduce((s,r)=>s+lineDiscount(r),0),net=rows.reduce((s,r)=>s+lineTotal(r),0),cost=rows.reduce((s,r)=>s+r.qty*r.cost,0);return{gross,disc,net,profit:net-cost}}
-function render(){
- $("itemRows").innerHTML=rows.map((r,i)=>`<div class="item-row" data-index="${i}">
- <div class="item-ident"><input class="code-input" data-field="code" value="${esc(r.code)}" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong>${esc(r.name)}</strong><small>${esc(r.unit)}${r.sqm?` · ${r.sqm} sqm/box`:""}</small></div></div>
- <div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="${r.qty}" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>
- <input class="price-input" data-field="price" value="${r.price.toFixed(2)}" inputmode="decimal" aria-label="Selling price">
- <input class="disc-input" data-field="disc" value="${esc(r.disc)}" aria-label="Discount rupees or percent">
- <div class="line-total">${money(lineTotal(r)).replace("Rs ","")}</div><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>`).join("");
- const t=totals();$("itemCount").textContent=rows.length+" items";$("netTotal").textContent=money(t.net);$("profitValue").textContent=t.profit.toLocaleString("en-LK",{minimumFractionDigits:2,maximumFractionDigits:2});
- $("miniList").innerHTML=rows.map(r=>`<div class="mini-line"><span>${esc(r.code)} · ${esc(r.name)} × ${r.qty}</span><strong>${money(lineTotal(r))}</strong></div>`).join("")||'<div class="muted" style="padding:12px 0">No items added</div>';
- $("sellPrice").value=t.net.toFixed(2);$("discountAmt").value=t.disc.toFixed(2);$("discountPct").value=t.gross?(t.disc/t.gross*100).toFixed(2):"0";
- $("heldCount").textContent=held.length;$("heldBtn").textContent=`Held (${held.length})`;$("todayCount").textContent=`(${bills.length})`;
- $("todayList").innerHTML=bills.slice(-5).reverse().map(b=>`<div>${esc(b.id)} · ${esc(b.customer||"Walk-in")} · ${money(b.total)}</div>`).join("")||"No bills yet.";
- const low=rows.filter(r=>r.qty>r.stock);$("stockWarning").textContent=low.length?`Stock warning: ${low.map(r=>r.code).join(", ")} · approval needed`:"";
- $("stockWarning").style.color=low.length?"var(--warn)":"";
-}
-function addItem(item){const existing=rows.find(r=>r.code===item.code);if(existing)existing.qty+=1;else rows.push({...item,qty:1,disc:"0"});render();$("picker").classList.add("hidden");}
-function openPicker(){renderPicker();$("picker").classList.remove("hidden");$("scanBox").value="";$("scanBox").focus()}
-function renderPicker(){const q=$("scanBox").value.toLowerCase();const found=catalogue.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().includes(q));$("pickerResults").innerHTML=found.map(x=>`<div class="pick-row" data-code="${x.code}"><span class="pick-code">${x.code}</span><span class="pick-name"><strong>${esc(x.name)}</strong><small>${x.unit}${x.sqm?` · ${x.sqm} sqm/box`:""} · catalogue item</small></span><span class="pick-stock">${x.stock}</span><span class="pick-price">${money(x.price)}</span></div>`).join("")||'<div class="muted" style="padding:12px">No matching items</div>'}
-function phoneValid(v){const s=v.trim();if(!s)return true;const digits=s.replace(/\D/g,"");if(s.startsWith("+")||s.startsWith("00"))return digits.length>=8&&digits.length<=15;if(/^0\d/.test(s)){const d=digits;return (d.length===10&&/^0(?:7\d|1\d)/.test(d))||(d.length===9&&/^0\d/.test(d));}return false}
-function showError(msg){$("errMsg").textContent=msg}
-function paymentUI(){const p=$("paymentMethod").value;$("chequeBox").classList.toggle("hidden",p!=="Cheque");$("creditNote").classList.toggle("hidden",p!=="Credit");$("splitBox").classList.toggle("hidden",p!=="Split")}
-function modal(title,body,confirmText,fn){$("modalTitle").textContent=title;$("modalBody").innerHTML=body;$("modalBack").classList.remove("hidden");$("modalConfirm").classList.toggle("hidden",!confirmText);$("modalConfirm").textContent=confirmText||"Confirm";$("modalConfirm").onclick=()=>{if(fn)fn();$("modalBack").classList.add("hidden")}}
-function holdBill(){if(!rows.length){showError("Add at least one item before holding.");return}held.push({rows:JSON.parse(JSON.stringify(rows)),name:$("customerName").value,phone:$("customerPhone").value,date:$("saleDate").value});rows=[];$("customerName").value="";render();showError("");$("heldPanel").innerHTML=`Held bills: <strong>${held.length}</strong> · Last held bill saved.`}
-function showHeld(){if(!held.length){modal("Held bills","<p>No held bills.</p>");return}const html=held.map((h,i)=>`<p><b>Held ${i+1}</b> · ${esc(h.name||"Walk-in")} · ${h.rows.length} lines <button class="secondary small" data-load-held="${i}">Resume</button></p>`).join("");modal("Held bills",html);$("modalBody").querySelectorAll("[data-load-held]").forEach(b=>b.onclick=()=>{const h=held.splice(+b.dataset.loadHeld,1)[0];rows=h.rows;$("customerName").value=h.name;$("customerPhone").value=h.phone;$("saleDate").value=h.date;$("modalBack").classList.add("hidden");render()})}
-function generateBill(){
- showError("");if(!rows.length){showError("Add at least one item.");return}
- if(!phoneValid($("customerPhone").value)){showError("Enter a valid Sri Lankan or international phone number.");return}
- const p=$("paymentMethod").value;if(p==="Credit"&&(!$("customerName").value.trim()||!$("customerPhone").value.trim())){showError("Credit sales require customer name and phone.");return}
- if(p==="Cheque"&&!$("chequeRef").value.trim()){showError("Enter the cheque number/reference.");return}
- const t=totals(),overallDisc=Number($("discountPct").value)||0;
- if(overallDisc>discountLimit){modal("Discount approval required",`<p>Discount is ${overallDisc.toFixed(2)}%, above the owner limit of ${discountLimit}%.</p><p>Demo approval records a reason in this session only.</p><label>Reason</label><input id="approvalReason" style="width:100%" placeholder="Reason for extra discount">`,"Approve & continue",()=>{const reason=$("approvalReason").value.trim();if(!reason){showError("Approval reason is required.");return}finishBill(reason)});return}
- if(p==="Split"&&Math.abs((Number($("splitCash").value)||0)+(Number($("splitOther").value)||0)-t.net)>.01){showError("Split payment amounts must equal the bill total.");return}
- finishBill("");
-}
-function finishBill(reason){
- const t=totals(),id="RBH-"+String(12+bills.length).padStart(3,"0");const b={id,customer:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),date:$("saleDate").value,items:JSON.parse(JSON.stringify(rows)),total:t.net,payment:$("paymentMethod").value,reason};
- bills.push(b);currentReceipt=b;renderReceipt(b);$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden");
-}
-function renderReceipt(b){$("receiptMeta").innerHTML=`<span>${esc(b.id)} · ${dateDMY(b.date)}</span><span>${esc(b.customer||"Walk-in customer")}</span>`;$("rItems").innerHTML=b.items.map(r=>`<tr><td>${esc(r.name)}<br><small>${esc(r.code)}</small></td><td>${r.qty}</td><td>${money(r.price)}</td><td>${money(lineTotal(r))}</td></tr>`).join("");const t=b.items.reduce((s,r)=>s+lineTotal(r),0);$("rTotals").innerHTML=`Total: <b>${money(t)}</b><br>Payment: ${esc(b.payment)}<br>${b.reason?`Approval reason: ${esc(b.reason)}`:""}`;$("billAttach").textContent="Receipt size: thermal / A4 selection not built yet."}
-function backToPOS(){$("receipt").classList.add("hidden");$("formPanel").classList.remove("hidden")}
-function resetBill(){rows=[];$("customerName").value="";$("customerPhone").value="";$("waCheck").checked=true;$("paymentMethod").value="Cash";$("chequeRef").value="";$("splitCash").value="0";$("splitOther").value="0";paymentUI();render();backToPOS();showError("")}
-function toolsToggle(){$("toolMenu").classList.toggle("hidden")}
-function findBill(){modal("Find bill",'<label>Invoice number or customer</label><input id="findBox" style="width:100%" placeholder="RBH-012 or customer name"><div id="findResults" style="margin-top:10px"></div>');const inp=$("findBox"),out=$("findResults");inp.oninput=()=>{const q=inp.value.toLowerCase();out.innerHTML=bills.filter(b=>b.id.toLowerCase().includes(q)||b.customer.toLowerCase().includes(q)).map(b=>`<p>${b.id} · ${esc(b.customer||"Walk-in")} · ${money(b.total)} <button class="secondary small" data-open="${b.id}">Open</button></p>`).join("")||"No matches"};out.onclick=e=>{const id=e.target.dataset.open;if(id){const b=bills.find(x=>x.id===id);currentReceipt=b;renderReceipt(b);$("modalBack").classList.add("hidden");$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden")}}}
-function downloadReceipt(){if(!currentReceipt)return;const b=currentReceipt;const text=`ROYAL BATH HUB\\n173/1 Kandy Road, Thihariya\\n074 035 5536\\n${b.id} ${dateDMY(b.date)}\\n${b.items.map(r=>`${r.code} ${r.name} x${r.qty} ${money(lineTotal(r))}`).join("\\n")}\\nTOTAL ${money(b.total)}\\nPayment ${b.payment}`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/plain"}));a.download=b.id+".txt";a.click();URL.revokeObjectURL(a.href)}
-/* 10 — Event wiring for item rows and keyboard-first entry */
-$("itemRows").addEventListener("click",e=>{const row=e.target.closest(".item-row");if(!row)return;const i=+row.dataset.index;if(e.target.dataset.act==="remove")rows.splice(i,1);if(e.target.dataset.act==="plus")rows[i].qty+=1;if(e.target.dataset.act==="minus")rows[i].qty=Math.max(.01,rows[i].qty-1);render()});
-$("itemRows").addEventListener("change",e=>{const row=e.target.closest(".item-row");if(!row)return;const r=rows[+row.dataset.index],f=e.target.dataset.field;if(f==="code"){const match=catalogue.find(x=>x.code.toLowerCase()===e.target.value.trim().toLowerCase());if(match)Object.assign(r,match);else{showError("Item code not found. Use Down arrow to browse.");}}if(f==="qty")r.qty=Math.max(.01,Number(e.target.value)||1);if(f==="price")r.price=Math.max(0,Number(e.target.value)||0);if(f==="disc")r.disc=e.target.value||"0";render()});
-$("itemRows").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const row=e.target.closest(".item-row");const i=+row.dataset.index;const inputs=[...row.querySelectorAll("input")],n=inputs.indexOf(e.target);if(n===0)inputs[1].focus();else if(n===1)inputs[2].focus();else if(n===2)inputs[3].focus();else if(n===3){if(rows[i+1])$("itemRows").querySelectorAll(".item-row")[i+1].querySelector("input").focus();else openPicker()}}});
-$("addItemBtn").onclick=openPicker;$("scanBtn").onclick=openPicker;$("pickerClose").onclick=()=>$("picker").classList.add("hidden");$("scanBox").oninput=renderPicker;$("pickerResults").onclick=e=>{const row=e.target.closest("[data-code]");if(row)addItem(catalogue.find(x=>x.code===row.dataset.code))};
-$("itemRows").addEventListener("keydown",e=>{if(e.key==="ArrowDown"&&e.target.dataset.field==="code"){e.preventDefault();openPicker()}});
-$("holdBtn").onclick=holdBill;$("holdBtnTop").onclick=holdBill;$("heldBtn").onclick=showHeld;$("toolsBtn").onclick=toolsToggle;$("toolsBtnBottom").onclick=toolsToggle;
-$("toolMenu").addEventListener("click",e=>{const id=e.target.id;$("toolMenu").classList.add("hidden");if(id==="findBtn")findBill();if(id==="lastBtn"){const b=bills[bills.length-1];if(b){currentReceipt=b;renderReceipt(b);$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden")}else modal("Last bill","No bill has been generated in this demo session.")}if(id==="quoteBtn")modal("Load quotation","Quotation storage and retrieval are not built yet.");if(id==="quoteSaveBtn")modal("Save quotation","Quotation save and quote-code sharing are not built yet.");if(id==="wholesaleBtn"){wholesale=!wholesale;e.target.textContent="Wholesale bill: "+(wholesale?"ON":"OFF")}if(id==="clearAllBtn")modal("Clear bill","<p>Clear the current unposted demo bill?</p>","Clear",()=>{rows=[];render()})});
-$("paymentMethod").onchange=paymentUI;$("genBtn").onclick=generateBill;$("cancelEditBtn").onclick=resetBill;
-$("modalCancel").onclick=()=>$("modalBack").classList.add("hidden");$("modalBack").onclick=e=>{if(e.target===$("modalBack"))$("modalBack").classList.add("hidden")};
-$("backPosBtn").onclick=backToPOS;$("newBillBtn").onclick=resetBill;$("downloadBtn").onclick=downloadReceipt;$("editReceiptBtn").onclick=()=>{modal("Edit bill","Posted-bill editing is not wired. Use an authorised reversal/credit note in the live ERP.");};$("voidBtn").onclick=()=>modal("Void bill","<p>Void this demo bill? A real system must require a reason and post a full reversal.</p><label>Reason</label><input id='voidReason' style='width:100%' placeholder='Reason required'>","Void demo bill",()=>{const reason=$("voidReason").value.trim();if(!reason){alert("A reason is required.");return}bills=bills.filter(x=>x.id!==currentReceipt.id);render();resetBill()});
-$("waBtn").onclick=$("waReceiptBtn").onclick=$("emailBtn").onclick=$("vcfBtn").onclick=()=>{$("waReceiptMsg").textContent="Sending is not connected in this standalone demo."};
-$("customerSearchBtn").onclick=()=>modal("Customer search","Coming soon.");
-$("camScanBtn").onclick=()=>modal("Camera scan","Coming soon.");
-$("billTab").onclick=()=>{quotationMode=false;$("billTab").classList.add("active");$("quotationTab").classList.remove("active");$("modeLabel").textContent="New sale · LKR"};
-$("quotationTab").onclick=()=>{quotationMode=true;$("quotationTab").classList.add("active");$("billTab").classList.remove("active");$("modeLabel").textContent="Quotation mode";modal("Quotation mode","Quotation saving and conversion are not connected in this starter.")};
-$("discountPct").onchange=()=>{const pct=Math.max(0,Number($("discountPct").value)||0);$("discountAmt").value=(totals().gross*pct/100).toFixed(2);$("capHint").textContent=pct>discountLimit?`Over ${discountLimit}%: approval and reason required.`:"";};
-$("discountAmt").onchange=()=>{const amt=Math.max(0,Number($("discountAmt").value)||0),g=totals().gross;$("discountPct").value=g?(amt/g*100).toFixed(2):"0"};
-$("sellPrice").onchange=()=>{const target=Math.max(0,Number($("sellPrice").value)||0),g=totals().gross;if(g>0){const pct=Math.max(0,(g-target)/g*100);$("discountPct").value=pct.toFixed(2);$("discountAmt").value=(g-target).toFixed(2)}};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("picker").classList.add("hidden");$("toolMenu").classList.add("hidden");$("modalBack").classList.add("hidden")}if(e.key==="F2"){e.preventDefault();openPicker()}if(e.key==="F4"){e.preventDefault();$("customerName").focus()}});
-setInterval(()=>$("clock").textContent=new Date().toLocaleTimeString("en-GB",{timeZone:"Asia/Colombo"}),1000);
-render();paymentUI();
-</script>
+<script src="pos-cart.js"></script>
+<script src="pos2-api.js"></script>
+<script src="pos2-screen.js"></script>
 </body>
 </html>
