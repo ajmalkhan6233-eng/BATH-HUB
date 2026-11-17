@@ -58,6 +58,17 @@ function cleanBill(d) {
   return out;
 }
 
+// Background set of the day: sets live in public/brand/receipt-sets/setN_{top,mid,foot}.jpg (N = 1,2,3...). One set for 2 days, then the next; no sets saved = the usual look.
+function currentSet(now) {
+  try {
+    const dir = path.join(__dirname, '..', 'public', 'brand', 'receipt-sets'), ok = [];
+    for (let n = 1; n <= 20; n++) if (['top', 'mid', 'foot'].every(p => fs.existsSync(path.join(dir, 'set' + n + '_' + p + '.jpg')))) ok.push(n);
+    if (!ok.length) return null;
+    const day = Math.floor((((now == null ? Date.now() : now) + 19800000)) / 86400000);   // Colombo day number
+    return ok[Math.floor(day / 2) % ok.length];
+  } catch (e) { return null; }
+}
+
 let chain = Promise.resolve();
 function renderReceiptPng(bill, opts = {}) {
   const run = chain.then(() => render(bill, opts));
@@ -69,6 +80,7 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   const data = cleanBill(bill);
   
   // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
+  data.set = (bill && bill.set) || currentSet();
   try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
 
   const puppeteer = require('puppeteer');
@@ -89,5 +101,5 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   return { file, bytes: buf.length, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), items: data.items.length };
 }
 
-module.exports = { brandedQr, WA_LINK, renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
+module.exports = { currentSet, brandedQr, WA_LINK, renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
 
