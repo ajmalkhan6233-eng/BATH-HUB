@@ -44,12 +44,12 @@ function createVendor360Router({ pool, requireAuth } = {}) {
       const all = await loadBills(null);
       const map = new Map();
       for (const x of all) {
-        const v = map.get(x.bill.vendor_name) || { vendor_name: x.bill.vendor_name, total_bills: 0, total_billed: 0, total_paid: 0, outstanding_balance: 0, cheques_pending: 0, overdue: 0, last_bill_date: null, has_bounced: false };
+        const v = map.get(x.bill.vendor_name) || { vendor_name: x.bill.vendor_name, total_bills: 0, total_billed: 0, total_paid: 0, outstanding_balance: 0, cheques_pending: 0, overdue: 0, last_bill_date: null, has_bounced: false, cheques_issued: 0 };
         v.total_bills += 1;
         v.total_billed = round2(v.total_billed + x.status.total);
         v.total_paid = round2(v.total_paid + x.status.cleared + x.status.paid + x.status.credited);
         v.outstanding_balance = round2(v.outstanding_balance + x.status.outstanding);
-        v.cheques_pending = round2(v.cheques_pending + x.status.covered);
+        v.cheques_pending = round2(v.cheques_pending + x.status.covered); v.cheques_issued = round2(v.cheques_issued + x.status.issued);
         if (x.status.outstanding > 0 && x.bill.due_date && String(x.bill.due_date).slice(0, 10) < today()) v.overdue = round2(v.overdue + x.status.outstanding);
         if (!v.last_bill_date || String(x.bill.bill_date) > String(v.last_bill_date)) v.last_bill_date = x.bill.bill_date;
         if (x.status.hasBounced) v.has_bounced = true;
