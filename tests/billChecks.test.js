@@ -5,6 +5,14 @@ test('phone numbers normalise to +94', () => {
   expect(B.normalisePhone('0331234567')).toBe('+94331234567');
   expect(B.normalisePhone('12345')).toBeNull();
 });
+test('international numbers (+ or 00 in front, not Sri Lankan) are kept as +digits', () => {
+  expect(B.normalisePhone('+61400000000')).toBe('+61400000000');
+  expect(B.normalisePhone('0061 400 000 000')).toBe('+61400000000');
+  expect(B.normalisePhone('009 61400000000')).toBe('+61400000000');
+  expect(B.normalisePhone('0094771234567')).toBe('+94771234567');
+  expect(B.normalisePhone('61400000000')).toBeNull();
+  expect(B.normalisePhone('+1234')).toBeNull();
+});
 const bill = { date: '2025-12-27', phone: '0771234567', total: 158080, items: [
   { qty: 1, rate: 39500, amount: 39500 }, { qty: 1, rate: 61000, amount: 61000 }, { qty: 1, rate: 20500, amount: 20500 },
   { qty: 1, rate: 8200, amount: 8200 }, { qty: 1, rate: 1000, amount: 1000 }, { qty: 1, rate: 4300, amount: 4300 }, { qty: 1, rate: 2440, amount: 2440 },

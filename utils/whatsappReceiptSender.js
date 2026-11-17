@@ -128,8 +128,8 @@ async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
         if (row.status === 'sent') { await logAttempt(pool, row, 'already_sent'); return { status: 'already_sent' }; }
         if (row.status !== 'queued') { return { status: 'skipped', reason: `row is "${row.status}", only "queued" rows are sent` }; }
 
-        // 1. valid Sri Lanka number on the bill, else "no phone" and skip. Never guess.
-        const to = normalizeSriLankaPhone(row.customer_phone);
+        // 1. valid Sri Lanka number on the bill (or an international one starting with + or 00, 17 Nov), else "no phone" and skip. Never guess.
+        const to = normalizeWhatsappPhone(row.customer_phone);
         if (!to) {
             await pool.query(`UPDATE receipt_queue SET status='no phone', last_error=$2 WHERE id=$1 AND status='queued'`, [row.id, 'no valid phone on this bill']);
             await logAttempt(pool, row, 'no_phone');
