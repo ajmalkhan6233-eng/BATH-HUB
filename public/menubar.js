@@ -41,7 +41,7 @@
     function openPos(m) {
       var f = doc.getElementById('pos-frame');
       if (f) {
-        if (!f.getAttribute('src')) { f.setAttribute('src', '/pos_billing.html' + (m === 'bill' ? '' : '#quote')); if (m === 'package') f.addEventListener('load', function once() { f.removeEventListener('load', once); try { f.contentWindow.postMessage({ pq: 'package' }, win.location.origin); } catch (e) {} }); }
+        if (!f.getAttribute('src')) { f.setAttribute('src', '/pos-preview2.html' + (m === 'bill' ? '' : '#quote')); if (m === 'package') f.addEventListener('load', function once() { f.removeEventListener('load', once); try { f.contentWindow.postMessage({ pq: 'package' }, win.location.origin); } catch (e) {} }); }
         else { try { f.contentWindow.postMessage({ pq: m }, win.location.origin); } catch (e) {} }
       }
       try { win.navigate('pos'); } catch (e) {}

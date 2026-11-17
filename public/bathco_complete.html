@@ -498,7 +498,7 @@ table tr:last-child td{border-bottom:none}
     <!-- ── POS BILLING (embeds public/pos_billing.html) ── -->
     <section class="page" id="page-pos">
       <iframe id="pos-frame" title="POS Billing" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
-      <script>/* BLOCK: POS first (16 Nov, AJ). POS starts loading the moment the shell appears, in parallel with Home, so a bill can be made while the rest still loads. */try{var _pf=document.getElementById("pos-frame");if(_pf&&!_pf.getAttribute("src"))_pf.setAttribute("src","/pos_billing.html")}catch(e){}</script>
+      <script>/* BLOCK: POS first (16 Nov, AJ). POS starts loading the moment the shell appears, in parallel with Home, so a bill can be made while the rest still loads. */try{var _pf=document.getElementById("pos-frame");if(_pf&&!_pf.getAttribute("src"))_pf.setAttribute("src","/pos-preview2.html")}catch(e){}</script>
     </section>
 
     <!-- ── GRN (manual entry) ── -->
@@ -1558,7 +1558,7 @@ function navigate(page) {
   if (page === 'branches') loadBranches();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   { const fr = document.getElementById('frame-' + page); if (fr && !fr.getAttribute('src')) fr.setAttribute('src', fr.dataset.src); }
-  if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
+  if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos-preview2.html'); }
   document.getElementById('page-sub').textContent = sub;
 }
 

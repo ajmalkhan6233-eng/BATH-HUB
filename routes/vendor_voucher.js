@@ -61,8 +61,11 @@ async function build(vendor, only) {
 }
 
 function html(data) {
-  const bg = BG.find(f => fs.existsSync(f));
-  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '' };
+  // 17 Nov: same picture + colour of the 2-day window as the customer receipt (utils/receiptTheme.js)
+  const th = require('../utils/receiptTheme').pick();
+  const setBg = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_bg.jpg') : null;
+  const bg = setBg && fs.existsSync(setBg) ? setBg : BG.find(f => fs.existsSync(f));
+  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const json = JSON.stringify(full).replace(/</g, '\\u003c');
   return tpl.replace(/\/\*DATA\*\/[\s\S]*?\/\*END\*\//, () => '/*DATA*/' + json + '/*END*/');

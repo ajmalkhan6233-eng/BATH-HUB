@@ -9,7 +9,7 @@
 body { width: 1122px; background:#0b0b0c; color:#111; font-family: Arial, Helvetica, sans-serif; font-size: 27px; line-height: 1.3; }
 .sheet { width:1122px; position:relative; overflow:hidden; background:#fffdf7; padding:0 56px 0; }
 .mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.62),rgba(255,253,247,.62)),var(--bg-mid,url('../receipt-mid.jpg')) center/cover no-repeat; }
-.top { margin:0 -56px; height:236px; background:linear-gradient(90deg,#0b0b0c 0%,rgba(11,11,12,.94) 38%,rgba(11,11,12,.55) 58%,rgba(11,11,12,0) 78%),var(--bg-top,url('../receipt-top.jpg')) center/cover no-repeat; border-bottom:5px solid #c9a24b; padding:26px 56px 0; text-align:left; }
+.top { margin:0 -56px; height:236px; background-color:var(--hdr,#0b0b0c); background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.92) 0%,rgba(var(--hdr-rgb,11,11,12),.8) 40%,rgba(var(--hdr-rgb,11,11,12),.3) 72%,rgba(var(--hdr-rgb,11,11,12),.08) 100%),var(--bg-top,url('../receipt-top.jpg')); background-size:cover,cover; background-position:center; background-repeat:no-repeat; border-bottom:5px solid #c9a24b; padding:26px 56px 0; text-align:left; }
 .logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:122px; width:auto; display:block; }
 .addr { color:#e8cf8a; font-size:22px; letter-spacing:.03em; margin-top:14px; line-height:1.45; }
 .addr b { color:#25D366; font-weight:800; }
@@ -29,10 +29,10 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .totals-wrap { padding-top:4px; font-size:26px; }
 .tot-row { display:flex; justify-content:space-between; padding:4px 0; font-weight:600; }
 .tot-row span:first-child { color:#8a6a1c; }
-.tot-row.grand { background:linear-gradient(90deg,#0b0b0c,#1c1a14); font-size:38px; font-weight:800; padding:10px 20px; border-radius:10px; margin:8px 0; border:2px solid #c9a24b; }
+.tot-row.grand { background:linear-gradient(90deg,var(--hdr,#0b0b0c),rgba(var(--hdr-rgb,11,11,12),.82)); font-size:38px; font-weight:800; padding:10px 20px; border-radius:10px; margin:8px 0; border:2px solid #c9a24b; }
 .tot-row.grand span:first-child { color:#c9a24b; } .tot-row.grand span:last-child { color:#fff; }
 .balance-row { background:#e8cf8a; font-weight:800; padding:8px 16px; border-radius:8px; font-size:26px; }
-.foot { display:flex; align-items:center; gap:30px; margin:0 -56px; padding:26px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(11,11,12,0) 0%,rgba(11,11,12,0) 28%,rgba(11,11,12,.88) 52%,rgba(11,11,12,.96) 100%),var(--bg-foot,url('../receipt-foot.jpg')) center/cover no-repeat; }
+.foot { display:flex; align-items:center; gap:30px; margin:0 -56px; padding:26px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.12) 0%,rgba(var(--hdr-rgb,11,11,12),.3) 28%,rgba(var(--hdr-rgb,11,11,12),.82) 55%,rgba(var(--hdr-rgb,11,11,12),.92) 100%),var(--bg-foot,url('../receipt-foot.jpg')) center/cover no-repeat; }
 .qrbox { flex:0 0 auto; width:236px; height:236px; border-radius:30px; background:rgba(255,255,255,.97); box-shadow:0 0 26px 12px rgba(255,255,255,.88); display:flex; align-items:center; justify-content:center; }
 .qrbox svg { width:214px; height:214px; display:block; }
 .fr { flex:1; text-align:right; }
@@ -79,7 +79,8 @@ const n = v => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2
 
 function renderReceipt(d) {
   // 17 Nov: background set rotates every 2 days (server sends d.set = 1..N; none = the usual look)
-  if (d && d.set) { var r = document.documentElement.style, n = d.set; r.setProperty('--bg-top', "url('../receipt-sets/set" + n + "_top.jpg')"); r.setProperty('--bg-mid', "url('../receipt-sets/set" + n + "_mid.jpg')"); r.setProperty('--bg-foot', "url('../receipt-sets/set" + n + "_foot.jpg')"); }
+  if (d && d.set) { var r = document.documentElement.style, sn = d.set; r.setProperty('--bg-top', "url('../receipt-sets/set" + sn + "_top.jpg')"); r.setProperty('--bg-mid', "url('../receipt-sets/set" + sn + "_mid.jpg')"); r.setProperty('--bg-foot', "url('../receipt-sets/set" + sn + "_foot.jpg')"); }
+  if (d && d.hdr) { var rs = document.documentElement.style; rs.setProperty('--hdr', d.hdr); rs.setProperty('--hdr-rgb', d.hdrRgb || '11,11,12'); }
   d = d || {};
   const $ = id => document.getElementById(id);
 
