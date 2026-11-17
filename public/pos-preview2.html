@@ -138,7 +138,31 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 #picker .picker-results{max-height:150px}
 .picker-head,.pick-row{grid-template-columns:70px minmax(160px,1fr) 60px 100px}
 </style>
-</head>
+<style id="p0fit">
+/* P0: compact docked picker so 10 item lines fit at 1366x768; items scroll inside their own box */
+#picker:not(.open) .picker-head,#picker:not(.open) .picker-results,#picker:not(.open) .picker-note{display:none}
+#picker:not(.open){max-height:48px}
+#picker{max-height:150px;padding:5px 8px;margin:3px auto 4px}
+#picker .picker-results{max-height:78px}
+#picker .picker-head{padding:2px 7px}
+#picker .pick-row{padding:3px 7px}
+#picker .picker-top{margin-bottom:3px}#picker .picker-top input{height:30px}
+.item-head{position:sticky;top:0}
+@media(max-height:800px){.item-row{min-height:34px}}
+@media(max-width:700px){
+  main{padding:6px}
+  .workspace{display:flex!important;flex-direction:column}
+  .customer-row{height:auto!important;display:grid!important;grid-template-columns:1fr 1fr;gap:6px}
+  .item-head{display:none!important}
+  .item-row{grid-template-columns:1fr 1fr!important;gap:6px;padding:8px;min-height:0;border:1px solid var(--line);border-radius:6px;margin:4px}
+  .item-row .item-ident{grid-column:1/-1}
+  .item-row input,.item-row button,.qtybox button{min-height:48px;font-size:16px}
+  #picker{width:100%}#picker .pick-row,#picker .picker-head{grid-template-columns:56px 1fr 44px 80px}
+  #genBtn{min-height:52px;font-size:17px}
+  .right-work{position:sticky;bottom:0;background:var(--panel,#fff);z-index:5}
+}
+</style>
+<style id="oneprice">#priceRow .field:first-child{display:none}</style></head>
 <body>
 <div class="shell">
   <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
@@ -208,7 +232,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
   <div class="picker-top"><input id="scanBox" placeholder="Type item code or name / scan barcode…" autocomplete="off"><button class="secondary" id="camScanBtn">Camera scan</button><button class="secondary" id="pickerClose">Close</button></div>
   <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
   <div class="picker-results" id="pickerResults"></div>
-  <div class="muted" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
+  <div class="muted picker-note" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
 </div>
 
 <!-- 06 — Bill tools menu -->
