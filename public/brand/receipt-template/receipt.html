@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { width: 1122px; background:#0b0b0c; color:#111; font-family: Arial, Helvetica, sans-serif; font-size: 27px; line-height: 1.3; }
 .sheet { width:1122px; position:relative; overflow:hidden; background:#fffdf7; padding:0 56px 0; }
-.mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.62),rgba(255,253,247,.62)),var(--bg-mid,url('../receipt-mid.jpg')) center/cover no-repeat; }
+.mid { position:relative; margin:0 -56px; padding:6px 56px 22px; background:linear-gradient(rgba(255,253,247,.5),rgba(255,253,247,.5)),var(--bg-mid,url('../receipt-mid.jpg')) center/cover no-repeat; }
 .top { margin:0 -56px; height:236px; background-color:var(--hdr,#0b0b0c); background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.92) 0%,rgba(var(--hdr-rgb,11,11,12),.8) 40%,rgba(var(--hdr-rgb,11,11,12),.3) 72%,rgba(var(--hdr-rgb,11,11,12),.08) 100%),var(--bg-top,url('../receipt-top.jpg')); background-size:cover,cover; background-position:center; background-repeat:no-repeat; border-bottom:5px solid #c9a24b; padding:26px 56px 0; text-align:left; }
 .logo-img { -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent); -webkit-mask-composite:source-in; mask-composite:intersect; height:122px; width:auto; display:block; }
 .addr { color:#e8cf8a; font-size:22px; letter-spacing:.03em; margin-top:14px; line-height:1.45; }
@@ -33,7 +33,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .tot-row.grand span:first-child { color:#c9a24b; } .tot-row.grand span:last-child { color:#fff; }
 .balance-row { background:#e8cf8a; font-weight:800; padding:8px 16px; border-radius:8px; font-size:26px; }
 .foot { display:flex; align-items:center; gap:30px; margin:0 -56px; padding:26px 56px; border-top:5px solid #c9a24b; background:linear-gradient(90deg,rgba(var(--hdr-rgb,11,11,12),.12) 0%,rgba(var(--hdr-rgb,11,11,12),.3) 28%,rgba(var(--hdr-rgb,11,11,12),.82) 55%,rgba(var(--hdr-rgb,11,11,12),.92) 100%),var(--bg-foot,url('../receipt-foot.jpg')) center/cover no-repeat; }
-.qrbox { flex:0 0 auto; width:236px; height:236px; border-radius:30px; background:rgba(255,255,255,.97); box-shadow:0 0 26px 12px rgba(255,255,255,.88); display:flex; align-items:center; justify-content:center; }
+.qrbox { flex:0 0 auto; width:236px; height:236px; border-radius:30px; background:rgba(255,255,255,.9); box-shadow:0 4px 14px rgba(0,0,0,.28); display:flex; align-items:center; justify-content:center; }
 .qrbox svg { width:214px; height:214px; display:block; }
 .fr { flex:1; text-align:right; }
 .thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:10px; color:#fff; }
@@ -45,7 +45,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 <body>
 <div class="sheet" id="sheet">
   <div class="top">
-    <img src="../../receipt-logo.png" alt="RBH" class="logo-img">
+    <img src="../receipt-logo-t.png" alt="RBH" class="logo-img">
     <div class="addr" id="addr"></div>
   </div>
   <div class="mid">
