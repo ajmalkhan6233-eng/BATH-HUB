@@ -15,3 +15,11 @@ UPDATE 17 Nov 11:50 (used real checkout .env; backup 11:15 passed first)
 - Brand is not a product column, so it is written in the name: "Plastic Angle Valve (TOKAI)", "(FRINCE)", "(BRASSCO)".
 - Sell price pending items stored as blank (NULL), listed in docs/PENDING_PRICES.txt. Rows 339 and 340 flagged CONFIRM there and in the GRN notes.
 - Cheque register / GRN list / Vendor 360 read the database, so they already show Leo cheques and both Lucky GRNs. Not checked in the browser (login needed).
+
+GRN-EDIT + RETURN-ITEMS (17 Nov, later)
+- GRN invoice page: routes/grn_invoice.js (GET/PUT /api/grn-invoice/:vendor/:grn, PUT .../reason), public/grn_invoice.js, click on a row in Vendor 360 > GRN. New tables (additive): grn_invoice_meta, grn_audit, grn_diff_reason. Only touches the GRN module plus one mount line in server.js and the GRN tab of vendor360.js.
+- Tests: scripts/test_grn_invoice.js (all pass, run in a rolled-back transaction: totals, Leo 503,425 / paid 503,500 / -75, reason turns it green, edit moves stock + payable + due date + audit, stock below zero refused). BROWSER SCREEN NOT TESTED: jsdom is not installed and the live server runs branch work, which does not have this yet. Needs merge into work + restart, then one look.
+- Edit with a changed cost re-averages avg_cost: (stock*avg - oldqty*oldcost + newqty*newcost) / new stock.
+- "Difference not zero" also fires for normal credit bills still unpaid (amber until a reason is saved). Follows the spec; say if unpaid credit bills should be excluded.
+- Leo: GRN date 2026-11-04 -> 2026-11-03 (bill date was already 03-11), reason "No change given" saved, audit line written. Leo stays 503,425; Rs 75 in our favour (outstanding 499,925, cheques 500,000).
+- Cool Lanka return: 6 lines saved in new table vendor_return_lines (162,000, balance 365,000). Stock NOT reduced again (already reduced by the earlier post). "Items missing" text was not found anywhere. Marunal matched to MARVEL COMMODE. See docs/PENDING_RETURNS.txt.
