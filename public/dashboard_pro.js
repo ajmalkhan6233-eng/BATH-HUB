@@ -41,7 +41,7 @@
     return '<span class="' + (up ? 'up' : 'down') + '">' + (up ? '▲ ' : '▼ ') + Math.abs(d).toFixed(0) + '%</span> <span class="dp-note">vs ' + label + '</span>';
   }
   function tile(label, val, sub, extra) { return '<div class="dp-card"><div class="dp-lab">' + label + '</div><div class="dp-val">' + val + '</div><div class="dp-note">' + (sub || '') + '</div>' + (extra || '') + '</div>'; }
-  function spark(vals) {   // small line of the last days; plain SVG, colour from the theme, nothing to read if there is no data
+  function spark(vals) { return ''; /* no graphics: faster */   // small line of the last days; plain SVG, colour from the theme, nothing to read if there is no data
     vals = (vals || []).map(Number).filter(function (x) { return isFinite(x); });
     if (vals.length < 2 || Math.max.apply(null, vals) <= 0) return '';
     var w = 120, h = 32, mx = Math.max.apply(null, vals), n = vals.length;
@@ -55,7 +55,7 @@
       + '<div class="dp-note"><b>' + p.toFixed(0) + '%</b> of ' + lkr(target) + (left > 0 ? ' · ' + lkr(left) + ' to go' : ' · <span class="up">target reached</span>') + '</div>'
       + (extra ? '<div class="dp-note">' + extra + '</div>' : '') + '</div>';
   }
-  function bars(vals, labels, hi) {
+  function bars(vals, labels, hi) { return ''; /* no graphics */
     var W = 320, H = 110, pad = 18, mx = Math.max.apply(null, vals.concat([1])), bw = (W - 8) / vals.length, out = '';
     vals.forEach(function (v, i) {
       var h = Math.round((v / mx) * (H - pad - 6)), x = 4 + i * bw, fill = i === hi ? 'var(--gold)' : 'rgba(201,162,39,.45)';
@@ -72,20 +72,17 @@
     var now = new Date();
     h += '<div class="dp-head"><div><div class="dp-title">Hi, AJ! What is the plan for today?</div><div class="dp-sub">' + now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       + ' · updated ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="dp-btn" id="dp-refresh">Refresh</button></div>';
+    var lk = new Date(Date.now() + 19800000).toISOString().slice(0, 10);
+    h += '<div class="dp-card" style="margin-bottom:12px"><h3>Daily ledger sheet (credit and debit, per day)</h3>'
+      + '<input type="date" id="dp-ldate" value="' + lk + '" style="padding:6px;font-size:14px"> '
+      + '<button class="dp-btn" onclick="var v=document.getElementById(\'dp-ldate\').value;if(v)location.href=\'/api/daily-ledger-sheet/\'+v+\'.xlsx\'">Download</button>'
+      + '<div class="dp-note">Every sale with its receipt number, money out, and the balance.</div></div>';
     /* 1 money today */
     h += '<div class="dp-grid">'
       + tile('Sales today', lkr(S.today), (function (x, y) { return x === y ? x : x + '<br>' + y; })(delta(S.today, S.yesterday, 'yesterday'), delta(S.today, S.same_day_last_week, 'last ' + now.toLocaleDateString('en-GB', { weekday: 'long' }))), spark((d.daily || []).map(function (x) { return x.total; })))
       + tile('Bills today', S.bills_today, 'Average bill ' + lkr(S.avg_bill_today) + (S.discount_today > 0 ? '<br>Discount given ' + lkr(S.discount_today) : ''))
       + tile('Profit today (est.)', P.today.margin_pct == null ? '-' : lkr(P.today.gross_profit), P.today.margin_pct == null ? 'No costed items sold yet' : 'Margin ' + pct(P.today.margin_pct) + ' · costs known for ' + pct(P.today.coverage_pct) + ' of sales')
       + tile('Expenses today', lkr(E.today), 'This month ' + lkr(E.month))
-      + '</div>';
-    /* 2 targets */
-    var dayPace = T.day_of_month ? (S.month / T.day_of_month) * T.days_in_month : 0, leftDays = Math.max(1, T.days_in_month - T.day_of_month + 1);
-    h += '<div class="dp-grid">'
-      + goal('Daily target', S.today, T.day)
-      + goal('This week', S.week, T.week, delta(S.week, S.last_week_same_point, 'same point last week'))
-      + goal('This month', S.month, T.month, delta(S.month, S.last_month_same_point, 'same point last month') + '<br>Pace: ' + lkr(dayPace) + ' by month end · need ' + lkr(Math.max(0, T.month - S.month) / leftDays) + ' a day')
-      + tile('Month profit (est.)', P.month.margin_pct == null ? '-' : lkr(P.month.gross_profit), P.month.margin_pct == null ? 'No costed sales yet' : 'Margin ' + pct(P.month.margin_pct) + ' · ' + S.bills_month + ' bills')
       + '</div>';
     /* 3 alerts */
     var al = [];
@@ -98,15 +95,6 @@
     if (st.no_price > 0) al.push(['', pl(st.no_price, 'item has', 'items have') + ' no selling price yet (tap to set prices)', 'helper']);
     if (CU.overdue > 0) al.push(['', 'Customers overdue to pay us: ' + lkr(CU.overdue)]);
     h += '<div class="dp-card" style="margin-bottom:12px"><h3>Needs attention</h3>' + (al.length ? al.map(function (a) { return '<div class="dp-alert ' + a[0] + (a[2] ? ' dp-go' : '') + '"' + (a[2] ? ' data-go="' + a[2] + '" role="button" tabindex="0"' : '') + '>' + esc(a[1]) + (a[2] ? ' <b style="margin-left:auto">\u203A</b>' : '') + '</div>'; }).join('') : '<div class="dp-alert ok">All clear. Nothing urgent.</div>') + '</div>';
-    /* 4 trends */
-    var dl = d.daily.map(function (x) { return new Date(x.d).getDate(); }), dv = d.daily.map(function (x) { return x.total; });
-    var hours = []; for (var i = 8; i <= 20; i++) hours.push(i);
-    var hmap = {}; d.hourly.forEach(function (x) { hmap[x.h] = x.total; });
-    var hv = hours.map(function (x) { return hmap[x] || 0; }), hmax = hv.indexOf(Math.max.apply(null, hv));
-    var pays = d.payments_today, ptot = pays.reduce(function (a, x) { return a + x.amount; }, 0);
-    h += '<div class="dp-grid2"><div class="dp-card"><h3>Sales, last 14 days</h3>' + bars(dv, dl, dv.length - 1) + '<div class="dp-note">Best day: ' + lkr(Math.max.apply(null, dv.concat([0]))) + ' · 14-day total ' + lkr(dv.reduce(function (a, b) { return a + b; }, 0)) + '</div></div>'
-      + '<div class="dp-card"><h3>Busy hours (last 7 days)</h3>' + bars(hv, hours.map(function (x) { return x + 'h'; }), hmax) + '<div class="dp-note">' + (Math.max.apply(null, hv) > 0 ? 'Busiest around ' + hours[hmax] + ':00' : 'Not enough sales yet') + '</div></div>'
-      + '<div class="dp-card"><h3>How customers paid today</h3>' + (pays.length ? pays.map(function (x) { var p = ptot ? (x.amount / ptot) * 100 : 0; return '<div class="dp-row"><span>' + esc(String(x.method).toUpperCase()) + '</span><b>' + lkr(x.amount) + ' · ' + p.toFixed(0) + '%</b></div>'; }).join('') : '<div class="dp-note">No sales yet today.</div>') + '</div></div>';
     /* 5 stock */
     h += '<div class="dp-grid">'
       + tile('Stock value (cost)', lkr(st.cost_value), n(st.items) + ' items · ' + Math.round(n(st.units)).toLocaleString('en-LK') + ' pieces')
@@ -114,18 +102,6 @@
       + tile('Out of stock', n(st.out_of_stock), 'Low stock: ' + n(st.low_stock))
       + tile('Items without price', n(st.no_price), 'Set them on the Item catalog screen')
       + '</div>';
-    /* 5b what if we discount everything (priced items only) */
-    (function () {
-      var rv = n(st.retail_value), cp = n(st.cost_priced);
-      if (!(rv > 0)) return;
-      var rows = [0, 5, 10, 15, 25].map(function (p) {
-        var got = rv * (1 - p / 100), pr = got - cp;
-        return '<tr><td>' + (p ? p + '% off' : 'No discount') + '</td><td style="text-align:right">' + lkr(got) + '</td><td style="text-align:right">' + lkr(pr) + '</td><td style="text-align:right">' + (got > 0 ? Math.round(pr / got * 100) : 0) + '%</td></tr>';
-      }).join('');
-      h += '<div class="dp-card" style="margin-bottom:12px"><h3>If we sell all stock with a discount</h3>'
-        + '<div style="font-size:12px;opacity:.75;margin-bottom:6px">Cost ' + lkr(cp) + ' · priced items only</div>'
-        + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="opacity:.7"><th style="text-align:left">Discount</th><th style="text-align:right">We get</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
-    })();
     h += '<div class="dp-grid2"><div class="dp-card"><h3>Reorder soon</h3>' + (st.low_list.length ? st.low_list.map(function (x) { return row(esc(x.item_code + ' ' + x.name), n(x.stock_level) <= 0 ? '<span class="down">OUT</span>' : n(x.stock_level) + ' left'); }).join('') : '<div class="dp-note">Nothing low.</div>') + '</div>'
       + '<div class="dp-card"><h3>Stock by category (cost)</h3>' + (st.categories.length ? st.categories.map(function (x) { return row(esc(x.category) + ' (' + x.items + ')', lkr(x.cost_value)); }).join('') : '<div class="dp-note">No items.</div>') + '</div>'
       + '<div class="dp-card"><h3>Top sellers this month</h3>' + (d.top_items_month.length ? d.top_items_month.map(function (x) { return row(esc(x.name) + ' ×' + Math.round(x.qty), lkr(x.revenue)); }).join('') : '<div class="dp-note">No sales yet this month.</div>') + '</div></div>';
@@ -173,8 +149,6 @@
       + tile('Open quotations', n(qo.n), lkr(qo.value))
       + tile('Enquiries this week', n(en.week), n(en.new_n) + ' still new')
       + '</div>';
-    h += '<div class="dp-grid2"><div class="dp-card"><h3>Average sales by weekday (8 weeks)</h3>' + bars(wv, wd, wb) + '<div class="dp-note">' + (Math.max.apply(null, wv) > 0 ? 'Best day: ' + wd[wb] + ' · ' + lkr(wv[wb]) : 'Not enough days yet') + '</div></div>'
-      + '<div class="dp-card"><h3>Sales by category (this month)</h3>' + ((d.category_sales_month || []).length ? d.category_sales_month.map(function (x) { return row(esc(x.category) + ' ×' + Math.round(x.qty), lkr(x.revenue)); }).join('') : '<div class="dp-note">No sales yet this month.</div>') + '</div></div>';
     if (d.missing && d.missing.length) h += '<div class="dp-note">Some figures not available yet: ' + esc(d.missing.join(', ')) + '</div>';
     h += '<div class="dp-note" style="margin:6px 0 2px">Profit is an estimate from items that have a cost. Targets come from Admin Settings.</div>';
     return h;
