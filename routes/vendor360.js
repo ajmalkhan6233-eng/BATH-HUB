@@ -55,6 +55,12 @@ function createVendor360Router({ pool, requireAuth } = {}) {
         if (x.status.hasBounced) v.has_bounced = true;
         map.set(x.bill.vendor_name, v);
       }
+      // 17 Nov: a registered supplier with no bills yet (e.g. Maheshan Hardware) was missing, because this list is built from bills. Show it with zeros.
+      try {
+        const have = new Set([...map.keys()].map(n => String(n).toLowerCase()));
+        const sup = await pool.query(`SELECT name FROM suppliers WHERE COALESCE(active,true) = TRUE`);
+        for (const s of sup.rows) if (s.name && !have.has(String(s.name).toLowerCase())) map.set(s.name, { vendor_name: s.name, total_bills: 0, total_billed: 0, total_paid: 0, outstanding_balance: 0, cheques_pending: 0, overdue: 0, last_bill_date: null, has_bounced: false, cheques_issued: 0 });
+      } catch (_) { /* suppliers table missing: keep the bill-based list */ }
       const vendors = [...map.values()].sort((a, b) => b.outstanding_balance - a.outstanding_balance || a.vendor_name.localeCompare(b.vendor_name));
       res.json({ vendors });
     } catch (e) { fail(res, e); }
