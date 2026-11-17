@@ -77,13 +77,17 @@ function createVendor360Router({ pool, requireAuth } = {}) {
   router.get('/:vendor/statement', async (req, res) => {
     try {
       const all = await loadBills(req.params.vendor);
+      // 17 Nov: a return shows its item list (code, name, qty x rate) under the credit note.
+      const retLines = {};
+      try { const ids = all.flatMap(x => x.credits.map(n => n.id)); if (ids.length) (await pool.query('SELECT credit_note_id, item_code, item_name, qty, rate FROM vendor_return_lines WHERE credit_note_id = ANY($1::int[]) ORDER BY id', [ids])).rows.forEach(l => (retLines[l.credit_note_id] = retLines[l.credit_note_id] || []).push(l)); } catch (_) { /* table not made yet */ }
+      const itemsText = id => (retLines[id] ? ' | Items: ' + retLines[id].map(l => (l.item_code ? l.item_code + ' ' : '') + l.item_name + ' x' + Number(l.qty) + ' @ ' + Number(l.rate).toLocaleString('en-US')).join('; ') : '');
       const rows = [];
       for (const x of all) {
         const b = x.bill, ref = b.bill_no || ('#' + b.id);
         rows.push({ id: 'b' + b.id, tx_date: b.bill_date, created_at: b.created_at, tx_type: 'BILL', reference: ref, description: 'Bill ' + ref, debit: Number(b.total), credit: 0 });
         x.payments.forEach(p => rows.push({ id: 'p' + p.id, tx_date: p.paid_at, created_at: p.created_at, tx_type: 'PAYMENT', reference: p.method || 'payment', description: 'Payment (' + (p.method || 'cash') + ')' + (p.note ? ' - ' + p.note : '') + ' for ' + ref, debit: 0, credit: Number(p.amount) }));
         x.cheques.filter(c => c.status === 'CLEARED').forEach(c => rows.push({ id: 'c' + c.id, tx_date: c.cleared_at || c.due_date, created_at: c.created_at, tx_type: 'CHEQUE', reference: c.cheque_no || 'cheque', description: 'Cheque ' + (c.cheque_no || '') + ' cleared' + (c.bank ? ' (' + c.bank + ')' : '') + ' for ' + ref, debit: 0, credit: Number(c.amount) }));
-        x.credits.forEach(n => rows.push({ id: 'n' + n.id, tx_date: n.note_date, created_at: n.created_at, tx_type: 'CREDIT_NOTE', reference: n.note_no || 'credit note', description: 'Credit note ' + (n.note_no || '') + (n.reason ? ' - ' + n.reason : '') + ' for ' + ref, debit: 0, credit: Number(n.amount) }));
+        x.credits.forEach(n => rows.push({ id: 'n' + n.id, tx_date: n.note_date, created_at: n.created_at, tx_type: 'CREDIT_NOTE', reference: n.note_no || 'credit note', description: 'Credit note ' + (n.note_no || '') + (n.reason ? ' - ' + n.reason : '') + ' for ' + ref + itemsText(n.id), debit: 0, credit: Number(n.amount) }));
       }
       const ledger = withRunningBalance(rows);
       const pending = [];

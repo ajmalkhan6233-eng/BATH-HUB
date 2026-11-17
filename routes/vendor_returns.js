@@ -62,6 +62,11 @@ router.post('/vendor-returns', async (req, res) => {
     const note = (await c.query(
       `INSERT INTO vendor_credit_notes (branch_id, bill_id, note_no, amount, note_date, reason, created_by) VALUES (1,$1,$2,$3,$4,$5,$6) RETURNING id, note_no`,
       [billId, `${kind === 'RETURN' ? 'RET' : 'DSC'}-${bill.bill_no}-${n}`, amount, noteDate, `${kind}: ${reason}`, (req.session && req.session.user && req.session.user.username) || null])).rows[0];
+    // 17 Nov (AJ rule): a return keeps its item lines (code, qty, rate, amount), shown in Vendor 360. Record only; the money and stock maths above are unchanged.
+    if (kind === 'RETURN') {
+      await c.query('CREATE TABLE IF NOT EXISTS vendor_return_lines (id SERIAL PRIMARY KEY, credit_note_id INT NOT NULL, item_code TEXT, item_name TEXT, qty NUMERIC(12,3) NOT NULL, rate NUMERIC(14,2) NOT NULL, amount NUMERIC(14,2) NOT NULL, created_at TIMESTAMPTZ DEFAULT now())');
+      for (const d of detail) await c.query('INSERT INTO vendor_return_lines (credit_note_id,item_code,item_name,qty,rate,amount) VALUES ($1,$2,$3,$4,$5,$6)', [note.id, d.item_code, d.name, d.qty, A.r2(d.credit / d.qty), d.credit]);
+    }
     await c.query('COMMIT');
     audit.log(pool, { who: (req.session && req.session.user && req.session.user.username) || 'system', action: 'vendor_' + kind.toLowerCase(), table: 'vendor_bills', id: billId, oldValue: String(room), newValue: String(A.r2(room - amount)), reason }).catch(() => {});
     res.status(201).json({ kind, bill_id: billId, credit_note: note, credited: amount, owed_after: A.r2(room - amount), items: detail });

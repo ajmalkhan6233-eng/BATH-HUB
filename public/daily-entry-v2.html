@@ -129,6 +129,8 @@
      Reload or Dismiss so an edit is never silently dropped. */
   .syncbanner{max-width:1560px; margin:8px auto 0; padding:9px 16px; border-radius:10px; font-size:13px;
     font-weight:600; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  /* 17 Nov (AJ): two sync warning bars at once looked doubled. When the day-sync bar shows a warning or conflict, the second bar (unsynced list) is hidden: one bar only. */
+  #syncBanner.warn[style*="flex"] ~ #unsyncedBanner, #syncBanner.conflict[style*="flex"] ~ #unsyncedBanner{display:none !important;}
   .syncbanner.info{background:rgba(47,191,143,.12); border:1px solid rgba(47,191,143,.4); color:var(--emerald);}
   .syncbanner.conflict{background:rgba(214,80,80,.14); border:1px solid rgba(214,80,80,.55); color:#B23A3A;}
   .syncbanner.warn{background:rgba(243,201,105,.14); border:1px solid rgba(243,201,105,.55); color:#F3C969;}
@@ -2710,9 +2712,9 @@
     const named = salNamedTotals();
     staffSalaryTotals = Object.keys(named).length ? named : null;
     const totalSalary = salRows.some(salHas) ? salGrandTotal() : null;
-    document.getElementById("pSalary").textContent = totalSalary==null ? "—" : fmt.format(totalSalary);
+    document.getElementById("pSalary").textContent = totalSalary==null ? "0" : fmt.format(totalSalary);   // 17 Nov: empty salary shows 0
     document.getElementById("pSalary").closest(".cell").classList.toggle("has-value", totalSalary!=null);
-    document.getElementById("staffSalaryTotal").textContent = totalSalary==null ? "—" : fmt.format(totalSalary);
+    document.getElementById("staffSalaryTotal").textContent = totalSalary==null ? "0" : fmt.format(totalSalary);
     epTotals(); // LEDGER FIXES 2026-07-25 Group B #11 — Cash In Hand now depends on salary too
   }
   document.getElementById("salAddRow").addEventListener("click", ()=>{

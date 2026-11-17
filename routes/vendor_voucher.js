@@ -26,7 +26,8 @@ const fail = (res, e, what) => res.status(e.status || 500).json({ error: e.statu
 const dataUri = (file, mime) => { try { return `data:${mime};base64,` + fs.readFileSync(file).toString('base64'); } catch (_) { return ''; } };
 const mimeOf = f => ({ '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' }[path.extname(f)]);
 const money = n => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const iso = d => (d instanceof Date ? d.toISOString() : String(d || '')).slice(0, 10);
+// 17 Nov: a DATE column arrives as a Date at local midnight; toISOString() turned it into the PREVIOUS day (cheque 15 Jan showed 14 Jan). Use the local day parts.
+const iso = d => (d instanceof Date ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') : String(d || '').slice(0, 10));
 
 pool.query(`CREATE TABLE IF NOT EXISTS vendor_voucher_log (id SERIAL PRIMARY KEY, vendor TEXT, voucher_no TEXT, phone_last3 VARCHAR(3), status VARCHAR(12), detail TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`)
   .catch(e => console.error('[vendor_voucher] log table:', e.message));

@@ -1,5 +1,5 @@
 PENDING RETURNS - Cool Lanka Impex return dated 2026-11-14 (Rs 162,000), checked 17 Nov
 All 6 lines filled (table vendor_return_lines): Ethan 167 3x12,000 | 7019 168 3x10,000 | Jim 166 3x12,000 | Aqua 159 1x20,500 | Marunal -> MARVEL COMMODE 160 1x27,000 | Delta 162 1x12,500. Total 162,000. Cool balance 365,000.
-Please glance: "Marunal commode" was matched to MARVEL COMMODE (code 160). Sentro (158) is also 27,000 but its stock was never reduced, Marvel's was (2 to 1). If you meant Sentro, say so.
+RESOLVED 17 Nov (AJ): "Marunal commode" = MARVEL COMMODE (code 160). Confirmed.
 Stock NOT reduced again: it was already reduced when the return was posted (Ethan, 7019, Jim now 0; Aqua 2 to 1; Marvel 2 to 1; Delta 4 to 3). Reducing again would have been double.
 No "Items missing" text exists in the code, the database or the credit note reason, so there was nothing to remove. Nothing created.
