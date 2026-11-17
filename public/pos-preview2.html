@@ -78,8 +78,9 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 @media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 340px}.item-row{min-height:40px}.item-head,.item-row{grid-template-columns:minmax(250px,1fr) 100px 130px 115px 130px 42px}.picker{right:360px}}
 @media(max-height:700px){main{padding-top:5px;gap:5px}.customer-row{height:42px}.item-row{min-height:34px}.mini-list{max-height:105px}.bill-summary{padding:6px}.payment-card{padding:6px}}
 @media print{body *{visibility:hidden}.receipt-wrap,.receipt-wrap *{visibility:visible}.receipt-wrap{position:absolute;background:white;padding:0}.receipt-card{border:0;box-shadow:none;width:100%;max-height:none}.receipt-actions{display:none}}
-.right-work{overflow-y:auto;overflow-x:hidden;padding-right:2px}.right-work>*{flex:none}.right-work .bill-summary{flex:none}.right-work .payment-card{position:sticky;bottom:0;z-index:2;background:#fff}
+.right-work{overflow-y:auto;overflow-x:hidden;padding-right:2px}.right-work>*{flex:none}.right-work .bill-summary{flex:none}
 html.in-frame .shell{min-height:0;height:100vh}
+@media(max-height:560px){.mini-list{max-height:48px}.price-control{margin-top:0}.right-work{gap:4px}}
 html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #clock+button{display:none}
 </style>
 </head>
