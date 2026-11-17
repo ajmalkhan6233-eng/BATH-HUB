@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Royal Bath Hub — POS Billing</title>
+<style>
+/* 01 — Global desktop frame and brand tokens */
+:root{--ink:#202124;--muted:#697078;--line:#d7dadd;--panel:#fff;--paper:#f2f3f3;--gold:#9b7a32;--gold2:#c2a45c;--soft:#f7f4eb;--dark:#262626;--good:#28634b;--warn:#8a6720;--bad:#a33a32}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{font:13px "Segoe UI",Tahoma,Arial,sans-serif;color:var(--ink);background:var(--paper)}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.shell{height:100vh;min-height:620px;display:flex;flex-direction:column;min-width:980px}
+.topbar{height:42px;flex:none;background:var(--dark);color:#f7f7f7;display:flex;align-items:center;padding:0 14px;gap:18px}
+.brand{font-weight:700;letter-spacing:.35px;color:#e4d2a4;white-space:nowrap}.brand small{font-weight:400;color:#c9c9c9;margin-left:8px}
+.appnav{height:36px;flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:3px;white-space:nowrap;overflow:hidden}
+.appnav button{border:0;background:transparent;padding:8px 10px;color:#34383b}.appnav button.active{background:var(--soft);color:#604b1c;border-bottom:2px solid var(--gold);font-weight:600}
+.toolbar{height:43px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#fafafa;border-bottom:1px solid var(--line)}
+.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:9px}.screen-title{font-size:16px;font-weight:700}.pill{border:1px solid var(--line);background:white;border-radius:3px;padding:5px 9px}.clock{font-variant-numeric:tabular-nums;color:#555;font-weight:600}
+main{flex:1;min-height:0;padding:9px 12px 10px;display:flex;flex-direction:column;gap:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:3px;min-width:0}
+button.primary{background:#292929;color:#fff;border:1px solid #292929;border-radius:3px;padding:9px 15px;font-weight:700}
+button.primary:hover{background:#444}button.gold{background:var(--gold);color:#fff;border:1px solid var(--gold);border-radius:3px;padding:8px 12px;font-weight:600}
+button.secondary{background:#fff;border:1px solid #c8cdd0;border-radius:3px;padding:7px 10px}
+button.small{padding:5px 8px;font-size:12px}.muted{color:var(--muted)}.goldtext{color:#7d6125}.hidden{display:none!important}
+input,select{border:1px solid #cbd0d3;background:#fff;border-radius:3px;padding:7px 8px;min-width:0;height:31px}
+label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field input{width:100%}
+/* 02 — Compact customer and document header */
+.customer-row{height:47px;flex:none;display:grid;grid-template-columns:minmax(170px,1.1fr) 145px minmax(175px,1fr) auto auto;align-items:center;gap:8px;padding:6px 9px}
+.customer-row .field{gap:2px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+.doc-tabs{display:flex;align-items:center;gap:6px}.tab{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:3px}.tab.active{background:var(--soft);border-color:#c8b47f;color:#614b1b;font-weight:700}
+.docline{display:flex;align-items:center;justify-content:space-between;min-height:30px;flex:none}
+.held-strip{height:25px;flex:none;padding:4px 9px;background:#f8f8f8;border:1px solid var(--line);color:#62696e;font-size:12px}
+/* 03 — Main two-column billing workspace */
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:9px}
+.left-work{min-height:0;display:flex;flex-direction:column;gap:6px}
+.item-head{display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;padding:6px 8px 4px;color:#70777c;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.35px}
+.item-rows{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--line);background:#fff;border-radius:3px}
+.item-row{min-height:36px;display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;align-items:center;padding:2px 8px;border-bottom:1px solid #eceeef}
+.item-row:last-child{border-bottom:0}.item-ident{min-width:0;display:flex;align-items:center;gap:7px}.item-ident .code-input{width:58px;flex:none;padding:5px 4px;text-align:center}.item-name{min-width:0;flex:1}.item-name strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.item-name small{display:block;color:#7a8085;font-size:10px;margin-top:2px}
+.code-input{width:100%;font-weight:700}.qtybox{display:flex;align-items:center;gap:3px}.qtybox button{width:23px;height:27px;border:1px solid var(--line);background:#f8f8f8;border-radius:2px;padding:0}.qtybox input{width:37px;text-align:center;padding:4px 2px;height:27px}
+.price-input,.disc-input{text-align:right;width:100%;font-variant-numeric:tabular-nums}.line-total{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.remove{width:31px;height:31px;border:1px solid #d8c9c7;background:#fff;color:#6e3a34;border-radius:3px;font-size:19px;line-height:1}
+.item-foot{height:38px;flex:none;display:flex;align-items:center;gap:7px;padding:4px 0}
+.item-foot .wide{flex:1}.status-note{font-size:11px;color:var(--muted);margin-left:auto}
+.right-work{min-height:0;display:flex;flex-direction:column;gap:7px}
+.bill-summary{padding:8px;display:flex;flex-direction:column;min-height:0;flex:1}
+.panel-title{font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.mini-list{overflow:auto;min-height:70px;max-height:145px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.mini-line{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:11px}.mini-line span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0 5px;font-weight:700}.total-row strong{font-size:19px;font-variant-numeric:tabular-nums}
+.price-control{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:3px}.price-control .field input{text-align:right}
+.profit-secret{font-size:12px;text-align:right;color:#666;padding:2px 0;font-variant-numeric:tabular-nums}
+.payment-card{padding:8px;display:flex;flex-direction:column;gap:6px}.payment-card select{width:100%}
+.payment-extra{display:grid;grid-template-columns:1fr 1fr;gap:6px}.payment-extra .field input{width:100%}
+.message{min-height:15px;font-size:11px;color:var(--bad);line-height:1.25}.message.ok{color:var(--good)}
+.gen-row{display:flex;gap:6px}.gen-row button{flex:1;min-height:39px;font-size:14px}
+.today-box{padding:7px 9px;max-height:91px;overflow:auto}.today-box summary{font-weight:700;cursor:pointer}.today-list{font-size:11px;margin-top:5px;display:grid;gap:3px}
+.bottom-status{height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;color:#70777c;font-size:10px;padding:0 3px}
+/* 04 — Item picker, tools and held-bill overlays */
+.popover{position:absolute;z-index:20;background:#fff;border:1px solid #bfc4c7;box-shadow:0 5px 18px #0002;border-radius:3px;padding:8px}
+.picker{left:10px;right:320px;top:130px;max-height:330px;display:flex;flex-direction:column}
+.picker-top{display:flex;gap:7px;margin-bottom:6px}.picker-top input{flex:1;height:35px}
+.picker-head,.pick-row{display:grid;grid-template-columns:75px minmax(150px,1fr) 65px 115px;gap:8px;align-items:center}
+.picker-head{font-size:10px;text-transform:uppercase;color:#737a7f;padding:5px 7px;border-bottom:1px solid var(--line)}
+.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
+.tool-menu{right:14px;top:75px;width:190px;display:grid;gap:3px}.tool-menu button{text-align:left;border:0;background:#fff;padding:8px}.tool-menu button:hover{background:var(--soft)}
+.modal-back{position:fixed;inset:0;background:#0005;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border:1px solid #aeb4b8;box-shadow:0 12px 35px #0003;width:min(600px,95vw);max-height:85vh;overflow:auto;padding:16px;border-radius:4px}
+.modal h2{font-size:17px;margin:0 0 12px}.modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:14px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* 05 — Receipt view */
+.receipt-wrap{position:fixed;inset:0;background:#eef0f0;z-index:40;display:flex;align-items:center;justify-content:center;padding:18px}
+.receipt-card{width:min(650px,96vw);max-height:95vh;overflow:auto;background:#fff;border:1px solid #cbd0d3;padding:22px}
+.receipt-head{text-align:center;border-bottom:1px dashed #999;padding-bottom:12px}.receipt-head h2{margin:0 0 4px;font-size:20px}.receipt-items{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}.receipt-items td,.receipt-items th{padding:6px 3px;border-bottom:1px solid #eee;text-align:left}.receipt-items td:last-child,.receipt-items th:last-child{text-align:right}.receipt-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.receipt-actions button{background:#fff;border:1px solid var(--line);padding:7px 10px;border-radius:3px}
+/* 06 — Responsive desktop scaling and print rules */
+@media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 340px}.item-row{min-height:40px}.item-head,.item-row{grid-template-columns:minmax(250px,1fr) 100px 130px 115px 130px 42px}.picker{right:360px}}
+@media(max-height:700px){main{padding-top:5px;gap:5px}.customer-row{height:42px}.item-row{min-height:34px}.mini-list{max-height:105px}.bill-summary{padding:6px}.payment-card{padding:6px}}
+@media print{body *{visibility:hidden}.receipt-wrap,.receipt-wrap *{visibility:visible}.receipt-wrap{position:absolute;background:white;padding:0}.receipt-card{border:0;box-shadow:none;width:100%;max-height:none}.receipt-actions{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
+  <header class="topbar"><div class="brand">RBH <small>ROYAL BATH HUB · OWNER</small></div><div style="margin-left:auto;font-size:11px;color:#ccc">173/1 Kandy Road, Thihariya</div></header>
+  <nav class="appnav" aria-label="Application navigation">
+    <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
+  </nav>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: RBH-S011</span></div><div class="toolbar-right"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop" onclick="holdBill()">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <main id="formPanel">
+    <!-- 02 — Document type and compact customer details -->
+    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last RBH-S011</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
+    <section class="card customer-row" id="custRow">
+      <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="off"></div>
+      <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="date"></div>
+      <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="off"></div>
+      <label class="check"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
+      <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
+    </section>
+    <!-- 03 — Held bill status -->
+    <div class="held-strip" id="heldPanel">Held bills: <strong id="heldCount">0</strong> · No held bills</div>
+    <!-- 04 — Item entry and live bill summary -->
+    <section class="workspace">
+      <div class="left-work">
+        <div class="item-head"><span>Item / code</span><span>Qty</span><span>Selling price (Rs)</span><span>Discount</span><span style="text-align:right">Line total (Rs)</span><span></span></div>
+        <div class="item-rows" id="itemRows" aria-label="Bill items"></div>
+        <div class="item-foot">
+          <button class="gold wide" id="addItemBtn">＋ Add item</button>
+          <button class="secondary" id="holdBtn">Hold bill</button>
+          <button class="secondary" id="heldBtn">Held (0)</button>
+          <button class="secondary" id="scanBtn">Scan</button>
+          <button class="secondary" id="toolsBtnBottom">Bill tools ▾</button>
+          <span class="status-note" id="stockWarning"></span>
+        </div>
+      </div>
+      <aside class="right-work">
+        <section class="card bill-summary" id="liveBill">
+          <div class="panel-title"><span>Bill so far</span><span id="itemCount">0 items</span></div>
+          <div class="mini-list" id="miniList"></div>
+          <div class="total-row"><span>Net total</span><strong id="netTotal">Rs 0.00</strong></div>
+          <div class="price-control" id="priceRow">
+            <div class="field"><label for="sellPrice">Agreed selling price (Rs)</label><input id="sellPrice" inputmode="decimal" placeholder="Auto total"></div>
+            <div class="field"><label for="discountPct">Discount (%)</label><input id="discountPct" inputmode="decimal" value="0"></div>
+            <div class="field"><label for="discountAmt">Discount (Rs)</label><input id="discountAmt" inputmode="decimal" value="0"></div>
+            <div class="field"><label>&nbsp;</label><div class="profit-secret" id="profitValue">0.00</div></div>
+          </div>
+          <div class="message" id="capHint" style="color:#62696e"></div>
+          <div class="message" id="saveHint"></div>
+        </section>
+        <section class="card payment-card">
+          <div class="field"><label for="paymentMethod">Payment method</label><select id="paymentMethod"><option>Cash</option><option>Card</option><option>Online transfer</option><option>Cheque</option><option>Credit</option><option>Split</option></select></div>
+          <div id="chequeBox" class="payment-extra hidden"><div class="field"><label>Cheque reference</label><input id="chequeRef" placeholder="Cheque number"></div><div class="field"><label>Cheque date</label><input id="chequeDate" type="date"></div></div>
+          <div id="creditNote" class="message hidden">Credit requires customer name and phone.</div>
+          <div id="splitBox" class="hidden"><div class="payment-extra" id="splitRows"><div class="field"><label>Cash (Rs)</label><input id="splitCash" value="0"></div><div class="field"><label>Card / transfer (Rs)</label><input id="splitOther" value="0"></div></div><div class="message" id="splitHint">Split amounts must equal the bill total.</div></div>
+          <div class="message" id="errMsg" role="alert"></div>
+          <div class="gen-row"><button class="primary" id="genBtn">Generate Bill</button><button class="secondary hidden" id="cancelEditBtn">Cancel edit</button></div>
+        </section>
+        <details class="card today-box" id="todayBox" open><summary>Today's bills <span class="muted" id="todayCount">(0)</span></summary><div class="today-list" id="todayList">No bills yet.</div></details>
+      </aside>
+    </section>
+    <div class="bottom-status"><span></span><span>Enter / Tab moves through fields · Down arrow opens item picker</span></div>
+  </main>
+</div>
+
+<!-- 05 — Item picker overlay -->
+<div class="popover picker hidden" id="picker">
+  <div class="picker-top"><input id="scanBox" placeholder="Type item code or name / scan barcode…" autocomplete="off"><button class="secondary" id="camScanBtn">Camera scan</button><button class="secondary" id="pickerClose">Close</button></div>
+  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
+  <div class="picker-results" id="pickerResults"></div>
+  <div class="muted" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
+</div>
+
+<!-- 06 — Bill tools menu -->
+<div class="popover tool-menu hidden" id="toolMenu">
+  <button id="lastBtn">Last bill</button><button id="findBtn">Find bill</button><button id="quoteBtn">Load quotation</button><button id="quoteSaveBtn">Save quotation</button><button id="wholesaleBtn">Wholesale bill: OFF</button><button id="clearAllBtn">Clear bill</button>
+</div>
+
+<!-- 07 — Utility modal panels -->
+<div class="modal-back hidden" id="modalBack"><div class="modal" role="dialog" aria-modal="true"><h2 id="modalTitle">POS tool</h2><div id="modalBody"></div><div class="modal-actions"><button class="secondary" id="modalCancel">Close</button><button class="primary hidden" id="modalConfirm">Confirm</button></div></div></div>
+
+<!-- 08 — Generated receipt -->
+<div class="receipt-wrap hidden" id="receipt">
+  <div class="receipt-card">
+    <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
+    <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
+    <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>
+    <div id="rTotals" style="text-align:right;font-size:13px;line-height:1.8"></div>
+    <div style="text-align:center;border-top:1px dashed #999;margin-top:12px;padding-top:10px;font-size:11px">Thank you for your business. Honest trade, lasting value.</div>
+    <div class="receipt-actions"><button onclick="window.print()">Print receipt</button><button id="waBtn">Send WhatsApp</button><button id="waReceiptBtn">Send receipt image</button><button id="downloadBtn">Download receipt</button><button id="emailBtn">Email</button><button id="vcfBtn">Customer contact</button><button id="editReceiptBtn">Edit</button><button id="voidBtn">Void this bill</button><button id="newBillBtn" class="primary">New bill</button><button id="backPosBtn">Back to POS</button></div>
+    <div id="waReceiptMsg" class="message"></div><div id="billAttach" class="muted" style="font-size:10px"></div>
+  </div>
+</div>
+
+<script>
+/* 09 — Demo catalogue and local POS state; replace with API-backed modules in integration */
+const catalogue=[
+ {code:"001",name:"SS ANGLE VALVE MONO",stock:34,price:2650,cost:1720,unit:"PCS"},
+ {code:"021",name:"SS ANGLE VALVE MONO",stock:21,price:2650,cost:1700,unit:"PCS"},
+ {code:"069",name:"GULLY COVER POP UP HEAVY",stock:8,price:4250,cost:2950,unit:"PCS"},
+ {code:"073",name:"BIDAY SPRAY LEO 002 SQUARE",stock:16,price:6250,cost:4100,unit:"PCS"},
+ {code:"119",name:"FH 1240S BASIN TAP SQ SILVER",stock:11,price:6250,cost:4300,unit:"PCS"},
+ {code:"164",name:"SHOWER SET (P)",stock:5,price:33950,cost:26000,unit:"SET"},
+ {code:"205",name:"WALL TILE GLOSS WHITE 300×600",stock:240,price:3850,cost:2950,unit:"BOX",sqm:1.44},
+ {code:"212",name:"FLOOR TILE GREY MATT 600×600",stock:82,price:5650,cost:4300,unit:"BOX",sqm:1.44},
+ {code:"310",name:"BASIN CERAMIC WHITE",stock:7,price:18500,cost:13200,unit:"PCS"},
+ {code:"415",name:"MIRROR LED 600 MM",stock:4,price:24500,cost:17800,unit:"PCS"},
+ {code:"502",name:"WALL HUNG COMMODE",stock:3,price:48500,cost:36000,unit:"PCS"},
+ {code:"610",name:"VANITY CABINET 600 MM",stock:2,price:67500,cost:51000,unit:"SET"}
+].sort((a,b)=>a.code.localeCompare(b.code));
+let rows=[],held=[],bills=[],currentReceipt=null,quotationMode=false,wholesale=false,discountLimit=10;
+const $=id=>document.getElementById(id), money=n=>"Rs "+Number(n||0).toLocaleString("en-LK",{minimumFractionDigits:2,maximumFractionDigits:2});
+const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+$("saleDate").value=todayISO();
+function dateDMY(v){if(!v)return "";const [y,m,d]=v.split("-");return `${d}/${m}/${y}`}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function lineDiscount(r){const raw=String(r.disc??"0").trim();if(raw.endsWith("%"))return r.qty*r.price*Math.max(0,parseFloat(raw)||0)/100;return Math.max(0,parseFloat(raw)||0)*r.qty}
+function lineTotal(r){return Math.max(0,r.qty*r.price-lineDiscount(r))}
+function totals(){const gross=rows.reduce((s,r)=>s+r.qty*r.price,0),disc=rows.reduce((s,r)=>s+lineDiscount(r),0),net=rows.reduce((s,r)=>s+lineTotal(r),0),cost=rows.reduce((s,r)=>s+r.qty*r.cost,0);return{gross,disc,net,profit:net-cost}}
+function render(){
+ $("itemRows").innerHTML=rows.map((r,i)=>`<div class="item-row" data-index="${i}">
+ <div class="item-ident"><input class="code-input" data-field="code" value="${esc(r.code)}" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong>${esc(r.name)}</strong><small>${esc(r.unit)}${r.sqm?` · ${r.sqm} sqm/box`:""}</small></div></div>
+ <div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="${r.qty}" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>
+ <input class="price-input" data-field="price" value="${r.price.toFixed(2)}" inputmode="decimal" aria-label="Selling price">
+ <input class="disc-input" data-field="disc" value="${esc(r.disc)}" aria-label="Discount rupees or percent">
+ <div class="line-total">${money(lineTotal(r)).replace("Rs ","")}</div><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>`).join("");
+ const t=totals();$("itemCount").textContent=rows.length+" items";$("netTotal").textContent=money(t.net);$("profitValue").textContent=t.profit.toLocaleString("en-LK",{minimumFractionDigits:2,maximumFractionDigits:2});
+ $("miniList").innerHTML=rows.map(r=>`<div class="mini-line"><span>${esc(r.code)} · ${esc(r.name)} × ${r.qty}</span><strong>${money(lineTotal(r))}</strong></div>`).join("")||'<div class="muted" style="padding:12px 0">No items added</div>';
+ $("sellPrice").value=t.net.toFixed(2);$("discountAmt").value=t.disc.toFixed(2);$("discountPct").value=t.gross?(t.disc/t.gross*100).toFixed(2):"0";
+ $("heldCount").textContent=held.length;$("heldBtn").textContent=`Held (${held.length})`;$("todayCount").textContent=`(${bills.length})`;
+ $("todayList").innerHTML=bills.slice(-5).reverse().map(b=>`<div>${esc(b.id)} · ${esc(b.customer||"Walk-in")} · ${money(b.total)}</div>`).join("")||"No bills yet.";
+ const low=rows.filter(r=>r.qty>r.stock);$("stockWarning").textContent=low.length?`Stock warning: ${low.map(r=>r.code).join(", ")} · approval needed`:"";
+ $("stockWarning").style.color=low.length?"var(--warn)":"";
+}
+function addItem(item){const existing=rows.find(r=>r.code===item.code);if(existing)existing.qty+=1;else rows.push({...item,qty:1,disc:"0"});render();$("picker").classList.add("hidden");}
+function openPicker(){renderPicker();$("picker").classList.remove("hidden");$("scanBox").value="";$("scanBox").focus()}
+function renderPicker(){const q=$("scanBox").value.toLowerCase();const found=catalogue.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().includes(q));$("pickerResults").innerHTML=found.map(x=>`<div class="pick-row" data-code="${x.code}"><span class="pick-code">${x.code}</span><span class="pick-name"><strong>${esc(x.name)}</strong><small>${x.unit}${x.sqm?` · ${x.sqm} sqm/box`:""} · catalogue item</small></span><span class="pick-stock">${x.stock}</span><span class="pick-price">${money(x.price)}</span></div>`).join("")||'<div class="muted" style="padding:12px">No matching items</div>'}
+function phoneValid(v){const s=v.trim();if(!s)return true;const digits=s.replace(/\D/g,"");if(s.startsWith("+")||s.startsWith("00"))return digits.length>=8&&digits.length<=15;if(/^0\d/.test(s)){const d=digits;return (d.length===10&&/^0(?:7\d|1\d)/.test(d))||(d.length===9&&/^0\d/.test(d));}return false}
+function showError(msg){$("errMsg").textContent=msg}
+function paymentUI(){const p=$("paymentMethod").value;$("chequeBox").classList.toggle("hidden",p!=="Cheque");$("creditNote").classList.toggle("hidden",p!=="Credit");$("splitBox").classList.toggle("hidden",p!=="Split")}
+function modal(title,body,confirmText,fn){$("modalTitle").textContent=title;$("modalBody").innerHTML=body;$("modalBack").classList.remove("hidden");$("modalConfirm").classList.toggle("hidden",!confirmText);$("modalConfirm").textContent=confirmText||"Confirm";$("modalConfirm").onclick=()=>{if(fn)fn();$("modalBack").classList.add("hidden")}}
+function holdBill(){if(!rows.length){showError("Add at least one item before holding.");return}held.push({rows:JSON.parse(JSON.stringify(rows)),name:$("customerName").value,phone:$("customerPhone").value,date:$("saleDate").value});rows=[];$("customerName").value="";render();showError("");$("heldPanel").innerHTML=`Held bills: <strong>${held.length}</strong> · Last held bill saved.`}
+function showHeld(){if(!held.length){modal("Held bills","<p>No held bills.</p>");return}const html=held.map((h,i)=>`<p><b>Held ${i+1}</b> · ${esc(h.name||"Walk-in")} · ${h.rows.length} lines <button class="secondary small" data-load-held="${i}">Resume</button></p>`).join("");modal("Held bills",html);$("modalBody").querySelectorAll("[data-load-held]").forEach(b=>b.onclick=()=>{const h=held.splice(+b.dataset.loadHeld,1)[0];rows=h.rows;$("customerName").value=h.name;$("customerPhone").value=h.phone;$("saleDate").value=h.date;$("modalBack").classList.add("hidden");render()})}
+function generateBill(){
+ showError("");if(!rows.length){showError("Add at least one item.");return}
+ if(!phoneValid($("customerPhone").value)){showError("Enter a valid Sri Lankan or international phone number.");return}
+ const p=$("paymentMethod").value;if(p==="Credit"&&(!$("customerName").value.trim()||!$("customerPhone").value.trim())){showError("Credit sales require customer name and phone.");return}
+ if(p==="Cheque"&&!$("chequeRef").value.trim()){showError("Enter the cheque number/reference.");return}
+ const t=totals(),overallDisc=Number($("discountPct").value)||0;
+ if(overallDisc>discountLimit){modal("Discount approval required",`<p>Discount is ${overallDisc.toFixed(2)}%, above the owner limit of ${discountLimit}%.</p><p>Demo approval records a reason in this session only.</p><label>Reason</label><input id="approvalReason" style="width:100%" placeholder="Reason for extra discount">`,"Approve & continue",()=>{const reason=$("approvalReason").value.trim();if(!reason){showError("Approval reason is required.");return}finishBill(reason)});return}
+ if(p==="Split"&&Math.abs((Number($("splitCash").value)||0)+(Number($("splitOther").value)||0)-t.net)>.01){showError("Split payment amounts must equal the bill total.");return}
+ finishBill("");
+}
+function finishBill(reason){
+ const t=totals(),id="RBH-"+String(12+bills.length).padStart(3,"0");const b={id,customer:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),date:$("saleDate").value,items:JSON.parse(JSON.stringify(rows)),total:t.net,payment:$("paymentMethod").value,reason};
+ bills.push(b);currentReceipt=b;renderReceipt(b);$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden");
+}
+function renderReceipt(b){$("receiptMeta").innerHTML=`<span>${esc(b.id)} · ${dateDMY(b.date)}</span><span>${esc(b.customer||"Walk-in customer")}</span>`;$("rItems").innerHTML=b.items.map(r=>`<tr><td>${esc(r.name)}<br><small>${esc(r.code)}</small></td><td>${r.qty}</td><td>${money(r.price)}</td><td>${money(lineTotal(r))}</td></tr>`).join("");const t=b.items.reduce((s,r)=>s+lineTotal(r),0);$("rTotals").innerHTML=`Total: <b>${money(t)}</b><br>Payment: ${esc(b.payment)}<br>${b.reason?`Approval reason: ${esc(b.reason)}`:""}`;$("billAttach").textContent="Receipt size: thermal / A4 selection not built yet."}
+function backToPOS(){$("receipt").classList.add("hidden");$("formPanel").classList.remove("hidden")}
+function resetBill(){rows=[];$("customerName").value="";$("customerPhone").value="";$("waCheck").checked=true;$("paymentMethod").value="Cash";$("chequeRef").value="";$("splitCash").value="0";$("splitOther").value="0";paymentUI();render();backToPOS();showError("")}
+function toolsToggle(){$("toolMenu").classList.toggle("hidden")}
+function findBill(){modal("Find bill",'<label>Invoice number or customer</label><input id="findBox" style="width:100%" placeholder="RBH-012 or customer name"><div id="findResults" style="margin-top:10px"></div>');const inp=$("findBox"),out=$("findResults");inp.oninput=()=>{const q=inp.value.toLowerCase();out.innerHTML=bills.filter(b=>b.id.toLowerCase().includes(q)||b.customer.toLowerCase().includes(q)).map(b=>`<p>${b.id} · ${esc(b.customer||"Walk-in")} · ${money(b.total)} <button class="secondary small" data-open="${b.id}">Open</button></p>`).join("")||"No matches"};out.onclick=e=>{const id=e.target.dataset.open;if(id){const b=bills.find(x=>x.id===id);currentReceipt=b;renderReceipt(b);$("modalBack").classList.add("hidden");$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden")}}}
+function downloadReceipt(){if(!currentReceipt)return;const b=currentReceipt;const text=`ROYAL BATH HUB\\n173/1 Kandy Road, Thihariya\\n074 035 5536\\n${b.id} ${dateDMY(b.date)}\\n${b.items.map(r=>`${r.code} ${r.name} x${r.qty} ${money(lineTotal(r))}`).join("\\n")}\\nTOTAL ${money(b.total)}\\nPayment ${b.payment}`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/plain"}));a.download=b.id+".txt";a.click();URL.revokeObjectURL(a.href)}
+/* 10 — Event wiring for item rows and keyboard-first entry */
+$("itemRows").addEventListener("click",e=>{const row=e.target.closest(".item-row");if(!row)return;const i=+row.dataset.index;if(e.target.dataset.act==="remove")rows.splice(i,1);if(e.target.dataset.act==="plus")rows[i].qty+=1;if(e.target.dataset.act==="minus")rows[i].qty=Math.max(.01,rows[i].qty-1);render()});
+$("itemRows").addEventListener("change",e=>{const row=e.target.closest(".item-row");if(!row)return;const r=rows[+row.dataset.index],f=e.target.dataset.field;if(f==="code"){const match=catalogue.find(x=>x.code.toLowerCase()===e.target.value.trim().toLowerCase());if(match)Object.assign(r,match);else{showError("Item code not found. Use Down arrow to browse.");}}if(f==="qty")r.qty=Math.max(.01,Number(e.target.value)||1);if(f==="price")r.price=Math.max(0,Number(e.target.value)||0);if(f==="disc")r.disc=e.target.value||"0";render()});
+$("itemRows").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const row=e.target.closest(".item-row");const i=+row.dataset.index;const inputs=[...row.querySelectorAll("input")],n=inputs.indexOf(e.target);if(n===0)inputs[1].focus();else if(n===1)inputs[2].focus();else if(n===2)inputs[3].focus();else if(n===3){if(rows[i+1])$("itemRows").querySelectorAll(".item-row")[i+1].querySelector("input").focus();else openPicker()}}});
+$("addItemBtn").onclick=openPicker;$("scanBtn").onclick=openPicker;$("pickerClose").onclick=()=>$("picker").classList.add("hidden");$("scanBox").oninput=renderPicker;$("pickerResults").onclick=e=>{const row=e.target.closest("[data-code]");if(row)addItem(catalogue.find(x=>x.code===row.dataset.code))};
+$("itemRows").addEventListener("keydown",e=>{if(e.key==="ArrowDown"&&e.target.dataset.field==="code"){e.preventDefault();openPicker()}});
+$("holdBtn").onclick=holdBill;$("holdBtnTop").onclick=holdBill;$("heldBtn").onclick=showHeld;$("toolsBtn").onclick=toolsToggle;$("toolsBtnBottom").onclick=toolsToggle;
+$("toolMenu").addEventListener("click",e=>{const id=e.target.id;$("toolMenu").classList.add("hidden");if(id==="findBtn")findBill();if(id==="lastBtn"){const b=bills[bills.length-1];if(b){currentReceipt=b;renderReceipt(b);$("receipt").classList.remove("hidden");$("formPanel").classList.add("hidden")}else modal("Last bill","No bill has been generated in this demo session.")}if(id==="quoteBtn")modal("Load quotation","Quotation storage and retrieval are not built yet.");if(id==="quoteSaveBtn")modal("Save quotation","Quotation save and quote-code sharing are not built yet.");if(id==="wholesaleBtn"){wholesale=!wholesale;e.target.textContent="Wholesale bill: "+(wholesale?"ON":"OFF")}if(id==="clearAllBtn")modal("Clear bill","<p>Clear the current unposted demo bill?</p>","Clear",()=>{rows=[];render()})});
+$("paymentMethod").onchange=paymentUI;$("genBtn").onclick=generateBill;$("cancelEditBtn").onclick=resetBill;
+$("modalCancel").onclick=()=>$("modalBack").classList.add("hidden");$("modalBack").onclick=e=>{if(e.target===$("modalBack"))$("modalBack").classList.add("hidden")};
+$("backPosBtn").onclick=backToPOS;$("newBillBtn").onclick=resetBill;$("downloadBtn").onclick=downloadReceipt;$("editReceiptBtn").onclick=()=>{modal("Edit bill","Posted-bill editing is not wired. Use an authorised reversal/credit note in the live ERP.");};$("voidBtn").onclick=()=>modal("Void bill","<p>Void this demo bill? A real system must require a reason and post a full reversal.</p><label>Reason</label><input id='voidReason' style='width:100%' placeholder='Reason required'>","Void demo bill",()=>{const reason=$("voidReason").value.trim();if(!reason){alert("A reason is required.");return}bills=bills.filter(x=>x.id!==currentReceipt.id);render();resetBill()});
+$("waBtn").onclick=$("waReceiptBtn").onclick=$("emailBtn").onclick=$("vcfBtn").onclick=()=>{$("waReceiptMsg").textContent="Sending is not connected in this standalone demo."};
+$("customerSearchBtn").onclick=()=>modal("Customer search","Coming soon.");
+$("camScanBtn").onclick=()=>modal("Camera scan","Coming soon.");
+$("billTab").onclick=()=>{quotationMode=false;$("billTab").classList.add("active");$("quotationTab").classList.remove("active");$("modeLabel").textContent="New sale · LKR"};
+$("quotationTab").onclick=()=>{quotationMode=true;$("quotationTab").classList.add("active");$("billTab").classList.remove("active");$("modeLabel").textContent="Quotation mode";modal("Quotation mode","Quotation saving and conversion are not connected in this starter.")};
+$("discountPct").onchange=()=>{const pct=Math.max(0,Number($("discountPct").value)||0);$("discountAmt").value=(totals().gross*pct/100).toFixed(2);$("capHint").textContent=pct>discountLimit?`Over ${discountLimit}%: approval and reason required.`:"";};
+$("discountAmt").onchange=()=>{const amt=Math.max(0,Number($("discountAmt").value)||0),g=totals().gross;$("discountPct").value=g?(amt/g*100).toFixed(2):"0"};
+$("sellPrice").onchange=()=>{const target=Math.max(0,Number($("sellPrice").value)||0),g=totals().gross;if(g>0){const pct=Math.max(0,(g-target)/g*100);$("discountPct").value=pct.toFixed(2);$("discountAmt").value=(g-target).toFixed(2)}};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("picker").classList.add("hidden");$("toolMenu").classList.add("hidden");$("modalBack").classList.add("hidden")}if(e.key==="F2"){e.preventDefault();openPicker()}if(e.key==="F4"){e.preventDefault();$("customerName").focus()}});
+setInterval(()=>$("clock").textContent=new Date().toLocaleTimeString("en-GB",{timeZone:"Asia/Colombo"}),1000);
+render();paymentUI();
+</script>
+</body>
+</html>
