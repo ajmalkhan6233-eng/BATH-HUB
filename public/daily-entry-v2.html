@@ -2192,7 +2192,10 @@
     // full ledger" in one click, not four tabs out of five.
     let cheques = [];
     try{ cheques = JSON.parse(localStorage.getItem("bathco-cheques")||"[]"); }catch(e){}
-    const full = Object.assign(payload(), {savedAt:new Date().toISOString(), cheques});
+    // 17 Nov: the typed day sheet can be empty while the day's POS bills are not, so the backup also carries them (receipt no, time, customer, method, total, void).
+    let pos_bills = [];
+    try{ const r = await fetch("/api/pos-bills?date="+encodeURIComponent(currentDate), {credentials:"same-origin"}); if (r.ok) pos_bills = (await r.json()).map(b=>({receipt_no:b.bill_number, time:b.created_at?new Date(b.created_at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Colombo"}):"", customer:b.customer_name||"", method:b.payment_method||"", total:Number(b.total), voided:!!b.voided})); }catch(e){}
+    const full = Object.assign(payload(), {savedAt:new Date().toISOString(), cheques, pos_bills});
     const blob = new Blob([JSON.stringify(full,null,2)], {type:"application/json"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
