@@ -54,6 +54,6 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 - Reports: max 5 short lines, answer first, plain words, one status word last (GREEN, DONE, BLOCKED, NEEDS YOU, UNVERIFIED) plus the next step. Say "heads-up", never "problems". Anything Aj must copy goes in its own code block. Never say done unless a check ran.
 - 15-MINUTE PUSH RULE: work is committed and pushed to the shared `work` branch at least every 15 minutes, and AI_MEMORY/LIVE.md is updated. The Windows task `RBH_Autosave_LIVE` (scripts/autosave_live.js) does this for the state line automatically; code is still committed by hand with a clear message.
 
-- Vendor and bill amounts (Leo, Lucky, Cool Lanka, Maheshan) are kept in the PRIVATE bridge repo (DATA/SHOP_LATEST and PRIVATE_FROM_APP_REPO), never in this PUBLIC repo.
-- LUCKY TRADING (75 Prince Street, Colombo 11), both GRNs dated 16-11-2026: V1018 = Rs 118,260 (3 months credit, due 16-02-2027); V1017 = Rs 198,000 (2 months credit, due 16-01-2027). Item codes 332-352 are Aj's own. Pending sell prices stay blank (docs/PENDING_PRICES.txt).
+## FACTS TO KEEP (17 Nov 2026)
+- Vendor and bill amounts (Leo, Lucky, Cool Lanka, Maheshan) live in the PRIVATE bridge repo (DATA/SHOP_LATEST, PRIVATE_FROM_APP_REPO), never in this PUBLIC repo.
 - RULE: a vendor RETURN must carry its item lines (code, qty, rate), not just a total. A GRN whose Bill total and Paid differ must carry a REASON (No change given / Discount given / Goods returned / Short delivered / Other + note). Saving is never blocked; no reason = amber, reason saved = green.
