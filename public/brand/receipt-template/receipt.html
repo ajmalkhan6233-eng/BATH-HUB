@@ -79,7 +79,7 @@ const n = v => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2
 
 function renderReceipt(d) {
   // 17 Nov: background set rotates every 2 days (server sends d.set = 1..N; none = the usual look)
-  if (d && d.set) { var r = document.documentElement.style, n = d.set; r.setProperty('--bg-top', "url('../receipt-sets/set" + n + "_top.jpg')"); r.setProperty('--bg-mid', "url('../receipt-sets/set" + n + "_mid.jpg')"); r.setProperty('--bg-foot', "url('../receipt-sets/set" + n + "_foot.jpg')"); }
+  if (d && d.set) { var r = document.documentElement.style, sn = d.set; r.setProperty('--bg-top', "url('../receipt-sets/set" + sn + "_top.jpg')"); r.setProperty('--bg-mid', "url('../receipt-sets/set" + sn + "_mid.jpg')"); r.setProperty('--bg-foot', "url('../receipt-sets/set" + sn + "_foot.jpg')"); }
   d = d || {};
   const $ = id => document.getElementById(id);
 
