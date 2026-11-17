@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Sales — Royal Bath Hub</title>
 <!-- 100% OFFLINE: no CDN fonts/images — Georgia / Segoe UI system fallbacks, gradient-only themes -->
+<style>html,body{background:#f8f9fa}html[data-theme=dark],html[data-theme=dark] body{background:#0b0d10}</style>
+<link rel="stylesheet" href="/rbh-font.css"><script src="/bathhub-theme.js"></script>
 <script src="/js/hyperspace-theme.js"></script>
-<script src="/lib/xlsx.full.min.js"></script>
+<script>/* 17 Nov: the 880 KB Excel library no longer blocks the first paint; it loads right after the page is shown (Excel export/import only). */addEventListener("load",function(){setTimeout(function(){var x=document.createElement("script");x.src="/lib/xlsx.full.min.js";document.head.appendChild(x);},0);});</script>
 <style>
   :root{
     --granite-0:#0C1412; --granite-1:#132019; --granite-2:#1A2B22;
@@ -743,7 +745,7 @@
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 </style>
 <link rel="stylesheet" href="/bathhub-logo.css">
-<link rel="stylesheet" href="/ledger-plain.css"></head>
+<link rel="stylesheet" href="/ledger-pos.css"></head>
 <body>
 
 <div class="mark786" aria-hidden="true">٧٨٦</div>

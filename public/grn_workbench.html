@@ -606,7 +606,7 @@ function start(list){
  if(CLOUD){api('/vendors').then(function(x){vendors=Array.isArray(x.j)?x.j:[];render()}).catch(function(){});api('/summary').then(function(x){if(x.s===200){vorder=x.j.vendors.filter(function(v){return v.active}).map(function(v){return v.name});x.j.vendors.forEach(function(v){if(v.default_credit_days!=null)vinfo[v.name.toLowerCase()]=v.default_credit_days});render()}}).catch(function(){});
   drafts.forEach(function(d){checkDup(d,true)})}
 }
-if(CLOUD&&typeof window.GRN_BILLS==='undefined'){fetch('/api/grn-workbench/bills',{credentials:'same-origin'}).then(function(r){return r.json()}).then(start).catch(function(){start([])})}
+if(CLOUD&&typeof window.GRN_BILLS==='undefined'){/* 17 Nov: open at once with this device's drafts; the server's bill list is added when it arrives (12 s limit). Before, a slow or stuck /bills call left the page blank. */start([]);var ac=window.AbortController?new AbortController():null,tmo=setTimeout(function(){if(ac)ac.abort()},12000);fetch('/api/grn-workbench/bills',{credentials:'same-origin',signal:ac?ac.signal:undefined}).then(function(r){return r.json()}).then(function(list){clearTimeout(tmo);var added=0;(list||[]).forEach(function(b){if(drafts.some(function(x){return x&&x.id===b.id}))return;drafts.push(fromBill(b));added++});if(added)render()}).catch(function(){clearTimeout(tmo)})}
 else start(window.GRN_BILLS||[]);
 
 /* ---- item search + pop-up (double click) ---- */
