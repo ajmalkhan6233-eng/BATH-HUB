@@ -1,0 +1,6 @@
+17 Nov - concerns (Claude Code, worktree ai-bridge-handoff-nov17-ca4994)
+1. BLOCKED: this worktree has no .env, so scripts cannot reach the shop database (money_check: "client password must be a string"). No pg_dump/psql on PATH either, and no backups\ folder here. Backup-before-change cannot pass, so NO database step was run (POS task steps 2-4, Leo, Lucky Trading, cheques, Vendor 360).
+2. Postgres :5432 and apex-server :3100 are running on this PC. Run from the real checkout that has .env, or tell me to use it.
+3. Leo: scripts/add_leo_missing_grn.js already exists and ADDS 6 lines (hand shower 305 x3, Leo Black Square x10, 006 Biday x10, Biday Colour x10, Biday BK x10, Towel Bar x10). Aj's 17 Nov note says Biday Colour 10, Biday BK 10, Towel Bar 10, Black Square 1 were never entered and must be EXCLUDED from the GRN (503,425). That conflicts with the script. Do not run the script until confirmed.
+4. Arithmetic checked OK: Leo 551,340-46,580-1,335 = 503,425; paid 500,000+3,500 = 503,500 (Rs 75 in our favour). V1018 = 118,260. V1017 = 198,000.
+5. Leo cheques 704938-40 and Lucky Trading V1017/V1018 touch money tables: need backup + real DB first.
