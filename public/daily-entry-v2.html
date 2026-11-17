@@ -752,7 +752,7 @@
 
 <header>
   <div class="hrow">
-    <div class="brandline">Bath <em>Hub</em><span class="dot">·</span><span class="sub">Daily Sales Ledger</span></div>
+    <div class="brandline">Royal Bath <em>Hub</em><span class="dot">·</span><span class="sub">Daily Sales Ledger</span></div>
     <a class="hbtn" id="cmdBtn" href="/owner" style="display:none">← Royal Bath Hub</a>
     <div class="datewrap">
       <button id="prevDay" title="Previous day" aria-label="Previous day">‹</button>
@@ -2196,7 +2196,7 @@
     const blob = new Blob([JSON.stringify(full,null,2)], {type:"application/json"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "BATHCO_DAY_"+currentDate+".json";
+    a.download = "RBH_DAY_"+currentDate+".json";
     a.click(); URL.revokeObjectURL(a.href);
   });
 
