@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All bills | Royal Bath Hub</title>
+<link rel="stylesheet" href="/rbh-font.css"><script src="/bathhub-theme.js"></script>
+<style>
+:root{--bg:#f8f9fa;--card:#fff;--line:#dbe0e8;--ink:#0f172a;--muted:#596577;--gold:#8f670a;--red:#b3261e;--green:#1b7a46}
+html[data-theme=dark]{--bg:#0b0d10;--card:#14171d;--line:#282f3a;--ink:#f8fafc;--muted:#94a3b8;--gold:#d4af37}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,"Segoe UI",sans-serif;padding:12px}
+h1{font-size:20px;margin:0 0 8px}.tabs{display:flex;gap:6px;margin:8px 0}.tabs button,.bar button,.bar input,.bar select,td button{font:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px}
+.tabs button[aria-selected=true]{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:700}.bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.bar input[type=search]{flex:1;min-width:160px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:13px;color:var(--muted)}.n{text-align:right;white-space:nowrap}
+.void{color:var(--red);font-weight:700}.sm{color:var(--muted);font-size:14px}td button{min-height:40px;padding:4px 10px;margin:2px 4px 2px 0}.state{padding:18px;color:var(--muted)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;overflow:auto;padding:12px}.ov .box{max-width:900px;margin:0 auto;background:var(--card);border-radius:14px;padding:12px}.ov img{max-width:100%;display:block;margin:8px auto;border:1px solid var(--line)}
+@media(max-width:700px){th:nth-child(n+4),td:nth-child(n+4){display:none}}
+</style></head><body>
+<h1>All bills: view, download, edit, cancel</h1>
+<div class="tabs" role="tablist"><button id="t1" role="tab" aria-selected="true">Customer bills</button><button id="t2" role="tab" aria-selected="false">Vendor bills (GRN)</button></div>
+<div class="bar" id="bar"></div><div id="out"><div class="state">Loading...</div></div>
+<script src="/grn_invoice.js"></script>
+<script>
+(function(){'use strict';
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var rs=function(n){return Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})};
+var dmy=function(d){return d?String(d).slice(0,10).split('-').reverse().join('-'):'-'};
+var slToday=function(){return new Date(Date.now()+19800000).toISOString().slice(0,10)};
+var S={tab:1,date:slToday(),q:'',vendorBills:null};
+function get(u){return fetch(u,{credentials:'same-origin'}).then(function(r){if(r.status===401)throw new Error('Please log in to the owner app first.');if(!r.ok)throw new Error('Could not load ('+r.status+')');return r.json()})}
+function tab(n){S.tab=n;$('t1').setAttribute('aria-selected',n===1);$('t2').setAttribute('aria-selected',n===2);bar();load()}
+function bar(){var b=$('bar');
+ if(S.tab===1){b.innerHTML='<input type="date" id="d" value="'+esc(S.date)+'" aria-label="Date"><input type="search" id="q" placeholder="Search bill no, name or phone" value="'+esc(S.q)+'"><button id="all" type="button">All dates</button><button id="go" type="button">Show</button>';
+  $('d').onchange=function(){S.date=this.value;load()};$('q').onkeydown=function(e){if(e.key==='Enter'){S.q=this.value;load()}};$('go').onclick=function(){S.q=$('q').value;S.date=$('d').value;load()};$('all').onclick=function(){S.date='';$('d').value='';S.q=$('q').value;load()}}
+ else{b.innerHTML='<input type="search" id="q" placeholder="Search vendor or bill no" value="'+esc(S.q)+'"><button id="go" type="button">Show</button>';
+  $('q').oninput=function(){S.q=this.value;drawVendor()};$('go').onclick=function(){S.vendorBills=null;load()}}}
+function load(){$('out').innerHTML='<div class="state">Loading...</div>';
+ if(S.tab===1){get('/api/pos-bills?'+(S.date?'date='+encodeURIComponent(S.date)+'&':'')+'q='+encodeURIComponent(S.q)).then(drawCust).catch(err)}
+ else if(S.vendorBills){drawVendor()}else{get('/api/grn-workbench/summary').then(function(j){S.vendorBills=j.bill_list||[];drawVendor()}).catch(err)}}
+function err(e){$('out').innerHTML='<div class="state" style="color:var(--red)">'+esc(e.message)+'</div>'}
+function drawCust(rows){if(!rows.length){$('out').innerHTML='<div class="state">No bills for this date or search.</div>';return}
+ var tot=rows.filter(function(r){return !r.voided}).reduce(function(a,r){return a+Number(r.total||0)},0);
+ $('out').innerHTML='<div class="sm">'+rows.length+' bills, total of active bills Rs. '+rs(tot)+'</div><table><thead><tr><th>Bill</th><th>Time</th><th>Customer</th><th>Method</th><th class="n">Total</th><th>Actions</th></tr></thead><tbody>'+rows.map(function(r){
+  var t=r.created_at?new Date(r.created_at).toLocaleString('en-GB',{timeZone:'Asia/Colombo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+  return '<tr><td><b>'+esc(r.bill_number)+'</b>'+(r.voided?' <span class="void">VOID</span>':'')+'</td><td>'+esc(t)+'</td><td>'+esc(r.customer_name||'Walk-in')+'<div class="sm">'+esc(r.customer_phone||'')+'</div></td><td>'+esc(r.payment_method||'')+'</td><td class="n">'+rs(r.total)+'</td><td>'
+  +'<button type="button" data-v="'+r.id+'" data-n="'+esc(r.bill_number)+'">View</button><a href="/api/pos-bills/'+r.id+'/receipt.png?download=1"><button type="button">Download</button></a><a href="/api/pos-bills/'+r.id+'/pdf" target="_blank" rel="noopener"><button type="button">PDF</button></a>'
+  +(r.voided?'':'<button type="button" data-x="'+r.id+'" data-n="'+esc(r.bill_number)+'">Void</button>')+'</td></tr>'}).join('')+'</tbody></table><div class="sm" style="margin-top:6px">To change items or prices of a bill: open it in POS, Bill tools, Find bill, then Edit (owner).</div>';
+ Array.prototype.forEach.call($('out').querySelectorAll('[data-v]'),function(b){b.onclick=function(){view(b.getAttribute('data-v'),b.getAttribute('data-n'))}});
+ Array.prototype.forEach.call($('out').querySelectorAll('[data-x]'),function(b){b.onclick=function(){voidBill(b.getAttribute('data-x'),b.getAttribute('data-n'))}})}
+function view(id,no){var o=document.createElement('div');o.className='ov';o.innerHTML='<div class="box"><b>Bill '+esc(no)+'</b> <button type="button" id="cl" style="float:right;min-height:40px">Close</button><img alt="Receipt '+esc(no)+'" src="/api/pos-bills/'+id+'/receipt.png"></div>';document.body.appendChild(o);o.onclick=function(e){if(e.target===o||e.target.id==='cl')o.remove()}}
+function voidBill(id,no){var why=window.prompt('Why void bill '+no+'? (needed) Stock goes back, nothing is deleted.');if(why===null)return;why=why.trim();if(why.length<3){alert('A reason is needed.');return}
+ fetch('/api/pos-bills/'+id+'/void',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:why})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Could not void');load()})}).catch(function(e){alert(e.message)})}
+function drawVendor(){var q=S.q.toLowerCase(),rows=(S.vendorBills||[]).filter(function(r){return !q||String(r.vendor).toLowerCase().indexOf(q)>=0||String(r.bill_no).toLowerCase().indexOf(q)>=0});
+ if(!rows.length){$('out').innerHTML='<div class="state">No vendor bills found.</div>';return}
+ $('out').innerHTML='<div class="sm">'+rows.length+' bills (newest 300). Open a bill to view it like an invoice, edit it, download or cancel it.</div><table><thead><tr><th>Vendor</th><th>Bill no</th><th>Date</th><th class="n">Total</th><th class="n">Owed</th><th>Actions</th></tr></thead><tbody>'+rows.map(function(r,i){
+  return '<tr><td>'+esc(r.vendor)+'</td><td><b>'+esc(r.bill_no)+'</b></td><td>'+dmy(r.bill_date)+'</td><td class="n">'+rs(r.total)+'</td><td class="n">'+rs(r.owed)+'</td><td><button type="button" data-o="'+i+'">Open</button></td></tr>'}).join('')+'</tbody></table>';
+ Array.prototype.forEach.call($('out').querySelectorAll('[data-o]'),function(b){b.onclick=function(){var r=rows[+b.getAttribute('data-o')];window.openGrnInvoice(r.vendor,r.bill_no,function(){S.vendorBills=null;load()})}})}
+$('t1').onclick=function(){tab(1)};$('t2').onclick=function(){tab(2)};bar();load();
+})();
+</script></body></html>

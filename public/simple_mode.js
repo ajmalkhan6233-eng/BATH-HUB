@@ -6,7 +6,7 @@
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
-    ['2 Sales', ['pos', 'daily-sales', 'saleshub']],
+    ['2 Sales', ['pos', 'allbills', 'daily-sales', 'saleshub']],
     ['Vendors', ['vendors', 'vendorsum', 'vendor360', 'vendorledger', 'vendorcredit', 'vendorreturns', 'cheques', 'chequereg']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
@@ -87,6 +87,7 @@
       addFramePage({ key: 'prices', label: 'Item catalog', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg>', url: '/prices.html', sub: 'Cost, price and profit for every item', after: 'stock' });
       addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'prices' });
       addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
+      addFramePage({ key: 'allbills', label: 'All bills', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/all-bills.html', sub: 'View, download, edit or cancel any customer or vendor bill', after: 'pos' });
       addFramePage({ key: 'vendor360', label: 'Vendor 360', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-truck"/></svg>', url: '/vendor360.html', sub: 'One vendor: bills, payments, cheques, statement', after: 'vendorsum' });
       addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
       var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';

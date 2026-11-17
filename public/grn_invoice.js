@@ -10,7 +10,8 @@
     '.gi .tot{margin-left:auto;max-width:360px}.gi .tot div{display:flex;justify-content:space-between;gap:10px;padding:4px 0}.gi .tot .big{font-weight:700;font-size:18px;border-top:2px solid var(--line,#ccc)}' +
     '.gi .strip{margin-top:12px;border-radius:12px;padding:10px;border:2px solid}.gi .strip.green{border-color:#1b7a46;background:rgba(27,122,70,.12)}.gi .strip.amber{border-color:#c98a00;background:rgba(201,138,0,.15)}.gi .strip.none{border-color:var(--line,#ccc)}' +
     '.gi .strip .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-weight:600}.gi .picks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.gi .picks button[aria-pressed=true]{outline:3px solid #0B1B3A}' +
-    '.gi .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.gi .aud{font-size:13px;color:var(--muted,#5b6070);margin-top:10px}.gi .err{color:#b3261e;margin-top:6px}';
+    '.gi .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.gi .aud{font-size:13px;color:var(--muted,#5b6070);margin-top:10px}.gi .err{color:#b3261e;margin-top:6px}' +
+    '@media print{body>*:not(.gi-back){display:none!important}.gi-back{position:static!important;background:none!important;padding:0!important;overflow:visible!important}.gi{border:0!important;max-width:none!important}.gi .bar,.gi .picks,.gi .aud,.gi #gi-note,.gi #gi-rsave{display:none!important}}';
   function api(method, vendor, grn, tail, body) {
     return fetch('/api/grn-invoice/' + encodeURIComponent(vendor) + '/' + encodeURIComponent(grn) + (tail || ''), { method: method, credentials: 'same-origin', headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Could not load'); return j; }); });
@@ -48,9 +49,15 @@
         '<div><span>Date</span>' + (e ? '<input id="gi-date" type="date" value="' + esc(d.date) + '" style="text-align:left">' : dmy(d.date)) + '</div><div><span>Terms</span>' + esc(d.terms) + (d.due_date ? ' · due ' + dmy(d.due_date) : '') + '</div></div>' +
         '<table><thead><tr><th>Code</th><th>Item</th><th class="n">Qty</th><th class="n">Cost</th><th class="n">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
         '<div class="tot"><div><span>Subtotal</span><span>' + rs(d.subtotal) + '</span></div>' + disc + '<div class="big"><span>Total</span><span>' + rs(d.total) + '</span></div></div>' + strip +
-        '<div class="err" role="alert">' + esc(err || '') + '</div><div class="bar">' + (d.bill_id ? (e ? '<button type="button" id="gi-save">Save</button><button type="button" class="ghost" id="gi-cancel">Cancel</button>' : '<button type="button" id="gi-edit">Edit</button>') : '') + '<button type="button" class="ghost" id="gi-close">Close</button></div>' + aud;
+        '<div class="err" role="alert">' + esc(err || '') + '</div><div class="bar">' + (d.bill_id ? (e ? '<button type="button" id="gi-save">Save</button><button type="button" class="ghost" id="gi-cancel">Cancel</button>' : '<button type="button" id="gi-edit">Edit</button>') : '') + '' + (d.bill_id && !e ? '<button type="button" class="ghost" id="gi-dl">Download / Print</button><button type="button" class="ghost" id="gi-cx">Cancel bill</button>' : '') + '<button type="button" class="ghost" id="gi-close">Close</button></div>' + aud;
       var $ = function (id) { return box.querySelector('#' + id); };
       $('gi-close').onclick = close;
+      if ($('gi-dl')) $('gi-dl').onclick = function () { window.print(); };   // Save as PDF in the print box
+      if ($('gi-cx')) $('gi-cx').onclick = function () {
+        var why = window.prompt('Why cancel this bill? (needed)  Stock is taken back, the lines are kept in the archive.'); if (why === null) return; why = String(why).trim(); if (why.length < 3) { draw('A reason is needed to cancel a bill.'); return; }
+        if (!window.confirm('Cancel bill ' + d.bill_no + ' (' + d.vendor + ', ' + rs(d.bill_total) + ')?')) return;
+        api('POST', vendor, grn, '/cancel', { reason: why }).then(function () { close(); if (onChange) onChange(); }).catch(function (x) { draw(x.message); });
+      };
       if ($('gi-edit')) $('gi-edit').onclick = function () { editing = true; draw(); };
       if ($('gi-cancel')) $('gi-cancel').onclick = function () { editing = false; draw(); };
       if ($('gi-save')) $('gi-save').onclick = function () {

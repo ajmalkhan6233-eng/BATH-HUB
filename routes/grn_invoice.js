@@ -141,6 +141,41 @@ async function saveReason(client, vendor, grn, body, who) {
   await client.query('INSERT INTO grn_audit (bill_id,field,old_value,new_value,changed_by) VALUES ($1,$2,$3,$4,$5)', [bill.id, 'difference reason', '', reason + (note ? ': ' + note : ''), who || 'owner']);
 }
 
+// Cancel a GRN bill: reason required, owner only. Nothing is deleted for good: the bill is marked voided, the lines are COPIED to grn_records_archive, stock is taken back, an audit line is written.
+// Refused if the bill still has live cheques or payments (cancel those first), or if stock was already sold.
+async function cancelBill(client, vendor, grn, body, who) {
+  await ensureTables(client);
+  await client.query('SELECT pg_advisory_xact_lock($1)', [774414]);
+  const reason = String((body && body.reason) || '').trim();
+  if (reason.length < 3) throw bad('A reason is required to cancel a bill.');
+  const bill = await findBill(client, vendor, grn, true);
+  if (!bill) throw bad('Bill not found or already cancelled', 404);
+  const ch = await client.query("SELECT COUNT(*) n FROM vendor_bill_cheques WHERE bill_id=$1 AND status NOT IN ('CANCELLED')", [bill.id]);
+  const pay = await client.query("SELECT COUNT(*) n FROM vendor_payments WHERE bill_id=$1 AND COALESCE(note,'') <> 'Paid cash at receipt'", [bill.id]);
+  if (Number(ch.rows[0].n) > 0 || Number(pay.rows[0].n) > 0) throw bad('This bill still has cheques or payments. Cancel or move those first, then cancel the bill.', 409);
+  const lines = await findLines(client, vendor, grn, true);
+  for (const l of lines) {
+    const code = String(l.item_description || '').split(' - ')[0].trim();
+    if (!code) continue;
+    const p = (await client.query('SELECT id, stock_level FROM products WHERE item_code=$1 FOR UPDATE', [code])).rows[0];
+    if (!p) continue;
+    const S2 = Number(p.stock_level || 0) - Number(l.quantity);
+    if (S2 < 0) throw bad('Item ' + code + ' would go below zero stock (some was already sold). Nothing was changed.', 409);
+    await client.query('UPDATE products SET stock_level=$1 WHERE id=$2', [S2, p.id]);
+    try { await require('../utils/stock_ledger').recordSafe(client, { item_code: code, qty_change: -Number(l.quantity), reason: 'grn_cancel', ref_type: 'grn_record', ref_id: String(l.id) }); } catch (_) {}
+  }
+  if (lines.length) {
+    await client.query('CREATE TABLE IF NOT EXISTS grn_records_archive (LIKE grn_records INCLUDING DEFAULTS)');
+    await client.query('ALTER TABLE grn_records_archive ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ DEFAULT now()');
+    const cols = (await client.query("SELECT column_name FROM information_schema.columns WHERE table_name='grn_records' ORDER BY ordinal_position")).rows.map(r => '"' + r.column_name + '"').join(',');
+    await client.query('INSERT INTO grn_records_archive (' + cols + ') SELECT ' + cols + ' FROM grn_records WHERE id = ANY($1::int[])', [lines.map(l => l.id)]);
+    await client.query('DELETE FROM grn_records WHERE id = ANY($1::int[])', [lines.map(l => l.id)]);
+  }
+  await client.query("DELETE FROM vendor_payments WHERE bill_id=$1 AND note='Paid cash at receipt'", [bill.id]);
+  await client.query("UPDATE vendor_bills SET voided=TRUE, notes=COALESCE(notes,'') || '; CANCELLED ' || $2 || ': ' || $3 WHERE id=$1", [bill.id, new Date().toISOString().slice(0, 10), reason.slice(0, 200)]);
+  await client.query('INSERT INTO grn_audit (bill_id,field,old_value,new_value,changed_by) VALUES ($1,$2,$3,$4,$5)', [bill.id, 'bill cancelled', String(bill.total), reason.slice(0, 200), who || 'owner']);
+  return { ok: true, cancelled: bill.bill_no, lines_archived: lines.length };
+}
 function createGrnInvoiceRouter({ pool } = {}) {
   const router = express.Router();
   const user = (req) => (req.session && req.session.user) || {};
@@ -156,8 +191,9 @@ function createGrnInvoiceRouter({ pool } = {}) {
     catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not load the GRN' }); }
   });
   router.put('/:vendor/:grn', express.json(), run(async (c, req) => { await saveEdit(c, req.params.vendor, req.params.grn, req.body || {}, user(req).username || user(req).name); return loadInvoice(c, req.params.vendor, req.params.grn); }));
+  router.post('/:vendor/:grn/cancel', express.json(), run(async (c, req) => cancelBill(c, req.params.vendor, req.params.grn, req.body || {}, user(req).username || user(req).name)));
   router.put('/:vendor/:grn/reason', express.json(), run(async (c, req) => { await saveReason(c, req.params.vendor, req.params.grn, req.body || {}, user(req).username || user(req).name); return loadInvoice(c, req.params.vendor, req.params.grn); }));
   return router;
 }
 module.exports = createGrnInvoiceRouter;
-Object.assign(module.exports, { totals, loadInvoice, saveEdit, saveReason, ensureTables, REASONS });
+Object.assign(module.exports, { cancelBill, totals, loadInvoice, saveEdit, saveReason, ensureTables, REASONS });
