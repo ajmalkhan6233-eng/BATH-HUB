@@ -58,7 +58,7 @@
   function addItem(item) {
     var ex = rows.filter(function (r) { return r.code && r.code === item.code; })[0];
     if (ex) ex.qty += 1; else rows.push(Object.assign({}, item, { qty: 1, disc: '0' }));
-    render(); $('picker').classList.add('hidden'); scanMsg('');
+    render(); $('scanBox').value = ''; renderPicker(); $('scanBox').focus(); scanMsg('');
   }
   var seq = 0;
   function openPicker() { $('picker').classList.remove('hidden'); $('scanBox').value = ''; $('scanBox').focus(); renderPicker(); }
@@ -160,7 +160,7 @@
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
   }
-  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); }
+  function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); $('picker').classList.remove('hidden'); renderPicker(); }
   function sendWa(auto) {
     if (!currentBill) return; var phone = (currentBill.customer_phone || '').trim();
     if (!phone) { if (auto) return; phone = (prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):') || '').trim(); if (!phone) return; }
@@ -209,6 +209,7 @@
     try {
       var dl = document.querySelector('.docline'), tabs = dl && dl.querySelector('.doc-tabs');
       if (dl && tabs) { tabs.appendChild($('lastBillLabel')); dl.appendChild($('posTools')); }
+      var ih = document.querySelector('.item-head'); if (ih && $('picker') && ih.parentNode) { ih.parentNode.insertBefore($('picker'), ih); $('picker').classList.remove('hidden'); renderPicker(); }
       var foot = document.querySelector('.item-foot'), gr = document.querySelector('.gen-row'); if (foot && gr) foot.appendChild(gr);
     } catch (e) {}
     var row = $('custRow'), sum = $('custSum'), open = false;
@@ -218,7 +219,7 @@
       sum.innerHTML = '<b>' + esc(n || 'Walk-in customer') + '</b> <span>· ' + esc(ph || 'no phone') + ' · ' + esc(d) + ($('waCheck').checked && ph ? ' · WhatsApp receipt' : '') + '</span><em>Change ✎</em>';
     }
     function tick() {
-      var both = $('customerName').value.trim() && $('customerPhone').value.trim(), any = $('customerName').value.trim() || $('customerPhone').value.trim();
+      var nm = $('customerName').value.trim(), both = $('customerPhone').value.trim() || (nm && nm.toLowerCase() !== 'cash'), any = $('customerName').value.trim() || $('customerPhone').value.trim();
       var fold = both && !inside() && !open;
       if (!any) open = false;
       row.classList.toggle('folded', !!fold); sum.classList.toggle('hidden', !fold);
