@@ -1,0 +1,17 @@
+17 Nov - concerns (Claude Code, worktree ai-bridge-handoff-nov17-ca4994)
+1. BLOCKED: this worktree has no .env, so scripts cannot reach the shop database (money_check: "client password must be a string"). No pg_dump/psql on PATH either, and no backups\ folder here. Backup-before-change cannot pass, so NO database step was run (POS task steps 2-4, Leo, Lucky Trading, cheques, Vendor 360).
+2. Postgres :5432 and apex-server :3100 are running on this PC. Run from the real checkout that has .env, or tell me to use it.
+3. Leo: scripts/add_leo_missing_grn.js already exists and ADDS 6 lines (hand shower 305 x3, Leo Black Square x10, 006 Biday x10, Biday Colour x10, Biday BK x10, Towel Bar x10). Aj's 17 Nov note says Biday Colour 10, Biday BK 10, Towel Bar 10, Black Square 1 were never entered and must be EXCLUDED from the GRN (503,425). That conflicts with the script. Do not run the script until confirmed.
+4. Arithmetic checked OK: Leo 551,340-46,580-1,335 = 503,425; paid 500,000+3,500 = 503,500 (Rs 75 in our favour). V1018 = 118,260. V1017 = 198,000.
+5. Leo cheques 704938-40 and Lucky Trading V1017/V1018 touch money tables: need backup + real DB first.
+
+UPDATE 17 Nov 11:50 (used real checkout .env; backup 11:15 passed first)
+- POS task: step 2 nothing to move (no bills dated today); step 3 bills are already RBH-S001..S011 (done by another window); real checkout already on work with ledger-stock-search. apex-server restarted, /health ok.
+- LEO (scripts/leo_10887_fix.js, saved): GRN lines BK 10 + Towel Bar 10 removed from 10887; the 3 duplicate/never-entered lines in 10887-LATE (Colour, BK, Towel) removed; Black Square 9; Brasco 4; the 3 kept late lines merged into 10887. GRN = 503,425. Stock taken back: 325 -10, 326 -10, 327 -10, 071 -1, 077 -1. Bill total 494,300 -> 503,425. Cheques 704938/39/40 (HNB Nittambuwa) + cash 3,500 (receipt 3937). Credit note 1930 NOT entered.
+- WHY Vendor 360 showed 494,300: bill total was stale (the late lines never raised it), and no cheques/cash were recorded. Also Vendor 360 caps "to pay" at the bill and counts issued cheques only up to it, so Rs 75 could never show. FIX (uncommitted-to-live, in this branch): billStatus now returns issued; /list returns cheques_issued; screen KPI shows "In our favour after cheques Rs 75". Needs merge into work + pm2 restart to appear. Before: 494,300 | After (live data): outstanding 499,925, cheques 500,000 => 75 in our favour.
+- ASSUMPTION to check: "lines never entered" = goods not received, so their stock was reduced. If you meant the opposite, tell me and I reverse.
+- LUCKY TRADING (scripts/lucky_trading_grn.js, saved): supplier created (75 Prince Street, Colombo 11, 90 days). V1018 17 lines 118,260 due 16-02-2027; V1017 4 lines 198,000 due 16-01-2027; both dated 16-11-2026. Totals verified by the script.
+- CODE CLASH: codes 332-335 were already inactive, stock 0, never used items (ORVEL SQUARE SHELF, 3" POP WASTE NIKAL, 3" POP WASTE CERAMIC, 2FT FLEXIBLE HOSE PVC). Archived by renaming their codes to OLD-332..OLD-335 (not deleted); your codes used exactly.
+- Brand is not a product column, so it is written in the name: "Plastic Angle Valve (TOKAI)", "(FRINCE)", "(BRASSCO)".
+- Sell price pending items stored as blank (NULL), listed in docs/PENDING_PRICES.txt. Rows 339 and 340 flagged CONFIRM there and in the GRN notes.
+- Cheque register / GRN list / Vendor 360 read the database, so they already show Leo cheques and both Lucky GRNs. Not checked in the browser (login needed).
