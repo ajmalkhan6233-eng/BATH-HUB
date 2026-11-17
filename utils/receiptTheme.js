@@ -21,12 +21,11 @@ function sets() {
   return ok;
 }
 function windowOf(now) { return Math.floor(((now == null ? Date.now() : now) + 19800000) / 86400000 / 2); }
-function raw(w, list) { return { set: list.length ? list[hash(w * 7 + 1) % list.length] : null, color: hash(w * 13 + 5) % PALETTE.length }; }
+const FRAMES = 5;   // 0 bathtub, 1 tap + basin plate, 2 shower panel, 3 wash basin, 4 round mirror
+// walk(): every step moves at least one place, so two bills in a row can NEVER share a set or colour
+function walk(w, L, salt) { if (L < 2) return 0; let x = 0; for (let i = 1; i <= w; i++) x = (x + 1 + hash(i * salt) % (L - 1)) % L; return x; }
 function lookOf(w, list) {
-  const a = raw(w, list), b = raw(w - 1, list);
-  if (list.length > 1 && a.set === b.set) a.set = list[(list.indexOf(a.set) + 1) % list.length];
-  if (a.color === b.color) a.color = (a.color + 1 + hash(w) % (PALETTE.length - 1)) % PALETTE.length;
-  return a;
+  return { set: list.length ? list[walk(w, list.length, 7)] : null, color: walk(w, PALETTE.length, 13), frame: (2 * w + Math.floor(w / 5)) % FRAMES };
 }
 function pick(now) {
   try {
@@ -42,7 +41,7 @@ function pickFor(billNo) {
   const m = String(billNo == null ? '' : billNo).match(/(\d+)\s*$/); if (!m) return pick();
   try {
     const list = sets(), a = lookOf(Number(m[1]) + 1000, list), p = PALETTE[a.color];
-    return { set: a.set, color: p.name, hex: p.hex, rgb: rgbOf(p.hex) };
+    return { set: a.set, color: p.name, hex: p.hex, rgb: rgbOf(p.hex), frame: a.frame };
   } catch (e) { return pick(); }
 }
 module.exports = { pick, pickFor, sets, PALETTE, DIR };

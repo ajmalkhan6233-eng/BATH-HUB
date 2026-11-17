@@ -42,14 +42,31 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .bar { height:12px; margin:0 -56px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
 
 .top{position:relative}
-.tub{position:absolute;right:56px;top:18px;width:196px;height:196px}
-.tub .rim{position:absolute;left:0;right:0;top:34px;height:14px;border-radius:8px;background:linear-gradient(#f4ead0,#c9a24b);box-shadow:0 2px 6px rgba(0,0,0,.35)}
-.tub .tubbody{position:absolute;left:8px;right:8px;top:46px;height:140px;border-radius:10px 10px 70px 70px/10px 10px 60px 60px;background:rgba(255,255,255,.9);border:3px solid #c9a24b;display:flex;align-items:center;justify-content:center;padding-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
-.tub .qrbox{width:112px;height:112px;border-radius:8px;background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center}
-.tub .qrbox svg{width:112px;height:112px;display:block}
-.tub .ft{position:absolute;bottom:0;width:20px;height:12px;border-radius:0 0 10px 10px;background:#c9a24b}.tub .ft.l{left:34px}.tub .ft.r{right:34px}
-.tub .tap{position:absolute;left:84px;top:0;width:12px;height:36px;border-radius:6px 6px 0 0;background:#c9a24b}.tub .tap:after{content:"";position:absolute;left:0;top:0;width:34px;height:10px;border-radius:6px;background:#c9a24b}
 .thanks{text-align:center;font-weight:700;font-style:italic;font-size:22px;color:#6b5114;padding:8px 0 10px;background:rgba(255,253,247,.35)}
+
+.fx{position:absolute;left:722px;top:12px;width:200px;height:172px}
+.fx i{position:absolute;display:none;background:linear-gradient(#f4ead0,#c9a24b);box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.fx .plate{position:absolute;background:rgba(255,255,255,.92);border:4px solid #c9a24b;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.fx .qrbox{width:104px;height:104px;background:transparent;box-shadow:none;border-radius:6px;display:flex;align-items:center;justify-content:center}.fx .qrbox svg{width:104px;height:104px;display:block}
+/* f0 bathtub */
+.f0 .plate{left:8px;right:8px;top:44px;height:114px;border-radius:10px 10px 62px 62px/10px 10px 50px 50px}
+.f0 .d1{display:block;left:94px;top:2px;width:12px;height:34px;border-radius:6px 6px 0 0}.f0 .d2{display:block;left:0;right:0;top:34px;height:14px;border-radius:8px}
+.f0 .d3{display:block;left:34px;top:156px;width:22px;height:12px;border-radius:0 0 10px 10px}.f0 .d4{display:block;right:34px;top:156px;width:22px;height:12px;border-radius:0 0 10px 10px}
+/* f1 tap over a basin plate */
+.f1 .plate{left:22px;right:22px;top:56px;height:114px;border-radius:24px}
+.f1 .d1{display:block;left:40px;top:4px;width:122px;height:16px;border-radius:8px}.f1 .d2{display:block;left:148px;top:4px;width:14px;height:44px;border-radius:0 0 8px 8px}
+.f1 .d3{display:block;left:40px;top:20px;width:14px;height:28px;border-radius:4px}.f1 .d4{display:block;left:150px;top:52px;width:9px;height:12px;border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:#8fd0ee}
+/* f2 shower panel with a rain head */
+.f2 .plate{left:34px;right:34px;top:30px;height:140px;border-radius:6px}
+.f2 .d1{display:block;left:36px;top:0;width:128px;height:14px;border-radius:50%}.f2 .d2{display:block;left:96px;top:12px;width:8px;height:20px}
+.f2 .d3{display:block;left:48px;top:16px;width:6px;height:6px;border-radius:50%;background:#8fd0ee;box-shadow:24px 4px 0 #8fd0ee,52px 0 0 #8fd0ee,76px 4px 0 #8fd0ee,100px 0 0 #8fd0ee}
+/* f3 wash basin on a pedestal */
+.f3 .plate{left:6px;right:6px;top:34px;height:104px;border-radius:26px 26px 90px 90px/18px 18px 50px 50px}
+.f3 .d1{display:block;left:94px;top:4px;width:12px;height:30px;border-radius:6px 6px 0 0}.f3 .d2{display:block;left:78px;top:134px;width:44px;height:26px;border-radius:0 0 10px 10px}
+.f3 .d3{display:block;left:56px;top:158px;width:88px;height:9px;border-radius:5px}
+/* f4 round mirror with a light bar */
+.f4 .plate{left:24px;right:24px;top:14px;height:152px;border-radius:50%;border-width:5px}
+.f4 .d1{display:block;left:52px;top:0;width:96px;height:9px;border-radius:5px}.f4 .d2{display:block;left:94px;top:164px;width:12px;height:8px;border-radius:0 0 4px 4px}
 </style>
 </head>
 <body>
@@ -57,7 +74,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
   <div class="top">
     <img src="../receipt-logo-t.png" alt="RBH" class="logo-img">
     <div class="addr" id="addr"></div>
-    <div class="tub"><i class="tap"></i><div class="rim"></div><div class="tubbody"><div class="qrbox" id="qrContainer"></div></div><i class="ft l"></i><i class="ft r"></i></div>
+    <div class="fx f0" id="fx"><i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i><div class="plate"><div class="qrbox" id="qrContainer"></div></div></div>
   </div>
   <div class="mid">
   <div class="rbar"><span class="rc">RECEIPT</span><span class="rb" id="rbNo"></span></div>
@@ -187,6 +204,7 @@ function renderReceipt(d) {
   $('thanks').textContent = d.thanks || 'Thank you for choosing Royal Bath Hub';
   
 
+  $('fx').className = 'fx f' + ((d.frame | 0) % 5);
   if (d.qrSvg) {
     $('qrContainer').innerHTML = d.qrSvg;
   }
