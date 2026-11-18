@@ -86,7 +86,7 @@ async function getBrowser(puppeteer) {
 }
 function idleSoon() {
   if (_idle) clearTimeout(_idle);
-  _idle = setTimeout(async () => { const p = _browserP; _browserP = null; try { const b = await p; await b.close(); } catch (e) {} }, 90000);
+  _idle = setTimeout(async () => { const p = _browserP; _browserP = null; try { const b = await p; await b.close(); } catch (e) {} }, 30 * 60000);   // 18 Nov: stay warm 30 min so the next receipt is near-instant
   if (_idle.unref) _idle.unref();
 }
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
@@ -116,5 +116,6 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
   return { file, bytes: buf.length, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), items: data.items.length };
 }
 
-module.exports = { currentSet, brandedQr, WA_LINK, renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
+async function warm() { try { await getBrowser(require('puppeteer')); idleSoon(); } catch (e) {} }
+module.exports = { warm, currentSet, brandedQr, WA_LINK, renderReceiptPng, cleanBill, DEFAULT_DIR, TEMPLATE };
 
