@@ -6,9 +6,9 @@
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
-    ['2 Sales', ['pos', 'allbills', 'daily-sales', 'saleshub']],
+    ['2 Sales', ['pos', 'salescomm', 'allbills', 'daily-sales', 'saleshub']],
     ['Vendors', ['vendors', 'vendorsum', 'vendor360', 'vendorledger', 'vendorcredit', 'vendorreturns', 'cheques', 'chequereg']],
-    ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'commissions', 'salary', 'staff', 'reports', 'reportshub']],
+    ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
     ['6 Stock', ['stockmgr', 'stock', 'prices', 'stickers', 'labels']],
     ['Layla and brief', ['layla', 'morningbrief', 'assistant']],
@@ -89,6 +89,7 @@
       addFramePage({ key: 'vendorsum', label: 'Vendors', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/vendors_overview.html', sub: 'Bought, paid and pending per vendor', after: 'grn' });
       addFramePage({ key: 'allbills', label: 'All bills', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/all-bills.html', sub: 'View, download, edit or cancel any customer or vendor bill', after: 'pos' });
       addFramePage({ key: 'vendor360', label: 'Vendor 360', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-truck"/></svg>', url: '/vendor360.html', sub: 'One vendor: bills, payments, cheques, statement', after: 'vendorsum' });
+      addFramePage({ key: 'salescomm', label: 'Sales Commission', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/sales-commission.html', sub: 'Commission per salesman, bill by bill, and the rough total so far', after: 'pos' });
       addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
       var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';
       organise();

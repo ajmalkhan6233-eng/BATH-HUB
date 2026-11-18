@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales commission | Royal Bath Hub</title>
+<link rel="stylesheet" href="/rbh-font.css"><script src="/bathhub-theme.js"></script>
+<style>
+:root{--bg:#f8f9fa;--card:#fff;--line:#dbe0e8;--ink:#0f172a;--muted:#596577;--gold:#8f670a;--red:#b3261e;--green:#1b7a46}
+html[data-theme=dark]{--bg:#0b0d10;--card:#14171d;--line:#282f3a;--ink:#f8fafc;--muted:#94a3b8;--gold:#d4af37}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,"Segoe UI",sans-serif;padding:12px}
+h1{font-size:19px;margin:0 0 4px}.sm{color:var(--muted);font-size:13px}.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:10px 0}
+.k div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.k b{display:block;font-size:20px;margin:2px 0}.k span{font-size:12px;color:var(--muted)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:10px 0}.bar label{display:block;font-size:12px;color:var(--muted)}.bar input,.bar button{font:inherit;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:4px 10px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:8px 0}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--muted)}.n{text-align:right;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0}a{color:var(--gold)}.err{color:var(--red)}
+</style></head><body>
+<h1>Sales commission</h1>
+<div class="sm" id="sub">Loading...</div>
+<div id="out"></div>
+<script>
+(function(){'use strict';
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var rs=function(n){return 'Rs '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2})};
+var dmy=function(d){return String(d).split('-').reverse().join('-')};
+function load(from,to){var q=[];if(from)q.push('from='+encodeURIComponent(from));if(to)q.push('to='+encodeURIComponent(to));
+ fetch('/api/sales-commission'+(q.length?'?'+q.join('&'):''),{credentials:'same-origin'}).then(function(r){if(r.status===401||r.status===403)throw new Error('Please sign in as owner');if(!r.ok)throw new Error('Could not load');return r.json()}).then(draw).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
+function draw(d){var H=d.history;
+ $('sub').textContent='Commission is '+d.pct+'% of profit (sale minus cost), counted from '+dmy(d.commission_from)+', on bills where the salesman is picked. Ajmal earns none.';
+ $('out').innerHTML='<div class="card"><b>Rough figure, the whole history</b><div class="k"><div><span>Total sales since '+esc(dmy(H.since||d.commission_from))+' ('+H.bills+' bills)</span><b>'+rs(H.sales)+'</b></div><div><span>Profit on them</span><b>'+rs(H.profit)+'</b></div><div><span>'+d.pct+'% of profit (the rule)</span><b>'+rs(H.commission_on_profit)+'</b></div><div><span>'+d.pct+'% of sales (for information)</span><b>'+rs(H.commission_on_sales)+'</b></div></div><div class="sm">Old bills have no salesman, so this is only a rough figure. It is not added to anyone\'s balance.</div></div>'+
+ '<div class="bar"><div><label>From</label><input type="date" id="f" value="'+esc(d.from)+'"></div><div><label>To</label><input type="date" id="t" value="'+esc(d.to)+'"></div><button id="go" type="button">Show</button><a href="#" id="st">Open the staff statement</a></div>'+
+ '<table><thead><tr><th>Salesman</th><th class="n">Bills</th><th class="n">Sales</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+(d.by_salesman.map(function(s){return '<tr><td>'+esc(s.salesman)+'</td><td class="n">'+s.bills+'</td><td class="n">'+rs(s.sales)+'</td><td class="n">'+rs(s.profit)+'</td><td class="n"><b>'+rs(s.commission)+'</b></td></tr>'}).join('')||'<tr><td colspan="5">No bills in this range.</td></tr>')+'</tbody></table>'+
+ '<table><thead><tr><th>Bill</th><th>Time</th><th>Salesman</th><th class="n">Total</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+d.bills.map(function(b){return '<tr><td>'+esc(b.bill)+'</td><td>'+esc(b.time)+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+rs(b.total)+'</td><td class="n">'+rs(b.profit)+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table>';
+ $('go').onclick=function(){load($('f').value,$('t').value)};
+ $('st').onclick=function(e){e.preventDefault();try{window.parent.rbhGo?window.parent.rbhGo('staff'):(window.location='/staff.html')}catch(x){window.location='/staff.html'}};
+}
+load();
+})();
+</script></body></html>
