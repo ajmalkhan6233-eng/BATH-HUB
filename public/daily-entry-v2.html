@@ -942,7 +942,7 @@
              explicit width so table-layout:fixed (see .minisheet table CSS)
              gives it a stable, right-aligned lane instead of shrinking to
              fit content — Description text no longer runs into it. -->
-        <table><thead><tr><th>Description</th><th style="width:100px; text-align:right">Amount</th></tr></thead><tbody id="expBody"></tbody></table>
+        <table><thead><tr><th style="width:26px"></th><th>Description</th><th style="width:120px; text-align:right">Amount</th><th style="width:24px"></th></tr></thead><tbody id="expBody"></tbody></table>
         <div class="subtot"><span>EXPENSES TOTAL</span><span id="expTotal">0</span></div>
       </div>
       <div class="minisheet payouts-col">
@@ -981,7 +981,7 @@
            shared rules or the Expenses/Payouts markup at all. -->
       <div class="minisheet sal-col">
         <h3>Staff Salary <small>entered manually, per staff</small></h3>
-        <table><thead><tr><th>Staff</th><th style="width:100px; text-align:right">Amount</th></tr></thead><tbody id="salBody"></tbody></table>
+        <table><thead><tr><th>Staff</th><th style="width:120px; text-align:right">Amount</th><th style="width:24px"></th></tr></thead><tbody id="salBody"></tbody></table>
         <div class="subtot"><span>TOTAL SALARY</span><span id="staffSalaryTotal">—</span></div>
         <button class="addrow" id="salAddRow">+ Add staff</button>
       </div>
@@ -1635,7 +1635,7 @@
       Object.keys(staffSalaryTotals).forEach(n=> L.push([n, staffSalaryTotals[n]].map(esc).join(",")));
       L.push(["Total Salary", Object.values(staffSalaryTotals).reduce((s,v)=>s+v,0)].join(","));
     } else {
-      L.push("Total Salary,— (enter Lasersoft profit figures on the Sales tab to calculate)");
+      L.push("Total Salary,— (profit not available yet)");
     }
 
     const ct = computeTotals();
@@ -1643,7 +1643,7 @@
     L.push("Total Sales," + ct.sales);
     L.push("Total Cash Out (Expenses + Payouts)," + (ct.expenses + ct.payouts));
     L.push("Cash In Hand," + ct.cash_in_hand);
-    L.push("Net Profit," + (ct.net_profit==null ? "— (enter Lasersoft profit figures)" : ct.net_profit));
+    L.push("Net Profit," + (ct.net_profit==null ? "— (profit not available yet)" : ct.net_profit));
     if (String(cashCountedVal()).trim()!=="") L.push("Cash counted at close (incl. 25,000 float)," + num(cashCountedVal()));
 
     return "﻿"+L.join("\r\n");
@@ -2373,7 +2373,7 @@
     } else {
       x.fillStyle = "#F6FAF7"; x.font = "700 13px "+UI; x.fillText("Total Salary", 40, y);
       x.fillStyle = "rgba(234,243,238,.5)"; x.font = "italic 400 12px "+UI; x.textAlign="right";
-      x.fillText("— enter Lasersoft profit figures to calculate", W-40, y); x.textAlign="left";
+      x.fillText("— profit not available yet", W-40, y); x.textAlign="left";
     }
     y += extraRowH + 10;
 
@@ -2383,7 +2383,7 @@
       ["Total Sales", fmt.format(ct.sales)],
       ["Total Cash Out (Expenses + Payouts)", fmt.format(ct.expenses + ct.payouts)],
       ["Cash In Hand", fmt.format(ct.cash_in_hand)],
-      ["Net Profit", ct.net_profit==null ? "— (enter Lasersoft profit figures)" : fmt.format(ct.net_profit)],
+      ["Net Profit", ct.net_profit==null ? "— (profit not available yet)" : fmt.format(ct.net_profit)],
     ];
     summaryRows.forEach(([label,val])=>{
       x.fillStyle = "#EAF3EE"; x.textAlign="left"; x.fillText(label, 40, y);
@@ -2428,7 +2428,7 @@
        <div class="row"><span>Total Sales</span><b>${ARS(ct.sales)}</b></div>
        <div class="row"><span>Total Cash Out (Expenses + Payouts)</span><b>${ARS(ct.expenses + ct.payouts)}</b></div>
        <div class="row"><span>Cash In Hand</span><b>${ARS(ct.cash_in_hand)}</b></div>
-       <div class="row"><span>Net Profit</span><b>${ct.net_profit==null ? "— (enter Lasersoft profit figures)" : ARS(ct.net_profit)}</b></div>`;
+       <div class="row"><span>Net Profit</span><b>${ct.net_profit==null ? "— (profit not available yet)" : ARS(ct.net_profit)}</b></div>`;
     markPrintEmptyRows();
   }
 
@@ -2493,6 +2493,15 @@
         localStorage.setItem("bathco-daily-"+date, JSON.stringify(data)); // keep local cache current
       }
       rows = (data.rows||[]).map(r=>Object.assign(blankRow(), r));
+      // 18 Nov: an empty day is filled from that day's POS bills (receipt, sale, how paid, profit), so past days need no typing.
+      let autoFilled = false;
+      if (!rows.some(rowHasData)){
+        try{
+          const pr = await fetch("/api/daily-sales-live/"+date+"/rows", {credentials:"same-origin", cache:"no-store"});
+          if (seq !== loadSeq) return;
+          if (pr.ok){ const pj = await pr.json(); if (pj.rows && pj.rows.length){ rows = pj.rows.map(r=>Object.assign(blankRow(), r)); autoFilled = true; } }
+        }catch(e){ /* POS list not reachable: leave the day empty */ }
+      }
       document.getElementById("dayRemarks").value = data.dayRemarks || "";
       exps = (data.expenses||[]).map(r=>({desc:r.description||"", amt:r.amount??""}));
       pays = (data.payouts ||[]).map(r=>({desc:r.description||"", amt:r.amount??"", staff:r.staff||"", type:r.type||""}));
@@ -2503,7 +2512,7 @@
       salRender(); salRecalcTotals(); // LEDGER FIXES 2026-07-25 Group B #9/#10: was salRecalc() — see comment on salRecalcTotals()
       updateMinRows(); ensureMinRows(); render();
       lasersoftRestore(date);
-      dirty = false;
+      dirty = autoFilled; // a day filled from POS is saved by the normal autosave
       status.classList.remove("err");
       status.textContent = data.savedAt
         ? "Saved " + new Date(data.savedAt).toLocaleTimeString("en-LK",{hour:"2-digit",minute:"2-digit"}) + (fromServer?" (server)":"")
@@ -2512,6 +2521,7 @@
       lastKnownUpdatedAt = fromServer ? (data.savedAt || null) : null;
       lastKnownUpdatedBy = fromServer ? (data.updated_by || null) : null;
       hideSyncBanner();
+      if (autoFilled){ markDirty(); status.textContent = "Filled from POS bills, saving…"; }
       const first = tbody.querySelector('input[data-f="receipt"]');
       if (first && !rowHasData(rows[0])) first.focus();
     }catch(err){
@@ -3218,7 +3228,7 @@
     const expected = 25000 + t.cash - expT - payT;
     const variance = counted==null ? null : counted - expected;
     const varOk = variance!=null && Math.abs(variance) <= 1;
-    const GPM = "— enter Lasersoft profit figures";
+    const GPM = "— profit not available yet";
 
     const dstr = new Date(currentDate+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long", day:"2-digit", month:"long", year:"numeric"});
     const banner = (ok, text) => `<div class="banner ${ok?"ok":"warn"}">${text}</div>`;
@@ -3229,7 +3239,7 @@
 
     body += sect(1, "THE DAY AT A GLANCE", `<div class="tiles">
       <div class="tile"><div class="tl">TOTAL SALES</div><div class="tv">${dataRows.length?ARS(t.sales):"—"}</div><div class="tn">${dataRows.length?dataRows.length+" invoice"+(dataRows.length>1?"s":""):"no rows entered"}</div></div>
-      <div class="tile"><div class="tl">GROSS PROFIT</div><div class="tv">${gp==null?GPM:ARS(gp)}</div><div class="tn">${gp==null?"":(t.sales?(gp/t.sales*100).toFixed(1)+"% margin — ":"")+"from Lasersoft"+(profMissing?" (missing on "+profMissing+" invoice"+(profMissing>1?"s":"")+")":"")}</div></div>
+      <div class="tile"><div class="tl">GROSS PROFIT</div><div class="tv">${gp==null?GPM:ARS(gp)}</div><div class="tn">${gp==null?"":(t.sales?(gp/t.sales*100).toFixed(1)+"% margin — ":"")+"from POS bills"+(profMissing?" (missing on "+profMissing+" invoice"+(profMissing>1?"s":"")+")":"")}</div></div>
       <div class="tile"><div class="tl">TOTAL EXPENSES</div><div class="tv">${expensesEntered?ARS(expT):"—"}</div><div class="tn">${expensesEntered?"":"no expense rows entered"}</div></div>
       <div class="tile"><div class="tl">NET PROFIT</div><div class="tv">${net==null?GPM:ARS(net)}</div><div class="tn">${net==null?"":"Gross Profit − Expenses"}</div></div>
     </div>`);
@@ -3293,13 +3303,13 @@
 
     body += sect(8, "IN ONE LINE", `<p class="oneline">${
       !dataRows.length ? "Nothing has been recorded for this day yet."
-      : net==null ? `The shop sold ${ARS(t.sales)} today; profit cannot be stated until the Lasersoft profit figures are entered.`
+      : net==null ? `The shop sold ${ARS(t.sales)} today; profit cannot be stated until the profit is available.`
       : `The shop sold ${ARS(t.sales)} today, earned ${ARS(gp)} gross profit, spent ${ARS(expT)}, and made a net profit of ${ARS(net)}.`}</p>`);
 
     const allMatch = dataRows.length>0 && profRows.length>0 && profMissing===0 && counted!=null && varOk;
     body += sect(9, "CONFIRMATION", `<table>
-      <tr><td>Lasersoft profit figures</td><td class="r">${!reg.length?"—":profRows.length===0?"✗ not entered":profMissing===0?"✓":"✗ missing on "+profMissing+" invoice(s)"}</td></tr>
-      <tr><td>Excel daily sales sheet</td><td class="r">${dataRows.length?"✓ "+dataRows.length+" row(s)":"✗ no rows"}</td></tr>
+      <tr><td>Profit figures (from POS bills)</td><td class="r">${!reg.length?"—":profRows.length===0?"✗ not entered":profMissing===0?"✓":"✗ missing on "+profMissing+" invoice(s)"}</td></tr>
+      <tr><td>Daily sales sheet</td><td class="r">${dataRows.length?"✓ "+dataRows.length+" row(s)":"✗ no rows"}</td></tr>
       <tr><td>Cash book (cash proof)</td><td class="r">${counted==null?"—":varOk?"✓ zero variance":"✗ variance "+fmt.format(variance)}</td></tr>
       <tr><td>Physical cash count</td><td class="r">${counted==null?"☐ not entered":"✓ counted"}</td></tr></table>
       ${allMatch ? banner(true,"ALL RECORDS MATCH") : banner(false,"RECORDS INCOMPLETE — see the notes above before signing.")}
@@ -3307,7 +3317,7 @@
 
     const w = window.open("", "_blank");
     if (!w) return alert("Popup blocked — allow popups for this page.");
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Daily Audit Report — ${dstr}</title><style>
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Daily Report — ${dstr}</title><style>
       @page{ size:A4; margin:14mm 14mm 16mm; }
       body{ font-family:Georgia,"Times New Roman",serif; color:#111; font-size:13.5pt; line-height:1.45; margin:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       table.doc{ width:100%; border-collapse:collapse; } table.doc>thead td{ border:0; padding:0; }
@@ -3336,8 +3346,8 @@
     </style></head><body>
     <table class="doc"><thead><tr><td><div class="runhead">
       <h1>ROYAL BATH HUB</h1>
-      <div class="l2">Daily Audit Report — ${dstr} &nbsp;·&nbsp; LARGE PRINT</div>
-      <div class="l3">Ref: BATHCO-AUD-${currentDate.replace(/-/g,"")}-LP &nbsp;·&nbsp; Royal Bath Hub — Confidential</div>
+      <div class="l2">Daily Report — ${dstr}</div>
+      <div class="l3">Royal Bath Hub — Confidential</div>
     </div></td></tr></thead>
     <tbody><tr><td>${body}</td></tr></tbody></table>
     <div class="print-trigger" style="margin:14pt 0; text-align:center;">
@@ -3552,20 +3562,32 @@
   // the save, with a manual retry, plus automatic retry on an interval and
   // when the browser comes back online. Whole-register replace, matching
   // routes/cheque_register.js's own POST contract ({ cheques: [...] }).
+  // 18 Nov: the Cheques tab now READS and WRITES the real register (/api/cheque-register), one row at a time (it never replaces the whole register).
+  const CHQ_REG = "/api/cheque-register";
+  const CHQ_TO_SRV = { Pending:"pending", Deposited:"pending", Cleared:"cleared", Bounced:"bounced", Cancelled:"cancelled" };
+  const CHQ_FROM_SRV = { pending:"Pending", held:"Pending", cleared:"Cleared", bounced:"Bounced", cancelled:"Cancelled" };
   async function chqSaveToServer(){
     if (netInFlight) return; // one of the other 3 background loops is mid-request right now — this run is skipped, not queued twice
     netInFlight = true;
     chqSyncing = true; chqRenderSyncStatus();
     try{
-      const res = await fetch("/api/ledger-cheques-unavailable", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ cheques })
-      });
-      if (!res.ok){
-        let detail = "server responded " + res.status;
-        try{ const j = await res.json(); if (j && j.error) detail = j.error; }catch(e2){}
-        throw new Error(detail);
+      let changed = false;
+      for (const c of cheques){
+        if (!c.srv){
+          if (!(c.payee && Number(c.amount) > 0 && (c.due || c.chqDate))) continue; // half-filled row stays on this device until complete
+          const res = await fetch(CHQ_REG, { method:"POST", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ cheque_no:c.no||null, bank:c.bank||null, payee:c.payee, amount:Number(c.amount), due_date:c.due||c.chqDate, notes:c.notes||null }) });
+          if (res.ok){ const j = await res.json(); c.srv = j.id; c._st = c.status; changed = true; }
+          else if (res.status === 409){ c.srv = "dup"; c._st = c.status; changed = true; } // already on the register
+          else { let d = "server responded " + res.status; try{ const j = await res.json(); if (j && j.error) d = j.error; }catch(e2){} throw new Error(d); }
+        } else if (c.srv !== "dup" && c._st !== c.status){
+          const res = await fetch(CHQ_REG + "/" + encodeURIComponent(c.srv), { method:"PUT", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ status: CHQ_TO_SRV[c.status] || "pending", notes: c.notes || null }) });
+          if (!res.ok){ let d = "server responded " + res.status; try{ const j = await res.json(); if (j && j.error) d = j.error; }catch(e2){} throw new Error(d); }
+          c._st = c.status; changed = true;
+        }
       }
+      if (changed) chqSaveLocal();
       netSucceeded();
       chqLastSyncError = null; chqLastSyncAt = new Date().toISOString();
     }catch(e){
@@ -3617,25 +3639,23 @@
   async function loadCheques(){
     let localData = [];
     try{ localData = JSON.parse(localStorage.getItem(CHEQUES_KEY)||"[]"); }catch(e){ localData = []; }
-
     try{
-      const res = await fetch("/api/ledger-cheques-unavailable", {cache:"no-store"});
+      const res = await fetch(CHQ_REG, {cache:"no-store"});
       if (res.ok){
         const server = await res.json();
-        const serverCheques = server.map(c=>({ id:c.id, no:c.no||"", bank:c.bank||"", payee:c.payee||"",
-          amount:Number(c.amount)||0, chqDate:c.chqDate||"", due:c.due||"",
-          status:c.status||"Pending", notes:c.notes||"", photo:c.photo||null }));
-        if (serverCheques.length === 0 && localData.length > 0){
-          cheques = localData;
-          chqLastSyncError = "This device has " + localData.length + " cheque row(s) not yet saved to the server — saving them now.";
-          chqRenderSyncStatus();
-          await chqSaveToServer();
-          return;
+        const used = new Set(), merged = [];
+        for (const s of server){
+          const l = localData.find(x => !used.has(x) && ((x.srv && String(x.srv) === String(s.id)) || (!x.srv && x.no && String(x.no).trim() === String(s.cheque_no||"").trim() && String(x.bank||"").toLowerCase() === String(s.bank||"").toLowerCase())));
+          if (l) used.add(l);
+          const st = CHQ_FROM_SRV[s.status] || "Pending";
+          merged.push(Object.assign({ id:chqNewId(), chqDate:"", photo:null }, l || {}, { no:s.cheque_no||"", bank:s.bank||"", payee:s.payee||"", amount:Number(s.amount)||0, due:s.due_date||"", status:st, notes:s.notes||"", srv:s.id, _st:st }));
         }
-        cheques = serverCheques;
+        for (const l of localData) if (!used.has(l)) merged.push(l); // rows typed here and not on the register yet
+        cheques = merged;
         chqSaveLocal();
         chqLastSyncError = null; chqLastSyncAt = new Date().toISOString();
         chqRenderSyncStatus();
+        if (cheques.some(c => !c.srv && c.payee && Number(c.amount) > 0 && (c.due || c.chqDate))) await chqSaveToServer();
         return;
       }
       chqLastSyncError = "Could not load the cheque register from the server (responded " + res.status + ") — showing this device's saved copy. New changes will only be saved here until the connection is restored.";
@@ -3703,7 +3723,7 @@
         "Your local copy on this device is UNCHANGED. Do not assume the server copy is complete.");
     }
   }
-  document.getElementById("chqMigrateBtn").addEventListener("click", chqMigrateToServer);
+  document.getElementById("chqMigrateBtn").addEventListener("click", chqSaveToServer);
 
   // LEDGER FIXES 2026-07-26 item 4: a full backup to a file, separate from
   // "Download Excel" — Excel can't hold the photo data properly, this can.
