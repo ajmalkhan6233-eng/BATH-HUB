@@ -17,7 +17,7 @@ let cache = null;   // 15 s memory copy
 router.get('/home-solid', ownerOnly, async (req, res) => {
   if (cache && Date.now() - cache.at < 15000) return res.json(cache.body);
   try {
-    const bills = await q(`SELECT b.id, b.created_at::date AS d, b.total, b.discount_amount,
+    const bills = await q(`SELECT b.id, b.created_at::date AS d, b.total, b.discount_amount, b.salesman,
         (SELECT COALESCE(SUM(i.line_total),0) FROM pos_bill_items i WHERE i.bill_id = b.id) AS items,
         (SELECT COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id) AS cost
       FROM pos_bills b WHERE ${LIVE}`);
@@ -29,6 +29,15 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const agg = f => bills.filter(f).reduce((a, b) => ({ n: a.n + 1, sales: a.sales + Number(b.total), profit: a.profit + Number(b.total) - Number(b.cost) }), { n: 0, sales: 0, profit: 0 });
     const S = { today: agg(b => day(b) === today), yesterday: agg(b => day(b) === ymd(1)), month: agg(b => day(b) >= monthStart), all: agg(() => true) };
     Object.values(S).forEach(o => { o.sales = r2(o.sales); o.profit = r2(o.profit); });
+    // 18 Nov (AJ): a permanent running cost per day (his 5,000, Jazeel 3,500, food, electricity, petrol, transport, commission, all inside it), counted from a start day.
+    const set = {}; (await q("SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from','commission_pct')").catch(() => [])).forEach(r => { set[r.key] = r.value; });
+    const rc = Number(set.running_cost_per_day || 0), rcFrom = String(set.running_cost_from || today).slice(0, 10), cpct = Number(set.commission_pct || 5);
+    const dayGp = {}; bills.forEach(b => { const k = day(b); dayGp[k] = (dayGp[k] || 0) + Number(b.total) - Number(b.cost); });
+    const daysSince = Math.max(0, Math.round((new Date(today + 'T00:00:00Z') - new Date(rcFrom + 'T00:00:00Z')) / 864e5) + 1);
+    const gpSince = Object.keys(dayGp).filter(k => k >= rcFrom).reduce((a, k) => a + dayGp[k], 0);
+    const weekStart = ymd((new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7);   // Monday
+    const jazGp = bills.filter(b => b.salesman === 'Jazeel' && day(b) >= weekStart).reduce((a, b) => a + Number(b.total) - Number(b.cost), 0);
+    const result = { per_day: rc, from: rcFrom, today: today >= rcFrom ? r2(S.today.profit - rc) : null, since: r2(gpSince - rc * daysSince), days: daysSince, commission_pct: cpct, jazeel_week: r2(jazGp * cpct / 100), unassigned: bills.filter(b => !b.salesman && day(b) >= rcFrom).length };
     const billsBad = bills.filter(b => Math.abs(Number(b.items) - Number(b.discount_amount || 0) - Number(b.total)) > 1).length;
 
     const st = (await q(`SELECT COALESCE(SUM(stock_level),0) units, COALESCE(SUM(stock_level*avg_cost),0) cost, COALESCE(SUM(stock_level*selling_price),0) sell,
@@ -63,7 +72,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const grnGap = r2(billed - Number(grn.amt) - pend);
     const body = {
       as_at: new Date().toISOString(), today,
-      sales: S, bills_bad: billsBad,
+      sales: S, result, bills_bad: billsBad,
       stock: { units: r2(st.units), items: Number(st.items), cost: r2(st.cost), sell: r2(st.sell), negative: Number(st.neg), no_price: Number(st.nosell) },
       vendors: { billed: r2(billed), owed: r2(owed), overdue: r2(overdue), top: topVendors },
       cheques: { count: reg.length, amount: regSum, due7: { count: due7.length, amount: r2(due7.reduce((a, x) => a + Number(x.amount), 0)) }, next: reg.slice(0, 3).map(x => ({ no: x.cheque_no, payee: x.payee, amount: Number(x.amount), due: x.due })) },

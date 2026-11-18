@@ -65,6 +65,7 @@ pool.query(`
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS unit_cost NUMERIC(14,4)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS salesman VARCHAR(30)`))   // 18 Nov: who sold it (Ajmal or Jazeel), for the 5% commission
   // was stock taken out for this bill? (NULL = older bill, unknown). Void and edit give back only what was taken.
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN`))
   // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
@@ -158,6 +159,7 @@ router.post('/pos-bills', async (req, res) => {
     const client = await pool.connect();
     try {
         const { customer_name, customer_phone, items, discount_pct, payment_method, notes } = req.body;
+        const salesman = ['Ajmal', 'Jazeel'].includes(String(req.body.salesman || '')) ? String(req.body.salesman) : null;
         // 15 Nov (AJ: back-date a sale). Optional sale_date: owner/admin only, a real day, not in the future. Reports read created_at::date, so every report follows. Normal sales are untouched.
         let backTs = null;
         if (req.body.sale_date) {
@@ -246,10 +248,10 @@ router.post('/pos-bills', async (req, res) => {
         await client.query('BEGIN');
         const billNumber = await nextBillNumber(client, req.body.bill_type === 'wholesale' ? 'wholesale' : 'retail');
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted, created_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12::timestamp, CURRENT_TIMESTAMP))
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted, created_at, salesman)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12::timestamp, CURRENT_TIMESTAMP), $13)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock, backTs]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock, backTs, salesman]);
         const billId = billRes.rows[0].id;
         if (payInfo) {
             for (const p of payInfo.rows) {

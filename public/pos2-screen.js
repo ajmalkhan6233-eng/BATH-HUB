@@ -16,6 +16,7 @@
     if (sd.value !== o) { sd.value = o; var np = 0, cnt = 0; while (np < o.length && cnt < before) { if (/\d/.test(o[np])) cnt++; np++; } try { sd.setSelectionRange(np, np); } catch (e) {} }
   });
   // click anywhere in a field = caret goes exactly there (the anti-autofill readonly is lifted BEFORE the click lands)
+  (function () { var sm = $('salesman'); if (!sm) return; try { var v = localStorage.getItem('rbh-salesman'); if (v) sm.value = v; } catch (e) {} sm.addEventListener('change', function () { try { localStorage.setItem('rbh-salesman', sm.value); } catch (e) {} }); })();
   ['customerName', 'customerPhone', 'saleDate'].forEach(function (id) { var e = $(id); if (e) { e.addEventListener('pointerdown', function () { e.removeAttribute('readonly'); }); e.addEventListener('mousedown', function () { e.removeAttribute('readonly'); }); } });
   function saleISO() { return api.dmyToISO(sd.value); }
   function dmyOf(ts) { try { return new Date(ts).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo' }); } catch (e) { return ''; } }
@@ -147,7 +148,7 @@
     var p = $('paymentMethod').value; if (p === 'Credit' && !$('customerName').value.trim() && !phone) { showError('A credit bill needs the customer name or phone.'); return; }
     var cd = $('chequeDate').value ? ' ' + api.isoToDMY($('chequeDate').value) : '';
     var t = totals();
-    var pl = api.billPayload({ rows: rows, disc: t.disc, name: $('customerName').value.trim(), phone: phone, method: p, chequeRef: $('chequeRef').value.trim() ? $('chequeRef').value.trim() + cd : '', split: [{ method: 'cash', amount: $('splitCash').value }, { method: 'card', amount: $('splitOther').value }], date: iso, wholesale: wholesale, quoteId: quoteId, editing: !!editingId });
+    var pl = api.billPayload({ rows: rows, disc: t.disc, salesman: ($('salesman') || {}).value, name: $('customerName').value.trim(), phone: phone, method: p, chequeRef: $('chequeRef').value.trim() ? $('chequeRef').value.trim() + cd : '', split: [{ method: 'cash', amount: $('splitCash').value }, { method: 'card', amount: $('splitOther').value }], date: iso, wholesale: wholesale, quoteId: quoteId, editing: !!editingId });
     if (pl.error) { showError(pl.error); return; }
     var go = function (reason) {
       if (editingId) pl.payload.reason = reason;

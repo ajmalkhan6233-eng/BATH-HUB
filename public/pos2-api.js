@@ -44,6 +44,7 @@
     var subtotal = money2(lines.reduce(function (s, l) { return s + money2(money2(l.qty) * money2(l.unit_price)); }, 0));
     var pct = subtotal > 0 ? Math.round(o.disc / subtotal * 1e8) / 1e6 : 0;
     var p = { customer_name: o.name || null, customer_phone: o.phone || null, items: lines, discount_pct: pct };
+    if (o.salesman) p.salesman = o.salesman;
     var mode = String(o.method || 'cash').toLowerCase();
     var total = PosCart.totals(lines.map(function (l) { return { qty: l.qty, unit_price: l.unit_price }; }), pct).total;
     if (mode === 'online transfer') mode = 'online';
