@@ -26,3 +26,11 @@ html body table{border-collapse:collapse}
 html body input,html body select,html body textarea{border:1px solid var(--lp-line)!important;border-radius:8px;background:var(--lp-surface);color:var(--lp-text)}
 html body input:focus,html body select:focus,html body textarea:focus{outline:none;border-color:var(--lp-gold)!important;box-shadow:0 0 0 3px rgba(143,103,10,.15)}
 html body canvas{display:none!important}
+
+/* 18 Nov: Expenses/Payouts/Salary headings were dark text on a dark band. Same light header as the other tables. */
+html body .minisheet h3{background:var(--lp-head)!important;background-image:none!important;color:var(--lp-text)!important;border-bottom:1px solid var(--lp-line)!important}
+html body .minisheet h3 small{color:var(--lp-muted,#596577)!important}
+html body .minisheet .subtot,html body .minisheet .stafftotals,html body .minisheet .pendingadv{background:var(--lp-head)!important}
+/* 18 Nov: Sales rows had boxes touching each other (no gap) and too tall. Smaller boxes with a clear gap. */
+html body #sheet tbody td{padding:3px 5px!important}
+html body #sheet tbody td input,html body #sheet tbody td select{height:34px!important;min-height:0!important;padding:4px 8px!important;font-size:14px!important}
