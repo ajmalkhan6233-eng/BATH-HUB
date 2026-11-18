@@ -45,4 +45,27 @@ router.get('/items', async (req, res) => {
     res.json({ by, estimate: true, rows: P.rollup(rows, by === 'category' ? 'category' : 'item') });
   } catch (e) { res.status(500).json({ error: 'could not build the item profit report' }); }
 });
+
+// 18 Nov (AJ): invoice profit for the phone Profit page. One row per bill: sale, cost, profit. Same cost rule as above. Read only.
+router.get('/bills', async (req, res) => {
+  const from = iso(req.query.from), to = iso(req.query.to);
+  try {
+    const rows = (await safe(`SELECT b.id, b.bill_number, b.created_at, b.total, b.customer_name, b.salesman,
+              COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)), 0) AS cost,
+              COUNT(i.id) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS no_cost
+         FROM pos_bills b LEFT JOIN pos_bill_items i ON i.bill_id = b.id LEFT JOIN products p ON p.item_code = i.item_code
+        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) GROUP BY b.id ORDER BY b.created_at DESC LIMIT 500`))
+      .map(b => ({ id: b.id, no: b.bill_number, day: colombo(b.created_at), time: new Date(new Date(b.created_at).getTime() + 5.5 * 3600 * 1000).toISOString().slice(11, 16), customer: b.customer_name || '', salesman: b.salesman || '', sale: P.round2(b.total), cost: P.round2(b.cost), profit: P.round2(Number(b.total) - Number(b.cost)), no_cost: Number(b.no_cost) }))
+      .filter(b => inRange(b.day, from, to));
+    res.json({ estimate: true, rows });
+  } catch (e) { res.status(500).json({ error: 'could not build the invoice profit list' }); }
+});
+router.get('/bill/:id', async (req, res) => {
+  try {
+    const rows = (await safe(`SELECT i.item_code, i.item_name, i.qty, i.line_total AS revenue, i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) AS cost
+         FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = $1 ORDER BY i.id`, [parseInt(req.params.id, 10) || 0]))
+      .map(r => ({ code: r.item_code, name: r.item_name, qty: Number(r.qty), revenue: P.round2(r.revenue), cost: P.round2(r.cost), profit: P.round2(Number(r.revenue) - Number(r.cost)), no_cost: Number(r.cost) === 0 }));
+    res.json({ estimate: true, rows });
+  } catch (e) { res.status(500).json({ error: 'could not build the bill lines' }); }
+});
 module.exports = router;
