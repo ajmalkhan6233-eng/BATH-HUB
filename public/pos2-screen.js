@@ -175,8 +175,14 @@
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
     var img = $('rImg'), card = img.closest('.receipt-card'); card.classList.add('img-ok'); $('rImgWrap').classList.remove('hidden'); $('rImgWrap').classList.add('loading');
-    img.onload = function () { card.classList.add('img-ok'); $('rImgWrap').classList.remove('loading'); };
-    img.onerror = function () { card.classList.remove('img-ok'); $('rImgWrap').classList.remove('loading'); $('rImgWrap').classList.add('hidden'); };
+    var tries = 0, wrap = $('rImgWrap'), ld = wrap.querySelector('.rload');
+    ld.textContent = 'Drawing your receipt…';
+    img.onload = function () { card.classList.add('img-ok'); wrap.classList.remove('loading'); };
+    img.onerror = function () {
+      if (tries++ < 3) { ld.textContent = 'Drawing your receipt… (try ' + (tries + 1) + ')'; setTimeout(function () { img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now(); }, 1500); return; }
+      ld.innerHTML = 'Picture not ready yet. <button type="button" id="rRetry" style="padding:4px 12px">Try again</button>';
+      var rb = document.getElementById('rRetry'); if (rb) rb.onclick = function () { tries = 0; ld.textContent = 'Drawing your receipt…'; img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now(); };
+    };
     img.src = '/api/pos-bills/' + b.id + '/receipt.png?t=' + Date.now();
     $('receipt').classList.remove('hidden'); $('formPanel').classList.add('hidden');
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);

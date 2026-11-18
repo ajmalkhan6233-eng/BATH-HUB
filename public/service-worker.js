@@ -4,7 +4,7 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v98-zi';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
+const VERSION = 'v99-rcpt';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
@@ -19,7 +19,7 @@ const PRECACHE = [
 ];
 
 // never cached (sign-in, first-run, security, admin data)
-const NO_CACHE_API = /^\/api\/(login|logout|setup|auth|system|admin-core|app-settings|sync|users)(\/|$|\?)/;
+const NO_CACHE_API = /^\/api\/(pos-bills\/[^/]+\/receipt\.png|login|logout|setup|auth|system|admin-core|app-settings|sync|users)(\/|$|\?)/;
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
