@@ -1,4 +1,4 @@
-AUTOSAVE 2026-11-18 16:27 SL | branch work @ 57d678d | last: autosave: LIVE.md state line 2026-11-18 16:12 | uncommitted files: 0 | server health: ok
+AUTOSAVE 2026-11-18 16:42 SL | branch work @ 16c970a | last: autosave: LIVE.md state line 2026-11-18 16:27 | uncommitted files: 0 | server health: ok
 17 Nov 11:50 | Leo 10887 fix + Lucky Trading V1018/V1017 + POS task | DONE on DB (backup 11:15 passed, apex-server restarted, health ok) | Ajmal: Ctrl+F5 twice; merge this branch into work to get the Vendor 360 "In our favour" label
 MONEY CHECK (run 17 Nov 11:19, BEFORE changes, from 2026-10-29):
   Sales 124,250 in 11 bills | Cost 94,515 | GROSS PROFIT 29,735 (23.9%) | Costs 198,820 | NET PROFIT -169,085
