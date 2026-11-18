@@ -663,6 +663,7 @@ app.use('/api', require('./routes/github_backup_api')); // play button: backup t
 app.use('/api', require('./routes/play'));            // green play buttons for tasks Claude wrote (owner, whitelist)
 app.use('/api', require('./routes/pc_actions'));      // play buttons: update app, restart, backup (owner, fixed list)
 app.use('/api', require('./routes/item_codes_fix'));   // item codes: Metro auto, Leo as typed, others TBD (owner)
+app.use('/api', require('./routes/staff_ledger'));         // /api/staff-ledger (owner: salary, commission, paid, borrowed per staff member; 18 Nov)
 app.use('/api', require('./routes/home_solid'));          // /api/home-solid (owner Home 18 Nov: confirmed numbers + live match checks; read-only)
 app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
 app.use('/api', require('./routes/brain'));   // /api/brain/* (RBH Brain: owner-only private notes, [[links]], #tags)
