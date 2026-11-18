@@ -48,6 +48,12 @@
   #list{overflow-x:auto}
   .msg{font-size:26px;padding:20px;border:3px dashed #999;border-radius:12px}
   @media (max-width:700px){.btn{font-size:22px;min-height:54px;padding:4px 12px}}
+  .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:6px 0 14px}
+  .sd{border:3px solid #111;border-radius:12px;background:#fff;padding:6px 8px;min-width:0}
+  .sd.we{background:#f1f1f1}.sd.td{border-color:#d00;box-shadow:0 0 0 3px #d00 inset}
+  .sd .t{font-size:20px;font-weight:800}.sd .a{font-size:26px;font-weight:800;color:#8a5a00}.sd .p{font-size:20px;font-weight:800;color:#0b4a8f}.sd .z{font-size:18px;color:#777}
+  .sh{font-size:30px;font-weight:800;margin:14px 0 2px}.sn{font-size:20px;color:#444;margin-bottom:4px}
+  @media (max-width:700px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="/bathhub-a11y.js" defer></script></head>
 <body>
@@ -61,6 +67,7 @@
     <button class="btn" id="today">Today</button>
     <button class="btn" id="next" aria-label="Later">Next ▶</button>
   </div>
+  <div class="sh">Next 14 days: money the bank needs</div><div class="sn">Gold = cheque date is that day. Blue = likely, because we write on Friday / Saturday and it usually arrives Monday / Tuesday.</div><div class="strip" id="strip"></div>
   <div class="sum" id="sum"></div>
   <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">✎ = day we wrote it</span><span id="kn"></span></div>
   <div id="msg"></div>
@@ -99,6 +106,28 @@ function load(){
     }
     draw();
   }).catch(function(e){ var m = document.getElementById('msg'); m.textContent = ''; m.appendChild(el('div', 'msg', 'Could not load cheques: ' + e.message)); });
+}
+
+
+// BLOCK: next 14 days strip (18 Nov). Friday-written cheques usually come Mon/Tue, Saturday-written Tue.
+function addD(d, n){ var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+function kd(d){ return key(d.getFullYear(), d.getMonth(), d.getDate()); }
+function likelyDays(wr){ // wr = Date we wrote it; returns the dates it will probably reach the bank
+  var w = wr.getDay(); if (w === 5) return [addD(wr, 3), addD(wr, 4)]; if (w === 6) return [addD(wr, 3)]; if (w === 0) return [addD(wr, 2)];
+  var a = addD(wr, 1), b = addD(wr, 2); [a, b].forEach(function(x, i){ if (x.getDay() === 0) x.setDate(x.getDate() + 1); if (x.getDay() === 6) x.setDate(x.getDate() + 2); }); return [a, b]; }
+function drawStrip(){
+  var box = document.getElementById('strip'); if (!box) return; box.textContent = '';
+  var t0 = new Date(); t0.setHours(0, 0, 0, 0), maybe = {}, sure = {};
+  ALL.forEach(function(c){ if (c.status !== 'ISSUED') return; if (c.due_date) (sure[c.due_date] = sure[c.due_date] || []).push(c);
+    if (c.cheque_date && c.due_date && c.due_date <= c.cheque_date) { var wr = new Date(c.cheque_date + 'T00:00:00'); if (wr >= addD(t0, -6)) likelyDays(wr).forEach(function(d){ var k = kd(d); (maybe[k] = maybe[k] || []).push(c); }); } });
+  for (var i = 0; i < 14; i++) { var d = addD(t0, i), k = kd(d), su = sure[k] || [], mb = maybe[k] || [];
+    var c = el('div', 'sd' + (d.getDay() === 0 || d.getDay() === 6 ? ' we' : '') + (i === 0 ? ' td' : ''));
+    c.appendChild(el('div', 't', DW[d.getDay()] + ' ' + d.getDate() + ' ' + MN[d.getMonth()].slice(0, 3)));
+    c.appendChild(su.length ? el('div', 'a', 'Rs ' + money(sum(su))) : el('div', 'z', 'nothing'));
+    if (su.length) c.appendChild(el('div', 'z', su.length + ' cheque' + (su.length > 1 ? 's' : '')));
+    var only = mb.filter(function(x){ return su.indexOf(x) < 0; });
+    if (only.length) c.appendChild(el('div', 'p', 'maybe +' + money(sum(only))));
+    c.addEventListener('click', function(){ var kk = k; SEL = (SEL === kk ? null : kk); draw(); }); box.appendChild(c); }
 }
 
 // BLOCK: draw
@@ -155,7 +184,7 @@ function draw(){
   // list
   var shown = SEL ? ALL.filter(function(c){ return c.due_date === SEL || c.cheque_date === SEL; }) : inR;
   document.getElementById('lt').textContent = SEL ? 'Cheques on ' + nice(SEL) + ' (tap the day again to see all)' : 'All cheques in these months';
-  drawList(shown);
+  drawList(shown); drawStrip();
   document.getElementById('kn').textContent = N >= 4 ? 'Small numbers are thousands: 120 = Rs 120,000' : '';
   Array.prototype.forEach.call(document.querySelectorAll('[data-n]'), function(b){ b.classList.toggle('on', Number(b.getAttribute('data-n')) === N); });
 }
