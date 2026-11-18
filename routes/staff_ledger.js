@@ -103,14 +103,14 @@ router.get('/sales-commission', ownerOnly, async (req, res) => {
     const COST = `COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)`;
     const LIVE = 'NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)';
     const hist = (await q(`SELECT COUNT(*) n, COALESCE(SUM(b.total),0) sales, COALESCE(SUM(b.total - ${COST}),0) gp, MIN(to_char(b.created_at::date,'YYYY-MM-DD')) first FROM pos_bills b WHERE ${LIVE}`))[0];
-    const bills = await q(`SELECT b.bill_number, to_char(b.created_at,'YYYY-MM-DD HH24:MI') t, COALESCE(b.salesman,'') salesman, b.total, (b.total - ${COST}) gp FROM pos_bills b
+    const bills = await q(`SELECT b.id, b.bill_number, to_char(b.created_at,'YYYY-MM-DD HH24:MI') t, COALESCE(b.salesman,'') salesman, b.total, (b.total - ${COST}) gp FROM pos_bills b
       WHERE ${LIVE} AND b.created_at::date BETWEEN $1::date AND $2::date ORDER BY b.created_at DESC, b.id DESC LIMIT 300`, [from, to]);
     const by = {}; bills.forEach(b => { const k = b.salesman || 'not picked'; const o = by[k] = by[k] || { salesman: k, bills: 0, sales: 0, profit: 0 }; o.bills++; o.sales = r2(o.sales + Number(b.total)); o.profit = r2(o.profit + Number(b.gp)); });
     const bySalesman = Object.values(by).map(o => Object.assign(o, { commission: o.salesman === 'not picked' || o.salesman.toLowerCase() === 'ajmal' ? 0 : r2(o.profit * pct / 100) }));
     res.json({
       pct, commission_from: cfrom, from, to,
       history: { bills: Number(hist.n), since: hist.first, sales: r2(hist.sales), profit: r2(hist.gp), commission_on_profit: r2(Number(hist.gp) * pct / 100), commission_on_sales: r2(Number(hist.sales) * pct / 100) },
-      by_salesman: bySalesman, bills: bills.map(b => ({ bill: b.bill_number, time: b.t, salesman: b.salesman, total: r2(b.total), profit: r2(b.gp), commission: b.salesman && b.salesman.toLowerCase() !== 'ajmal' && b.t.slice(0, 10) >= cfrom ? r2(Number(b.gp) * pct / 100) : 0 })),
+      by_salesman: bySalesman, bills: bills.map(b => ({ id: b.id, bill: b.bill_number, time: b.t, salesman: b.salesman, total: r2(b.total), profit: r2(b.gp), commission: b.salesman && b.salesman.toLowerCase() !== 'ajmal' && b.t.slice(0, 10) >= cfrom ? r2(Number(b.gp) * pct / 100) : 0 })),
     });
   } catch (e) { console.error('[sales_commission]', e.message); res.status(500).json({ error: 'Could not load commission' }); }
 });
