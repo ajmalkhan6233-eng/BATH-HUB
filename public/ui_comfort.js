@@ -135,6 +135,7 @@
 (function () {
   'use strict';
   function run(el) {
+    return;   // 18 Nov (Ajmal): dashboard numbers show ONE solid final value, no count-up
     var t = el.textContent, m = /(\d[\d,]*)(\.\d+)?/.exec(t); if (!m || el.dataset.cu === t) return;
     var target = parseFloat(m[0].replace(/,/g, '')); if (!isFinite(target) || target < 10) { el.dataset.cu = t; return; }
     var pre = t.slice(0, m.index), post = t.slice(m.index + m[0].length), dec = m[2] ? m[2].length - 1 : 0, t0 = performance.now();
