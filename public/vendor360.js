@@ -21,10 +21,12 @@
   function say(t) { $('msg').textContent = t || ''; }
 
   /* ---------- left list ---------- */
+  // 18 Nov: Fazal / Fazaal / Fawaz spellings: compare without doubled letters
+  function flat(s) { return String(s || '').toLowerCase().replace(/(.)\1+/g, '$1'); }
   function drawList() {
     var q = S.q.toLowerCase();
     var rows = S.vendors.filter(function (v) {
-      if (q && v.vendor_name.toLowerCase().indexOf(q) < 0) return false;
+      if (q && flat(v.vendor_name).indexOf(flat(q)) < 0) return false;
       if (S.filter === 'bal') return v.outstanding_balance > 0;
       if (S.filter === 'over') return v.overdue > 0;
       return true;
