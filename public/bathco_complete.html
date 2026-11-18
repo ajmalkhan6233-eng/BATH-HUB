@@ -2814,25 +2814,20 @@ async function initApp() {
 
 <script src="/logo-pet.js"></script>
 <link rel="stylesheet" href="/rbh_polish.css">
-<link rel="stylesheet" href="/home-calm.css">
+<!-- 18 Nov OFF (one dashboard only): <link rel="stylesheet" href="/home-calm.css"> -->
 <script src="/menubar.js"></script>
 <script src="/oversold_prompt.js"></script>
-<script src="/attention_strip.js"></script>
+<!-- 18 Nov OFF (one dashboard only): <script src="/attention_strip.js"></script> -->
 <script src="/cashier_mode.js"></script>
 <script src="/bathhub-logo.js"></script>
-<script src="/dashboard_pro.js?v=98q"></script>
+<!-- 18 Nov OFF (one dashboard only): <script src="/dashboard_pro.js?v=98q"></script> -->
 <script src="/shell-fit.js"></script>
 <script src="/menu-simple.js"></script><script src="/layla-tabs.js"></script>
 <script src="/frame-diet.js"></script>
 <script src="/saved-tick.js"></script>
 <script src="/saved-dropdown.js"></script>
-<script src="/rbh-charts.js"></script><script src="/build-stamp.js" defer></script><script src="/dashboard_modern.js?v=98q"></script>
-<style>/* 14 Nov: Home builds its cards one by one after load (shifts 0.8). Hidden (space kept) until it settles, then shown once: nothing visibly jumps. */
-#page-dashboard:not(.dash-ready){visibility:hidden}</style>
-<script>/* BLOCK: home settle. Shows Home 300 ms after its cards are in and quiet; never later than 0.8 s. */
-(function(){var d=document.getElementById('page-dashboard');if(!d)return;var done=false,t=null;function show(){if(done)return;done=true;d.classList.add('dash-ready');try{mo.disconnect()}catch(e){}}
-var mo=new MutationObserver(function(){clearTimeout(t);if(d.querySelector('.kpi-grid')&&d.querySelector('#home-play-card'))t=setTimeout(show,300)});mo.observe(d,{childList:true,subtree:true});setTimeout(show,800);})();</script>
-<script src="/home-play.js" defer></script><script src="/dashboard_breakdown.js"></script><script src="/dashboard_v2.js?v=98q"></script><script src="/dashboard_lite.js?v=98s"></script><script src="/home_solid.js?v=18p"></script>
+<script src="/rbh-charts.js"></script><script src="/build-stamp.js" defer></script><!-- 18 Nov OFF (one dashboard only): <script src="/dashboard_modern.js?v=98q"></script> -->
+<!-- 18 Nov OFF: old Home hide/settle block removed; home_solid.js is the only Home -->
 <script src="/lib/palette.js"></script>
 <script src="/lib/grn_import.js"></script>
 <script src="/test-banner.js"></script>
