@@ -89,13 +89,13 @@ router.get('/daily-sales-live/:date/rows', async (req, res) => {
     if (!isDay(req.params.date)) return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
     try {
         const b = (await pool.query(
-            `SELECT b.id, b.bill_number, b.customer_name, b.total, COALESCE(b.payment_method,'cash') AS pm, b.created_at,
+            `SELECT b.id, b.bill_number, b.customer_name, b.salesman, b.total, COALESCE(b.payment_method,'cash') AS pm, b.created_at,
                     COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id), 0) AS cost
              FROM pos_bills b WHERE b.created_at::date = $1::date AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
              ORDER BY b.created_at, b.id`, [req.params.date])).rows;
         const pays = (await pool.query(`SELECT bill_id, method, SUM(amount) AS amount FROM pos_bill_payments WHERE bill_id = ANY($1::int[]) GROUP BY bill_id, method`, [b.map(x => x.id)]).catch(() => ({ rows: [] }))).rows;
         const rows = b.map(x => {
-            const r = { receipt: x.bill_number, staff: '', sales: money2(x.total), cash: '', card: '', online: '', cheque: '', credit: '', customer: /^(cash|walk-?in.*)?$/i.test(String(x.customer_name || '').trim()) ? '' : x.customer_name, profit: money2(Number(x.total) - Number(x.cost)), option: '', remarks: 'from POS' };
+            const r = { receipt: x.bill_number, staff: x.salesman || '', sales: money2(x.total), cash: '', card: '', online: '', cheque: '', credit: '', customer: /^(cash|walk-?in.*)?$/i.test(String(x.customer_name || '').trim()) ? '' : x.customer_name, profit: money2(Number(x.total) - Number(x.cost)), option: '', remarks: 'from POS' };
             const mine = pays.filter(p => p.bill_id === x.id);
             const set = (m, a) => { const k = METHODS.includes(String(m).trim().toLowerCase()) ? String(m).trim().toLowerCase() : 'cash'; r[k] = money2(Number(r[k] || 0) + Number(a)); };
             if (mine.length) mine.forEach(p => set(p.method, p.amount)); else set(x.pm, x.total);

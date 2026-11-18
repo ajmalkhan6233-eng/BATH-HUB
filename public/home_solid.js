@@ -19,7 +19,7 @@
   var dm = function (d) { return String(d || '').slice(8, 10) + '-' + String(d || '').slice(5, 7); };
   function tile(l, v, s, warn) { return '<div class="hs-t"><div class="hs-l">' + l + '</div><div class="hs-v">' + v + '</div><div class="hs-s' + (warn ? ' hs-w' : '') + '">' + s + '</div></div>'; }
   function draw(d, err) {
-    var S = d.sales, K = d.stock, V = d.vendors, C = d.cheques, nx = C.next[0];
+    var S = d.sales, R = d.result, K = d.stock, V = d.vendors, C = d.cheques, nx = C.next[0];
     var t = new Date(d.as_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Colombo' });
     var sub = document.getElementById('page-sub'); if (sub && visible()) sub.textContent = err ? 'Numbers may be old' : 'Confirmed numbers, as at ' + t;
     box.innerHTML = '<div class="hs-top"><h2>Home</h2><span class="hs-at">' + (err ? '<span class="hs-w">' + esc(err) + ' · showing ' + t + '</span>' : 'as at ' + t) + '</span></div><div class="hs-grid">' +
@@ -27,6 +27,9 @@
       tile('Profit today', rs(S.today.profit), 'sale minus cost') +
       tile('Yesterday', rs(S.yesterday.sales), S.yesterday.n + ' bills · profit ' + rs(S.yesterday.profit)) +
       tile('This month', rs(S.month.sales), S.month.n + ' bills · profit ' + rs(S.month.profit)) +
+      tile('Result today', R.today == null ? '—' : rs(R.today), 'profit minus ' + rs(R.per_day) + ' running cost', R.today != null && R.today < 0) +
+      tile('Result since ' + dm(R.from), rs(R.since), R.days + ' days · ' + rs(R.per_day) + ' a day', R.since < 0) +
+      tile('Jazeel commission', rs(R.jazeel_week), R.commission_pct + '% of profit, this week' + (R.unassigned ? ' · ' + R.unassigned + ' bills no salesman' : '')) +
       tile('Stock at cost', rs(K.cost), K.units.toLocaleString('en-LK') + ' units · ' + K.items + ' items') +
       tile('Stock at selling', rs(K.sell), K.no_price ? K.no_price + ' items without price' : 'all priced', K.no_price > 0) +
       tile('We owe vendors', rs(V.owed), V.overdue > 0 ? rs(V.overdue) + ' overdue' : 'nothing overdue', V.overdue > 0) +

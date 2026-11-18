@@ -34,3 +34,5 @@ html body .minisheet .subtot,html body .minisheet .stafftotals,html body .minish
 /* 18 Nov: Sales rows had boxes touching each other (no gap) and too tall. Smaller boxes with a clear gap. */
 html body #sheet tbody td{padding:3px 5px!important}
 html body #sheet tbody td input,html body #sheet tbody td select{height:34px!important;min-height:0!important;padding:4px 8px!important;font-size:14px!important}
+/* 18 Nov (AJ): Sunrise / Plain theme picker and Hyperspace do not work and are not wanted: hidden. */
+html body .themewrap{display:none!important}
