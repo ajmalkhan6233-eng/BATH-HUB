@@ -97,6 +97,11 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 .price-control{grid-template-columns:1.25fr .75fr 1fr;gap:5px}.price-control .field:nth-child(4){grid-column:1/-1}
 .price-control .field input{height:28px;padding:4px 6px}.price-control label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profit-secret{padding:0}.mini-list{min-height:46px;max-height:96px}
+.sm-pick{font-size:12px;height:24px;padding:0 4px;margin-left:4px;width:auto;min-width:0;border:1px solid var(--line);border-radius:3px;background:#fff}
+/* 18 Nov (AJ): at least 10 item rows visible, small. Compact rows, no duplicate mini list. */
+.item-row{min-height:26px!important;padding:1px 8px!important}.item-row input,.item-row .qtybox input{height:22px!important;padding:1px 4px!important;font-size:12px!important}.item-row .qtybox button{height:22px!important;width:20px!important}
+.item-row .remove{width:24px!important;height:24px!important;font-size:16px!important}.item-name strong{font-size:12px!important}.item-name small{display:none!important}.item-ident .code-input{padding:1px 4px!important}
+.item-head{padding:3px 8px 2px!important}.item-rows{min-height:270px}.mini-list{display:none!important}main{overflow-y:auto}
 .total-row{padding:4px 0 3px}.bill-summary{padding:7px 9px}
 @media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 430px}.picker{right:450px}}
 .picker{right:400px}
@@ -183,10 +188,10 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
   <main id="formPanel">
     <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
-    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
+    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span><span class="muted" style="margin-left:10px">Salesman</span><select id="salesman" class="sm-pick" title="Who sold this bill"><option value="Jazeel">Jazeel</option><option value="Ajmal">Ajmal</option></select></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
       <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
-      <div class="field"><label for="salesman">Salesman</label><select id="salesman"><option value="Ajmal">Ajmal</option><option value="Jazeel">Jazeel</option></select></div><div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
+      <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
       <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
