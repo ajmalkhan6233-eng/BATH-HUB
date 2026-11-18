@@ -299,6 +299,7 @@ router.post('/pos-bills', async (req, res) => {
 
         const full = await loadBill(billId);
         res.json({ ...full, stock_deducted: deductStock });
+        try { setImmediate(() => ensureReceipt(full.id).catch(() => {})); } catch (e) {}   // 18 Nov: start drawing the picture NOW, so it is ready when the screen opens
         require('../utils/autoReceipt').afterSale(pool, full);   // queue the WhatsApp receipt in the background; never affects the sale
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
@@ -418,24 +419,37 @@ router.get('/pos-bills/:id', async (req, res) => {
 
 // ═══════════════════════ the receipt PICTURE of a bill (same design as the WhatsApp one) ═══════════════════════
 // GET /api/pos-bills/:id/receipt.png            shows it    ?download=1  saves it    ?json=1  shows what would be drawn (no picture)
+const _rcptBusy = new Map();   // bill id -> promise (a picture already being drawn is shared, never drawn twice)
+async function ensureReceipt(id, wantJson) {
+    const bill = await loadBill(id);
+    if (!bill) return null;
+    const dmy = new Date(bill.created_at).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const pay = bill.payments && bill.payments.length > 1 ? 'split' : (bill.payments && bill.payments[0] ? bill.payments[0].method : (bill.payment_method || 'cash'));
+    const payload = {
+        items: bill.items.map(i => ({ name: i.item_name, code: i.item_code || null, qty: Number(i.qty), price: Number(i.unit_price) })),
+        discount: Number(bill.discount_amount || 0), billNo: bill.bill_number, date: dmy,
+        customer: bill.customer_name || 'Walk-in customer', customerPhone: bill.customer_phone || '', paymentMethod: String(pay), total: Number(bill.total),
+    };
+    if (wantJson) return { bill, payload };
+    const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pickFor(bill.bill_number);
+    const fs0 = require('fs'), tp = require('path').join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
+    let tv = '0'; try { tv = Math.floor(fs0.statSync(tp).mtimeMs / 1000).toString(36); } catch (e) {}
+    const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}-v${tv}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
+    if (!fs0.existsSync(full)) {
+        let pr = _rcptBusy.get(fileName);
+        if (!pr) { pr = receiptImage.renderReceiptPng(payload, { fileName }).finally(() => _rcptBusy.delete(fileName)); _rcptBusy.set(fileName, pr); }
+        await pr;
+    }
+    return { bill, payload, fileName, root: receiptImage.DEFAULT_DIR };
+}
+router.ensureReceipt = ensureReceipt;
 router.get('/pos-bills/:id/receipt.png', async (req, res) => {
     try {
-        const bill = await loadBill(req.params.id);
-        if (!bill) return res.status(404).json({ error: 'not found' });
-        const dmy = new Date(bill.created_at).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo', day: '2-digit', month: '2-digit', year: 'numeric' });
-        const pay = bill.payments && bill.payments.length > 1 ? 'split' : (bill.payments && bill.payments[0] ? bill.payments[0].method : (bill.payment_method || 'cash'));
-        const payload = {
-            items: bill.items.map(i => ({ name: i.item_name, code: i.item_code || null, qty: Number(i.qty), price: Number(i.unit_price) })),
-            discount: Number(bill.discount_amount || 0), billNo: bill.bill_number, date: dmy,
-            customer: bill.customer_name || 'Walk-in customer', customerPhone: bill.customer_phone || '', paymentMethod: String(pay), total: Number(bill.total),
-        };
-        if (req.query.json) return res.json(payload);
-        const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pickFor(bill.bill_number);
-        const fs0 = require('fs'), tp = require('path').join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html'), tv = (() => { try { return Math.floor(fs0.statSync(tp).mtimeMs / 1000).toString(36); } catch { return '0'; } })();
-        const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}-v${tv}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
-        if (!require('fs').existsSync(full)) await receiptImage.renderReceiptPng(payload, { fileName });
-        if (req.query.download) res.setHeader('Content-Disposition', `attachment; filename="${bill.bill_number}.png"`);
-        res.type('png').sendFile(fileName, { root: receiptImage.DEFAULT_DIR });
+        const r = await ensureReceipt(req.params.id, !!req.query.json);
+        if (!r) return res.status(404).json({ error: 'not found' });
+        if (req.query.json) return res.json(r.payload);
+        if (req.query.download) res.setHeader('Content-Disposition', `attachment; filename="${r.bill.bill_number}.png"`);
+        res.type('png').sendFile(r.fileName, { root: r.root });
     } catch (e) { res.status(e.status || 500).json({ error: `Could not draw the receipt picture: ${e.message}` }); }
 });
 
