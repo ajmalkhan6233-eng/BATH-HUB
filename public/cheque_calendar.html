@@ -29,6 +29,7 @@
   .d .n{font-size:var(--dn,30px);font-weight:800;line-height:1.05}
   .d .a{font-size:var(--am,20px);font-weight:800;line-height:1.1;margin-top:2px}
   .d .w{font-size:calc(var(--am,20px) - 4px);font-weight:700;color:#0b4a8f}
+  .d .mb{font-size:calc(var(--am,20px) - 4px);font-weight:800;color:#0b4a8f;background:#e3efff;border-radius:5px;padding:0 3px;margin-top:2px}
   .d.out{background:#f4f4f4;border-color:#e2e2e2;color:#aaa}
   .d.today{border-color:#d00;box-shadow:0 0 0 3px #d00 inset}
   .d.due{background:#ffe9a8;border-color:#a87a00;cursor:pointer}
@@ -69,7 +70,7 @@
   </div>
   <div class="sh">Next 14 days: money the bank needs</div><div class="sn">Gold = cheque date is that day. Blue = likely, because we write on Friday / Saturday and it usually arrives Monday / Tuesday.</div><div class="strip" id="strip"></div>
   <div class="sum" id="sum"></div>
-  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">✎ = day we wrote it</span><span id="kn"></span></div>
+  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">~ maybe = Friday/Saturday cheque, usually Mon/Tue &nbsp; ✎ = day we wrote it</span><span id="kn"></span></div>
   <div id="msg"></div>
   <div class="months" id="months"></div>
   <div class="lt" id="lt">All cheques in these months</div>
@@ -115,6 +116,9 @@ function kd(d){ return key(d.getFullYear(), d.getMonth(), d.getDate()); }
 function likelyDays(wr){ // wr = Date we wrote it; returns the dates it will probably reach the bank
   var w = wr.getDay(); if (w === 5) return [addD(wr, 3), addD(wr, 4)]; if (w === 6) return [addD(wr, 3)]; if (w === 0) return [addD(wr, 2)];
   var a = addD(wr, 1), b = addD(wr, 2); [a, b].forEach(function(x, i){ if (x.getDay() === 0) x.setDate(x.getDate() + 1); if (x.getDay() === 6) x.setDate(x.getDate() + 2); }); return [a, b]; }
+function maybeMap(){ var t0 = new Date(); t0.setHours(0, 0, 0, 0); var mb = {};
+  ALL.forEach(function(c){ if (c.status !== 'ISSUED' || !c.cheque_date || !c.due_date || c.due_date > c.cheque_date) return; var wr = new Date(c.cheque_date + 'T00:00:00'); if (wr >= addD(t0, -6)) likelyDays(wr).forEach(function(d){ var k = kd(d); (mb[k] = mb[k] || []).push(c); }); });
+  return mb; }
 function drawStrip(){
   var box = document.getElementById('strip'); if (!box) return; box.textContent = '';
   var t0 = new Date(); t0.setHours(0, 0, 0, 0), maybe = {}, sure = {};
@@ -141,7 +145,7 @@ function bucket(){ // per date: due list, written list
 }
 function sum(a){ return a.reduce(function(s, c){ return s + Number(c.amount || 0); }, 0); }
 function draw(){
-  var bk = bucket(), tk = todayKey(), box = document.getElementById('months');
+  var bk = bucket(), MB = maybeMap(), tk = todayKey(), box = document.getElementById('months');
   box.textContent = '';
   var W = window.innerWidth, cols = W < 700 ? 1 : W < 1100 ? Math.min(N, 2) : N;
   box.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0,1fr))';
@@ -169,7 +173,9 @@ function draw(){
       var cell = el('div', cls);
       cell.appendChild(el('div', 'n', day));
       if (du.length) cell.appendChild(el('div', 'a', short(sum(du))));
-      if (wv.length) cell.appendChild(el('div', 'w', N <= 3 ? '✎ ' + short(sum(wv)) : '✎'));
+      if (wv.length) cell.appendChild(el('div', 'w', N <= 3 ? '✎ wrote ' + short(sum(wv)) : '✎'));
+      var mbo = (MB[k] || []).filter(function(x){ return du.indexOf(x) < 0; }); if (mbo.length) cell.appendChild(el('div', 'mb', N <= 3 ? '~ maybe ' + short(sum(mbo)) : '~' + short(sum(mbo))));
+      if ((du.length || wv.length || mbo.length) && !(du.length || wv.length)) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
       if (du.length || wv.length) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
       g.appendChild(cell);
     }
