@@ -11,10 +11,10 @@ h1{font-size:19px;margin:0 0 4px}.sm{color:var(--muted);font-size:13px}.k{displa
 .k div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}.k b{display:block;font-size:20px;margin:2px 0}.k span{font-size:12px;color:var(--muted)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:10px 0}.bar label{display:block;font-size:12px;color:var(--muted)}.bar input,.bar button{font:inherit;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:4px 10px}
 table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:8px 0}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--muted)}.n{text-align:right;white-space:nowrap}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0}a{color:var(--gold)}.err{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0}summary{cursor:pointer;min-height:32px}a{color:var(--gold)}.err{color:var(--red)}
 </style></head><body>
 <h1>Sales commission</h1>
-<div class="sm" id="sub">Loading...</div>
+<div class="sm" id="sub"></div>
 <div id="out"></div>
 <script>
 (function(){'use strict';
@@ -22,17 +22,24 @@ var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
 var rs=function(n){return 'Rs '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2})};
 var dmy=function(d){return String(d).split('-').reverse().join('-')};
-function load(from,to){var q=[];if(from)q.push('from='+encodeURIComponent(from));if(to)q.push('to='+encodeURIComponent(to));
- fetch('/api/sales-commission'+(q.length?'?'+q.join('&'):''),{credentials:'same-origin'}).then(function(r){if(r.status===401||r.status===403)throw new Error('Please sign in as owner');if(!r.ok)throw new Error('Could not load');return r.json()}).then(draw).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
-function draw(d){var H=d.history;
- $('sub').textContent='Commission is '+d.pct+'% of profit (sale minus cost), counted from '+dmy(d.commission_from)+', on bills where the salesman is picked. Ajmal earns none.';
- $('out').innerHTML='<div class="card"><b>Rough figure, the whole history</b><div class="k"><div><span>Total sales since '+esc(dmy(H.since||d.commission_from))+' ('+H.bills+' bills)</span><b>'+rs(H.sales)+'</b></div><div><span>Profit on them</span><b>'+rs(H.profit)+'</b></div><div><span>'+d.pct+'% of profit (the rule)</span><b>'+rs(H.commission_on_profit)+'</b></div><div><span>'+d.pct+'% of sales (for information)</span><b>'+rs(H.commission_on_sales)+'</b></div></div><div class="sm">Old bills have no salesman, so this is only a rough figure. It is not added to anyone\'s balance.</div></div>'+
- '<div class="bar"><div><label>From</label><input type="date" id="f" value="'+esc(d.from)+'"></div><div><label>To</label><input type="date" id="t" value="'+esc(d.to)+'"></div><button id="go" type="button">Show</button><a href="#" id="st">Open the staff statement</a></div>'+
- '<table><thead><tr><th>Salesman</th><th class="n">Bills</th><th class="n">Sales</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+(d.by_salesman.map(function(s){return '<tr><td>'+esc(s.salesman)+'</td><td class="n">'+s.bills+'</td><td class="n">'+rs(s.sales)+'</td><td class="n">'+rs(s.profit)+'</td><td class="n"><b>'+rs(s.commission)+'</b></td></tr>'}).join('')||'<tr><td colspan="5">No bills in this range.</td></tr>')+'</tbody></table>'+
- '<table><thead><tr><th>Bill</th><th>Time</th><th>Salesman</th><th class="n">Total</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+d.bills.map(function(b){return '<tr><td>'+esc(b.bill)+'</td><td>'+esc(b.time)+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+rs(b.total)+'</td><td class="n">'+rs(b.profit)+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table>';
+var ymd=function(d){return d.toISOString().slice(0,10)};
+var today=function(){return ymd(new Date(Date.now()+19800000))};
+var back=function(n){return ymd(new Date(Date.now()+19800000-n*864e5))};
+var F=today(),T=today();
+function load(from,to){F=from;T=to;$('sub').textContent='Loading...';
+ fetch('/api/sales-commission?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to),{credentials:'same-origin'}).then(function(r){if(r.status===401||r.status===403)throw new Error('Please sign in as owner');if(!r.ok)throw new Error('Could not load');return r.json()}).then(draw).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
+function draw(d){
+ $('sub').textContent='';
+ var pay=d.by_salesman.filter(function(s){return s.commission>0});
+ var days={};d.bills.forEach(function(b){var k=b.time.slice(0,10);var o=days[k]=days[k]||{bills:[],sales:0,profit:0,com:0};o.bills.push(b);o.sales+=b.total;o.profit+=b.profit;o.com+=b.commission});
+ var keys=Object.keys(days).sort().reverse();
+ var h='<div class="bar"><button type="button" data-n="0">1 day</button><button type="button" data-n="1">2 days</button><button type="button" data-n="6">1 week</button><div><label>From</label><input type="date" id="f" value="'+esc(d.from)+'"></div><div><label>To</label><input type="date" id="t" value="'+esc(d.to)+'"></div><button id="go" type="button">Show</button></div>';
+ h+='<div class="k">'+(pay.map(function(s){return '<div><span>'+esc(s.salesman)+' commission to pay</span><b>'+rs(s.commission)+'</b></div>'}).join('')||'<div><span>Commission to pay</span><b>'+rs(0)+'</b></div>')+'</div>';
+ h+=keys.map(function(k){var o=days[k];return '<details class="card"><summary><b>'+esc(dmy(k))+'</b> <span class="sm">details</span></summary><div class="sm" style="margin:6px 0">'+o.bills.length+' bills &middot; sales '+rs(o.sales)+' &middot; profit '+rs(o.profit)+' &middot; commission '+rs(o.com)+'</div><table><thead><tr><th>Bill</th><th>Time</th><th>Salesman</th><th class="n">Total</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+o.bills.map(function(b){return '<tr><td><a href="/api/pos-bills/'+b.id+'/receipt.png" target="_blank" rel="noopener">'+esc(b.bill)+'</a></td><td>'+esc(b.time.slice(11))+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+rs(b.total)+'</td><td class="n">'+rs(b.profit)+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table></details>'}).join('')||'<div class="sm">No bills in this range.</div>';
+ $('out').innerHTML=h;
  $('go').onclick=function(){load($('f').value,$('t').value)};
- $('st').onclick=function(e){e.preventDefault();try{window.parent.rbhGo?window.parent.rbhGo('staff'):(window.location='/staff.html')}catch(x){window.location='/staff.html'}};
+ Array.prototype.forEach.call($('out').querySelectorAll('button[data-n]'),function(b){b.onclick=function(){load(back(+b.dataset.n),today())}});
 }
-load();
+load(F,T);
 })();
 </script></body></html>
