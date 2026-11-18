@@ -58,7 +58,8 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const pend = Number((await q("SELECT COALESCE(SUM(amount),0) s FROM vendor_pending_items WHERE status = 'PENDING'").catch(() => [{ s: 0 }]))[0].s);
     const sold = Number((await q(`SELECT COALESCE(SUM(i.qty),0) s FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id WHERE ${LIVE}`))[0].s);
     const ret = Number((await q('SELECT COALESCE(SUM(qty),0) s FROM vendor_return_lines').catch(() => [{ s: 0 }]))[0].s);
-    const stockGap = r2(stockAll - (Number(grn.qty) - sold - ret));
+    const opening = Number((await q("SELECT COALESCE(SUM(qty_change),0) s FROM stock_movements WHERE reason = 'opening_stock_confirmed'").catch(() => [{ s: 0 }]))[0].s);   // stock AJ confirmed by hand (no GRN), e.g. item 331
+    const stockGap = r2(stockAll - (Number(grn.qty) - sold - ret + opening));
     const grnGap = r2(billed - Number(grn.amt) - pend);
     const body = {
       as_at: new Date().toISOString(), today,
@@ -70,7 +71,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
       checks: [
         { key: 'grn', label: 'GRN received = vendor bills', ok: Math.abs(grnGap) < 1, note: Math.abs(grnGap) < 1 ? (pend ? 'incl. ' + r2(pend) + ' not yet delivered' : '') : 'difference ' + grnGap },
         { key: 'cheques', label: 'Cheque list = cheques on bills', ok: Math.abs(regSum - billChq) < 1, note: Math.abs(regSum - billChq) < 1 ? '' : 'difference ' + r2(regSum - billChq) },
-        { key: 'stock', label: 'Stock = GRN - sold - returned', ok: Math.abs(stockGap) < 0.001, note: Math.abs(stockGap) < 0.001 ? '' : stockGap + ' units not explained' },
+        { key: 'stock', label: 'Stock = GRN - sold - returned' + (opening ? ' (+' + opening + ' opening confirmed)' : ''), ok: Math.abs(stockGap) < 0.001, note: Math.abs(stockGap) < 0.001 ? '' : stockGap + ' units not explained' },
         { key: 'bills', label: 'Every bill = items - discount', ok: billsBad === 0, note: billsBad ? billsBad + ' bills differ' : '' },
         { key: 'neg', label: 'No negative stock', ok: Number(st.neg) === 0, note: Number(st.neg) ? st.neg + ' items' : '' },
       ],
