@@ -51,6 +51,7 @@ AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .clau
 SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux, rbh-qa, rbh-blocks, rbh-erp, rbh-halal as needed) and name it in the LIVE line.
 
 ## AJMAL'S REPORTING + PUSH RULES (added 17 Nov 2026)
+- REPORT FORMAT (AJ 18 Nov, HARD): NO bullet dots. Numbered lists only: DONE: 1, 2, 3. NOT DONE: 1, 2, 3. Numbers must match everywhere (stock = GRN = vendors = cheques = bills); any mismatch is discussed with AJ straight away, then logged to chat.
 - Reports: max 5 short lines, answer first, plain words, one status word last (GREEN, DONE, BLOCKED, NEEDS YOU, UNVERIFIED) plus the next step. Say "heads-up", never "problems". Anything Aj must copy goes in its own code block. Never say done unless a check ran.
 - 15-MINUTE PUSH RULE: work is committed and pushed to the shared `work` branch at least every 15 minutes, and AI_MEMORY/LIVE.md is updated. The Windows task `RBH_Autosave_LIVE` (scripts/autosave_live.js) does this for the state line automatically; code is still committed by hand with a clear message.
 
