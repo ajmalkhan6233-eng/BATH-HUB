@@ -22,7 +22,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
         (SELECT COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id) AS cost
       FROM pos_bills b WHERE ${LIVE}`);
     const today = (await q('SELECT CURRENT_DATE::text AS d'))[0].d;
-    const day = x => new Date(x.d.getTime() - x.d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);   // date column arrives as a local-midnight Date
+    const day = x => (typeof x.d === 'string' ? x.d.slice(0, 10) : new Date(x.d.getTime() - x.d.getTimezoneOffset() * 60000).toISOString().slice(0, 10));   // the app returns dates as text; a plain pg Date is a local-midnight Date
     const dayStr = new Date(today + 'T00:00:00Z');
     const ymd = n => new Date(dayStr.getTime() - n * 864e5).toISOString().slice(0, 10);
     const monthStart = today.slice(0, 8) + '01';
