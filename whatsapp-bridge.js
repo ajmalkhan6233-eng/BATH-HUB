@@ -70,7 +70,11 @@ let lastCode = null;
 const client = new Client({
     ...(PAIR_PHONE ? { pairWithPhoneNumber: { phoneNumber: PAIR_PHONE, showNotification: true, intervalMs: 180000 } } : {}),
     authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),   // absolute: the login must not depend on which folder pm2 or a scheduled task started us from
+    // 19 Nov: the library timed out 30 s after every start ("Waiting failed: 30000ms exceeded" in Client.inject) on this slow PC. Give WhatsApp Web 3 minutes to load.
+    authTimeoutMs: Number(process.env.WA_AUTH_TIMEOUT_MS || 180000),
+    ...(process.env.WA_WEB_VERSION ? { webVersion: process.env.WA_WEB_VERSION, webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/' + process.env.WA_WEB_VERSION + '.html' } } : {}),
     puppeteer: {
+        protocolTimeout: 240000,
         headless: true,
         executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
