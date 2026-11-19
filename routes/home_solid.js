@@ -48,12 +48,15 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const vb = await q('SELECT * FROM vendor_bills WHERE voided = FALSE');
     const ids = vb.map(b => b.id);
     const [ch, pa, cr] = ids.length ? await Promise.all([q('SELECT * FROM vendor_bill_cheques WHERE bill_id = ANY($1::int[])', [ids]), q('SELECT * FROM vendor_payments WHERE bill_id = ANY($1::int[])', [ids]), q('SELECT * FROM vendor_credit_notes WHERE bill_id = ANY($1::int[])', [ids])]) : [[], [], []];
-    let billed = 0, owed = 0, covered = 0, overdue = 0;
+    let billed = 0, owed = 0, covered = 0, overdue = 0, pendingConfirm = 0, pendingBills = 0;
     const per = {};
     for (const b of vb) {
       const s = billStatus(b, ch.filter(x => x.bill_id === b.id), pa.filter(x => x.bill_id === b.id), cr.filter(x => x.bill_id === b.id));
       billed += Number(b.total); owed += s.outstanding; covered += s.covered;
-      if (s.outstanding > 0 && b.due_date && new Date(b.due_date) < new Date(today + 'T00:00:00')) overdue += s.outstanding;
+      // 19 Nov (AJ): never assume a pay day. Overdue = a cheque we gave whose own date has passed and is not yet answered cleared. A bill with no confirmed payment date is PENDING (confirm the date), not overdue.
+      const bch = ch.filter(x => x.bill_id === b.id);
+      bch.forEach(x => { if (x.status === 'ISSUED' && x.due_date && new Date(x.due_date) < new Date(today + 'T00:00:00')) overdue += Number(x.amount) || 0; });
+      if (s.uncovered > 0) { pendingConfirm += s.uncovered; pendingBills += 1; }
       per[b.vendor_name] = r2((per[b.vendor_name] || 0) + s.outstanding);
     }
     const topVendors = Object.entries(per).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, owed]) => ({ name, owed }));
@@ -74,7 +77,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
       as_at: new Date().toISOString(), today,
       sales: S, result, bills_bad: billsBad,
       stock: { units: r2(st.units), items: Number(st.items), cost: r2(st.cost), sell: r2(st.sell), negative: Number(st.neg), no_price: Number(st.nosell) },
-      vendors: { billed: r2(billed), owed: r2(owed), overdue: r2(overdue), top: topVendors },
+      vendors: { billed: r2(billed), owed: r2(owed), overdue: r2(overdue), pending_confirm: r2(pendingConfirm), pending_bills: pendingBills, top: topVendors },
       cheques: { count: reg.length, amount: regSum, due7: { count: due7.length, amount: r2(due7.reduce((a, x) => a + Number(x.amount), 0)) }, next: reg.slice(0, 3).map(x => ({ no: x.cheque_no, payee: x.payee, amount: Number(x.amount), due: x.due })) },
       grn: { received: r2(grn.amt), pending_delivery: r2(pend) },
       checks: [
