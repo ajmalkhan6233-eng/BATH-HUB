@@ -63,7 +63,12 @@ const OWNER_DIGITS = require('./layla_owner/ownerGate').normalizeNumber(process.
 const app = express();
 app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
+// 19 Nov (AJ): the QR screen would not scan. Alternative: link with an 8-letter CODE typed into the phone (WhatsApp > Linked devices > Link a device > Link with phone number instead).
+// Turned on only when WA_PAIR_PHONE is set (digits with country code, the number of the WhatsApp that sends the receipts). Never logged to a file other than the console and /pair on this PC.
+const PAIR_PHONE = String(process.env.WA_PAIR_PHONE || '').replace(/\D/g, '');
+let lastCode = null;
 const client = new Client({
+    ...(PAIR_PHONE ? { pairWithPhoneNumber: { phoneNumber: PAIR_PHONE, showNotification: true, intervalMs: 180000 } } : {}),
     authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),   // absolute: the login must not depend on which folder pm2 or a scheduled task started us from
     puppeteer: {
         headless: true,
@@ -128,8 +133,14 @@ client.on('qr', (qr) => {
     console.log(`[WA-BRIDGE] Or open http://localhost:${PORT}/qr in a browser — it refreshes automatically.`);
 });
 
+client.on('code', (code) => {
+    lastCode = code;
+    console.log('\n[WA-BRIDGE] PAIRING CODE: ' + code + '  (phone: WhatsApp > Settings > Linked devices > Link a device > Link with phone number instead)');
+});
+
 client.on('ready', () => {
     ready = true;
+    lastCode = null;
     lastQR = null;
     lastLivenessOkAt = Date.now(); // we just connected, count that as a pass
     lastLivenessError = null;
@@ -331,6 +342,14 @@ app.post('/check', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.get('/pair', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const body = ready ? '<h1 style="color:#2ecc71">LINKED</h1><p>WhatsApp is linked and ready.</p>'
+        : (lastCode ? '<p>On your phone: WhatsApp > Settings > Linked devices > Link a device > Link with phone number instead. Type this code:</p><h1 style="font-size:64px;letter-spacing:8px">' + String(lastCode).replace(/[^A-Za-z0-9-]/g, '') + '</h1><p>The code changes every few minutes; this page refreshes.</p>'
+            : '<h2>Waiting for a code from WhatsApp...</h2>' + (PAIR_PHONE ? '' : '<p>WA_PAIR_PHONE is not set, so only the QR page works.</p>'));
+    res.send('<!doctype html><html><head><meta http-equiv="refresh" content="5"><title>WhatsApp pairing code</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;background:#0a0f0a;color:#eee">' + body + '</body></html>');
 });
 
 app.get('/qr', async (req, res) => {
