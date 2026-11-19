@@ -22,6 +22,35 @@
     (root || document).querySelectorAll('input:not([type=hidden]),select,textarea').forEach(nameField);
     (root || document).querySelectorAll('button,[role=button],a[href]').forEach(nameButton);
   }
-  function start() { run(); if (window.MutationObserver) { var t; new MutationObserver(function () { clearTimeout(t); t = setTimeout(run, 150); }).observe(document.body, { childList: true, subtree: true }); } }
+  function start() { run(); if (window.MutationObserver) { var t; var q = []; new MutationObserver(function (m) { m.forEach(function (r) { [].forEach.call(r.addedNodes, function (n) { if (n.nodeType === 1) q.push(n); }); }); clearTimeout(t); t = setTimeout(function () { var l = q.splice(0); l.forEach(function (n) { if (n.isConnected) { run(n); if (n.matches && n.matches('input,select,textarea')) nameField(n); if (n.matches && n.matches('button,[role=button],a[href]')) nameButton(n); } }); }, 150); }).observe(document.body, { childList: true, subtree: true }); } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+/* INPUT HELP (Ajmal 2026-11-04), shared by every page that loads this file:
+   1. A box that holds only a hint in brackets, like "(no number on slip)", is cleared the moment you click or tab into it.
+   2. A number box that shows 0 is selected on click, so what you type replaces it.
+   3. Inside any element marked data-enter-next, Enter jumps to the next box (like Tab). Last box: nothing happens. */
+(function () {
+  if (window.__rbhInputHelp) return; window.__rbhInputHelp = true;
+  var HINT = /^\s*[\(\[][^\)\]]{1,60}[\)\]]\s*$/;
+  document.addEventListener('focusin', function (e) {
+    var t = e.target; if (!t || t.tagName !== 'INPUT' || t.readOnly || t.disabled) return;
+    var ty = (t.type || 'text').toLowerCase();
+    if ((ty === 'text' || ty === 'search') && HINT.test(t.value)) { t.value = ''; t.dispatchEvent(new Event('input', { bubbles: true })); return; }
+    if (ty === 'number' && /^0(\.0+)?$/.test(t.value)) { try { t.select(); } catch (x) {} }
+  });
+  /* Enter = Tab on every form (Ajmal 2026-11-15). Skips search/scan boxes, chat boxes, textareas, buttons, and anything a page already handled itself. */
+  var SKIP = /search|scan|barcode|chat|ask|message/i;
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.defaultPrevented || e.isComposing || e.keyCode === 229) return;
+    var t = e.target; if (!t || !t.closest || (t.tagName !== 'INPUT' && t.tagName !== 'SELECT')) return;
+    var ty = (t.type || 'text').toLowerCase();
+    if (/^(button|submit|checkbox|radio|file|hidden|search|reset|image|range|color)$/.test(ty)) return;
+    if (t.closest('[data-no-enter-next]') || t.getAttribute('role') === 'combobox' || t.getAttribute('aria-autocomplete')) return;
+    if (SKIP.test((t.placeholder || '') + ' ' + (t.id || '') + ' ' + (t.name || ''))) return;
+    var box = t.closest('[data-enter-next],form,.modal,.box,.card,main,body') || document.body;
+    var all = [].slice.call(box.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button]):not([type=submit]):not([disabled]):not([readonly]),select,textarea')).filter(function (x) { return x.offsetParent && x.tabIndex !== -1; });
+    var i = all.indexOf(t); if (i < 0 || i === all.length - 1) return;
+    e.preventDefault(); if (typeof t.onchange === 'function') try { t.onchange(); } catch (x) {}
+    var n = all[i + 1]; n.focus(); try { n.select(); } catch (x) {}
+  });
 })();

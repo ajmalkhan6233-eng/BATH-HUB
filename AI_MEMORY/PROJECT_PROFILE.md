@@ -12,8 +12,8 @@
 - AGENT_GUIDE/ (rules 01-18; READ 09 and 15 before edits), docs/, SESSION_LOG.md
 
 ## PROTECTED CONTENT (never read into memory, edit, export, commit, or send)
-- Live shop data (live system C:\BATHCO_PHASE1, Railway project bathco-production / alert-cooperation)
-- Lasersoft ERP exports in C:\Bathco\AI-Data\ (folder not found from this PC at inspection: UNKNOWN location)
+- Former workplace live system, history only, never touch (C:\BATHCO_PHASE1, Railway project bathco-production / alert-cooperation)
+- Former workplace Lasersoft exports in C:\Bathco\AI-Data\ (history only, not RBH data) (folder not found from this PC at inspection: UNKNOWN location)
 - Any customer or financial records: sales, payments, cheques, supplier, staff salary/loans, customer chats
 - Golden core (AGENT_GUIDE/09): financial regions of server.js, routes/purchasing_accounting.js, staff_reports.js, audit.js, scripts/daily_reconciliation_check.js, scripts/layla_answer_engine.js
 - Financial tables, never ALTER: daily_summary, expenses, payments, lasersoft_invoices, supplier_*, cheques, staff_salary, staff_loans

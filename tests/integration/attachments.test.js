@@ -34,6 +34,15 @@ describe('attachments', () => {
     expect(dl.status).toBe(200);
     expect(Buffer.compare(dl.body, PNG)).toBe(0);
   });
+  test('Remove hides the file everywhere but keeps it on disk; only admin; unknown id 404', async () => {
+    const up = await request(admin).post('/api/attachments').field('record_type', 'grn').field('record_id', 'RM1').attach('file', PNG, 'x.png');
+    expect((await request(appAs('staff')).delete('/api/attachments/' + up.body.id)).status).toBe(403);
+    expect((await request(admin).delete('/api/attachments/' + up.body.id)).status).toBe(200);
+    expect((await request(admin).get('/api/attachments?record_type=grn&record_id=RM1')).body).toEqual([]);
+    expect((await request(admin).get(up.body.download_url)).status).toBe(404);
+    expect((await request(admin).delete('/api/attachments/' + up.body.id)).status).toBe(404);
+    expect(fs.readdirSync(DIR).length).toBeGreaterThan(before.size);       // the file is still there
+  });
   test('a file that is not really an image is refused, whatever its name', async () => {
     const r = await request(admin).post('/api/attachments').field('record_type', 'stock').field('record_id', 'T2').attach('file', Buffer.from('MZ not an image'), 'fake.png');
     expect(r.status).toBe(400);

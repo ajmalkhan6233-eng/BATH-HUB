@@ -34,13 +34,21 @@ function sniff(buf) {
     if (buf.length > 12 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'jpg';
     if (buf.length > 8 && buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return 'png';
     if (buf.length > 5 && buf.slice(0, 5).toString() === '%PDF-') return 'pdf';
+    // voice notes (WhatsApp .ogg/.opus, phone recorder .m4a/.mp3/.wav, browser recorder .webm)
+    if (buf.length > 12 && buf.slice(0, 4).toString() === 'OggS') return 'ogg';
+    if (buf.length > 12 && buf.slice(4, 8).toString() === 'ftyp') return 'm4a';
+    if (buf.length > 12 && (buf.slice(0, 3).toString() === 'ID3' || (buf[0] === 0xFF && (buf[1] & 0xE0) === 0xE0))) return 'mp3';
+    if (buf.length > 12 && buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WAVE') return 'wav';
+    if (buf.length > 12 && buf[0] === 0x1A && buf[1] === 0x45 && buf[2] === 0xDF && buf[3] === 0xA3) return 'webm';
     return null;
 }
 
+const isAudioExt = e => ['ogg', 'm4a', 'mp3', 'wav', 'webm'].includes(e);
+const AUDIO_MIME = { ogg: 'audio/ogg', m4a: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav', webm: 'audio/webm' };
 const parse = r => ({ ...r, extracted: (() => { try { return JSON.parse(r.extracted); } catch (e) { return {}; } })() });
 const present = r => {
     const p = parse(r), meta = F.DOC_TYPES[p.doc_type] || F.DOC_TYPES.unknown;
-    return { ...p, type_label: meta.label, files_to: meta.files_to, fileable: !!meta.files_to, has_photo: true };
+    return { ...p, type_label: meta.label, files_to: meta.files_to, fileable: !!meta.files_to, has_photo: !!p.file_path };
 };
 // GRN: which supplier is this, and which catalogue item is each line? Items are created in the catalogue first, so a
 // line is matched by its item code (exact), else by its exact name. Reads only; a missing table just means "no match".
@@ -66,18 +74,48 @@ async function matchGrn(db, ex) {
     }
     return out;
 }
+// Credit entries: which customer is this? Exact name first, else a name that contains / is contained (min 3 letters). Reads only.
+async function matchCustomer(db, name) {
+    const want = String(name || '').trim().toLowerCase();
+    if (!want) return { found: 'none', customers: [] };
+    let all = [];
+    try { all = (await db.query(`SELECT id, name, phone FROM customers`)).rows; } catch (e) { return { found: 'none', customers: [] }; }
+    const low = r => String(r.name || '').trim().toLowerCase();
+    let hits = all.filter(r => low(r) === want);
+    if (!hits.length && want.length >= 3) hits = all.filter(r => low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r))));
+    return { found: hits.length === 1 ? 'one' : hits.length ? 'many' : 'none', customers: hits.slice(0, 5).map(r => ({ id: r.id, name: r.name, phone: r.phone })) };
+}
+async function openInvoices(db, customerId, lock) {
+    const sql = lock
+        ? 'SELECT id, invoice_no, invoice_date, amount, paid FROM credit_customers WHERE customer_id = $1 AND quarantined IS NOT TRUE ORDER BY invoice_date, id FOR UPDATE'
+        : 'SELECT id, invoice_no, invoice_date, amount, paid FROM credit_customers WHERE customer_id = $1 AND quarantined IS NOT TRUE ORDER BY invoice_date, id';
+    return (await db.query(sql, [customerId])).rows;
+}
 const bad = (status, msg) => { const e = new Error(msg); e.status = status; return e; };
 
-function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
+function createRouter(pool, { ocr, inboxRoot, fileDaySheet, voice } = {}) {
     const router = express.Router();
     // what the screen gets: the row, plus (for a GRN waiting to be checked) which supplier / items were recognised
     const view = async row => {
         const p = present(row);
         if (p.doc_type === 'grn' && p.status === 'to_check') p.match = await matchGrn(pool, p.extracted);
+        if ((p.doc_type === 'credit_given' || p.doc_type === 'credit_paid') && p.status === 'to_check') {
+            const c = await matchCustomer(pool, p.extracted.customer_name);
+            p.match = { ...c };
+            if (c.found === 'one') {
+                try {
+                    const inv = await openInvoices(pool, c.customers[0].id);
+                    const a = F.allocatePayment(inv, p.doc_type === 'credit_paid' ? (p.extracted.amount || 0) : 0);
+                    p.match.outstanding = a.outstanding;
+                    if (p.doc_type === 'credit_paid') { p.match.applied = a.applied; p.match.remaining = a.remaining; }
+                } catch (e) { /* no credit table: no preview */ }
+            }
+        }
         return p;
     };
     const ROOT = path.resolve(inboxRoot || path.join(process.env.DROP_ROOT || path.join(__dirname, '..', 'data', 'drop'), 'inbox'));
     const reader = ocr || (async (p) => require('../scripts/ocr_photo').ocrPhoto(p));
+    const listenVoice = voice || (async (buffer, mime) => { let hints = null; try { hints = { customers: (await pool.query(`SELECT name FROM customers ORDER BY id DESC LIMIT 80`)).rows.map(r => r.name) }; } catch (e) { /* no customers table: no hints */ } return require('../utils/geminiVoice').geminiVoice({ key: process.env.GEMINI_API_KEY, buffer, mime, hints }); });
 
     const ready = pool.query(`CREATE TABLE IF NOT EXISTS document_inbox (
         id SERIAL PRIMARY KEY,
@@ -94,7 +132,21 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
         filed_id TEXT,
         filed_note TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        filed_at TIMESTAMPTZ)`).catch(e => console.error('[document_inbox] init failed:', e.message));
+        filed_at TIMESTAMPTZ)`)
+        // file fingerprint: the same photo cannot be saved twice (added 2026-10-21; old rows simply have none)
+        .then(() => pool.query(`ALTER TABLE document_inbox ADD COLUMN IF NOT EXISTS sha256 VARCHAR(64)`))
+        .then(() => pool.query(`CREATE INDEX IF NOT EXISTS idx_document_inbox_sha256 ON document_inbox (sha256)`))
+        .catch(e => console.error('[document_inbox] init failed:', e.message));
+
+    // The same file (same bytes) already waiting or already filed? Rejected ones may be sent again on purpose.
+    const sha256Of = buf => crypto.createHash('sha256').update(buf).digest('hex');
+    // store the fingerprint AFTER the row is saved: if this ever fails (old database, rights), saving a paper still works
+    const tagSha = (id, sha) => (sha && id ? pool.query(`UPDATE document_inbox SET sha256 = $1 WHERE id = $2`, [sha, id]).catch(() => {}) : null);
+    async function findSame(sha) {
+        if (!sha) return null;
+        try { return (await pool.query(`SELECT * FROM document_inbox WHERE sha256 = $1 AND status IN ('to_check','filed') ORDER BY id DESC LIMIT 1`, [sha])).rows[0] || null; }
+        catch (e) { return null; }   // a lookup problem must never block saving a paper
+    }
 
     // Reads a saved photo and returns the row fields to store. Never throws: a failed read keeps the photo for manual entry.
     async function readPhoto(filePath, hintType) {
@@ -111,6 +163,10 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     // Used by the WhatsApp webhook and the upload route: one inbox row per photo.
     async function record({ source, from_ref = '', original_name = '', file_path, ocr_result = null, doc_type = null, reader_note = '' }) {
         await ready;
+        let sha = null;
+        try { if (file_path && fs.existsSync(file_path)) sha = sha256Of(fs.readFileSync(file_path)); } catch (e) { sha = null; }
+        const same = await findSame(sha);
+        if (same) return { ...present(same), duplicate: true };   // the same photo again (WhatsApp resend): keep the first row only
         let type = doc_type, ex = {}, conf = '', note = reader_note;
         if (ocr_result) {
             type = type || F.typeFromOcr(ocr_result);
@@ -122,9 +178,35 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
         const r = await pool.query(
             `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
             [source, String(from_ref), String(original_name).slice(0, 200), file_path, type, JSON.stringify(ex), conf, note]);
+        await tagSha(r.rows[0].id, sha);
         return present(r.rows[0]);
     }
     router.record = record;
+
+    // A voice note (the owner dictated a day's expenses or sales) -> ONE inbox row, with the audio kept beside it so it can be played back.
+    // It is a DRAFT like every other paper: nothing is filed until Confirm, and the daily-summary merge still refuses to overwrite figures already there.
+    async function recordVoice({ entry, buffer, mime = 'audio/ogg', original = '', english = '', warnings = [], confidence = '', from = '', engine = '' }) {
+        await ready;
+        if (!entry || !['expense_list', 'day_sheet', 'credit_given', 'credit_paid', 'customer_create'].includes(entry.kind)) throw bad(400, 'Not an expense list, a day sheet, a credit entry or a new customer');
+        const ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /mpeg|mp3/.test(mime) ? 'mp3' : /webm/.test(mime) ? 'webm' : /wav/.test(mime) ? 'wav' : 'ogg';
+        const dir = path.join(ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
+        const file = path.join(dir, `${Date.now()}-voice-${crypto.randomBytes(3).toString('hex')}.${ext}`);
+        fs.writeFileSync(file, buffer);
+        const type = entry.kind === 'expense_list' ? 'expense_sheet' : entry.kind;
+        const usedToday = !entry.date;
+        const isCredit = entry.kind === 'credit_given' || entry.kind === 'credit_paid' || entry.kind === 'customer_create';
+        const ex = isCredit ? F.normalize(type, { customer_name: entry.party, phone: entry.phone, amount: entry.amount, date: entry.date || todayLK(), notes: entry.note }) : F.normalize(type, {
+            date: entry.date || todayLK(), total_expenses: entry.total_expenses, total_sale: entry.total_sale, cash_sale: entry.cash_sale,
+            card_sale: entry.card_sale, online_sale: entry.online_sale, credit_sale: entry.credit_sale,
+            expense_items: (entry.items || []).map(i => `${i.name} ${i.amount}`).join('; '),
+        });
+        const note = [`Voice note${engine ? ' (' + engine + ')' : ''}. Said: "${String(original).slice(0, 300)}"`, english && english !== original ? `English: "${String(english).slice(0, 300)}"` : '', usedToday ? 'No date was said: today was used.' : '', ...(warnings || [])].filter(Boolean).join(' ').slice(0, 500);
+        const r = await pool.query(
+            `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('voice',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+            [String(from), 'voice note', file, type, JSON.stringify(ex), String(confidence || ''), note]);
+        return present(r.rows[0]);
+    }
+    router.recordVoice = recordVoice;
 
     // ── intake: direct upload ───────────────────────────────────────────────
     const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_BYTES, files: 1 } });
@@ -136,20 +218,45 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             await ready;
             if (!req.file) return res.status(400).json({ error: 'Choose a photo to upload' });
             const ext = sniff(req.file.buffer);
-            if (!ext) return res.status(400).json({ error: 'That file is not a photo (JPG or PNG) or a PDF' });
+            if (!ext) return res.status(400).json({ error: 'That file is not a photo (JPG or PNG), a PDF or a voice note' });
             const hint = String(req.body && req.body.doc_type || '').trim();
             if (hint && hint !== 'auto' && !F.DOC_TYPES[hint]) return res.status(400).json({ error: 'Unknown paper type' });
+            const sha = sha256Of(req.file.buffer);
+            const same = await findSame(sha);
+            if (same) return res.status(200).json({ ...(await view(same)), duplicate: true, reader_note: `Same file as inbox item #${same.id} (${same.status === 'filed' ? 'already filed' : 'waiting to be checked'}). Not saved again.` });
             const dir = path.join(ROOT, todayLK());
             fs.mkdirSync(dir, { recursive: true });
             const file = path.join(dir, `${Date.now()}-upload-${crypto.randomBytes(3).toString('hex')}.${ext}`);
             fs.writeFileSync(file, req.file.buffer);
             const hintType = hint && hint !== 'auto' ? hint : null;
-            const read = ext === 'pdf'
-                ? { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: 'PDFs are saved but not read. Choose the type and type the details in, or send a photo.' }
-                : await readPhoto(file, hintType);
+            let read;
+            if (isAudioExt(ext)) {
+                // a voice note: listen (Sinhala / Tamil / English), and when a day's expenses or sales were dictated, fill the figures. A draft only.
+                const v = await Promise.resolve(listenVoice(req.file.buffer, AUDIO_MIME[ext])).catch(e => ({ ok: false, reason: e.message }));
+                const vEntries = v && v.ok ? (v.entries && v.entries.length ? v.entries : (v.entry ? [v.entry] : [])).filter(e => e && e.kind !== 'none') : [];
+                if (vEntries.length) {
+                    fs.unlinkSync(file);
+                    const who = String((req.session.user && req.session.user.username) || '');
+                    let first = null, extra = 0;
+                    for (const en of vEntries) {   // one voice note can hold expenses AND a loan: one draft each
+                        const row = await recordVoice({ entry: en, buffer: req.file.buffer, mime: AUDIO_MIME[ext], original: v.text, english: v.english, warnings: v.warnings, confidence: v.confidence, from: who, engine: v.model });
+                        await tagSha(row.id, sha);   // fingerprint (a voice note may make several drafts; all carry it)
+                        if (!first) first = row; else extra++;
+                    }
+                    const out = await view((await pool.query(`SELECT * FROM document_inbox WHERE id = $1`, [first.id])).rows[0]);
+                    return res.status(201).json(extra ? { ...out, also_made: extra, reader_note: `${out.reader_note || ''} The same note had ${extra} more entry(ies): drafts were made for them too.`.trim() } : out);
+                }
+                const said = v && v.ok ? `Heard: "${String(v.text).slice(0, 300)}"${v.english && v.english !== v.text ? ` (English: "${String(v.english).slice(0, 300)}")` : ''}. It was not a list of the day's expenses or sales, so nothing was filled in. Choose the type and type the details in.` : `Could not listen to the voice note (${String((v && v.reason) || 'unknown').slice(0, 120)}). Choose the type and type the details in.`;
+                read = { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: said };
+            } else if (ext === 'pdf' && !process.env.GEMINI_API_KEY && !ocr) {
+                read = { doc_type: hintType || 'unknown', extracted: F.normalize(hintType || 'unknown', {}), confidence: '', reader_note: 'PDFs can only be read when the Gemini key is set. It is saved: choose the type and type the details in, or send a photo.' };
+            } else {
+                read = await readPhoto(file, hintType);   // photos, and PDFs (Gemini reads a PDF directly)
+            }
             const row = await pool.query(
                 `INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('upload',$1,$2,$3,$4,$5,$6,$7) RETURNING *`,
                 [String((req.session.user && req.session.user.username) || ''), String(req.file.originalname || '').slice(0, 200), file, read.doc_type, JSON.stringify(read.extracted), read.confidence, read.reader_note]);
+            await tagSha(row.rows[0].id, sha);
             res.status(201).json(await view(row.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
@@ -183,7 +290,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
     }
 
     // Aj changes the type and/or the fields.
-    router.put('/document-inbox/:id', ownerOnly, async (req, res) => {
+    const putHandler = async (req, res) => {
         try {
             await ready;
             const row = await load(req.params.id);
@@ -196,7 +303,8 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const u = await pool.query(`UPDATE document_inbox SET doc_type = $1, extracted = $2 WHERE id = $3 RETURNING *`, [type, JSON.stringify(ex), row.id]);
             res.json(await view(u.rows[0]));
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
-    });
+    };
+    router.put('/document-inbox/:id', ownerOnly, putHandler);
 
     // Read the photo again (e.g. the reader was down the first time).
     router.post('/document-inbox/:id/reread', ownerOnly, async (req, res) => {
@@ -213,7 +321,7 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
         } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
     });
 
-    router.post('/document-inbox/:id/reject', ownerOnly, async (req, res) => {
+    const rejectHandler = async (req, res) => {
         try {
             await ready;
             const row = await load(req.params.id);
@@ -222,10 +330,11 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             const u = await pool.query(`UPDATE document_inbox SET status = 'rejected', filed_at = NOW() WHERE id = $1 RETURNING *`, [row.id]);
             res.json(await view(u.rows[0]));
         } catch (e) { res.status(500).json({ error: e.message }); }
-    });
+    };
+    router.post('/document-inbox/:id/reject', ownerOnly, rejectHandler);
 
     // ── confirm and file ────────────────────────────────────────────────────
-    router.post('/document-inbox/:id/file', ownerOnly, async (req, res) => {
+    const fileHandler = async (req, res) => {
         let client;
         try {
             await ready;
@@ -291,6 +400,39 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
                     `INSERT INTO cheque_register (cheque_no, bank, payee, amount, due_date, notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
                     [ex.cheque_number || null, ex.bank || null, ex.payee, F.money2(ex.amount), ex.due_date, `From paper (document #${row.id})${ex.direction ? ', ' + ex.direction : ''}. ${ex.notes}`.trim()]);
                 filed_to = 'cheque_register'; filed_id = String(ins.rows[0].id); note = `Cheque to ${ex.payee}, ${F.money2(ex.amount)}, due ${ex.due_date}`;
+            } else if (type === 'credit_given' || type === 'credit_paid') {
+                const c = await matchCustomer(pool, ex.customer_name);
+                if (c.found === 'none') throw bad(400, `Customer "${ex.customer_name}" is not in your Customers list. Add them in Customers first, or correct the name.`);
+                if (c.found === 'many') throw bad(400, `More than one customer matches "${ex.customer_name}" (${c.customers.map(x => x.name).join(', ')}). Type the full name exactly as in Customers.`);
+                const cust = c.customers[0];
+                if (type === 'credit_given') {
+                    const ins = await client.query(
+                        `INSERT INTO credit_customers (customer_id, invoice_date, invoice_no, amount, paid, due_date, notes) VALUES ($1,$2,$3,$4,0,$5,$6) RETURNING id`,
+                        [cust.id, ex.date, `VOICE-${row.id}`, F.money2(ex.amount), ex.due_date || null, `From ${row.source === 'voice' ? 'a voice note' : 'a paper'} (document #${row.id}). ${ex.notes}`.trim()]);
+                    filed_to = 'credit_customers'; filed_id = String(ins.rows[0].id); note = `Credit of ${F.money2(ex.amount)} to ${cust.name} (invoice VOICE-${row.id})`;
+                } else {
+                    const a = F.allocatePayment(await openInvoices(client, cust.id, true), ex.amount);
+                    if (!a.applied.length) throw bad(400, `${cust.name} owes nothing on credit, so there is nothing to settle.`);
+                    if (a.remaining > 0) throw bad(400, `${cust.name} owes only ${a.outstanding}, but ${F.money2(ex.amount)} was paid. Check the amount.`);
+                    for (const x of a.applied) await client.query(`UPDATE credit_customers SET paid = COALESCE(paid, 0) + $1 WHERE id = $2`, [x.apply, x.id]);
+                    filed_to = 'credit_customers'; filed_id = a.applied.map(x => x.id).join(',');
+                    note = `${cust.name} paid ${F.money2(ex.amount)}: settled ${a.applied.map(x => `${x.invoice_no || '#' + x.id} (${x.apply}${x.left > 0 ? ', ' + x.left + ' still owed' : ''})`).join(', ')}. Cash received is NOT added to the day's sales: enter it on the day sheet.`;
+                }
+            } else if (type === 'customer_create') {
+                const want = ex.customer_name.trim().toLowerCase();
+                const all = (await client.query(`SELECT id, name, phone FROM customers`)).rows;
+                const same = all.filter(r => String(r.name || '').trim().toLowerCase() === want);
+                if (same.length) throw bad(409, `A customer called "${same[0].name}" already exists (id ${same[0].id}). Nothing was made. To add credit for them, use "credit" instead.`);
+                const like = all.filter(r => { const n = String(r.name || '').trim().toLowerCase(); return n.length >= 3 && want.length >= 3 && (n.includes(want) || want.includes(n)); });
+                if (like.length && (req.body || {}).accept_warnings !== true) throw Object.assign(bad(409, `Similar customer already there: ${like.slice(0, 3).map(r => r.name).join(', ')}. Make a new one anyway?`), { code: 'needs_confirmation', warnings: [`Similar customer: ${like.slice(0, 3).map(r => r.name).join(', ')}`] });
+                if (ex.phone && all.some(r => String(r.phone || '').replace(/\D/g, '') === ex.phone.replace(/\D/g, ''))) throw bad(409, 'That phone number already belongs to another customer.');
+                const phone = ex.phone || `NOPHONE-${row.id}`;   // the Customers table needs a unique phone: a clear placeholder until the real one is added
+                const ins = await client.query(`INSERT INTO customers (name, phone, notes) VALUES ($1,$2,$3) RETURNING id`, [ex.customer_name, phone, `Made from ${row.source === 'voice' ? 'a voice note' : 'a message'} (document #${row.id}).${ex.phone ? '' : ' Phone not given yet.'} ${ex.notes}`.trim()]);
+                filed_to = 'customers'; filed_id = String(ins.rows[0].id); note = `Customer ${ex.customer_name} made${ex.phone ? '' : ' (no phone yet: add it in Customers)'}`;
+                if (ex.amount > 0) {
+                    await client.query(`INSERT INTO credit_customers (customer_id, invoice_date, invoice_no, amount, paid, due_date, notes) VALUES ($1,$2,$3,$4,0,NULL,$5)`, [ins.rows[0].id, ex.date, `OPENING-${row.id}`, F.money2(ex.amount), `Opening credit balance (document #${row.id}). ${ex.notes}`.trim()]);
+                    note += `, opening credit Rs ${F.money2(ex.amount)}`;
+                }
             } else if (type === 'day_sheet' || type === 'expense_sheet') {
                 if (!fileDaySheet) throw bad(501, 'Filing daily sheets is not available here');
                 const out = await fileDaySheet(ex);
@@ -303,11 +445,47 @@ function createRouter(pool, { ocr, inboxRoot, fileDaySheet } = {}) {
             res.json({ ...present(done.rows[0]), warnings: v.warnings });
         } catch (e) {
             if (client) await client.query('ROLLBACK').catch(() => {});
-            res.status(e.status || 500).json({ error: e.status ? e.message : `Could not file it (nothing was saved): ${e.message}` });
+            res.status(e.status || 500).json({ error: e.status ? e.message : `Could not file it (nothing was saved): ${e.message}`, ...(e.code === 'needs_confirmation' ? { code: e.code, warnings: e.warnings } : {}) });
         } finally {
             if (client) client.release();
         }
-    });
+    };
+    router.post('/document-inbox/:id/file', ownerOnly, fileHandler);
+
+    // The WhatsApp owner chat runs the SAME handlers (same checks, same filing code) without a browser session. The caller has already checked it is the owner.
+    router.act = async (action, id, body = {}) => {
+        const handler = { edit: putHandler, reject: rejectHandler, file: fileHandler }[action];
+        if (!handler) throw new Error('unknown action');
+        const out = { status: 200, body: null };
+        const res = { status(c) { out.status = c; return this; }, json(b) { out.body = b; return this; } };
+        await handler({ params: { id: String(id) }, body, query: {}, session: { user: { username: 'whatsapp-owner', role: 'owner' } } }, res);
+        return out;
+    };
+    router.customerLike = async (name) => {   // exact and similar customers for a new-customer draft. Reads only.
+        const want = String(name || '').trim().toLowerCase();
+        let all = []; try { all = (await pool.query(`SELECT id, name FROM customers`)).rows; } catch (e) { return { exact: [], similar: [] }; }
+        const low = r => String(r.name || '').trim().toLowerCase();
+        return { exact: all.filter(r => low(r) === want), similar: want.length >= 3 ? all.filter(r => low(r) !== want && low(r).length >= 3 && (low(r).includes(want) || want.includes(low(r)))) : [] };
+    };
+    router.owing = async () => {   // who owes on credit and is past their date (reads only)
+        let r = []; try { r = (await pool.query(`SELECT cc.customer_id, c.name, c.phone, cc.amount, cc.paid, cc.due_date, cc.invoice_date, cc.quarantined FROM credit_customers cc JOIN customers c ON c.id = cc.customer_id`)).rows; } catch (e) { return []; }
+        const by = new Map(); const today = todayLK(); const iso = d => (d instanceof Date ? d.toISOString() : String(d || '')).slice(0, 10);
+        for (const x of r) {
+            const left = Number(x.amount || 0) - Number(x.paid || 0); if (!(left > 0) || x.quarantined) continue;
+            const inv = iso(x.invoice_date); const due = iso(x.due_date) || (inv ? new Date(Date.parse(inv) + 30 * 864e5).toISOString().slice(0, 10) : '');
+            if (!due || due >= today) continue;
+            const e = by.get(x.customer_id) || { name: x.name, phone: x.phone, owed: 0, since: due }; e.owed += left; if (due < e.since) e.since = due; by.set(x.customer_id, e);
+        }
+        return [...by.values()].sort((a, b) => b.owed - a.owed).slice(0, 8);
+    };
+    router.list = async (status = 'to_check') => (await pool.query(`SELECT * FROM document_inbox WHERE status = $1 ORDER BY id DESC LIMIT 50`, [status])).rows.map(present);
+    router.recordText = async ({ type, fields, from = '', note = '' }) => {
+        await ready;
+        if (!F.DOC_TYPES[type]) throw bad(400, 'Unknown paper type');
+        const r = await pool.query(`INSERT INTO document_inbox (source, from_ref, original_name, file_path, doc_type, extracted, confidence, reader_note) VALUES ('whatsapp',$1,'typed message','',$2,$3,'',$4) RETURNING *`,
+            [String(from), type, JSON.stringify(F.normalize(type, fields)), String(note).slice(0, 400)]);
+        return present(r.rows[0]);
+    };
 
     return router;
 }

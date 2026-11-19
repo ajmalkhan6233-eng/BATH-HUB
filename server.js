@@ -1,3 +1,4 @@
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';   // no "injected env" noise at start-up; real errors still show
 require('dotenv').config();
 require('./utils/timezone');   // Sri Lanka time for JS dates and Postgres sessions
 require('./utils/startupChecks').run();   // prints warnings for PETTY_CASH_FLOAT / backup-copy settings that are missing
@@ -120,6 +121,8 @@ const PORT = process.env.PORT || 3000;
 
 // Must be first — bypasses all middleware so Railway's health probe always gets 200
 app.get('/health', (req, res) => res.json({ ok: true }));
+// deep check: proves the database answers (watchdog can use this instead of /health)
+app.get('/health/deep', async (req, res) => { try { await require('./utils/pool').query('SELECT 1'); res.json({ ok: true, db: true }); } catch (e) { res.status(503).json({ ok: false, db: false }); } });
 
 // ─── SESSION-BASED LOGIN (per-user accounts, role-based access) ───────────────
 const session = require('express-session');
@@ -140,7 +143,7 @@ if (process.env.NODE_ENV === 'production' && (!process.env.ADMIN_PIN || process.
 // Trusts ngrok's X-Forwarded-Proto so cookie.secure:'auto' below marks the
 // session cookie HTTPS-only when reached via the ngrok tunnel, while still
 // allowing plain http://localhost access for local dev.
-app.set('trust proxy', 1);
+app.set('trust proxy', 'loopback'); // only the local tunnel may set X-Forwarded-For (was 1 = any direct caller could fake its IP)
 
 // ─── SECURITY HARDENING ───────────────────────────────────────────────────────
 // CSP intentionally left off: BATHCO_NATURE.html and dashboard.html rely on
@@ -180,8 +183,10 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, secure: 'auto', maxAge: 12 * 60 * 60 * 1000 },
+    cookie: { httpOnly: true, secure: 'auto', sameSite: 'lax', maxAge: 12 * 60 * 60 * 1000 },   // FIX 2: sameSite lax
 }));
+
+app.use(require('./utils/csrfGuard').csrfGuard());   // FIX 2: refuse logged-in actions that come from another website
 
 // Brute-force limits on the two guessable secrets (password, 4-digit admin PIN). Only FAILED
 // attempts count; a correct login/PIN does not use up the allowance. Loopback is not exempt here.
@@ -192,13 +197,17 @@ const failedAuthLimiter = (max) => rateLimit({
 });
 app.use('/api/login', failedAuthLimiter(10));
 app.use('/api/admin/verify', failedAuthLimiter(5));
+app.use('/api/auth/verify-totp', failedAuthLimiter(5));
 // HARDENING: per-IP limits on the public website API (shop-network devices are not counted) + strict security headers (CSP with hashes) on the public site.
 app.use('/api/site/public', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/public/catalogue', require('./utils/hardening').publicApiLimiter({ skipPrivate: true }));
 app.use('/api/site/photo', require('./utils/hardening').publicFileLimiter({ skipPrivate: true }));
 app.use(['/site', '/api/site'], require('./utils/hardening').siteSecurityHeaders());
 
-app.use(bodyParser.json({ limit: '1mb' }));
+// Routes that carry photos (data-URLs) parse their own bigger JSON (14 MB, 8 MB, 16 MB). The global 1 MB parser used to run first and refused a photo over about 750 KB with 413, so the save failed. Those exact routes skip it.
+const BIG_BODY = /^\/api\/(grn-workbench(\/(cheque|read|bill\/\d+))?|item-detail\/[^/]+|layla-owner\/media|sync(\/[a-z-]+)?|setup\/complete)\/?$/;
+const jsonSmall = bodyParser.json({ limit: '1mb' });
+app.use((req, res, next) => ((req.method === 'POST' || req.method === 'PUT') && BIG_BODY.test(req.path)) ? next() : jsonSmall(req, res, next));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use(require('./utils/pgInputErrors'));   // bad dates/numbers/ids that reach Postgres answer 400 with a plain message instead of 500 (bugcheck)
 app.use(['/api/public', '/api/site', '/api/sync'], require('./utils/hardening').jsonDepthGuard());   // HARDENING: refuse absurdly nested/huge JSON on public + sync endpoints
@@ -211,7 +220,7 @@ app.use(require('./middleware/tenantStatusMiddleware'));
 // DB enum (user_role) uses admin/owner/staff. These map 1:1 onto the
 // PHASE 2 role spec admin / uncle_readonly / staff — 'owner' IS
 // uncle_readonly (an investor, view-only). No new accounts
-// needed; 'uncle' (role='owner') and the 9 staff accounts already exist
+// needed; the read-only 'owner'-role viewer account (legacy username 'uncle') and the 9 staff accounts already exist
 // (see scripts/seed_accounts.js).
 // admin  : full access
 // owner  : same access as admin in this white-label template (the read-only
@@ -227,6 +236,7 @@ const STAFF_OWN_DATA = /^\/api\/staff\/(\d+)\/(salary|loans)$/;
 // code needs to change back. This does NOT touch the auth code itself
 // (login/logout/RBAC all still work if someone hits them directly).
 const LOGIN_DISABLED = process.env.LOGIN_DISABLED === 'true';
+if (LOGIN_DISABLED && process.env.NODE_ENV === 'production') { console.error('REFUSED: LOGIN_DISABLED=true is not allowed when NODE_ENV=production'); process.exit(1); }
 let _bypassUserCache = null;
 async function getBypassUser() {
     if (_bypassUserCache) return _bypassUserCache;
@@ -237,18 +247,32 @@ async function getBypassUser() {
     return _bypassUserCache;
 }
 
+// POCKET (19 Nov): the phone-app helper (utils/pocketInbox.js) runs on this PC and calls ONLY these 3 routes, from this PC itself, with the secret from .env.
+// Not for tunnel traffic (it carries X-Forwarded-For). Everything else still needs the normal login.
+const POCKET_ROUTES = [['POST', /^\/api\/pos-bills$/], ['GET', /^\/api\/pos-bills\/\d+\/receipt\.png$/], ['POST', /^\/api\/purchase-orders$/]];
+app.use(async (req, res, next) => {
+    const h = req.headers['x-pocket-secret']; if (!h) return next();
+    const sec = String(process.env.POCKET_PUSH_SECRET || '');
+    const ip = req.socket && req.socket.remoteAddress;
+    const okIp = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    let eq = false; try { eq = sec.length >= 16 && h.length === sec.length && require('crypto').timingSafeEqual(Buffer.from(String(h)), Buffer.from(sec)); } catch (e) {}
+    if (!eq || !okIp || req.headers['x-forwarded-for'] || !POCKET_ROUTES.some(([m, rx]) => m === req.method && rx.test(req.path))) return res.status(403).json({ error: 'Forbidden' });
+    const u = await getBypassUser(); if (!u) return res.status(403).json({ error: 'Forbidden' });
+    req.session.user = u; return next();
+});
+
 app.use(async (req, res, next) => {
     if (req.path.startsWith('/webhook/')) return next();
     if (req.path === '/api/login') return next();
     if (req.path === '/api/auth/verify-totp') return next();
-    if (req.path.startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
+    if (req.path.toLowerCase().startsWith('/api/setup/')) return next(); // first-run wizard (self-locks once an admin exists)
     if (req.path === '/api/branding') return next();       // branding is public chrome (name/logo/colors)
     if (req.path === '/api/money-control/viewer-requests' && req.method === 'POST') return next(); // investor/friend has no login — public request-access form
     if (req.method === 'POST' && req.path === '/api/public/enquiry') return next();                // website enquiry form: add-only, rate-limited (routes/enquiries.js)
     if (req.method === 'GET' && req.path === '/api/public/catalogue') return next();                // M5 website feed: whitelisted fields only (routes/catalogue_feed.js)
 if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/photo\/[a-f0-9]{24}\.(webp|jpg)$/.test(req.path))) return next();   // website editor: public read-only feed + tile photos
     if (req.method === 'GET' && req.path === '/api/site/catalogue.pdf') return next();                 // website: public catalogue PDF (routes/site_catalogue.js), visible tiles only, rate-limited
-    if (req.method === 'GET' && req.path.startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
+    if (req.method === 'GET' && req.path.toLowerCase().startsWith('/api/item-photos/')) return next();            // product photos shown on the public website (random file names)
     if (req.path === '/api/money-control/viewer-dashboard') return next();                        // investor/friend's token-gated limited view — no login either
 
     if (LOGIN_DISABLED && !req.session.user) {
@@ -257,7 +281,7 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
     }
 
     const user = req.session.user;
-    const isApi = req.path.startsWith('/api/');
+    const isApi = req.path.toLowerCase().startsWith('/api/');
 
     if (!user) {
         if (isApi) return res.status(401).json({ error: 'Not logged in' });
@@ -279,6 +303,14 @@ if (req.method === 'GET' && (req.path === '/api/site/public' || /^\/api\/site\/p
         const m = req.path.match(STAFF_OWN_DATA);
         if (req.method === 'GET' && m && Number(m[1]) === user.staff_id) return next();
         return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (user.role === 'cashier') {   // sells only (utils/cashierGate.js): allow-list, and any cost-like field is removed from what they get back
+        const G = require('./utils/cashierGate');
+        if (!isApi) return next();
+        if (!G.allowed(req.method, req.originalUrl.split('#')[0])) return res.status(403).json({ error: 'Not allowed for a cashier login' });
+        const _json = res.json.bind(res); res.json = (b) => _json(G.strip(b));
+        return next();
     }
 
     return res.status(403).json({ error: 'Forbidden' });
@@ -304,13 +336,15 @@ const CASH_IN_EXPR  = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
+app.get('/site', require('./utils/siteRedirect').siteRedirect());   // SITE_REDIRECT=netlify in .env sends /site to the real website; off by default
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
 app.use(require('./routes/site_catalogue'));   // website extras: /robots.txt, /sitemap.xml, /site with absolute links when SITE_URL is set, /api/site/catalogue.pdf (public)
 app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root: __dirname }));
 // The customer front page is the real website (black + gold, RBH logo). The old page public/bathhub.html is no longer shown to anyone.
 const PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || 'https://dapper-dieffenbachia-69d038.netlify.app';
 app.get('/bathhub.html', (req, res) => res.redirect(302, PUBLIC_SITE_URL));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(require('./middleware/staticFast')(path.join(__dirname, 'public')));   // SPEED: gzip + ETag for screens (middleware/staticFast.js); remove this line to turn off
+app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, f) => { if (/\.(png|jpe?g|webp|gif|ico|woff2?)$/i.test(f)) res.setHeader('Cache-Control', 'public, max-age=86400'); } }));   // SPEED: pictures and fonts kept 1 day on the phone
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────
 const logLoginAttempt = (username, success, ip, reason) =>
@@ -382,7 +416,7 @@ app.get('/api/auth/totp-setup', async (req, res) => {
         return res.status(403).json({ error: 'Admin only' });
     try {
         const generated = speakeasy.generateSecret({
-            name: `BATHCO COMMAND (${req.session.user.username})`,
+            name: `Royal Bath Hub (RBH) (${req.session.user.username})`,
             length: 32
         });
         const qrDataUrl = await QRCode.toDataURL(generated.otpauth_url);
@@ -559,6 +593,7 @@ const setupGate = (handler) => async (req, res) => {
 };
 // One site: the Royal Bath Hub website (Netlify) is the front door; the owner's business screens live at /owner (sign-in required for every private API).
 app.get('/', setupGate((req, res) => res.redirect(302, PUBLIC_SITE_URL)));
+app.get('/grn', (req, res) => res.redirect(302, '/bathco_complete.html#/grn'));   // short link: opens the GRN screen in the main app
 app.get('/app', setupGate((req, res) => res.redirect(302, '/owner')));
 app.get('/owner', setupGate((req, res) => res.sendFile('public/bathco_complete.html', { root: __dirname })));
 
@@ -587,9 +622,15 @@ app.patch('/api/feature-flags/:key', async (req, res) => {
 
 // ─── DORMANT MODULE ROUTERS (feature-flagged, own pool each) ──────────────────
 const sync = require('./routes/sync');
+// Live shop data is private: browsers and shared proxies must not keep a copy of any /api answer.
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-cache'); next(); });
+app.use('/api', require('./middleware/apiGzip')());   // SPEED: /api answers gzip (middleware/apiGzip.js); remove this line to turn off
 app.use('/api', sync.idempotency());   // same key twice = one record (offline queue replays)
+// NEAR-LIVE phone copy: after any saved change (bill, stock, payment) refresh the Pocket numbers within seconds (utils/pocketSnapshot.js kick). Remove this block to turn off.
+app.use('/api', (req, res, next) => { if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') res.on('finish', () => { if (res.statusCode < 400) { try { require('./utils/pocketSnapshot').kick(); } catch (e) {} } }); next(); });
 app.use('/api', sync);                 // /api/sync/status, needs-review, review
 app.use('/', require('./routes/purchasing_accounting')); // routes already prefixed /api/...
+app.use('/api', require('./routes/client_errors'));       // FIX 3: screens report their own errors (POST /client-error public+limited, GET /client-errors owner)
 app.use('/api', require('./routes/staff_reports'));       // routes are relative (/attendance etc)
 app.use('/', require('./routes/audit'));                  // routes already prefixed /api/audit/...
 app.use('/', require('./routes/apex_admin'));             // APEX control plane, /api/apex/* (admin + PIN gated)
@@ -607,19 +648,63 @@ app.use('/api/system', require('./routes/backup_status'));      // admin-only: b
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
+app.use('/api', require('./routes/daily_ledger_sheet'));   // READ-ONLY one-click daily balancing sheet (xlsx) -> /api/daily-ledger-sheet/:date.xlsx
 app.use('/api', require('./routes/cheque_register'));      // routes are relative (/cheque-register etc) -> /api/cheque-register*
 app.use('/api', require('./routes/cheque_clearing'));      // owed / in transit / cleared + alert dates -> /api/cheque-clearing* (additive, own tables)
+app.use('/api', require('./routes/payment_planner'));      // vendor cheque schedule -> /api/payment-planner* (additive; writes only cheque_register)
 app.use('/api', require('./routes/items_import'));         // CSV item import (dry run by default) -> /api/items/import-csv
 app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
+app.use('/api/vendor360', require('./routes/vendor360')({ pool: require('./utils/pool') })); // Vendor 360 (read-only, owner only)
+app.use('/api/grn-invoice', require('./routes/grn_invoice')({ pool: require('./utils/pool') })); // GRN invoice page + edit (owner only)
+app.use('/api/vendor-credit', require('./routes/vendor_credit')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor credit view: owed, cheque not written, written not cleared, owed after 1/2/3 months (read only); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
 const laylaOwner = require('./layla_owner/boot')({ pool: require('./utils/pool') });   // owner assistant (Build 2; router is routes/layla_owner' built inside layla_owner/boot): login enforced by the global /api gate
 app.use('/api/layla-owner', require('./middleware/idempotency')({ pool: require('./utils/pool') }), laylaOwner.router);
+app.use('/api/layla-diary', require('./routes/layla_diary')());   // owner diary inside Layla chat (own module, own file data/owner-diary; owner/admin only; login enforced by the global /api gate)
+app.post('/webhook/layla-owner', require('./middleware/webhookAuth').webhookAuth, async (req, res) => { try { res.json(await laylaOwner.bridgeIn(req.body)); } catch (e) { console.error('[layla-owner bridge-in]', e.message); res.status(500).json({ status: 'error', replies: [] }); } });   // free bridge -> Layla, owner only (secret header or loopback)
 app.use('/', require('./routes/daily_entry_sync'));         // daily ledger sync (ported from BATHCO): /api/daily-entry/sync, /meta, /range (behind login)
 app.use('/api', require('./routes/business_intelligence')); // routes are relative (/cash-position-forecast /non-moving-stock) -> /api/cash-position-forecast, /api/non-moving-stock
 app.use('/api/money-control', require('./routes/money_control')); // Money control dashboard backend, /api/money-control/*
+app.use('/api/daily-breakdown', require('./routes/daily_breakdown')); // Daily Breakdown: sales split into keep-aside / net profit / to-pay, /api/daily-breakdown/*
 app.use('/api', require('./routes/item_catalog'));       // routes are relative (/items /item-photos) -> /api/items*, /api/item-photos/*
+app.use('/api', require('./routes/qr_svg'));            // /api/qr/<code>.svg (sticker QR pictures)
+app.use('/api', require('./routes/item_prices'));       // /api/item-prices (owner Prices screen)
+app.use('/api', require('./routes/item_detail'));      // item pop-up: cost, price, margin, name, photo (owner)
+app.use('/api', require('./routes/grn_cheques'));      // GRN screen: vendor cheques list, edit, delete
+app.use('/api', require('./routes/sales_view'));      // GRN screen: customer bills by day / hour
+app.use('/api', require('./routes/grn_dupes'));      // double-counted GRN check + fix (owner)
+app.use('/api', require('./routes/github_backup_api')); // play button: backup to the private GitHub branch (owner)
+app.use('/api', require('./routes/play'));            // green play buttons for tasks Claude wrote (owner, whitelist)
+app.use('/api', require('./routes/pc_actions'));      // play buttons: update app, restart, backup (owner, fixed list)
+app.use('/api', require('./routes/item_codes_fix'));   // item codes: Metro auto, Leo as typed, others TBD (owner)
+app.use('/api', require('./routes/staff_ledger'));         // /api/staff-ledger (owner: salary, commission, paid, borrowed per staff member; 18 Nov)
+app.use('/api', require('./routes/home_solid'));          // /api/home-solid (owner Home 18 Nov: confirmed numbers + live match checks; read-only)
+app.use('/api', require('./routes/dashboard_pro'));      // /api/dashboard-pro (owner Home: sales vs targets, stock, money owed; read-only)
+app.use('/api', require('./routes/brain'));   // /api/brain/* (RBH Brain: owner-only private notes, [[links]], #tags)
+app.use('/api', require('./routes/grn_match'));   // /api/grn-match (GRN: which shop item is each bill line; read-only on products)
+app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vendor bills and cheques by due date; read-only)
+app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
+app.use('/api', require('./routes/audit_checks'));            // read-only audit checks (19 Nov): duplicate codes, no-cost items, two cheque lists
+app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
+app.use('/api/sale-profit', require('./routes/sale_profit')); // live profit of the sale on screen (owner only, read-only) -> /api/sale-profit
+app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
+app.use('/api', require('./routes/staff_logins'));         // /staff-logins (admin only: create cashier + PIN)
+app.use('/api', require('./routes/stock_helper'));        // /price-helper, /reorder
+app.use('/api', require('./routes/cheque_plan'));          // /cheque-plan
+app.use('/api', require('./routes/attention'));           // /attention (dashboard needs-attention strip)
+app.use('/api', require('./routes/bill_watch'));          // /bill-watch (vendor bills to chase: mismatch reminders)
+app.use('/api', require('./routes/pending_delivery'));  // /pending-delivery (items billed by a vendor but not delivered yet)
+app.use('/api', require('./routes/oversold'));           // /oversold/open, /oversold/:id/resolve
+app.use('/api', require('./routes/modules'));            // /modules (module on/off switch for the simple menu)
+app.use('/api', require('./routes/vendor_returns'));      // /vendor-returns (vendor return or discount: payable, stock and cost move together)
 app.use('/api', require('./routes/grn_manual'));         // routes are relative (/grn-manual) -> /api/grn-manual
+app.use('/api', require('./routes/grn_workbench'));   // GRN workbench: photo + stock + prices + vendor bill in one save
+app.use('/api', require('./routes/item_renumber'));   // item codes in vendor arrival order (admin button in the GRN workbench)
+app.use('/api', require('./routes/grn_read'));           // /api/grn-read-photo: AI reads a GRN photo, returns lines for review (saves nothing)
+app.use('/api', require('./routes/test_mode'));         // /api/test-mode: is TEST_MODE on (red banner)
+app.use('/api', require('./routes/grn_barcodes'));   // routes are relative (/grn-barcodes) -> /api/grn-barcodes: sticker PDF for the GRN screen
 app.use('/api', require('./routes/invoice_receipts'));   // routes are relative (/invoice-receipts*) -> /api/invoice-receipts*
+app.use('/api', require('./routes/vendor_voucher'));   // payment voucher for a vendor: preview + WhatsApp (/api/vendor-voucher*)
 app.use('/api', require('./routes/agent_rulebook'));       // M1 agent rulebook (owner-only) -> /api/agent/rules*, /api/agent/rulebook
 app.use('/api', require('./routes/enquiries'));            // M2 enquiry tracker (owner-only) -> /api/enquiries*
 app.use('/api', require('./routes/content_calendar'));     // M3 content calendar (owner-only, manual posting) -> /api/content-posts*
@@ -641,6 +726,12 @@ app.use('/api', require('./routes/notifications'));       // routes are relative
 // see utils/whatsappBusinessApi.js). The in-app bell (routes/notifications.js)
 // works immediately either way.
 require('./scripts/notify_due_soon').start();
+// Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
+require('./utils/selfRun').start(require('./utils/pool'));
+require('./utils/pocketSnapshot').start(require('./utils/pool'));
+require('./utils/safeIndexes').run(require('./utils/pool')).catch(() => {});   // speed: plain indexes only (19 Nov audit)
+require('./utils/pocketInbox').start(require('./utils/pool'));   // phone app: make a bill / order stock (does nothing unless POCKET_* are in .env)   // phone app snapshot (does nothing unless POCKET_* are in .env)
+app.use('/api', require('./routes/selfrun'));
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────
 // Saves to <DROP_ROOT>\inbox\YYYY-MM-DD\ with date-tagged names, then runs OCR
@@ -718,6 +809,7 @@ app.get('/api/error-log', (req, res) => {
 app.get('/api/branding', (req, res) => {
     try {
         const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'active.branding.json'), 'utf8'));
+        delete cfg.db_name; delete cfg.db_host; delete cfg.db_user; // internal names stay private
         res.json(cfg);
     } catch (e) { res.status(500).json({ error: 'branding config missing or invalid: ' + e.message }); }
 });
@@ -784,7 +876,7 @@ function sanitizeText(input, maxLen = 4000) {
 }
 
 // ─── WHATSAPP WEBHOOK (incoming) ──────────────────────────────────────────────
-const { webhookAuth, safeInboxPath } = require('./middleware/webhookAuth');
+const { webhookAuth, safeInboxPath, safeInboxMediaPath } = require('./middleware/webhookAuth');
 const agentWhatsapp = require('./utils/agentWhatsapp');
 agentWhatsapp.watchDbSwitch(pool);   // the Admin Settings switch (app_settings.whatsapp_draft_only) overrides AGENT_DRAFT_ONLY
 const documentInbox = require('./routes/document_inbox');
@@ -815,8 +907,14 @@ app.post('/webhook/whatsapp', webhookAuth, async (req, res) => {
 
         const phone = messageObj.from || body.from;
         const msgType = messageObj.type || 'text';
-        const isVoiceNote = msgType === 'audio';
-        const text = sanitizeText(messageObj.text?.body || body.message || '');
+        let isVoiceNote = msgType === 'audio';
+        let text = sanitizeText(messageObj.text?.body || body.message || '');
+        // Voice note + speech-to-text switched on (utils/stt.js): turn it into text and answer it like a typed message.
+        if (isVoiceNote && body.filePath && require('./utils/stt').enabled()) {
+            const f = /\.(ogg|opus|oga|mp3|m4a|aac|wav)$/i.test(String(body.filePath)) ? safeInboxMediaPath(body.filePath, WA_INBOX_ROOT) : null;
+            const heard = f ? await require('./utils/stt').transcribe(f) : null;
+            if (heard) { text = sanitizeText(heard); isVoiceNote = false; console.log('[STT] voice note heard as text'); }
+        }
 
         if (!phone) {
             return res.status(400).json({ error: 'Missing phone number' });
@@ -1325,7 +1423,7 @@ app.post('/api/process-inbox', (req, res) => {
     if (!ingestScript) {
         return res.status(503).json({ error: 'LOCAL_INGEST_SCRIPT is not configured on this instance.' });
     }
-    execFile('python', [ingestScript], { timeout: 120000 }, (err, stdout, stderr) => {
+    execFile('python', [ingestScript], { timeout: 120000, windowsHide: true }, (err, stdout, stderr) => {
         if (err) return res.status(500).json({ error: err.message, stderr });
         try {
             const lastLine = stdout.trim().split('\n').pop();
@@ -1415,7 +1513,7 @@ app.post('/api/quotations', async (req, res) => {
             [customer_id, quote_date||todayLK(), valid_until||null,
              subtotal, disc, total, notes||null, req.session.user.id]);
         const quotation = qr.rows[0];
-        await client.query(`UPDATE quotations SET quote_no='Q-'||LPAD(id::text,4,'0') WHERE id=$1`, [quotation.id]);
+        await client.query(`UPDATE quotations SET quote_no='RBH-Q'||LPAD(id::text,3,'0') WHERE id=$1`, [quotation.id]);
         for (const [i, it] of items.entries()) {
             const lineTotal = (+it.qty||0)*(+it.unit_price||0);
             await client.query(
@@ -2428,6 +2526,8 @@ app.get('/api/staff/:id/loans', async (req, res) => {
 app.get('/api/suppliers', async (req, res) => {
     try {
         await ensureVoids(pool);
+        // 13 Nov: vendors that exist only on bills (e.g. Fawaz) get a directory row, so they show and can be paid
+        try { await pool.query(`INSERT INTO suppliers (name, active, notes) SELECT DISTINCT TRIM(v.vendor_name), true, 'added from bills' FROM vendor_bills v WHERE v.voided=FALSE AND COALESCE(TRIM(v.vendor_name),'')<>'' AND NOT EXISTS (SELECT 1 FROM suppliers s WHERE LOWER(TRIM(s.name))=LOWER(TRIM(v.vendor_name)))`); } catch (e2) { /* keep list working */ }
         const r = await pool.query(`
             SELECT s.*, COALESCE(SUM(p.amount),0) as total_paid,
                    TO_CHAR(MAX(p.pay_date),'YYYY-MM-DD') as last_payment,
@@ -3377,7 +3477,7 @@ async function m8CallOpenRouter(message, history) {
     return response.choices[0].message.content.trim();
 }
 
-const M8_SYSTEM_PROMPT = `You are the BATHCO COMMAND dashboard assistant — a help/navigation
+const M8_SYSTEM_PROMPT = `You are the Royal Bath Hub (RBH) dashboard assistant — a help/navigation
 assistant embedded in the Your Business Name internal dashboard (a different system from
 LAYLA, the customer-facing WhatsApp bot — never confuse the two, and never claim to be LAYLA).
 
@@ -3433,27 +3533,17 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 });
 /* ===== END M8 ===== */
 
+app.use(require('./utils/safety').errorHandler);   // FIX 1: anything uncaught becomes a calm JSON answer
+
 // ─── START ────────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    app.listen(PORT, '0.0.0.0', () => {
+    const httpServer = app.listen(PORT, '0.0.0.0', () => {
+        setTimeout(() => { try { require('./utils/receiptImage').warm(); } catch (e) {} }, 4000);   // 18 Nov: Chrome ready before the first bill
         laylaOwner.start();   // reminders every minute; WhatsApp relay only if RELAY_URL is set; DRY RUN unless LAYLA_OWNER_LIVE=true
-        console.log(`
-╔══════════════════════════════════════════╗
-║   BATHCO COMMAND — PHASE 1 ACTIVE       ║
-║   Your Business Name (Pvt) Ltd           ║
-║   Your City                  ║
-║                                          ║
-║   LAYLA is ready to receive messages    ║
-║   Server : http://localhost:${PORT}         ║
-║   Webhook: POST /webhook/whatsapp       ║
-║   Test   : POST /simulate               ║
-║                                          ║
-║   Bismillah — InshAllah                 ║
-╚══════════════════════════════════════════╝
-        `);
+        console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);
+        require('./utils/extraAdmins').run(pool).catch(() => {});   // owner-level logins listed in config/extra_admins.json   // one clean line (the old banner still said "Your Business Name")
     });
+    require('./utils/safety').installProcessGuards({ server: httpServer, pool });   // FIX 1: safe shutdown + no silent crashes
 }
-
-module.exports = app;
 
 module.exports = app;

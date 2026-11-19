@@ -32,7 +32,7 @@ require('../../layla').pool.query.mockImplementation((...a) => realPool.query(..
 const dir = path.join(DROP, 'inbox', '2026-09-30');
 fs.mkdirSync(dir, { recursive: true });
 let n = 0;
-const photo = () => { const f = path.join(dir, `p${++n}.jpg`); fs.writeFileSync(f, Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3])); return f; };
+const photo = () => { const f = path.join(dir, `p${++n}.jpg`); fs.writeFileSync(f, Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, n])); return f; };
 const send = (from, filePath) => request(app).post('/webhook/whatsapp-photo').send({ from, filePath });
 const inbox = () => db.many('SELECT * FROM document_inbox ORDER BY id');
 const settle = () => new Promise(r => setTimeout(r, 400));

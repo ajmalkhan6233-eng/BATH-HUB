@@ -8,6 +8,23 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // don't
 const { client } = require('../openrouter.config');
 
 const VISION_MODEL = process.env.OCR_VISION_MODEL || 'nvidia/nemotron-nano-12b-v2-vl:free';
+// Free vision models come and go on OpenRouter ("404 No endpoints found"). Try the configured
+// one first, then ask OpenRouter which free image-reading models exist right now.
+// real vision models first; some free models are restricted to "agentic harnesses" (403) and are tried last
+const PREFERRED = /gemma|qwen.*vl|llama.*(vision|4)|pixtral|mistral.*(small|3)|nemotron.*vl|molmo|internvl|glm.*v/i;
+let _freeCache = { at: 0, ids: [] };
+async function discoverFreeVisionModels(fetchFn = globalThis.fetch) {
+    if (Date.now() - _freeCache.at < 3600e3 && _freeCache.ids.length) return _freeCache.ids;
+    try {
+        const r = await fetchFn('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(10000) });
+        const d = (await r.json()).data || [];
+        const ids = d.filter(m => m.pricing && String(m.pricing.prompt) === '0' && String(m.pricing.completion) === '0'
+            && ((m.architecture || {}).input_modalities || []).includes('image') && ((m.architecture || {}).output_modalities || ['text']).includes('text'))
+            .sort((a, b) => (PREFERRED.test(b.id) - PREFERRED.test(a.id)) || ((b.context_length || 0) - (a.context_length || 0))).map(m => m.id);
+        if (ids.length) _freeCache = { at: Date.now(), ids };
+        return ids;
+    } catch (e) { return _freeCache.ids; }
+}
 const OCR_TIMEOUT_MS = 45000; // free vision models can be slow/flaky - fail fast rather than hang the caller (e.g. LAYLA)
 
 // document_type classification added 2026-07-04 (Item 3B) so cheque notes and
@@ -47,30 +64,86 @@ For document_type "unknown", output:
 
 Rules: never guess a number, date, or name you cannot actually read - use null instead. If a field is genuinely illegible, set confidence to "low" and say why in notes. Do not invent a document_type just to fill in fields - if genuinely unsure between two types, pick the closer one and lower confidence rather than fabricate.`;
 
+
+// ── Gemini (Google AI Studio free key) is tried FIRST when GEMINI_API_KEY is in .env: far steadier than the free OpenRouter models.
+// Model: GEMINI_VISION_MODEL, else the newest "flash" model the key can use (looked up live, so a retired name never breaks it).
+let _gemModels = { at: 0, ids: [] };
+async function geminiModels(key, fetchFn = globalThis.fetch) {
+    if (Date.now() - _gemModels.at < 3600e3 && _gemModels.ids.length) return _gemModels.ids;
+    const r = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}&pageSize=200`, { signal: AbortSignal.timeout(10000) });
+    const d = (await r.json()).models || [];
+    const ids = d.filter(m => /flash/i.test(m.name) && !/image|tts|live|audio|embedding|thinking-exp/i.test(m.name) && (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, '')).sort((a, b) => /lite/i.test(a) - /lite/i.test(b) || b.localeCompare(a, undefined, { numeric: true }));
+    if (ids.length) _gemModels = { at: Date.now(), ids };
+    return ids;
+}
+async function geminiOcr({ key, base64, mime, fetchFn = globalThis.fetch, model = process.env.GEMINI_VISION_MODEL }) {
+    const tried = []; let lastErr;
+    const order = model ? [model] : [];
+    for (let i = 0; i < 4; i++) {
+        let m = order[i];
+        if (!m) { const ids = await geminiModels(key, fetchFn).catch(() => []); m = ids.find(x => !tried.includes(x)); if (!m) break; }
+        tried.push(m);
+        try {
+            const r = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(OCR_TIMEOUT_MS),
+                body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime, data: base64 } }] }], generationConfig: { temperature: 0, responseMimeType: 'application/json' } }),
+            });
+            const j = await r.json();
+            if (!r.ok) { const e = new Error(`gemini ${r.status}: ${(j.error && j.error.message) || ''}`.slice(0, 200)); e.status = r.status; throw e; }
+            const raw = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+            const text = raw.map(x => x.text || '').join('');
+            const mm = text.match(/\{[\s\S]*\}/); if (!mm) throw new Error('gemini returned no JSON');
+            return { parsed: JSON.parse(mm[0]), raw: text, model: 'gemini:' + m };
+        } catch (e) { lastErr = e; if (![400, 404, 429, 500, 503].includes(e.status) && !/timeout|aborted/i.test(e.message)) break; }
+    }
+    throw lastErr || new Error('no Gemini model available');
+}
+
 // Standing rule: never guess - flag uncertain fields, don't fabricate.
 async function ocrPhoto(filePath) {
     const imageBuffer = fs.readFileSync(filePath);
     const base64 = imageBuffer.toString('base64');
     const ext = filePath.split('.').pop().toLowerCase();
-    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    const mime = ext === 'png' ? 'image/png' : ext === 'pdf' ? 'application/pdf' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
 
-    const response = await client.chat.completions.create({
-        model: VISION_MODEL,
-        messages: [{
-            role: 'user',
-            content: [
-                { type: 'text', text: PROMPT },
-                { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
-            ],
-        }],
+    let geminiQuota = false;
+    if (process.env.GEMINI_API_KEY) {
+        try { const g = await geminiOcr({ key: process.env.GEMINI_API_KEY, base64, mime }); return { ...g.parsed, _raw: g.raw, _model: g.model, _file: filePath }; }
+        catch (e) { geminiQuota = e.status === 429 || /quota/i.test(e.message || ''); console.error('[ocr] Gemini failed, trying OpenRouter:', e.message); }
+    }
+    // Plain words for Aj when every reader is out of reach (a real photo problem looks different).
+    const readerDown = () => { const e = new Error(geminiQuota ? 'The photo reader has used up its free quota for now (Google limit). Please try again in a few minutes, or type the GRN in the app.' : 'The photo reader gave no answer. Please try again in a minute, or type the GRN in the app.'); e.readerDown = true; return e; };
+    if (mime === 'application/pdf') throw new Error('PDF reading needs the Gemini key (GEMINI_API_KEY in .env)');
+    const body = model => ({
+        model,
+        messages: [{ role: 'user', content: [
+            { type: 'text', text: PROMPT },
+            { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
+        ] }],
         max_tokens: 1800,          // a manual bill or GRN lists every item
-    }, { timeout: OCR_TIMEOUT_MS });
-
-    const raw = response.choices?.[0]?.message?.content || '';
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error(`OCR returned no parseable JSON. Raw: ${raw.slice(0, 200)}`);
+    });
+    let response, usedModel = VISION_MODEL, lastErr, raw = '', jsonMatch = null;
+    const tried = [VISION_MODEL];
+    for (let i = 0; i < 8; i++) {
+        let failed = null;
+        try {
+            response = await client.chat.completions.create(body(usedModel), { timeout: OCR_TIMEOUT_MS }); lastErr = null;
+            raw = response.choices?.[0]?.message?.content || ''; jsonMatch = raw.match(/\{[\s\S]*\}/);
+            if (jsonMatch) break;
+            failed = new Error(`OCR returned no parseable JSON. Raw: ${raw.slice(0, 200)}`);   // an EMPTY answer is a failed model: try the next one
+        } catch (e) {
+            lastErr = e;
+            if (![404, 429, 502, 503, 400, 403, 408].includes(e.status) && !/No endpoints|timed out|timeout/i.test(e.message || '')) break;
+        }
+        if (failed) lastErr = failed;
+        const next = (await discoverFreeVisionModels().catch(() => [])).find(id => !tried.includes(id));
+        if (!next) break;
+        tried.push(next); usedModel = next;
+    }
+    if (!jsonMatch) { console.error('[ocr] OpenRouter gave nothing:', lastErr && lastErr.message); throw readerDown(); }
     const parsed = JSON.parse(jsonMatch[0]);
-    return { ...parsed, _raw: raw, _model: VISION_MODEL, _file: filePath };
+    return { ...parsed, _raw: raw, _model: usedModel, _file: filePath };
 }
 
-module.exports = { ocrPhoto, PROMPT };
+module.exports = { ocrPhoto, PROMPT, discoverFreeVisionModels, geminiOcr, geminiModels, _resetGeminiCache: () => { _gemModels = { at: 0, ids: [] }; } };

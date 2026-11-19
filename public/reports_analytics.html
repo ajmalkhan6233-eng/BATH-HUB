@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en"><head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script>if (window.top === window.self) location.replace('/owner#/reports2');</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -30,7 +30,8 @@ th{color:var(--text2);font-weight:600;font-size:12px}td.n,th.n{text-align:right}
 .hb .t i{display:block;height:100%;background:var(--gold)}.hb .v{width:110px;text-align:right;font-size:12px}
 .neg{color:var(--red)}
 </style><link rel="stylesheet" href="/bathhub-design.css">
-</head><body>
+<link rel="stylesheet" href="/bathhub-logo.css">
+<link rel="stylesheet" href="/compact-all.css"></head><body>
 <h1>Reports &amp; Analytics</h1>
 <div class="sub">Trends, digest, forecast, customers, margins, daily range and payroll export.</div>
 <div class="tabs" id="tabs"></div>
@@ -156,4 +157,5 @@ $('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-k]'
 (async()=>{FLAGS=await api('/api/feature-flags').catch(()=>[]);show('trends');})();
 </script>
 <script src="/bathhub-logo.js"></script>
+<script src="/layla-door.js"></script>
 </body></html>

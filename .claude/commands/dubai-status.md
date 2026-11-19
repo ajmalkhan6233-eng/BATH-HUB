@@ -4,7 +4,7 @@ Show current status of Dubai Imports inventory tracker app.
 **Project:** Dubai Imports — Internal inventory tracker for Royal Bath Hub Aromatic perfume imports (Kuwait & Dubai)
 **Folder:** C:\dubai-imports\
 **Stack:** Node/Express API (port 3002) + React/Vite frontend (port 5174 dev)
-**DB:** PostgreSQL — `dubai_imports` database (postgres/Bathco2026)
+**DB:** PostgreSQL — `dubai_imports` database (password: ask Ajmal, never stored in this file)
 
 ## Features Built
 - Dashboard — stats: stock value, shipment counts, recent shipments

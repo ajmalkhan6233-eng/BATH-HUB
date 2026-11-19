@@ -7,6 +7,7 @@
  */
 const express = require('express');
 const L = require('../utils/vendorLedger');
+const audit = require('../utils/moneyAudit');
 
 const isNum = (v) => v !== '' && v !== null && v !== undefined && Number.isFinite(Number(v));
 const bad = (res, msg) => res.status(400).json({ error: msg });
@@ -86,11 +87,15 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
   async function setStatus(req, res, status) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || !STATUSES.includes(status)) return bad(res, 'bad request');
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner can change a cheque status' });
+    const reason = String((req.body && req.body.reason) || '').trim();
+    if (status !== 'CLEARED' && !audit.reasonOk(reason)) return bad(res, 'Give a reason (at least 3 letters) for a bounced or cancelled cheque');
     const cur = (await pool.query('SELECT * FROM vendor_bill_cheques WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
     if (!cur) return res.status(404).json({ error: 'cheque not found' });
     if (cur.status === status) return res.json(cur); // idempotent: clearing twice changes nothing
     if (cur.status === 'CLEARED' && status !== 'CLEARED') return bad(res, 'a cleared cheque cannot be changed');
     const { rows } = await pool.query(`UPDATE vendor_bill_cheques SET status=$1, cleared_at=${status === 'CLEARED' ? 'NOW()' : 'NULL'} WHERE id=$2 RETURNING *`, [status, id]);
+    await audit.log(pool, { who: userOf(req), action: 'cheque_' + status.toLowerCase(), table: 'vendor_bill_cheques', id, oldValue: cur.status, newValue: status, reason: reason || null }).catch((e) => console.error('[vendor-ledger] audit:', e.message));
     res.json(rows[0]);
   }
   r.post('/cheques/:id/clear', wrap((req, res) => setStatus(req, res, 'CLEARED')));
@@ -102,10 +107,26 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
     if (!Number.isInteger(id)) return bad(res, 'bad bill id');
     if (!isNum(p.amount) || Number(p.amount) <= 0) return bad(res, 'amount must be a positive number');
     const paidAt = p.paid_at || today(); if (!L.isIso(paidAt)) return bad(res, 'paid_at must be YYYY-MM-DD');
-    const bill = (await pool.query('SELECT id FROM vendor_bills WHERE id=$1 AND branch_id=$2', [id, branchOf(req)])).rows[0];
-    if (!bill) return res.status(404).json({ error: 'bill not found' });
-    const { rows } = await pool.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, Number(p.amount), p.method || 'CASH', paidAt, p.note || null, userOf(req)]);
-    res.status(201).json(rows[0]);
+    // Payment guard (audit 10 Nov 2026): the bill row is locked, so two taps cannot both pass the checks.
+    const amount = Math.round((Number(p.amount) + Number.EPSILON) * 100) / 100, method = p.method || 'CASH';
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const bill = (await client.query('SELECT id, total, voided FROM vendor_bills WHERE id=$1 AND branch_id=$2 FOR UPDATE', [id, branchOf(req)])).rows[0];
+      if (!bill) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'bill not found' }); }
+      if (bill.voided) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'This bill is voided. It cannot be paid.', code: 'bill_voided' }); }
+      const paid = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_payments WHERE bill_id=$1', [id])).rows[0].s);
+      const notes = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_credit_notes WHERE bill_id=$1', [id])).rows[0].s);
+      const owed = Math.round((Number(bill.total) - paid - notes + Number.EPSILON) * 100) / 100;
+      if (amount > owed + 0.005) { await client.query('ROLLBACK'); return res.status(409).json({ error: owed > 0 ? `Only ${owed.toFixed(2)} is still owed on this bill.` : 'This bill is already fully paid.', code: 'over_owed', owed: Math.max(0, owed) }); }
+      if (p.confirm_duplicate !== true) {
+        const same = (await client.query(`SELECT id FROM vendor_payments WHERE bill_id=$1 AND amount=$2 AND paid_at=$3 AND method=$4 AND created_at > NOW() - INTERVAL '2 minutes' LIMIT 1`, [id, amount, paidAt, method])).rows[0];
+        if (same) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'The same payment was saved a moment ago. It was not saved twice.', code: 'duplicate_payment', payment_id: same.id }); }
+      }
+      const { rows } = await client.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [branchOf(req), id, amount, method, paidAt, p.note || null, userOf(req)]);
+      await client.query('COMMIT');
+      res.status(201).json(rows[0]);
+    } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
   }));
 
   r.post('/bills/:id/credit-notes', wrap(async (req, res) => {
@@ -122,9 +143,20 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
   r.post('/bills/:id/void', wrap(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return bad(res, 'bad bill id');
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Only the owner can void a bill' });
+    const reason = String((req.body && req.body.reason) || '').trim();
+    if (!audit.reasonOk(reason)) return bad(res, 'Give a reason (at least 3 letters) for voiding a bill');
     const { rows } = await pool.query('UPDATE vendor_bills SET voided=TRUE WHERE id=$1 AND branch_id=$2 RETURNING *', [id, branchOf(req)]);
     if (!rows[0]) return res.status(404).json({ error: 'bill not found' });
+    await audit.log(pool, { who: userOf(req), action: 'bill_void', table: 'vendor_bills', id, oldValue: 'active', newValue: 'voided', reason }).catch((e) => console.error('[vendor-ledger] audit:', e.message));
     res.json(rows[0]);
+  }));
+
+  // Owner only: the trail of voids and cheque changes, newest first.
+  r.get('/audit-log', wrap(async (req, res) => {
+    if (!audit.isOwner(req)) return res.status(403).json({ error: 'Owner only' });
+    await audit.ensure(pool);
+    res.json((await pool.query('SELECT * FROM money_audit_log ORDER BY id DESC LIMIT 100')).rows);
   }));
 
   r.get('/calendar', wrap(async (req, res) => {

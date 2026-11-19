@@ -96,7 +96,7 @@ function catalogueHtml(tiles) {
         + '.f{margin-top:18px;font-size:12px;color:#4a4f5e;line-height:1.5}'
         + '</style></head><body><div class="h">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<div><b>ROYAL BATH HUB</b><span>Tile catalogue. Thihariya, Kandy Road.</span></div></div>'
         + '<div class="g">' + cards + '</div>'
-        + '<div class="f">Colours and finishes can look different in your light, so please see the tile in our showroom before you buy. Ask us on WhatsApp: 077 799 9219.</div></body></html>';
+        + '<div class="f">Colours and finishes can look different in your light, so please see the tile in our showroom before you buy. Ask us on WhatsApp: 074 035 5536.</div></body></html>';
 }
 
 // One Chromium at a time: every run waits in this queue (same idea as utils/siteImage.js).

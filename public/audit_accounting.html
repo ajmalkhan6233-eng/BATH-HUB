@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script>if (window.top === window.self) location.replace('/owner#/auditacc');</script>
 <meta charset="UTF-8">
@@ -38,7 +38,8 @@ td.click{cursor:pointer;text-decoration:underline dotted}
 #modal .box{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px;width:100%;max-width:560px;max-height:85vh;overflow:auto}
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
-</head>
+<link rel="stylesheet" href="/bathhub-logo.css">
+<link rel="stylesheet" href="/compact-all.css"></head>
 <body>
 <h1>Audit &amp; Accounting</h1>
 <div class="sub">Sales, profit, cash proof and exceptions for any date range</div>
@@ -51,7 +52,7 @@ td.click{cursor:pointer;text-decoration:underline dotted}
   <button id="xls"><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Excel (Full Report)</button>
   <button id="pdf"><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> PDF (Full Report)</button>
   <button id="wa"><svg class="bh-icon" aria-hidden="true"><use href="#i-send"/></svg> Send to WhatsApp</button>
-  <label class="btn"><svg class="bh-icon" aria-hidden="true"><use href="#i-camera"/></svg> Upload Source Document<input type="file" id="up" accept=".jpg,.jpeg,.png,.pdf" style="display:none"></label>
+  <span data-layla-door></span>
 </div>
 <div id="upres"></div>
 <div id="msg"></div>
@@ -205,21 +206,9 @@ $('wa').onclick=async function(){
   try{var r=await api('/send',{method:'POST',body:JSON.stringify({to:num,message:message})});alert(r.success?'Sent.':'Failed: '+(r.error||'unknown'));}
   catch(e){alert('Send failed: '+e.message);}
 };
-$('up').onchange=async function(){
-  var file=this.files[0];if(!file)return;var el=$('upres');
-  el.innerHTML='<div class="note">Uploading and running OCR (photos only — PDFs are saved but not auto-OCR\'d)...</div>';
-  var fd=new FormData();fd.append('file',file);
-  try{
-    var res=await fetch('/api/inbox-upload',{method:'POST',credentials:'same-origin',body:fd});var data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Upload failed');
-    if(data.ocr_error)el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="err">OCR failed: '+esc(data.ocr_error)+'</div></div>';
-    else if(data.ocr){var o=data.ocr;el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="txt"><b>OCR read</b> (confidence: '+esc(o.confidence||'unknown')+')<br>Date: '+esc(o.date||'—')+' | Total Sale: '+(o.total_sale!=null?f0(o.total_sale):'—')+' | Expenses: '+(o.total_expenses!=null?f0(o.total_expenses):'—')+'<br>'+(o.notes?'<span class="pending">'+esc(o.notes)+'</span><br>':'')+'<span class="pending">Read-only preview — nothing was written to daily_summary. Enter the confirmed figures manually.</span></div></div>';}
-    else el.innerHTML='<div class="card"><span class="badge">Saved</span> '+esc(data.filename)+'<div class="note">'+esc(data.note||'')+'</div></div>';
-  }catch(e){el.innerHTML='<div class="err">Upload failed: '+esc(e.message)+'</div>';}
-  this.value='';
-};
 generate().catch(function(e){$('msg').innerHTML='<div class="err">'+esc(e.message)+'</div>';});
 </script>
 <script src="/bathhub-logo.js"></script>
+<script src="/layla-door.js"></script>
 </body>
 </html>

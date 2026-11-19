@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,7 +87,7 @@
   .btn-next { display:flex; align-items:center; gap:8px; background:var(--gold); color:var(--em9); font-size:15px;
               font-weight:600; padding:12px 24px; border:none; border-radius:8px; cursor:pointer;
               box-shadow:0 0 20px rgba(212,175,55,.3); transition:background .15s, box-shadow .15s; }
-  .btn-next:hover:not(:disabled) { background:var(--gold-hover); box-shadow:0 0 25px rgba(212,175,55,.5); }
+  .btn-next:hover:not(:disabled) { background:var(--gold-hover, #a07a12); box-shadow:0 0 25px rgba(212,175,55,.5); }
   .btn-next:disabled { opacity:.6; cursor:wait; }
 
   /* Done screen */
@@ -104,10 +104,11 @@
               background:var(--gold); color:var(--em9); font-size:17px; font-weight:600; padding:16px 24px;
               border:none; border-radius:12px; cursor:pointer; box-shadow:0 0 20px rgba(212,175,55,.3);
               transition:background .15s; }
-  .btn-done:hover { background:var(--gold-hover); }
+  .btn-done:hover { background:var(--gold-hover, #a07a12); }
   svg { flex-shrink:0; }
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
+<link rel="stylesheet" href="/bathhub-logo.css">
 </head>
 <body>
 <div class="card">

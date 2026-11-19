@@ -1,9 +1,6 @@
-# LATEST REPORT 2026-10-11 (Tasks 20/21/22, branch work)
-Tasks: 21 header (long RBH lockup) PASS | 22 item 0 shop app PASS (running, port 3100) | 22A cheque alerts PASS | 22B GRN/cheque photo draft PASS (test mode) | 22C items to website PASS | 22D supplier price alerts PASS | 22E health check PARTLY (one blocked run) | leftovers: 4 of 4 done.
-Commits (BATH-HUB work): b1cbf8c 22A, a5923a0 22B, b9d9e42 22C shop, 1d38721 22D, e52b6b7 22E, then leftovers: tests fixed, dynamic SQL ratchet, vendor CLEARED, sync-review screen. Website work: 42e99cc, 5eb5178 (logo), ad382c1 (22C).
-UNVERIFIED: real photo reading (needs OPENROUTER key + live WhatsApp), WhatsApp sends (still DRY RUN until live creds), auto-start after reboot, running shop app does NOT have these changes (it runs old master; "MERGE TO LIVE" needed).
-BLOCKED by classifier: first real run of scripts/website_health_check.js (pushes HEALTH.md). Line for Ajmal is in the bridge LIVE.md.
-Needs Ajmal OK: install Tailscale (iPhone access); install Tesseract; @imgly background removal; https tunnel address for website shopApiUrl.
-Ajmal next physical action: open the Netlify draft on his phone, say "publish" or what to change; say MERGE TO LIVE when ready.
-WATCH: aikido + playwright plugins: I called neither plugin; I used the playwright-core library and local Chrome for screenshots (no data sent out). Their background activity: UNVERIFIED.
-Status: NEEDS YOU
+# LATEST REPORT 2026-11-04 (GRN fixes, branch work)
+1. Generate now shows steps + timer, fills vendor, number, dates, credit days, paper total and ALL lines into the draft you pressed it on; busy 429 gives a plain message + Retry. Likely cause of "CANCELLED, 0 lines": an old cancelled draft kept its status, and clicking a duplicate draft jumped into the saved bill. Both fixed. UNVERIFIED with a real Cool Lanka photo (fake reader used).
+2. Number check is per vendor (001 = 01 = 1), shows "GRN 001 already exists for <vendor> (date, total)", Open it, Use next free number (002). Read-only, no data changed. Also fixed a case where another vendor's same number could hide the duplicate.
+3. Enter moves cell to cell, line to line, adds a line at the end (not an empty one twice), Paper total goes to the OK button.
+4. New look: tokens in public/rbh-app.css (black, ash, gold, 48 px taps, no fonts/images), simple home + GRN workbench done; phone shows each line as a card. Next: Sales, Vendors+Cheques.
+5. Tests: 13 pass (new ones included), full suite 14 failed = same old baseline; headless browser 38/38 (1 of 10 runs had 3 unexplained fails, not repeated). Pushed to work only. NEXT FOR AJMAL: pull work, restart apex-server, try one real photo. Status: UNVERIFIED on the PC.

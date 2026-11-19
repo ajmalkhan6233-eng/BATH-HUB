@@ -1,0 +1,43 @@
+/* BLOCK: compact-all (AJ 12 Nov). Squeeze every screen on a computer so more fits on one page: smaller text, boxes, tabs, buttons, tables. Computer screens only (phones untouched). Remove the link line to undo. Loaded LAST. */
+@media (min-width:900px){
+  :root{--touch-target:28px;--space-1:2px;--space-2:4px;--space-3:6px;--space-4:8px;--space-5:10px;--space-6:12px;--space-8:14px;--text-xs:10.5px;--text-sm:11.5px;--text-base:12.5px;--text-lg:14px;--text-xl:16px;--text-2xl:19px;--text-3xl:22px;--radius-md:8px;--radius-lg:10px}
+  html body{font-size:12.5px !important;line-height:1.3 !important}
+  html body h1{font-size:18px !important;margin:4px 0 !important}html body h2{font-size:15px !important;margin:4px 0 !important}html body h3,html body h4{font-size:13px !important;margin:3px 0 !important}
+  html body button,html body .btn,html body a.btn,html body [role=button],html body input[type=button],html body input[type=submit]{min-height:26px !important;height:auto !important;padding:3px 10px !important;font-size:12px !important;border-radius:8px !important}
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),html body select,html body textarea{min-height:26px !important;height:auto !important;padding:3px 8px !important;font-size:12.5px !important;border-radius:8px !important}
+  html body input[type=checkbox],html body input[type=radio]{width:14px;height:14px}
+  html body label{font-size:11px !important;margin-bottom:1px !important}
+  html body .card,html body .panel,html body .box,html body .section,html body .kpi-card,html body fieldset{padding:8px 10px !important;margin-bottom:6px !important;border-radius:10px !important}
+  html body .tab,html body .tabs button,html body [class*=tab-]:not(table),html body nav button{min-height:24px !important;padding:3px 10px !important;font-size:12px !important}
+  html body table th,html body table td{padding:3px 6px !important;font-size:12px !important;line-height:1.25 !important}
+  html body .modal,html body .modal-content,html body dialog{padding:10px !important}
+  html body .grid,html body [class*=grid]{gap:6px !important}
+  html body hr{margin:5px 0 !important}html body p{margin:3px 0 !important}
+  html body .bh-strip{padding:2px 10px !important}html body .bh-strip img,html body .bh-strip .bh-lockup img{height:26px !important;max-height:26px !important}
+  html body header img[src*=logo],html body .brandbar img,html body .top img[src*=logo]{max-height:30px !important;height:auto}
+  html body header.topbar img.brand-logo{max-height:48px !important;height:48px !important;width:auto !important}   /* 15 Nov (AJ): RBH logo a little bigger */
+  html body main,html body .page,html body .container,html body .wrap,html body .content{max-width:1240px !important;padding:6px 10px !important}
+  html body main .grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) !important}
+  html body .big{font-size:17px !important}html body .sm{font-size:11px !important}
+}
+
+/* AJ 12 Nov: list screens keep columns close together, not spread across the whole width */
+@media(min-width:900px){body.tight-cols table{width:auto !important;min-width:min(720px,100%)}body.tight-cols td,body.tight-cols th{padding-right:18px}}
+
+/* 13 Nov (AJ: two rules fought, keep the latest). 1) The compact input padding (8px, !important) beat the search box icon room (34px), so the magnifier sat ON the placeholder text. The search box now wins again.
+   2) The page title bar was squeezed by the page below it (flex shrink): its height jumped 41 / 45 / 60 px from screen to screen and the menu moved. It now keeps one fixed height. */
+html body .search-wrap input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){padding-left:34px !important}
+@media (min-width:900px){ html body header.topbar, html body #rbh-menubar{flex:0 0 auto !important} }
+/* 13 Nov (AJ: mouse on a list scrolled the whole page): a list that reaches its end no longer hands the wheel to the page. */
+/* removed 13 Nov: overscroll-behavior:contain on every list/table stopped the mouse wheel on Stock and other screens (AJ: cannot scroll). GRN keeps its own in grn-compact.css. */
+
+/* 13 Nov (AJ: the font looks ugly and fatty, change it in the complete app). Windows drew bold headings in Segoe UI BLACK. (14 Nov fix: back to AJ's own Segoe UI, NOT Inter.) "RBH Sans" = Segoe UI, every bold weight uses Semibold. Sinhala and Tamil letters fall through to their own fonts as before. To undo: delete this block and the "RBH Sans" names added in ui_comfort.js and the 3 pages. */
+@font-face{font-family:'RBH Sans';font-weight:100 300;src:local('Segoe UI')}@font-face{font-family:'RBH Sans';font-weight:400 500;src:local('Segoe UI Semibold'),local('SegoeUI-Semibold')}@font-face{font-family:'RBH Sans';font-weight:600 900;src:local('Segoe UI Bold'),local('SegoeUI-Bold')}
+html:not([data-keepfont]) body,html:not([data-keepfont]) body *:not(svg):not(path){font-family:'RBH Sans',"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,"Noto Sans Sinhala","Noto Sans Tamil",sans-serif !important}
+html body .bh-lockup .bh-name,html body h1,html body h2{font-weight:700 !important}
+html body .live-clock,html body code,html body pre,html body .mono{font-family:ui-monospace,Consolas,monospace !important}
+/* 13 Nov: page change is slow and clearly visible (AJ asked) */
+@keyframes rbhPageIn{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:translateX(0)}}
+html body .page.active{animation:none !important}
+html body .main-content>.page.active,html body .page.active,html .mo-in{animation:none!important;transition:none!important;filter:none!important;transform:none!important}
+html.mo-lite body .main-content>.page.active,html.mo-lite .mo-in,html body.mo-lite .main-content>.page.active{animation:none!important}

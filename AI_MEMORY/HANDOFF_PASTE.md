@@ -1,0 +1,4 @@
+# First message for a successor window (the old window sends this itself with create_session; Ajmal never pastes it)
+You are the successor of a heavy window (repo BATH-HUB, branch work). Read AI_MEMORY/NOW.md first (the start-up hook prints it), then AI_MEMORY/CORE_RULES.md. Trust NOW.md over the old queue files.
+Ajmal: not a coder, phone/voice, wants SHORT replies (max 5 lines, status word last), no questions, no paste or terminal tasks for him. Build in the cloud on the throwaway DB (bash scripts/dev/cloud_test.sh --rig-only; db bhtest), commit and push only to branch work.
+Do the OPEN items in NOW.md in order without waiting. Do not greet with the old queue. When YOUR chat gets heavy: rewrite NOW.md, push, then open your own successor with create_session using this same text (CORE_RULES 7), and tell Ajmal in one line.

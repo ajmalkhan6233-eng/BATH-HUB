@@ -19,14 +19,26 @@ const ALLOWED = {
   'routes/cheque_register.js': [1, "fixed 'WHERE status = $1'"],
   'routes/corrections.js': [4, 'table and column names come from the internal MODULES map (unknown module is refused); values are $n'],
   'routes/document_inbox.js': [1, "fixed ' FOR UPDATE' or nothing"],
+  'routes/grn_workbench.js': [9, "NORM() and KEY() are internal constants that wrap a fixed column name; the typed bill number always goes through a $n placeholder (reviewed 2026-11-04)"],
+  'routes/item_detail.js': [3, "SET list from fixed column names with $n placeholders; COLS is a constant; table names to re-point come from information_schema and are double-quoted (reviewed 2026-11-05)"],
+  'routes/sales_view.js': [2, "base and g are internal constants (fixed FROM/WHERE text and a fixed grouping expression); dates are $n (reviewed 2026-11-05)"],
+  'routes/item_prices.js': [1, "SET list from fixed column names (selling_price, category) with $n placeholders (reviewed 2026-11-04)"],
+  'routes/vendor360.js': [1, "fixed 'AND vb.vendor_name = $1' or nothing (reviewed 2026-11-04)"],
+  'utils/auditInvariants.js': [4, "TOL is the constant 0.01 (reviewed 2026-11-04)"],
+  'utils/laylaPhoto.js': [1, "conditions are fixed LIKE / = clauses numbered with $n; search words are values, never SQL (reviewed 2026-11-04)"],
+  'utils/oversold.js': [1, "fixed status clause plus 'item_code = ANY($1)' (reviewed 2026-11-04)"],
   'routes/investor_loans.js': [5, "LOAN_SELECT is a constant; fixed 'WHERE l.status = $1'"],
   'routes/item_catalog.js': [2, 'ITEM_COLS is a constant; limit is a clamped number'],
+  'routes/item_catalog_fix.js': [2, 'table names come from information_schema and a Date.now() digit suffix; every value is $n (reviewed 2026-11-05)'],
+  'routes/item_dupe_merge.js': [2, 'table names come from information_schema and a Date.now() digit suffix; every value is $n (reviewed 2026-11-05)'],
+  'layla_owner/taskStore.js': [2, "done/snooze: fixed 'source=$n' or fixed 'NOT LIKE family' fragment chosen by a yes/no; values are $n"],
   'routes/money_control.js': [2, "fixed 'WHERE status = $1'"],
   'routes/purchasing_accounting.js': [5, 'SET lists from fixed field names; notVoided() and CASH_OUT_EXPR are internal constants'],
   'routes/sale_commissions.js': [2, 'clauses are fixed fragments with $n; notVoided() is internal'],
   'routes/shop_operations.js': [1, "fixed 'WHERE status = $1'"],
   'routes/site_editor.js': [1, 'SET list from the keys readTile() builds: name, size, finish, grp, photo_file, visible only'],
   'routes/staff_reports.js': [4, 'fixed WHERE / AND fragments with $n placeholders'],
+  'utils/vendorCreditDb.js': [2, "fixed AND fragment, internal table names from a fixed list and a list of $n placeholders"],
   'routes/vendor_ledger.js': [3, "fixed AND fragments, internal table names, a list of $n placeholders, fixed 'NOW()' or 'NULL'"],
   'utils/documents/reports.js': [4, 'internal column lists and constants (CASH_IN_EXPR, CASH_OUT_EXPR, notVoided)'],
   'utils/egressGate.js': [1, "fixed 'WHERE status = $1' or nothing"],
@@ -63,7 +75,7 @@ describe('dynamic SQL ratchet', () => {
     const stale = Object.keys(ALLOWED).filter((f) => !found[f] || found[f] < ALLOWED[f][0]);
     expect(stale).toEqual([]);
   });
-  test('42 reviewed spots in total', () => {
-    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(42);
+  test('72 reviewed spots in total', () => {
+    expect(Object.values(found).reduce((a, b) => a + b, 0)).toBe(72);
   });
 });

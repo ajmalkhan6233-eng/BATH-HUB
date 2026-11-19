@@ -1,0 +1,15 @@
+/* home-calm.css (16 Nov, AJ: Home numbers moving / struggling). Home shows once, nothing animates, same look as Stock & items. Look only. */
+#page-dashboard .ra-card-in,#page-dashboard .kpi,#page-dashboard .dm-card{animation:none!important}
+#page-dashboard .ra-card-in{opacity:1!important;transform:none!important}
+#dash-modern,#dash-pro{min-height:0}
+/* Stock & items look for Home: ash page, white boxes, thin border, no shadows or gradients */
+#page-dashboard{background:#f4f4f2;font-size:16px}
+#page-dashboard .card,#page-dashboard .dm-card,#page-dashboard .dp-card,#page-dashboard .kpi,#page-dashboard .welcome-banner,#page-dashboard .box{background:#fff!important;border:1px solid #d4d4cf!important;border-radius:8px!important;box-shadow:none!important;background-image:none!important}
+#page-dashboard h2,#page-dashboard h3{font-weight:700;color:#0b0b0c}
+#page-dashboard table{border-collapse:collapse;background:#fff;font-variant-numeric:tabular-nums}
+#page-dashboard th{background:#ecece8;color:#0b0b0c;text-align:left;padding:6px 10px;border-bottom:1px solid #d4d4cf}
+#page-dashboard td{padding:6px 10px;border-bottom:1px solid #d4d4cf}
+#page-dashboard button,#page-dashboard .btn{border:1.5px solid #9a9a93;border-radius:8px;background:#fff;color:#111;font-weight:600;box-shadow:none}
+/* 16 Nov: when the real numbers did not load, never show the old zero cards (TOTAL SALE LKR 0 ...): they look like real numbers. One calm line instead. */
+#page-dashboard:not(.dp-on)>*:not(#dash-pro):not(#dash-modern){display:none!important}
+#page-dashboard:not(.dp-on)::before{content:"Numbers are loading. If this stays, press Refresh at the top.";display:block;padding:16px;margin:12px;background:#fff;border:1px solid #d4d4cf;border-radius:8px;font-weight:600}

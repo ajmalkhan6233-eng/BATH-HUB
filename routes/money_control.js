@@ -121,7 +121,7 @@ router.put('/bank-accounts/:id/balance', async (req, res) => {
 });
 
 // ═══════════════════════ CHEQUE HOLD (extends cheque_register) ═══════════════════════
-router.post('/cheque-register/:id/hold', async (req, res) => {
+router.post('/cheque-register/:id/hold', (req, res, next) => { const u = req.session && req.session.user; return u && !['admin', 'owner'].includes(u.role) ? res.status(403).json({ error: 'Owner only' }) : next(); }, async (req, res) => {
     try {
         const { new_due_date } = req.body;
         if (!new_due_date) return res.status(400).json({ error: 'new_due_date is required' });
@@ -263,8 +263,10 @@ pool.query(`
 // A friend/investor asks for access — creates a pending request, nothing is visible yet.
 router.post('/viewer-requests', async (req, res) => {
     try {
-        const { requester_name, requester_contact } = req.body;
+        const requester_name = String((req.body || {}).requester_name || '').trim().slice(0, 80), requester_contact = String((req.body || {}).requester_contact || '').trim().slice(0, 80);
         if (!requester_name) return res.status(400).json({ error: 'requester_name is required' });
+        const open = await pool.query(`SELECT COUNT(*)::int AS n FROM viewer_access_requests WHERE status = 'pending'`);
+        if (open.rows[0].n >= 50) return res.status(429).json({ error: 'Too many open requests. Please try later.' });
         const r = await pool.query(`
             INSERT INTO viewer_access_requests (requester_name, requester_contact)
             VALUES ($1,$2) RETURNING id, status

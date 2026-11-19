@@ -1,6 +1,7 @@
 'use strict';
 // ONE shared Postgres pool for the route modules (they used to open 35 pools of 10 connections each, against Postgres's default
 // limit of 100). Same DB_* settings the modules used before. Cap: PG_POOL_MAX (default 15); idle connections close after 30 s.
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';   // no "injected env" noise at start-up; real errors still show
 require('dotenv').config();
 const { Pool } = require('pg');
 

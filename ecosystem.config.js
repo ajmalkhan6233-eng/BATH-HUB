@@ -31,6 +31,7 @@ module.exports = {
     {
       name: "whatsapp-bridge",
       script: "./whatsapp-bridge.js",
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       watch: false,

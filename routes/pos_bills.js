@@ -29,6 +29,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const PDFDocument = require('pdfkit');
 const { todayLK } = require('../utils/lkTime');
+const { findBadPrice } = require('../utils/priceGuard');
 
 const router = express.Router();
 
@@ -61,8 +62,12 @@ pool.query(`
   // additive columns: which bills were given a discount above the cap (by the owner), and which catalogue item a line was
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS discount_override BOOLEAN NOT NULL DEFAULT FALSE`))
   .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS item_code VARCHAR(50)`))
+  .then(() => pool.query(`ALTER TABLE pos_bill_items ADD COLUMN IF NOT EXISTS unit_cost NUMERIC(14,4)`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'pos'`))
   .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS attachment_path TEXT`))
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS salesman VARCHAR(30)`))   // 18 Nov: who sold it (Ajmal or Jazeel), for the 5% commission
+  // was stock taken out for this bill? (NULL = older bill, unknown). Void and edit give back only what was taken.
+  .then(() => pool.query(`ALTER TABLE pos_bills ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN`))
   // bill correction (routes/pos_bill_corrections.js): NEW tables only. A bill with a row in pos_bill_voids is VOID: kept, greyed, left out of totals.
   // payment types (cheque, credit, split): NEW table only, no ALTER. Bills without rows here read exactly as before.
   .then(() => pool.query(`CREATE TABLE IF NOT EXISTS pos_bill_payments (id SERIAL PRIMARY KEY, bill_id INT NOT NULL REFERENCES pos_bills(id), method VARCHAR(20) NOT NULL, amount NUMERIC(12,2) NOT NULL, reference TEXT)`))
@@ -78,16 +83,15 @@ pool.query(`
 // Bill ids are whole numbers; anything else is simply "not found" (not a database error).
 router.param('id', (req, res, next, id) => /^\d+$/.test(id) ? next() : res.status(404).json({ error: 'not found' }));
 
-// Sequential per day (BHT-YYYYMMDD-0001, -0002 ...). Must run inside the bill's transaction:
-// the advisory lock stops two cashiers being handed the same number. (The old random 4-digit
-// suffix collided against the UNIQUE constraint after ~100 bills in a day and failed the sale.)
-async function nextBillNumber(client) {
-    const prefix = `BHT-${todayLK().replace(/-/g, '')}-`;
+// 16 Nov (AJ): short bill numbers. Retail: RBH-S001, RBH-S002 ... Wholesale (to shops): RBH-HS001 ... Each has its own running count.
+// Old BHT- numbers stay as they are (scripts/renumber_bills.js renames them once). Must run inside the bill's transaction:
+// the advisory lock stops two cashiers being handed the same number.
+async function nextBillNumber(client, type) {
+    const pre = type === 'wholesale' ? 'RBH-HS' : 'RBH-S';
     await client.query('SELECT pg_advisory_xact_lock(774413)');
     const r = await client.query(
-        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '-([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number LIKE $1`,
-        [prefix + '%']);
-    return prefix + String(r.rows[0].n).padStart(4, '0');
+        `SELECT COALESCE(MAX(SUBSTRING(bill_number FROM '^' || $1 || '([0-9]+)$')::int), 0) + 1 AS n FROM pos_bills WHERE bill_number ~ ('^' || $1 || '[0-9]+$')`, [pre]);
+    return pre + String(r.rows[0].n).padStart(3, '0');
 }
 
 // Round to 2 decimals (money). Adding Number.EPSILON stops 1.005 -> 1.00.
@@ -155,6 +159,15 @@ router.post('/pos-bills', async (req, res) => {
     const client = await pool.connect();
     try {
         const { customer_name, customer_phone, items, discount_pct, payment_method, notes } = req.body;
+        const salesman = ['Ajmal', 'Jazeel'].includes(String(req.body.salesman || '')) ? String(req.body.salesman) : null;
+        // 15 Nov (AJ: back-date a sale). Optional sale_date: owner/admin only, a real day, not in the future. Reports read created_at::date, so every report follows. Normal sales are untouched.
+        let backTs = null;
+        if (req.body.sale_date) {
+            const sd = String(req.body.sale_date);
+            if (!canOverride(req)) return res.status(403).json({ error: 'Only the owner or admin can enter a bill for an earlier day' });
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || isNaN(Date.parse(sd)) || sd > todayLK()) return res.status(400).json({ error: 'Bill date must be a real day, not in the future' });
+            if (sd < todayLK()) backTs = sd + ' ' + new Date(Date.now() + 19800000).toISOString().slice(11, 19);
+        }
         if (!Array.isArray(items) || !items.length) {
             return res.status(400).json({ error: 'items (non-empty array) is required' });
         }
@@ -198,6 +211,33 @@ router.post('/pos-bills', async (req, res) => {
             override = true;
         }
 
+        // Price guard: the server checks the price, not just the browser. Same approval flow as a big discount (the screen already asks the owner).
+        if (!override) {
+            const bad = await findBadPrice((sql, a) => pool.query(sql, a), lines, pct, await discountCapFor(roleOf(req)), { ownerSale: canOverride(req) || !(req.session && req.session.user) });
+            if (bad) {
+                if (!(canOverride(req) && req.body.override === true)) {
+                    return res.status(409).json({
+                        error: bad.reason === 'zero'
+                            ? `${bad.line.item_name}: a price of 0 needs the owner's approval.`
+                            : bad.reason === 'no_code'
+                            ? `${bad.line.item_name}: a big line with no item code needs the owner's approval` + (canOverride(req) ? '. You can approve it as the owner.' : '.')
+                            : `${bad.line.item_name}: price ${bad.price.toFixed(2)} is below the allowed ${bad.floor.toFixed(2)}` + (canOverride(req) ? '. You can approve it as the owner.' : '. Ask the owner to approve it.'),
+                        code: 'discount_over_cap', max_allowed: null, can_override: canOverride(req),
+                    });
+                }
+                override = true;
+            }
+        }
+
+        // Credit, cheque and split need payment rows (that is what records who owes what). Free-text methods are refused.
+        const pm = String(payment_method || 'cash').toLowerCase();
+        if (req.body.payments === undefined && ['credit', 'cheque', 'split'].includes(pm)) {
+            return res.status(400).json({ error: `Payment by ${pm} needs the payment details (who pays how much). Use the payment screen.`, code: 'payments_required' });
+        }
+        if (req.body.payments === undefined && !['cash', 'card', 'online'].includes(pm)) {
+            return res.status(400).json({ error: 'payment_method must be cash, card or online', code: 'bad_payment_method' });
+        }
+
         let payInfo = null;
         if (req.body.payments !== undefined) {
             payInfo = checkPayments(req.body.payments, total, customer_name, customer_phone);
@@ -206,12 +246,12 @@ router.post('/pos-bills', async (req, res) => {
 
         const deductStock = String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
         await client.query('BEGIN');
-        const billNumber = await nextBillNumber(client);
+        const billNumber = await nextBillNumber(client, req.body.bill_type === 'wholesale' ? 'wholesale' : 'retail');
         const billRes = await client.query(`
-            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            INSERT INTO pos_bills (bill_number, customer_name, customer_phone, subtotal, discount_pct, discount_amount, total, payment_method, notes, discount_override, stock_deducted, created_at, salesman)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE($12::timestamp, CURRENT_TIMESTAMP), $13)
             RETURNING id
-        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : (payment_method || 'cash'), notes || null, override]);
+        `, [billNumber, customer_name || null, customer_phone || null, subtotal, pct, discount_amount, total, payInfo ? payInfo.payment_method : pm, notes || null, override, deductStock, backTs, salesman]);
         const billId = billRes.rows[0].id;
         if (payInfo) {
             for (const p of payInfo.rows) {
@@ -225,16 +265,32 @@ router.post('/pos-bills', async (req, res) => {
         }
 
         for (const l of lines) {
+            // Audit D: keep the item's average cost AT THE MOMENT OF SALE on the line, so past profit does not move when a later GRN changes the cost.
+            let unitCost = null;
+            if (l.item_code) {
+                await client.query('SAVEPOINT cost_read');
+                try { const c = await client.query(`SELECT avg_cost FROM products WHERE item_code = $1 AND active = true LIMIT 1`, [l.item_code]); if (c.rows[0] && c.rows[0].avg_cost != null) unitCost = c.rows[0].avg_cost; await client.query('RELEASE SAVEPOINT cost_read'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT cost_read').catch(() => {}); }
+            }
             await client.query(`
-                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total)
-                VALUES ($1,$2,$3,$4,$5,$6)
-            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total]);
+                INSERT INTO pos_bill_items (bill_id, item_name, item_code, qty, unit_price, line_total, unit_cost)
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
+            `, [billId, l.item_name, l.item_code, l.qty, l.unit_price, l.line_total, unitCost]);
             // Optional (POS_DEDUCT_STOCK=true): take catalogue items out of stock in the SAME transaction as the bill.
             // Off by default: if the shop's real stock is kept in another system (Lasersoft), deducting here would count twice.
+            // A side-check: if it fails it must not poison the bill's transaction, so it runs inside its own savepoint.
+            if (l.item_code) {
+                await client.query('SAVEPOINT oversold_check');
+                try { await require('../utils/oversold').record(client, { itemCode: l.item_code, itemName: l.item_name, qty: l.qty, billNumber, name: customer_name, phone: customer_phone }); await client.query('RELEASE SAVEPOINT oversold_check'); }
+                catch (e) { await client.query('ROLLBACK TO SAVEPOINT oversold_check').catch(() => {}); console.error('[oversold]', e.message); }
+            }
             if (deductStock && l.item_code) {
                 await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $1 WHERE item_code = $2 AND active = true`, [l.qty, l.item_code]);
+                await require('../utils/stock_ledger').recordSafe(client, { item_code: l.item_code, qty_change: -Number(l.qty), reason: 'sale', ref_type: 'pos_bill', ref_id: billNumber });
             }
         }
+        // Credit part of the bill becomes money the customer owes us, in the SAME transaction (all or nothing).
+        if (payInfo) await require('../utils/posCredit').addReceivable(client, { billNumber, name: customer_name, phone: customer_phone, payments: payInfo.rows });
         await client.query('COMMIT');
 
         // A bill with a phone gets its customer matched/created now (best effort — never fails the sale).
@@ -245,6 +301,7 @@ router.post('/pos-bills', async (req, res) => {
 
         const full = await loadBill(billId);
         res.json({ ...full, stock_deducted: deductStock });
+        try { setImmediate(() => ensureReceipt(full.id).catch(() => {})); } catch (e) {}   // 18 Nov: start drawing the picture NOW, so it is ready when the screen opens
         require('../utils/autoReceipt').afterSale(pool, full);   // queue the WhatsApp receipt in the background; never affects the sale
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
@@ -284,10 +341,20 @@ router.get('/pos-bills/summary', async (req, res) => {
         if (!isDay(from) || !isDay(to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
         if (to < from) return res.status(400).json({ error: 'to cannot be before from' });
         const r = await pool.query(
-            `SELECT COALESCE(payment_method, 'cash') AS payment_method, COUNT(*) AS bills,
+            `SELECT lower(COALESCE(payment_method, 'cash')) AS payment_method, COUNT(*) AS bills,
                     SUM(subtotal) AS subtotal, SUM(discount_amount) AS discount, SUM(total) AS total
              FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE v.bill_id IS NULL AND created_at::date BETWEEN $1::date AND $2::date
-             GROUP BY COALESCE(payment_method, 'cash') ORDER BY 1`, [from, to]);
+             GROUP BY lower(COALESCE(payment_method, 'cash')) ORDER BY 1`, [from, to]);
+        // Money by what was really paid (split bills count under each part). Bills with no payment rows use their label.
+        const pm = await pool.query(
+            `SELECT method, COUNT(DISTINCT bill_id) AS bills, SUM(amount) AS amount FROM (
+               SELECT p.bill_id, lower(p.method) AS method, p.amount FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id
+                 LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date
+               UNION ALL
+               SELECT b.id, lower(COALESCE(b.payment_method,'cash')), b.total FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
+                 LEFT JOIN (SELECT DISTINCT bill_id FROM pos_bill_payments) pp ON pp.bill_id = b.id
+                 WHERE v.bill_id IS NULL AND pp.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date) z GROUP BY method ORDER BY 1`, [from, to]).catch(() => ({ rows: [] }));
+        const by_method = pm.rows.map(x => ({ method: x.method, bills: Number(x.bills), amount: money2(x.amount) }));
         const by_payment = r.rows.map(x => ({
             payment_method: x.payment_method, bills: Number(x.bills),
             subtotal: money2(x.subtotal), discount: money2(x.discount), total: money2(x.total),
@@ -295,7 +362,7 @@ router.get('/pos-bills/summary', async (req, res) => {
         const sum = k => money2(by_payment.reduce((a, x) => a + x[k], 0));
         res.json({
             from, to, bills: by_payment.reduce((a, x) => a + x.bills, 0),
-            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment,
+            subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment, by_method,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -350,6 +417,42 @@ router.get('/pos-bills/:id', async (req, res) => {
         if (!full) return res.status(404).json({ error: 'not found' });
         res.json(full);
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ the receipt PICTURE of a bill (same design as the WhatsApp one) ═══════════════════════
+// GET /api/pos-bills/:id/receipt.png            shows it    ?download=1  saves it    ?json=1  shows what would be drawn (no picture)
+const _rcptBusy = new Map();   // bill id -> promise (a picture already being drawn is shared, never drawn twice)
+async function ensureReceipt(id, wantJson) {
+    const bill = await loadBill(id);
+    if (!bill) return null;
+    const dmy = new Date(bill.created_at).toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const pay = bill.payments && bill.payments.length > 1 ? 'split' : (bill.payments && bill.payments[0] ? bill.payments[0].method : (bill.payment_method || 'cash'));
+    const payload = {
+        items: bill.items.map(i => ({ name: i.item_name, code: i.item_code || null, qty: Number(i.qty), price: Number(i.unit_price) })),
+        discount: Number(bill.discount_amount || 0), billNo: bill.bill_number, date: dmy,
+        customer: bill.customer_name || 'Walk-in customer', customerPhone: bill.customer_phone || '', paymentMethod: String(pay), total: Number(bill.total),
+    };
+    if (wantJson) return { bill, payload };
+    const receiptImage = require('../utils/receiptImage'), th = require('../utils/receiptTheme').pickFor(bill.bill_number);
+    const fs0 = require('fs'), tp = require('path').join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
+    let tv = '0'; try { tv = Math.floor(fs0.statSync(tp).mtimeMs / 1000).toString(36); } catch (e) {}
+    const fileName = `pos-${bill.id}-s${th.set || 0}-${th.hex.slice(1)}-v${tv}.png`, full = require('path').join(receiptImage.DEFAULT_DIR, fileName);
+    if (!fs0.existsSync(full)) {
+        let pr = _rcptBusy.get(fileName);
+        if (!pr) { pr = receiptImage.renderReceiptPng(payload, { fileName }).finally(() => _rcptBusy.delete(fileName)); _rcptBusy.set(fileName, pr); }
+        await pr;
+    }
+    return { bill, payload, fileName, root: receiptImage.DEFAULT_DIR };
+}
+router.ensureReceipt = ensureReceipt;
+router.get('/pos-bills/:id/receipt.png', async (req, res) => {
+    try {
+        const r = await ensureReceipt(req.params.id, !!req.query.json);
+        if (!r) return res.status(404).json({ error: 'not found' });
+        if (req.query.json) return res.json(r.payload);
+        if (req.query.download) res.setHeader('Content-Disposition', `attachment; filename="${r.bill.bill_number}.png"`);
+        res.type('png').sendFile(r.fileName, { root: r.root });
+    } catch (e) { res.status(e.status || 500).json({ error: `Could not draw the receipt picture: ${e.message}` }); }
 });
 
 // ═══════════════════════ DOWNLOAD bill as PDF ═══════════════════════
@@ -445,7 +548,7 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         y += 8;
 
         doc.font('Helvetica').fontSize(8.5).fillColor('#000')
-            .text(`Subtotal: ${sym} ${Number(bill.subtotal).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+            .text(`${Number(bill.discount_amount) > 0 ? 'Real price' : 'Subtotal'}: ${sym} ${Number(bill.subtotal).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
         y = doc.y + 2;
         if (Number(bill.discount_amount) > 0) {
             doc.fillColor('#8b6f47')
@@ -454,7 +557,13 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
             y = doc.y + 2;
         }
         doc.font('Helvetica-Bold').fontSize(11)
-            .text(`Total: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+            .text(`${Number(bill.discount_amount) > 0 ? 'Price given' : 'Total'}: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+        if (Number(bill.discount_amount) > 0) {
+            y = doc.y + 2;
+            doc.font('Helvetica-Bold').fontSize(9).fillColor('#8b6f47')
+                .text(`You saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)`, MARGIN, y, { width: CONTENT_W, align: 'right' })
+                .fillColor('#000');
+        }
         y = doc.y + 2;
         doc.font('Helvetica').fontSize(8)
             .text(`Payment: ${(bill.payment_method || 'cash').toUpperCase()}`, MARGIN, y, { width: CONTENT_W, align: 'right' });

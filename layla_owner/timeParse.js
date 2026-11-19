@@ -36,6 +36,12 @@ function parseClock(text) {
   const t = String(text).toLowerCase(); let m;
   if ((m = t.match(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/))) { let h = +m[1] % 12; if (m[3] === 'pm') h += 12; return { h, min: m[2] ? +m[2] : 0 }; }
   if ((m = t.match(/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/))) return { h: +m[1], min: +m[2] };
+  // "12 o'clock", "at 5": no am/pm given, so use the words around it; otherwise 12 = noon, 7-11 = morning, 1-6 = afternoon/evening. Replies always show the time so it can be corrected.
+  if ((m = t.match(/\b(\d{1,2})\s*(?:o'?\s?clock|oclock)\b/) || t.match(/\bat\s+(\d{1,2})(?![\d:.\/]|\s*(?:am|pm|st|nd|rd|th|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b)/)) && +m[1] >= 1 && +m[1] <= 12) {
+    let h = +m[1] % 12; const pm = /\b(evening|afternoon|night|tonight)\b/.test(t), am = /\bmorning\b/.test(t);
+    if (pm || (!am && +m[1] !== 12 && +m[1] <= 6)) h += 12; if (+m[1] === 12) h = am ? 0 : 12;
+    return { h, min: 0 };
+  }
   for (const k of ['end of day', 'eod', 'tonight', 'evening', 'afternoon', 'noon', 'morning', 'night']) if (t.includes(k)) return { h: PARTS[k][0], min: PARTS[k][1] };
   return null;
 }

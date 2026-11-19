@@ -14,23 +14,27 @@ const fs = require('fs'); const path = require('path'); const crypto = require('
 const { handleOwnerMessage } = require('../layla_owner/brain');
 const { processInbound } = require('../layla_owner/inbound');
 const { verifySignature, LIMITS } = require('../layla_owner/ownerGate');
-const { parseWebhook } = require('../layla_owner/waCloud');
+const { checkWebhook, verifyChallenge } = require('../layla_owner/webhookGate');
+const { loadSettings } = require('../layla_owner/settings');
+const { createRateLimiter } = require('../layla_owner/ownerGate');
 
-module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, env = process.env, now = () => new Date() }) {
+module.exports = function createRouter({ store, adapters, requireAuth, send, download, transcribe, saveMedia, ownerNumber, paper, customer, family, familyRateLimit, voiceDraft, inboxCmd, env = process.env, now = () => new Date() }) {
   const r = express.Router();
   const wrap = (fn) => (req, res) => fn(req, res).catch((e) => { console.error('[layla-owner]', e.message); res.status(500).json({ error: 'Something went wrong' }); });
 
   // Meta webhook: raw body needed for the signature. Registered BEFORE login (Meta cannot log in) but protected by the signature.
-  r.get('/wa', (req, res) => (req.query['hub.mode'] === 'subscribe' && env.WA_VERIFY_TOKEN && req.query['hub.verify_token'] === env.WA_VERIFY_TOKEN ? res.send(String(req.query['hub.challenge'])) : res.sendStatus(403)));
+  const settings = loadSettings(env); const webhookLimiter = createRateLimiter(120);
+  r.get('/wa', (req, res) => { const c = verifyChallenge(req.query, settings); return c === null ? res.sendStatus(403) : res.send(c); });
   r.post('/wa', express.raw({ type: '*/*', limit: '1mb' }), wrap(async (req, res) => {
-    if (!verifySignature(req.body, req.get('X-Hub-Signature-256'), env.WA_APP_SECRET)) return res.sendStatus(403);
+    const g = checkWebhook({ raw: req.body, signature: req.get('X-Hub-Signature-256'), settings, limiter: webhookLimiter });
+    if (!g.ok) return res.sendStatus(g.status);
     res.sendStatus(200);                                   // answer Meta first, work after
-    for (const m of parseWebhook(JSON.parse(req.body.toString('utf8')))) processInbound(m, inboundDeps()).catch((e) => console.error('[layla-owner]', e.message));
+    for (const m of g.messages) processInbound(m, inboundDeps()).catch((e) => console.error('[layla-owner]', e.message));
   }));
 
   if (requireAuth) r.use(requireAuth);
   r.use(express.json({ limit: '16mb' }));
-  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, now });
+  const inboundDeps = () => ({ store, adapters, send, ownerNumber, download, transcribe, saveMedia, paper, customer, family, familyRateLimit, voiceDraft, inboxCmd, now });
 
   r.post('/message', wrap(async (req, res) => {
     const text = String((req.body && req.body.text) || '').slice(0, LIMITS.maxTextChars);
@@ -51,5 +55,19 @@ module.exports = function createRouter({ store, adapters, requireAuth, send, dow
   }));
 
   r.get('/tasks', wrap(async (req, res) => { res.json(await store.listOpen()); }));
+  // Undo a mistaken Done, and the list to undo from (last 2 days).
+  r.get('/done-recent', wrap(async (req, res) => { res.json({ done: (await store.listRecentDone()).map((t) => ({ id: t.id, title: t.title })) }); }));
+  r.post('/reopen', wrap(async (req, res) => {
+    const id = Number(req.body && req.body.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'id is required' });
+    const t = await store.reopen(id); if (!t) return res.status(404).json({ error: 'That reminder is not in the last 2 days of finished ones.' });
+    res.json({ ok: true, title: t.title });
+  }));
+  // In-app reminder pop-ups: open reminders whose time has come (or whose snooze is over). Read only; "done N" / "snooze N 1 hour" go through /message.
+  r.get('/due', wrap(async (req, res) => {
+    const n = now(); const open = await store.listOpen();
+    const due = open.filter((t) => { const at = t.snoozed_until && t.snoozed_until > t.due_at ? t.snoozed_until : t.due_at; return at <= n; })
+      .slice(0, 10).map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, key: t.id + '@' + (t.snoozed_until && t.snoozed_until > t.due_at ? t.snoozed_until : t.due_at).toISOString() }));
+    res.json({ due });
+  }));
   return r;
 };

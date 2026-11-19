@@ -1,0 +1,61 @@
+/* GRN ONE-SCREEN, part 2 (AJ 12 Nov, task 205). Loaded after grn-compact.css.
+   Right side = form on top (.g-hdr), lines in the middle (take ALL the free height, own scroll), totals + buttons pinned at the bottom (.g-ftr).
+   The old fixed height calc(100dvh - 290px) let the buttons slide under the lines whenever a note or message added a row. Layout only. */
+@media (min-width:900px) {
+  html body #view1 > section:first-child { display:flex; flex-direction:column; gap:6px; }
+  html body #view1 > section:first-child > .card { margin:0 !important; flex:none; }
+  html body #view1 > section:first-child > .card:nth-child(2) { order:-1; }     /* drafts first, photo below: ONE scroll on the left */
+  html body #view1 #right.has-lines { display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; align-items:stretch !important; overflow:hidden !important; height:100% !important; gap:3px !important; }
+  html body #view1 #right.has-lines > .g-hdr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:flex-end; gap:2px 8px; }
+  html body #view1 #right.has-lines > .g-hdr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-hdr .row, html body #view1 #right.has-lines > .g-ftr .row { display:contents; }
+  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:1 1 0 !important; height:auto !important; min-height:110px !important; max-height:none !important; order:0 !important; }
+  html body #view1 #right.has-lines > .g-ftr { flex:0 0 auto !important; display:flex; flex-wrap:wrap; align-items:center; gap:3px 10px; padding-top:3px; border-top:1px solid var(--c-line,#ddd); background:var(--c-surface,#fff); }
+  html body #view1 #right.has-lines > .g-ftr > * { flex:0 0 auto; margin:0; }
+  html body #view1 #right.has-lines > .g-ftr .msg { flex:1 1 100%; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:auto !important; display:flex; flex-wrap:wrap; gap:6px; }
+  html body #view1 #right.has-lines > .g-ftr #status:empty { display:none; }
+}
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .row:first-child h3, html body #view1 #right.has-lines > .g-hdr > .row:first-child .badge { display:none !important; }
+  html body #view1 #right.has-lines > .g-ftr .actions { margin-left:0 !important; }                 /* left side: the Layla chat button sits bottom right */
+  html body #view1 #right.has-lines > .g-ftr #status { max-height:42px; overflow:auto; font-size:13px; }
+  html body #view1 #right.has-lines > .g-ftr > .row:has(button:only-child) { display:block; }
+}
+
+/* 13 Nov (task: GRN lines box too short on the shop screen): more rows. Header, totals and buttons take less height. Layout only. */
+@media (min-width:900px) {
+  html body #view1 #right.has-lines { gap:2px !important; }
+  html body #view1 #right.has-lines > .g-ftr { gap:1px 10px; padding-top:2px; }
+  html body #view1 #right.has-lines > .g-ftr .sum { margin:0 !important; }
+  html body #view1 #right.has-lines > .g-ftr .actions button { min-height:30px !important; padding:1px 12px !important; font-size:14px !important; }
+  html body #view1 #right.has-lines > .g-ftr #status { max-height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:1px 8px !important; margin:0 !important; }
+  html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { min-height:150px !important; }
+}
+/* 13 Nov: Cheques tab. Header always solid (rows never show through it), dates and buttons never wrap or get cut off. */
+html body #view3 thead th{background:#ece8dc !important;position:sticky;top:0;z-index:5;white-space:nowrap}
+html body #view3 table td:nth-child(5),html body #view3 table td:nth-child(6),html body #view3 table td:nth-child(7),html body #view3 table td:last-child{white-space:nowrap}
+html body #view3 .scroll{overflow-x:auto}
+
+/* 13 Nov (AJ: more lines, ~15): inputs sat on the text baseline, so each row grew 22 -> 29px. Top-align them: rows are 24px and more fit. */
+@media (min-width:900px) {
+  html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td > button, html body #view1 #right .lines td .dsel { vertical-align:top !important; margin-top:0 !important; margin-bottom:0 !important; }
+  html body #view1 #right .lines td { vertical-align:top !important; }
+  html body #view1 #right .lines td input[type=checkbox] { margin:3px auto 0 !important; display:block; }
+}
+@media (min-width:900px) { html body #view1 #right .lines tr, html body #view1 #right .lines td { height:22px !important; } }
+@media (min-width:900px) { html body #view1 #right .lines td > input, html body #view1 #right .lines td > select, html body #view1 #right .lines td .dsel { box-sizing:border-box !important; } }
+
+/* 13 Nov (AJ: 15 lines): spend the height on lines, not on notices. The "you are editing" note and the idle SAVED note go; the status chip stays. */
+@media (min-width:900px) {
+  html body #view1 #right.has-lines > .g-hdr > .msg.warn { display:none !important; }
+}
+
+/* 13 Nov 17:20 (AJ: only 6 lines were visible, he wants at least 20): the lines box is tall enough for 20 rows; the right panel scrolls if the screen is short; totals and buttons stay pinned at the bottom. Layout only. */
+html body #view1 #right.has-lines { overflow-y:auto !important; overflow-x:hidden !important; }
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { flex:0 0 auto !important; min-height:var(--grn20,640px) !important; }
+html body #view1 #right.has-lines > .g-ftr { position:sticky !important; bottom:0 !important; z-index:6 !important; }
+
+/* 15 Nov SPEED: the GRN lines box scrolls on its own layer; rows never repaint the rest of the page while scrolling. Layout/paint only. */
+html body #view1 #right.has-lines > .scroll.lines:not(.fullpage) { contain: layout style; overscroll-behavior: contain; will-change: scroll-position; }
+html body #view1 .card, html body #view1 .dr { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; transition: none !important; }

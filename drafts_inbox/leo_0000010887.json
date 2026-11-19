@@ -1,0 +1,302 @@
+[
+ {
+  "id": "INBOX-LEO-0000010887",
+  "vendor": "Leo Marketing",
+  "no": "0000010887",
+  "date": "2026-11-03",
+  "received": "2026-11-03",
+  "credit_days": 90,
+  "printed_total": 551340,
+  "photo": "/api/grn-inbox/leo_0000010887.jpg",
+  "note": "Read from the photo by Claude. Sell prices are YOUR handwriting: check them. Not read (tick or cross only): lines 1, 7, 14, 17-21, 25. Unsure: line 6 (2990). Handwritten notes on the paper: '9 - 1' near line 8 and 'BIDAY SPRAY C.P (BRASCO) 1 later will send' (line 15 qty is 5 on the bill): check what really arrived.",
+  "lines": [
+   {
+    "code": "",
+    "name": "HAND SHOWER 305",
+    "qty": 3,
+    "unit": 780,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "HAND SHOWER AUSCO",
+    "qty": 4,
+    "unit": 800,
+    "sell": 2650
+   },
+   {
+    "code": "",
+    "name": "HAND SHOWER SQUARE (BRASCO/CARD)",
+    "qty": 3,
+    "unit": 1015,
+    "sell": 2950
+   },
+   {
+    "code": "",
+    "name": "GULLY COVER POLO",
+    "qty": 20,
+    "unit": 295,
+    "sell": 575
+   },
+   {
+    "code": "",
+    "name": "GULLY COVER POP UP HEAVY",
+    "qty": 10,
+    "unit": 1960,
+    "sell": 4250
+   },
+   {
+    "code": "",
+    "name": "ANGLE VALVE LEO TWO WAY",
+    "qty": 25,
+    "unit": 975,
+    "sell": 2990
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY COLOUR",
+    "qty": 10,
+    "unit": 1040,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY LEO BLACK SQUARE",
+    "qty": 10,
+    "unit": 3180,
+    "sell": 6350
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY LEO 006 C.P. (KD)",
+    "qty": 10,
+    "unit": 1250,
+    "sell": 4350
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY LEO 002 SQUARE",
+    "qty": 10,
+    "unit": 2950,
+    "sell": 6250
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY SMART IVORY",
+    "qty": 10,
+    "unit": 550,
+    "sell": 2350
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY SMART BLUE",
+    "qty": 10,
+    "unit": 550,
+    "sell": 2350
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY SMART PINK",
+    "qty": 10,
+    "unit": 550,
+    "sell": 2350
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY BK (WATER MASTER)",
+    "qty": 10,
+    "unit": 1275,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY C.P (BRASCO)",
+    "qty": 5,
+    "unit": 1335,
+    "sell": 3150
+   },
+   {
+    "code": "",
+    "name": "BIDAY SPRAY SMART WHITE",
+    "qty": 10,
+    "unit": 550,
+    "sell": 2350
+   },
+   {
+    "code": "",
+    "name": "ALUMINIUM FRAME MIRROR 70X70CM (GOLD)",
+    "qty": 3,
+    "unit": 7510,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "ALUMINIUM FRAME MIRROR 60X60CM (SILVER)",
+    "qty": 3,
+    "unit": 6250,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "MIRROR LEO GX 150 (60X45)",
+    "qty": 5,
+    "unit": 2575,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "MIRROR LEO GX 156 W/SHELF SQURE",
+    "qty": 5,
+    "unit": 4920,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "WOODEN FRAME MIRROR GX 167 M",
+    "qty": 3,
+    "unit": 9090,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "BASIN TAP ZAM",
+    "qty": 16,
+    "unit": 1275,
+    "sell": 3150
+   },
+   {
+    "code": "",
+    "name": "ANGLE VALVE LEVER TYPE LEO",
+    "qty": 10,
+    "unit": 1015,
+    "sell": 2950
+   },
+   {
+    "code": "",
+    "name": "BASIN TAP LEVER TYPE LEO",
+    "qty": 10,
+    "unit": 1795,
+    "sell": 3750
+   },
+   {
+    "code": "",
+    "name": "TOWEL BAR SINGLE 164",
+    "qty": 10,
+    "unit": 2025,
+    "sell": 0
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER S/D ROUND (ONE UNIT)",
+    "qty": 3,
+    "unit": 5210,
+    "sell": 7950
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER S/D SQUARE (ONE UNIT)",
+    "qty": 3,
+    "unit": 5210,
+    "sell": 7950
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER HEAVY PINK (ROUND)",
+    "qty": 3,
+    "unit": 2140,
+    "sell": 4350
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER HEAVY IVORY (ROUND)",
+    "qty": 3,
+    "unit": 2030,
+    "sell": 4350
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER HEAVY WHITE (ROUND)",
+    "qty": 3,
+    "unit": 2030,
+    "sell": 4350
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER - PP1 (A-510PP)",
+    "qty": 3,
+    "unit": 3475,
+    "sell": 6450
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER 888 BLACK",
+    "qty": 3,
+    "unit": 2890,
+    "sell": 5950
+   },
+   {
+    "code": "",
+    "name": "SLOW DOWN SQUARE BLUE",
+    "qty": 3,
+    "unit": 2850,
+    "sell": 5950
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER CLASSIC (GRAY)",
+    "qty": 3,
+    "unit": 965,
+    "sell": 2750
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER CLASSIC (MAROON)",
+    "qty": 3,
+    "unit": 965,
+    "sell": 2750
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER CLASSIC (BEIGE)",
+    "qty": 3,
+    "unit": 965,
+    "sell": 2750
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER CLASSIC (BLACK)",
+    "qty": 3,
+    "unit": 965,
+    "sell": 2850
+   },
+   {
+    "code": "",
+    "name": "SEAT COVER CLASSIC (GREEN)",
+    "qty": 3,
+    "unit": 965,
+    "sell": 2850
+   },
+   {
+    "code": "",
+    "name": "SHOWER PANEL SET ROSE GOLD",
+    "qty": 1,
+    "unit": 33500,
+    "sell": 45500
+   },
+   {
+    "code": "",
+    "name": "SHOWER PANEL SET MATT (SUS)",
+    "qty": 1,
+    "unit": 33500,
+    "sell": 45000
+   },
+   {
+    "code": "",
+    "name": "SHOWER PANEL SET BLACK",
+    "qty": 1,
+    "unit": 33500,
+    "sell": 46000
+   }
+  ]
+ }
+]

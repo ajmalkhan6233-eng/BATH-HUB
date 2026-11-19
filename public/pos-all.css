@@ -1,0 +1,235 @@
+/* ===== pos-polish.css ===== */
+/* POS polish (AJ 11 Nov 2026). One module for the bill screen: compact top, labelled item rows, item list that floats on top,
+   page that scrolls a little (not locked), a big bill page with Back / New bill. Colours come only from the theme variables. */
+
+/* the page may scroll a little again; only the item list scrolls by itself and never drags the page with it */
+@media (min-width:1000px) { html body { overflow-y:auto !important; } }
+#itemRows { overscroll-behavior:contain; }
+
+/* slim top: no big title, no empty message lines */
+.pos-h1 { display:none; }
+.scan-msg:empty { display:none; }
+.cust-row { align-items:end; }
+.pos-tools { margin:6px 0 0; }
+.panel label { margin:4px 0 2px; }
+
+/* item rows: Item | Qty | Price | Discount | x, with labels */
+.item-head, html body .item-row { grid-template-columns:minmax(0,1fr) 156px 100px 92px 40px !important; }
+.item-head { display:grid; gap:8px; font-size:12px; font-weight:700; color:var(--text-secondary); padding:2px 0 4px; }
+.item-head span:nth-child(2) { text-align:center; }
+.i-disc { width:100%; min-height:44px; }
+.i-qty::-webkit-outer-spin-button, .i-qty::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.i-qty { -moz-appearance:textfield; appearance:textfield; }
+@media (max-width:480px) {
+  .item-head, .i-disc { display:none; }
+  html body .item-row { grid-template-columns:136px minmax(0,1fr) 44px !important; }
+}
+
+/* the item list floats above everything (placed by pos-polish.js), so nothing hides it */
+.pick-list.open { position:fixed !important; z-index:9999 !important; max-height:min(320px, 50vh); overscroll-behavior:contain; }
+
+/* bill page: actions on top, receipt beside them on a big screen */
+#billPanel .bill-bar { display:flex; gap:10px; margin:0 0 12px; }
+#billPanel .bill-bar button { flex:1; min-height:52px; font-size:17px; font-weight:800; border:none; border-radius:10px; cursor:pointer; background:var(--gold-primary); color:var(--text-on-accent); }
+#billPanel .bill-bar button.ghost { background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-strong); }
+#billPanel .temp-note { display:none; background:var(--status-warning-bg); border:1px solid var(--status-warning); border-radius:8px; padding:10px 12px; margin:0 0 12px; font-size:14px; font-weight:600; }
+#billPanel .share-btn { min-height:52px; font-size:15px; }
+#billPanel .share-btn.is-off { opacity:.45; pointer-events:none; }
+.new-bill-btn { display:none; }
+@media (min-width:760px) {
+  .wrap.has-bill { grid-template-columns:minmax(0,1fr) !important; }
+  #billPanel[style*="block"] { display:grid !important; grid-template-columns:minmax(260px,460px) minmax(260px,1fr); gap:6px 24px; justify-content:center; max-width:100%; overflow-x:hidden; align-items:start; overflow-y:auto; }
+  #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, #billPanel #waReceiptMsg, #billPanel #billAttach { grid-column:2; }
+  #billPanel .receipt { grid-column:1; grid-row:1 / span 6; }
+}
+@media (max-width:899px) { #billPanel .bill-bar { position:sticky; top:0; z-index:5; background:var(--bg-surface); padding:6px 0; } }
+@media print { #billPanel .bill-bar, #billPanel .temp-note, #billPanel .share-buttons, .item-head { display:none !important; } }
+
+#billPanel .share-btn.whatsapp { grid-column:1 / -1; }
+#billPanel #waReceiptMsg { display:block; min-height:20px; }
+
+/* ===== pos-onepage.css ===== */
+/* BLOCK: pos-onepage (AJ 11 Nov 15:40). Desktop POS = ONE screen, no page scroll.
+   Left = the whole screen for item name + code (customer/phone are one thin line on top). Right = calm, 4 small groups.
+   Loaded AFTER pos-polish.css so it wins. Only layout; colours stay on theme variables. */
+@media (min-width:1000px) {
+  html body { height:100dvh !important; overflow:hidden !important; padding:8px 12px !important; }
+  html body .wrap, html body .wrap.has-bill { max-width:none !important; width:100% !important; margin:0 !important; grid-template-columns:minmax(0,1fr) !important; gap:0 !important; }
+  /* left gets the room, right stays a slim column */
+  html body #formPanel { grid-template-columns:minmax(0,1fr) clamp(300px,24vw,360px) !important; gap:14px !important; padding:10px 12px !important; }
+  html body #formPanel .fp-left { display:flex !important; flex-direction:column; min-height:0 !important; height:100% !important; overflow:hidden !important; }
+
+  /* TOP LINE: small customer name + phone + WhatsApp tick, labels gone (placeholders say it) */
+  html body #custRow { display:grid !important; grid-template-columns:minmax(120px,1fr) minmax(120px,1fr) auto !important; gap:6px !important; align-items:center !important; margin:0 0 4px !important; }
+  html body #custRow > div > label { display:none !important; }
+  html body #custRow input[type=text], html body #custRow input[type=tel] { min-height:30px !important; height:30px; padding:2px 8px !important; font-size:13px !important; }
+  html body #custRow .wa-line { margin:0 !important; font-size:11px !important; align-self:center !important; }
+  html body #waCheck { margin:0 !important; font-size:11px; }
+
+  /* scan row slim, tools in the drop-down */
+  html body #posTools { margin:0 0 4px !important; }
+  html body #posTools .scan-row { gap:6px; }
+  html body #posTools input#scanBox { min-height:34px !important; height:34px; font-size:14px; }
+  html body #posTools .tools-btn { min-height:34px !important; padding:2px 10px !important; font-size:13px; }
+  html body #formPanel .fp-left > label { display:none !important; }   /* the word "Items" */
+
+  /* ITEMS: all the remaining height; item name + code gets the width */
+  html body #formPanel #itemRows { flex:1 1 auto !important; min-height:0 !important; overflow-y:auto !important; }
+  html body .item-head, html body .item-row { grid-template-columns:minmax(0,1fr) 150px 96px 84px 36px !important; }
+  html body #formPanel .add-btn { flex:0 0 auto; margin:4px 0 0 !important; min-height:36px !important; }
+
+  /* RIGHT: column, bill list takes the free space, the rest is small and tidy */
+  html body #formPanel .fp-right { display:flex !important; flex-direction:column; gap:6px; height:100% !important; min-height:0 !important; overflow:hidden !important; padding:0 0 34px 0 !important; }
+  html body #formPanel .fp-right #liveBill { flex:1 1 auto; min-height:60px; overflow-y:auto; margin:0 !important; }
+  html body #formPanel .fp-right > * { flex:0 0 auto; }
+  html body #formPanel .fp-right > #liveBill { flex:1 1 auto; }
+  html body #formPanel .fp-right label { margin:0 0 1px !important; font-size:11px !important; color:var(--text-secondary); }
+  html body #formPanel .fp-right input, html body #formPanel .fp-right select { min-height:32px !important; height:32px; padding:2px 8px !important; font-size:14px; }
+  html body #formPanel .fp-right #liveBill, html body #liveBill .lb-h { font-size:13px !important; line-height:1.3; }
+  html body #priceRow { display:grid !important; grid-template-columns:1.3fr 1fr 1fr !important; gap:6px !important; }
+  html body #saveHint, html body #capHint { display:none !important; }
+  html body #capHint:not(:empty) { display:block !important; font-size:11px; margin:0; }
+  html body #formPanel .fp-right .generate-btn { min-height:46px !important; font-size:17px; margin:2px 0 0 !important; }
+  html body #formPanel .fp-right #quoteSaveBtn { min-height:30px !important; font-size:12px; margin:0 !important; }
+  html body #formPanel .fp-right .today-d { margin:0; } html body #formPanel .fp-right .today-d summary { padding:2px 0; font-size:12px; font-weight:600; }
+  html body #formPanel .fp-right .today-d[open] .today { max-height:22vh; overflow-y:auto; }
+  html body #formPanel .fp-right .edit-banner:empty, html body #formPanel .fp-right .err:empty { display:none; }
+}
+/* phone: same slim customer line, still scrolls naturally (a phone has no room to avoid it) */
+@media (max-width:999px) {
+  html body #custRow > div > label { display:none; }
+  html body #custRow input { min-height:36px; font-size:16px; }
+  html body #custRow { gap:6px !important; margin:0 0 4px !important; }
+}
+
+/* AJ 11 Nov: no bouncing up and down on the POS: rows and panels appear without moving */
+html body .item-row, html body .panel, html body #formPanel, html body #itemRows > *, html body .wrap { animation:none !important; transform:none !important; }
+html body .item-row { transition:none !important; }
+
+/* ===== pos-space.css ===== */
+/* BLOCK: pos-space (AJ 11 Nov 18:55). Use the whole POS screen: slim item rows, many rows visible, calm wider right side.
+   Item list always drops BELOW its box (soft short slide, no flip, no jump); rows keep a fixed height so nothing shifts.
+   Loaded AFTER pos-onepage.css. Layout only; colours stay on theme variables. */
+@media (min-width:1000px) {
+  html body #formPanel { grid-template-columns:minmax(0,1fr) clamp(380px,31vw,520px) !important; gap:12px !important; }
+
+  /* LEFT: slim rows, constant height (stock line always reserves its space) */
+  html body #formPanel .item-head { font-size:11px !important; margin:0 0 2px !important; }
+  html body #formPanel .item-head > * { padding:0 !important; }
+  html body #formPanel .item-row { margin:0 0 3px !important; align-items:center !important; min-height:54px; }
+  html body #formPanel .item-row .i-name { height:34px !important; min-height:34px !important; font-size:15px !important; padding:2px 8px !important; }
+  html body #formPanel .item-row .i-price, html body #formPanel .item-row .i-disc { height:34px !important; min-height:34px !important; font-size:14px !important; padding:2px 8px !important; text-align:right; }
+  html body #formPanel .item-row .qty-step { display:flex; align-items:center; gap:3px; }
+  html body #formPanel .item-row .qty-step button { width:30px !important; min-width:30px !important; height:34px !important; min-height:34px !important; padding:0 !important; }
+  html body #formPanel .item-row .qty-step .i-qty { height:34px !important; min-height:34px !important; min-width:44px !important; width:100%; padding:2px 4px !important; text-align:center; }
+  html body #formPanel .item-row .stock-hint { min-height:16px; line-height:16px; font-size:12px; margin:1px 0 0 !important; }
+  html body #formPanel .item-row .remove-btn { min-height:30px !important; }
+
+  /* item list: under its box, short soft slide, never flips */
+  html body .pick-list.open { animation:posDrop .14s ease-out both !important; }
+  @keyframes posDrop { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+  html body .pick-opt { padding:5px 10px !important; }
+  html body .pick-opt b { font-size:14px !important; } html body .pick-opt span { font-size:11px !important; }
+
+  /* RIGHT: bill list takes the height; price line, then pay + Generate on ONE line, then quote + today on one line */
+  html body #formPanel .fp-right { display:grid !important; grid-template-columns:minmax(110px,.85fr) 1.15fr; grid-template-rows:minmax(0,1fr); grid-auto-rows:auto; gap:6px !important; align-content:stretch; }
+  html body #formPanel .fp-right > * { grid-column:1 / -1; min-width:0; }
+  html body #formPanel .fp-right > label { display:none !important; }   /* the word "Payment method": the box says it */
+  html body #formPanel .fp-right #liveBill { order:0; min-height:0 !important; }
+  html body #formPanel .fp-right #priceRow { order:1; }
+  html body #formPanel .fp-right #capHint { order:2; }
+  html body #formPanel .fp-right #paymentMethod { order:3; grid-column:1 !important; }
+  html body #formPanel .fp-right #genBtn { order:4; grid-column:2 !important; margin:0 !important; min-height:40px !important; font-size:16px !important; }
+  html body #formPanel .fp-right #chequeBox { order:5; } html body #formPanel .fp-right #creditNote { order:6; } html body #formPanel .fp-right #splitBox { order:7; }
+  html body #formPanel .fp-right #editBanner { order:8; } html body #formPanel .fp-right #errMsg { order:9; }
+  html body #formPanel .fp-right #cancelEditBtn { order:10; grid-column:1 !important; margin:0 !important; }
+  html body #formPanel .fp-right #quoteSaveBtn { order:11; align-self:center; grid-column:1 !important; width:100% !important; min-height:32px !important; font-size:12px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:0 !important; }
+  html body #formPanel .fp-right .today-d { order:12; grid-column:2 !important; align-self:center; }
+  html body #formPanel .fp-right .today-d[open] { grid-column:1 / -1 !important; }
+
+  /* bill lines: name gets the width, one clean line per item, no wobble when a line is added */
+  html body #liveBill, html body #liveBill * { animation:none !important; transition:none !important; }
+  html body #liveBill table { table-layout:auto; } html body #liveBill td { padding:3px 5px !important; font-size:13px !important; line-height:1.25; }
+  html body #liveBill .lb-h { margin:0 0 3px !important; }
+  html body #liveBill .lb-tot { font-size:17px !important; padding-top:4px !important; }
+}
+
+/* ===== pos-look.css ===== */
+/* BLOCK: pos-look (AJ 11 Nov 20:30). New POS LOOK: soft cards, pill fields, receipt-style bill, calm gold button. Look only, no layout moves.
+   Loaded LAST on pos_billing.html. Colours only through theme variables, so Light / Soft / Dark all follow. */
+html body { background:var(--bg-canvas) !important; font-family:var(--font-sans); }
+html body #formPanel { background:var(--bg-surface) !important; border:1px solid var(--border-subtle) !important; border-radius:18px !important; box-shadow:var(--shadow-md) !important; }
+
+/* fields: soft pills with a gold focus ring */
+html body #formPanel input[type=text], html body #formPanel input[type=tel], html body #formPanel input[type=number], html body #formPanel select {
+  background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:10px !important; color:var(--text-primary) !important; transition:border-color .15s, box-shadow .15s; }
+html body #formPanel input:focus, html body #formPanel select:focus { border-color:var(--gold-primary) !important; box-shadow:0 0 0 3px var(--gold-bg-subtle, rgba(212,175,55,.18)) !important; outline:none !important; }
+html body #posTools input#scanBox { border-radius:999px !important; padding-left:14px !important; }
+html body #posTools .tools-btn, html body #posTools #camScanBtn { border-radius:999px !important; background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; }
+
+/* item rows: each one a soft card */
+html body #formPanel .item-row { box-sizing:border-box !important; background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:12px !important; padding:6px 8px !important; transition:border-color .15s, background .15s; }
+html body #formPanel .item-row:focus-within { border-color:var(--gold-primary) !important; background:var(--bg-surface) !important; }
+html body #formPanel .item-row .i-name { background:transparent !important; border-color:transparent !important; font-weight:600; }
+html body #formPanel .item-row .i-name:focus { background:var(--bg-surface) !important; }
+html body #formPanel .item-head { color:var(--text-muted) !important; letter-spacing:.04em; text-transform:uppercase; font-weight:600; }
+html body #formPanel .qty-step button { border-radius:999px !important; background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; color:var(--text-primary) !important; }
+html body #formPanel .qty-step button:hover { background:var(--gold-primary) !important; color:var(--text-on-accent) !important; }
+html body #formPanel .remove-btn { border-radius:999px !important; width:28px !important; min-width:28px !important; max-width:28px !important; height:28px !important; min-height:28px !important; justify-self:center; display:flex; align-items:center; justify-content:center; padding:0 !important; background:var(--status-danger-bg) !important; color:var(--status-danger) !important; }
+html body #formPanel .stock-hint { color:var(--status-success) !important; font-weight:600; }
+
+/* add item: quiet dashed button, not a big gold bar */
+html body #formPanel .add-btn { background:transparent !important; color:var(--gold-text) !important; border:1.5px dashed var(--gold-primary) !important; border-radius:12px !important; font-weight:700; }
+html body #formPanel .add-btn:hover { background:var(--gold-bg-subtle, rgba(212,175,55,.14)) !important; }
+
+/* right side: the bill reads like a receipt */
+html body #formPanel .fp-right #liveBill { background:var(--bg-surface-subtle) !important; border:1px solid var(--border-subtle) !important; border-radius:14px !important; padding:10px 12px !important; }
+html body #liveBill .lb-h { text-transform:uppercase; letter-spacing:.05em; font-size:11px !important; color:var(--text-muted); }
+html body #liveBill td { border-bottom:1px dashed var(--border-subtle) !important; font-variant-numeric:tabular-nums; }
+html body #liveBill .lb-tot { color:var(--gold-text); border-top:2px solid var(--border-strong); margin-top:4px; font-variant-numeric:tabular-nums; }
+html body #formPanel .fp-right label { color:var(--text-muted) !important; text-transform:uppercase; letter-spacing:.04em; font-size:10px !important; font-weight:600; }
+
+/* main action: calm gold, soft lift on hover (no bounce) */
+html body #formPanel .generate-btn { background:linear-gradient(180deg, var(--gold-hover, #a07a12), var(--gold-primary)) !important; color:var(--text-on-accent) !important; border:none !important; border-radius:12px !important; font-weight:800; box-shadow:var(--shadow-md); transition:box-shadow .15s, filter .15s; }
+html body #formPanel .generate-btn:hover { filter:brightness(1.06); box-shadow:var(--shadow-lg); }
+html body #formPanel #quoteSaveBtn { background:var(--bg-surface-elevated) !important; border:1px solid var(--border-subtle) !important; border-radius:10px !important; color:var(--text-primary) !important; font-weight:600; }
+
+/* item list: floating card */
+html body .pick-list.open { border-radius:12px !important; box-shadow:var(--shadow-lg) !important; border:1px solid var(--border-strong) !important; }
+html body .pick-opt.active, html body .pick-opt:hover { background:var(--gold-bg-subtle, rgba(212,175,55,.16)) !important; }
+
+/* BLOCK: pos-preview-match (AJ 12 Nov, approved N4): match the approved preview. Look only, same ids. */
+@media (min-width:900px){
+  html body #formPanel .item-row{min-height:32px !important;padding:2px 6px !important;border-radius:10px !important}
+  html body #formPanel .item-row input{min-height:26px !important}
+  html body #formPanel .generate-btn{box-shadow:0 0 16px -4px rgba(212,175,55,.5) !important;font-weight:700}
+  html body #liveBill{font-size:12.5px}
+  html body #rTotals{font-size:15px;font-weight:700;color:var(--gold-primary)}
+  html body #formPanel #customerName,html body #formPanel #customerPhone,html body #formPanel #scanBox{min-height:26px !important;border-radius:10px !important}
+}
+
+/* BLOCK: pick-layout (AJ 12 Nov): code far left, name + stock below, bigger price right */
+.pick-opt,.suggest-row.po-sug{display:flex !important;align-items:center;gap:12px}
+.po-code{flex:0 0 58px;font-weight:700;font-size:15px;color:var(--gold-primary,#b8892b)}
+.po-mid{flex:1 1 auto;min-width:0}.po-mid b{display:block;font-size:14px;white-space:normal}.po-mid span{font-size:12px;color:var(--text-muted)}
+.po-price{flex:0 0 auto;min-width:84px;text-align:right;font-size:18px;font-weight:800;color:var(--text-primary)}
+/* 13 Nov: item list in POS: wider box, code and price never wrap, name and stock in the middle */
+html body .pick-list { min-width:440px !important; max-width:92vw !important; }
+html body .po-code { flex:0 0 auto !important; min-width:70px; white-space:nowrap; padding-right:6px; }
+html body .po-price { flex:0 0 auto !important; white-space:nowrap; min-width:96px; }
+html body .po-mid b { white-space:normal; }
+
+/* 13 Nov 16:15 (AJ): stock is its own column between name and price; same Segoe font as the rest of the app */
+.po-stock{flex:0 0 auto;min-width:74px;text-align:right;font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.1}
+.po-stock small{display:block;font-size:11px;font-weight:500;color:var(--text-muted)}
+html body, html body input, html body button, html body select, html body .pick-opt, html body .pick-opt *{font-family:'RBH Sans','Segoe UI',system-ui,'Noto Sans Sinhala','Noto Sans Tamil',sans-serif !important}
+
+
+/* 16 Nov: Stock & items look for POS (colours, borders, no motion). Layout untouched. */
+html,body{background:#f4f4f2!important}
+*{animation:none!important;transition:none!important}
+input:not([type=checkbox]):not([type=radio]),select,textarea{border:1.5px solid #9a9a93!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important}
+input:focus,select:focus,textarea:focus{outline:2px solid #c9a227!important;outline-offset:0}
+button{border:1.5px solid #9a9a93;border-radius:8px;box-shadow:none!important;background-image:none!important}
+th{background:#ecece8!important;color:#0b0b0c!important}
+td{border-bottom:1px solid #d4d4cf!important}

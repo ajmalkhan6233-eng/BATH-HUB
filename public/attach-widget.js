@@ -42,7 +42,7 @@
     var state = { type: opts.type, id: resolveId(opts.id), open: false, files: [] };
     el.__aw = state; el.classList.add('aw');
     el.innerHTML = '<button type="button" data-a="photo"><svg class="bh-icon" aria-hidden="true"><use href="#i-camera"/></svg> Take photo</button><button type="button" data-a="upload"><svg class="bh-icon" aria-hidden="true"><use href="#i-upload"/></svg> Upload file</button>' +
-      '<button type="button" data-a="dl"><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</button><span class="aw-msg"></span><ul class="aw-list" hidden></ul>' +
+      '<button type="button" data-a="dl"><svg class="bh-icon" aria-hidden="true"><use href="#i-download"/></svg> Download</button><span data-ld-slot></span><span class="aw-msg"></span><ul class="aw-list" hidden></ul>' +
       '<input type="file" accept="image/*" capture="environment" hidden data-i="photo"><input type="file" accept="image/*,application/pdf,.pdf,.xlsx,.csv" hidden data-i="upload">';
     var msg = el.querySelector('.aw-msg'), list = el.querySelector('.aw-list');
     function say(t, bad) { msg.textContent = t || ''; msg.className = 'aw-msg' + (bad ? ' aw-err' : ''); }
@@ -63,6 +63,17 @@
           '<li><span></span><a href="/api/attachments/zip?record_type=' + encodeURIComponent(state.type) + '&record_id=' + encodeURIComponent(state.id) + '">Download all as .zip</a></li>'
         : '<li><span>No files attached here yet.</span></li>';
     }
+    list.addEventListener('click', async function (ev) {
+      var a = ev.target.closest && ev.target.closest('[data-rm]'); if (!a) return;
+      ev.preventDefault();
+      if (!confirm('Remove this file from here? It is hidden, not erased, and the removal is logged.')) return;
+      try {
+        var r = await fetch('/api/attachments/' + encodeURIComponent(a.getAttribute('data-rm')), { method: 'DELETE', credentials: 'same-origin' });
+        var j = await r.json().catch(function () { return {}; });
+        if (!r.ok) throw new Error(j.error || 'Could not remove');
+        say('Removed.'); await refresh();
+      } catch (e) { say(e.message, true); }
+    });
     async function send(file) {
       if (!file) return;
       if (file.size > MAX) return say('That file is bigger than 10 MB.', true);
@@ -81,6 +92,13 @@
       else { state.open = !state.open; if (state.open) refresh(); else render(); }
     });
     el.addEventListener('change', function (ev) { var i = ev.target; if (i.matches && i.matches('input[type=file]')) { send(i.files[0]); i.value = ''; } });
+    // ONE AI door beside the record buttons: a paper sent here goes to Layla and the Document Inbox, not to this record.
+    (function () {
+      var slot = el.querySelector('[data-ld-slot]'); if (!slot) return;
+      var go = function () { if (window.LaylaDoor && !slot.__ld) { slot.__ld = true; window.LaylaDoor.mount(slot, {}); } };
+      if (window.LaylaDoor) go();
+      else { var sc = document.createElement('script'); sc.src = '/layla-door.js'; sc.onload = go; document.head.appendChild(sc); }
+    })();
     el.__awRefresh = refresh;
     refresh();
     return el;

@@ -23,7 +23,7 @@ function ceramicPrice(cost, { table = DEFAULT_CERAMIC_TABLE, uplift = 0.25, step
   const list = ceilTo(floor * (1 + uplift), step);
   return { kind: 'ceramic', cost, minProfit: mp, floor, list, maxDiscountPct: Math.floor((1 - floor / list) * 1000 + 1e-6) / 10 };
 }
-/** Tiles: red line = cost x (1 + pct). First Choice Bathco gross margin is about 18% of price, which is about 22% on cost. */
+/** Tiles: red line = cost x (1 + pct). the former workplace gross margin is about 18% of price, which is about 22% on cost. */
 function tilePrice(cost, { pctOfCost = 22, uplift = 0.25, step = 10 } = {}) {
   if (!(cost > 0)) throw new RangeError('cost must be positive');
   const floor = ceilTo(cost * (1 + pctOfCost / 100), step);
@@ -38,8 +38,8 @@ function marginInfo(cost, price, floor) {
 }
 
 /**
- * Real shelf markups on cost from First Choice Bathco's item price list (Lasersoft export, 22 April 2026, 1,256 items; no names or prices kept).
- * Median markup on cost, with the 25th and 75th percentile. Starting values only, the owner edits them. Royal Bath Hub and First Choice Bathco are
+ * Real shelf markups on cost from the former workplace's item price list (Lasersoft export, 22 April 2026, 1,256 items; no names or prices kept).
+ * Median markup on cost, with the 25th and 75th percentile. Starting values only, the owner edits them. Royal Bath Hub and the former workplace are
  * on the same road: keep commodes and basins close to these shelf prices or customers will compare.
  */
 const DEFAULT_CATEGORY_MARKUP = {

@@ -12,7 +12,7 @@
 ## Known problems
 - 17 pre-existing Jest integration failures (CLAUDE.md; not re-run)
 - Railway apex-platform parked; real DASH_* creds still open
-- Deferred: rename lasersoft_invoices table (golden core, needs sign-off); BATHCO rebrand decision
+- Deferred: rename lasersoft_invoices table (golden core, needs sign-off); old-name rename: see AI_MEMORY/RENAME_PLAN_WAITING_GO.md
 - Sinhala/Tamil website text not yet checked by a native speaker
 - CLAUDE.md task queue dated 2026-07-11; may be stale vs. recent commits
 

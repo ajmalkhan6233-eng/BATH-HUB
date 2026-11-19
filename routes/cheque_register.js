@@ -26,7 +26,7 @@ pool.query(`
         payee       VARCHAR(150) NOT NULL,
         amount      NUMERIC(12,2) NOT NULL,
         due_date    DATE NOT NULL,
-        status      VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending / cleared / bounced
+        status      VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending / cleared / bounced / held / cancelled
         notes       TEXT,
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -83,7 +83,12 @@ const { isRealDate: isDate } = require('../utils/validate');   // real calendar 
 const isPositive = v => Number.isFinite(Number(v)) && Number(v) > 0;
 const isPct = v => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100;
 
-router.post('/cheque-register', async (req, res) => {
+// Audit F: staff cannot add or change cheques (a signed-in non-owner gets 403). A request with no session at all is left to the app's own login gate.
+const ownerWrite = (req, res, next) => {
+    const u = req.session && req.session.user;
+    return u && !['admin', 'owner'].includes(u.role) ? res.status(403).json({ error: 'Owner only' }) : next();
+};
+router.post('/cheque-register', ownerWrite, async (req, res) => {
     try {
         const { cheque_no, bank, payee, amount, due_date, notes } = req.body;
         if (!payee || !amount || !due_date) {
@@ -91,6 +96,13 @@ router.post('/cheque-register', async (req, res) => {
         }
         if (!isPositive(amount)) return res.status(400).json({ error: 'amount must be a number greater than 0' });
         if (!isDate(due_date)) return res.status(400).json({ error: 'due_date must be a date (YYYY-MM-DD)' });
+        // the same cheque number at the same bank is refused unless the owner says "confirm_duplicate" (a cancelled cheque does not count)
+        if (cheque_no && req.body.confirm_duplicate !== true) {
+            const norm = v => String(v || '').trim().toLowerCase();
+            const all = await pool.query(`SELECT id, cheque_no, bank, payee, amount FROM cheque_register WHERE cheque_no IS NOT NULL AND status <> 'cancelled'`);
+            const dup = { rows: all.rows.filter(x => norm(x.cheque_no) === norm(cheque_no) && norm(x.bank) === norm(bank)).slice(0, 1) };
+            if (dup.rows.length) return res.status(409).json({ error: `Cheque ${cheque_no} is already on the register (${dup.rows[0].payee}, ${dup.rows[0].amount}).`, code: 'duplicate_cheque', existing_id: dup.rows[0].id });
+        }
         const r = await pool.query(`
             INSERT INTO cheque_register (cheque_no, bank, payee, amount, due_date, notes)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING id
@@ -99,10 +111,10 @@ router.post('/cheque-register', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.put('/cheque-register/:id', async (req, res) => {
+router.put('/cheque-register/:id', ownerWrite, async (req, res) => {
     try {
         const { status, notes } = req.body;
-        if (status && !['pending', 'cleared', 'bounced', 'held'].includes(status)) return res.status(400).json({ error: "status must be 'pending', 'cleared', 'bounced' or 'held'" });
+        if (status && !['pending', 'cleared', 'bounced', 'held', 'cancelled'].includes(status)) return res.status(400).json({ error: "status must be 'pending', 'cleared', 'bounced', 'held' or 'cancelled'" });
         const r = await pool.query(`
             UPDATE cheque_register
             SET status = COALESCE($1, status), notes = COALESCE($2, notes), updated_at = CURRENT_TIMESTAMP

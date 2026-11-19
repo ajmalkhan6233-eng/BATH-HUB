@@ -5,7 +5,7 @@
 const http = require('http');
 const { exec } = require('child_process');
 const { Pool } = require('pg');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const CHECKS = [];
 const pass = (name, detail) => CHECKS.push({ status: 'PASS', name, detail });

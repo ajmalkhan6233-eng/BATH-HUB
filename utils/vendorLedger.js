@@ -55,7 +55,7 @@ function billStatus(bill, cheques = [], payments = [], credits = []) {
   else if (uncovered <= EPS) state = 'CHEQUE_ISSUED';
   else if (covered > EPS) state = 'PART_COVERED';
   else state = 'UNPAID';
-  return { total, cleared, paid, credited, outstanding, overpaid, covered, uncovered, hasBounced, state };
+  return { total, cleared, paid, credited, outstanding, overpaid, covered, uncovered, issued, hasBounced, state };
 }
 
 /** rows: [{ bill, cheques, payments, credits }] */

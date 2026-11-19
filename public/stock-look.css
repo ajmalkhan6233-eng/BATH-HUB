@@ -1,0 +1,20 @@
+/* stock-look.css (15 Nov, AJ: "the Stock & items page, the way it is: that is how the whole app must look").
+   One small look file = the Stock & items page's own look (ash page, white boxes, thin gold, neat table). Look only: no logic, no ids.
+   Loaded at first paint by rbh-early.js (so nothing changes later). Skipped: Stock & items itself, POS, GRN, Layla, Daily Ledger, Home. Roll back: delete the one line in rbh-early.js. */
+html.stock-look body{background:#f4f4f2;color:#0b0b0c;font-size:16px}
+html.stock-look body h1{font-size:1.4rem;font-weight:700;margin:8px 12px 0}
+html.stock-look body h2{font-size:1.15rem;font-weight:700}
+html.stock-look body input:not([type=checkbox]):not([type=radio]),html.stock-look body select,html.stock-look body textarea{border:1.5px solid #9a9a93;border-radius:8px;background:#fff;color:#111;min-height:36px;padding:2px 10px;font:inherit}
+html.stock-look body input:focus,html.stock-look body select:focus,html.stock-look body textarea:focus{outline:2px solid #c9a227;outline-offset:0}
+html.stock-look body button{border:1.5px solid #9a9a93;border-radius:8px;background:#fff;color:#111;min-height:36px;padding:2px 12px;font:inherit;font-weight:600;cursor:pointer}
+html.stock-look body button.p,html.stock-look body button.primary,html.stock-look body .btn-primary{background:#c9a227;border-color:#c9a227;color:#0b0b0c}
+html.stock-look body table{border-collapse:collapse;background:#fff;font-variant-numeric:tabular-nums}
+html.stock-look body th{background:#ecece8;color:#0b0b0c;font-weight:700;text-align:left;padding:6px 10px;border-bottom:1px solid #d4d4cf}
+html.stock-look body td{padding:6px 10px;border-bottom:1px solid #d4d4cf}
+html.stock-look body th.r,html.stock-look body td.r,html.stock-look body td.num,html.stock-look body th.num{text-align:right}
+html.stock-look body tbody tr:hover td{background:#f6f0dc}
+/* tabs: plain pills, the active one gold. No coloured slab under the tabs. */
+html.stock-look body .tabs button,html.stock-look body .tab,html.stock-look body [role=tab]{border-radius:8px;min-height:36px}
+html.stock-look body .tabs button.on,html.stock-look body .tabs button.active,html.stock-look body .tab.on,html.stock-look body .tab.active,html.stock-look body [role=tab][aria-selected=true]{background:#c9a227;border-color:#c9a227;color:#0b0b0c}
+html.stock-look body .tabs::after,html.stock-look body .tabs button::after,html.stock-look body .tabs button::before{display:none!important}
+html.stock-look body .none,html.stock-look body .bad{color:#b00020}

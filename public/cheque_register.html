@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/chequereg');   // one app: opened on its own -> open it inside /owner</script>
@@ -49,8 +49,10 @@
   .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--gold-primary);color:var(--text-on-accent);padding:10px 20px;border-radius:20px;font-size:14px;display:none;}
 </style>
 <link rel="stylesheet" href="/bathhub-design.css">
-</head>
-<body>
+<link rel="stylesheet" href="/bathhub-logo.css">
+<script src="/ui/fx-legacy.js" defer></script>
+<link rel="stylesheet" href="/compact-all.css"></head>
+<body class="tight-cols">
 
 <header>
   <h1>Cheque Register</h1>
@@ -147,15 +149,17 @@ async function loadAlerts() {
   rows.forEach(c => {
     const div = document.createElement('div');
     div.className = 'alert';
-    div.innerHTML = `<div class="title">${c.payee} — ${money(c.amount)} due ${c.due_date}</div>` +
-      `<div class="detail">${c.bank || 'No bank set'}${c.cheque_no ? ' · #' + c.cheque_no : ''}</div>`;
+    div.innerHTML = `<div class="title">${esc(c.payee)} — ${money(c.amount)} due ${esc(c.due_date)}</div>` +
+      `<div class="detail">${esc(c.bank) || 'No bank set'}${c.cheque_no ? ' · #' + esc(c.cheque_no) : ''}</div>`;
     list.appendChild(div);
   });
 }
 
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 async function loadCheques() {
   const qs = currentFilter ? ('?status=' + currentFilter) : '';
   const res = await fetch('/api/cheque-register' + qs);
+  if (!res.ok) { alert('Could not load cheques (' + res.status + ')'); return; }
   const rows = await res.json();
   const body = document.getElementById('cheques-body');
   const empty = document.getElementById('cheques-empty');
@@ -164,9 +168,9 @@ async function loadCheques() {
   rows.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${c.due_date}</td>
-      <td>${c.payee}${c.notes ? `<br><span style="color:var(--text-muted);font-size:12px;">${c.notes}</span>` : ''}</td>
-      <td>${c.bank || '—'}${c.cheque_no ? ' · #' + c.cheque_no : ''}</td>
+      <td>${esc(c.due_date)}</td>
+      <td>${esc(c.payee)}${c.notes ? `<br><span style="color:var(--text-muted);font-size:12px;">${esc(c.notes)}</span>` : ''}</td>
+      <td>${esc(c.bank) || '—'}${c.cheque_no ? ' · #' + esc(c.cheque_no) : ''}</td>
       <td>${money(c.amount)}</td>
       <td><span class="badge ${badgeClass(c.status)}">${c.status.charAt(0).toUpperCase() + c.status.slice(1)}</span></td>
       <td>${c.status === 'pending' ? `
@@ -218,5 +222,6 @@ loadAlerts();
 loadCheques();
 </script>
 <script src="/bathhub-logo.js"></script>
+<script src="/layla-door.js"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 require('dotenv').config();
 const { todayLK } = require('./utils/lkTime');
+const { handlePhotoRequest } = require('./utils/laylaPhoto');
+const { pickStyle, langNote, needsStrongModel, fallbackLine } = require('./utils/laylaLang');
 const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
@@ -143,8 +145,8 @@ const LAYLA_SYSTEM_PROMPT = buildSystemPrompt();
 // from utils/laylaOutput.buildDateAnchor() — the ONE date mechanism (apex
 // integration replaced the old inline CURRENT DATE sentence; don't add a
 // second date line here).
-function getSystemPrompt() {
-    const base = `${LAYLA_SYSTEM_PROMPT}\n\n${buildDateAnchor()}`;
+function getSystemPrompt(langNote = '') {
+    const base = `${LAYLA_SYSTEM_PROMPT}\n\n${buildDateAnchor()}${langNote ? '\n\n' + langNote : ''}`;
     const taught = loadTaughtFacts();
     return taught ? `${base}\n\n--- ADDITIONAL FACTS TAUGHT BY THE OWNER ---\n${taught}` : base;
 }
@@ -303,9 +305,9 @@ async function callAnthropic(messages) {
     return JSON.parse(cleaned);
 }
 
-async function callOllama(messages) {
+async function callOllama(messages, langNote = '') {
     const ollamaMessages = [
-        { role: 'system', content: getSystemPrompt() },
+        { role: 'system', content: getSystemPrompt(langNote) },
         ...messages,
     ];
     const response = await axios.post(
@@ -335,17 +337,25 @@ async function callOllama(messages) {
     return parsed;
 }
 
-async function callOpenRouter(messages) {
+async function callOpenRouter(messages, langNote = '') {
     const orMessages = [
-        { role: 'system', content: getSystemPrompt() },
+        { role: 'system', content: getSystemPrompt(langNote) },
         ...messages,
     ];
-    const response = await openRouterClient.chat.completions.create({
-        model: DEFAULT_MODEL,
-        max_tokens: 1024,
-        messages: orMessages,
-    });
-    const raw = stripReasoning(response.choices[0].message.content.trim());
+    // The free model sometimes answers with an EMPTY message (content null): that crashed here with null.trim() and the customer got
+    // "technical hiccup". Ask once more; if still empty, throw a clear error so the caller can try its other route.
+    let response, text = '';
+    for (let attempt = 1; attempt <= 2 && !text; attempt++) {
+        response = await openRouterClient.chat.completions.create({
+            model: DEFAULT_MODEL,
+            max_tokens: 1024,
+            messages: orMessages,
+        });
+        text = String((response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content) || '').trim();
+        if (!text) console.warn(`[LAYLA] OpenRouter gave an empty reply (attempt ${attempt}/2)`);
+    }
+    if (!text) throw new Error('OpenRouter returned an empty reply twice');
+    const raw = stripReasoning(text);
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
     console.log('[LAYLA] Using OpenRouter fallback — raw:', cleaned.slice(0, 200));
 
@@ -428,6 +438,12 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
         }
     }
 
+    // "Send me a photo of X": published catalogue items only (utils/laylaPhoto.js). Nothing matched = carry on as normal.
+    try {
+        const photoRes = await handlePhotoRequest({ pool, text: incomingMessage, send: (media, caption) => axios.post(process.env.WHATSAPP_API_URL || 'http://localhost:3001/send', { to: phone, message: caption, media }, { timeout: 30000 }) });
+        if (photoRes) return { message: photoRes.message, escalate: false };
+    } catch (e) { console.error('[LAYLA] photo request error:', e.message); }
+
     // Business-question answer engine — deterministic DB lookups for money/
     // stock figures, bypasses the AI entirely so numbers can't be hallucinated.
     // OWNER ONLY. Its replies include profit, credit balances, cheques and item COST. They used to be produced for any
@@ -474,22 +490,33 @@ async function processMessage(phone, incomingMessage, isVoiceNote = false) {
         return LOW_QUALITY_MARKERS.some(m => lower.includes(m));
     }
 
+    // Language: reply in the language the customer wrote (Sinhala, Tamil, or either in English letters).
+    // Sinhala/Tamil script goes straight to the stronger model: the small local one cannot write it.
+    const style = pickStyle(incomingMessage, history);
+    const note = langNote(style);
+    if (style !== 'en') console.log(`[LAYLA] language=${style} phone=${digits}`);
+    const localFallback = () => (style !== 'en' && fallbackLine(style)) || null;
+
     let laylaResponse;
     try {
-        laylaResponse = await callOllama(messages);
-        if (isLowQuality(laylaResponse)) {
-            console.warn('[LAYLA] Ollama answer looked weak — escalating to OpenRouter');
-            laylaResponse = await callOpenRouter(messages);
+        if (needsStrongModel(style)) {
+            laylaResponse = await callOpenRouter(messages, note);
+        } else {
+            laylaResponse = await callOllama(messages, note);
+            if (isLowQuality(laylaResponse)) {
+                console.warn('[LAYLA] Ollama answer looked weak — escalating to OpenRouter');
+                laylaResponse = await callOpenRouter(messages, note);
+            }
         }
-    } catch (ollamaErr) {
-        console.warn('[LAYLA] Ollama error:', ollamaErr.message, '— trying OpenRouter');
+    } catch (firstErr) {
+        console.warn('[LAYLA] first AI error:', firstErr.message, '— trying the other');
         try {
-            laylaResponse = await callOpenRouter(messages);
-        } catch (openRouterErr) {
-            console.error('[LAYLA] All AI fallbacks failed:', openRouterErr.message);
+            laylaResponse = needsStrongModel(style) ? await callOllama(messages, note) : await callOpenRouter(messages, note);
+        } catch (secondErr) {
+            console.error('[LAYLA] All AI fallbacks failed:', secondErr.message);
             await alertOwner(phone, 'AI error — needs manual reply', incomingMessage);
             return {
-                message: "Thanks for reaching out to Your Business Name. I'm having a technical hiccup right now, please resend your message in a moment. We're open daily from 9:30 AM.",
+                message: localFallback() || "Thanks for reaching out to Royal Bath Hub, Kandy Road, Thihariya. I'm having a technical hiccup right now, please resend your message in a moment. We're open daily from 9:30 AM.",
                 escalate: true,
             };
         }

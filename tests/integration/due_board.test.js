@@ -1,0 +1,22 @@
+'use strict';
+jest.mock('pg', () => require('../helpers/pgmock')());
+const express = require('express');
+const request = require('supertest');
+const db = require('pg').__db.public;
+db.none(`CREATE TABLE vendor_bills (id SERIAL PRIMARY KEY, vendor_name TEXT, bill_no TEXT, due_date DATE, total NUMERIC, voided BOOLEAN DEFAULT FALSE)`);
+db.none(`CREATE TABLE vendor_payments (id SERIAL PRIMARY KEY, bill_id INT, amount NUMERIC)`);
+db.none(`CREATE TABLE vendor_credit_notes (id SERIAL PRIMARY KEY, bill_id INT, amount NUMERIC)`);
+db.none(`CREATE TABLE cheque_register (id SERIAL PRIMARY KEY, cheque_no TEXT, payee TEXT, amount NUMERIC, due_date DATE, status TEXT DEFAULT 'pending')`);
+db.none(`INSERT INTO vendor_bills (vendor_name, bill_no, due_date, total, voided) VALUES ('Metro','M1','2026-11-20',100000,false),('Metro','M2','2026-11-25',50000,false),('Old','O1','2026-11-01',9000,true),('Paid','P1','2026-11-02',7000,false)`);
+db.none(`INSERT INTO vendor_payments (bill_id, amount) VALUES (1,30000),(4,7000)`);
+db.none(`INSERT INTO cheque_register (cheque_no, payee, amount, due_date, status) VALUES ('1','Metro',70000,'2026-11-20','pending'),('2','Done',5000,'2026-11-05','cleared'),('3','Held',2000,'2026-11-30','held')`);
+const router = require('../../routes/due_board');
+const appAs = role => { const a = express(); a.use((q, _r, n) => { q.session = { user: { role } }; n(); }); a.use('/api', router); return a; };
+beforeAll(() => new Promise(r => setTimeout(r, 250)));
+test('staff refused', async () => { expect((await request(appAs('cashier')).get('/api/due-board')).status).toBe(403); });
+test('owner: only unpaid, not voided; cheques pending or held only', async () => {
+  const r = (await request(appAs('owner')).get('/api/due-board')).body;
+  expect(r.bills.map(b => [b.bill_no, b.amount])).toEqual([['M1', 70000], ['M2', 50000]]);
+  expect(r.cheques.map(c => c.cheque_no)).toEqual(['1', '3']);
+  expect(r.bills[0].due).toBe('2026-11-20'); expect(r.today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+});

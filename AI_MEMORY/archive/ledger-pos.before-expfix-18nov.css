@@ -1,0 +1,28 @@
+/* ledger-pos.css (17 Nov, AJ: Daily Ledger must look like POS: soft, light, thin lines, no heavy black/gold).
+   Replaces ledger-plain.css on daily-entry-v2.html ONLY. Colours are POS's own theme values (bathhub-design.css light / dark), so the page follows the saved theme.
+   Gold only on the main Save button (POS calm gold). No animations. Hyperspace canvas stays off. */
+:root{--lp-bg:#f8f9fa;--lp-surface:#fff;--lp-head:#f1f3f7;--lp-line:#dbe0e8;--lp-strong:#b2bcc9;--lp-text:#0f172a;--lp-muted:#596577;--lp-gold:#8f670a;--lp-on-gold:#fff}
+html[data-theme=dark]{--lp-bg:#0b0d10;--lp-surface:#14171d;--lp-head:#1d2129;--lp-line:#282f3a;--lp-strong:#3b4554;--lp-text:#f8fafc;--lp-muted:#94a3b8;--lp-gold:#d4af37;--lp-on-gold:#000}
+html,html body{background:var(--lp-bg)!important;background-image:none!important;color:var(--lp-text)!important}
+html body .bh-strip{display:none!important}
+html body header,html body .tabbar,html body #rightPanel,html body .savebar{background:var(--lp-surface)!important;background-image:none!important;border:0!important;border-bottom:1px solid var(--lp-line)!important;box-shadow:none!important;color:var(--lp-text)!important}
+html body .savebar{border-top:1px solid var(--lp-line)!important;border-bottom:0!important}
+html body header *,html body .tabbar *,html body #rightPanel *,html body .savebar *{color:var(--lp-text)!important;text-shadow:none!important}
+html body header button,html body .tabbar button,html body .savebar button,html body #rightPanel button,html body header .pill,html body header input{background:var(--lp-bg)!important;background-image:none!important;border:1px solid var(--lp-line)!important;border-radius:10px!important;box-shadow:none!important}
+html body .tabbar button.on,html body .tabbar button.active,html body .tabbar button[aria-selected=true]{background:var(--lp-head)!important;border-color:var(--lp-strong)!important}
+html body #saveBtn,html body .savebar #saveBtn{background:var(--lp-gold)!important;border-color:var(--lp-gold)!important;color:var(--lp-on-gold)!important}
+html body .savebar #saveBtn *{color:var(--lp-on-gold)!important}
+html body table th,html body table thead th{background:var(--lp-head)!important;background-image:none!important;color:var(--lp-text)!important;text-shadow:none!important;border-bottom:1px solid var(--lp-line)!important}
+html body table tfoot td,html body #tSales,html body #tCash,html body #tCard,html body #tOnline,html body td.col-option,html body tr.totals td{background:var(--lp-head)!important;background-image:none!important;color:var(--lp-text)!important;text-shadow:none!important}
+html body table td{background-color:var(--lp-surface);color:var(--lp-text)}
+html body .cell,html body .kpi,html body .minisheet{background:var(--lp-surface)!important;border:1px solid var(--lp-line)!important;border-radius:10px!important;box-shadow:none!important;color:var(--lp-text)!important}
+html body .cell *,html body .minisheet *{color:var(--lp-text)!important}
+html body *{animation:none!important;transition:none!important}
+html body table th *,html body table th span,html body th.col-option *{color:var(--lp-text)!important}
+html body table th,html body .tabbar,html body header,html body .minisheet{box-shadow:none!important}
+html body td.col-option,html body th.col-option{background:var(--lp-bg)!important}
+html body table td,html body table th{border-color:var(--lp-line)!important}
+html body table{border-collapse:collapse}
+html body input,html body select,html body textarea{border:1px solid var(--lp-line)!important;border-radius:8px;background:var(--lp-surface);color:var(--lp-text)}
+html body input:focus,html body select:focus,html body textarea:focus{outline:none;border-color:var(--lp-gold)!important;box-shadow:0 0 0 3px rgba(143,103,10,.15)}
+html body canvas{display:none!important}

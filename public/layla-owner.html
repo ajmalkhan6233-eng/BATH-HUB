@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="en"><head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Layla | Royal Bath Hub</title>
 <style>
 :root{--bg:#0B1B3A;--panel:#10224a;--ink:#F6EFDC;--gold:#C9A24B;--me:#C9A24B;--meInk:#0B1B3A;--line:rgba(232,207,138,.25);padding-top:env(safe-area-inset-top,0)}
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--ink);font:18px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}header b{letter-spacing:.2em;color:#E8CF8A}#badge{font-size:13px;color:#E8CF8A}#badge[data-state=waiting]{color:#ffb74d}#badge[data-state=failed]{color:#ff8a80}
 #log{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.m{max-width:86%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}.me{align-self:flex-end;background:var(--me);color:var(--meInk)}.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.sys{align-self:center;font-size:13px;color:#E8CF8A}
 form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0));border-top:1px solid var(--line);align-items:flex-end}
@@ -11,23 +11,38 @@ textarea{flex:1;min-height:44px;max-height:120px;border-radius:12px;border:1px s
 button,.btn{min-width:44px;min-height:44px;border-radius:12px;border:0;background:var(--gold);color:var(--meInk);font:inherit;font-weight:700;cursor:pointer}button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button.on{background:#ff8a80}
 .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 8px}.chip{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:99px;background:transparent;color:var(--ink);min-height:36px}
 </style><link rel="stylesheet" href="/design2_legacy.css">
-</head><body>
-<header><b>LAYLA</b><span id="badge" role="status">All saved</span></header>
+<link rel="stylesheet" href="/compact-all.css"></head><body>
+<header><b>LAYLA · your assistant</b><span id="badge" role="status">All saved</span></header>
 <div id="log" aria-live="polite"></div>
 <div class="chips" id="chips"></div>
-<form id="f"><input id="photo" type="file" accept="image/*" capture="environment" hidden>
-<button type="button" class="ghost" id="cam" aria-label="Send a photo">&#128247;</button>
+<form id="f"><input id="photo" type="file" accept="image/*" capture="environment" hidden><input id="att" type="file" accept="image/*,application/pdf,audio/*,.ogg,.opus,.m4a,.mp3,.wav" hidden>
+<button type="button" class="ghost" id="cam" aria-label="Take a photo">&#128247;</button><button type="button" class="ghost" id="clip" aria-label="Attach a bill, PDF, photo or voice note">&#128206;</button>
 <textarea id="t" rows="1" placeholder="Talk to Layla: a bill, a cheque, a question" enterkeyhint="send"></textarea>
 <button type="button" class="ghost" id="mic" aria-label="Speak">&#127908;</button><button type="submit" id="go">Send</button></form>
-<script src="/lib/offlineSave.js"></script>
+<script src="/lib/offlineSave.js"></script><script src="/layla-commands.js"></script>
 <script>
 const $=(i)=>document.getElementById(i), log=$('log');
 const add=(cls,txt)=>{const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;log.append(d);log.scrollTop=log.scrollHeight};
 OfflineSave.badge($('badge'));
-add('bot','Hello. Tell me about a bill you have not entered, a cheque you wrote, or ask about stock, cheques and what you owe. Say "help" for examples.');
+add('bot','Hello. Tell me about a bill you have not entered, a cheque you wrote, or ask about stock, cheques and what you owe. Say "help" for examples. To open a tool say: open morning brief, open agent review, open agent rules, open brain, open assistant.');
+const recent=document.createElement('button');recent.type='button';recent.className='chip';recent.textContent='recently done (undo)';recent.onclick=async()=>{try{const r=await fetch('/api/layla-owner/done-recent',{credentials:'same-origin'});const d=await r.json();if(!d.done||!d.done.length){add('bot','Nothing finished in the last 2 days.');return}
+  d.done.forEach(t=>{const w=document.createElement('div');w.className='m bot';w.textContent='#'+t.id+' '+t.title+'  ';const u=document.createElement('button');u.type='button';u.textContent='Undo';u.style.cssText='min-height:36px;padding:2px 12px;margin-top:4px';u.onclick=async()=>{const x=await fetch('/api/layla-owner/reopen',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Idempotency-Key':'ru'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)},body:JSON.stringify({id:t.id})});u.replaceWith(document.createTextNode(x.ok?'Put back.':'Could not undo.'))};w.appendChild(u);log.append(w)});log.scrollTop=log.scrollHeight}catch(e){add('sys','Could not load.')}};
+$('chips').appendChild(recent);
 ['cheques tomorrow','cash gap',"what's pending",'how much do we owe','help'].forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;b.onclick=()=>send(t);$('chips').append(b)});
+let diaryMode=false;
+const dBtn=document.createElement('button');dBtn.type='button';dBtn.className='chip';dBtn.textContent='\uD83D\uDCD3 Diary mode: off';
+dBtn.onclick=()=>{diaryMode=!diaryMode;dBtn.textContent='\uD83D\uDCD3 Diary mode: '+(diaryMode?'ON':'off');$('t').placeholder=diaryMode?'Write anything, like a diary...':'Talk to Layla: a bill, a cheque, a question';add('bot',diaryMode?'Diary mode. Just write: it is saved. Say "remind me ..." for a reminder, "find ...", "on this day", "keep in mind", "mood 😊", "clear".':'Back to normal Layla.')};
+$('chips').prepend(dBtn);
+async function diarySend(text){
+  try{const r=await fetch('/api/layla-diary/send',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({text})});const d=await r.json().catch(()=>({}));
+    if(!r.ok){add('sys',d.error||'Diary not saved');return}
+    if(d.clear){log.querySelectorAll('.m').forEach(x=>x.remove());add('bot',d.reply);return}
+    if(d.forward){const x=await OfflineSave.post('/api/layla-owner/message',{text:d.forward},{label:'chat'});add('bot',x.ok&&x.response?x.response.reply:(x.queued?'Saved on this phone, I will set it when the internet is back.':d.reply));return}
+    add('bot',d.reply)}catch(e){add('sys','Not saved: '+e.message)}}
 async function send(text){
   text=(text||'').trim(); if(!text)return; add('me',text);
+  try{if(window.LaylaCmd&&!diaryMode&&window.LaylaCmd.handle(text,(m)=>add('bot',m)))return}catch(e){}
+  if(diaryMode){await diarySend(text);return}
   const r=await OfflineSave.post('/api/layla-owner/message',{text},{label:'chat'});
   if(r.queued)add('sys','No internet. Saved on this phone, I will answer when it is back.');
   else if(r.ok&&r.response)add('bot',r.response.reply);
@@ -36,6 +51,17 @@ async function send(text){
 $('f').addEventListener('submit',e=>{e.preventDefault();const v=$('t').value;$('t').value='';send(v)});
 $('t').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('f').requestSubmit()}});
 $('cam').onclick=()=>$('photo').click();
+$('clip').onclick=()=>$('att').click();
+/* attach: photo or voice note go to Layla's media route; a PDF goes to the Document Inbox as a DRAFT (nothing is filed until you press Confirm there) */
+$('att').onchange=async()=>{const f=$('att').files[0];$('att').value='';if(!f)return;if(f.size>10*1024*1024){add('sys','That file is too big (max 10 MB).');return}
+  const cap=$('t').value.trim();$('t').value='';add('me','[attached: '+f.name+']'+(cap?' '+cap:''));
+  if(f.type.indexOf('image/')===0||f.type.indexOf('audio/')===0){
+    const b64=await new Promise((res)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.readAsDataURL(f)});
+    const r=await OfflineSave.post('/api/layla-owner/media',{kind:f.type.indexOf('audio/')===0?'audio':'image',mime:f.type,data:b64,caption:cap},{label:'attach'});
+    r.queued?add('sys','No internet. Saved on this device, it will be sent later.'):r.ok&&r.response?add('bot',r.response.reply):add('sys',r.error||'Not saved');return}
+  add('sys','Layla is reading it... up to a minute.');
+  try{const fd=new FormData();fd.append('photo',f);fd.append('doc_type','auto');const r=await fetch('/api/document-inbox/upload',{method:'POST',body:fd,credentials:'same-origin'});const d=await r.json().catch(()=>({}));
+    if(r.ok)add('bot','Got it. Read as '+((d&&d.type_label)||'a paper')+' (draft #'+(d&&d.id)+'). Nothing is filed until you press Confirm in the Document Inbox.');else add('sys',(d&&d.error)||'Could not send it. Try again.')}catch(e){add('sys','Could not send it: '+e.message)}};
 $('photo').onchange=async()=>{const f=$('photo').files[0];if(!f)return;if(f.size>12*1024*1024){add('sys','Photo is too big (max 12 MB).');return}
   const b64=await new Promise((res)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.readAsDataURL(f)});
   const cap=$('t').value.trim();$('t').value='';add('me','[photo]'+(cap?' '+cap:''));

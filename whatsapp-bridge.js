@@ -2,7 +2,7 @@
 // no Meta Business API account needed). Bridges inbound messages to server.js's
 // /webhook/whatsapp, and exposes POST /send for outbound (matches layla.js's
 // WHATSAPP_API_URL default of http://localhost:3001/send).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 require('./utils/timezone');
 const { todayLK } = require('./utils/lkTime');
 const express = require('express');
@@ -17,6 +17,17 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 // pipeline (stripReasoning etc.) — this is the belt-and-braces layer on the
 // dispatch side, covering every send path including /send and photo replies.
 const { sanitizeAssistantOutput } = require('./utils/laylaOutput');
+const { startWaiting } = require('./layla_owner/waitNudge');
+// Waiting messages (AJ, 22 Oct 2026): typing sign now, then at most 3 short texts while Layla is slow. See layla_owner/waitNudge.js.
+function waitIO(msg) {
+    let chat = null;
+    const getChat = async () => chat || (chat = await msg.getChat());
+    return {
+        typing: async () => { await (await getChat()).sendStateTyping(); },
+        clearTyping: async () => { await (await getChat()).clearState(); },
+        send: async (text) => { await (await getChat()).sendMessage(text); },
+    };
+}
 
 const PORT = process.env.WHATSAPP_BRIDGE_PORT || 3001;
 // Sent to the main server's /webhook/* routes when WEBHOOK_SECRET is configured (see middleware/webhookAuth.js).
@@ -42,16 +53,32 @@ const WHITELIST_NUMBER = WHITELIST_RAW.replace(/\D/g, ''); // digits only, e.g. 
 // identity for the same whitelisted person, alongside the real number in case
 // WhatsApp ever does expose it (e.g. after a privacy setting change on their end).
 const WHITELIST_KNOWN_LIDS = (process.env.WHATSAPP_TEST_WHITELIST_LIDS || '232985483817135').split(',').map(s=>s.trim()).filter(Boolean);
-function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits); }
+// FAMILY MODE (Layla): extra numbers allowed to use the small reminders-and-notes Layla. Real numbers only; never put a family member's id in WHATSAPP_TEST_WHITELIST_LIDS (those are treated as the owner).
+const FAMILY_DIGITS = String(process.env.FAMILY_WA_NUMBERS || '').split(/[,;\s]+/).map((s) => require('./layla_owner/ownerGate').normalizeNumber(s)).filter(Boolean);
+function isWhitelisted(digits) { return digits === WHITELIST_NUMBER || WHITELIST_KNOWN_LIDS.includes(digits) || FAMILY_DIGITS.includes(digits); }
+// Free route to Layla's owner brain (see the OWNER -> LAYLA block below). Off unless LAYLA_OWNER_BRIDGE=on.
+const LAYLA_OWNER_BRIDGE = String(process.env.LAYLA_OWNER_BRIDGE || '').toLowerCase() === 'on';
+const OWNER_DIGITS = require('./layla_owner/ownerGate').normalizeNumber(process.env.OWNER_WA_NUMBER || '0777999219');
 
 const app = express();
 app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
+// 19 Nov (AJ): the QR screen would not scan. Alternative: link with an 8-letter CODE typed into the phone (WhatsApp > Linked devices > Link a device > Link with phone number instead).
+// Turned on only when WA_PAIR_PHONE is set (digits with country code, the number of the WhatsApp that sends the receipts). Never logged to a file other than the console and /pair on this PC.
+const WA_WEB_VERSION = String(process.env.WA_WEB_VERSION || '2.3000.1055285117-alpha');
+const PAIR_PHONE = String(process.env.WA_PAIR_PHONE || '').replace(/\D/g, '');
+let lastCode = null;
 const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+    ...(PAIR_PHONE ? { pairWithPhoneNumber: { phoneNumber: PAIR_PHONE, showNotification: true, intervalMs: 180000 } } : {}),
+    authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),   // absolute: the login must not depend on which folder pm2 or a scheduled task started us from
+    // 19 Nov: the library timed out 30 s after every start ("Waiting failed: 30000ms exceeded" in Client.inject) on this slow PC. Give WhatsApp Web 3 minutes to load.
+    authTimeoutMs: Number(process.env.WA_AUTH_TIMEOUT_MS || 180000),
+    // 19 Nov: this WhatsApp Web version is the one that worked on the shop PC (public version name, no secret). Override with WA_WEB_VERSION, or set it to 'off' to use the library default.
+    ...(WA_WEB_VERSION !== 'off' ? { webVersion: WA_WEB_VERSION, webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/' + WA_WEB_VERSION + '.html' } } : {}),
     puppeteer: {
+        protocolTimeout: 240000,
         headless: true,
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     },
 });
@@ -112,8 +139,14 @@ client.on('qr', (qr) => {
     console.log(`[WA-BRIDGE] Or open http://localhost:${PORT}/qr in a browser — it refreshes automatically.`);
 });
 
+client.on('code', (code) => {
+    lastCode = code;
+    console.log('\n[WA-BRIDGE] PAIRING CODE: ' + code + '  (phone: WhatsApp > Settings > Linked devices > Link a device > Link with phone number instead)');
+});
+
 client.on('ready', () => {
     ready = true;
+    lastCode = null;
     lastQR = null;
     lastLivenessOkAt = Date.now(); // we just connected, count that as a pass
     lastLivenessError = null;
@@ -167,6 +200,56 @@ client.on('message', async (msg) => {
         return;
     }
 
+    // ── OWNER -> LAYLA (free bridge) ────────────────────────────────────────
+    // LAYLA_OWNER_BRIDGE=on: the owner's text, voice notes, photos and documents go to Layla's owner brain
+    // (POST /webhook/layla-owner) and her replies come straight back here. Only the owner gets this; the
+    // whitelist above has already dropped everyone else.
+    const isFamilyMsg = FAMILY_DIGITS.includes(resolved) && resolved !== OWNER_DIGITS;     // a family member keeps her OWN number as the sender: she is never treated as the owner
+    if (LAYLA_OWNER_BRIDGE && (isFamilyMsg || resolved === OWNER_DIGITS || (TEST_MODE && whitelisted))) {
+        const wait = startWaiting(waitIO(msg));
+        try {
+            const payload = { from: isFamilyMsg ? resolved : OWNER_DIGITS, id: msg.id && msg.id._serialized, ts: msg.timestamp };
+            if (isFamilyMsg && msg.hasMedia) { await msg.reply('I can read text messages only.'); return; }   // family: text only, her files are never downloaded or saved
+            if (msg.hasMedia) {
+                let media = null;   // WhatsApp Web sometimes fails the first download: retry up to 3 times, log the FULL error each time
+                for (let attempt = 1; attempt <= 3 && !media; attempt++) {
+                    try { media = await msg.downloadMedia(); } catch (e) { console.error(`[WA-BRIDGE] downloadMedia attempt ${attempt}/3 failed:`, e && e.message, '|', String((e && e.stack) || e)); }
+                    if (!media && attempt < 3) await new Promise((r) => setTimeout(r, 2000 * attempt));
+                }
+                if (!media) throw new Error('downloadMedia failed after 3 tries (see the log lines above)');
+                const mime = (media && media.mimetype) || '';
+                const type = mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'audio' : mime === 'application/pdf' ? 'document' : null;
+                if (!type) { await msg.reply('I can read text, voice notes, photos and PDFs.'); return; }
+                const dir = path.join(INBOX_ROOT, todayLK()); fs.mkdirSync(dir, { recursive: true });
+                const ext = { 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' }[mime.split(';')[0]] || (type === 'audio' ? 'ogg' : 'jpg');
+                const file = path.join(dir, `${Date.now()}-layla-${type}.${ext}`);
+                fs.writeFileSync(file, Buffer.from(media.data, 'base64'));
+                Object.assign(payload, { type, filePath: file, mime, caption: msg.body || '' });
+            } else {
+                Object.assign(payload, { type: 'text', text: msg.body });
+            }
+            const res = await axios.post(`${MAIN_SERVER_URL}/webhook/layla-owner`, payload, { timeout: 90000, headers: WEBHOOK_HEADERS });
+            { const st0 = res.data && res.data.status; if (st0 !== 'fallback' && st0 !== 'fallback_photo') wait.stop(); }   // the old Layla (slow AI) still has to answer when the owner brain had no job
+            for (const line of (res.data && res.data.replies) || []) { const out = sanitizeAssistantOutput(line); if (out) await msg.reply(out); }
+            // ONE LAYLA: the owner assistant had no job for this message, so the ORIGINAL Layla handles it exactly as before (chat, TEACH:, day-sheet photos).
+            const st = res.data && res.data.status;
+            if (st === 'fallback' || st === 'fallback_photo') {
+                if (st === 'fallback_photo') {
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp-photo`, { from: payload.from, filePath: payload.filePath }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    wait.stop(); const photoReply = sanitizeAssistantOutput(r2.data?.reply); if (photoReply) await msg.reply(photoReply);
+                } else {
+                    const r2 = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: payload.from, message: msg.body }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+                    wait.stop(); const reply2 = sanitizeAssistantOutput(r2.data?.reply); if (reply2) await msg.reply(reply2);
+                }
+            }
+        } catch (err) {
+            wait.stop();
+            console.error('[WA-BRIDGE] Layla owner route failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400), '| stack:', String(err.stack || '').split('\n').slice(0, 25).join(' <- '));
+            await msg.reply('Layla is not reachable right now. Please try again in a minute.').catch(() => {});
+        } finally { wait.stop(); }
+        return;
+    }
+
     // ── PHOTO PIPELINE (audit.md item 3) ────────────────────────────────────
     // A day-sheet/expense-sheet photo: save it, hand off to the server for
     // OCR + drafting, reply with what it read. Non-image media (documents,
@@ -175,6 +258,17 @@ client.on('message', async (msg) => {
     if (msg.hasMedia) {
         try {
             const media = await msg.downloadMedia();
+            // Customer voice note: save it in the inbox and send it as an audio message; the server turns it into text (utils/stt.js)
+            // when speech-to-text is switched on, else asks the customer to type. The file path never comes from the customer.
+            if (media && media.mimetype?.startsWith('audio/')) {
+                const adir = path.join(INBOX_ROOT, todayLK()); fs.mkdirSync(adir, { recursive: true });
+                const apath = path.join(adir, `${Date.now()}-whatsapp-${resolved}.ogg`);
+                fs.writeFileSync(apath, Buffer.from(media.data, 'base64'));
+                const ar = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, { from: resolved, type: 'audio', filePath: apath, message: '' }, { timeout: 120000, headers: WEBHOOK_HEADERS });
+                const areply = sanitizeAssistantOutput(ar.data?.reply);
+                if (areply) await msg.reply(areply);
+                return;
+            }
             if (!media || !media.mimetype?.startsWith('image/')) {
                 await msg.reply(`I can only read photos of day/expense sheets right now — not documents, video, or audio. Please send a photo.`);
                 return;
@@ -193,24 +287,27 @@ client.on('message', async (msg) => {
             const photoReply = sanitizeAssistantOutput(res.data?.reply);
             if (photoReply) await msg.reply(photoReply);
         } catch (err) {
-            console.error('[WA-BRIDGE] Photo pipeline failed:', err.message);
+            console.error('[WA-BRIDGE] Photo pipeline failed:', err.message, '| status:', err.response && err.response.status, '| body:', JSON.stringify((err.response && err.response.data) || null).slice(0, 400));
             await msg.reply(`Something went wrong reading that photo. Please try resending it.`).catch(()=>{});
         }
         return;
     }
 
+    const waitC = startWaiting(waitIO(msg));
     try {
         const res = await axios.post(`${MAIN_SERVER_URL}/webhook/whatsapp`, {
             from: resolved,
             message: msg.body,
         }, { timeout: 60000, headers: WEBHOOK_HEADERS });
+        waitC.stop();
         const reply = sanitizeAssistantOutput(res.data?.reply);
         if (reply) {
             await msg.reply(reply);
         }
     } catch (err) {
+        waitC.stop();
         console.error('[WA-BRIDGE] Failed to forward inbound message or send reply:', err.message);
-    }
+    } finally { waitC.stop(); }
 });
 
 // Outbound: POST { to, message, media? } -> sends via the linked WhatsApp account.
@@ -227,8 +324,9 @@ app.post('/send', async (req, res) => {
         if (message && !clean && !media) return res.status(400).json({ error: 'message was empty after output sanitization' });
         if (media) {
             const { MessageMedia } = require('whatsapp-web.js');
-            const file = new MessageMedia(media.mimetype, media.data, media.filename || undefined);
-            await client.sendMessage(chatId, file, clean ? { caption: clean } : {});
+            const { sendMediaWithFallback } = require('./utils/waMediaSend');
+            const sent = await sendMediaWithFallback((f, o) => client.sendMessage(chatId, f, o), MessageMedia, media, clean);   // image first; if WhatsApp Web refuses it, same file as a document
+            return res.json({ success: true, to, message: clean, media: true, sentAs: sent.sentAs });
         } else {
             await client.sendMessage(chatId, clean);
         }
@@ -250,6 +348,14 @@ app.post('/check', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.get('/pair', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const body = ready ? '<h1 style="color:#2ecc71">LINKED</h1><p>WhatsApp is linked and ready.</p>'
+        : (lastCode ? '<p>On your phone: WhatsApp > Settings > Linked devices > Link a device > Link with phone number instead. Type this code:</p><h1 style="font-size:64px;letter-spacing:8px">' + String(lastCode).replace(/[^A-Za-z0-9-]/g, '') + '</h1><p>The code changes every few minutes; this page refreshes.</p>'
+            : '<h2>Waiting for a code from WhatsApp...</h2>' + (PAIR_PHONE ? '' : '<p>WA_PAIR_PHONE is not set, so only the QR page works.</p>'));
+    res.send('<!doctype html><html><head><meta http-equiv="refresh" content="5"><title>WhatsApp pairing code</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;background:#0a0f0a;color:#eee">' + body + '</body></html>');
 });
 
 app.get('/qr', async (req, res) => {
@@ -297,7 +403,7 @@ app.listen(PORT, () => console.log(`[WA-BRIDGE] HTTP API on http://localhost:${P
 // session folder (path.resolve of the LocalAuth dataPath). It used to match any Chrome
 // with "wwebjs_auth" in its command line, which also killed a second bridge's Chrome
 // (e.g. the live shop's) when two bridges ran on one machine.
-const OWN_SESSION_DIR = path.resolve('./.wwebjs_auth');
+const OWN_SESSION_DIR = path.join(__dirname, '.wwebjs_auth');
 function killOrphanedSessionBrowsers() {
     try {
         const { execSync } = require('child_process');

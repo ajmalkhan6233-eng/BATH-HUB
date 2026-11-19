@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Bath Hub - Store Operating System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#FAF6E8',
+                            100: '#F5EDD1',
+                            300: '#E6D28C',
+                            400: '#DCC166',
+                            500: '#D4AF37', // Brand Signature Gold
+                            600: '#B89327',
+                            700: '#94731D',
+                            800: '#6B5215'
+                        },
+                        ash: {
+                            850: '#181A1D',
+                            900: '#121417',
+                            950: '#0B0C0E',
+                            800: '#22252A',
+                            700: '#2E3239',
+                            600: '#414751',
+                            500: '#5E6674',
+                            400: '#8A94A6',
+                            300: '#B4BDCE',
+                            200: '#E1E6F0',
+                            100: '#F3F5F9'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Modern Glass & GPU-Optimized Motion Setup */
+        @media (prefers-reduced-motion: reduce) {
+            *, ::before, ::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Ambient Aura Gradient Backgrounds */
+        .aura-bg-dark {
+            background: radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.07) 0%, transparent 40%),
+                        radial-gradient(circle at 85% 75%, rgba(65, 71, 81, 0.25) 0%, transparent 50%),
+                        #121417;
+        }
+
+        .aura-bg-light {
+            background: radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.12) 0%, transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(225, 230, 240, 0.6) 0%, transparent 50%),
+                        #F3F5F9;
+        }
+
+        /* ---------------------------------------------------- */
+        /* iOS-INSPIRED FLUID PHYSICS & MICRO-INTERACTION ENGINE */
+        /* ---------------------------------------------------- */
+
+        /* iOS Rubber-Band Spring Easing Curve */
+        :root {
+            --ios-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ios-ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Hardware Acceleration Isolation Layer */
+        .gpu-layer {
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        /* Interactive Scale Compression (iOS Touch Physics) */
+        .ios-press-target {
+            will-change: transform;
+            transition: transform 0.18s var(--ios-spring), opacity 0.18s ease, box-shadow 0.18s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ios-press-target:active {
+            transform: scale(0.94) !important;
+            opacity: 0.88;
+        }
+
+        /* Touch Visual Ripple Glow Effect */
+        .ios-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ios-ripple::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .ios-ripple:active::after {
+            opacity: 1;
+        }
+
+        /* Dynamic Glass Surface Cards */
+        .glass-card {
+            will-change: transform, opacity, box-shadow;
+            transition: transform 0.25s var(--ios-spring), opacity 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Liquid Tube Fill Physics Animation */
+        .tube-fill {
+            transition: height 0.85s var(--ios-spring);
+            will-change: height;
+        }
+
+        /* Dynamic Number Counter Transition Utility */
+        .animate-count {
+            transition: all 0.4s var(--ios-ease);
+        }
+
+        /* Subtle Glow Effects */
+        .gold-glow {
+            box-shadow: 0 0 20px -3px rgba(212, 175, 55, 0.35);
+        }
+        
+        .gold-glow-sm {
+            box-shadow: 0 0 10px -2px rgba(212, 175, 55, 0.25);
+        }
+
+        /* Skeleton Pulse for Performant Load */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.995); }
+        }
+        .pulse-subtle {
+            animation: subtlePulse 3s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(140, 140, 140, 0.25);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.5);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased text-ash-200 bg-ash-900 dark:bg-ash-900 dark:text-ash-200 min-h-screen selection:bg-gold-500 selection:text-ash-950 aura-bg-dark transition-colors duration-300 overflow-x-hidden pb-16 md:pb-0">
+
+    <div id="app" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR NAVIGATION (Desktop) -->
+        <aside class="hidden md:flex w-16 md:w-20 bg-ash-850/80 dark:bg-ash-850/80 backdrop-blur-xl border-r border-ash-700/50 flex-col items-center py-5 z-30 transition-all duration-300 flex-shrink-0 gpu-layer">
+            <!-- Brand Logo -->
+            <div class="mb-8 relative group cursor-pointer ios-press-target" onclick="switchTab('dashboard')" title="Royal Bath Hub">
+                <div class="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-gold-400 via-gold-500 to-gold-700 p-[1px] shadow-lg gold-glow-sm transition-transform duration-300 group-hover:scale-105">
+                    <div class="w-full h-full bg-ash-900 rounded-[15px] flex items-center justify-center font-bold text-gold-400 text-lg">
+                        R
+                    </div>
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-ash-900"></div>
+            </div>
+
+            <!-- Nav Icons Stack -->
+            <nav class="flex-1 flex flex-col gap-3 w-full px-2 items-center">
+                <!-- Dashboard Tab -->
+                <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-btn ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-gold-400 bg-gold-500/10 border border-gold-500/30 transition-all duration-200 relative group">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">Dashboard</span>
+                </button>
+
+                <!-- Inventory Tab -->
+                <button id="nav-inventory" onclick="switchTab('inventory')" class="nav-btn ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.75 7.5h16.5m-16.5 0l1.455-3.638A1.125 1.125 0 015.75 3.187h12.5a1.125 1.125 0 011.045.675L20.25 7.5"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">Inventory Tubes</span>
+                </button>
+
+                <!-- POS / Bills -->
+                <button onclick="triggerToast('POS Module selected. Direct counter checkout ready.')" class="nav-btn ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">POS & Billing</span>
+                </button>
+
+                <!-- Customers -->
+                <button onclick="triggerToast('Customer Ledger updated: 42 contractors active.')" class="nav-btn ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">Contractors & Clients</span>
+                </button>
+
+                <!-- Analytics -->
+                <button onclick="switchTab('dashboard')" class="nav-btn ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">Reports</span>
+                </button>
+            </nav>
+
+            <!-- Bottom Utilities -->
+            <div class="flex flex-col gap-3 items-center w-full px-2">
+                <!-- Theme Toggle Button -->
+                <button onclick="toggleTheme()" class="ios-press-target ios-ripple w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group" title="Toggle Theme (Light/Dark)">
+                    <svg id="theme-icon-dark" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                    <svg id="theme-icon-light" class="w-5 h-5 block dark:hidden text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    <span class="absolute left-full ml-3 px-2.5 py-1 bg-ash-800 text-ash-100 text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 border border-ash-700 shadow-xl z-50">Theme Mode</span>
+                </button>
+
+                <!-- Profile Avatar -->
+                <div class="ios-press-target w-10 h-10 rounded-xl bg-gradient-to-tr from-gold-500 to-ash-600 flex items-center justify-center font-bold text-ash-950 text-xs shadow-inner cursor-pointer hover:ring-2 hover:ring-gold-400 transition-all">
+                    RB
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            
+            <!-- TOP APP BAR -->
+            <header class="h-16 border-b border-ash-700/40 bg-ash-850/60 backdrop-blur-md px-4 md:px-8 flex items-center justify-between z-20 flex-shrink-0 gpu-layer">
+                <!-- Search Bar -->
+                <div class="flex items-center gap-3 flex-1 max-w-md">
+                    <button onclick="toggleSearchModal(true)" class="ios-press-target w-full bg-ash-800/80 hover:bg-ash-800 border border-ash-700/60 rounded-xl px-3.5 py-2 flex items-center justify-between text-ash-400 text-sm transition-all duration-200 group">
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-ash-400 group-hover:text-gold-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                            <span class="text-ash-400 text-xs md:text-sm">Search tiles, commodes, bills...</span>
+                        </div>
+                        <kbd class="hidden sm:inline-flex items-center gap-1 bg-ash-900 px-2 py-0.5 rounded text-[10px] font-medium text-ash-400 border border-ash-700/80">Ctrl K</kbd>
+                    </button>
+                </div>
+
+                <!-- Top Right Action Controls -->
+                <div class="flex items-center gap-3">
+                    <button onclick="createNewBill()" class="ios-press-target ios-ripple bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-ash-950 font-semibold px-4 py-2 rounded-xl text-xs md:text-sm flex items-center gap-2 shadow-lg gold-glow-sm transition-all">
+                        <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <span>Create Bill</span>
+                    </button>
+
+                    <!-- Store Sync Status Indicator -->
+                    <div class="hidden md:flex items-center gap-2 bg-ash-800/50 px-3 py-1.5 rounded-xl border border-ash-700/40 text-xs text-ash-300">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Shop Online (POS 01)</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SCROLLABLE PAGE CONTAINER -->
+            <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+
+                <!-- ================= DASHBOARD SCREEN ================= -->
+                <div id="screen-dashboard" class="space-y-6 animate-fade">
+                    
+                    <!-- Header Greeting -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="text-xs font-semibold text-gold-400 uppercase tracking-widest mb-1">Royal Bath Hub • Store Operations</div>
+                            <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                                Good evening, Mara
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-gold-500/10 text-gold-400 border border-gold-500/20 font-normal">Manager</span>
+                            </h1>
+                            <p class="text-ash-400 text-xs md:text-sm mt-1">15 orders today • LKR 1,236,000 in sales • 13 items waiting for delivery setup</p>
+                        </div>
+                        <div class="flex items-center gap-2 self-start md:self-auto">
+                            <span class="text-xs text-ash-400 bg-ash-800/80 px-3 py-1.5 rounded-xl border border-ash-700/50">Tue, Nov 10</span>
+                            <button onclick="triggerToast('Analytics exported to PDF format successfully')" class="ios-press-target text-xs bg-ash-800 hover:bg-ash-700 text-ash-200 px-3 py-1.5 rounded-xl border border-ash-700/60 transition-colors flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4 Top KPI Stat Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Today so far -->
+                        <div class="glass-card ios-press-target bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 relative overflow-hidden group gpu-layer">
+                            <div class="text-xs text-ash-400 font-medium">Today so far</div>
+                            <div class="text-2xl font-bold text-white mt-2 tracking-tight">LKR 1,236,000</div>
+                            <div class="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 font-semibold">+9%</span>
+                                <span class="text-ash-400">vs last Tue</span>
+                            </div>
+                            <svg class="absolute bottom-2 right-2 w-20 h-10 stroke-emerald-400 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 80 40"><path d="M0 35 Q 20 25, 40 30 T 80 5" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+
+                        <!-- Last 7 days -->
+                        <div class="glass-card ios-press-target bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 relative overflow-hidden group gpu-layer">
+                            <div class="text-xs text-ash-400 font-medium">Last 7 days</div>
+                            <div class="text-2xl font-bold text-white mt-2 tracking-tight">LKR 13,732,000</div>
+                            <div class="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 font-semibold">+3%</span>
+                                <span class="text-ash-400">vs week before</span>
+                            </div>
+                            <svg class="absolute bottom-2 right-2 w-20 h-10 stroke-gold-400 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 80 40"><path d="M0 28 Q 20 35, 40 15 T 80 8" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+
+                        <!-- Bills Today -->
+                        <div class="glass-card ios-press-target bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 relative overflow-hidden group gpu-layer">
+                            <div class="text-xs text-ash-400 font-medium">Bills today</div>
+                            <div class="text-2xl font-bold text-white mt-2 tracking-tight">15</div>
+                            <div class="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                                <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 font-semibold">+0%</span>
+                                <span class="text-ash-400">vs last week</span>
+                            </div>
+                            <svg class="absolute bottom-2 right-2 w-20 h-10 stroke-cyan-400 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 80 40"><path d="M0 20 Q 20 10, 40 25 T 80 12" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+
+                        <!-- Average Bill -->
+                        <div class="glass-card ios-press-target bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 relative overflow-hidden group gpu-layer">
+                            <div class="text-xs text-ash-400 font-medium">Average bill</div>
+                            <div class="text-2xl font-bold text-white mt-2 tracking-tight">LKR 82,400</div>
+                            <div class="flex items-center gap-1.5 mt-2 text-xs text-gold-400">
+                                <span class="px-1.5 py-0.5 rounded bg-gold-500/10 border border-gold-500/20 font-semibold">+4.2%</span>
+                                <span class="text-ash-400">premium fixtures</span>
+                            </div>
+                            <svg class="absolute bottom-2 right-2 w-20 h-10 stroke-gold-400 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 80 40"><path d="M0 30 Q 20 5, 40 20 T 80 10" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Main Sales Chart & Goal Ring Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Main Interactive Sales Chart (2 Cols) -->
+                        <div class="lg:col-span-2 glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden gpu-layer">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-lg font-bold text-white">Sales Revenue</h3>
+                                        <span class="text-xs text-ash-400">5,336 orders • 12 months</span>
+                                    </div>
+                                    <div id="chart-total" class="text-3xl font-extrabold text-gold-400 mt-1 tracking-tight">LKR 524,083,000</div>
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <button id="btn-compare" onclick="toggleCompare()" class="ios-press-target text-xs px-3 py-1.5 rounded-lg bg-ash-800 border border-ash-700 text-ash-300 hover:text-white transition-all flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m-3-13.5L18 7.5m0 0L13.5 12M18 7.5H4.5"/></svg>
+                                        Compare
+                                    </button>
+                                    <div class="flex bg-ash-900/90 p-1 rounded-lg border border-ash-700/60 text-xs">
+                                        <button onclick="setChartRange('7D', this)" class="chart-range-btn ios-press-target px-2.5 py-1 rounded-md text-ash-400 hover:text-white transition-colors">7D</button>
+                                        <button onclick="setChartRange('30D', this)" class="chart-range-btn ios-press-target px-2.5 py-1 rounded-md text-ash-400 hover:text-white transition-colors">30D</button>
+                                        <button onclick="setChartRange('90D', this)" class="chart-range-btn ios-press-target px-2.5 py-1 rounded-md text-ash-400 hover:text-white transition-colors">90D</button>
+                                        <button onclick="setChartRange('12M', this)" class="chart-range-btn ios-press-target px-2.5 py-1 rounded-md bg-gold-500/20 text-gold-400 font-semibold border border-gold-500/30">12M</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SVG Chart Canvas Area -->
+                            <div class="h-64 w-full relative mt-2">
+                                <svg class="w-full h-full overflow-visible" viewBox="0 0 600 200" preserveAspectRatio="none">
+                                    <line x1="0" y1="40" x2="600" y2="40" stroke="#2E3239" stroke-dasharray="4 4" stroke-opacity="0.5"/>
+                                    <line x1="0" y1="90" x2="600" y2="90" stroke="#2E3239" stroke-dasharray="4 4" stroke-opacity="0.5"/>
+                                    <line x1="0" y1="140" x2="600" y2="140" stroke="#2E3239" stroke-dasharray="4 4" stroke-opacity="0.5"/>
+                                    
+                                    <defs>
+                                        <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.35"/>
+                                            <stop offset="100%" stop-color="#D4AF37" stop-opacity="0.0"/>
+                                        </linearGradient>
+                                    </defs>
+
+                                    <path id="chart-area" d="M0,130 Q150,160 300,90 T600,40 L600,200 L0,200 Z" fill="url(#goldGradient)" class="transition-all duration-700"/>
+                                    <path id="chart-compare" d="M0,150 Q150,170 300,120 T600,80" fill="none" stroke="#5E6674" stroke-width="2" stroke-dasharray="4 4" class="transition-all duration-700 opacity-60"/>
+                                    <path id="chart-line" d="M0,130 Q150,160 300,90 T600,40" fill="none" stroke="#D4AF37" stroke-width="3.5" stroke-linecap="round" class="transition-all duration-700"/>
+                                    
+                                    <circle cx="300" cy="90" r="5" class="fill-ash-950 stroke-gold-400 stroke-[3] cursor-pointer hover:r-7 transition-all"/>
+                                    <circle cx="600" cy="40" r="5" class="fill-gold-400 stroke-ash-950 stroke-[2] cursor-pointer"/>
+                                </svg>
+
+                                <div class="flex justify-between text-[11px] text-ash-400 mt-2 px-1">
+                                    <span>Nov</span>
+                                    <span>Jan</span>
+                                    <span>Mar</span>
+                                    <span>May</span>
+                                    <span>Jul</span>
+                                    <span>Sep</span>
+                                    <span>Nov</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 text-xs text-ash-400 mt-4 border-t border-ash-700/40 pt-3">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-3 h-1 bg-gold-400 rounded-full"></span>
+                                    <span>This period</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-3 h-0.5 bg-ash-500 border border-dashed border-ash-400"></span>
+                                    <span>The period before</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Target Progress Ring -->
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-5 flex flex-col justify-between gpu-layer">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-base font-bold text-white">November Goal</h3>
+                                    <span class="text-xs text-ash-400">20 days left</span>
+                                </div>
+                                <p class="text-xs text-ash-400 mt-0.5">Target revenue for current month</p>
+                            </div>
+
+                            <div class="relative w-44 h-44 mx-auto my-4 flex items-center justify-center">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="#22252A" stroke-width="10" fill="none"/>
+                                    <circle cx="50" cy="50" r="40" stroke="#D4AF37" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="133" stroke-linecap="round" fill="none" class="transition-all duration-1000"/>
+                                </svg>
+                                <div class="absolute flex flex-col items-center justify-center text-center">
+                                    <span class="text-3xl font-extrabold text-white tracking-tight">47%</span>
+                                    <span class="text-xs text-ash-400 mt-0.5">of LKR 42M</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5 border-t border-ash-700/40 pt-3 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-ash-400">Booked so far</span>
+                                    <span class="font-semibold text-white">LKR 19,683,000</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-ash-400">Needed a day</span>
+                                    <span class="font-semibold text-gold-400">LKR 1,115,850</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-ash-400">On pace for</span>
+                                    <span class="font-semibold text-emerald-400">LKR 60,051,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom 3 Columns Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Latest Bills Feed -->
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 flex flex-col justify-between gpu-layer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                                    Latest Bills
+                                </h3>
+                                <button onclick="triggerToast('Viewing all recent counter receipts')" class="text-xs text-gold-400 hover:underline">All orders</button>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="ios-press-target flex items-center justify-between p-2 rounded-xl hover:bg-ash-800/50 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 text-gold-400 flex items-center justify-center font-bold text-xs">EH</div>
+                                        <div>
+                                            <div class="text-xs font-semibold text-white">Elodie Hale</div>
+                                            <div class="text-[11px] text-ash-400">#15966 • Italian Matte Porcelain Tile</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-bold text-white">LKR 31,080</div>
+                                        <div class="text-[10px] text-ash-400">25 min ago</div>
+                                    </div>
+                                </div>
+                                <div class="ios-press-target flex items-center justify-between p-2 rounded-xl hover:bg-ash-800/50 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center font-bold text-xs">MQ</div>
+                                        <div>
+                                            <div class="text-xs font-semibold text-white">Mila Quinn</div>
+                                            <div class="text-[11px] text-ash-400">#15965 • Smart Commode x2</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-bold text-white">LKR 183,620</div>
+                                        <div class="text-[10px] text-ash-400">47 min ago</div>
+                                    </div>
+                                </div>
+                                <div class="ios-press-target flex items-center justify-between p-2 rounded-xl hover:bg-ash-800/50 transition-colors cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-xs">HA</div>
+                                        <div>
+                                            <div class="text-xs font-semibold text-white">Hugo Adeyemi</div>
+                                            <div class="text-[11px] text-ash-400">#15964 • Rain Shower Gold Set</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-bold text-white">LKR 63,240</div>
+                                        <div class="text-[10px] text-ash-400">1 hr ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Running Low Mini Tube Preview -->
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 flex flex-col justify-between gpu-layer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-bold text-white">Running Low</h3>
+                                <button onclick="switchTab('inventory')" class="text-xs text-gold-400 hover:underline">Inventory</button>
+                            </div>
+                            <p class="text-xs text-ash-400 mb-3">4 items at or under reorder point</p>
+                            
+                            <div class="flex items-end justify-between px-3 h-28 bg-ash-900/60 rounded-xl p-3 border border-ash-700/40">
+                                <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                                    <div class="w-4 bg-ash-800 rounded-full h-full relative overflow-hidden flex items-end border border-ash-700">
+                                        <div class="w-full bg-red-500 rounded-b-full tube-fill" style="height: 10%;"></div>
+                                        <div class="absolute w-full h-0.5 bg-ash-300 top-1/2"></div>
+                                    </div>
+                                    <span class="text-[10px] text-ash-400">0</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                                    <div class="w-4 bg-ash-800 rounded-full h-full relative overflow-hidden flex items-end border border-ash-700">
+                                        <div class="w-full bg-amber-500 rounded-b-full tube-fill" style="height: 30%;"></div>
+                                        <div class="absolute w-full h-0.5 bg-ash-300 top-1/2"></div>
+                                    </div>
+                                    <span class="text-[10px] text-ash-400">3</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                                    <div class="w-4 bg-ash-800 rounded-full h-full relative overflow-hidden flex items-end border border-ash-700">
+                                        <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 45%;"></div>
+                                        <div class="absolute w-full h-0.5 bg-ash-300 top-1/2"></div>
+                                    </div>
+                                    <span class="text-[10px] text-ash-400">14</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1.5 h-full justify-end">
+                                    <div class="w-4 bg-ash-800 rounded-full h-full relative overflow-hidden flex items-end border border-ash-700">
+                                        <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 55%;"></div>
+                                        <div class="absolute w-full h-0.5 bg-ash-300 top-1/2"></div>
+                                    </div>
+                                    <span class="text-[10px] text-ash-400">16</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Where Sales Came From (Donut Chart) -->
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4 flex flex-col justify-between gpu-layer">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-bold text-white">Payment Breakdown</h3>
+                                <span class="text-[11px] text-ash-400">Last 30 days</span>
+                            </div>
+
+                            <div class="flex items-center justify-around my-2">
+                                <div class="relative w-28 h-28 flex items-center justify-center">
+                                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                        <path class="text-ash-800" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path class="text-gold-400" stroke-dasharray="60, 100" stroke-width="4.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path class="text-emerald-400" stroke-dasharray="25, 100" stroke-dashoffset="-60" stroke-width="4.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path class="text-cyan-400" stroke-dasharray="15, 100" stroke-dashoffset="-85" stroke-width="4.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    </svg>
+                                    <div class="absolute text-center">
+                                        <span class="text-xs font-bold text-white block">LKR 53M</span>
+                                        <span class="text-[9px] text-ash-400">Total</span>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-gold-400"></span>
+                                        <span class="text-ash-300">Card (60%)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                                        <span class="text-ash-300">Cash (25%)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                                        <span class="text-ash-300">Bank (15%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= INVENTORY SCREEN (BRAMBLE TUBES) ================= -->
+                <div id="screen-inventory" class="space-y-6 hidden animate-fade">
+                    
+                    <!-- Inventory Top Bar -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Inventory</h1>
+                            <p class="text-ash-400 text-xs md:text-sm mt-0.5">Each tube is a product: the liquid is stock on shelf, the line is reorder point.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="triggerToast('Purchase Request generated for low stock items')" class="ios-press-target bg-ash-800 hover:bg-ash-700 text-ash-200 text-xs px-3.5 py-2 rounded-xl border border-ash-700/60 font-medium transition-colors flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Purchase List
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4 Inventory Top Stat Cards -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4">
+                            <div class="text-xs text-ash-400">Units on hand</div>
+                            <div class="text-2xl font-bold text-white mt-1">1,216</div>
+                            <div class="text-[11px] text-ash-400 mt-1">23 active tile & bath lines</div>
+                        </div>
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4">
+                            <div class="text-xs text-ash-400">Stock value at cost</div>
+                            <div class="text-2xl font-bold text-gold-400 mt-1">LKR 24.4M</div>
+                            <div class="text-[11px] text-ash-400 mt-1">LKR 67.5M at retail</div>
+                        </div>
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4">
+                            <div class="text-xs text-ash-400">At or under reorder</div>
+                            <div class="text-2xl font-bold text-amber-400 mt-1">3</div>
+                            <div class="text-[11px] text-ash-400 mt-1">2 run out within a week</div>
+                        </div>
+                        <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-4">
+                            <div class="text-xs text-ash-400">Sold out</div>
+                            <div class="text-2xl font-bold text-red-400 mt-1">1</div>
+                            <div class="text-[11px] text-ash-400 mt-1">Hidden from floor display</div>
+                        </div>
+                    </div>
+
+                    <!-- The Shelf: Visual Tubes Section -->
+                    <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                            <div>
+                                <h2 class="text-base font-bold text-white">The Shelf</h2>
+                                <p class="text-xs text-ash-400">Grouped by category, emptiest first</p>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs text-ash-400">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-gold-400"></span>
+                                    <span>Above reorder</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                    <span>Reorder now</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-3 h-0.5 bg-ash-300"></span>
+                                    <span>Reorder point</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories Tube Containers Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            
+                            <!-- Category 1: TILES -->
+                            <div class="bg-ash-900/60 border border-ash-700/40 rounded-xl p-4 flex flex-col items-center">
+                                <div class="flex items-end justify-center gap-3 h-48 w-full px-2">
+                                    <!-- Tube Item -->
+                                    <div class="flex flex-col items-center h-full justify-end group cursor-pointer" onclick="triggerToast('Italian Marble Tile: 37/100 units on hand')">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80 shadow-inner">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 37%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]" title="Reorder point: 20"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">37</span>
+                                    </div>
+                                    <!-- Tube Item 2 -->
+                                    <div class="flex flex-col items-center h-full justify-end group cursor-pointer" onclick="triggerToast('Granite Black Slab: 75/100 units')">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80 shadow-inner">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 75%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[70%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">75</span>
+                                    </div>
+                                    <!-- Tube Item 3 -->
+                                    <div class="flex flex-col items-center h-full justify-end group cursor-pointer" onclick="triggerToast('Mosaic Gold Trim: 21/100 units')">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80 shadow-inner">
+                                            <div class="w-full bg-amber-500 rounded-b-full tube-fill" style="height: 21%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[65%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-amber-400 mt-2">21</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-ash-300 uppercase tracking-wider mt-4">TILES</span>
+                            </div>
+
+                            <!-- Category 2: COMMODES -->
+                            <div class="bg-ash-900/60 border border-ash-700/40 rounded-xl p-4 flex flex-col items-center">
+                                <div class="flex items-end justify-center gap-3 h-48 w-full px-2">
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-amber-500 rounded-b-full tube-fill" style="height: 18%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-amber-400 mt-2">18</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 48%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[70%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">48</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 90%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[50%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">90</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-ash-300 uppercase tracking-wider mt-4">COMMODES</span>
+                            </div>
+
+                            <!-- Category 3: ACCESSORIES -->
+                            <div class="bg-ash-900/60 border border-ash-700/40 rounded-xl p-4 flex flex-col items-center">
+                                <div class="flex items-end justify-center gap-3 h-48 w-full px-2">
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 34%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[70%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">34</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 52%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[65%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">52</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 88%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">88</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-ash-300 uppercase tracking-wider mt-4">ACCESSORIES</span>
+                            </div>
+
+                            <!-- Category 4: FAUCETS -->
+                            <div class="bg-ash-900/60 border border-ash-700/40 rounded-xl p-4 flex flex-col items-center">
+                                <div class="flex items-end justify-center gap-3 h-48 w-full px-2">
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-amber-500 rounded-b-full tube-fill" style="height: 14%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-amber-400 mt-2">14</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 40%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[70%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">40</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 58%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">58</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-ash-300 uppercase tracking-wider mt-4">FAUCETS</span>
+                            </div>
+
+                            <!-- Category 5: SHOWERS -->
+                            <div class="bg-ash-900/60 border border-ash-700/40 rounded-xl p-4 flex flex-col items-center">
+                                <div class="flex items-end justify-center gap-3 h-48 w-full px-2">
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-red-500 rounded-b-full tube-fill" style="height: 0%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-red-400 mt-2">0</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-amber-500 rounded-b-full tube-fill" style="height: 16%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[60%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-amber-400 mt-2">16</span>
+                                    </div>
+                                    <div class="flex flex-col items-center h-full justify-end">
+                                        <div class="w-7 h-full bg-ash-800 rounded-full relative overflow-hidden flex items-end border border-ash-700/80">
+                                            <div class="w-full bg-gold-400 rounded-b-full tube-fill" style="height: 65%;"></div>
+                                            <div class="absolute w-full h-0.5 bg-ash-200 top-[50%]"></div>
+                                        </div>
+                                        <span class="text-[11px] font-semibold text-ash-300 mt-2">65</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-ash-300 uppercase tracking-wider mt-4">SHOWERS</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Inventory Table Data Filter Controls -->
+                    <div class="flex items-center gap-2 border-b border-ash-700/50 pb-2">
+                        <button onclick="filterTable('all', this)" class="tbl-filter-btn px-3.5 py-1.5 rounded-xl bg-gold-500/20 text-gold-400 border border-gold-500/30 text-xs font-semibold">All 23</button>
+                        <button onclick="filterTable('low', this)" class="tbl-filter-btn px-3.5 py-1.5 rounded-xl bg-ash-800 text-ash-400 hover:text-white text-xs font-medium border border-ash-700/60">Low 3</button>
+                        <button onclick="filterTable('soldout', this)" class="tbl-filter-btn px-3.5 py-1.5 rounded-xl bg-ash-800 text-ash-400 hover:text-white text-xs font-medium border border-ash-700/60">Sold out 1</button>
+                    </div>
+
+                    <!-- Detailed Inventory Table -->
+                    <div class="glass-card bg-ash-850/80 border border-ash-700/60 rounded-2xl overflow-x-auto">
+                        <table class="w-full text-left text-xs text-ash-300">
+                            <thead class="bg-ash-900/80 text-ash-400 uppercase tracking-wider border-b border-ash-700/60">
+                                <tr>
+                                    <th class="py-3.5 px-4 font-semibold">Product</th>
+                                    <th class="py-3.5 px-4 font-semibold">In stock</th>
+                                    <th class="py-3.5 px-4 font-semibold">Reorder at</th>
+                                    <th class="py-3.5 px-4 font-semibold">Sells a day</th>
+                                    <th class="py-3.5 px-4 font-semibold">Lasts</th>
+                                    <th class="py-3.5 px-4 font-semibold text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody" class="divide-y divide-ash-800/60">
+                                <!-- Row 1 -->
+                                <tr class="inv-row hover:bg-ash-800/40 transition-colors" data-status="soldout">
+                                    <td class="py-3.5 px-4 flex items-center gap-3">
+                                        <div class="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs border border-red-500/20">B</div>
+                                        <div>
+                                            <div class="font-bold text-white">Bespoke Brass Rain Shower</div>
+                                            <div class="text-[10px] text-ash-400">STA-192 • Bath & Fixtures</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4"><span class="font-bold text-red-400">0</span></td>
+                                    <td class="py-3.5 px-4 text-ash-400">20</td>
+                                    <td class="py-3.5 px-4 text-ash-400">3.6</td>
+                                    <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold">Out</span></td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <button onclick="restockItem('Bespoke Brass Rain Shower', 20)" class="px-3 py-1 bg-ash-800 hover:bg-gold-500 hover:text-ash-950 text-gold-400 rounded-lg border border-gold-500/30 transition-all font-medium">+ Restock</button>
+                                    </td>
+                                </tr>
+                                <!-- Row 2 -->
+                                <tr class="inv-row hover:bg-ash-800/40 transition-colors" data-status="low">
+                                    <td class="py-3.5 px-4 flex items-center gap-3">
+                                        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/20">C</div>
+                                        <div>
+                                            <div class="font-bold text-white">Cedar & Moss Bath Sink Mixer</div>
+                                            <div class="text-[10px] text-ash-400">BAT-164 • Faucets</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4"><span class="font-bold text-amber-400">14</span></td>
+                                    <td class="py-3.5 px-4 text-ash-400">30</td>
+                                    <td class="py-3.5 px-4 text-ash-400">3.4</td>
+                                    <td class="py-3.5 px-4"><span class="text-amber-400 font-semibold">4 d</span></td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <button onclick="restockItem('Cedar & Moss Bath Sink Mixer', 30)" class="px-3 py-1 bg-ash-800 hover:bg-gold-500 hover:text-ash-950 text-gold-400 rounded-lg border border-gold-500/30 transition-all font-medium">+ Restock</button>
+                                    </td>
+                                </tr>
+                                <!-- Row 3 -->
+                                <tr class="inv-row hover:bg-ash-800/40 transition-colors" data-status="low">
+                                    <td class="py-3.5 px-4 flex items-center gap-3">
+                                        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/20">E</div>
+                                        <div>
+                                            <div class="font-bold text-white">Enamel Wall Mount Commode</div>
+                                            <div class="text-[10px] text-ash-400">KIT-220 • Commodes</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4"><span class="font-bold text-amber-400">16</span></td>
+                                    <td class="py-3.5 px-4 text-ash-400">20</td>
+                                    <td class="py-3.5 px-4 text-ash-400">1.3</td>
+                                    <td class="py-3.5 px-4"><span class="text-amber-400 font-semibold">13 d</span></td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <button onclick="restockItem('Enamel Wall Mount Commode', 20)" class="px-3 py-1 bg-ash-800 hover:bg-gold-500 hover:text-ash-950 text-gold-400 rounded-lg border border-gold-500/30 transition-all font-medium">+ Restock</button>
+                                    </td>
+                                </tr>
+                                <!-- Row 4 -->
+                                <tr class="inv-row hover:bg-ash-800/40 transition-colors" data-status="all">
+                                    <td class="py-3.5 px-4 flex items-center gap-3">
+                                        <div class="w-7 h-7 rounded-lg bg-gold-500/10 text-gold-400 flex items-center justify-center font-bold text-xs border border-gold-500/20">W</div>
+                                        <div>
+                                            <div class="font-bold text-white">Wool Felt Bath Mat Set</div>
+                                            <div class="text-[10px] text-ash-400">APP-185 • Accessories</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4"><span class="font-bold text-white">52</span></td>
+                                    <td class="py-3.5 px-4 text-ash-400">15</td>
+                                    <td class="py-3.5 px-4 text-ash-400">2.1</td>
+                                    <td class="py-3.5 px-4"><span class="text-emerald-400 font-semibold">24 d</span></td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <button onclick="restockItem('Wool Felt Bath Mat Set', 15)" class="px-3 py-1 bg-ash-800 hover:bg-gold-500 hover:text-ash-950 text-gold-400 rounded-lg border border-gold-500/30 transition-all font-medium">+ Restock</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- ADAPTIVE DYNAMIC DOCK (Mobile Bottom Navigation) -->
+            <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-ash-850/90 backdrop-blur-xl border-t border-ash-700/50 flex items-center justify-around px-2 z-40 pb-safe gpu-layer">
+                <button onclick="switchTab('dashboard')" class="ios-press-target flex flex-col items-center gap-1 text-gold-400">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                    <span class="text-[10px] font-medium">Dash</span>
+                </button>
+
+                <button onclick="switchTab('inventory')" class="ios-press-target flex flex-col items-center gap-1 text-ash-400 hover:text-gold-400">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.75 7.5h16.5m-16.5 0l1.455-3.638A1.125 1.125 0 015.75 3.187h12.5a1.125 1.125 0 011.045.675L20.25 7.5"/></svg>
+                    <span class="text-[10px] font-medium">Inventory</span>
+                </button>
+
+                <button onclick="createNewBill()" class="ios-press-target flex flex-col items-center gap-1 text-gold-400">
+                    <div class="w-8 h-8 rounded-xl bg-gold-500 text-ash-950 flex items-center justify-center font-bold shadow-md gold-glow-sm">
+                        +
+                    </div>
+                </button>
+
+                <button onclick="toggleSearchModal(true)" class="ios-press-target flex flex-col items-center gap-1 text-ash-400 hover:text-gold-400">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                    <span class="text-[10px] font-medium">Search</span>
+                </button>
+
+                <button onclick="toggleTheme()" class="ios-press-target flex flex-col items-center gap-1 text-ash-400 hover:text-gold-400">
+                    <svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                    <span class="text-[10px] font-medium">Theme</span>
+                </button>
+            </nav>
+
+        </div>
+    </div>
+
+    <!-- QUICK SEARCH MODAL (Ctrl+K) -->
+    <div id="search-modal" class="fixed inset-0 z-50 bg-ash-950/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-ash-850 border border-ash-700/80 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 scale-95 opacity-0" id="search-card">
+            <div class="p-4 border-b border-ash-700/60 flex items-center gap-3">
+                <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input id="search-input" type="text" placeholder="Type a command or search inventory..." class="bg-transparent text-white placeholder-ash-400 text-sm w-full outline-none">
+                <kbd onclick="toggleSearchModal(false)" class="text-xs bg-ash-800 text-ash-400 px-2 py-1 rounded cursor-pointer border border-ash-700">ESC</kbd>
+            </div>
+            <div class="p-3 max-h-72 overflow-y-auto space-y-1 text-xs">
+                <div onclick="switchTab('inventory'); toggleSearchModal(false);" class="p-2.5 rounded-xl hover:bg-ash-800 text-ash-200 cursor-pointer flex items-center justify-between">
+                    <span class="font-medium text-white">Italian Matte Porcelain Tiles</span>
+                    <span class="text-gold-400">Inventory Tube #01</span>
+                </div>
+                <div onclick="switchTab('dashboard'); toggleSearchModal(false);" class="p-2.5 rounded-xl hover:bg-ash-800 text-ash-200 cursor-pointer flex items-center justify-between">
+                    <span class="font-medium text-white">View Daily Sales Report</span>
+                    <span class="text-ash-400">Dashboard</span>
+                </div>
+                <div onclick="createNewBill(); toggleSearchModal(false);" class="p-2.5 rounded-xl hover:bg-ash-800 text-ash-200 cursor-pointer flex items-center justify-between">
+                    <span class="font-medium text-white">+ Create New Customer POS Receipt</span>
+                    <span class="text-emerald-400">Quick Action</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            const dashScreen = document.getElementById('screen-dashboard');
+            const invScreen = document.getElementById('screen-inventory');
+            const navDash = document.getElementById('nav-dashboard');
+            const navInv = document.getElementById('nav-inventory');
+
+            if (tabId === 'dashboard') {
+                dashScreen.classList.remove('hidden');
+                invScreen.classList.add('hidden');
+
+                navDash.className = 'nav-btn w-11 h-11 rounded-xl flex items-center justify-center text-gold-400 bg-gold-500/10 border border-gold-500/30 transition-all duration-200 relative group';
+                navInv.className = 'nav-btn w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group';
+            } else if (tabId === 'inventory') {
+                dashScreen.classList.add('hidden');
+                invScreen.classList.remove('hidden');
+
+                navInv.className = 'nav-btn w-11 h-11 rounded-xl flex items-center justify-center text-gold-400 bg-gold-500/10 border border-gold-500/30 transition-all duration-200 relative group';
+                navDash.className = 'nav-btn w-11 h-11 rounded-xl flex items-center justify-center text-ash-400 hover:text-gold-400 hover:bg-ash-800/60 transition-all duration-200 relative group';
+            }
+        }
+
+        // Theme Toggle (Light/Dark Mode)
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.remove('aura-bg-dark');
+                html.classList.add('aura-bg-light');
+            } else {
+                html.classList.add('dark');
+                html.classList.remove('aura-bg-light');
+                html.classList.add('aura-bg-dark');
+            }
+        }
+
+        // Chart Controls
+        let compareActive = false;
+        function toggleCompare() {
+            compareActive = !compareActive;
+            const comparePath = document.getElementById('chart-compare');
+            const btn = document.getElementById('btn-compare');
+            if (compareActive) {
+                comparePath.style.opacity = '1';
+                btn.classList.add('bg-gold-500/20', 'text-gold-400', 'border-gold-500/40');
+                triggerToast('Comparison timeframe overlay enabled');
+            } else {
+                comparePath.style.opacity = '0';
+                btn.classList.remove('bg-gold-500/20', 'text-gold-400', 'border-gold-500/40');
+            }
+        }
+
+        function setChartRange(range, el) {
+            document.querySelectorAll('.chart-range-btn').forEach(b => {
+                b.className = 'chart-range-btn px-2.5 py-1 rounded-md text-ash-400 hover:text-white transition-colors';
+            });
+            el.className = 'chart-range-btn px-2.5 py-1 rounded-md bg-gold-500/20 text-gold-400 font-semibold border border-gold-500/30';
+            
+            const line = document.getElementById('chart-line');
+            const area = document.getElementById('chart-area');
+            const total = document.getElementById('chart-total');
+
+            if (range === '7D') {
+                line.setAttribute('d', 'M0,160 Q150,80 300,140 T600,20');
+                area.setAttribute('d', 'M0,160 Q150,80 300,140 T600,20 L600,200 L0,200 Z');
+                total.innerText = 'LKR 13,732,000';
+            } else if (range === '30D') {
+                line.setAttribute('d', 'M0,120 Q150,150 300,60 T600,90');
+                area.setAttribute('d', 'M0,120 Q150,150 300,60 T600,90 L600,200 L0,200 Z');
+                total.innerText = 'LKR 53,420,000';
+            } else if (range === '90D') {
+                line.setAttribute('d', 'M0,100 Q150,130 300,110 T600,50');
+                area.setAttribute('d', 'M0,100 Q150,130 300,110 T600,50 L600,200 L0,200 Z');
+                total.innerText = 'LKR 142,800,000';
+            } else {
+                line.setAttribute('d', 'M0,130 Q150,160 300,90 T600,40');
+                area.setAttribute('d', 'M0,130 Q150,160 300,90 T600,40 L600,200 L0,200 Z');
+                total.innerText = 'LKR 524,083,000';
+            }
+        }
+
+        // Inventory Table Filtering
+        function filterTable(status, el) {
+            document.querySelectorAll('.tbl-filter-btn').forEach(b => {
+                b.className = 'tbl-filter-btn px-3.5 py-1.5 rounded-xl bg-ash-800 text-ash-400 hover:text-white text-xs font-medium border border-ash-700/60';
+            });
+            el.className = 'tbl-filter-btn px-3.5 py-1.5 rounded-xl bg-gold-500/20 text-gold-400 border border-gold-500/30 text-xs font-semibold';
+
+            const rows = document.querySelectorAll('.inv-row');
+            rows.forEach(r => {
+                if (status === 'all') {
+                    r.style.display = 'table-row';
+                } else {
+                    if (r.dataset.status === status) {
+                        r.style.display = 'table-row';
+                    } else {
+                        r.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Toast Helper
+        let toastTimeout;
+        function triggerToast(message) {
+            const toast = document.getElementById('toast-container');
+            const text = document.getElementById('toast-text');
+            text.innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                closeToast();
+            }, 4000);
+        }
+
+        function closeToast() {
+            const toast = document.getElementById('toast-container');
+            toast.classList.add('translate-y-20', 'opacity-0');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+        }
+
+        function undoLastAction() {
+            triggerToast('Previous action reversed successfully.');
+        }
+
+        function restockItem(name, qty) {
+            triggerToast(`Restock order placed: +${qty} units for ${name}`);
+        }
+
+        function createNewBill() {
+            triggerToast('New POS Bill initialized. Ready to scan item barcodes.');
+        }
+
+        // Search Modal Keyboard Shortcut (Ctrl+K)
+        function toggleSearchModal(show) {
+            const modal = document.getElementById('search-modal');
+            const card = document.getElementById('search-card');
+            const input = document.getElementById('search-input');
+
+            if (show) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    card.classList.remove('scale-95', 'opacity-0');
+                    card.classList.add('scale-100', 'opacity-100');
+                    input.focus();
+                }, 10);
+            } else {
+                card.classList.remove('scale-100', 'opacity-100');
+                card.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.remove('flex');
+                    modal.classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                toggleSearchModal(true);
+            }
+            if (e.key === 'Escape') {
+                toggleSearchModal(false);
+            }
+        });
+
+        // Auto trigger initial notification on load
+        window.onload = function() {
+            setTimeout(() => {
+                triggerToast('79× Bespoke Tiles received');
+            }, 800);
+        };
+    </script>
+</body>
+</html>

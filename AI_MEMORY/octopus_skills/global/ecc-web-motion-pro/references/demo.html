@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Motion recipes demo</title>
+<link rel="stylesheet" href="recipes.css">
+<style>section{padding:12vh 8vw}h1{font-size:clamp(2.2rem,8vw,6rem);margin:0;line-height:1.02}.hero{position:relative;min-height:100vh;display:grid;align-content:center;justify-items:start;gap:28px;overflow:hidden;padding:0 8vw}.hero>*{position:relative}.hero canvas.shader{position:absolute}
+.steps div{position:absolute;opacity:0;transition:opacity .5s}.steps div.on{opacity:1}.steps{position:relative;height:120px;width:min(80vw,600px);text-align:center;font-size:clamp(1.2rem,4vw,2rem)}
+.pin canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55}.stats{display:flex;gap:6vw;flex-wrap:wrap}.stats b{font-size:clamp(2rem,7vw,4rem);color:var(--gold);display:block}
+.photo{height:60vh;background:linear-gradient(135deg,#222,#3b3320);border-radius:18px}</style></head><body>
+<div class="progress css-driven"></div>
+<header class="hero"><canvas class="shader" id="sh"></canvas><h1 class="split">Bathroom accessories made to be touched</h1><p class="rv" style="--i:2;color:var(--ash);max-width:34ch">Real fittings. Real showroom. Ask us for today's price.</p><a class="mag rv" style="--i:3" href="#visit">Visit the showroom</a></header>
+<div class="marquee"><div><span>Taps</span><span>Mixers</span><span>Showers</span><span>Accessories</span><span>Taps</span><span>Mixers</span><span>Showers</span><span>Accessories</span></div></div>
+<div class="pin" id="pin"><div class="stage"><canvas id="seq"></canvas><div class="steps"><div data-step class="on">Choose the finish</div><div data-step>See it in your bathroom</div><div data-step>We deliver and fit</div></div></div></div>
+<div class="hscroll" id="hs"><div class="stage"><div class="track"><div class="card tilt">Chrome</div><div class="card tilt">Matt black</div><div class="card tilt">Brushed gold</div><div class="card tilt">Ash grey</div><div class="card tilt">White</div></div></div></div>
+<section><div class="stats"><div><b data-count="1200">0</b>items in stock</div><div><b data-count="35">0</b>brands</div></div><div class="photo clip" style="margin-top:6vh"></div></section>
+<section id="visit"><h1 class="split">Come and see</h1></section>
+<script src="recipes.js"></script>
+<script>
+var mode=Motion.init(); window.__mode=mode;
+// make 24 synthetic frames so the sequence recipe is tested without files
+var frames=[];for(var i=0;i<24;i++){var c=document.createElement('canvas');c.width=320;c.height=200;var x=c.getContext('2d');x.fillStyle='hsl('+(40+i*2)+',30%,'+(10+i)+'%)';x.fillRect(0,0,320,200);x.fillStyle='#c9a24b';x.fillRect(20+i*10,80,40,40);frames.push(c);}
+Motion.sequence(document.getElementById('seq'),frames,document.getElementById('pin'));
+window.__shader=Motion.shader(document.getElementById('sh'),[.04,.04,.05],[.45,.35,.12]);
+</script></body></html>

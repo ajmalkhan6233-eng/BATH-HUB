@@ -1,0 +1,32 @@
+diff --git a/routes/grn_dupes.js b/routes/grn_dupes.js
+index 999a176..c2691c6 100644
+--- a/routes/grn_dupes.js
++++ b/routes/grn_dupes.js
+@@ -51,21 +51,22 @@ async function fixDupes(nums) {
+         await client.query(`ALTER TABLE grn_records_archive ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ DEFAULT NOW()`);
+         await client.query(`ALTER TABLE grn_records_archive ADD COLUMN IF NOT EXISTS archived_reason TEXT`);
+         const rows = (await client.query(`SELECT * FROM grn_records WHERE grn_number = ANY($1::text[]) FOR UPDATE`, [nums])).rows;
+-        const adj = [];
++        const adj = []; let clamped = 0;
+         for (const l of rows) {
+             const m = /^\s*([A-Za-z0-9-]+)\s+-\s+(.*)$/.exec(String(l.item_description || ''));
+             if (!m) throw Object.assign(new Error('Line "' + l.item_description + '" has no item code, cannot undo its stock'), { status: 409 });
+             const p = (await client.query(`SELECT id, name, stock_level FROM products WHERE item_code=$1 FOR UPDATE`, [m[1]])).rows[0];
+             if (!p || String(p.name).trim().toLowerCase() !== m[2].trim().toLowerCase()) throw Object.assign(new Error('Item ' + m[1] + ' does not match "' + m[2] + '" any more. Nothing was changed.'), { status: 409 });
+-            const left = Number(p.stock_level || 0) - Number(l.quantity || 0);
+-            if (left < -0.0001) throw Object.assign(new Error('Item ' + m[1] + ' would go below 0 stock. Nothing was changed.'), { status: 409 });
+-            adj.push({ id: p.id, qty: Number(l.quantity || 0) });
++            // Stock may not go below 0: take back only what is still there (the duplicate goods were already counted out or sit on the bill's own item).
++            const have = Math.max(0, Number(p.stock_level || 0)), take = Math.min(have, Number(l.quantity || 0));
++            if (take < Number(l.quantity || 0) - 0.0001) clamped++;
++            adj.push({ id: p.id, qty: take });
+         }
+         for (const a of adj) await client.query(`UPDATE products SET stock_level = stock_level - $1 WHERE id=$2`, [a.qty, a.id]);
+         await client.query(`INSERT INTO grn_records_archive SELECT g.*, NOW(), 'double-counted: same goods as a vendor bill' FROM grn_records g WHERE g.grn_number = ANY($1::text[])`, [nums]);
+         await client.query(`DELETE FROM grn_records WHERE grn_number = ANY($1::text[])`, [nums]);
+         await client.query('COMMIT');
+-        return { lines: rows.length, items: adj.length };
++        return { lines: rows.length, items: adj.length, clamped };
+     } catch (e) { try { await client.query('ROLLBACK'); } catch (x) { /* ignore */ } throw e; } finally { client.release(); }
+ }
+ router.post('/grn-dupes/fix', ownerOnly, express.json(), async (req, res) => {

@@ -32,6 +32,15 @@ function normalizeSriLankaPhone(raw) {
     if (!/^947\d{8}$/.test(d)) return null;
     return '+' + d;
 }
+// 17 Nov (AJ): POS receipts only. Sri Lanka numbers as before, PLUS any other country when the number starts with + or 00 (8 to 15 digits). Never guesses: no + / 00 and not Sri Lanka = null.
+function normalizeWhatsappPhone(raw) {
+    const t = String(raw == null ? "" : raw).trim().replace(/^009[\s-]/, "00");   // "009 61..." typed with a space = 00 61...
+    const sl = normalizeSriLankaPhone(t);
+    if (sl) return sl;
+    if (!/^(\+|00)/.test(t)) return null;
+    const d = t.replace(/\D/g, "").replace(/^00/, "");
+    return /^[1-9]\d{7,14}$/.test(d) && !d.startsWith("94") ? "+" + d : null;
+}
 const last3 = p => (p ? String(p).replace(/\D/g, '').slice(-3) : '???');
 const mask = p => '***' + last3(p);
 
@@ -89,13 +98,24 @@ async function sendViaCloudApi({ to, filePath, env = process.env, http = axios }
     return { id: res.data && res.data.messages && res.data.messages[0] && res.data.messages[0].id };
 }
 
+// FREE route: the shop's own linked WhatsApp on this PC (whatsapp-bridge /send). Used when WHATSAPP_VIA=bridge: no Meta keys needed.
+// Same picture, same caption. Throws if the bridge says no, so the caller's retry and "failed" handling work as before.
+async function sendViaBridge({ to, filePath, env = process.env, http = axios }) {
+    const url = env.WHATSAPP_API_URL || 'http://localhost:3001/send';
+    const res = await http.post(url, { to: String(to).replace(/\D/g, ''), message: CAPTION,
+        media: { data: fs.readFileSync(filePath).toString('base64'), mimetype: 'image/png', filename: 'receipt.png' } }, { timeout: 60000 });
+    if (!(res.data && res.data.success)) throw new Error('WhatsApp bridge did not send the receipt');
+    return { id: null };
+}
+const viaBridge = (env = process.env) => String(env.WHATSAPP_VIA || '').toLowerCase() === 'bridge';
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Sends the receipt for one queue row. Returns { status, ... } and NEVER throws.
 // opts: env, send (replaceable sender for tests), retryWaitMs, dir (where the PNGs are)
 async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
     const env = opts.env || process.env;
-    const send = opts.send || sendViaCloudApi;
+    const send = opts.send || (viaBridge(env) ? sendViaBridge : sendViaCloudApi);
     const wait = opts.retryWaitMs == null ? RETRY_WAIT_MS : opts.retryWaitMs;
     const dir = opts.dir || receiptImage.DEFAULT_DIR;
     let row;
@@ -109,8 +129,8 @@ async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
         if (row.status === 'sent') { await logAttempt(pool, row, 'already_sent'); return { status: 'already_sent' }; }
         if (row.status !== 'queued') { return { status: 'skipped', reason: `row is "${row.status}", only "queued" rows are sent` }; }
 
-        // 1. valid Sri Lanka number on the bill, else "no phone" and skip. Never guess.
-        const to = normalizeSriLankaPhone(row.customer_phone);
+        // 1. valid Sri Lanka number on the bill (or an international one starting with + or 00, 17 Nov), else "no phone" and skip. Never guess.
+        const to = normalizeWhatsappPhone(row.customer_phone);
         if (!to) {
             await pool.query(`UPDATE receipt_queue SET status='no phone', last_error=$2 WHERE id=$1 AND status='queued'`, [row.id, 'no valid phone on this bill']);
             await logAttempt(pool, row, 'no_phone');
@@ -138,7 +158,7 @@ async function sendReceiptForQueueItem(pool, queueId, opts = {}) {
             await logAttempt(pool, row, 'dry_run', `would send receipt picture to ${mask(to)} with caption "${CAPTION}"`);
             return { status: 'dry_run', to: mask(to), caption: CAPTION };
         }
-        if (!haveKeys(env)) {
+        if (!haveKeys(env) && !viaBridge(env)) {
             await logAttempt(pool, row, 'no_keys', 'WHATSAPP_LIVE=true but keys missing in .env');
             return { status: 'no_keys', reason: 'WHATSAPP_API_TOKEN / WHATSAPP_PHONE_NUMBER_ID missing in .env' };
         }
@@ -181,4 +201,4 @@ async function sendAllQueued(pool, opts = {}) {
     return out;
 }
 
-module.exports = { CAPTION, normalizeSriLankaPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };
+module.exports = { sendViaBridge, viaBridge, CAPTION, normalizeSriLankaPhone, normalizeWhatsappPhone, sendReceiptForQueueItem, sendAllQueued, sendViaCloudApi, isLive, haveKeys, ensureSchema, safeReason };

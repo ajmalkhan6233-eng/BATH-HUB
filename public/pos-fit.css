@@ -1,0 +1,48 @@
+/* POS fits any window height (AJ 16 Nov): nothing overlaps, Generate Bill never gets pushed off the bottom, the Layla button never covers it.
+   Left: customer + titles stay, the item list scrolls INSIDE its own box, Add item / Scan / Bill tools stay under it.
+   Right: the bill window shrinks and scrolls inside itself, the price boxes + Generate Bill always show.
+   Loaded last. Remove the link to go back. */
+html body #formPanel { height:calc(100vh - 18px) !important; max-height:calc(100vh - 18px) !important; min-height:0 !important; overflow:hidden !important; box-sizing:border-box !important; margin:4px auto !important; padding:8px 10px !important; }
+html body #formPanel .fp-left { display:flex !important; flex-direction:column !important; min-height:0 !important; min-width:0 !important; overflow:hidden !important; }
+html body #formPanel .fp-left > * { flex:0 0 auto; }
+html body #formPanel .fp-left > #itemRows { flex:1 1 auto !important; min-height:60px !important; overflow-y:auto !important; overflow-x:hidden !important; max-height:none !important; padding-right:2px; }
+html body #formPanel .fp-right { display:flex !important; flex-direction:column !important; min-height:0 !important; min-width:0 !important; overflow:hidden !important; padding-bottom:58px !important; gap:2px !important; }
+html body #formPanel .fp-right > * { flex:0 0 auto; }
+html body #formPanel .fp-right > #liveBill { flex:1 1 auto !important; min-height:56px !important; max-height:none !important; height:auto !important; overflow-y:auto !important; align-self:stretch !important; }
+/* slim item row: name, then code + stock on ONE small line */
+html body #formPanel #itemRows .item-row { min-height:46px !important; padding:3px 8px !important; margin:0 0 3px !important; }
+html body #formPanel #itemRows .item-row .i-name { font-size:14px !important; min-height:26px !important; padding-top:2px !important; padding-bottom:2px !important; }
+html body #formPanel .i-code, html body #formPanel .stock-hint { font-size:11px !important; line-height:1.1 !important; margin:0 8px 0 0 !important; display:inline-block !important; padding:0 !important; min-height:0 !important; }
+html body #formPanel #itemRows .item-row .i-qty, html body #formPanel #itemRows .item-row .i-sell, html body #formPanel #itemRows .item-row .i-disc { min-height:30px !important; height:30px !important; padding-top:0 !important; padding-bottom:0 !important; }
+html body #formPanel #itemRows .item-row .qty-step button { height:28px !important; min-height:28px !important; }
+html body #formPanel #itemRows .item-row .remove-btn { width:34px !important; min-width:34px !important; max-width:34px !important; height:34px !important; min-height:34px !important; font-size:20px !important; }
+html body #formPanel .item-head, html body #formPanel #itemRows .item-row { grid-template-columns:minmax(0,1fr) 124px 88px 88px 84px 38px !important; }
+html body #formPanel #itemTools .add-btn { min-height:34px !important; padding:4px !important; }
+html body #formPanel #itemTools .tools-btn { min-height:34px !important; }
+/* right-hand price boxes and hints take little room */
+html body #formPanel .fp-right .cap-hint { margin:0 !important; line-height:1.2 !important; }
+html body #formPanel .fp-right .cap-hint:empty { display:none !important; }
+html body #formPanel .fp-right #priceRow input, html body #formPanel .fp-right #paymentMethod { min-height:34px !important; height:34px !important; }
+html body #formPanel .fp-right .generate-btn { min-height:40px !important; }
+html body #posProfit { margin:0 4px !important; }
+/* short windows: tighter still */
+@media (max-height:420px) {
+  html body #formPanel #itemRows .item-row { min-height:40px !important; }
+  html body #formPanel .fp-right { padding-bottom:50px !important; }
+  html body #formPanel .fp-right label { font-size:10px !important; margin:0 !important; }
+}
+html body #payRow { display:flex; gap:8px; align-items:stretch; margin:2px 0 0; }
+html body #payRow #paymentMethod { flex:0 0 38%; width:38% !important; }
+html body #payRow #genBtn { flex:1 1 auto; margin:0 !important; width:auto !important; }
+/* order on the right: bill window, profit, price boxes, hints, payment sub-boxes, then Payment + Generate Bill, Today's bills last */
+html body #formPanel .fp-right > * { order:5 !important; }
+html body #formPanel .fp-right > #liveBill { order:0 !important; }
+html body #formPanel .fp-right > #posProfit { order:1 !important; }
+html body #formPanel .fp-right > #priceRow { order:2 !important; }
+html body #formPanel .fp-right > #saveHint, html body #formPanel .fp-right > #capHint { order:3 !important; }
+html body #formPanel .fp-right > #editBanner, html body #formPanel .fp-right > #errMsg { order:4 !important; }
+html body #formPanel .fp-right > #payRow { order:7 !important; }
+html body #formPanel .fp-right > #cancelEditBtn { order:8 !important; }
+html body #formPanel .fp-right > .today-d { order:9 !important; }
+html body #formPanel .fp-right > #posExtra { order:1 !important; }
+html body #formPanel .fp-right > #posProfit { order:1 !important; }

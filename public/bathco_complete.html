@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>
-<script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
+<script src="/perf-guard.js"></script><script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Royal Bath Hub — Owner</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png"><link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-48.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon-180.png">
-<script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.getElementById("chip-slot") || document.body)); }</script>
+<script src="/lib/errorlog.js"></script><script src="/offline-queue.js"></script><script>if (window.OfflineQueue) { OfflineQueue.install(); window.addEventListener("DOMContentLoaded", () => OfflineQueue.mountChip(document.getElementById("chip-slot") || document.body)); }</script>
 <meta name="theme-color" content="#0B1B3A">
-<link href="/fonts/inter.css" rel="stylesheet">
 <script src="/vendor/chart.umd.min.js"></script>
 <style>
 /* ── VARIABLES ── */
@@ -29,7 +28,7 @@
   --text:#1a1a1a;--text2:#555;--text3:#888;--shadow:0 4px 20px rgba(0,0,0,0.1)
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
+body{font-family:'RBH Sans','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--t),color var(--t)}
 input,select,textarea,button{font-family:inherit}
 ul{list-style:none}
 button{cursor:pointer;border:none;background:none}
@@ -164,6 +163,7 @@ table tr:last-child td{border-bottom:none}
 /* ── SEARCH ── */
 .search-wrap{position:relative}
 .search-wrap input{padding-left:34px}
+.search-wrap input.fi, .search-wrap input[type=text]{padding-left:34px !important}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);pointer-events:none}
 
 /* ── TOAST ── */
@@ -221,7 +221,7 @@ table tr:last-child td{border-bottom:none}
 @media(max-width:768px){
   body{padding-bottom:62px}
   /* embedded screens stop above the bottom menu so their last buttons are not hidden (Ajmal 13:06) */
-  #pos-frame, iframe[id^="frame-"]{height:calc(100dvh - 205px)!important;min-height:420px!important}
+  #pos-frame, iframe[id^="frame-"]{height:calc(100dvh - 150px)!important;min-height:420px!important}
   #bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg2);border-top:1px solid var(--card-border);padding:4px 0 max(4px,env(safe-area-inset-bottom))}
   #bottom-nav button{flex:1;background:none;border:0;color:var(--text2);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer}
   #bottom-nav button .bi{font-size:20px;line-height:1}
@@ -239,10 +239,14 @@ table tr:last-child td{border-bottom:none}
   .main-content,.page{min-width:0;max-width:100vw}
   .page table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
+/* embed mode: the new shell shows a screen inside a frame, without this page's own menu and header */
+.embed .sidebar,.embed .topbar{display:none!important}.embed .main-content{margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
 </style>
-<link rel="stylesheet" href="/bathhub-design.css">
-</head>
+<link rel="stylesheet" href="/bathhub-design.css"><link rel="stylesheet" href="/motion.css"><link rel="stylesheet" href="/ux-extra.css"><link rel="stylesheet" href="/rbh-modern.css">
+<link rel="stylesheet" href="/bathhub-logo.css">
+<link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"><link rel="stylesheet" href="/fit-window.css"><script src="/cheque-dayask.js" defer></script></head>
 <body>
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
 <canvas id="confetti-canvas"></canvas>
 <div id="toasts"></div>
 <nav id="bottom-nav" aria-label="Main menu">
@@ -290,6 +294,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="docinbox"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">Document Inbox</span></li>
       <li class="nav-item" data-page="loans"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg></span><span class="nav-label">Friend &amp; Investor Loans</span></li>
       <li class="nav-item" data-page="moneycontrol"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="nav-label">Money Control</span></li>
+      <li class="nav-item" data-page="dailybreakdown"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="nav-label">Daily Breakdown</span></li>
       <li class="nav-item" data-page="commissions"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg></span><span class="nav-label">Sale Commissions</span></li>
       <li class="nav-item" data-page="enquiries"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-phone-call"/></svg></span><span class="nav-label">Enquiries</span></li>
       <li class="nav-item" data-page="replies"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chat"/></svg></span><span class="nav-label">Reply Drafts</span></li>
@@ -307,16 +312,12 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="reports"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg></span><span class="nav-label">Reports</span></li>
     </ul>
     <div class="sidebar-footer">
-      <div class="sidebar-toggle" onclick="toggleSidebar()">
-        <span style="font-size:18px"><svg class="bh-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg></span>
-        <span class="nav-label toggle-lbl">Collapse</span>
-      </div>
     </div>
   </nav>
 
   <div class="main-content" id="main-content">
     <header class="topbar">
-      <div class="topbar-brand"><img class="brand-logo" src="/brand/logo-header-400h.png" alt="Royal Bath Hub" height="44">
+      <div class="topbar-brand"><img class="brand-logo" src="/brand/logo-header-400h.png" alt="Royal Bath Hub" height="55">
       <div>
         <div style="font-size:16px;font-weight:700" id="page-title">Dashboard</div>
         <div style="font-size:12px;color:var(--text2)" id="page-sub">Loading…</div>
@@ -324,6 +325,7 @@ table tr:last-child td{border-bottom:none}
       <div class="topbar-right">
         <span id="chip-slot"></span>
         <div class="live-clock" id="clock">00:00:00</div>
+        <a class="btn btn-s" id="notepad-btn" href="layla://open" title="Open the Layla desk notepad" style="background:#c9a24b;color:#1a1200;border-color:#c9a24b;padding:5px 12px;font-size:12px;font-weight:700;text-decoration:none">Notepad</a>
         <button class="theme-toggle" onclick="toggleTheme()"><svg class="bh-icon" aria-hidden="true"><use href="#i-moon"/></svg></button>
         <button class="logout-btn" onclick="doLogout()">Sign Out</button>
       </div>
@@ -447,14 +449,14 @@ table tr:last-child td{border-bottom:none}
           <input type="text" class="fi" placeholder="Search code or name..." id="stk-search" oninput="filterStock()">
         </div>
         <select class="fs" style="width:160px" id="stk-cat" onchange="filterStock()"><option value="">All Categories</option></select>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;min-width:0">
           <button class="btn btn-p" onclick="toggleItemForm()">+ Add Item</button>
           <button class="btn btn-p" onclick="toggleGRNForm()">+ GRN Entry</button>
           <button class="btn btn-s" onclick="loadStock()">↺ Refresh</button>
         </div>
       </div>
       <div id="stk-alerts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
-      <div class="card" style="margin-bottom:16px"><div class="tbl-wrap"><table><thead><tr><th>Photo</th><th>Code</th><th>Name</th><th>Category</th><th>Stock</th><th>Level</th><th>Supplier</th></tr></thead><tbody id="stk-tbody"></tbody></table></div></div>
+      <div class="card" style="margin-bottom:16px"><div class="tbl-wrap"><table style="width:auto;min-width:60%"><thead><tr><th>Photo</th><th>Code</th><th>Name</th><th>Category</th><th>Stock</th></tr></thead><tbody id="stk-tbody"></tbody></table></div></div>
       <!-- Add item form -->
       <div class="card" id="item-form" style="display:none;margin-bottom:16px">
         <div class="section-hdr"><div class="section-title">Add Item — next code <code style="color:var(--gold)" id="i-next-code">…</code></div><button class="btn btn-s" onclick="toggleItemForm()">✕ Close</button></div>
@@ -496,6 +498,7 @@ table tr:last-child td{border-bottom:none}
     <!-- ── POS BILLING (embeds public/pos_billing.html) ── -->
     <section class="page" id="page-pos">
       <iframe id="pos-frame" title="POS Billing" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
+      <script>/* BLOCK: POS first (16 Nov, AJ). POS starts loading the moment the shell appears, in parallel with Home, so a bill can be made while the rest still loads. */try{var _pf=document.getElementById("pos-frame");if(_pf&&!_pf.getAttribute("src"))_pf.setAttribute("src","/pos-preview2.html")}catch(e){}</script>
     </section>
 
     <!-- ── GRN (manual entry) ── -->
@@ -507,8 +510,18 @@ table tr:last-child td{border-bottom:none}
           <div class="fg"><label class="fl">Supplier *</label><input class="fi" id="mg-supplier" list="mg-supplier-list" placeholder="Pick or type a supplier"><datalist id="mg-supplier-list"></datalist></div>
           <div class="fg"><label class="fl">Date *</label><input type="date" class="fi" id="mg-date"></div>
           <div class="fg"><label class="fl">Notes</label><input class="fi" id="mg-notes" placeholder="Optional (delivery note no., etc.)"></div>
+          <div class="fg"><label class="fl">Credit days the vendor allows</label><input class="fi" id="mg-credit-days" type="number" inputmode="numeric" min="0" max="1095" placeholder="Required. 0 = pay now, 30 = 30 days"></div>
+          <div class="fg"><label class="fl" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mg-paid-now"> Paid in cash on delivery (nothing owed)</label></div>
         </div>
         <div style="font-size:12px;color:var(--text2);margin:6px 0 10px">Each new item gets the next item code automatically. An item whose name already exists is restocked instead of duplicated.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+          <button class="btn btn-s" type="button" onclick="document.getElementById('mg-file').click()">📄 Fill from file</button>
+          <button class="btn btn-s" type="button" onclick="document.getElementById('mg-photo-read').click()">📷 Read photo (AI)</button>
+          <span style="font-size:12px;color:var(--text2)">Fills the boxes below. Nothing is saved until you press Save GRN.</span>
+          <input type="file" id="mg-file" accept=".json,.csv,.xlsx,.xls" style="display:none" onchange="mgFillFromFile(this)">
+          <input type="file" id="mg-photo-read" accept="image/jpeg,image/png" style="display:none" onchange="mgReadPhoto(this)">
+        </div>
+        <div id="mg-review" style="display:none"></div>
         <div id="mg-rows"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">
           <button class="btn btn-s" onclick="mgAddRow()">+ Add item row</button>
@@ -759,7 +772,7 @@ table tr:last-child td{border-bottom:none}
 
       <div class="card" style="margin-bottom:16px">
         <div class="section-title" style="margin-bottom:10px">Website text</div>
-        <div class="fg"><label class="fl" for="we-wa">WhatsApp number</label><input class="fi" style="font-size:16px;min-height:46px" id="we-wa" type="tel" maxlength="20" placeholder="0777999219"></div>
+        <div class="fg"><label class="fl" for="we-wa">WhatsApp number</label><input class="fi" style="font-size:16px;min-height:46px" id="we-wa" type="tel" maxlength="20" placeholder="0740355536"></div>
         <div class="fg"><label class="fl" for="we-addr">Address</label><input class="fi" style="font-size:16px;min-height:46px" id="we-addr" maxlength="200"></div>
         <div class="fg"><label class="fl" for="we-hen">Promise heading (English)</label><input class="fi" style="font-size:16px;min-height:46px" id="we-hen" maxlength="120"></div>
         <div class="fg"><label class="fl" for="we-pen">Promise paragraph (English)</label><textarea class="fi" style="font-size:16px;min-height:90px" id="we-pen" maxlength="600"></textarea></div>
@@ -840,10 +853,10 @@ table tr:last-child td{border-bottom:none}
         <div class="grid-3">
           <div class="fg"><label class="fl">What is it?</label>
             <select class="fs" id="di-type"><option value="auto">Let the app decide (from the heading)</option><option value="manual_bill">Manual bill</option><option value="grn">GRN (goods received)</option><option value="cheque">Cheque</option><option value="day_sheet">Daily sales sheet</option><option value="expense_sheet">Expense list</option></select></div>
-          <div class="fg" style="grid-column:span 2"><label class="fl">Photo (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf" capture="environment"></div>
+          <div class="fg" style="grid-column:span 2"><label class="fl">Photo, PDF or voice note (take one or choose a file)</label><input type="file" class="fi" id="di-file" accept="image/*,application/pdf,audio/*,.ogg,.opus,.m4a,.mp3,.wav"></div>
         </div>
         <button class="btn btn-p" onclick="diUpload()">Upload and read</button>
-        <div style="font-size:12px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos sent to LAYLA on WhatsApp land here too. Nothing is filed until you check it and press Confirm.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:8px">Write the heading at the top of the paper: BILL, GRN, CHEQUE, EXPENSES or DAILY SALES. Photos, PDFs and voice notes sent to LAYLA on WhatsApp land here too (a spoken list of the day's expenses becomes a draft). Nothing is filed until you check it and press Confirm.</div>
         <div id="di-msg" style="font-size:12px;margin-top:6px;color:var(--amber)"></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="di-tabs"></div>
@@ -954,6 +967,9 @@ table tr:last-child td{border-bottom:none}
     </section>
     <section class="page" id="page-moneycontrol">
       <iframe id="frame-moneycontrol" title="Money Control" data-src="/money-control.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
+    </section>
+    <section class="page" id="page-dailybreakdown">
+      <iframe id="frame-dailybreakdown" title="Daily Breakdown" data-src="/daily-breakdown.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
     </section>
     <section class="page" id="page-commissions">
       <iframe id="frame-commissions" title="Sale Commissions" data-src="/sale_commissions.html" style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)"></iframe>
@@ -1111,12 +1127,12 @@ async function doLogout() {
 const PAGE_META = {
   dashboard:   ['Dashboard',    'Live sales & KPI overview'],
   'daily-sales':['Daily Sales', 'Invoices & payment breakdown'],
-  stock:       ['Stock',        'Inventory & GRN records'],
+  stock:       ['Stock (old view)',        'Inventory & GRN records'],
   pos:         ['POS Billing',  'Itemized bill with discount — share, print or PDF'],
   grn:         ['GRN',          'Receive a supplier delivery'],
   expenses:    ['Expenses',     'Daily expense detail'],
   cheques:     ['Cheques',      'Cheque register & calendar'],
-  vendors:     ['Vendors',      'Supplier directory & payments'],
+  vendors:     ['Pay vendors', 'Record a payment to a supplier'],
   barcode:     ['Barcode',      'Label print & preview'],
   reports:     ['Reports',      'P&L, range export, Investor report'],
   branches:    ['Branches',     'What the agent may do at each branch (starts read-only)'],
@@ -1130,6 +1146,7 @@ const PAGE_META = {
   agentreview: ['Agent Review', 'LAYLA drafts replies and checks itself. You approve. Nothing is sent'],
   loans:       ['Friend & Investor Loans','Money lent to the business: record loans and repayments (halal, no interest)'],
   moneycontrol:['Money Control','Where the money goes: allocations and viewer access'],
+  dailybreakdown:['Daily Breakdown','Where today\'s sales go: keep aside, yours, and what to pay'],
   commissions: ['Sale Commissions','Commission on sales and exchanges'],
   settings:    ['Settings','Shop, branding and options'],
   salary:      ['Salary & Costs', 'Daily cost target, monthly profit split, cheque set-aside'],
@@ -1376,7 +1393,7 @@ async function stTill() {
   const r = await fetch('/api/pos-bills/summary?date=' + day); const d = await r.json();
   if (!r.ok) { out.textContent = d.error; return; }
   out.innerHTML = `<b>${d.bills} bills</b> · sales ${stMoney(d.subtotal)} · discounts ${stMoney(d.discount)} · <b>total ${stMoney(d.total)}</b><br>` +
-    (d.by_payment.map(p => `${arEsc(p.payment_method)}: ${stMoney(p.total)} (${p.bills})`).join(' · ') || 'No bills that day');
+    ((d.by_method || []).map(p => `${arEsc(p.method)}: ${stMoney(p.amount)} (${p.bills})`).join(' · ') || d.by_payment.map(p => `${arEsc(p.payment_method)}: ${stMoney(p.total)} (${p.bills})`).join(' · ') || 'No bills that day');
 }
 async function loadShopTools() {
   const dEl = document.getElementById('st-day'); if (!dEl.value) { const n = new Date(); dEl.value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
@@ -1541,7 +1558,7 @@ function navigate(page) {
   if (page === 'branches') loadBranches();
   // POS Billing is its own page (own tables); load it into the tab the first time it's opened.
   { const fr = document.getElementById('frame-' + page); if (fr && !fr.getAttribute('src')) fr.setAttribute('src', fr.dataset.src); }
-  if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos_billing.html'); }
+  if (page === 'pos') { const f = document.getElementById('pos-frame'); if (!f.getAttribute('src')) f.setAttribute('src', '/pos-preview2.html'); }
   document.getElementById('page-sub').textContent = sub;
 }
 
@@ -1557,8 +1574,15 @@ const EXTRA_FRAMES = [
   { key: 'reports2', label: 'Reports & Analytics', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_analytics.html', sub: 'Trends, digest, forecast, heatmap, margins, payroll export', after: 'reports' },
   { key: 'labels', label: 'Barcode Labels', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/labels.html', sub: 'Choose items, label size, print', after: 'stock' },
   { key: 'assistant', label: 'AI Assistant', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/assistant.html', sub: 'Ask about your figures (needs internet or Ollama)', after: 'shoptools' },
+  { key: 'brain', label: 'RBH Brain 🧠', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>', url: '/brain.html', sub: 'Your private notes: link, tag, search', after: 'assistant' },
+  { key: 'shopcards', label: 'Shop Cards', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/shop_cards.html', sub: 'Print shop card, price cards, offer card', after: 'labels' },
+  { key: 'dueboard', label: 'Due Board', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/due_board.html', sub: 'Vendor bills and cheques by due date', after: 'chequereg' },
+  { key: 'profitphone', label: 'Profit', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/profit_phone.html', sub: 'Profit by invoice, by item, and net profit (phone ready)', after: 'chequecal' },
+  { key: 'chequecal', label: 'Cheque Calendar', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_calendar.html', sub: 'Big calendar: cheques written, due, cleared', after: 'chequereg' },
   { key: 'chequereg', label: 'Cheque Register', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/cheque_register.html', sub: 'Cheques with due dates and status', after: 'cheques' },
   { key: 'vendorledger', label: 'Vendor Ledger', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-ledger.html', sub: 'Supplier bills, cheques, payable', after: 'chequereg' },
+  { key: 'vendorreturns', label: 'Return / Discount', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor_returns.html', sub: 'Send goods back or take a discount: payable, stock and cost move together', after: 'vendorcredit' },
+  { key: 'vendorcredit', label: 'Vendor Credit', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/vendor-credit.html', sub: 'Owed now and after 1, 2, 3 months', after: 'vendorledger' },
   { key: 'moneyplan', label: 'Money Plan', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/money-plan.html', sub: 'Profit waterfall, commission, split', after: 'vendorledger' },
   { key: 'morningbrief', label: 'Morning Brief', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/morning-brief.html', sub: 'Yesterday, cheques due and what to do today', after: 'moneyplan' },
   { key: 'layla', label: 'Layla', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/layla-owner.html', sub: 'Chat, voice, reminders, cheque notes', after: 'morningbrief' },
@@ -1629,13 +1653,13 @@ async function applyAppSettings() {
       const sep = document.getElementById('admin-sep'); if (sep) { ul.appendChild(sep); ADMIN_FRAMES.forEach(f => { const li = ul.querySelector('.nav-item[data-page="' + f.key + '"]'); if (li) ul.appendChild(li); }); }
     }
     if (window.BHMenuPrefs) BHMenuPrefs.apply();   // Dashboard, POS, Daily Ledger first; hide what this device unticked
+    if (window.RBHSimpleMenu) { RBHSimpleMenu.apply(); setTimeout(RBHSimpleMenu.apply, 1500); }   // 13 Nov: simple menu
   } catch (e) { /* settings are a nicety: the app works without them */ }
 }
 
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
   s.classList.toggle('collapsed');
-  document.querySelector('.toggle-lbl').textContent = s.classList.contains('collapsed') ? 'Expand' : 'Collapse';
 }
 
 /* ─────────────────────────────────────────────
@@ -1652,11 +1676,11 @@ setInterval(tick, 1000); tick();
    THEME
 ───────────────────────────────────────────── */
 let _theme = (window.BHTheme && BHTheme.current()) || 'dark';
-const _themeIcon = { dark: 'moon', water: 'water', light: 'sun' }, _themeName = { dark: 'Gold', water: 'Water', light: 'Light' };
+const _themeIcon = { dark: 'moon', water: 'water', light: 'sun' }, _themeName = { dark: 'Gold', water: 'Water', light: 'Light', sand: 'Sand', glass: 'Ocean glass', aurora: 'Aurora', midnight: 'Midnight', emerald: 'Emerald', rose: 'Sunset', win7: 'Windows 7 Aero', win10: 'Windows 10', win11: 'Windows 11', apple: 'Apple glass', kinetic: 'Kinetic', aqua: 'Aqua' };
 function _paintThemeButton() {
   const btn = document.querySelector('.theme-toggle'); if (!btn) return;
-  btn.innerHTML = '<svg class="bh-icon" aria-hidden="true"><use href="#i-' + _themeIcon[_theme] + '"/></svg>';
-  btn.title = 'Theme: ' + _themeName[_theme] + ' (tap to change)';
+  btn.innerHTML = '<svg class="bh-icon" aria-hidden="true"><use href="#i-' + (_themeIcon[_theme] || 'water') + '"/></svg>';
+  btn.title = 'Theme: ' + (_themeName[_theme] || _theme) + ' (tap to pick a look)';
 }
 function toggleTheme() {                      // Gold -> Water -> Light
   _theme = window.BHTheme ? BHTheme.next() : (_theme === 'dark' ? 'light' : 'dark');
@@ -1760,7 +1784,8 @@ async function loadDashboard() {
   document.getElementById('target-bar').style.width = pct+'%';
   document.getElementById('target-pct').textContent = pct.toFixed(0)+'%';
   document.getElementById('target-achieved').textContent = fmtLKR(sale)+' achieved';
-  if (pct>=100) setTimeout(confetti, 800);
+  // celebrate once per day, and only when there is a real sale (it fired on every refresh before)
+  if (pct>=100 && sale>0) { var cfKey='rbh_confetti_'+today(), cfDone=false; try { cfDone=localStorage.getItem(cfKey)==='1'; if(!cfDone) localStorage.setItem(cfKey,'1'); } catch(e){} if(!cfDone) setTimeout(confetti, 800); }
 
   // KPI definitions
   const kpis = [
@@ -2027,9 +2052,9 @@ function renderStock() {
   const rows = _stock.filter(r =>
     (!search || r.item_code?.toLowerCase().includes(search) || r.name?.toLowerCase().includes(search)) &&
     (!cat || r.category === cat)
-  );
+  ).sort((a, b) => String(a.item_code || '').localeCompare(String(b.item_code || ''), undefined, { numeric: true }));   // 13 Nov: stock list starts at code 001
   const tbody = document.getElementById('stk-tbody');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="no-data">No items found</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">No items found</td></tr>'; return; }
 
   // Alerts
   const zero = rows.filter(r=>r.stock_level<=0).length;
@@ -2041,19 +2066,44 @@ function renderStock() {
   ].filter(Boolean).join('');
 
   tbody.innerHTML = rows.map(r => {
-    const lvl = r.stock_level||0;
-    const pct = Math.min((lvl/30)*100,100);
-    const cls = lvl<=0?'#ef4444':lvl<=5?'#f59e0b':'#22c55e';
-    return `<tr style="${lvl<=0?'background:rgba(239,68,68,0.04)':''}">
-      <td>${r.photo_url?`<img src="${encodeURI(r.photo_url)}" alt="" loading="lazy" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--card-border)">`:'<span style="color:var(--text3)">—</span>'}</td>
-      <td><code style="color:var(--gold)">${r.item_code||'—'}</code></td>
+    const lvl = Number(r.stock_level) || 0;     // 13 Nov: whole numbers, no .000
+    const code = String(r.item_code || '').replace(/"/g, '&quot;');
+    return `<tr ondblclick="stkOpenFull('${code.replace(/'/g, "\\'")}')" title="Double click: full page to edit" style="${lvl<=0?'background:rgba(120,120,120,0.06)':''}">
+      <td style="width:46px">${r.photo_url?`<img src="${encodeURI(r.photo_url)}" alt="" loading="lazy" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--card-border)">`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="white-space:nowrap;padding-left:12px"><code style="color:var(--gold)">${r.item_code||'—'}</code></td>
       <td><strong>${r.name}</strong></td>
-      <td><span class="badge bb">${r.category||'—'}</span></td>
-      <td style="font-weight:700;color:${lvl<=0?'var(--red)':lvl<=5?'var(--amber)':'var(--text)'}">${lvl}</td>
-      <td style="min-width:70px"><div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${cls}"></div></div></td>
-      <td style="color:var(--text2)">${r.supplier||'—'}</td>
+      <td><span class="badge bb stk-cat" tabindex="0" title="Click to change" onclick="stkEditCat(this,'${code.replace(/'/g, "\\'")}')" style="cursor:pointer">${r.category||'—'}</span></td>
+      <td style="font-weight:700;text-align:right;color:${lvl<=0?'var(--text3)':'var(--text)'}">${lvl}</td>
     </tr>`;
   }).join('');
+}
+function stkOpenFull(code) {
+  try { sessionStorage.setItem('rbh_edit', code); } catch (e) { /* ignore */ }
+  navigate('stockmgr');
+  setTimeout(() => { try { const w = document.getElementById('frame-stockmgr').contentWindow; if (w && typeof w.edit === 'function') { sessionStorage.removeItem('rbh_edit'); w.edit(code); } } catch (e) { /* frame still loading: it opens the item itself */ } }, 400);
+}
+function stkEditCat(el, code) {
+  if (el.dataset.editing) return; el.dataset.editing = '1';
+  const old = (el.textContent || '').trim() === '—' ? '' : el.textContent.trim();
+  const cats = [...new Set(_stock.map(r => r.category).filter(Boolean))].sort();
+  const inp = document.createElement('input'); inp.className = 'fi'; inp.value = old; inp.setAttribute('list', 'stk-cat-list'); inp.style.cssText = 'width:150px;padding:2px 6px;min-height:0';
+  let dl = document.getElementById('stk-cat-list'); if (!dl) { dl = document.createElement('datalist'); dl.id = 'stk-cat-list'; document.body.appendChild(dl); }
+  dl.innerHTML = cats.map(c => '<option value="' + String(c).replace(/"/g, '&quot;') + '">').join('');
+  el.textContent = ''; el.appendChild(inp); inp.focus(); inp.select();
+  let done = false;
+  const finish = async (save) => {
+    if (done) return; done = true; const v = inp.value.trim(); delete el.dataset.editing;
+    if (!save || v === old) { el.textContent = old || '—'; return; }
+    try {
+      const r = await fetch('/api/item-prices/save', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: [{ item_code: code, category: v }] }) });
+      if (!r.ok) throw new Error('no');
+      const row = _stock.find(x => x.item_code === code); if (row) row.category = v;
+      el.textContent = v || '—'; toast('Category saved', 'success');
+    } catch (e) { el.textContent = old || '—'; toast('Could not save the category', 'error'); }
+  };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); });
+  inp.addEventListener('change', () => finish(true)); inp.addEventListener('blur', () => finish(true));
+  inp.addEventListener('click', e => e.stopPropagation());
 }
 
 function filterStock() { renderStock(); }
@@ -2070,9 +2120,59 @@ function mgAddRow() {
     <div class="fg" style="flex:2;min-width:160px;margin:0"><label class="fl">Item name</label><input class="fi mg-name" list="mg-item-list" placeholder="Item name"></div>
     <div class="fg" style="flex:0 0 90px;margin:0"><label class="fl">Qty</label><input type="number" min="0" step="any" class="fi mg-qty" placeholder="0" oninput="mgRecalc()"></div>
     <div class="fg" style="flex:0 0 120px;margin:0"><label class="fl">Unit cost</label><input type="number" min="0" step="any" class="fi mg-cost" placeholder="0" oninput="mgRecalc()"></div>
+    <div class="fg" style="flex:0 0 120px;margin:0"><label class="fl">Selling price</label><input type="number" min="0" step="any" class="fi mg-price" placeholder="0"></div>
     <div class="fg" style="flex:1;min-width:150px;margin:0"><label class="fl">Photo</label><input type="file" class="fi mg-photo" accept="image/jpeg,image/png,image/webp"></div>
     <button class="btn btn-s" type="button" title="Remove this row" onclick="mgRemoveRow(this)">✕</button>`;
   wrap.appendChild(row);
+}
+// ═══ GRN IMPORT (Fill from file / Read photo) — fills the form for review, never saves ═══
+function mgApplyImport(r, label) {
+  const wrap = document.getElementById('mg-rows'); wrap.innerHTML = '';
+  (r.lines.length ? r.lines : [{}]).forEach(l => {
+    mgAddRow();
+    const row = wrap.lastElementChild;
+    row.querySelector('.mg-name').value = l.name || '';
+    row.querySelector('.mg-qty').value = l.qty != null ? l.qty : '';
+    row.querySelector('.mg-cost').value = l.cost != null ? l.cost : '';
+    if (l.price != null) row.querySelector('.mg-price').value = l.price;
+  });
+  if (r.supplier) document.getElementById('mg-supplier').value = r.supplier;
+  if (r.date) document.getElementById('mg-date').value = r.date;
+  if (r.ref) document.getElementById('mg-notes').value = 'Invoice ' + r.ref;
+  if (r.credit_days != null) document.getElementById('mg-credit-days').value = r.credit_days;
+  mgRecalc();
+  const box = document.getElementById('mg-review');
+  const warns = r.warnings || [];
+  box.style.display = 'block';
+  box.innerHTML = '<div class="card" style="border:1px solid ' + (warns.length ? '#d9a300' : '#2e9d5b') + ';padding:10px;margin-bottom:10px">'
+    + '<b>' + mgEsc(label) + ': ' + r.lines.length + ' lines, lines add up to ' + fmtLKR(r.lines_total) + (r.paper_total != null ? ' (paper total ' + fmtLKR(r.paper_total) + ')' : '') + '</b>'
+    + (warns.length ? '<ul style="margin:6px 0 0 18px">' + warns.map(w => '<li>' + mgEsc(w) + '</li>').join('') + '</ul>' : '<div>No problems found. Still check it against the paper.</div>')
+    + '<div style="margin-top:6px;font-size:12px">Credit days: type the days this vendor really allows. Then press Save GRN.</div></div>';
+}
+async function mgFillFromFile(inp) {
+  const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+  try {
+    let r;
+    if (/\.xlsx?$/i.test(f.name)) {
+      if (!window.XLSX) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/lib/xlsx.full.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      r = GrnImport.build(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' }));
+    } else {
+      r = GrnImport.fromText(await f.text(), f.name);
+    }
+    mgApplyImport(r, 'From file ' + f.name);
+  } catch (e) { toast('Could not read that file: ' + e.message, 'error'); }
+}
+async function mgReadPhoto(inp) {
+  const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+  toast('AI is reading the photo… up to 1 minute', 'info');
+  try {
+    const fd = new FormData(); fd.append('file', f);
+    const res = await fetch('/api/grn-read-photo', { method: 'POST', body: fd, credentials: 'same-origin' });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(j.error || 'Could not read the photo', 'error'); return; }
+    mgApplyImport(j, 'AI read photo');
+  } catch (e) { toast('Could not read the photo: ' + e.message, 'error'); }
 }
 function mgRemoveRow(btn) {
   if (document.querySelectorAll('#mg-rows .mg-row').length <= 1) { toast('A GRN needs at least one item row', 'warning'); return; }
@@ -2097,6 +2197,17 @@ async function loadManualGRNList() {
     <td>${r.quantity||0}</td><td>${fmtLKR(r.unit_cost)}</td><td>${fmtLKR(r.total_amount)}</td></tr>`).join('');
 }
 async function openGRNPage() {
+  // The GRN workbench (photo, lines, receiving, vendors, cheques, item search) is the GRN screen. The old manual form below stays hidden as a fallback.
+  const pg = document.getElementById('page-grn');
+  if (pg && !document.getElementById('frame-grn')) {
+    [...pg.children].forEach(c => { c.style.display = 'none'; c.dataset.oldgrn = '1'; });
+    const f = document.createElement('iframe'); f.id = 'frame-grn'; f.title = 'GRN';
+    f.style.cssText = 'display:block;width:100%;height:calc(100dvh - 128px);min-height:0;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-surface)';
+    pg.style.overflow = 'hidden'; pg.style.overscrollBehavior = 'contain';
+    f.src = '/grn_workbench.html?embed=1'; pg.appendChild(f);
+    return;
+  }
+  if (document.getElementById('frame-grn')) return;
   const d = document.getElementById('mg-date');
   if (!d.value) d.value = today();
   if (!document.querySelector('#mg-rows .mg-row')) mgAddRow();
@@ -2110,6 +2221,17 @@ async function openGRNPage() {
   }
   document.getElementById('mg-item-list').innerHTML = _stock.map(r => `<option value="${mgEsc(r.name)}">`).join('');
   loadManualGRNList();
+}
+let _mgLastItems = [];
+async function mgPrintBarcodes(layout) {
+  const items = _mgLastItems.map(i => ({ item_code: i.item_code, name: i.name, price: i.selling_price, copies: i.qty }));
+  if (!items.length) { toast('Save the GRN first', 'warning'); return; }
+  const noPrice = items.filter(i => !(Number(i.price) > 0));
+  if (noPrice.length) { toast('Enter the selling price first: ' + noPrice.map(i => i.name).join(', '), 'warning'); return; }
+  const r = await fetch('/api/grn-barcodes', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items, layout }) });
+  if (r.status === 401) { showLogin(); return; }
+  if (!r.ok) { const d = await r.json().catch(() => ({})); toast(d.error || 'Could not make the barcode PDF', 'error'); return; }
+  window.open(URL.createObjectURL(await r.blob()), '_blank');
 }
 async function saveManualGRN() {
   const supplier_name = document.getElementById('mg-supplier').value.trim();
@@ -2126,12 +2248,14 @@ async function saveManualGRN() {
     if (!name) { toast(`Row ${i+1}: enter the item name`, 'warning'); return; }
     if (!(qty > 0)) { toast(`Row ${i+1} (${name}): quantity must be more than 0`, 'warning'); return; }
     if (!(unit_cost >= 0)) { toast(`Row ${i+1} (${name}): enter the unit cost`, 'warning'); return; }
-    lines.push({ name, qty, unit_cost });
+    const selling_price = r.querySelector('.mg-price').value;
+    lines.push({ name, qty, unit_cost, selling_price });
     const f = r.querySelector('.mg-photo').files[0];
     if (f) fd.append('photo_' + i, f);
   }
+  if (String(document.getElementById('mg-credit-days').value).trim() === '' && !document.getElementById('mg-paid-now').checked) { toast('Enter the credit days (0 = pay now) or tick Paid in cash', 'warning'); return; }
   const sup = _mgSuppliers.find(s => String(s.name).toLowerCase() === supplier_name.toLowerCase());
-  fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, lines }));
+  fd.append('payload', JSON.stringify({ supplier_name, supplier_id: sup ? sup.id : null, grn_date, notes: document.getElementById('mg-notes').value, credit_days: document.getElementById('mg-credit-days').value, paid_now: document.getElementById('mg-paid-now').checked, lines }));
   const btn = document.getElementById('mg-save');
   btn.disabled = true;
   try {
@@ -2143,9 +2267,13 @@ async function saveManualGRN() {
     toast(`GRN ${d.grn_number} saved`, 'success');
     document.getElementById('mg-result').innerHTML = `<div style="padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);font-size:14px">
       <strong>${mgEsc(d.grn_number)}</strong> — ${mgEsc(d.supplier_name)}, ${mgEsc(d.grn_date)} — ${fmtLKR(d.total)}<br>` +
-      d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span>`).join('<br>') + '</div>';
+      d.items.map(i => `<code style="color:var(--gold)">${mgEsc(i.item_code)}</code> ${mgEsc(i.name)} × ${i.qty} <span class="badge ${i.is_new?'bg':'ba'}">${i.is_new?'new item':'restocked'}</span> in stock now: <strong>${Number(i.stock_now)}</strong>`).join('<br>') + '</div>' + mgCreditBlock(d);
+    _mgLastItems = d.items;
+    document.getElementById('mg-result').insertAdjacentHTML('beforeend', `<div style="margin-top:10px"><button class="btn btn-p" type="button" onclick="mgPrintBarcodes('sticker')">Print barcode</button> <button class="btn btn-s" type="button" onclick="mgPrintBarcodes('a4')">Print barcode (A4 sheet)</button></div>`);
     document.getElementById('mg-rows').innerHTML = '';
     document.getElementById('mg-notes').value = '';
+    document.getElementById('mg-credit-days').value = '';
+    document.getElementById('mg-paid-now').checked = false;
     mgAddRow(); mgRecalc();
     loadManualGRNList();
     loadStock();
@@ -2154,6 +2282,23 @@ async function saveManualGRN() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// What the owner sees under a saved GRN: payment status, who is owed, written/not written, owed after 1-3 months.
+function mgCreditBlock(d) {
+  const c = d && d.credit; if (!c) return '';
+  const box = (inner) => `<div style="margin-top:10px;padding:12px;border-radius:8px;background:rgba(201,162,75,0.12);font-size:14px;line-height:1.6">${inner}</div>`;
+  if (c.bill && c.bill.skipped) return box(`Saved. The vendor payable was not created yet: ${mgEsc(c.bill.skipped)}`);
+  const t = c.this_bill; if (!t) return c.note ? box(mgEsc(c.note)) : '';
+  const v = c.vendor, a = v ? v.after : {};
+  let h = `<strong>${mgEsc(t.status_text)}</strong> — ${fmtLKR(t.total)}` + (t.due_date ? ` — vendor wants payment by ${mgEsc(t.due_date)}` : '');
+  if (v) {
+    h += `<br>${mgEsc(d.supplier_name)} total owed: <strong>${fmtLKR(v.owed)}</strong>` +
+         `<br>Cheque not written: ${fmtLKR(v.notWritten)} &middot; Written, not cleared: ${fmtLKR(v.writtenNotClear)}` +
+         `<br>Still owed after 1 month: ${fmtLKR(a[1])} &middot; 2 months: ${fmtLKR(a[2])} &middot; 3 months: ${fmtLKR(a[3])}`;
+  }
+  if (c.long_dated && c.long_dated.length) h += `<br><span style="color:#b3261e">Heads-up: ${c.long_dated.length} written cheque(s) clear after more than 3 months.</span>`;
+  return box(h);
 }
 
 async function toggleItemForm() {
@@ -2656,12 +2801,44 @@ async function initApp() {
   document.getElementById('page-sub').textContent = fmtDate(today()) + ' — Connected to database';
 }
 </script>
+<script src="/layla-door.js"></script><script src="/rbh-alerts.js"></script>
 <script src="/document-inbox.js"></script>
 <script src="/website-editor.js"></script>
 <script src="/tile-gallery.js"></script>
 <script src="/attach-widget.js"></script>
 <script src="/salary.js"></script>
 <script src="/lib/menuPrefs.js"></script>
+<script src="/js/simple-modules.js" defer></script>
+<script src="/simple_mode.js"></script>
+<script src="/ui_comfort.js"></script>
+<script src="/motion.js"></script><script src="/ux-extra.js" defer></script><script src="/rubber.js"></script><script src="/fitwin.js"></script>
+
+<script src="/logo-pet.js"></script>
+<link rel="stylesheet" href="/rbh_polish.css">
+<!-- 18 Nov OFF (one dashboard only): <link rel="stylesheet" href="/home-calm.css"> -->
+<script src="/menubar.js"></script>
+<script src="/oversold_prompt.js"></script>
+<!-- 18 Nov OFF (one dashboard only): <script src="/attention_strip.js"></script> -->
+<script src="/cashier_mode.js"></script>
 <script src="/bathhub-logo.js"></script>
+<!-- 18 Nov OFF (one dashboard only): <script src="/dashboard_pro.js?v=98q"></script> -->
+<script src="/shell-fit.js"></script>
+<script src="/menu-simple.js"></script><script src="/layla-tabs.js"></script>
+<script src="/frame-diet.js"></script>
+<script src="/saved-tick.js"></script>
+<script src="/saved-dropdown.js"></script>
+<script src="/rbh-charts.js"></script><script src="/build-stamp.js" defer></script><!-- 18 Nov OFF (one dashboard only): <script src="/dashboard_modern.js?v=98q"></script> -->
+<!-- 18 Nov OFF: old Home hide/settle block removed; home_solid.js is the only Home -->
+<script src="/home_solid.js?v=1"></script>
+<script src="/lib/palette.js"></script>
+<script src="/lib/grn_import.js"></script>
+<script src="/test-banner.js"></script><script src="/old_copy_notice.js" defer></script>
+<script>
+/* fit-window: push fit-window.css into every embedded screen except POS and GRN (own fit). Same origin only; any failure is ignored. */
+(function(){function fit(f){try{var sa=f.getAttribute('src');if(!sa||sa==='about:blank')return;var d=f.contentDocument;if(!d||!d.head||d.__fw)return;var u=String(f.src||'');if(/pos_billing|grn_workbench|layla-owner/.test(u))return;d.__fw=1;if(d.documentElement.hasAttribute('data-keepfont')||d.documentElement.classList.contains('in-frame'))return;d.documentElement.classList.add('in-frame');var l=d.createElement('link');l.rel='stylesheet';l.href='/fit-window.css';d.head.appendChild(l);}catch(e){}}
+function wire(f){if(f.__fw)return;f.__fw=1;f.addEventListener('load',function(){fit(f)});fit(f)}
+function scan(){document.querySelectorAll('iframe').forEach(wire)}
+document.addEventListener('DOMContentLoaded',scan);setInterval(scan,1500);})();
+</script>
 </body>
 </html>

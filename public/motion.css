@@ -1,0 +1,110 @@
+/* MOTION layer (4 Nov 2026): small, light animations for clicks, tabs, menus, cards, popups. CSS + a little JS, no libraries.
+   Switch off: localStorage bh_motion = off. Also off for "reduce motion" computers. */
+@keyframes moPage{from{opacity:0;transform:translateY(16px) scale(.985);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes moItem{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes moSpring{0%{opacity:0;transform:scale(.88) translateY(12px)}60%{opacity:1;transform:scale(1.025)}100%{transform:none}}
+@keyframes moRow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes moPop{0%{transform:scale(.9);opacity:0}60%{transform:scale(1.03);opacity:1}100%{transform:none}}
+@keyframes moRipple{from{transform:scale(0);opacity:.45}to{transform:scale(1);opacity:0}}
+@keyframes moFlash{0%{background:rgba(255,179,71,.55)}100%{background:transparent}}
+@keyframes moBurst{0%{transform:translate(0,0) scale(1) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4) rotate(var(--rot));opacity:0}}
+.mo-in{animation:moPage .38s cubic-bezier(.16,1,.3,1) both}
+.main-content>.page.active{animation:moPage .38s cubic-bezier(.16,1,.3,1) both!important}
+#rbh-menubar .mb-top.on .mb-item{animation:moItem .26s cubic-bezier(.16,1,.3,1) both}
+#rbh-menubar .mb-top.on .mb-item:nth-child(1){animation-delay:0ms}#rbh-menubar .mb-top.on .mb-item:nth-child(2){animation-delay:30ms}#rbh-menubar .mb-top.on .mb-item:nth-child(3){animation-delay:60ms}
+#rbh-menubar .mb-top.on .mb-item:nth-child(4){animation-delay:90ms}#rbh-menubar .mb-top.on .mb-item:nth-child(5){animation-delay:120ms}#rbh-menubar .mb-top.on .mb-item:nth-child(6){animation-delay:150ms}
+#rbh-menubar .mb-top.on .mb-item:nth-child(7){animation-delay:180ms}#rbh-menubar .mb-top.on .mb-item:nth-child(8){animation-delay:210ms}#rbh-menubar .mb-top.on .mb-item:nth-child(n+9){animation-delay:240ms}
+#rbh-menubar button.mb-btn{transition:background .18s,transform .12s}#rbh-menubar button.mb-btn:active{transform:scale(.94)}
+.modal.on .box,#qModal>div{animation:moSpring .34s cubic-bezier(.34,1.56,.64,1) both}
+.modal.on{animation:moFade .2s ease both}@keyframes moFade{from{opacity:0}to{opacity:1}}
+tbody tr{animation:moRow .35s cubic-bezier(.16,1,.3,1) both}
+tbody tr:nth-child(2){animation-delay:30ms}tbody tr:nth-child(3){animation-delay:60ms}tbody tr:nth-child(4){animation-delay:90ms}tbody tr:nth-child(5){animation-delay:120ms}tbody tr:nth-child(6){animation-delay:150ms}tbody tr:nth-child(7){animation-delay:180ms}tbody tr:nth-child(8){animation-delay:210ms}tbody tr:nth-child(n+9){animation-delay:240ms}
+.msg.ok,.msg.warn,.msg.bad{animation:moPop .32s cubic-bezier(.34,1.56,.64,1) both}
+.tabs{position:relative}.tab-ink{position:absolute;bottom:-2px;height:4px;border-radius:4px;background:#C9A24B;box-shadow:0 0 10px rgba(201,162,75,.8);transition:left .38s cubic-bezier(.34,1.56,.64,1),width .38s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.mo-ripple{position:relative;overflow:hidden}
+.mo-ripple>.mo-rp{position:absolute;border-radius:50%;background:currentColor;pointer-events:none;animation:moRipple .55s ease-out forwards}
+.mo-tilt{transition:transform .18s ease-out,box-shadow .25s;transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));position:relative}
+.mo-tilt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.22),transparent 60%);opacity:var(--sh,0);transition:opacity .25s}
+.mo-flash{animation:moFlash .9s ease-out}
+.mo-confetti{position:fixed;left:0;top:0;width:0;height:0;z-index:99999;pointer-events:none}
+.mo-confetti i{position:absolute;width:9px;height:14px;border-radius:2px;animation:moBurst .95s cubic-bezier(.2,.7,.3,1) forwards}
+html.mo-off *,html.mo-off *::before,html.mo-off *::after{animation:none!important;transition:none!important}
+/* ---- round 2 (from Gemini's snippets, trimmed for speed) ---- */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:100000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.bh-toast{pointer-events:auto;background:rgba(12,34,56,.92);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 18px;min-width:260px;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translate3d(120%,0,0);transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .3s;position:relative;overflow:hidden;font-size:15px}
+.bh-toast.show{transform:none}.bh-toast .bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#C9A24B;transform-origin:left}
+.nav-glider{position:absolute;top:0;left:0;background:rgba(201,162,75,.2);border:1px solid rgba(201,162,75,.45);border-radius:10px;pointer-events:none;transition:transform .25s cubic-bezier(.2,.8,.2,1),width .25s,height .25s,opacity .15s;opacity:0;z-index:0}
+#rbh-menubar>.mb-btn,#rbh-menubar>.mb-top{position:relative;z-index:1}#rbh-menubar>.nav-glider{position:absolute;z-index:0}
+.mo-fly{position:fixed;z-index:99999;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff3c4,#C9A24B);box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
+.btn-gold-ready{position:relative;overflow:hidden}
+.btn-gold-ready::after{content:"";position:absolute;top:-50%;left:-60%;width:60%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,215,0,.45),transparent);transform:rotate(25deg);animation:goldSweep 3.2s infinite}
+@keyframes goldSweep{0%,25%{left:-60%}100%{left:130%}}
+.register-ripple::before{content:"";position:absolute;inset:-4px;border:2px solid #10B981;border-radius:inherit;pointer-events:none;animation:shockwave .7s cubic-bezier(.1,.8,.3,1) forwards}
+@keyframes shockwave{to{transform:scale(1.35);opacity:0}}
+.stock-hint.low,.stock-hint.out,.stock-hint.over{animation:qtyFlash .5s 2 ease-in-out}
+@keyframes qtyFlash{50%{transform:scale(1.12);filter:brightness(1.4)}}
+.cheque-today-pulse td{animation:subPulse 2s infinite alternate ease-in-out}
+@keyframes subPulse{0%{background:rgba(16,185,129,0)}100%{background:rgba(16,185,129,.22)}}
+html.mo-lite .mo-in,html.mo-lite .main-content>.page.active{filter:none!important;animation-name:moPageLite!important}
+@keyframes moPageLite{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html.mo-lite .mo-tilt::after{display:none}
+
+/* ===== BIG ANIMATION PACK (5 Nov 2026): obvious, always-on motion. The Windows "reduce motion" setting is ignored on purpose; the switch is bh_motion=off. ===== */
+@keyframes moPageBig{0%{opacity:0;transform:translateY(34px) scale(.94);filter:blur(8px)}60%{opacity:1;filter:none}100%{opacity:1;transform:none;filter:none}}
+@keyframes moSlideIn{from{opacity:0;transform:translateX(calc(var(--dir,1)*60px))}to{opacity:1;transform:none}}
+@keyframes moFloat{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes moSweep{0%{transform:translateX(-30%);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(130vw);opacity:0}}
+@keyframes moGlow{0%,100%{filter:drop-shadow(0 0 0 rgba(255,196,107,0))}50%{filter:drop-shadow(0 0 10px rgba(255,196,107,.95))}}
+@keyframes moCardIn{0%{opacity:0;transform:translateY(46px) scale(.9) rotateX(14deg)}100%{opacity:1;transform:none}}
+@keyframes moWobble{0%{transform:scale(1)}25%{transform:scale(1.14) rotate(-3deg)}55%{transform:scale(.96) rotate(2deg)}100%{transform:scale(1)}}
+.main-content>.page.active{animation:moPageBig .55s cubic-bezier(.16,1,.3,1) both!important}
+.mo-in{animation:moSlideIn .45s cubic-bezier(.16,1,.3,1) both!important}
+.page.active .dp-card,.page.active .stat{animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards}
+.page.active .dp-card:nth-child(2){animation-delay:.07s}.page.active .dp-card:nth-child(3){animation-delay:.14s}.page.active .dp-card:nth-child(4){animation-delay:.21s}.page.active .dp-card:nth-child(5){animation-delay:.28s}.page.active .dp-card:nth-child(6){animation-delay:.35s}.page.active .dp-card:nth-child(7){animation-delay:.42s}.page.active .dp-card:nth-child(n+8){animation-delay:.5s}
+/* the tiles keep floating gently after they arrive (uses the separate "translate" property, so hover and entrance still work) */
+.page.active .dp-card,.page.active .stat{translate:0 0}
+body.mo-alive .dp-card:nth-child(odd){animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards,moFloat 5.5s ease-in-out 1.2s infinite}
+body.mo-alive .dp-card:nth-child(even){animation:moCardIn .65s cubic-bezier(.16,1,.3,1) backwards,moFloat 6.5s ease-in-out 1.6s infinite}
+/* a light runs along the menu bar */
+#rbh-menubar::after{content:"";position:absolute;left:0;bottom:0;width:22vw;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--c-gold,#C9A24B),#fff,var(--c-gold,#C9A24B),transparent);pointer-events:none;animation:moSweep 5.5s ease-in-out infinite}
+/* the logo glows slowly */
+header.topbar img{animation:moGlow 3.4s ease-in-out infinite}
+/* every button wobbles when pressed, every click rings out */
+button:active{animation:moWobble .35s ease}
+.mo-ripple>.mo-rp{animation-duration:.8s!important}
+#rbh-menubar .mb-top.on .mb-item{animation-duration:.4s!important}
+#rbh-menubar .mb-top.on .mb-item:nth-child(n){animation-name:moItem}
+@keyframes moItem{from{opacity:0;transform:translateX(-26px) scale(.92)}to{opacity:1;transform:none}}
+.modal.on .box,#qModal>div{animation-duration:.5s!important}
+tbody tr{animation-duration:.5s}
+
+/* UX LAWS (AJ 11 Nov): 70% dim behind popups, page sinks back when the menu sheet opens, buttons sink on press */
+.modal-bg,.modal-overlay,html .modal-bg,html .modal-overlay{background:rgba(11,11,12,.7)!important;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+html.rbh-sheet body>*:not(#rbh-drawer){transform:scale(.94);transform-origin:50% 0;border-radius:18px;overflow:hidden;transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+body>*{transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+button:active,.btn:active{animation:none!important;transform:scale(.95);transition:transform .15s}
+.peek-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-right:48px;-webkit-overflow-scrolling:touch}.peek-row>*{flex:0 0 calc(100% - 48px);scroll-snap-align:start}
+@media(prefers-reduced-motion:reduce){html.rbh-sheet body>*:not(#rbh-drawer){transition:none}}
+
+/* CALM layer (13 Nov, AJ "go"): quieter and faster. Later rules win over the big pack above. Same switch: localStorage bh_motion = off.
+   Removes: endless floating tiles, endless logo glow, blur on page entry, per-row animation on long tables, body-wide transition.
+   Adds: short fade on page change, gold edge on hover, smooth toggle. Stock page (data-keepfont) gets none. */
+@keyframes moCalm{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.main-content>.page.active{animation:moCalm .22s ease-out both!important}
+.mo-in{animation:moCalm .22s ease-out both!important}
+.page.active .dp-card,.page.active .stat{animation:moCalm .25s ease-out backwards}
+.page.active .dp-card:nth-child(n){animation-delay:0s}
+body.mo-alive .dp-card:nth-child(n){animation:moCalm .25s ease-out backwards}
+header.topbar img{animation:none}
+#rbh-menubar::after{display:none}
+tbody tr{animation:none}
+tbody tr:nth-child(-n+12){animation:moCalm .2s ease-out both}
+.modal.on .box,#qModal>div{animation-duration:.25s!important}
+body>*{transition:none}
+html.rbh-sheet body>*:not(#rbh-drawer){transition:transform .3s ease-out}
+.dp-card,.stat,.card{transition:border-color .2s,transform .2s}
+.dp-card:hover,.stat:hover,.card:hover{border-color:var(--c-gold,#C9A24B);transform:translateY(-2px)}
+.switch,.toggle,.tgl{transition:background .25s}
+.switch::after,.toggle::after,.tgl::after,.switch>span,.toggle>span{transition:transform .25s}
+html[data-keepfont] *,html[data-keepfont] tbody tr{animation:none!important;transition:none!important}
+html.mo-off *{animation:none!important;transition:none!important}

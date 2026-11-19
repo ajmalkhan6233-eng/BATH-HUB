@@ -16,6 +16,8 @@
 const { newDb, DataType } = require('pg-mem');
 
 const REWRITES = [
+    // pg-mem has no savepoints: make them no-ops (real Postgres behaviour is checked in scripts/dev/savepoint_realpg.js)
+    [/^\s*(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT)\s+\w+\s*;?\s*$/i, 'SELECT 1'],
     [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
     [/item_code ~ '\^\[0-9\]\{1,9\}\$'/g, 'item_code IS NOT NULL'],
     [/\(SELECT SUM\((?:pm|p)\.amount\) FROM investor_loan_payments (?:pm|p) WHERE (?:pm|p)\.loan_id = l\.id\)/g, '0'],
@@ -30,6 +32,15 @@ module.exports = function makePg() {
     const db = newDb();
     db.public.registerFunction({
         name: 'pg_advisory_xact_lock', args: [DataType.integer], returns: DataType.bool, implementation: () => true,
+    });
+    // regexp_replace(text, pattern, repl, flags) and RIGHT(text, n): used by utils/posCredit.js to match a customer by phone.
+    db.public.registerFunction({
+        name: 'regexp_replace', args: [DataType.text, DataType.text, DataType.text, DataType.text], returns: DataType.text,
+        implementation: (t, re, rep, fl) => (t == null ? null : String(t).replace(new RegExp(re, String(fl || '').includes('g') ? 'g' : ''), rep)),
+    });
+    db.public.registerFunction({
+        name: 'right', args: [DataType.text, DataType.integer], returns: DataType.text,
+        implementation: (t, n) => (t == null ? null : String(t).slice(-n)),
     });
     // ROUND(x, n) is missing for floats/numerics in pg-mem.
     for (const t of [DataType.float, DataType.decimal]) {

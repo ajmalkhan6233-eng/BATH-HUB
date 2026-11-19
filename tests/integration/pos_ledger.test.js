@@ -9,8 +9,8 @@ const pg = require('pg');
 const db = pg.__db.public;
 db.none(`CREATE TABLE daily_summary (report_date DATE PRIMARY KEY, total_sale NUMERIC)`);
 db.none(`CREATE TABLE discount_rules (id SERIAL PRIMARY KEY, role VARCHAR(30) NOT NULL DEFAULT 'all', max_discount_pct NUMERIC(5,2) NOT NULL, notes TEXT, active BOOLEAN NOT NULL DEFAULT TRUE)`);
-db.none(`CREATE TABLE customers (id SERIAL PRIMARY KEY, name VARCHAR(100), phone VARCHAR(30))`);
-db.none(`CREATE TABLE credit_customers (id SERIAL PRIMARY KEY, customer_id INT, amount NUMERIC(12,2), paid NUMERIC(12,2) DEFAULT 0)`);
+db.none(`CREATE TABLE customers (id SERIAL PRIMARY KEY, name VARCHAR(100), phone VARCHAR(30), whatsapp VARCHAR(30), source VARCHAR(40), notes TEXT)`);
+db.none(`CREATE TABLE credit_customers (id SERIAL PRIMARY KEY, customer_id INT, invoice_date DATE, invoice_no VARCHAR(60), amount NUMERIC(12,2), paid NUMERIC(12,2) DEFAULT 0, due_date DATE, notes TEXT)`);
 db.none(`INSERT INTO credit_customers (customer_id, amount, paid) VALUES (1, 5000, 1000)`);
 db.none(`INSERT INTO customers (name, phone) VALUES ('Nimal', '0771234567')`);
 const posBills = require('../../routes/pos_bills');
@@ -62,14 +62,14 @@ describe('(b) registering twice is blocked', () => {
 });
 
 describe('(c) a credit bill shows in its own section; old aging totals do not move', () => {
-  test('credit part listed with a per-customer total, credit_customers untouched', async () => {
+  test('credit part listed with a per-customer total; each credit bill also enters Credit & Aging (utils/posCredit.js, 24 Oct)', async () => {
     const before = agingSum(), rowsBefore = Number(db.many('SELECT COUNT(*) AS n FROM credit_customers')[0].n);
     await admin.post('/api/pos-bills', { items: ITEMS, customer_name: 'Kamal', customer_phone: '0712223344', payments: [{ method: 'credit', amount: 1000 }] });
     await admin.post('/api/pos-bills', { items: ITEMS, customer_name: 'Kamal', customer_phone: '0712223344', payments: [{ method: 'credit', amount: 1000 }] });
     const c = await crd();
     expect(c.customers.find(x => x.phone === '0712223344')).toMatchObject({ total: 2000, bills: 2 });
-    expect(agingSum()).toBe(before);
-    expect(Number(db.many('SELECT COUNT(*) AS n FROM credit_customers')[0].n)).toBe(rowsBefore);
+    expect(agingSum()).toBe(before + 2000);
+    expect(Number(db.many('SELECT COUNT(*) AS n FROM credit_customers')[0].n)).toBe(rowsBefore + 2);
   });
 });
 

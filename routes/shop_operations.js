@@ -178,7 +178,7 @@ router.get('/stock-items', async (req, res) => {
     try {
         const r = await pool.query(`
             SELECT *, (current_qty <= reorder_level) AS low_stock
-            FROM stock_items ORDER BY item_name
+            FROM stock_items ORDER BY item_name LIMIT 20000
         `);
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }

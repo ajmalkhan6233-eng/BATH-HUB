@@ -14,13 +14,13 @@
     var hidden = load(), box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px';
     var card = document.createElement('div');
-    card.style.cssText = 'background:#10224a;color:#f6efdc;border:1px solid #c9a24b;border-radius:14px;max-width:420px;width:100%;max-height:85vh;overflow:auto;padding:16px;font:15px system-ui,sans-serif';
+    card.style.cssText = 'background:var(--card,#10224a);color:var(--text,#f6efdc);border:1px solid var(--gold,#c9a24b);border-radius:14px;max-width:420px;width:100%;max-height:85vh;overflow:auto;padding:16px;font:15px system-ui,sans-serif';
     card.innerHTML = '<div style="font-weight:800;font-size:18px;margin-bottom:4px">Customize menu</div><div style="opacity:.75;font-size:13px;margin-bottom:10px">Tick what you want to see on the left. Saved on this device.</div><div id="mp-list"></div>'
       + '<div style="display:flex;gap:8px;margin-top:12px"><button type="button" id="mp-all" style="flex:1;min-height:44px;border-radius:10px;border:1px solid #c9a24b;background:transparent;color:inherit">Show all</button><button type="button" id="mp-done" style="flex:1;min-height:44px;border-radius:10px;border:0;background:#c9a24b;color:#0b1b3d;font-weight:800">Done</button></div>';
     var list = card.querySelector('#mp-list');
     items().forEach(function (li) {
       var k = li.dataset.page, name = (li.querySelector('.nav-label') || {}).textContent || k;
-      var row = document.createElement('label'); row.style.cssText = 'display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid rgba(232,207,138,.15)';
+      var row = document.createElement('label'); row.style.cssText = 'display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--card-border,rgba(232,207,138,.25));color:var(--text,#f6efdc);font-size:15px';
       var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = hidden.indexOf(k) < 0; cb.disabled = k === 'dashboard'; cb.style.cssText = 'width:20px;height:20px';
       cb.addEventListener('change', function () { hidden = hidden.filter(function (x) { return x !== k; }); if (!cb.checked) hidden.push(k); save(hidden); apply(); });
       row.appendChild(cb); row.appendChild(document.createTextNode(name)); list.appendChild(row);

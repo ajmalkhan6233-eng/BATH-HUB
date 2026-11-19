@@ -7,6 +7,8 @@ const request = require('supertest');
 const pg = require('pg');
 
 const db = pg.__db.public;
+db.none(`CREATE TABLE IF NOT EXISTS customers (id SERIAL PRIMARY KEY, name VARCHAR(100), phone VARCHAR(30), whatsapp VARCHAR(30), source VARCHAR(40), notes TEXT)`);
+db.none(`CREATE TABLE IF NOT EXISTS credit_customers (id SERIAL PRIMARY KEY, customer_id INT, invoice_date DATE, invoice_no VARCHAR(60), amount NUMERIC(12,2), paid NUMERIC(12,2) DEFAULT 0, due_date DATE, notes TEXT)`);
 db.none(`CREATE TABLE daily_summary (report_date DATE PRIMARY KEY, total_sale NUMERIC)`);
 db.none(`CREATE TABLE discount_rules (id SERIAL PRIMARY KEY, role VARCHAR(30) NOT NULL DEFAULT 'all', max_discount_pct NUMERIC(5,2) NOT NULL, notes TEXT, active BOOLEAN NOT NULL DEFAULT true)`);
 const posBills = require('../../routes/pos_bills');

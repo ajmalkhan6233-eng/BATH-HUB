@@ -67,4 +67,12 @@ describe('GET /api/pos-bills/summary', () => {
     expect((await request(app).get('/api/pos-bills/summary?date=2026-10-01')).body).toHaveProperty('by_payment');
     expect((await request(app).get('/api/pos-bills/abc')).status).toBe(404);
   });
+
+  test('split bill: cash to count comes from the payment parts, not the label', async () => {
+    await db.none(`INSERT INTO pos_bills (bill_number, subtotal, discount_pct, discount_amount, total, payment_method, created_at) VALUES ('S1', 9000, 0, 0, 9000, 'split', '2026-10-05 10:00:00')`);
+    const id = (await db.one(`SELECT id FROM pos_bills WHERE bill_number='S1'`)).id;
+    await db.none(`INSERT INTO pos_bill_payments (bill_id, method, amount) VALUES (${id}, 'Cash', 6000), (${id}, 'credit', 3000)`);
+    const r = await request(app).get('/api/pos-bills/summary?date=2026-10-05');
+    expect(r.body.by_method).toEqual([{ method: 'cash', bills: 1, amount: 6000 }, { method: 'credit', bills: 1, amount: 3000 }]);
+  });
 });

@@ -389,7 +389,7 @@
                         return adapter.putResult(rec).then(function () { return adapter.remove(item.seq); }).then(function () { return true; });
                     }
                     if (code >= 500 || code === 401 || code === 408 || code === 429 || stillProcessing) {      // try again later; nothing is lost
-                        item.state = 'waiting'; lastError = (code === 401 ? 'Please log in again. ' : '') + errText(body, resp);
+                        item.state = 'waiting'; lastError = (code === 401 ? 'Please log in again. ' : 'Network: server busy or restarting (' + code + '). ') + errText(body, resp);   // 5xx/408/429 = the server is down for a moment: show OFFLINE (amber/grey), not a red SYNC ERROR
                         stopped = true; failures++;
                         return adapter.update(item).then(function () { return false; });
                     }
@@ -403,6 +403,22 @@
             return adapter.all().then(function (items) {
                 return Promise.all(items.filter(function (i) { return i.state === 'rejected'; }).map(function (i) { i.state = 'waiting'; i.error = null; return adapter.update(i); }));
             }).then(function () { lastError = null; failures = 0; return refresh(); }).then(function () { return replay(); });
+        }
+
+        // Remove ONE refused item (never a waiting one) after the owner has read why it was refused. Used by the SYNC ERROR panel.
+        function discardRejected(seq) {
+            return adapter.all().then(function (items) {
+                var it = items.filter(function (i) { return i.seq === seq && i.state === 'rejected'; })[0];
+                return it ? adapter.remove(it.seq) : null;
+            }).then(function () { return refresh(); });
+        }
+
+        // Throw away ONE offline bill that has not reached the server yet (a test or dummy bill), found by its OFF- number.
+        function discardTempBill(billNumber) {
+            return adapter.all().then(function (items) {
+                var it = items.filter(function (i) { return i.temp && i.temp.bill_number === billNumber && i.state !== 'sending'; })[0];
+                return it ? adapter.remove(it.seq).then(function () { return true; }) : false;
+            }).then(function (ok) { return refresh().then(function () { return ok; }); });
         }
 
         var ready = refresh().then(function () {
@@ -419,9 +435,19 @@
             }).catch(function () { /* staff get 403; offline is fine */ });
         }
 
+        // Clear a stuck error message and try again (nothing is removed).
+        function clearError() { lastError = null; failures = 0; emit(); return replay(); }
+        // Remove every refused item. Returns what was removed so the caller can save a copy first.
+        function discardAllRejected() {
+            return adapter.all().then(function (items) {
+                var rej = items.filter(function (i) { return i.state === 'rejected'; });
+                return Promise.all(rej.map(function (i) { return adapter.remove(i.seq); })).then(function () { lastError = null; failures = 0; return rej; });
+            }).then(function (rej) { return refresh().then(function () { return rej; }); });
+        }
+
         return {
-            deviceId: deviceId, adapter: adapter, ready: ready,
-            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected,
+            deviceId: deviceId, adapter: adapter, ready: ready, clearError: clearError, discardAllRejected: discardAllRejected,
+            fetch: wrappedFetch, enqueue: function (r) { return enqueue(r); }, replay: replay, retryRejected: retryRejected, discardRejected: discardRejected, discardTempBill: discardTempBill,
             status: status, on: on, list: function () { return adapter.all(); }, results: function () { return adapter.results(); },
             refresh: refresh, refreshServerCounts: refreshServerCounts, backoffMs: backoffMs,
             isQueueable: function (u) { var p = pathOf(u); return !!p && !NEVER_QUEUE.test(p) && isQueueable(p); }
@@ -454,9 +480,28 @@
                     var row = doc.createElement('div'); row.style.cssText = 'border-top:1px solid #eee;padding:6px 0';
                     row.appendChild(txt('div', i.method + ' ' + i.url, 'font-weight:600;word-break:break-all'));
                     row.appendChild(txt('div', i.error || 'Refused', 'color:#b00020'));
+                    var del = txt('button', 'Discard', 'margin-top:4px;padding:3px 10px;border:1px solid #b00020;border-radius:6px;background:#fff;color:#b00020;cursor:pointer');
+                    del.type = 'button';
+                    del.onclick = function () { if (doc.defaultView.confirm('Discard this refused item? It will be removed from this device.')) inst.discardRejected(i.seq).then(renderPanel); };
+                    row.appendChild(del);
                     panel.appendChild(row);
                 });
-                if (!rej.length) panel.appendChild(txt('div', 'Nothing refused.', 'color:#666'));
+                if (!rej.length) {
+                    var le = inst.status().lastError;
+                    panel.appendChild(txt('div', le ? 'Nothing refused. Last message: ' + le : 'Nothing refused.', 'color:#666'));
+                    var clr = txt('button', 'Clear and try again', 'margin-top:8px;padding:6px 14px;border:1px solid #2e7d32;border-radius:6px;background:#fff;color:#2e7d32;font-weight:600;cursor:pointer');
+                    clr.type = 'button'; clr.onclick = function () { inst.clearError(); open = false; renderPanel(); };
+                    panel.appendChild(clr);
+                } else {
+                    var all = txt('button', 'Save a copy and discard all', 'margin:8px 8px 0 0;padding:6px 14px;border:1px solid #b00020;border-radius:6px;background:#fff;color:#b00020;font-weight:600;cursor:pointer');
+                    all.type = 'button';
+                    all.onclick = function () {
+                        if (!doc.defaultView.confirm('Save a copy of all ' + rej.length + ' refused items to a file, then remove them from this device?')) return;
+                        try { var a = doc.createElement('a'); a.href = doc.defaultView.URL.createObjectURL(new doc.defaultView.Blob([JSON.stringify(rej, null, 2)], { type: 'application/json' })); a.download = 'refused-items-' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); } catch (e) { /* copy not possible: still ask before removing */ if (!doc.defaultView.confirm('Could not save a copy. Remove anyway?')) return; }
+                        inst.discardAllRejected().then(function () { open = false; renderPanel(); });
+                    };
+                    panel.appendChild(all);
+                }
                 var btn = txt('button', 'Retry', 'margin-top:8px;padding:6px 14px;border:0;border-radius:6px;background:#b00020;color:#fff;font-weight:600;cursor:pointer');
                 btn.type = 'button';
                 btn.onclick = function () { inst.retryRejected(); };
@@ -467,9 +512,11 @@
             var label, bg, title;
             if (s.state === 'offline') { label = 'OFFLINE'; bg = '#6b7280'; title = 'Saved on this device' + (s.waiting ? ' (' + s.waiting + ' waiting)' : ''); }
             else if (s.state === 'syncing') { label = 'SYNCING (' + s.waiting + ' waiting)'; bg = '#d97706'; title = 'Sending saved items'; }
+            else if (s.state === 'error' && /^Please log in/i.test(String(s.lastError || '')) && !s.rejected) { label = 'LOG IN AGAIN'; bg = '#d97706'; title = 'Your sign-in ended. Log in again and saved items will send.'; }
             else if (s.state === 'error') { label = 'SYNC ERROR'; bg = '#c62828'; title = s.lastError || (s.rejected + ' item(s) refused by the server') + ' - click for details'; }
             else { label = 'ONLINE'; bg = '#2e7d32'; title = 'Connected'; }
             pill.textContent = label; pill.style.background = bg; pill.title = title;
+            pill.style.display = (s.state === 'error') ? '' : 'none';   // Ajmal 4 Nov: no ONLINE / OFFLINE / SYNCING badge; only show when something is refused or login ended
             pill.style.cursor = s.state === 'error' ? 'pointer' : 'default';
             if (s.state !== 'error' && open && !s.rejected) { open = false; }
             if (open) renderPanel(); else { panel.style.display = 'none'; }
@@ -514,6 +561,9 @@
     OfflineQueue.list = function () { return inst().list(); };
     OfflineQueue.results = function () { return inst().results(); };
     OfflineQueue.retryRejected = function () { return inst().retryRejected(); };
+    OfflineQueue.discardRejected = function (seq) { return inst().discardRejected(seq); };
+    OfflineQueue.discardAllRejected = function () { return inst().discardAllRejected(); };
+    OfflineQueue.clearError = function () { return inst().clearError(); };
     OfflineQueue.mountChip = function (el) { return mountChip(inst(), el); };
 
     root.OfflineQueue = OfflineQueue;

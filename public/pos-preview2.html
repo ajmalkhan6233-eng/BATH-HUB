@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" data-keepfont>
+<head>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add("in-frame")}catch(e){document.documentElement.classList.add("in-frame")}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Royal Bath Hub — POS Billing</title>
+<style>
+/* 01 — Global desktop frame and brand tokens */
+:root{--ink:#202124;--muted:#697078;--line:#d7dadd;--panel:#fff;--paper:#f2f3f3;--gold:#9b7a32;--gold2:#c2a45c;--soft:#f7f4eb;--dark:#262626;--good:#28634b;--warn:#8a6720;--bad:#a33a32}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{font:13px "Segoe UI",Tahoma,Arial,sans-serif;color:var(--ink);background:var(--paper)}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.shell{height:100vh;min-height:620px;display:flex;flex-direction:column;min-width:980px}
+.topbar{height:42px;flex:none;background:var(--dark);color:#f7f7f7;display:flex;align-items:center;padding:0 14px;gap:18px}
+.brand{font-weight:700;letter-spacing:.35px;color:#e4d2a4;white-space:nowrap}.brand small{font-weight:400;color:#c9c9c9;margin-left:8px}
+.appnav{height:36px;flex:none;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:3px;white-space:nowrap;overflow:hidden}
+.appnav button{border:0;background:transparent;padding:8px 10px;color:#34383b}.appnav button.active{background:var(--soft);color:#604b1c;border-bottom:2px solid var(--gold);font-weight:600}
+.toolbar{height:43px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#fafafa;border-bottom:1px solid var(--line)}
+.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:9px}.screen-title{font-size:16px;font-weight:700}.pill{border:1px solid var(--line);background:white;border-radius:3px;padding:5px 9px}.clock{font-variant-numeric:tabular-nums;color:#555;font-weight:600}
+main{flex:1;min-height:0;padding:9px 12px 10px;display:flex;flex-direction:column;gap:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:3px;min-width:0}
+button.primary{background:#292929;color:#fff;border:1px solid #292929;border-radius:3px;padding:9px 15px;font-weight:700}
+button.primary:hover{background:#444}button.gold{background:var(--gold);color:#fff;border:1px solid var(--gold);border-radius:3px;padding:8px 12px;font-weight:600}
+button.secondary{background:#fff;border:1px solid #c8cdd0;border-radius:3px;padding:7px 10px}
+button.small{padding:5px 8px;font-size:12px}.muted{color:var(--muted)}.goldtext{color:#7d6125}.hidden{display:none!important}
+input,select{border:1px solid #cbd0d3;background:#fff;border-radius:3px;padding:7px 8px;min-width:0;height:31px}
+label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field input{width:100%}
+/* 02 — Compact customer and document header */
+.customer-row{height:47px;flex:none;display:grid;grid-template-columns:minmax(170px,1.1fr) 145px minmax(175px,1fr) auto auto;align-items:center;gap:8px;padding:6px 9px}
+.customer-row .field{gap:2px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+.doc-tabs{display:flex;align-items:center;gap:6px}.tab{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:3px}.tab.active{background:var(--soft);border-color:#c8b47f;color:#614b1b;font-weight:700}
+.docline{display:flex;align-items:center;justify-content:space-between;min-height:30px;flex:none}
+.held-strip{height:25px;flex:none;padding:4px 9px;background:#f8f8f8;border:1px solid var(--line);color:#62696e;font-size:12px}
+/* 03 — Main two-column billing workspace */
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:9px}
+.left-work{min-height:0;display:flex;flex-direction:column;gap:6px}
+.item-head{display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;padding:6px 8px 4px;color:#70777c;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.35px}
+.item-rows{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--line);background:#fff;border-radius:3px}
+.item-row{min-height:36px;display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;align-items:center;padding:2px 8px;border-bottom:1px solid #eceeef}
+.item-row:last-child{border-bottom:0}.item-ident{min-width:0;display:flex;align-items:center;gap:7px}.item-ident .code-input{width:58px;flex:none;padding:5px 4px;text-align:center}.item-name{min-width:0;flex:1}.item-name strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.item-name small{display:block;color:#7a8085;font-size:10px;margin-top:2px}
+.code-input{width:100%;font-weight:700}.qtybox{display:flex;align-items:center;gap:3px}.qtybox button{width:23px;height:27px;border:1px solid var(--line);background:#f8f8f8;border-radius:2px;padding:0}.qtybox input{width:37px;text-align:center;padding:4px 2px;height:27px}
+.price-input,.disc-input{text-align:right;width:100%;font-variant-numeric:tabular-nums}.line-total{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.remove{width:31px;height:31px;border:1px solid #d8c9c7;background:#fff;color:#6e3a34;border-radius:3px;font-size:19px;line-height:1}
+.item-foot{height:38px;flex:none;display:flex;align-items:center;gap:7px;padding:4px 0}
+.item-foot .wide{flex:1}.status-note{font-size:11px;color:var(--muted);margin-left:auto}
+.right-work{min-height:0;display:flex;flex-direction:column;gap:7px}
+.bill-summary{padding:8px;display:flex;flex-direction:column;min-height:0;flex:1}
+.panel-title{font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.mini-list{overflow:auto;min-height:70px;max-height:145px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.mini-line{display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:11px}.mini-line span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0 5px;font-weight:700}.total-row strong{font-size:19px;font-variant-numeric:tabular-nums}
+.price-control{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:3px}.price-control .field input{text-align:right}
+.profit-secret{font-size:12px;text-align:right;color:#666;padding:2px 0;font-variant-numeric:tabular-nums}
+.payment-card{padding:8px;display:flex;flex-direction:column;gap:6px}.payment-card select{width:100%}
+.payment-extra{display:grid;grid-template-columns:1fr 1fr;gap:6px}.payment-extra .field input{width:100%}
+.message{min-height:15px;font-size:11px;color:var(--bad);line-height:1.25}.message.ok{color:var(--good)}
+.gen-row{display:flex;gap:6px}.gen-row button{flex:1;min-height:39px;font-size:14px}
+.today-box{padding:7px 9px;max-height:91px;overflow:auto}.today-box summary{font-weight:700;cursor:pointer}.today-list{font-size:11px;margin-top:5px;display:grid;gap:3px}
+.bottom-status{height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;color:#70777c;font-size:10px;padding:0 3px}
+/* 04 — Item picker, tools and held-bill overlays */
+.popover{position:absolute;z-index:20;background:#fff;border:1px solid #bfc4c7;box-shadow:0 5px 18px #0002;border-radius:3px;padding:8px}
+.picker{left:10px;right:320px;top:130px;max-height:330px;display:flex;flex-direction:column}
+.picker-top{display:flex;gap:7px;margin-bottom:6px}.picker-top input{flex:1;height:35px}
+.picker-head,.pick-row{display:grid;grid-template-columns:75px minmax(150px,1fr) 65px 115px;gap:8px;align-items:center}
+.picker-head{font-size:10px;text-transform:uppercase;color:#737a7f;padding:5px 7px;border-bottom:1px solid var(--line)}
+.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
+.tool-menu{right:14px;top:75px;width:190px;display:grid;gap:3px}.tool-menu button{text-align:left;border:0;background:#fff;padding:8px}.tool-menu button:hover{background:var(--soft)}
+.modal-back{position:fixed;inset:0;background:#0005;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border:1px solid #aeb4b8;box-shadow:0 12px 35px #0003;width:min(600px,95vw);max-height:85vh;overflow:auto;padding:16px;border-radius:4px}
+.modal h2{font-size:17px;margin:0 0 12px}.modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:14px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* 05 — Receipt view */
+.receipt-wrap{position:fixed;inset:0;background:#eef0f0;z-index:40;display:flex;align-items:center;justify-content:center;padding:18px}
+.receipt-card{width:min(650px,96vw);max-height:95vh;overflow:auto;background:#fff;border:1px solid #cbd0d3;padding:22px}
+.receipt-head{text-align:center;border-bottom:1px dashed #999;padding-bottom:12px}.receipt-head h2{margin:0 0 4px;font-size:20px}.receipt-items{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}.receipt-items td,.receipt-items th{padding:6px 3px;border-bottom:1px solid #eee;text-align:left}.receipt-items td:last-child,.receipt-items th:last-child{text-align:right}.receipt-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.receipt-actions button{background:#fff;border:1px solid var(--line);padding:7px 10px;border-radius:3px}
+/* 06 — Responsive desktop scaling and print rules */
+@media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 340px}.item-row{min-height:40px}.item-head,.item-row{grid-template-columns:minmax(250px,1fr) 100px 130px 115px 130px 42px}.picker{right:360px}}
+@media(max-height:700px){main{padding-top:5px;gap:5px}.customer-row{height:42px}.item-row{min-height:34px}.mini-list{max-height:105px}.bill-summary{padding:6px}.payment-card{padding:6px}}
+@media print{body *{visibility:hidden}.receipt-wrap,.receipt-wrap *{visibility:visible}.receipt-wrap{position:absolute;background:white;padding:0}.receipt-card{border:0;box-shadow:none;width:100%;max-height:none}.receipt-actions{display:none}}
+.right-work{overflow-y:auto;overflow-x:hidden;padding-right:2px}.right-work>*{flex:none}.right-work .bill-summary{flex:none}
+html.in-frame .shell{min-height:0;height:100vh}
+@media(max-height:560px){.mini-list{max-height:48px}.price-control{margin-top:0}.right-work{gap:4px}}
+html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-frame #clock,html.in-frame #clock+button{display:none}
+
+/* 17 Nov (AJ): save height. One top line, customer details fold up once typed, bigger/neater right side */
+.toolbar{display:none}
+.docline{gap:8px}.docline .doc-tabs{flex:1;min-width:0}.docline #posTools{display:flex;align-items:center;gap:6px;margin-left:auto}
+.docline #modeLabel,.docline #docRef,.docline .clock,.docline #posTools #signOutBtn{display:none}
+.customer-row.folded{height:30px;padding:2px 9px;grid-template-columns:1fr}
+.customer-row.folded .field,.customer-row.folded .check{display:none}
+.cust-sum{width:100%;text-align:left;border:0;background:transparent;padding:3px 2px;font-size:13px;color:#2e3336;cursor:pointer}
+.cust-sum b{font-weight:700}.cust-sum span{color:#62696e}.cust-sum em{font-style:normal;color:#7d6125;float:right;font-size:12px}
+.held-strip{display:none}
+.workspace{grid-template-columns:minmax(0,1fr) 380px}
+.price-control{grid-template-columns:1.25fr .75fr 1fr;gap:5px}.price-control .field:nth-child(4){grid-column:1/-1}
+.price-control .field input{height:28px;padding:4px 6px}.price-control label{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profit-secret{padding:0}.mini-list{min-height:46px;max-height:96px}
+.sm-pick{font-size:12px;height:24px;padding:0 4px;margin-left:4px;width:auto;min-width:0;border:1px solid var(--line);border-radius:3px;background:#fff}
+/* 18 Nov (AJ): at least 10 item rows visible, small. Compact rows, no duplicate mini list. */
+.item-row{min-height:26px!important;padding:1px 8px!important}.item-row input,.item-row .qtybox input{height:22px!important;padding:1px 4px!important;font-size:12px!important}.item-row .qtybox button{height:22px!important;width:20px!important}
+.item-row .remove{width:24px!important;height:24px!important;font-size:16px!important}.item-name strong{font-size:12px!important}.item-name small{display:none!important}.item-ident .code-input{padding:1px 4px!important}
+.item-head{padding:3px 8px 2px!important}.item-rows{min-height:270px}.mini-list{display:none!important}main{overflow-y:auto}
+.total-row{padding:4px 0 3px}.bill-summary{padding:7px 9px}
+@media(min-width:1600px){.workspace{grid-template-columns:minmax(0,1fr) 430px}.picker{right:450px}}
+.picker{right:400px}
+.bill-summary .message:empty{display:none}.bill-summary{flex:none}.last-pill-fix{}
+#lastBillLabel{border:0;background:transparent;color:#62696e;padding:5px 4px}
+
+/* 17 Nov (AJ): receipt screen shows the real receipt picture; buttons readable; New bill visible */
+.receipt-card.img-ok{width:min(760px,96vw)}
+.receipt-card.img-ok>*:not(.receipt-actions):not(#rImgWrap):not(#waReceiptMsg):not(#billAttach){display:none}
+#rImgWrap{text-align:center}#rImg{max-width:100%;max-height:60vh;object-fit:contain;border-radius:6px;box-shadow:0 3px 14px #0003}
+.receipt-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.receipt-actions button{background:#fff;color:#222;border:1px solid #c8cdd0;padding:8px 12px;border-radius:4px;font-weight:600}
+.receipt-actions button.primary{background:#292929;color:#fff;border-color:#292929}
+.receipt-actions .ra-side{margin-left:auto;display:flex;gap:6px}.receipt-actions .ra-side button{font-weight:500;font-size:12px;padding:6px 9px}
+@media print{#rImgWrap{display:block!important}.receipt-card.img-ok{width:100%}#rImg{max-height:none;box-shadow:none}}
+/* 17 Nov (AJ): calmer layout. Items get the whole width; totals + payment + Generate sit in ONE bar underneath */
+.workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) auto}
+.right-work{display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;overflow:visible;padding:0;align-items:stretch}
+.right-work .bill-summary{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 12px;padding:6px 9px}
+.bill-summary .panel-title,.bill-summary .mini-list{display:none}
+.bill-summary .total-row{display:block;padding:0}.bill-summary .total-row span{display:block;font-size:11px;font-weight:600;color:#62696e}.bill-summary .total-row strong{font-size:23px}
+.price-control{margin:0;grid-template-columns:1.3fr .8fr 1fr .6fr!important}.price-control .field:nth-child(4){grid-column:auto!important}
+.bill-summary .message{grid-column:1/-1}
+.payment-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;align-items:end;padding:6px 9px}
+.payment-card>.field{grid-column:1;grid-row:1}.payment-card>.gen-row{grid-column:2;grid-row:1}.payment-card>*:not(.field):not(.gen-row){grid-column:1/-1}
+.gen-row button{min-height:34px;padding:0 22px;white-space:nowrap}
+#todayBox{display:none}.item-foot #holdBtn,.item-foot #heldBtn,.item-foot #toolsBtnBottom{display:none}
+.bottom-status{display:none}
+.picker{left:10px;right:10px!important}.tool-menu{top:44px}
+.findbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.findbar input{height:30px}
+.dayhead{background:#f4f1e6;padding:4px 8px;font-size:12px;font-weight:700;margin-top:6px;border-radius:3px;display:flex;justify-content:space-between}
+.billrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #eceeef;font-size:13px}
+@media(max-width:1000px){.right-work{grid-template-columns:1fr}}
+.item-foot .gen-row{margin-left:6px}.item-foot .gen-row button{min-height:36px;padding:0 28px;font-size:15px;flex:none}.item-foot .status-note{margin-left:8px}
+.payment-card{grid-template-columns:minmax(0,1fr)!important}
+</style>
+<style id="pickerDock">
+#picker{position:static!important;left:auto!important;right:auto!important;top:auto!important;width:min(780px,100%);margin:6px auto 8px;max-height:260px;box-shadow:none;border:1px solid #cfd4d7;z-index:1}
+#picker .picker-results{max-height:150px}
+.picker-head,.pick-row{grid-template-columns:70px minmax(160px,1fr) 60px 100px}
+</style>
+<style id="p0fit">
+/* P0: compact docked picker so 10 item lines fit at 1366x768; items scroll inside their own box */
+#picker:not(.open) .picker-head,#picker:not(.open) .picker-results,#picker:not(.open) .picker-note{display:none}
+#picker:not(.open){max-height:48px}
+#picker{max-height:150px;padding:5px 8px;margin:3px auto 4px}
+#picker .picker-results{max-height:78px}
+#picker .picker-head{padding:2px 7px}
+#picker .pick-row{padding:3px 7px}
+#picker .picker-top{margin-bottom:3px}#picker .picker-top input{height:30px}
+.item-head{position:sticky;top:0}
+@media(max-height:800px){.item-row{min-height:34px}}
+@media(max-width:700px){
+  main{padding:6px}
+  .workspace{display:flex!important;flex-direction:column}
+  .customer-row{height:auto!important;display:grid!important;grid-template-columns:1fr 1fr;gap:6px}
+  .item-head{display:none!important}
+  .item-row{grid-template-columns:1fr 1fr!important;gap:6px;padding:8px;min-height:0;border:1px solid var(--line);border-radius:6px;margin:4px}
+  .item-row .item-ident{grid-column:1/-1}
+  .item-row input,.item-row button,.qtybox button{min-height:48px;font-size:16px}
+  #picker{width:100%}#picker .pick-row,#picker .picker-head{grid-template-columns:56px 1fr 44px 80px}
+  #genBtn{min-height:52px;font-size:17px}
+  .right-work{position:sticky;bottom:0;background:var(--panel,#fff);z-index:5}
+}
+</style>
+<style id="oneprice">@media(min-width:701px){.customer-row{grid-template-columns:145px minmax(170px,1.1fr) minmax(175px,1fr) auto auto!important}}#priceRow .field:first-child{display:none}</style><style id="pickmore">
+#picker{max-height:330px!important}
+#picker .picker-results{max-height:224px!important}
+#picker .pick-row{padding:3px 7px;white-space:nowrap}
+#picker .pick-name{overflow:hidden;text-overflow:ellipsis}
+#picker .pick-name strong,#picker .pick-name small{display:inline!important}#picker .pick-name small{margin-left:8px;color:#737a7f}
+#picker .pick-row.selected{background:#e8dcc0;outline:1px solid #c9a24b}
+@media(min-width:701px){#priceRow{grid-template-columns:repeat(4,1fr)!important}#priceRow .field:nth-child(4){grid-column:auto!important}#priceRow .field:nth-child(5){grid-column:1/-1}}
+</style>
+<style id="rload">#rImgWrap .rload{display:none;padding:60px 0;color:#8a6a1c;font-weight:700;font-size:18px}#rImgWrap.loading .rload{display:block}#rImgWrap.loading #rImg,#rImgWrap.loading #rImgDl{display:none}</style></head>
+<body>
+<div class="shell">
+  <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
+  <header class="topbar"><div class="brand">RBH <small>ROYAL BATH HUB · OWNER</small></div><div style="margin-left:auto;font-size:11px;color:#ccc">173/1 Kandy Road, Thihariya</div></header>
+  <nav class="appnav" aria-label="Application navigation">
+    <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
+  </nav>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><button class="secondary small" id="findTop">Bills · find</button><button class="secondary small" id="recallTop">Recall held (<span id="recallN">0</span>)</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" id="signOutBtn" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <main id="formPanel">
+    <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
+    <!-- 02 — Document type and compact customer details -->
+    <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span><span class="muted" style="margin-left:10px">Salesman</span><select id="salesman" class="sm-pick" title="Who sold this bill"><option value="Jazeel">Jazeel</option><option value="Ajmal">Ajmal</option></select></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
+    <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
+      <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
+      <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
+      <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
+      <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
+      <button class="secondary small hidden" id="customerSearchBtn" type="button">Customer search</button>
+    </section>
+    <!-- 03 — Held bill status -->
+    <div class="held-strip" id="heldPanel" style="cursor:pointer" title="Tap to recall a held bill">Held bills: <strong id="heldCount">0</strong> · No held bills</div>
+    <!-- 04 — Item entry and live bill summary -->
+    <section class="workspace">
+      <div class="left-work">
+        <div class="item-head"><span>Item / code</span><span>Qty</span><span>Selling price (Rs)</span><span>Discount</span><span style="text-align:right">Line total (Rs)</span><span></span></div>
+        <div class="item-rows" id="itemRows" aria-label="Bill items"></div>
+        <div class="item-foot">
+          <button class="gold wide" id="addItemBtn">＋ Add item</button>
+          <button class="secondary" id="holdBtn">Hold bill</button>
+          <button class="secondary" id="heldBtn">Held (0)</button>
+          <button class="secondary" id="scanBtn">Scan</button>
+          <button class="secondary" id="toolsBtnBottom">Bill tools ▾</button>
+          <span class="status-note" id="stockWarning"></span><span class="status-note" id="scanMsg"></span>
+        </div>
+      </div>
+      <aside class="right-work">
+        <section class="card bill-summary" id="liveBill">
+          <div class="panel-title"><span>Bill so far</span><span id="itemCount">0 items</span></div>
+          <div class="mini-list" id="miniList"></div>
+          <div class="total-row"><span>Net total</span><strong id="netTotal">Rs 0.00</strong></div>
+          <div class="price-control" id="priceRow">
+            <div class="field"><label for="sellPrice">Agreed selling price (Rs)</label><input id="sellPrice" inputmode="decimal" placeholder="Auto total"></div>
+            <div class="field"><label for="discountPct">Discount (%)</label><input id="discountPct" inputmode="decimal" value="0"></div>
+            <div class="field"><label for="discountAmt">Discount (Rs)</label><input id="discountAmt" inputmode="decimal" value="0"></div>
+            <div class="field"><label for="lessAmt">Less from total (Rs)</label><input id="lessAmt" inputmode="decimal" placeholder="0"></div>
+            <div class="field"><label>&nbsp;</label><div class="profit-secret" id="profitValue">0.00</div></div>
+          </div>
+          <div class="message" id="capHint" style="color:#62696e"></div>
+          <div class="message" id="saveHint"></div>
+        </section>
+        <section class="card payment-card">
+          <div class="field"><label for="paymentMethod">Payment method</label><select id="paymentMethod"><option>Cash</option><option>Card</option><option>Online transfer</option><option>Cheque</option><option>Credit</option><option>Split</option></select></div>
+          <div id="chequeBox" class="payment-extra hidden"><div class="field"><label>Cheque reference</label><input id="chequeRef" placeholder="Cheque number"></div><div class="field"><label>Cheque date</label><input id="chequeDate" type="date"></div></div>
+          <div id="creditNote" class="message hidden">Credit requires customer name and phone.</div>
+          <div id="splitBox" class="hidden"><div class="payment-extra" id="splitRows"><div class="field"><label>Cash (Rs)</label><input id="splitCash" value="0"></div><div class="field"><label>Card / transfer (Rs)</label><input id="splitOther" value="0"></div></div><div class="message" id="splitHint">Split amounts must equal the bill total.</div></div>
+          <div class="message" id="errMsg" role="alert"></div>
+          <div class="gen-row"><button class="primary" id="genBtn">Generate Bill</button><button class="secondary hidden" id="cancelEditBtn">Cancel edit</button></div>
+        </section>
+        <details class="card today-box" id="todayBox" open><summary>Today's bills <span class="muted" id="todayCount">(0)</span></summary><div class="today-list" id="todayList">No bills yet.</div></details>
+      </aside>
+    </section>
+    <div class="bottom-status"><span></span><span>Enter / Tab moves through fields · Down arrow opens item picker</span></div>
+  </main>
+</div>
+
+<!-- 05 — Item picker overlay -->
+<div class="popover picker hidden" id="picker">
+  <div class="picker-top"><input id="scanBox" placeholder="Type item code or name / scan barcode…" autocomplete="off"><button class="secondary" id="camScanBtn">Camera scan</button><button class="secondary" id="pickerClose">Close</button></div>
+  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
+  <div class="picker-results" id="pickerResults"></div>
+  <div class="muted picker-note" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
+</div>
+
+<!-- 06 — Bill tools menu -->
+<div class="popover tool-menu hidden" id="toolMenu">
+  <button id="lastBtn">Last bill</button><button id="findBtn">Find bill</button><button id="quoteBtn">Load quotation</button><button id="quoteSaveBtn">Save quotation</button><button id="wholesaleBtn">Wholesale bill: OFF</button><button id="clearAllBtn">Clear bill</button>
+</div>
+
+<!-- 07 — Utility modal panels -->
+<div class="modal-back hidden" id="modalBack"><div class="modal" role="dialog" aria-modal="true"><h2 id="modalTitle">POS tool</h2><div id="modalBody"></div><div class="modal-actions"><button class="secondary" id="modalCancel">Close</button><button class="primary hidden" id="modalConfirm">Confirm</button></div></div></div>
+
+<!-- 08 — Generated receipt -->
+<div class="receipt-wrap hidden" id="receipt">
+  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><div class="rload">Drawing your receipt…</div><img id="rImg" alt="Receipt"><div><button id="rImgDl" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px">&#8681; Download</button></div></div>
+    <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
+    <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
+    <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>
+    <div id="rTotals" style="text-align:right;font-size:13px;line-height:1.8"></div>
+    <div style="text-align:center;border-top:1px dashed #999;margin-top:12px;padding-top:10px;font-size:11px">Thank you for your business. Honest trade, lasting value.</div>
+    <div class="receipt-actions"><button id="printBtn">Print receipt</button><button id="waBtn">Send WhatsApp</button><button id="waReceiptBtn">Receipt image</button><button id="newBillBtn" class="primary">New bill</button><button id="backPosBtn">Back to POS</button><span class="ra-side"><button id="editReceiptBtn">Edit</button><button id="voidBtn">Void</button><button id="emailBtn" class="small">Email</button></span></div>
+    <div id="waReceiptMsg" class="message"></div><div id="billAttach" class="muted" style="font-size:10px"></div>
+  </div>
+</div>
+
+<script src="pos-cart.js"></script>
+<script src="pos2-api.js"></script>
+<script src="pos2-screen.js"></script>
+</body>
+</html>

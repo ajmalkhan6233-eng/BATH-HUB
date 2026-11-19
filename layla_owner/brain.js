@@ -6,12 +6,14 @@
  */
 const { parseOwnerMessage } = require('./intentParser');
 const { fmtLocal } = require('./timeParse');
+const { handlePlan, handleMove } = require('./planHandler');
 const rs = (n) => `Rs. ${Math.round(Number(n) || 0).toLocaleString('en-US')}`;
 const HELP = `Talk to me like a person. Examples:
 - "Fazal Hardware bill pending, remind me by evening"
 - "I wrote a 1 million cheque, clears tomorrow, remind me this evening"
 - "stock of angle valve" / "price of bidet spray"
 - "cheques tomorrow" / "cash gap" / "how much do we owe Eskema"
+- "plan 680000 Metro 4 months" / "move cheque 2 to 20th"
 - "what's pending" / "done 3" / "snooze 3 2 hours"`;
 
 async function handleOwnerMessage(msg, { store, adapters, now = () => new Date() }) {
@@ -20,6 +22,8 @@ async function handleOwnerMessage(msg, { store, adapters, now = () => new Date()
   switch (it.type) {
     case 'EMPTY': return { reply: 'Say it again?', intent: it };
     case 'HELP': return { reply: HELP, intent: it };
+    case 'PLAN': return handlePlan(it, { store, now });
+    case 'MOVE_CHEQUE': return handleMove(it, { store, now });
     case 'PENDING_BILL': {
       const who = it.vendor || 'a supplier'; const t = await store.create({ kind: 'BILL_PENDING', title: `Enter ${who} bill into the GRN${it.amount ? ` (${rs(it.amount)})` : ''}`, dueAt: it.remindAt, sourceMsgId: srcId, meta: { vendor: it.vendor, amount: it.amount }, nagEveryMin: 60, maxNags: 3 });
       return { reply: `Noted. I will remind you at ${fmtLocal(it.remindAt)} to enter the ${who} bill into the GRN (#${t.id}). Reply "done ${t.id}" when it is in.`, intent: it, taskId: t.id };

@@ -1,0 +1,16 @@
+/* Gemini theme (AJ 12 Nov): soft glass + gentle motion. Loaded only when this theme is chosen. Look only. No bouncing on POS. */
+html[data-tone="gemini"] body{background:radial-gradient(900px 500px at 8% -5%,rgba(212,175,55,.16),transparent 60%),radial-gradient(800px 520px at 100% 0%,rgba(110,140,200,.14),transparent 60%),var(--bg-canvas,#0b0d10) !important;background-attachment:fixed;animation:gmAura 1.6s ease-out both}
+@keyframes gmAura{from{background-position:0 -40px,40px 0,0 0;opacity:.6}to{background-position:0 0,0 0,0 0;opacity:1}}
+html[data-tone="gemini"] .card,html[data-tone="gemini"] .kpi-card,html[data-tone="gemini"] .dr,html[data-tone="gemini"] .stat{background:rgba(255,255,255,.045) !important;border:1px solid rgba(255,255,255,.1) !important;border-radius:16px !important;box-shadow:0 8px 24px -14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);animation:gmIn .5s cubic-bezier(.2,.8,.2,1) both}
+html[data-tone="gemini"] .card:nth-child(2),html[data-tone="gemini"] .kpi-card:nth-child(2){animation-delay:.06s}
+html[data-tone="gemini"] .card:nth-child(3),html[data-tone="gemini"] .kpi-card:nth-child(3){animation-delay:.12s}
+html[data-tone="gemini"] .card:nth-child(4),html[data-tone="gemini"] .kpi-card:nth-child(4){animation-delay:.18s}
+@keyframes gmIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html[data-tone="gemini"] button{transition:transform .12s ease,box-shadow .2s ease,background-color .2s ease;border-radius:12px}
+html[data-tone="gemini"] button:hover{box-shadow:0 0 16px -4px rgba(212,175,55,.5)}
+html[data-tone="gemini"] button:active{transform:scale(.97);box-shadow:inset 0 2px 6px rgba(0,0,0,.4)}
+html[data-tone="gemini"] input,html[data-tone="gemini"] select{border-radius:10px !important;background:rgba(255,255,255,.05) !important;border-color:rgba(255,255,255,.14) !important}
+html[data-tone="gemini"] input:focus,html[data-tone="gemini"] select:focus{border-color:#d4af37 !important;box-shadow:0 0 0 2px rgba(212,175,55,.4),0 0 14px -2px rgba(212,175,55,.4) !important}
+html[data-tone="gemini"] table th{background:rgba(212,175,55,.1) !important;color:#f1d98a}
+html[data-tone="gemini"] tr:hover td{background:rgba(212,175,55,.06)}
+@media(prefers-reduced-motion:reduce){html[data-tone="gemini"] *{animation:none !important}}

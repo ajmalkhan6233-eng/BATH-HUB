@@ -4,6 +4,7 @@
  * No AI, no network, free. Writes nothing: it only returns an intent. Unknown messages return UNKNOWN (an optional LLM fallback can be added later).
  */
 const T = require('./timeParse');
+const { parsePlanCommand } = require('./planCommands');
 
 const STOP = new Set(['layla', 'leila', 'laila', 'hey', 'hi', 'hello', 'please', 'pls', 'tell', 'note', 'remember', 'remind', 'me', 'that', 'about', 'the', 'from', 'at', 'of', 'a', 'an', 'and', 'also', 'quick', 'just', 'ok', 'okay', 'so', 'one', 'more', 'thing', 'if', 'i', 'said', 'say']);
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
@@ -34,6 +35,7 @@ function parseOwnerMessage(raw, now = new Date()) {
   const text = clean(raw); const t = text.toLowerCase();
   if (!t) return { type: 'EMPTY' };
   if (/^(help|menu|\?|commands)$/.test(t)) return { type: 'HELP' };
+  const planCmd = parsePlanCommand(text, now); if (planCmd) return planCmd;
   let m;
   if ((m = t.match(/^(?:done|finished|entered|complete[d]?)\s*#?(\d+)/))) return { type: 'DONE', id: +m[1] };
   if ((m = t.match(/^snooze\s*#?(\d+)\s*(.*)$/))) { const w = T.parseWhen(m[2] ? (/^\d/.test(m[2]) ? `in ${m[2]}` : m[2]) : 'in 1 hour', now) || T.parseWhen('in 1 hour', now); return { type: 'SNOOZE', id: +m[1], until: w.at }; }

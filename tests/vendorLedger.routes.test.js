@@ -54,7 +54,7 @@ test('credit note reduces payable, bounced cheque restores it', async () => {
   const bill = (await post('/api/vendor-ledger/bills', { vendor_name: 'RK Trading', bill_date: '2025-12-17', total: 100000 })).body;
   await post(`/api/vendor-ledger/bills/${bill.id}/credit-notes`, { amount: 25000, note_no: 'M1-6032' });
   const ch = (await post(`/api/vendor-ledger/bills/${bill.id}/cheques`, { amount: 75000, cheque_date: day(1) })).body;
-  await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`);
+  await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`, { reason: 'bank returned: no funds' });
   const b = (await request(app).get('/api/vendor-ledger/bills?vendor=RK%20Trading')).body[0];
   expect(b).toMatchObject({ outstanding: 75000, covered: 0, hasBounced: true, state: 'UNPAID' });
 });
@@ -71,4 +71,40 @@ test('calendar, cash gap, checks, csv', async () => {
   expect(chk.duplicates.sameNumber.length).toBeGreaterThanOrEqual(1);
   const csv = await request(app).get('/api/vendor-ledger/export.csv');
   expect(csv.text.split('\n')[0]).toContain('outstanding');
+});
+
+test('AUDIT: bounce, cancel and void need a reason, and every change is logged with who, old and new', async () => {
+  const bill = (await post('/api/vendor-ledger/bills', { vendor_name: 'Audit Co', bill_date: '2026-10-01', total: 50000 })).body;
+  const ch = (await post(`/api/vendor-ledger/bills/${bill.id}/cheques`, { amount: 50000, cheque_date: day(1) })).body;
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`)).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/cancel`, { reason: 'x' })).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/bills/${bill.id}/void`)).status).toBe(400);
+  expect((await post(`/api/vendor-ledger/cheques/${ch.cheque.id}/bounce`, { reason: 'returned by bank' })).status).toBe(200);
+  expect((await post(`/api/vendor-ledger/bills/${bill.id}/void`, { reason: 'entered twice' })).status).toBe(200);
+  const log = (await request(app).get('/api/vendor-ledger/audit-log')).body;
+  expect(log.map((x) => x.action)).toEqual(expect.arrayContaining(['cheque_bounced', 'bill_void']));
+  expect(log.find((x) => x.action === 'bill_void')).toMatchObject({ reason: 'entered twice', old_value: 'active', new_value: 'voided' });
+});
+
+// Audit fix B (10 Nov 2026): payment guard.
+describe('vendor payment guard', () => {
+  let bill;
+  beforeAll(async () => { bill = (await post('/api/vendor-ledger/bills', { vendor_name: 'Guard Vendor', bill_no: 'G-1', bill_date: '2026-11-01', total: 1000 })).body; });
+  const pay = (amount, extra = {}) => post(`/api/vendor-ledger/bills/${bill.id}/payments`, { amount, paid_at: '2026-11-10', ...extra });
+  test('a normal part payment is saved', async () => { const r = await pay(400); expect(r.status).toBe(201); expect(Number(r.body.amount)).toBe(400); });
+  test('the same payment a moment later is refused, unless confirmed', async () => {
+    const r = await pay(400); expect(r.status).toBe(409); expect(r.body.code).toBe('duplicate_payment');
+    expect((await pay(400, { confirm_duplicate: true })).status).toBe(201);
+  });
+  test('more than what is owed is refused and says how much is left', async () => {
+    const r = await pay(500); expect(r.status).toBe(409); expect(r.body.code).toBe('over_owed'); expect(r.body.owed).toBe(200);
+    expect((await pay(200)).status).toBe(201);
+    const full = await pay(1); expect(full.status).toBe(409); expect(full.body.error).toMatch(/fully paid/);
+  });
+  test('a voided bill cannot be paid', async () => {
+    const b2 = (await post('/api/vendor-ledger/bills', { vendor_name: 'Guard Vendor', bill_no: 'G-2', bill_date: '2026-11-01', total: 500 })).body;
+    await pool.query('UPDATE vendor_bills SET voided = TRUE WHERE id = $1', [b2.id]);
+    const r = await post(`/api/vendor-ledger/bills/${b2.id}/payments`, { amount: 100 }); expect(r.status).toBe(409); expect(r.body.code).toBe('bill_voided');
+  });
+  test('unknown bill is 404', async () => { expect((await post('/api/vendor-ledger/bills/999999/payments', { amount: 1 })).status).toBe(404); });
 });

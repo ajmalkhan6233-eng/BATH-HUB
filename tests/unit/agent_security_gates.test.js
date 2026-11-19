@@ -42,7 +42,7 @@ describe('(a) egress gate: every outgoing message is a draft', () => {
       'utils/whatsappReceiptSender.js',    // the customer's own receipt, no outside text
       'whatsapp-bridge.js',                // old bridge, live system only
     ]);
-    const skip = new Set(['node_modules', '.git', 'reference', 'tests', 'frontend', 'backups', '.claude', 'public', 'docs', 'audit', 'AGENT_GUIDE', 'apex_backend']);
+    const skip = new Set(['node_modules', '.git', 'reference', 'tests', 'frontend', 'backups', '.claude', 'public', 'docs', 'audit', 'AGENT_GUIDE', 'apex_backend', '.wwebjs_auth', '.wwebjs_cache']);
     const root = path.join(__dirname, '..', '..');
     const found = [];
     (function walk(d) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en"><head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <script src="/bathhub-theme.js"></script><script src="/bathhub-icons.js"></script><script src="/bathhub-a11y.js" defer></script>
 <script src="/offline-queue.js"></script><script>if (window.OfflineQueue) OfflineQueue.install();</script>
 <script>if (window.top === window.self) location.replace('/owner#/staff');</script>
@@ -29,7 +29,8 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--card)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 #msg{min-height:20px;margin-bottom:8px}
 </style><link rel="stylesheet" href="/bathhub-design.css">
-</head><body>
+<link rel="stylesheet" href="/bathhub-logo.css">
+<link rel="stylesheet" href="/compact-all.css"></head><body class="tight-cols">
 <h1>Staff</h1>
 <div class="sub">People, salary, loans, attendance, leave, advances and commission.</div>
 <div class="tabs" id="tabs"></div>
@@ -181,4 +182,6 @@ $('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-k]'
 show('staff');
 </script>
 <script src="/bathhub-logo.js"></script>
+<script src="/layla-door.js"></script>
+<script src="/staff-statement.js?v=18q"></script>
 </body></html>

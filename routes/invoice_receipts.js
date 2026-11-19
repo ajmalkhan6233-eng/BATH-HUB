@@ -15,8 +15,7 @@
 // - Sending: POST to the existing bridge /send (WHATSAPP_API_URL, default
 //   http://localhost:3001/send) with the image as base64 media + a text caption. This
 //   module never starts the bridge.
-// - Logo: drop public/receipt-logo.png in place and it appears in the empty slot at the
-//   top of the receipt. Shop name comes from SHOP_NAME (default "Royal Bath Hub Thihariya").
+// - Logo: public/receipt-logo.png (long Royal Bath Hub logo) fills the black band at the top of the receipt. Shop name comes from SHOP_NAME (default "Royal Bath Hub Thihariya").
 
 require('dotenv').config();
 const express = require('express');
@@ -103,6 +102,7 @@ async function findBill({ bill_id, bill_number }) {
         throw httpError(400, 'bill_id is required');
     }
     if (!r.rows.length) throw httpError(404, 'That bill was not found — generate the bill first');
+    { const vd = await pool.query(`SELECT 1 FROM pos_bill_voids WHERE bill_id = $1`, [r.rows[0].id]).catch(() => ({ rows: [] })); if (vd.rows.length) throw httpError(409, 'That bill was voided, so no receipt can be made'); }
     const bill = r.rows[0];
     bill.items = (await pool.query(`SELECT item_name, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;
     return bill;
@@ -111,8 +111,10 @@ async function findBill({ bill_id, bill_number }) {
 // ─── Receipt rendering ───────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lkr = n => { const v = Number(n || 0); const f = Number.isInteger(v) ? 0 : 2; return 'LKR ' + v.toLocaleString('en-US', { minimumFractionDigits: f, maximumFractionDigits: f }); };
+// Shop phone shown on the receipt: ONE setting (env SHOP_PHONE), default below.
+const SHOP_PHONE = process.env.SHOP_PHONE || '074 035 5536';
+const shopName = () => process.env.SHOP_NAME || 'Royal Bath Hub Thihariya';
 const { SHOP, contactFooter, mapQrDataUrl, mapQrBuffer } = require('../utils/shopInfo');
-const shopName = () => process.env.SHOP_NAME || SHOP.name;
 // adds the Google Maps QR (picture and PDF) to the receipt data; never fails the receipt
 async function withQr(r) { r.qr = await mapQrDataUrl(); r.qrBuf = await mapQrBuffer(); return r; }
 
@@ -132,33 +134,37 @@ function receiptData(bill, rec) {
 
 function receiptHtml(r) {
     const logo = fs.existsSync(LOGO_PATH)
-        ? `<img src="data:image/png;base64,${fs.readFileSync(LOGO_PATH).toString('base64')}" style="max-width:100%;max-height:100%">` : '';
+        ? `<img src="data:image/png;base64,${fs.readFileSync(LOGO_PATH).toString('base64')}" alt="">` : `<div class="shop">${esc(r.shop)}</div>`;
     const rows = r.items.map(i => `<div class="row"><span>${esc(i.name)} × ${i.qty}</span><span>${lkr(i.total)}</span></div>`).join('');
+    // Plain CSS only: no CDN, no web fonts, nothing fetched from the internet.
     return `<!doctype html><html><head><meta charset="utf-8"><style>
       *{box-sizing:border-box;margin:0;padding:0}
-      body{width:420px;background:#f7f4ec;font-family:'Segoe UI',Arial,sans-serif;color:#201c16}
-      .card{margin:0;background:#fff;border-top:10px solid #062e21}
-      .head{background:#062e21;color:#f7f4ec;text-align:center;padding:22px 20px 20px}
-      .logo{width:72px;height:72px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}
-      .shop{font-size:22px;font-weight:700;letter-spacing:.5px}
-      .tag{margin-top:4px;color:#c9a227;font-size:12px;letter-spacing:3px;text-transform:uppercase}
-      .body{padding:20px 24px}
-      .meta{display:flex;justify-content:space-between;font-size:13px;color:#5c4033;margin-bottom:4px}
-      .meta b{color:#201c16}
-      hr{border:0;border-top:1px dashed #d8d0bd;margin:14px 0}
+      body{width:420px;background:#e4e4e6;font-family:'Segoe UI',Arial,sans-serif;color:#0b0b0c}
+      .card{background:#fff;border-bottom:6px solid #c9a227}
+      .head{background:#0b0b0c;border-bottom:3px solid #c9a227;line-height:0}
+      .head img{display:block;width:100%;height:auto}
+      .head .shop{color:#c9a227;font-size:22px;font-weight:700;text-align:center;padding:22px 0;line-height:1.2}
+      .tag{background:#0b0b0c;color:#c9a227;text-align:center;font-size:12px;letter-spacing:4px;text-transform:uppercase;padding:7px 0}
+      .body{padding:18px 24px 14px}
+      .meta{display:flex;justify-content:space-between;font-size:13px;color:#6b6b70;margin-bottom:4px}
+      .meta b{color:#0b0b0c}
+      hr{border:0;border-top:1px dashed #b5b5b9;margin:14px 0}
       .row{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:4px 0}
       .row span:first-child{flex:1}
-      .disc{color:#5c4033}
-      .total{display:flex;justify-content:space-between;align-items:baseline;background:#f7f4ec;border-radius:6px;padding:12px 14px;margin-top:8px}
-      .total span:first-child{font-size:13px;color:#5c4033;text-transform:uppercase;letter-spacing:1px}
-      .total span:last-child{font-size:24px;font-weight:700;color:#062e21}
-      .notes{font-size:12px;color:#5c4033;margin-top:10px}
-      .thanks{text-align:center;padding:4px 24px 12px;font-size:13px;color:#5c4033}
-      .shopinfo{text-align:center;padding:0 24px 22px;font-size:12px;line-height:1.5;color:#5c4033}
+      .disc{color:#6b6b70}
+      .save{color:#8b6f47;font-weight:700}
+      .total{display:flex;justify-content:space-between;align-items:baseline;background:#0b0b0c;border-radius:6px;padding:12px 14px;margin:10px 0 6px}
+      .total span:first-child{font-size:13px;color:#c9a227;text-transform:uppercase;letter-spacing:1px}
+      .total span:last-child{font-size:24px;font-weight:700;color:#fff}
+      .notes{font-size:12px;color:#6b6b70;margin-top:10px}
+      .thanks{text-align:center;padding:2px 24px 10px;font-size:13px;color:#6b6b70}
+      .shopinfo{text-align:center;padding:0 24px 20px;font-size:12px;line-height:1.5;color:#6b6b70}
       .shopinfo img{width:96px;height:96px;display:block;margin:8px auto 4px}
       .shopinfo a{color:#0a4531}
+      .thanks b{display:block;color:#0b0b0c;font-size:14px;margin-top:4px}
     </style></head><body><div class="card">
-      <div class="head"><div class="logo">${logo}</div><div class="shop">${esc(r.shop)}</div><div class="tag">Receipt</div></div>
+      <div class="head">${logo}</div>
+      <div class="tag">Receipt</div>
       <div class="body">
         <div class="meta"><span>Bill</span><b>${esc(r.bill_no)}</b></div>
         <div class="meta"><span>Date</span><b>${esc(r.date)}</b></div>
@@ -167,14 +173,15 @@ function receiptHtml(r) {
         <hr>
         ${rows}
         <hr>
-        <div class="row"><span>Subtotal</span><span>${lkr(r.subtotal)}</span></div>
+        <div class="row"><span>${r.discount > 0 ? 'Real price' : 'Subtotal'}</span><span>${lkr(r.subtotal)}</span></div>
         ${r.discount > 0 ? `<div class="row disc"><span>Discount (${r.discount_pct}%)</span><span>-${lkr(r.discount)}</span></div>` : ''}
-        <div class="total"><span>Total</span><span>${lkr(r.total)}</span></div>
+        <div class="total"><span>${r.discount > 0 ? 'Price given' : 'Total'}</span><span>${lkr(r.total)}</span></div>
+        ${r.discount > 0 ? `<div class="row save"><span>You saved</span><span>${lkr(r.discount)} (${r.discount_pct}%)</span></div>` : ''}
         <div class="row"><span>Paid by</span><span>${esc(r.payment.toUpperCase())}</span></div>
         ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ''}
       </div>
-      <div class="thanks">Thank you for shopping with us!</div>
-      <div class="shopinfo">${esc(SHOP.address)}<br>Phone / WhatsApp: ${esc(SHOP.phone)}<br>${esc(SHOP.email)}<br>Find us on Google Maps:<br><a href="${esc(SHOP.mapsUrl)}">${esc(SHOP.mapsUrl)}</a>${r.qr ? `<img src="${r.qr}" alt="Map QR">` : ''}</div>
+      <div class="thanks">Thank you for shopping with us!<b>${esc(SHOP_PHONE)}</b></div>
+      <div class="shopinfo">${esc(SHOP.address)}<br>${esc(SHOP.email)}<br>Find us on Google Maps:<br><a href="${esc(SHOP.mapsUrl)}">${esc(SHOP.mapsUrl)}</a>${r.qr ? `<img src="${r.qr}" alt="Map QR">` : ''}</div>
     </div></body></html>`;
 }
 
@@ -207,8 +214,8 @@ function renderPdf(r) {
         const doc = new PDFDocument({ size: [300, 340 + r.items.length * 18], margin: 20 });
         const chunks = [];
         doc.on('data', c => chunks.push(c)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
-        doc.rect(0, 0, 300, 70).fill('#062e21');
-        doc.fillColor('#f7f4ec').fontSize(17).text(r.shop, 20, 22, { align: 'center', width: 260 });
+        doc.rect(0, 0, 300, 70).fill('#0b0b0c');
+        doc.fillColor('#f2f2f3').fontSize(17).text(r.shop, 20, 22, { align: 'center', width: 260 });
         doc.fillColor('#c9a227').fontSize(9).text('RECEIPT', { align: 'center', width: 260 });
         doc.fillColor('#201c16').fontSize(10);
         const line = (a, b) => { const y = doc.y; doc.text(a, 20, y, { width: 170 }); doc.text(b, 150, y, { width: 130, align: 'right' }); doc.moveDown(0.4); };
@@ -218,14 +225,16 @@ function renderPdf(r) {
         line('Phone', r.phone); doc.moveDown(0.5);
         r.items.forEach(i => line(`${i.name} x ${i.qty}`, lkr(i.total)));
         doc.moveDown(0.5);
-        line('Subtotal', lkr(r.subtotal));
+        line(r.discount > 0 ? 'Real price' : 'Subtotal', lkr(r.subtotal));
         if (r.discount > 0) line(`Discount (${r.discount_pct}%)`, '-' + lkr(r.discount));
-        doc.moveDown(0.3).fontSize(14).fillColor('#062e21');
-        const y = doc.y; doc.text('Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
+        doc.moveDown(0.3).fontSize(14).fillColor('#0b0b0c');
+        const y = doc.y; doc.text(r.discount > 0 ? 'Price given' : 'Total', 20, y, { width: 110 }); doc.text(lkr(r.total), 130, y, { width: 150, align: 'right' });
+        if (r.discount > 0) { doc.moveDown(0.3).fontSize(10).fillColor('#8b6f47'); line('You saved', `${lkr(r.discount)} (${r.discount_pct}%)`); doc.fillColor('#0b0b0c'); }
         doc.moveDown(0.6).fontSize(10).fillColor('#201c16'); line('Paid by', r.payment.toUpperCase());
-        if (r.notes) doc.moveDown(0.5).fontSize(9).fillColor('#5c4033').text(r.notes, 20, doc.y, { width: 260 });
-        doc.moveDown(1.5).fontSize(10).fillColor('#5c4033').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
-        doc.moveDown(0.6).fontSize(8).text(`${SHOP.address}\nPhone / WhatsApp: ${SHOP.phone}\n${SHOP.email}\nFind us on Google Maps:`, 20, doc.y, { align: 'center', width: 260 });
+        if (r.notes) doc.moveDown(0.5).fontSize(9).fillColor('#6b6b70').text(r.notes, 20, doc.y, { width: 260 });
+        doc.moveDown(1.5).fontSize(10).fillColor('#6b6b70').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
+        doc.fillColor('#0b0b0c').text(SHOP_PHONE, 20, doc.y, { align: 'center', width: 260 });
+        doc.moveDown(0.6).fontSize(8).fillColor('#6b6b70').text(`${SHOP.address}\n${SHOP.email}\nFind us on Google Maps:`, 20, doc.y, { align: 'center', width: 260 });
         doc.fillColor('#0a4531').text(SHOP.mapsUrl, 20, doc.y, { align: 'center', width: 260, link: SHOP.mapsUrl, underline: true });
         if (r.qrBuf) doc.image(r.qrBuf, 110, doc.y + 6, { width: 80 });
         doc.end();
@@ -351,7 +360,7 @@ router.post('/invoice-receipts/send', async (req, res) => {
 
         const data = await withQr(receiptData(bill, rec));
         const out = await renderReceipt(data);
-        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!\n\n${contactFooter()}`;
+        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\n${data.discount > 0 ? `Real price: ${lkr(data.subtotal)}\nPrice given: ${lkr(data.total)}\nYou saved: ${lkr(data.discount)} (${data.discount_pct}%)` : `Total: ${lkr(data.total)}`}\nThank you for shopping with us!\n\n${contactFooter()}`;
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {
@@ -377,3 +386,5 @@ module.exports = router;
 module.exports.normalizePhone = normalizePhone;
 module.exports.attachCustomer = attachCustomer;
 module.exports.isOnWhatsApp = isOnWhatsApp;
+module.exports.receiptHtml = receiptHtml;
+module.exports.renderReceipt = renderReceipt;

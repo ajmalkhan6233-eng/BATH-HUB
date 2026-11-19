@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Layla | Royal Bath Hub</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:#fff;color:#1f2430;font:15px/1.4 "RBH Sans","Segoe UI",Arial,sans-serif}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid #d9d4c5;background:#faf8f2}
+nav button{min-height:40px;padding:0 14px;border:1px solid #d9d4c5;border-radius:10px;background:#fff;color:#1f2430;font:inherit;cursor:pointer}
+nav button[aria-selected="true"]{background:#0B1B3A;color:#F6EFDC;border-color:#0B1B3A;font-weight:700}
+iframe{flex:1;width:100%;border:0;background:#fff}
+</style></head><body>
+<nav role="tablist" id="tabs"></nav>
+<iframe id="v" title="Layla"></iframe>
+<script>
+(function(){
+  // One Layla: each tab opens the page that used to be its own menu item. Agent Review and Agent Rules live inside the main shell, so they switch the shell page.
+  var T=[['Layla (WhatsApp)','/layla-owner.html'],['AI Assistant','/assistant.html'],['RBH Brain','/brain.html'],['Agent Review','#agentreview'],['Agent Rules','#agent-rules'],['Morning brief','/morning-brief.html'],['Due Board','/due_board.html'],['Audit log','/admin_audit.html']];
+  var nav=document.getElementById('tabs'),v=document.getElementById('v'),cur=0;
+  function open(i){
+    var u=T[i][1];
+    if(u.charAt(0)==='#'){try{parent.navigate(u.slice(1));return}catch(e){return}}
+    cur=i;try{localStorage.setItem('laylaTab',String(i))}catch(e){}
+    [].forEach.call(nav.children,function(b,k){b.setAttribute('aria-selected',k===i?'true':'false')});
+    if(v.getAttribute('src')!==u)v.src=u;
+  }
+  T.forEach(function(t,i){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=t[0];b.onclick=function(){open(i)};nav.appendChild(b)});
+  var s=0;try{s=+localStorage.getItem('laylaTab')||0}catch(e){}
+  if(!T[s]||T[s][1].charAt(0)==='#')s=0;
+  open(s);
+})();
+</script></body></html>

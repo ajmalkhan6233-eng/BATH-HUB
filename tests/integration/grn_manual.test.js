@@ -14,7 +14,8 @@ const pool = require('../../utils/pool');
 const app = express(); app.use(express.json()); app.use('/api', router);
 
 afterEach(() => jest.restoreAllMocks());
-const send = payload => request(app).post('/api/grn-manual').field('payload', typeof payload === 'string' ? payload : JSON.stringify(payload));
+const withTerms = payload => (typeof payload === 'string' ? payload : JSON.stringify({ credit_days: 0, ...payload }));   // credit days are now required (audit 16 Oct)
+const send = payload => request(app).post('/api/grn-manual').field('payload', withTerms(payload));
 const ok = { supplier_name: 'Lanka Tiles', grn_date: '2026-10-03', lines: [{ name: 'Floor tile A', qty: 10, unit_cost: 1500 }] };
 const rows = () => db.many('SELECT * FROM grn_records');
 

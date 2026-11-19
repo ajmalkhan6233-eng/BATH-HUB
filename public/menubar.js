@@ -1,0 +1,172 @@
+/* Classic menu bar for the owner shell (24 Oct 2026, from MENU_MAP.md).
+   Desktop: a menu bar under the top bar (File, Sales, Customers & Online, Vendors, Inventory, Banking & Money, Reports; profit reports live inside Reports) with drop-down lists.
+   Phone: the bottom "More" button opens the same groups as one-at-a-time lists (rows 48 px).
+   Touches no data. Every screen keeps its own key. A screen that does not exist yet shows "coming soon" and does nothing.
+   The map is also exported (window.RBHMenu.MAP) so tests can check that every screen appears exactly once. */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root && root.document) { root.RBHMenu = api; api.start(root); }
+})(typeof window !== 'undefined' ? window : null, function () {
+  'use strict';
+  // [group, [[key, label, soon?], ...]]
+  var MAP = [
+    ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
+    ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['dueboard', 'Due Board (bills and cheques by due date)'], ['purchasing', 'Purchasing']]],
+    ['Sales', [['pos', 'POS Billing'], ['salescomm', 'Sales Commission'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['allbills', 'All bills (view, download, edit, cancel)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown']]],
+    ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
+    ['Layla', [['layla', 'Layla (all AI in one place)']]],
+    ['Reports', [
+      ['--', 'Profit'], ['profit:daily', 'Daily profit'], ['profit:weekly', 'Weekly profit'], ['profit:monthly', 'Monthly profit'], ['profit:yearly', 'Yearly profit'], ['profit:item', 'Profit by item'], ['profit:category', 'Profit by category'],
+      ['--', 'Sales'], ['rep:sday', 'Sales by day'], ['rep:sweek', 'Sales by week'], ['rep:smonth', 'Sales by month'], ['reports', 'Daily summary and investor report'],
+      ['--', 'Stock and items'], ['rep:items', 'Items: cost, price, profit'], ['rep:svalue', 'Stock value by category'], ['rep:lowstock', 'Low stock (5 or less)'], ['rep:zero', 'Out of stock'], ['rep:noprice', 'Items with no price'], ['rep:nocost', 'Items with no cost'],
+      ['--', 'Vendors and cheques'], ['rep:vsum', 'Vendors: bought, paid, pending'], ['rep:vbills', 'Vendor bills: every bill'], ['rep:vone', 'One vendor: all bills'], ['rep:vcheq', 'Cheques given, not cleared'], ['rep:vdue', 'Bills still to pay, by due date'], ['rep:grn', 'GRN history: every goods-in line'],
+      ['--', 'All in one place'], ['reportshub', 'Report list (show, download, print)']
+    ]],
+    ['File', [['logins', 'Staff logins'], ['docinbox', 'Document Inbox'], ['documents', 'Documents'], ['branches', 'Branches'], ['policy', 'Policy Watch'], 
+      ['shoptools', 'Shop Tools'], ['shopcards', 'Shop Cards'], ['settings', 'Settings'], ['adminaudit', 'Audit Log (who changed what)'], ['auditacc', 'Accounting audit'], ['adminusers', 'Users and roles'], ['adminsettings', 'Shop details'], ['adminsystem', 'System']]],
+  ];
+  var HOME = ['dashboard', 'Home'];
+
+  function allKeys() { var o = [HOME[0]]; MAP.forEach(function (g) { g[1].forEach(function (i) { if (i[0] !== '--') o.push(i[0]); }); }); return o; }
+
+  function start(win) {
+    var doc = win.document;
+    if (doc.getElementById('rbh-menubar')) return;
+    var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
+    var exists = function (k) { return k.indexOf('sale:') === 0 ? (!!nav('pos') || !!doc.getElementById('page-pos')) : (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var labelOf = function (k, fallback) { if (k === '--' || k === 'reports' || k === 'reportshub' || k.indexOf(':') > 0) return fallback; var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
+    // Quotation and Building Packages open the POS screen in Quotation mode (public/pos-quote.js listens for the message).
+    function openPos(m) {
+      var f = doc.getElementById('pos-frame');
+      if (f) {
+        if (!f.getAttribute('src')) { f.setAttribute('src', '/pos-preview2.html' + (m === 'bill' ? '' : '#quote')); if (m === 'package') f.addEventListener('load', function once() { f.removeEventListener('load', once); try { f.contentWindow.postMessage({ pq: 'package' }, win.location.origin); } catch (e) {} }); }
+        else { try { f.contentWindow.postMessage({ pq: m }, win.location.origin); } catch (e) {} }
+      }
+      try { win.navigate('pos'); } catch (e) {}
+    }
+    function go(k) {
+      closeAll(); closeDrawer();
+      if (k.indexOf('sale:') === 0) { openPos(k.slice(5)); return; }
+      if (k === 'pos') { openPos('bill'); return; }
+      if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
+      if (k.indexOf('rep:') === 0) { var id = k.slice(4); win.__rbhPick = id; try { win.navigate('reportshub'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-reportshub'); try { f && f.contentWindow.postMessage({ type: 'report-pick', id: id }, win.location.origin); } catch (e) {} }, 300); setTimeout(function () { win.__rbhPick = ''; }, 3000); return; }
+      if (k === 'pending') { ensurePending(); }
+      if (k === 'helper') { ensureHelper(); }
+      if (k === 'logins') { ensureLogins(); }
+      if (k === 'stickers') { ensureStickers(); }
+      try { win.navigate(k); } catch (e) {}
+    }
+    win.rbhGo = go;   // the dashboard alerts use this to open a screen
+    function ensureLogins() {
+      if (doc.getElementById('page-logins') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'logins', label: 'Staff logins', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/staff_logins.html', sub: 'Cashier logins with a PIN: can only sell', after: 'dashboard' }); } catch (e) {}
+    }
+    function ensureHelper() {
+      if (doc.getElementById('page-helper') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'helper', label: 'Prices and reorder', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/stock_helper.html', sub: 'Set missing selling prices, reorder low stock by vendor', after: 'stock' }); } catch (e) {}
+    }
+    function ensureStickers() {
+      if (doc.getElementById('page-stickers') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'stickers', label: 'Stickers', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/stickers.html', sub: 'Make and print item stickers', after: 'stock' }); } catch (e) {}
+    }
+    function ensurePending() {
+      if (doc.getElementById('page-pending') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'pending', label: 'Awaiting delivery', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/pending_delivery.html', sub: 'Billed by a vendor, not delivered yet', after: 'stock' }); } catch (e) {}
+    }
+    function ensureProfit() {
+      if (doc.getElementById('page-profit') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'profit', label: 'Profit', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/profit.html', sub: 'Gross and net profit: day, week, month, year, item, category', after: 'dashboard' }); } catch (e) {}
+    }
+    var css = doc.createElement('style');
+    css.textContent = '#rbh-menubar{display:none;background:var(--bg-surface,#fff);border-bottom:1px solid var(--border-subtle,#ddd);padding:0 12px;position:sticky;top:60px;z-index:49;gap:2px;align-items:center;flex-wrap:wrap}' +
+      '@media(min-width:768px){#rbh-menubar{display:flex}}' +
+      '#rbh-menubar .mb-top{position:relative}#rbh-menubar button.mb-btn{background:transparent;color:inherit;border:0;font:inherit;font-size:14px;font-weight:600;min-height:34px;padding:0 10px;cursor:pointer;border-radius:8px}' +
+      '#rbh-menubar button.mb-btn:hover,#rbh-menubar button.mb-btn[aria-expanded=true]{background:var(--gold-bg-subtle,rgba(201,162,75,.15))}' +
+      '#rbh-menubar button:focus-visible,#rbh-drawer button:focus-visible{outline:3px solid var(--gold-primary,#C9A24B);outline-offset:1px}' +
+      '#rbh-menubar .mb-list{display:none;position:absolute;left:0;top:100%;min-width:230px;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border:1px solid var(--border-subtle,#ddd);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:6px;z-index:60;max-height:72dvh;overflow-y:auto}' +
+      '#rbh-menubar .mb-top.on .mb-list{display:block}' +
+      '.mb-item{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:transparent;color:inherit;border:0;font:inherit;font-size:14px;min-height:40px;padding:0 10px;border-radius:8px;cursor:pointer}' +
+      '.mb-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.65;padding:8px 10px 2px;pointer-events:none}' +
+      '.mb-item:hover{background:var(--gold-bg-subtle,rgba(201,162,75,.15))}.mb-item[disabled]{opacity:.5;cursor:default}.mb-item small{opacity:.7;font-size:11px}' +
+      '#rbh-drawer{position:fixed;inset:0;background:rgba(0,0,0,.7);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:9996;display:none}#rbh-drawer.on{display:block}' +
+      '#rbh-drawer .dr{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;background:var(--bg-surface,#fff);color:var(--text-primary,#111);border-radius:16px 16px 0 0;padding:8px 10px calc(16px + env(safe-area-inset-bottom))}' +
+      '#rbh-drawer .dh{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;font-weight:800;font-size:16px}' +
+      '#rbh-drawer .g>button.gh{display:flex;justify-content:space-between;width:100%;min-height:48px;background:transparent;color:inherit;border:0;border-bottom:1px solid var(--border-subtle,#ddd);font:inherit;font-size:15px;font-weight:700;padding:0 6px;cursor:pointer}' +
+      '#rbh-drawer .g.on>button.gh:after{content:"\\25BE"}#rbh-drawer .g>button.gh:after{content:"\\25B8"}' +
+      '#rbh-drawer .gl{display:none}#rbh-drawer .g.on .gl{display:block}#rbh-drawer .mb-item{min-height:48px;padding-left:18px}';
+    doc.head.appendChild(css);
+
+    var bar = doc.createElement('nav'); bar.id = 'rbh-menubar'; bar.setAttribute('role', 'menubar'); bar.setAttribute('aria-label', 'Main menu');
+    var drawer = doc.createElement('div'); drawer.id = 'rbh-drawer'; drawer.setAttribute('role', 'dialog'); drawer.setAttribute('aria-modal', 'true'); drawer.setAttribute('aria-label', 'Menu');
+    drawer.innerHTML = '<div class="dr"><div class="dh"><span>Menu</span><button type="button" class="mb-item" id="rbh-dclose" style="width:auto" aria-label="Close menu">Close</button></div><div id="rbh-dbody"></div></div>';
+    var topbar = doc.querySelector('header.topbar');
+    if (!topbar || !topbar.parentNode) return;
+    topbar.parentNode.insertBefore(bar, topbar.nextSibling); doc.body.appendChild(drawer);
+    // Stick the menu bar right under the real top bar (its height changes with screen size and zoom); a fixed 60px made it slide over the page heading.
+    function fitBar() { try { bar.style.top = Math.round(topbar.getBoundingClientRect().height) + 'px'; } catch (e) {} }
+    fitBar(); win.addEventListener('resize', fitBar); win.addEventListener('load', fitBar);
+    try { if (win.ResizeObserver) new win.ResizeObserver(fitBar).observe(topbar); } catch (e) {}
+
+    function itemBtn(k, label, soon) {
+      if (k === '--') { var h = doc.createElement('div'); h.className = 'mb-head'; h.setAttribute('role', 'presentation'); h.textContent = label; return h; }
+      var b = doc.createElement('button'); b.type = 'button'; b.className = 'mb-item'; b.setAttribute('role', 'menuitem'); b.dataset.k = k;
+      var ok = !soon && exists(k);
+      b.innerHTML = '<span></span>' + (ok ? '' : '<small>coming soon</small>'); b.firstChild.textContent = label;
+      if (!ok) b.disabled = true; else b.onclick = function () { go(k); };
+      return b;
+    }
+    function visible(g) { return g[1].filter(function (i) { return i[0] === '--' || i[2] || i[0].indexOf('profit:') === 0 || exists(i[0]); }); }
+    function build() {
+      bar.innerHTML = '';
+      var home = doc.createElement('button'); home.type = 'button'; home.className = 'mb-btn'; home.textContent = HOME[1]; home.onclick = function () { go('dashboard'); }; bar.appendChild(home); var posb = doc.createElement('button'); posb.type = 'button'; posb.className = 'mb-btn'; posb.textContent = 'POS'; posb.style.fontWeight = '700'; posb.onclick = function () { go('pos'); }; bar.appendChild(posb); var dlb = doc.createElement('button'); dlb.type = 'button'; dlb.className = 'mb-btn'; dlb.textContent = 'Daily Ledger'; dlb.style.fontWeight = '700'; dlb.onclick = function () { go('dailyledger'); }; bar.appendChild(dlb);
+      MAP.forEach(function (g) {
+        var items = visible(g); if (!items.length) return;
+        var top = doc.createElement('div'); top.className = 'mb-top';
+        var b = doc.createElement('button'); b.type = 'button'; b.className = 'mb-btn'; b.setAttribute('role', 'menuitem'); b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false'); b.textContent = g[0] + ' ▾';
+        var list = doc.createElement('div'); list.className = 'mb-list'; list.setAttribute('role', 'menu');
+        items.forEach(function (i) { list.appendChild(itemBtn(i[0], labelOf(i[0], i[1]), i[2])); });
+        b.onclick = function (e) { e.stopPropagation(); var on = top.classList.contains('on'); closeAll(); if (!on) { top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } }; if (items.length === 1) { b.textContent = g[0]; b.onclick = function (e) { e.stopPropagation(); go(items[0][0]); }; }
+        top.appendChild(b); top.appendChild(list); bar.appendChild(top);
+      });
+      var body = doc.getElementById('rbh-dbody'); body.innerHTML = '';
+      var h = itemBtn('dashboard', HOME[1], false); h.style.paddingLeft = '6px'; h.style.fontWeight = '700'; body.appendChild(h);
+      MAP.forEach(function (g, gi) {
+        var items = visible(g); if (!items.length) return;
+        var w = doc.createElement('div'); w.className = 'g';
+        var gh = doc.createElement('button'); gh.type = 'button'; gh.className = 'gh'; gh.textContent = g[0]; gh.setAttribute('aria-expanded', 'false');
+        var gl = doc.createElement('div'); gl.className = 'gl';
+        items.forEach(function (i) { gl.appendChild(itemBtn(i[0], labelOf(i[0], i[1]), i[2])); });
+        if (items.length === 1) { gh.onclick = function () { go(items[0][0]); }; } else gh.onclick = function () { var on = w.classList.contains('on'); Array.prototype.forEach.call(body.querySelectorAll('.g.on'), function (x) { x.classList.remove('on'); x.firstChild.setAttribute('aria-expanded', 'false'); }); if (!on) { w.classList.add('on'); gh.setAttribute('aria-expanded', 'true'); } };
+        w.appendChild(gh); w.appendChild(gl); body.appendChild(w);
+      });
+    }
+    function closeAll() { Array.prototype.forEach.call(bar.querySelectorAll('.mb-top.on'), function (t) { t.classList.remove('on'); t.firstChild.setAttribute('aria-expanded', 'false'); }); }
+    function closeDrawer() { drawer.classList.remove('on'); doc.documentElement.classList.remove('rbh-sheet'); }
+    function openDrawer() { build(); drawer.classList.add('on'); doc.documentElement.classList.add('rbh-sheet'); var f = drawer.querySelector('.gh'); if (f) f.focus(); }
+    doc.addEventListener('click', function (e) { if (!bar.contains(e.target)) closeAll(); });
+    // BLOCK: close on outside tap, also when the tap lands inside a screen frame (a click inside an iframe never reaches this page)
+    win.addEventListener('blur', closeAll);
+    function hookFrame(f) { try { var d = f.contentDocument; if (d && !d.__rbhMb) { d.__rbhMb = 1; d.addEventListener('pointerdown', closeAll, true); } } catch (e) {} }
+    Array.prototype.forEach.call(doc.querySelectorAll('iframe'), hookFrame);
+    doc.addEventListener('load', function (e) { if (e.target && e.target.tagName === 'IFRAME') hookFrame(e.target); }, true);
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeAll(); closeDrawer(); } });
+    drawer.addEventListener('mousedown', function (e) { if (e.target === drawer) closeDrawer(); });
+    doc.getElementById('rbh-dclose').onclick = closeDrawer;
+    // the phone "More" button opens this list instead of the old long side menu
+    doc.addEventListener('click', function (e) {
+      var m = e.target.closest && e.target.closest('#bottom-nav [data-go="__more"]');
+      if (m && win.matchMedia && win.matchMedia('(max-width:767px)').matches) { e.preventDefault(); e.stopImmediatePropagation(); openDrawer(); }
+    }, true);
+    ensureProfit(); build();
+    // Owner screens (Stock & items, Vendor 360, Stickers...) are added by other scripts a moment after load, on a slow PC even after 9 s.
+    // Rebuild the menu whenever the side list changes (not while a drop-down is open).
+    try {
+      var side = doc.querySelector('.sidebar-nav'), t = null;
+      if (side && win.MutationObserver) new win.MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { if (!bar.querySelector('.mb-top.on') && !drawer.classList.contains('on')) build(); }, 400); }).observe(side, { childList: true, subtree: true });
+    } catch (e) { /* the timed rebuilds below still run */ }
+    [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
+  }
+  return { MAP: MAP, HOME: HOME, allKeys: allKeys, start: start };
+});
