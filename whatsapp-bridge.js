@@ -65,6 +65,7 @@ app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
 // 19 Nov (AJ): the QR screen would not scan. Alternative: link with an 8-letter CODE typed into the phone (WhatsApp > Linked devices > Link a device > Link with phone number instead).
 // Turned on only when WA_PAIR_PHONE is set (digits with country code, the number of the WhatsApp that sends the receipts). Never logged to a file other than the console and /pair on this PC.
+const WA_WEB_VERSION = String(process.env.WA_WEB_VERSION || '2.3000.1055285117-alpha');
 const PAIR_PHONE = String(process.env.WA_PAIR_PHONE || '').replace(/\D/g, '');
 let lastCode = null;
 const client = new Client({
@@ -72,7 +73,8 @@ const client = new Client({
     authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),   // absolute: the login must not depend on which folder pm2 or a scheduled task started us from
     // 19 Nov: the library timed out 30 s after every start ("Waiting failed: 30000ms exceeded" in Client.inject) on this slow PC. Give WhatsApp Web 3 minutes to load.
     authTimeoutMs: Number(process.env.WA_AUTH_TIMEOUT_MS || 180000),
-    ...(process.env.WA_WEB_VERSION ? { webVersion: process.env.WA_WEB_VERSION, webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/' + process.env.WA_WEB_VERSION + '.html' } } : {}),
+    // 19 Nov: this WhatsApp Web version is the one that worked on the shop PC (public version name, no secret). Override with WA_WEB_VERSION, or set it to 'off' to use the library default.
+    ...(WA_WEB_VERSION !== 'off' ? { webVersion: WA_WEB_VERSION, webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/' + WA_WEB_VERSION + '.html' } } : {}),
     puppeteer: {
         protocolTimeout: 240000,
         headless: true,

@@ -6,13 +6,13 @@
   var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del: function (k) { try { localStorage.removeItem(k); } catch (e) {} } };
   var STALE_MIN = 30;           // older than this: say so, the shop PC may be off
   var GRACE_MIN = 15;           // leaving the app (or changing page) for less than this does NOT lock it again
-  var passcode = null, snap = null, ckey = null, ckeySalt = null, tab = 'home', hiddenAt = 0;
+  var sealMeta = null, passcode = null, snap = null, ckey = null, ckeySalt = null, tab = 'home', hiddenAt = 0;
 
   // ---------- pure helpers (also used by the test) ----------
   function b64(s) { var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
   async function deriveKey(sealed, pass) {   // not extractable: the key itself can never be read back out
     var base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
-    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(sealed.salt), iterations: sealed.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(sealed.salt), iterations: sealed.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   }
   async function decryptWith(key, sealed) {
     var plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(sealed.iv) }, key, b64(sealed.ct));
@@ -52,6 +52,7 @@
   // icons: Lucide (ISC licence), inline, fixed strings only
   var ICONS = {"trend":"<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>","week":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/><path d=\"M8 14h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 18h.01\"/><path d=\"M12 18h.01\"/><path d=\"M16 18h.01\"/>","month":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>","cash":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","pay":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>","box":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>","top":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>"};
   ICONS.home = "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>";
+  ICONS.cart = "<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>";
   ICONS.doc = "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>";
   ICONS.face = "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\"/><path d=\"M17 3h2a2 2 0 0 1 2 2v2\"/><path d=\"M21 17v2a2 2 0 0 1-2 2h-2\"/><path d=\"M7 21H5a2 2 0 0 1-2-2v-2\"/><path d=\"M8 14s1.5 2 4 2 4-2 4-2\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/>";
   var TITLE_ICON = { 'Today': 'trend', 'This week': 'week', 'This month': 'month', 'Money in today': 'cash', 'To pay': 'pay', 'Stock': 'box', 'Best sellers this month': 'top', 'Face ID': 'face' };
@@ -209,7 +210,35 @@
     box.appendChild(c);
   }
 
-  var TABS = [['home', 'Home', 'home', rHome], ['sales', 'Sales', 'trend', rSales], ['stock', 'Stock', 'box', rStock], ['money', 'Money', 'cash', rMoney], ['cheques', 'Cheques', 'doc', rCheques]];
+
+  var EXTRA = { profit: null, sell: null, stockExtras: [] };
+  // ---- hooks for the modules (profit.js, act.js). They get the screen helpers and a way to send a LOCKED request to the shop PC.
+  async function encryptWith(obj) {
+    if (!ckey || !sealMeta) throw new Error('Open with your passcode first.');
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    try { var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, ckey, new TextEncoder().encode(JSON.stringify(obj))); }
+    catch (e) { throw new Error('Please close the app, open with your passcode, then try again.'); }
+    return { v: 1, iter: sealMeta.iter, salt: sealMeta.salt, iv: enc64(iv), ct: enc64(new Uint8Array(ct)) };
+  }
+  async function toShop(cmd) {   // phone -> locked inbox. Returns the request id.
+    var w = LS.get('rbh_w'), t = LS.get('rbh_t'); if (!w || !t) throw new Error('This phone is not paired yet.');
+    var id = enc64(crypto.getRandomValues(new Uint8Array(12))).replace(/[+/=]/g, 'x'); cmd.id = id; cmd.ts = Date.now();
+    var r = await fetch(w + '/inbox', { method: 'POST', headers: { 'X-Read-Token': t, 'Content-Type': 'application/json' }, body: JSON.stringify(await encryptWith(cmd)) });
+    if (r.status === 429) throw new Error('Too many waiting. Try again in a minute.');
+    if (!r.ok) throw new Error('Could not reach the shop mailbox (' + r.status + ').');
+    return id;
+  }
+  async function fromShop(id) {  // locked answer, or null while the PC has not answered yet
+    var w = LS.get('rbh_w'), t = LS.get('rbh_t'), r = await fetch(w + '/out/' + id, { headers: { 'X-Read-Token': t }, cache: 'no-store' });
+    if (r.status === 404) return null; if (!r.ok) throw new Error('Could not reach the shop mailbox (' + r.status + ').');
+    return decryptWith(ckey, await r.json());
+  }
+  window.RBHP = { EXTRA: EXTRA, LS: LS, rs: rs, el: el, row: row, card: card, bigCard: bigCard, tapRow: tapRow, sheet: sheet, closeSheet: closeSheet, find: find, none: none, toShop: toShop, fromShop: fromShop, snap: function () { return snap; }, redraw: function () { if (snap) render(snap); } };
+  // Tabs are modules. profit.js adds Profit, act.js adds Sell and the Order card. If a module is missing the app still works.
+  var TABS = [['home', 'Home', 'home', rHome], ['profit', 'Profit', 'trend', function (s, b) { if (EXTRA.profit) EXTRA.profit(s, b); else rSales(s, b); }],
+    ['sell', 'Sell', 'cart', function (s, b) { if (EXTRA.sell) EXTRA.sell(s, b); else b.appendChild(el('div', 'dim', 'Sell is not loaded.')); }],
+    ['stock', 'Stock', 'box', function (s, b) { rStock(s, b); EXTRA.stockExtras.forEach(function (f) { f(s, b); }); }],
+    ['money', 'Money', 'cash', function (s, b) { rMoney(s, b); rCheques(s, b); }]];
   function drawTabs() {
     var n = $('tabs'); n.textContent = '';
     TABS.forEach(function (t) {
@@ -301,9 +330,9 @@
 
   // open a sealed copy: the kept key if it fits (same salt), else the passcode. Neither: ask again.
   async function openSealed(sealed) {
-    if (ckey && ckeySalt === sealed.salt) { try { return await decryptWith(ckey, sealed); } catch (e) { ckey = null; } }
+    if (ckey && ckeySalt === sealed.salt) { sealMeta = { salt: sealed.salt, iter: sealed.iter }; try { return await decryptWith(ckey, sealed); } catch (e) { ckey = null; } }
     if (!passcode) { var e2 = new Error('Please open again with your passcode.'); e2.needPass = true; throw e2; }
-    ckey = await deriveKey(sealed, passcode); ckeySalt = sealed.salt;
+    ckey = await deriveKey(sealed, passcode); ckeySalt = sealed.salt; sealMeta = { salt: sealed.salt, iter: sealed.iter };
     return decryptWith(ckey, sealed);
   }
 
