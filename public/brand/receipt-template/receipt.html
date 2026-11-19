@@ -39,6 +39,11 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
 .thanks { font-weight:700; font-style:italic; font-size:34px; margin-bottom:0; color:#fff; }
 .wa { display:inline-block; background:#25D366; color:#06240f; font-weight:800; font-size:25px; padding:8px 22px; border-radius:999px; }
 .shop-info { font-size:21px; color:#e8cf8a; margin-top:10px; line-height:1.35; }
+.mapfoot { display:flex; align-items:center; gap:22px; margin:0 -56px; padding:14px 56px; background:#f6efdc; border-top:4px solid #c9a24b; color:#3a3f55; }
+.mapfoot img { width:120px; height:120px; flex:none; background:#fff; padding:5px; border:2px solid #c9a24b; }
+.mapfoot .mt { font-size:22px; line-height:1.4; word-break:break-all; }
+.mapfoot .mt b { display:block; font-size:20px; letter-spacing:.08em; color:#0b1b3a; word-break:normal; margin-bottom:2px; }
+.mapfoot .mt a { color:#7a5f1f; text-decoration:underline; }
 .bar { height:12px; margin:0 -56px; background:linear-gradient(90deg,#c9a24b,#25D366 50%,#c9a24b); }
 
 .top{position:relative}
@@ -94,6 +99,7 @@ td { padding:8px 0; border-bottom:1px solid rgba(17,17,17,.13); vertical-align:t
   </div>
   </div>
   <div class="thanks" id="thanks"></div>
+  <div class="mapfoot" id="mapfoot"><img id="mapQr" alt="Map QR"><div class="mt"><b>FIND US ON GOOGLE MAPS</b><span id="mapAddr"></span><br><span id="mapContact"></span><br>Scan the QR code, or open:<br><a id="mapLink"></a></div></div>
   <div class="bar"></div>
 </div>
 
@@ -114,7 +120,7 @@ function renderReceipt(d) {
   ];
 
   $('rbNo').textContent = d.billNo ? 'Bill #' + d.billNo : '';
-  $('addr').innerHTML = (d.address || 'No. 173/1, Kandy Road, Thihariya') + ' &nbsp;|&nbsp; WhatsApp <b>' + (d.phone || '074 035 5536') + '</b>';
+  $('addr').innerHTML = (d.address || 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka') + '<br>Phone / WhatsApp <b>' + (d.phone || '+94 74 035 5536') + '</b>';
   const metaGrid = $('metaGrid');
   metaGrid.innerHTML = '';
   metaData.forEach(([label, val]) => {
@@ -206,12 +212,18 @@ function renderReceipt(d) {
   $('thanks').textContent = d.thanks || 'Thank you for choosing Royal Bath Hub';
   
 
+  // Official footer: Google Maps link + QR (utils/shopInfo.js); the QR picture is waited for before the screenshot
+  const mapUrl = String(d.mapsUrl || '').replace(/&amp;/g, '&');
+  $('mapfoot').style.display = mapUrl ? 'flex' : 'none';
+  $('mapLink').textContent = mapUrl; $('mapLink').href = mapUrl;
+  $('mapAddr').innerHTML = d.address || ''; $('mapContact').innerHTML = (d.phone ? 'Phone / WhatsApp: ' + d.phone : '') + (d.email ? ' &nbsp;|&nbsp; ' + d.email : '');
   $('fx').className = 'fx f' + ((d.frame | 0) % 5);
   if (d.qrSvg) {
     $('qrContainer').innerHTML = d.qrSvg;
   }
 
-  document.body.dataset.ready = '1';
+  const qi = $('mapQr'), done = () => { document.body.dataset.ready = '1'; };
+  if (d.qr) { qi.src = d.qr; if (!qi.complete) { qi.onload = done; qi.onerror = done; } else done(); } else { qi.style.display = 'none'; done(); }
 }
 
 document.fonts.ready.then(() => renderReceipt(window.RECEIPT_DATA));

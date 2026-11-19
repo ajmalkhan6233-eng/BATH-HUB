@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
+const { SHOP, mapQrDataUrl } = require('./shopInfo');
 
 const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
 const DEFAULT_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
@@ -41,9 +42,12 @@ function cleanBill(d) {
   if (!(discount >= 0)) throw Object.assign(new Error('discount must be 0 or more'), { status: 400 });
 
   const out = { items, discount };
-  if (d.shopName) out.shopName = text(d.shopName, 60);
-  if (d.address != null) out.address = esc(text(d.address, 160));
-  if (d.phone != null) out.phone = esc(text(d.phone, 40));
+  // Official shop details are the default (utils/shopInfo.js); a caller can still send its own.
+  out.shopName = text(d.shopName || SHOP.name, 60);
+  out.address = esc(text(d.address != null ? d.address : SHOP.address, 160));      // the template writes the address as HTML
+  out.phone = esc(text(d.phone != null ? d.phone : SHOP.phone, 40));
+  out.email = esc(text(d.email != null ? d.email : SHOP.email, 80));
+  out.mapsUrl = esc(text(d.mapsUrl || SHOP.mapsUrl, 120));
   if (d.billNo != null) out.billNo = text(d.billNo, 30);
   if (d.date) out.date = text(d.date, 30);
   if (d.customer != null) out.customer = text(d.customer, 80);
@@ -91,7 +95,8 @@ function idleSoon() {
 }
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
   const data = cleanBill(bill);
-  
+  data.qr = await mapQrDataUrl();                                // QR of the Google Maps link (null if the library is missing: the link text still shows)
+
   // QR = shop WhatsApp chat (opens a chat with the shop number, message already typed). Styled: rounded dots, gold-ringed eyes, RBH logo plate in the middle (error correction H keeps it scannable).
   const th = require('./receiptTheme').pickFor(data.billNo); data.frame = (bill && bill.frame != null) ? bill.frame : (th.frame || 0); data.set = (bill && bill.set) || th.set; data.hdr = (bill && bill.hdr) || th.hex; data.hdrRgb = (bill && bill.hdr) ? [1, 3, 5].map(i => parseInt(String(bill.hdr).slice(i, i + 2), 16)).join(',') : th.rgb;
   try { data.qrSvg = brandedQr(WA_LINK); } catch (e) { data.qrSvg = ''; }
