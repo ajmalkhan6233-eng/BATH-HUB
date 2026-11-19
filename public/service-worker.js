@@ -4,7 +4,7 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v128-dash2';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
+const VERSION = 'v129-audit1';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
     if (NO_CACHE_API.test(url.pathname + url.search)) return;
     event.respondWith((async () => {
       try {
-        const res = await fetchT(req, url.pathname.indexOf('/api/dashboard') === 0 ? 30000 : undefined);   // 16 Nov: Home numbers waited only 8 s, then an OLD saved copy showed (numbers flipped)
+        const res = await fetchT(req, (url.pathname.indexOf('/api/dashboard') === 0 || url.pathname.indexOf('/api/home') === 0 || url.pathname.indexOf('/api/profit') === 0) ? 30000 : 20000);   // 16 Nov: Home numbers waited only 8 s, then an OLD saved copy showed (numbers flipped)
         if (isDown(res)) throw new Error('server down');
         if (res.ok) { const copy = res.clone(); caches.open(API_CACHE).then(c => c.put(req, copy)); }
         return res;

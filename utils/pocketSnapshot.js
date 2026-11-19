@@ -73,7 +73,9 @@ async function build(pool, now = new Date()) {
     ...(bills || []).map((r) => ({ kind: 'bill', who: r.vendor_name, ref: r.bill_no, due: ymd(r.due_date), amount: num(r.owed) })),
     ...(cheques || []).map((r) => ({ kind: 'cheque', who: r.payee, ref: r.cheque_no, due: ymd(r.due_date), amount: num(r.amount) })),
   ].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
-  const overdue = dueItems.filter((x) => x.due && x.due < today);
+  // 19 Nov (AJ): a bill with no payment date is NOT overdue. Only a cheque whose date has passed counts.
+  const overdue = dueItems.filter((x) => x.kind === 'cheque' && x.due && x.due < today);
+  const undated = dueItems.filter((x) => x.kind === 'bill' && !x.due);
 
   // profit (gross = sales - cost; "net" = gross - the running cost per day AJ set, from the day he set it)
   const sl = new Date(now.getTime() + 5.5 * 3600e3), tdy = ymd(sl), yst = ymd(new Date(sl.getTime() - 86400e3));
@@ -97,7 +99,7 @@ async function build(pool, now = new Date()) {
     top_month: top ? top.map((r) => ({ name: r.name, qty: num(r.qty), revenue: num(r.revenue) })) : null,
     stock: stock && stock[0] ? { items: num(stock[0].items), out: num(stock[0].out_of_stock), low: num(stock[0].low_stock),
       low_list: (low || []).map((r) => ({ code: r.item_code, name: r.name, qty: num(r.stock_level), min: num(r.reorder_threshold) })) } : null,
-    due: (bills || cheques) ? { overdue_count: overdue.length, overdue_amount: overdue.reduce((s, x) => s + x.amount, 0),
+    due: (bills || cheques) ? { pending_dates: undated.length, overdue_count: overdue.length, overdue_amount: overdue.reduce((s, x) => s + x.amount, 0),
       next: dueItems.slice(0, 15) } : null,
     // v2 (the phone tabs)
     bills: billsToday ? billsToday.map((r) => ({ id: r.id, no: r.bill_number, t: r.t, who: r.customer_name || '', total: num(r.total), pay: r.payment_method || 'cash', profit: Math.round(num(r.total) - (costByBill.get(r.id) || 0)),

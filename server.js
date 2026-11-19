@@ -684,6 +684,7 @@ app.use('/api', require('./routes/brain'));   // /api/brain/* (RBH Brain: owner-
 app.use('/api', require('./routes/grn_match'));   // /api/grn-match (GRN: which shop item is each bill line; read-only on products)
 app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vendor bills and cheques by due date; read-only)
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
+app.use('/api', require('./routes/audit_checks'));            // read-only audit checks (19 Nov): duplicate codes, no-cost items, two cheque lists
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
 app.use('/api/sale-profit', require('./routes/sale_profit')); // live profit of the sale on screen (owner only, read-only) -> /api/sale-profit
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
@@ -728,6 +729,7 @@ require('./scripts/notify_due_soon').start();
 // Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
 require('./utils/selfRun').start(require('./utils/pool'));
 require('./utils/pocketSnapshot').start(require('./utils/pool'));
+require('./utils/safeIndexes').run(require('./utils/pool')).catch(() => {});   // speed: plain indexes only (19 Nov audit)
 require('./utils/pocketInbox').start(require('./utils/pool'));   // phone app: make a bill / order stock (does nothing unless POCKET_* are in .env)   // phone app snapshot (does nothing unless POCKET_* are in .env)
 app.use('/api', require('./routes/selfrun'));
 

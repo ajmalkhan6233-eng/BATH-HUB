@@ -19,8 +19,8 @@ const bills = (title, p) => ({ title, sum: 5, cols: [['Bill', text], ['Time', te
   sql: `SELECT b.bill_number, to_char(b.created_at,'DD Mon HH24:MI'), COALESCE(NULLIF(b.customer_name,''),'Walk-in'), COALESCE(b.payment_method,'cash'), b.discount_amount, b.total
         FROM pos_bills b ${LIVE} AND ${p} ORDER BY b.created_at DESC LIMIT 200` });
 const profit = (title, p) => ({ title, sum: 4, note: 'Profit only for items that have a cost. Blank = cost not known yet.', cols: [['Item', text], ['Sold', num], ['Sales', money], ['Cost', money], ['Profit', money]],
-  sql: `SELECT i.item_name, SUM(i.qty), SUM(i.line_total), SUM(CASE WHEN pr.avg_cost > 0 THEN i.qty * pr.avg_cost END),
-        SUM(CASE WHEN pr.avg_cost > 0 THEN i.line_total - i.qty * pr.avg_cost END) AS profit
+  sql: `SELECT i.item_name, SUM(i.qty), SUM(i.line_total), SUM(CASE WHEN COALESCE(NULLIF(i.unit_cost,0), pr.avg_cost, 0) > 0 THEN i.qty * COALESCE(NULLIF(i.unit_cost,0), pr.avg_cost) END),
+        SUM(CASE WHEN COALESCE(NULLIF(i.unit_cost,0), pr.avg_cost, 0) > 0 THEN i.line_total - i.qty * COALESCE(NULLIF(i.unit_cost,0), pr.avg_cost) END) AS profit
         FROM pos_bill_items i LEFT JOIN products pr ON pr.item_code = i.item_code JOIN pos_bills b ON b.id = i.bill_id ${LIVE} AND ${p}
         GROUP BY i.item_name ORDER BY profit DESC NULLS LAST LIMIT 200` });
 const expenses = (title, where) => ({ title, sum: 3, cols: [['Date', text], ['Category', text], ['What for', text], ['Amount', money]],
