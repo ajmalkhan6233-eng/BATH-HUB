@@ -2495,13 +2495,22 @@
       rows = (data.rows||[]).map(r=>Object.assign(blankRow(), r));
       // 18 Nov: an empty day is filled from that day's POS bills (receipt, sale, how paid, profit), so past days need no typing.
       let autoFilled = false;
-      if (!rows.some(rowHasData)){
-        try{
-          const pr = await fetch("/api/daily-sales-live/"+date+"/rows", {credentials:"same-origin", cache:"no-store"});
-          if (seq !== loadSeq) return;
-          if (pr.ok){ const pj = await pr.json(); if (pj.rows && pj.rows.length){ rows = pj.rows.map(r=>Object.assign(blankRow(), r)); autoFilled = true; } }
-        }catch(e){ /* POS list not reachable: leave the day empty */ }
-      }
+      // 19 Nov: also on a day that already has rows, POS bills made since are added at the bottom (matched by receipt number), so new sales never go missing.
+      try{
+        const pr = await fetch("/api/daily-sales-live/"+date+"/rows", {credentials:"same-origin", cache:"no-store"});
+        if (seq !== loadSeq) return;
+        if (pr.ok){
+          const pj = await pr.json();
+          if (pj.rows && pj.rows.length){
+            if (!rows.some(rowHasData)){ rows = pj.rows.map(r=>Object.assign(blankRow(), r)); autoFilled = true; }
+            else {
+              const have = new Set(rows.map(r=>String(r.receipt||"").trim().toUpperCase()).filter(Boolean));
+              const add = pj.rows.filter(r=>!have.has(String(r.receipt||"").trim().toUpperCase())).map(r=>Object.assign(blankRow(), r));
+              if (add.length){ rows = rows.filter(rowHasData).concat(add); autoFilled = true; }
+            }
+          }
+        }
+      }catch(e){ /* POS list not reachable: leave the day as it is */ }
       document.getElementById("dayRemarks").value = data.dayRemarks || "";
       exps = (data.expenses||[]).map(r=>({desc:r.description||"", amt:r.amount??""}));
       pays = (data.payouts ||[]).map(r=>({desc:r.description||"", amt:r.amount??"", staff:r.staff||"", type:r.type||""}));
