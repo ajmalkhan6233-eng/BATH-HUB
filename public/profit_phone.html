@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
+<script src="/bathhub-theme.js"></script>
+<script>if (window.top === window.self) location.replace('/owner#/profitphone');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profit — Royal Bath Hub</title>
+<style>
+  :root{--bg:var(--bg-page,#f6f7f5);--card:var(--card,#fff);--tx:var(--text,#1c2a24);--mut:#6b7a73;--ac:#0a6b4a;--bd:#dfe5e1;--red:#b91c1c}
+  @media (prefers-color-scheme:dark){:root{--bg:var(--bg-page,#10181a);--card:var(--card,#1a2427);--tx:var(--text,#e8f0ec);--mut:#9db0a8;--bd:#2a3a3e;--red:#f87171}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,"Segoe UI",sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:10px 12px 40px}
+  h1{font-size:18px;margin:4px 0}.mut{color:var(--mut);font-size:13px}
+  .tabs{display:flex;gap:6px;margin:8px 0}.tabs button{flex:1;min-height:44px;font:inherit;font-weight:700;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px}
+  .tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+  .rng{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.rng button{min-height:40px;padding:0 12px;font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px}
+  .rng button.on{border-color:var(--ac);color:var(--ac);font-weight:700}
+  .rng input{min-height:40px;font:inherit;border:1px solid var(--bd);border-radius:10px;padding:0 8px;background:var(--card);color:var(--tx)}
+  .row{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px;margin:6px 0;display:flex;gap:10px;align-items:center}
+  .row .g{flex:1;min-width:0}.row b{display:block;overflow-wrap:anywhere}.row small{color:var(--mut)}.row .a{text-align:right;white-space:nowrap}
+  .pos{color:#1b7a46;font-weight:800}.neg{color:var(--red);font-weight:800}
+  .big{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:6px 0}.big .v{font-size:26px;font-weight:800}
+  .lines{margin:0 0 8px 8px;border-left:3px solid var(--bd);padding-left:8px}
+  .warn{color:var(--red);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Profit</h1><div class="mut" id="sub">Estimate: sale minus what the item cost.</div>
+  <div class="tabs" id="tabs"><button data-t="inv" class="on">By invoice</button><button data-t="item">By item</button><button data-t="net">Net profit</button></div>
+  <div class="rng" id="rng">
+    <button data-r="0" class="on">Today</button><button data-r="1">Yesterday</button><button data-r="7">7 days</button><button data-r="m">This month</button>
+    <input type="date" id="f"><input type="date" id="t">
+  </div>
+  <div id="out" class="mut">Loading…</div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var tab = 'inv', from = '', to = '';
+  var $ = function (i) { return document.getElementById(i); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var rs = function (n) { return 'Rs ' + Math.round(Number(n || 0)).toLocaleString('en-LK'); };
+  var cls = function (n) { return Number(n) < 0 ? 'neg' : 'pos'; };
+  // Sri Lanka today (UTC+5:30), as YYYY-MM-DD
+  function lk(offset) { var d = new Date(Date.now() + 5.5 * 3600 * 1000 - (offset || 0) * 86400000); return d.toISOString().slice(0, 10); }
+  function setRange(r) {
+    if (r === 'm') { from = lk(0).slice(0, 8) + '01'; to = lk(0); }
+    else if (r === '1') { from = to = lk(1); }
+    else if (r === '7') { from = lk(6); to = lk(0); }
+    else { from = to = lk(0); }
+    $('f').value = from; $('t').value = to;
+  }
+  function get(u) { return fetch(u, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Please log in as owner' : 'Could not load'); return r.json(); }); }
+  var q = function () { return 'from=' + from + '&to=' + to; };
+  function fail(e) { $('out').innerHTML = '<span class="warn">' + esc(e.message) + ' (no number shown rather than a wrong one)</span>'; }
+
+  function inv() {
+    get('/api/profit/bills?' + q()).then(function (d) {
+      var s = 0, c = 0; d.rows.forEach(function (b) { s += b.sale; c += b.cost; });
+      var h = '<div class="big"><div class="mut">' + d.rows.length + ' bills · sale ' + rs(s) + '</div><div class="v ' + cls(s - c) + '">' + rs(s - c) + '</div><div class="mut">profit on these bills</div></div>';
+      if (!d.rows.length) h += '<div class="mut">No bills in this range.</div>';
+      h += d.rows.map(function (b) {
+        return '<div class="row" data-id="' + b.id + '" style="cursor:pointer"><div class="g"><b>' + esc(b.no) + ' · ' + esc(b.day.slice(8) + '-' + b.day.slice(5, 7)) + ' ' + esc(b.time) + '</b><small>' + esc(b.customer || 'Walk-in') + (b.salesman ? ' · ' + esc(b.salesman) : '') + ' · sale ' + rs(b.sale) + (b.no_cost ? ' · <span class="warn">' + b.no_cost + ' line no cost</span>' : '') + '</small></div><div class="a ' + cls(b.profit) + '">' + rs(b.profit) + '</div></div><div class="lines" id="l' + b.id + '" hidden></div>';
+      }).join('');
+      $('out').innerHTML = h;
+      [].forEach.call($('out').querySelectorAll('.row[data-id]'), function (r) {
+        r.onclick = function () {
+          var id = r.getAttribute('data-id'), box = $('l' + id);
+          if (!box.hidden) { box.hidden = true; return; }
+          get('/api/profit/bill/' + id).then(function (x) {
+            box.innerHTML = x.rows.map(function (l) { return '<div class="row"><div class="g"><b>' + esc(l.name || l.code) + '</b><small>' + l.qty + ' × · sale ' + rs(l.revenue) + ' · cost ' + (l.no_cost ? '<span class="warn">none</span>' : rs(l.cost)) + '</small></div><div class="a ' + cls(l.profit) + '">' + rs(l.profit) + '</div></div>'; }).join('');
+            box.hidden = false;
+          }).catch(fail);
+        };
+      });
+    }).catch(fail);
+  }
+  function item() {
+    get('/api/profit/items?by=item&' + q()).then(function (d) {
+      var p = 0; d.rows.forEach(function (r) { p += r.profit; });
+      var h = '<div class="big"><div class="mut">' + d.rows.length + ' items sold</div><div class="v ' + cls(p) + '">' + rs(p) + '</div><div class="mut">profit on these items, best first</div></div>';
+      if (!d.rows.length) h += '<div class="mut">Nothing sold in this range.</div>';
+      h += d.rows.map(function (r) { return '<div class="row"><div class="g"><b>' + esc(r.name) + '</b><small>' + esc(r.key) + ' · ' + r.qty + ' sold · sale ' + rs(r.revenue) + '</small></div><div class="a ' + cls(r.profit) + '">' + rs(r.profit) + '</div></div>'; }).join('');
+      $('out').innerHTML = h;
+    }).catch(fail);
+  }
+  function net() {
+    Promise.all([get('/api/profit?group=year&' + q()), get('/api/home-solid').catch(function () { return null; })]).then(function (a) {
+      var t = a[0].total, H = a[1], days = 1, rc = 0;
+      if (from && to) days = Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+      if (H && H.result) rc = Number(H.result.per_day || 0);
+      var after = t.gross - rc * days;
+      var h = '<div class="big"><div class="mut">Net profit (books: sale − cost − expenses − salary − commission)</div><div class="v ' + cls(t.net) + '">' + rs(t.net) + '</div><div class="mut">sale ' + rs(t.sales) + ' · gross ' + rs(t.gross) + '</div></div>';
+      if (rc) h += '<div class="big"><div class="mut">After the running cost (' + rs(rc) + ' a day × ' + days + ' day' + (days === 1 ? '' : 's') + ')</div><div class="v ' + cls(after) + '">' + rs(after) + '</div><div class="mut">gross profit minus the daily running cost</div></div>';
+      h += '<div class="row"><div class="g"><b>Expenses</b></div><div class="a">' + rs(t.expenses) + '</div></div><div class="row"><div class="g"><b>Salary</b></div><div class="a">' + rs(t.salary) + '</div></div><div class="row"><div class="g"><b>Commission</b></div><div class="a">' + rs(t.commissions) + '</div></div>';
+      if (t.lines_without_cost) h += '<div class="warn">' + t.lines_without_cost + ' sold lines have no cost yet, so profit may look higher.</div>';
+      $('out').innerHTML = h;
+    }).catch(fail);
+  }
+  function run() { $('out').innerHTML = '<span class="mut">Loading…</span>'; (tab === 'inv' ? inv : tab === 'item' ? item : net)(); }
+  [].forEach.call($('tabs').children, function (b) { b.onclick = function () { tab = b.getAttribute('data-t'); [].forEach.call($('tabs').children, function (x) { x.classList.toggle('on', x === b); }); run(); }; });
+  [].forEach.call($('rng').querySelectorAll('button'), function (b) { b.onclick = function () { [].forEach.call($('rng').querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); }); setRange(b.getAttribute('data-r')); run(); }; });
+  $('f').onchange = $('t').onchange = function () { from = $('f').value; to = $('t').value; [].forEach.call($('rng').querySelectorAll('button'), function (x) { x.classList.remove('on'); }); run(); };
+  setRange('0'); run();
+})();
+</script>
+</body>
+</html>
