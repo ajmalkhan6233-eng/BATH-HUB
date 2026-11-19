@@ -27,12 +27,12 @@
       tile('Profit today', rs(S.today.profit), 'sale minus cost') +
       tile('Yesterday', rs(S.yesterday.sales), S.yesterday.n + ' bills · profit ' + rs(S.yesterday.profit)) +
       tile('This month', rs(S.month.sales), S.month.n + ' bills · profit ' + rs(S.month.profit)) +
-      tile('Result today', R.today == null ? '—' : rs(R.today), 'profit minus ' + rs(R.per_day) + ' running cost', R.today != null && R.today < 0) +
-      tile('Result since ' + dm(R.from), rs(R.since), R.days + ' days · ' + rs(R.per_day) + ' a day', R.since < 0) +
+      tile('Result today', R.today == null ? '—' : rs(R.today), 'profit minus ' + rs(R.per_day) + ' running cost') +
+      tile('Result since ' + dm(R.from), rs(R.since), R.days + ' days · ' + rs(R.per_day) + ' a day') +
       tile('Jazeel commission', rs(R.jazeel_week), R.commission_pct + '% of profit, this week' + (R.unassigned ? ' · ' + R.unassigned + ' bills no salesman' : '')) +
       tile('Stock at cost', rs(K.cost), K.units.toLocaleString('en-LK') + ' units · ' + K.items + ' items') +
       tile('Stock at selling', rs(K.sell), K.no_price ? K.no_price + ' items without price' : 'all priced', K.no_price > 0) +
-      tile('We owe vendors', rs(V.owed), V.overdue > 0 ? rs(V.overdue) + ' overdue' : 'nothing overdue', V.overdue > 0) +
+      tile('We owe vendors', rs(V.owed), V.overdue > 0 ? rs(V.overdue) + ' cheque date passed, confirm cleared' : (V.pending_bills ? V.pending_bills + ' bill' + (V.pending_bills === 1 ? '' : 's') + ' pending: confirm payment date' : 'all dates set'), V.overdue > 0) +
       tile('Cheques to pay', rs(C.amount), C.count + ' cheques' + (nx ? ' · next ' + dm(nx.due) + ' ' + rs(nx.amount) : '')) +
       '</div><div class="hs-c"><div class="hs-l">Do the numbers match?</div>' + d.checks.map(function (c) { return '<div><span class="' + (c.ok ? 'ok' : 'no') + '">' + (c.ok ? '✓' : '!') + '</span><span>' + esc(c.label) + (c.note ? ' <span class="hs-s' + (c.ok ? '' : ' hs-w') + '">(' + esc(c.note) + ')</span>' : '') + '</span></div>'; }).join('') + '</div>' +
       '<div class="hs-c"><div class="hs-l">Owed most</div>' + V.top.map(function (v) { return '<div><span style="flex:1">' + esc(v.name) + '</span><b>' + rs(v.owed) + '</b></div>'; }).join('') + '</div>';
