@@ -110,10 +110,10 @@
     box.appendChild(p);
     var d = card('To pay');
     if (s.due) {
-      var od = el('div', null); var pill = el('span', 'pill ' + (s.due.overdue_count ? 'bad' : 'ok'), s.due.overdue_count ? s.due.overdue_count + ' overdue · ' + rs(s.due.overdue_amount) : 'Nothing overdue');
+      var od = el('div', null); var pill = el('span', 'pill ' + (s.due.overdue_count ? 'bad' : 'ok'), s.due.overdue_count ? s.due.overdue_count + ' cheque date passed · ' + rs(s.due.overdue_amount) : (s.due.pending_dates ? s.due.pending_dates + ' bill(s) need a payment date' : 'Nothing overdue'));
       od.appendChild(pill); od.style.marginBottom = '6px'; d.appendChild(od);
       var today = today0(s);
-      s.due.next.slice(0, 6).forEach(function (x) { d.appendChild(row((x.kind === 'cheque' ? 'Cheque · ' : '') + (x.who || '') + ' ' + dueWord(x.due, today), rs(x.amount), x.due && x.due < today ? 'down' : '')); });
+      s.due.next.slice(0, 6).forEach(function (x) { d.appendChild(row((x.kind === 'cheque' ? 'Cheque · ' : '') + (x.who || '') + ' ' + dueWord(x.due, today), rs(x.amount), x.kind === 'cheque' && x.due && x.due < today ? 'down' : '')); });
     } else d.appendChild(none());
     box.appendChild(d);
     var st = card('Stock');
@@ -188,8 +188,8 @@
     var tv = s.vendors ? s.vendors.reduce(function (a, v) { return a + v.owed; }, 0) : 0;
     var v = bigCard('You owe vendors', tv, s.vendors ? s.vendors.length + (s.vendors.length === 1 ? ' vendor' : ' vendors') : NODATA);
     if (s.vendors) s.vendors.forEach(function (x) {
-      v.appendChild(tapRow(x.who + (x.oldest ? ' · ' + dueWord(x.oldest, today) : ''), rs(x.owed), x.oldest && x.oldest < today ? 'down' : '', function () {
-        sheet(x.who, x.bills.map(function (b) { return ['Bill ' + (b.ref || '') + ' · ' + dueWord(b.due, today), rs(b.amount), b.due && b.due < today ? 'down' : '']; }).concat([['Total', rs(x.owed), 'up']]));
+      v.appendChild(tapRow(x.who + (x.oldest ? ' · ' + dueWord(x.oldest, today) : ''), rs(x.owed), '', function () {
+        sheet(x.who, x.bills.map(function (b) { return ['Bill ' + (b.ref || '') + ' · ' + dueWord(b.due, today), rs(b.amount), '']; }).concat([['Total', rs(x.owed), 'up']]));
       }));
     });
     box.appendChild(v);

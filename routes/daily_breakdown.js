@@ -105,8 +105,8 @@ router.get('/', async (req, res) => {
       `SELECT COALESCE(SUM(b.total),0) AS total, COUNT(*) AS n FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
        WHERE v.bill_id IS NULL AND b.created_at::date = $1::date`, [date]);
     const cost = await pool.query(
-      `SELECT COALESCE(SUM(i.qty * COALESCE(p.avg_cost,0)),0) AS cost,
-              COUNT(*) FILTER (WHERE p.id IS NULL OR p.avg_cost IS NULL OR p.avg_cost = 0) AS nocost
+      `SELECT COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) AS cost,
+              COUNT(*) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS nocost
        FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
        LEFT JOIN products p ON p.item_code = i.item_code AND i.item_code IS NOT NULL
        WHERE v.bill_id IS NULL AND b.created_at::date = $1::date`, [date]);

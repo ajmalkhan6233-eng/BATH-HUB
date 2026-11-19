@@ -102,6 +102,7 @@ async function findBill({ bill_id, bill_number }) {
         throw httpError(400, 'bill_id is required');
     }
     if (!r.rows.length) throw httpError(404, 'That bill was not found — generate the bill first');
+    { const vd = await pool.query(`SELECT 1 FROM pos_bill_voids WHERE bill_id = $1`, [r.rows[0].id]).catch(() => ({ rows: [] })); if (vd.rows.length) throw httpError(409, 'That bill was voided, so no receipt can be made'); }
     const bill = r.rows[0];
     bill.items = (await pool.query(`SELECT item_name, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;
     return bill;

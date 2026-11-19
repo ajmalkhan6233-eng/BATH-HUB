@@ -5,16 +5,16 @@ Owner: AJ. Not a developer. Halal, honest, privacy-first. Never print .env, data
 PHASE 1 AUDIT (model Fable 5.2, READ ONLY, no edits)
 1. Open Claude Code in the app folder. Type: /model   then pick Fable 5.2.
 2. Type: /usage   (stop and tell AJ if weekly is over 40%).
-3. Paste: Read docs/AUDIT_PACK.md and do PHASE 1 only. Write the report to docs/AUDIT_REPORT_FABLE.md, push it, then tell me to switch to Opus.
+3. Paste: Read docs/AUDIT_PACK.md and do PHASE 1 only. Write the report to docs/AUDIT_REPORT_PHASE1.md, push it, then tell me to switch to Opus.
 PHASE 2 FIX HARD ITEMS (model Opus)
-4. Type: /model   then pick Opus.   Paste: Read docs/AUDIT_REPORT_FABLE.md and do every item tagged HARD, one per commit, test each. Then tell me to switch to Sonnet.
+4. Type: /model   then pick Opus.   Paste: Read docs/AUDIT_REPORT_PHASE1.md and do every item tagged HARD, one per commit, test each. Then tell me to switch to Sonnet.
 PHASE 3 FIX THE REST (model Sonnet 5.5)
-5. Type: /model   then pick Sonnet 5.5.   Paste: Do every item tagged EASY in docs/AUDIT_REPORT_FABLE.md, one per commit. Then write the final report.
+5. Type: /model   then pick Sonnet 5.5.   Paste: Do every item tagged EASY in docs/AUDIT_REPORT_PHASE1.md, one per commit. Then write the final report.
 (Claude cannot change its own model. AJ taps /model. Each phase ends by asking him to.)
 
 ## PHASE 1 RULES (Fable)
 - READ ONLY. Test only on the cloud copy (bash scripts/dev/cloud_rig.sh), never real data. Do not fix anything.
-- Output ONE file, docs/AUDIT_REPORT_FABLE.md. Each finding = one line: `#n | severity (RED/AMBER/GREEN) | file:line | what is wrong | proof | fix size (EASY/HARD)`. Rank RED first. Max 60 findings. Plain words, no jargon.
+- Output ONE file, docs/AUDIT_REPORT_PHASE1.md. Each finding = one line: `#n | severity (RED/AMBER/GREEN) | file:line | what is wrong | proof | fix size (EASY/HARD)`. Rank RED first. Max 60 findings. Plain words, no jargon.
 - End with: top 5 to do first, and the exact words "SWITCH TO OPUS".
 
 ## WHAT TO AUDIT (AJ's list)

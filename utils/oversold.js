@@ -17,7 +17,7 @@ const shortOf = (stock, qty) => round2(Math.max(0, Number(qty) - Math.max(0, Num
 async function record(client, { itemCode, itemName, qty, billNumber, name, phone }) {
   if (!itemCode) return 0;
   await ensure(client);
-  const r = await client.query(`SELECT stock_level FROM products WHERE item_code = $1 AND active = true LIMIT 1`, [itemCode]);
+  const r = await client.query(`SELECT stock_level FROM products WHERE item_code = $1 AND active = true LIMIT 1 FOR UPDATE`, [itemCode]);
   if (!r.rows.length) return 0;
   const short = shortOf(r.rows[0].stock_level, qty);
   if (short > 0) await client.query(`INSERT INTO oversold_owed (item_code,item_name,bill_number,customer_name,customer_phone,qty_short) VALUES ($1,$2,$3,$4,$5,$6)`, [itemCode, itemName, billNumber, name || null, phone || null, short]);

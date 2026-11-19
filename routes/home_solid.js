@@ -40,10 +40,10 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const result = { per_day: rc, from: rcFrom, today: today >= rcFrom ? r2(S.today.profit - rc) : null, since: r2(gpSince - rc * daysSince), days: daysSince, commission_pct: cpct, jazeel_week: r2(jazGp * cpct / 100), unassigned: bills.filter(b => !b.salesman && day(b) >= rcFrom).length };
     const billsBad = bills.filter(b => Math.abs(Number(b.items) - Number(b.discount_amount || 0) - Number(b.total)) > 1).length;
 
-    const st = (await q(`SELECT COALESCE(SUM(stock_level),0) units, COALESCE(SUM(stock_level*avg_cost),0) cost, COALESCE(SUM(stock_level*selling_price),0) sell,
+    const st = (await q(`SELECT COALESCE(SUM(stock_level),0) units, COALESCE(SUM(GREATEST(stock_level,0)*avg_cost),0) cost, COALESCE(SUM(GREATEST(stock_level,0)*selling_price),0) sell,
         COUNT(*) FILTER (WHERE stock_level > 0) items, COUNT(*) FILTER (WHERE stock_level < 0) neg,
         COUNT(*) FILTER (WHERE stock_level > 0 AND COALESCE(selling_price,0) = 0) nosell FROM products WHERE active IS NOT FALSE`))[0];
-    const stockAll = Number((await q('SELECT COALESCE(SUM(stock_level),0) s FROM products'))[0].s);
+    const stockAll = Number((await q('SELECT COALESCE(SUM(stock_level),0) s FROM products WHERE active IS NOT FALSE'))[0].s);
 
     const vb = await q('SELECT * FROM vendor_bills WHERE voided = FALSE');
     const ids = vb.map(b => b.id);
