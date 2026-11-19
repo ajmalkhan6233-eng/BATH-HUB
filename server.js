@@ -247,6 +247,20 @@ async function getBypassUser() {
     return _bypassUserCache;
 }
 
+// POCKET (19 Nov): the phone-app helper (utils/pocketInbox.js) runs on this PC and calls ONLY these 3 routes, from this PC itself, with the secret from .env.
+// Not for tunnel traffic (it carries X-Forwarded-For). Everything else still needs the normal login.
+const POCKET_ROUTES = [['POST', /^\/api\/pos-bills$/], ['GET', /^\/api\/pos-bills\/\d+\/receipt\.png$/], ['POST', /^\/api\/purchase-orders$/]];
+app.use(async (req, res, next) => {
+    const h = req.headers['x-pocket-secret']; if (!h) return next();
+    const sec = String(process.env.POCKET_PUSH_SECRET || '');
+    const ip = req.socket && req.socket.remoteAddress;
+    const okIp = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    let eq = false; try { eq = sec.length >= 16 && h.length === sec.length && require('crypto').timingSafeEqual(Buffer.from(String(h)), Buffer.from(sec)); } catch (e) {}
+    if (!eq || !okIp || req.headers['x-forwarded-for'] || !POCKET_ROUTES.some(([m, rx]) => m === req.method && rx.test(req.path))) return res.status(403).json({ error: 'Forbidden' });
+    const u = await getBypassUser(); if (!u) return res.status(403).json({ error: 'Forbidden' });
+    req.session.user = u; return next();
+});
+
 app.use(async (req, res, next) => {
     if (req.path.startsWith('/webhook/')) return next();
     if (req.path === '/api/login') return next();
@@ -713,7 +727,8 @@ app.use('/api', require('./routes/notifications'));       // routes are relative
 require('./scripts/notify_due_soon').start();
 // Self-run: one read-only health check a day (from 05:00 Sri Lanka) queued for the 06:00 message; recovers a missed day. Status: /api/selfrun (owner).
 require('./utils/selfRun').start(require('./utils/pool'));
-require('./utils/pocketSnapshot').start(require('./utils/pool'));   // phone app snapshot (does nothing unless POCKET_* are in .env)
+require('./utils/pocketSnapshot').start(require('./utils/pool'));
+require('./utils/pocketInbox').start(require('./utils/pool'));   // phone app: make a bill / order stock (does nothing unless POCKET_* are in .env)   // phone app snapshot (does nothing unless POCKET_* are in .env)
 app.use('/api', require('./routes/selfrun'));
 
 // ─── GENERIC INBOX UPLOAD (Daily Entry / Audit / Expenses upload buttons) ─────

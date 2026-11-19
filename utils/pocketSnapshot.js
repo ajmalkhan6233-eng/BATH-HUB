@@ -18,7 +18,7 @@ async function rows(pool, sql, params) { try { return (await pool.query(sql, par
 
 /** Plain object, only what the phone shows. Any part that fails to read comes back as null (the phone shows "no data"). */
 async function build(pool, now = new Date()) {
-  const [tot, pays, low, stock, bills, cheques, top, billsToday, linesToday, daily, items, outList, credit] = await Promise.all([
+  const [tot, pays, low, stock, bills, cheques, top, billsToday, linesToday, daily, items, outList, credit, pBills, pItems, pSet] = await Promise.all([
     rows(pool, `SELECT
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE),0) AS today, COUNT(*) FILTER (WHERE d = CURRENT_DATE) AS bills_today,
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE - 1),0) AS yesterday,
@@ -47,10 +47,22 @@ async function build(pool, now = new Date()) {
         AND b.created_at::date = CURRENT_DATE ORDER BY i.id LIMIT 600`),
     rows(pool, `SELECT b.created_at::date AS d, SUM(b.total) AS total, COUNT(*) AS n FROM pos_bills b ${NV}
         AND b.created_at::date >= CURRENT_DATE - 13 GROUP BY 1 ORDER BY 1`),
-    rows(pool, `SELECT item_code, name, stock_level, selling_price FROM products WHERE active = true ORDER BY name LIMIT 2500`),
+    rows(pool, `SELECT id, item_code, name, stock_level, selling_price FROM products WHERE active = true ORDER BY name LIMIT 2500`),
     rows(pool, `SELECT item_code, name FROM products WHERE active = true AND stock_level <= 0 ORDER BY name LIMIT 60`),
     rows(pool, `SELECT name, SUM(amount - paid) AS owed, MIN(due_date) AS oldest FROM credit_customers WHERE COALESCE(quarantined,false) = false
         AND amount > paid GROUP BY name ORDER BY 2 DESC LIMIT 60`),
+    // ---- v3 (profit): cost = the cost kept on the bill line when sold, else the item's average cost (same rule as routes/profit.js) ----
+    rows(pool, `SELECT b.id, b.created_at::date AS d, b.total, COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) AS cost,
+          COUNT(i.id) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS no_cost
+        FROM pos_bills b LEFT JOIN pos_bill_items i ON i.bill_id = b.id LEFT JOIN products p ON p.item_code = i.item_code
+        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date - 7
+        GROUP BY b.id`),
+    rows(pool, `SELECT i.item_name AS name, SUM(i.qty) AS qty, SUM(i.line_total) AS revenue,
+          SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) AS cost
+        FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
+        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date
+        GROUP BY 1 ORDER BY SUM(i.line_total) - SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) DESC LIMIT 25`),
+    rows(pool, `SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from')`),
   ]);
 
   const byBill = new Map();
@@ -63,8 +75,22 @@ async function build(pool, now = new Date()) {
   ].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
   const overdue = dueItems.filter((x) => x.due && x.due < today);
 
+  // profit (gross = sales - cost; "net" = gross - the running cost per day AJ set, from the day he set it)
+  const sl = new Date(now.getTime() + 5.5 * 3600e3), tdy = ymd(sl), yst = ymd(new Date(sl.getTime() - 86400e3));
+  const mon = tdy.slice(0, 8) + '01', wk = ymd(new Date(sl.getTime() - ((sl.getUTCDay() + 6) % 7) * 86400e3));
+  const set = {}; (pSet || []).forEach((r) => { set[r.key] = r.value; });
+  const rc = num(set.running_cost_per_day), rcFrom = String(set.running_cost_from || tdy).slice(0, 10);
+  const sumP = (from, to) => (pBills || []).filter((b) => ymd(b.d) >= from && ymd(b.d) <= to).reduce((a, b) => { a.sales += num(b.total); a.cost += num(b.cost); a.n++; a.nc += num(b.no_cost); return a; }, { sales: 0, cost: 0, n: 0, nc: 0 });
+  const daysIn = (from, to) => Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 86400e3) + 1);
+  const mk = (from, to) => { const a = sumP(from, to), g = a.sales - a.cost, f = from < rcFrom ? rcFrom : from; const run = rc * (f <= to ? daysIn(f, to) : 0);
+    return { sales: Math.round(a.sales), cost: Math.round(a.cost), gross: Math.round(g), net: Math.round(g - run), bills: a.n, no_cost: a.nc }; };
+  const costByBill = new Map((pBills || []).map((b) => [b.id, num(b.cost)]));
+  const profit = pBills ? { run_per_day: rc, today: mk(tdy, tdy), yesterday: mk(yst, yst), week: mk(wk, tdy), month: mk(mon, tdy),
+    items: (pItems || []).map((r) => ({ name: r.name, qty: num(r.qty), revenue: Math.round(num(r.revenue)), cost: Math.round(num(r.cost)), profit: Math.round(num(r.revenue) - num(r.cost)) })) } : null;
+
   return {
-    v: 2,
+    v: 3,
+    profit,
     at: now.toISOString(),
     sales: t ? { today: num(t.today), bills_today: num(t.bills_today), yesterday: num(t.yesterday), week: num(t.week), month: num(t.month) } : null,
     pays_today: pays ? pays.map((r) => ({ method: r.method, amount: num(r.amount) })) : null,
@@ -74,10 +100,10 @@ async function build(pool, now = new Date()) {
     due: (bills || cheques) ? { overdue_count: overdue.length, overdue_amount: overdue.reduce((s, x) => s + x.amount, 0),
       next: dueItems.slice(0, 15) } : null,
     // v2 (the phone tabs)
-    bills: billsToday ? billsToday.map((r) => ({ no: r.bill_number, t: r.t, who: r.customer_name || '', total: num(r.total), pay: r.payment_method || 'cash',
+    bills: billsToday ? billsToday.map((r) => ({ id: r.id, no: r.bill_number, t: r.t, who: r.customer_name || '', total: num(r.total), pay: r.payment_method || 'cash', profit: Math.round(num(r.total) - (costByBill.get(r.id) || 0)),
       lines: (byBill.get(r.id) || []).slice(0, 12) })) : null,
     daily: daily ? daily.map((r) => ({ d: ymd(r.d), total: num(r.total), n: num(r.n) })) : null,
-    items: items ? items.map((r) => [r.item_code || '', r.name || '', num(r.stock_level), num(r.selling_price)]) : null,
+    items: items ? items.map((r) => [r.item_code || '', r.name || '', num(r.stock_level), num(r.selling_price), r.id]) : null,
     out_list: outList ? outList.map((r) => ({ code: r.item_code || '', name: r.name || '' })) : null,
     credit: credit ? { total: credit.reduce((s, r) => s + num(r.owed), 0), list: credit.map((r) => ({ who: r.name || '', owed: num(r.owed), oldest: ymd(r.oldest) })) } : null,
     vendors: bills ? Object.values(bills.reduce((m, r) => { const k = r.vendor_name || '?'; const o = m[k] || (m[k] = { who: k, owed: 0, oldest: null, bills: [] });
@@ -124,7 +150,7 @@ async function runOnce(pool, env = process.env, deps = {}) {
 
 // NEAR-LIVE: after any saved change (bill, stock, payment) the phone copy is refreshed within seconds, not 10 minutes.
 // Debounced (one send per 10 s at most) and capped at 700 sends a day, so it stays inside Cloudflare's free storage limit (1,000 writes a day).
-const KICK_GAP_MS = 10 * 1000, KICK_DELAY_MS = 1500, KICK_DAY_MAX = 700;
+const KICK_GAP_MS = 10 * 1000, KICK_DELAY_MS = 1500, KICK_DAY_MAX = 500;
 const live = { pool: null, last: 0, timer: null, day: '', n: 0 };
 function count() { const d = new Date().toISOString().slice(0, 10); if (live.day !== d) { live.day = d; live.n = 0; } live.n++; }
 function kick(deps = {}) {
