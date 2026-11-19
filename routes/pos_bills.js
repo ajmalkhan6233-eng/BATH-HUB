@@ -462,6 +462,16 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
 
         doc.fontSize(7).fillColor('#5c4033')
             .text('Thank you for shopping with us!', MARGIN, y, { width: CONTENT_W, align: 'center' });
+        y = doc.y + 8;
+
+        // Official shop details + Google Maps link (clickable in the PDF) + QR code to scan from the printed bill (utils/shopInfo.js)
+        const { SHOP, mapQrBuffer } = require('../utils/shopInfo');
+        doc.font('Helvetica').fontSize(7).fillColor('#5c4033')
+            .text(`${SHOP.address}\nPhone / WhatsApp: ${SHOP.phone}\n${SHOP.email}\nFind us on Google Maps:`, MARGIN, y, { width: CONTENT_W, align: 'center' });
+        doc.fillColor('#0a4531')
+            .text(SHOP.mapsUrl, MARGIN, doc.y, { width: CONTENT_W, align: 'center', link: SHOP.mapsUrl, underline: true });
+        const qr = await mapQrBuffer({ width: 200 });
+        if (qr) doc.image(qr, cx - 28, doc.y + 6, { width: 56 });
 
         doc.end();
     } catch (e) { res.status(500).json({ error: e.message }); }

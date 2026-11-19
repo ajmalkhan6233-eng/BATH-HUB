@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
+const { SHOP, mapQrDataUrl } = require('./shopInfo');
 
 const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
 const DEFAULT_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
@@ -26,9 +27,12 @@ function cleanBill(d) {
   const discount = Number(d.discount || 0);
   if (!(discount >= 0)) throw Object.assign(new Error('discount must be 0 or more'), { status: 400 });
   const out = { items, discount };
-  if (d.shopName) out.shopName = text(d.shopName, 60);
-  if (d.address != null) out.address = esc(text(d.address, 160));      // the template writes the address as HTML
-  if (d.phone != null) out.phone = esc(text(d.phone, 40));
+  // Official shop details are the default (utils/shopInfo.js); a caller can still send its own.
+  out.shopName = text(d.shopName || SHOP.name, 60);
+  out.address = esc(text(d.address != null ? d.address : SHOP.address, 160));      // the template writes the address as HTML
+  out.phone = esc(text(d.phone != null ? d.phone : SHOP.phone, 40));
+  out.email = esc(text(d.email != null ? d.email : SHOP.email, 80));
+  out.mapsUrl = esc(text(d.mapsUrl || SHOP.mapsUrl, 120));
   if (d.billNo != null) out.billNo = text(d.billNo, 30);
   if (d.date) out.date = text(d.date, 30);
   if (d.customer != null) out.customer = text(d.customer, 80);
@@ -46,6 +50,7 @@ function renderReceiptPng(bill, opts = {}) {
 
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
   const data = cleanBill(bill);
+  data.qr = await mapQrDataUrl();                                // QR of the Google Maps link (null if the library is missing: the link text still shows)
   const puppeteer = require('puppeteer');
   fs.mkdirSync(outDir, { recursive: true });
   const safeBill = String(data.billNo || 'bill').replace(/[^\w.-]+/g, '_').slice(0, 30);

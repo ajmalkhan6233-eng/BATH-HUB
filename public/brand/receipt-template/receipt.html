@@ -32,6 +32,11 @@ td:first-child{width:44%}
 .grand{font-family:Cinzel;font-size:42px;color:#0B1B3A;border-top:2px solid #C9A24B;border-bottom:2px solid #C9A24B;margin-top:16px;padding:12px 0}
 .thanks{font-size:40px;font-style:italic;font-weight:500;text-align:center;margin-top:6px;color:#0B1B3A}
 .tag{font-size:26px;color:#7a5f1f;margin-top:8px;font-style:italic;text-align:center}
+.map{display:flex;align-items:center;gap:26px;margin-top:22px;padding-top:18px;border-top:3px dashed #b99a4f;width:100%}
+.map img{width:150px;height:150px;flex:none;background:#fff;padding:6px;border:2px solid #C9A24B}
+.map .mt{font-size:26px;line-height:1.4;color:#4a4f63;word-break:break-all}
+.map .mt b{font-family:Cinzel;font-weight:600;font-size:22px;letter-spacing:.06em;color:#0B1B3A;display:block;margin-bottom:4px;word-break:normal}
+.map .mt a{color:#7a5f1f;text-decoration:underline}
 </style></head><body>
 <div class="frame"></div><div class="frame2"></div>
 <div class="wrap" id="wrap"><div class="shadow" id="sh"></div>
@@ -50,10 +55,11 @@ td:first-child{width:44%}
 <div class="dash" style="margin-top:24px"></div>
 <div class="thanks" id="thanks"></div>
 <div class="tag" id="tag"></div>
+<div class="map" id="map"><img id="qr" alt="Map QR"><div class="mt"><b>FIND US ON GOOGLE MAPS</b>Scan the QR code, or open:<br><a id="mlink"></a><br><span id="mcontact"></span></div></div>
 </div></div>
 <script>
 /* ---- DATA: the app sets window.RECEIPT_DATA before load (or calls renderReceipt(data)) ---- */
-const SAMPLE={shopName:"ROYAL BATH HUB",address:"Thihariya, Kandy Road",phone:"0777 999 219",
+const SAMPLE={shopName:"ROYAL BATH HUB",address:"No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka",phone:"+94 74 035 5536",email:"royalbathhub1@gmail.com",mapsUrl:"https://maps.app.goo.gl/2t5f6dTp35tpPnQL8",
  billNo:"0001",date:"02 Oct 2026",customer:"Mr. Sample Name",
  items:[{name:"Wall-hung toilet set",qty:1,price:45000},{name:"Basin mixer tap",qty:2,price:8500},{name:"Shower set, gold finish",qty:1,price:12000}],
  discount:4000,thanks:"Thank you for choosing Royal Bath Hub",tagline:"Every piece, a little more than you paid for."};
@@ -65,7 +71,7 @@ function renderReceipt(d){
   for(let i=10;i>=1;i--){const s=i*0.8;h+=`<div class="L" style="transform:translate(${s}px,${s*1.05}px);color:${i>7?'#4d3608':(i>4?'#6b4d10':'#8a6516')}">BH</div>`}
   c.innerHTML=h+'<div class="L front">BH</div>';
   $('shopName').textContent=d.shopName;
-  $('addr').innerHTML=d.address+(d.phone?'<br>WhatsApp: '+d.phone:'');
+  $('addr').innerHTML=d.address+(d.phone?'<br>Phone / WhatsApp: '+d.phone:'')+(d.email?'<br>'+d.email:'');
   const rows=[['Bill No.','#'+d.billNo],['Date',d.date],['Customer',d.customer]].filter(r=>r[1]&&r[1]!=='#');
   $('info').innerHTML=rows.map(r=>`<div><span>${r[0]}</span><b></b></div>`).join('');
   [...$('info').querySelectorAll('b')].forEach((b,i)=>b.textContent=rows[i][1]);
@@ -79,13 +85,17 @@ function renderReceipt(d){
   $('disc').textContent='– Rs. '+n(disc);
   $('total').textContent='Rs. '+n(sub-disc);
   $('thanks').textContent=d.thanks;$('tag').textContent=d.tagline;
+  const ml=$('mlink');ml.textContent=(d.mapsUrl||'').replace(/&amp;/g,'&');ml.href=ml.textContent;
+  $('map').style.display=d.mapsUrl?'flex':'none';
+  if(d.qr){$('qr').src=d.qr}else{$('qr').style.display='none'}
   // torn-paper edge (top and bottom), sized to the real height
   const W=$('sheet').offsetWidth,H=$('sheet').offsetHeight,t=16,p=[];
   for(let x=0;x<=W;x+=t)p.push(`${x}px ${((x/t)%2)?0:12}px`);
   for(let k=Math.floor(W/t);k>=0;k--)p.push(`${k*t}px ${H-((k%2)?0:12)}px`);
   const poly=`polygon(${p.join(',')})`;
   $('sheet').style.clipPath=poly;$('sh').style.clipPath=poly;
-  document.body.dataset.ready='1';
+  const qi=$('qr'),done=()=>{document.body.dataset.ready='1'};
+  if(d.qr&&!qi.complete){qi.onload=done;qi.onerror=done}else done();   // wait for the QR picture before the screenshot
 }
 document.fonts.ready.then(()=>renderReceipt(window.RECEIPT_DATA));
 </script></body></html>

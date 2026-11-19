@@ -100,7 +100,12 @@ describe('sending', () => {
     const r = await pool.query(`SELECT bill_no, phone_last3 FROM wa_receipt_log WHERE bill_no='B-OK'`);
     expect(r.rows.length).toBeGreaterThan(0); expect(r.rows[0].phone_last3).toBe('219');
   });
-  test('caption text is exactly the approved one', () => expect(S.CAPTION).toBe('Thank you for shopping at Royal Bath Hub. Your receipt is attached.'));
+  test('caption text is exactly the approved one (thanks + official address, phone, email, Google Maps link)', () => expect(S.CAPTION).toBe(
+    'Thank you for shopping at Royal Bath Hub. Your receipt is attached.\n\n' +
+    'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka\n' +
+    'Phone / WhatsApp: +94 74 035 5536\n' +
+    'Email: royalbathhub1@gmail.com\n' +
+    'Find us on Google Maps: https://maps.app.goo.gl/2t5f6dTp35tpPnQL8'));
 });
 
 // Live test: ONLY to the owner's own number and ONLY when WHATSAPP_LIVE=true and keys exist. Otherwise skipped.

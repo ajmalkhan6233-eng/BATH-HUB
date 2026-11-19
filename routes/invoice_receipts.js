@@ -111,7 +111,10 @@ async function findBill({ bill_id, bill_number }) {
 // ─── Receipt rendering ───────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const lkr = n => { const v = Number(n || 0); const f = Number.isInteger(v) ? 0 : 2; return 'LKR ' + v.toLocaleString('en-US', { minimumFractionDigits: f, maximumFractionDigits: f }); };
-const shopName = () => process.env.SHOP_NAME || 'Royal Bath Hub Thihariya';
+const { SHOP, contactFooter, mapQrDataUrl, mapQrBuffer } = require('../utils/shopInfo');
+const shopName = () => process.env.SHOP_NAME || SHOP.name;
+// adds the Google Maps QR (picture and PDF) to the receipt data; never fails the receipt
+async function withQr(r) { r.qr = await mapQrDataUrl(); r.qrBuf = await mapQrBuffer(); return r; }
 
 function receiptData(bill, rec) {
     const d = bill.created_at instanceof Date ? bill.created_at : new Date(bill.created_at);
@@ -150,7 +153,10 @@ function receiptHtml(r) {
       .total span:first-child{font-size:13px;color:#5c4033;text-transform:uppercase;letter-spacing:1px}
       .total span:last-child{font-size:24px;font-weight:700;color:#062e21}
       .notes{font-size:12px;color:#5c4033;margin-top:10px}
-      .thanks{text-align:center;padding:4px 24px 22px;font-size:13px;color:#5c4033}
+      .thanks{text-align:center;padding:4px 24px 12px;font-size:13px;color:#5c4033}
+      .shopinfo{text-align:center;padding:0 24px 22px;font-size:12px;line-height:1.5;color:#5c4033}
+      .shopinfo img{width:96px;height:96px;display:block;margin:8px auto 4px}
+      .shopinfo a{color:#0a4531}
     </style></head><body><div class="card">
       <div class="head"><div class="logo">${logo}</div><div class="shop">${esc(r.shop)}</div><div class="tag">Receipt</div></div>
       <div class="body">
@@ -168,6 +174,7 @@ function receiptHtml(r) {
         ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ''}
       </div>
       <div class="thanks">Thank you for shopping with us!</div>
+      <div class="shopinfo">${esc(SHOP.address)}<br>Phone / WhatsApp: ${esc(SHOP.phone)}<br>${esc(SHOP.email)}<br>Find us on Google Maps:<br><a href="${esc(SHOP.mapsUrl)}">${esc(SHOP.mapsUrl)}</a>${r.qr ? `<img src="${r.qr}" alt="Map QR">` : ''}</div>
     </div></body></html>`;
 }
 
@@ -218,6 +225,9 @@ function renderPdf(r) {
         doc.moveDown(0.6).fontSize(10).fillColor('#201c16'); line('Paid by', r.payment.toUpperCase());
         if (r.notes) doc.moveDown(0.5).fontSize(9).fillColor('#5c4033').text(r.notes, 20, doc.y, { width: 260 });
         doc.moveDown(1.5).fontSize(10).fillColor('#5c4033').text('Thank you for shopping with us!', 20, doc.y, { align: 'center', width: 260 });
+        doc.moveDown(0.6).fontSize(8).text(`${SHOP.address}\nPhone / WhatsApp: ${SHOP.phone}\n${SHOP.email}\nFind us on Google Maps:`, 20, doc.y, { align: 'center', width: 260 });
+        doc.fillColor('#0a4531').text(SHOP.mapsUrl, 20, doc.y, { align: 'center', width: 260, link: SHOP.mapsUrl, underline: true });
+        if (r.qrBuf) doc.image(r.qrBuf, 110, doc.y + 6, { width: 80 });
         doc.end();
     });
 }
@@ -304,7 +314,7 @@ router.get('/invoice-receipts/preview', async (req, res) => {
     try {
         const bill = await findBill({ bill_id: req.query.bill_id, bill_number: req.query.bill_number });
         const rec = { customer_name: req.query.customer_name || '', customer_phone: req.query.phone || bill.customer_phone || '' };
-        const out = await renderReceipt(receiptData(bill, rec));
+        const out = await renderReceipt(await withQr(receiptData(bill, rec)));
         res.type(out.mimetype).send(out.buffer);
     } catch (e) { fail(res, e, 'Could not build the receipt preview'); }
 });
@@ -339,9 +349,9 @@ router.post('/invoice-receipts/send', async (req, res) => {
             throw httpError(422, `${rec.customer_phone} is not on WhatsApp. Check the number, or give the customer the printed bill.`);
         }
 
-        const data = receiptData(bill, rec);
+        const data = await withQr(receiptData(bill, rec));
         const out = await renderReceipt(data);
-        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!`;
+        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\nTotal: ${lkr(data.total)}\nThank you for shopping with us!\n\n${contactFooter()}`;
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {
