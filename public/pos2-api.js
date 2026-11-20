@@ -15,7 +15,7 @@
     var nm = String(x.name || '');
     var m = /(\d+(?:\.\d+)?)\s*sqm/i.exec(nm);
     return { code: String(x.item_code || ''), name: nm, stock: Number(x.stock_level || 0), price: Number(x.selling_price || 0),
-             cost: x.avg_cost == null ? null : Number(x.avg_cost), unit: String(x.unit || 'PCS').toUpperCase(), sqm: m ? Number(m[1]) : undefined, reorder: Number(x.reorder_threshold || 0) };
+             cost: x.avg_cost == null ? null : Number(x.avg_cost), unit: String(x.unit || 'PCS').toUpperCase(), sqm: m ? Number(m[1]) : undefined, reorder: Number(x.reorder_threshold || 0), supplier: String(x.supplier || '') };
   }
   function items(q, limit) {
     return j('/api/items?limit=' + (limit || 60) + (q ? '&q=' + encodeURIComponent(q) : '')).then(function (r) {

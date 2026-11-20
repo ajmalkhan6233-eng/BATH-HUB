@@ -81,7 +81,7 @@
     var mine = ++seq, q = $('scanBox').value.trim();
     api.items(q, 60).then(function (found) {
       if (mine !== seq) return;
-      $('pickerResults').innerHTML = found.map(function (x) { return '<div class="pick-row" data-code="' + esc(x.code) + '"><span class="pick-code">' + esc(x.code) + '</span><span class="pick-name"><strong>' + esc(x.name) + '</strong><small>' + esc(x.unit) + (x.sqm ? ' · ' + x.sqm + ' sqm/box' : '') + '</small></span><span class="pick-stock">' + x.stock + '</span><span class="pick-price">' + money(x.price) + '</span></div>'; }).join('') || '<div class="muted" style="padding:12px">No matching items</div>';
+      $('pickerResults').innerHTML = found.map(function (x) { return '<div class="pick-row" data-code="' + esc(x.code) + '"><span class="pick-code">' + esc(x.code) + '</span><span class="pick-name">' + (x.supplier ? '<span class="pick-sup">' + esc(x.supplier) + '</span>' : '') + '<strong>' + esc(x.name) + '</strong><small>' + esc(x.unit) + (x.sqm ? ' · ' + x.sqm + ' sqm/box' : '') + '</small></span><span class="pick-stock">' + x.stock + '</span><span class="pick-price">' + money(x.price) + '</span></div>'; }).join('') || '<div class="muted" style="padding:12px">No matching items</div>';
       $('pickerResults')._found = found; sel = -1;
     });
   }
