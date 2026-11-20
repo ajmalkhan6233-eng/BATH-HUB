@@ -378,8 +378,7 @@ router.post('/invoice-receipts/send', async (req, res) => {
             out = { buffer: fs.readFileSync(png.file), mimetype: 'image/png', ext: 'png' }; gold = true;
         } catch (e) { console.warn('[receipt] gold picture not drawn, using the plain one:', e.message); }
         if (!out) out = await renderReceipt(data);
-        const goldCaption = gold ? require('../utils/whatsappReceiptSender').CAPTION : null;
-        const caption = goldCaption || `${data.shop}\nReceipt — bill ${data.bill_no}\n${data.discount > 0 ? `Real price: ${lkr(data.subtotal)}\nPrice given: ${lkr(data.total)}\nYou saved: ${lkr(data.discount)} (${data.discount_pct}%)` : `Total: ${lkr(data.total)}`}\nThank you for shopping with us!\n\n${contactFooter()}`;
+        const caption = require('../utils/whatsappReceiptSender').CAPTION;   // AJ 20 Nov: gold or plain picture, the message under it is ONLY the Google Maps link (everything else is on the picture)
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {

@@ -14,6 +14,12 @@ function contactFooter() {
     return `${SHOP.address}\nPhone / WhatsApp: ${SHOP.phone}\nEmail: ${SHOP.email}\nFind us on Google Maps: ${SHOP.mapsUrl}`;
 }
 
+// The ONLY text sent under the receipt picture (AJ 20 Nov): the receipt picture already shows the address, phone, email, QR and thank-you,
+// so the message carries just the Google Maps link (WhatsApp makes it tappable, one tap opens the way to the shop).
+function mapLine() {
+    return `Find us on Google Maps: ${SHOP.mapsUrl}`;
+}
+
 // QR code of the map link: data URL (for the picture) or PNG buffer (for the PDF). Returns null if the library is missing.
 async function mapQrDataUrl(opts = {}) {
     try { return await require('qrcode').toDataURL(SHOP.mapsUrl, { margin: 1, width: 240, errorCorrectionLevel: 'M', ...opts }); } catch (e) { return null; }
@@ -22,4 +28,4 @@ async function mapQrBuffer(opts = {}) {
     try { return await require('qrcode').toBuffer(SHOP.mapsUrl, { margin: 1, width: 240, errorCorrectionLevel: 'M', ...opts }); } catch (e) { return null; }
 }
 
-module.exports = { SHOP, contactFooter, mapQrDataUrl, mapQrBuffer };
+module.exports = { SHOP, contactFooter, mapLine, mapQrDataUrl, mapQrBuffer };

@@ -14,9 +14,9 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const receiptImage = require('./receiptImage');
-const { contactFooter } = require('./shopInfo');
-// The picture caption: thanks, then the official address, phone, email and the tappable Google Maps link (utils/shopInfo.js).
-const CAPTION = 'Thank you for shopping at Royal Bath Hub. Your receipt is attached.\n\n' + contactFooter();
+const { mapLine } = require('./shopInfo');
+// The picture caption: ONLY the tappable Google Maps link (AJ 20 Nov). The receipt picture itself already carries the address, phone, email, QR and the thank-you.
+const CAPTION = mapLine();
 const GRAPH = 'https://graph.facebook.com/v20.0';
 const RETRIES = 2;                       // 1 first try + 2 retries
 const RETRY_WAIT_MS = 1500;
