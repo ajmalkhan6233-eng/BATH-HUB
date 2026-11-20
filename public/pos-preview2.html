@@ -177,7 +177,9 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 #picker .pick-row.selected{background:#e8dcc0;outline:1px solid #c9a24b}
 @media(min-width:701px){#priceRow{grid-template-columns:repeat(4,1fr)!important}#priceRow .field:nth-child(4){grid-column:auto!important}#priceRow .field:nth-child(5){grid-column:1/-1}}
 </style>
-<style id="rload">#rImgWrap .rload{display:none;padding:60px 0;color:#8a6a1c;font-weight:700;font-size:18px}#rImgWrap.loading .rload{display:block}#rImgWrap.loading #rImg,#rImgWrap.loading #rImgDl{display:none}</style></head>
+<style id="rload">#rImgWrap .rload{display:none;padding:60px 0;color:#8a6a1c;font-weight:700;font-size:18px}#rImgWrap.loading .rload{display:block}#rImgWrap.loading #rImg,#rImgWrap.loading #rImgDl{display:none}</style>
+<style id="rzoom">/* 20 Nov (AJ): make the receipt bigger or smaller with the mouse wheel or the - Fit + buttons; scroll to move around */#rZoomBox{max-height:62vh;overflow:auto;border-radius:6px}#rZoomBox #rImg{max-height:none;cursor:zoom-in}#rZoomBox.fit #rImg{max-height:60vh}</style>
+<script>(function(){var z=0;function el(i){return document.getElementById(i)}function apply(){var b=el('rZoomBox'),im=el('rImg');if(!b||!im)return;if(z<=0){b.classList.add('fit');im.style.width='';im.style.maxWidth='100%';return}b.classList.remove('fit');im.style.maxWidth='none';im.style.width=Math.round(z*100)+'%'}function set(v){z=v<=0?0:Math.max(0.5,Math.min(4,v));apply()}function cur(){var b=el('rZoomBox'),im=el('rImg');if(z>0)return z;return b&&im&&b.clientWidth?Math.max(0.5,im.clientWidth/b.clientWidth):1}document.addEventListener('DOMContentLoaded',function(){var b=el('rZoomBox');if(!b)return;apply();b.addEventListener('wheel',function(e){if(!el('rImg').src)return;e.preventDefault();set(cur()*(e.deltaY<0?1.15:1/1.15))},{passive:false});el('rImg').addEventListener('dblclick',function(){set(z>0?0:2)});el('rZoomIn').onclick=function(){set(cur()*1.25)};el('rZoomOut').onclick=function(){set(cur()/1.25)};el('rZoomFit').onclick=function(){set(0)};var mo=new MutationObserver(function(){set(0)});mo.observe(el('rImg'),{attributes:true,attributeFilter:['src']})})})();</script></head>
 <body>
 <div class="shell">
   <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
@@ -261,7 +263,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 
 <!-- 08 — Generated receipt -->
 <div class="receipt-wrap hidden" id="receipt">
-  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><div class="rload">Drawing your receipt…</div><img id="rImg" alt="Receipt"><div><button id="rImgDl" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px">&#8681; Download</button></div></div>
+  <div class="receipt-card" id="billPanel"><div id="rImgWrap" class="hidden"><div class="rload">Drawing your receipt…</div><div id="rZoomBox"><img id="rImg" alt="Receipt"></div><div><button id="rZoomOut" type="button" title="Smaller" style="margin-top:6px;padding:4px 12px;font-size:13px">&minus;</button> <button id="rZoomFit" type="button" title="Fit" style="margin-top:6px;padding:4px 10px;font-size:13px">Fit</button> <button id="rZoomIn" type="button" title="Bigger" style="margin-top:6px;padding:4px 12px;font-size:13px">+</button> <button id="rImgDl" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px">&#8681; Download</button></div></div>
     <div class="receipt-head"><h2 id="rShopName">ROYAL BATH HUB</h2><div id="rTagline">Sanitaryware · Tiles · Bathroom Fittings</div><div id="rMeta">173/1 Kandy Road, Thihariya · 074 035 5536</div></div>
     <div id="receiptMeta" style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px"></div>
     <table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="rItems"></tbody></table>
