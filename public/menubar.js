@@ -140,6 +140,12 @@
         items.forEach(function (i) { list.appendChild(itemBtn(i[0], labelOf(i[0], i[1]), i[2])); });
         b.onclick = function (e) { e.stopPropagation(); var on = top.classList.contains('on'); closeAll(); if (!on) { top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } }; if (items.length === 1) { b.textContent = g[0]; b.onclick = function (e) { e.stopPropagation(); go(items[0][0]); }; }
         top.appendChild(b); top.appendChild(list); bar.appendChild(top);
+        // 20 Nov (AJ): on a mouse screen the drop-down opens when the cursor rests on the menu name, and closes shortly after it leaves; click still works, touch is unchanged
+        if (items.length > 1 && window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+          var ht; b.onclick = function (e) { e.stopPropagation(); if (!top.classList.contains('on')) { closeAll(); top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } };
+          top.addEventListener('mouseenter', function () { clearTimeout(ht); if (!top.classList.contains('on')) { closeAll(); top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } });
+          top.addEventListener('mouseleave', function () { ht = setTimeout(function () { top.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); }, 250); });
+        }
       });
       var body = doc.getElementById('rbh-dbody'); body.innerHTML = '';
       var h = itemBtn('dashboard', HOME[1], false); h.style.paddingLeft = '6px'; h.style.fontWeight = '700'; body.appendChild(h);
