@@ -353,14 +353,33 @@ router.post('/invoice-receipts/send', async (req, res) => {
             });
         }
 
+        // 20 Nov (AJ, a customer got TWO receipts): when the gold receipt goes out automatically after the sale, this route
+        // sends nothing unless the owner asks again (resend). One receipt per sale.
+        if (body.resend !== true && require('../utils/autoReceipt').autoSendOn()) {
+            rec = undefined;
+            return res.status(409).json({ error: 'The receipt picture already goes to the customer automatically. Send it again?', code: 'already_sent' });
+        }
+
         // No WhatsApp on that number: say so plainly and send nothing.
         if (await isOnWhatsApp(rec.customer_phone) === false) {
             throw httpError(422, `${rec.customer_phone} is not on WhatsApp. Check the number, or give the customer the printed bill.`);
         }
 
         const data = await withQr(receiptData(bill, rec));
-        const out = await renderReceipt(data);
-        const caption = `${data.shop}\nReceipt — bill ${data.bill_no}\n${data.discount > 0 ? `Real price: ${lkr(data.subtotal)}\nPrice given: ${lkr(data.total)}\nYou saved: ${lkr(data.discount)} (${data.discount_pct}%)` : `Total: ${lkr(data.total)}`}\nThank you for shopping with us!\n\n${contactFooter()}`;
+        // 20 Nov (AJ): ONE design for customers - the gold receipt with the short caption. The old white one is only a fallback if the gold one cannot be drawn.
+        let out = null, gold = false;
+        try {
+            const png = await require('../utils/receiptImage').renderReceiptPng({
+                billNo: String(bill.bill_number), customer: data.customer, customerPhone: rec.customer_phone,
+                paymentMethod: bill.payment_method || null, total: Number(bill.total) || null, discount: Number(bill.discount_amount) || 0,
+                date: new Date(bill.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                items: (bill.items || []).map(i => ({ code: i.item_code || null, name: i.item_name, qty: Number(i.qty), price: Number(i.unit_price) })),
+            });
+            out = { buffer: fs.readFileSync(png.file), mimetype: 'image/png', ext: 'png' }; gold = true;
+        } catch (e) { console.warn('[receipt] gold picture not drawn, using the plain one:', e.message); }
+        if (!out) out = await renderReceipt(data);
+        const goldCaption = gold ? require('../utils/whatsappReceiptSender').CAPTION : null;
+        const caption = goldCaption || `${data.shop}\nReceipt — bill ${data.bill_no}\n${data.discount > 0 ? `Real price: ${lkr(data.subtotal)}\nPrice given: ${lkr(data.total)}\nYou saved: ${lkr(data.discount)} (${data.discount_pct}%)` : `Total: ${lkr(data.total)}`}\nThank you for shopping with us!\n\n${contactFooter()}`;
 
         const bridgeUrl = process.env.WHATSAPP_API_URL || 'http://localhost:3001/send';
         try {
