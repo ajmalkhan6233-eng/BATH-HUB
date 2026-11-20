@@ -56,6 +56,7 @@
       if (k === 'helper') { ensureHelper(); }
       if (k === 'logins') { ensureLogins(); }
       if (k === 'stickers') { ensureStickers(); }
+      if (k === 'stockmgr') { ensureStockMgr(); }
       try { win.navigate(k); } catch (e) {}
     }
     win.rbhGo = go;   // the dashboard alerts use this to open a screen
@@ -74,6 +75,11 @@
     function ensurePending() {
       if (doc.getElementById('page-pending') || typeof win.addFramePage !== 'function') return;
       try { win.addFramePage({ key: 'pending', label: 'Awaiting delivery', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/pending_delivery.html', sub: 'Billed by a vendor, not delivered yet', after: 'stock' }); } catch (e) {}
+    }
+    // 20 Nov: Stock & items (item code edit) is ALWAYS in the Inventory menu. Before, it only appeared after /api/me answered, so a slow PC hid it.
+    function ensureStockMgr() {
+      if (doc.getElementById('page-stockmgr') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit code, name, category, price, picture', after: 'grn' }); } catch (e) {}
     }
     function ensureProfit() {
       if (doc.getElementById('page-profit') || typeof win.addFramePage !== 'function') return;
@@ -159,14 +165,14 @@
       var m = e.target.closest && e.target.closest('#bottom-nav [data-go="__more"]');
       if (m && win.matchMedia && win.matchMedia('(max-width:767px)').matches) { e.preventDefault(); e.stopImmediatePropagation(); openDrawer(); }
     }, true);
-    ensureProfit(); build();
+    ensureProfit(); ensureStockMgr(); build();
     // Owner screens (Stock & items, Vendor 360, Stickers...) are added by other scripts a moment after load, on a slow PC even after 9 s.
     // Rebuild the menu whenever the side list changes (not while a drop-down is open).
     try {
       var side = doc.querySelector('.sidebar-nav'), t = null;
       if (side && win.MutationObserver) new win.MutationObserver(function () { clearTimeout(t); t = setTimeout(function () { if (!bar.querySelector('.mb-top.on') && !drawer.classList.contains('on')) build(); }, 400); }).observe(side, { childList: true, subtree: true });
     } catch (e) { /* the timed rebuilds below still run */ }
-    [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); build(); }, ms); });   // owner screens are added a moment after the page loads
+    [800, 2500, 5000, 9000].forEach(function (ms) { setTimeout(function () { ensureProfit(); ensureStockMgr(); build(); }, ms); });   // owner screens are added a moment after the page loads
   }
   return { MAP: MAP, HOME: HOME, allKeys: allKeys, start: start };
 });

@@ -65,7 +65,13 @@ app.use(express.json({ limit: '10mb' })); // receipts arrive as base64 images
 
 // 19 Nov (AJ): the QR screen would not scan. Alternative: link with an 8-letter CODE typed into the phone (WhatsApp > Linked devices > Link a device > Link with phone number instead).
 // Turned on only when WA_PAIR_PHONE is set (digits with country code, the number of the WhatsApp that sends the receipts). Never logged to a file other than the console and /pair on this PC.
-const WA_WEB_VERSION = String(process.env.WA_WEB_VERSION || '2.3000.1055285117-alpha');
+// 20 Nov: WhatsApp sometimes says "Authenticated" and then never gets "ready" (WhatsApp Web changed under us).
+// The bridge now takes turns between the pinned version and the library's own default after each stuck start (file .wa_version_mode, no secret).
+const WA_PIN = '2.3000.1055285117-alpha';
+const WA_MODE_FILE = path.join(__dirname, '.wa_version_mode');
+function readWaMode() { try { return fs.readFileSync(WA_MODE_FILE, 'utf8').trim() === 'default' ? 'default' : 'pin'; } catch (e) { return 'pin'; } }
+const WA_MODE = readWaMode();
+const WA_WEB_VERSION = String(process.env.WA_WEB_VERSION || (WA_MODE === 'default' ? 'off' : WA_PIN));
 const PAIR_PHONE = String(process.env.WA_PAIR_PHONE || '').replace(/\D/g, '');
 let lastCode = null;
 const client = new Client({
@@ -155,7 +161,24 @@ client.on('ready', () => {
     console.log(`[WA-BRIDGE] Liveness check active — verifying the real connection every ${LIVENESS_INTERVAL_MS/60000} min, auto-restarts via pm2 if it goes stale.`);
 });
 
-client.on('authenticated', () => console.log('[WA-BRIDGE] Authenticated.'));
+// READY WATCHDOG (20 Nov): authenticated but no 'ready' within 5 min = stuck. Switch version mode, exit, pm2 starts a fresh one.
+const READY_TIMEOUT_MS = Number(process.env.WA_READY_TIMEOUT_MS || 300000);
+let waitingSince = null, sawLink = false;
+function stuckExit(why) {
+    const next = WA_MODE === 'pin' ? 'default' : 'pin';
+    try { if (!process.env.WA_WEB_VERSION) fs.writeFileSync(WA_MODE_FILE, next); } catch (e) {}
+    console.error(`[WA-BRIDGE] STUCK: ${why}. Version mode ${WA_MODE} -> ${next}. Exiting so pm2 restarts it.`);
+    setTimeout(async () => { try { await client.destroy(); } catch (e) {} process.exit(1); }, 3000);
+}
+setInterval(() => {
+    if (ready || waitingSince === null) return;
+    if (Date.now() - waitingSince > READY_TIMEOUT_MS) { waitingSince = null; stuckExit('authenticated but not ready after ' + Math.round(READY_TIMEOUT_MS / 60000) + ' min'); }
+}, 15000).unref();
+setTimeout(() => { if (!ready && !sawLink && waitingSince === null) stuckExit('no QR, no code and no login 8 min after start'); }, Number(process.env.WA_START_TIMEOUT_MS || 480000)).unref();
+client.on('qr', () => { sawLink = true; });
+client.on('code', () => { sawLink = true; });
+client.on('authenticated', () => { sawLink = true; if (!ready) waitingSince = Date.now(); console.log('[WA-BRIDGE] Authenticated. Version mode: ' + WA_MODE + ' (' + WA_WEB_VERSION + ').'); });
+client.on('ready', () => { waitingSince = null; });
 client.on('auth_failure', (msg) => console.error('[WA-BRIDGE] Auth failure:', msg));
 client.on('disconnected', (reason) => {
     ready = false;

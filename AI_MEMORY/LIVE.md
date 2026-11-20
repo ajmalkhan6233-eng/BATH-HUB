@@ -1,5 +1,4 @@
-10:07 | PC | check bridge | DONE | tasks 279 (new vendor bill + 3 items) and 280 (Stock & items menu) run; details in the private bridge LIVE | AJ: Ctrl+F5 twice, open Stock & items
-AUTOSAVE 2026-11-19 18:42 SL | branch work @ 3ab1dd9 | last: autosave: LIVE.md state line 2026-11-19 18:27 | uncommitted files: 1 | server health: ok
+AUTOSAVE 2026-11-20 10:42 SL | branch work @ 49eeef5 | last: WhatsApp bridge: ready watchdog (authenticated but not ready 5 min ->  | uncommitted files: 1 | server health: ok
 17 Nov 11:50 | Leo 10887 fix + Lucky Trading V1018/V1017 + POS task | DONE on DB (backup 11:15 passed, apex-server restarted, health ok) | Ajmal: Ctrl+F5 twice; merge this branch into work to get the Vendor 360 "In our favour" label
 MONEY CHECK (run 17 Nov 11:19, BEFORE changes, from 2026-10-29):
   Sales 124,250 in 11 bills | Cost 94,515 | GROSS PROFIT 29,735 (23.9%) | Costs 198,820 | NET PROFIT -169,085
