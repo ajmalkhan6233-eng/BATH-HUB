@@ -48,6 +48,7 @@
     }
     function go(k) {
       closeAll(); closeDrawer();
+      if (k === 'sale:package') { ensurePkgPlanner(); try { win.navigate('pkgplan'); } catch (e) {} return; }   // 20 Nov: Building Packages = its own Package planner screen (the old POS side window was never loaded in the new POS)
       if (k.indexOf('sale:') === 0) { openPos(k.slice(5)); return; }
       if (k === 'pos') { openPos('bill'); return; }
       if (k.indexOf('profit:') === 0) { ensureProfit(); try { win.navigate('profit'); } catch (e) {} setTimeout(function () { var f = doc.getElementById('frame-profit'); try { f && f.contentWindow.postMessage({ type: 'profit-tab', tab: k.split(':')[1] }, win.location.origin); } catch (e) {} }, 250); return; }
@@ -77,6 +78,10 @@
       try { win.addFramePage({ key: 'pending', label: 'Awaiting delivery', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-check-circle"/></svg>', url: '/pending_delivery.html', sub: 'Billed by a vendor, not delivered yet', after: 'stock' }); } catch (e) {}
     }
     // 20 Nov: Stock & items (item code edit) is ALWAYS in the Inventory menu. Before, it only appeared after /api/me answered, so a slow PC hid it.
+    function ensurePkgPlanner() {
+      if (doc.getElementById('page-pkgplan') || typeof win.addFramePage !== 'function') return;
+      try { win.addFramePage({ key: 'pkgplan', label: 'Building Packages', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/package_planner.html', sub: 'Add items by code, set the package price, see the profit', after: 'pos' }); } catch (e) {}
+    }
     function ensureStockMgr() {
       if (doc.getElementById('page-stockmgr') || typeof win.addFramePage !== 'function') return;
       try { win.addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit code, name, category, price, picture', after: 'grn' }); } catch (e) {}

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Package planner</title>
+<style>
+:root{--ink:#1a1b1f;--mut:#5b5f6b;--line:#dcd8cc;--bg:#f6f4ee;--card:#fff;--gold:#c9a24b;--good:#1d6b3a;--bad:#b3261e;--warn:#9a6a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,Arial,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:20px;margin:4px 0 2px}
+.sub{color:var(--mut);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.add{display:grid;grid-template-columns:150px 80px 1fr auto;gap:8px;align-items:end}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;min-height:40px}
+input:focus{outline:2px solid var(--gold);outline-offset:0}
+button{padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;cursor:pointer;min-height:40px}
+button.gold{background:var(--gold);border-color:var(--gold);color:#1a1b1f;font-weight:700}
+.msg{min-height:20px;margin-top:6px;font-size:13px;color:var(--bad)}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:860px}
+th{font-size:12px;color:var(--mut);text-align:left;padding:6px 6px;border-bottom:2px solid var(--gold);white-space:nowrap}
+td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th.r,td.r{text-align:right;white-space:nowrap}
+td input{min-height:34px;padding:6px 8px}
+td.name{min-width:200px}
+td.name small{color:var(--mut);display:block}
+.neg{color:var(--bad);font-weight:600}.pos{color:var(--good);font-weight:600}.low{color:var(--warn);font-weight:600}
+.rm{padding:4px 9px;min-height:30px}
+.tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.tot div{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfaf6}
+.tot span{display:block;font-size:12px;color:var(--mut)}
+.tot b{font-size:20px}
+.tot .big{background:#fff8e1;border-color:var(--gold)}
+.warn{margin-top:8px;font-size:13px;color:var(--warn)}
+.row2{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}
+.row2>div{width:230px}
+.note{color:var(--mut);font-size:12px;margin-top:8px}
+@media(max-width:700px){.add{grid-template-columns:1fr 1fr}.add .cm{grid-column:1/-1}}
+@media print{.add,.rm,#acts{display:none}body{background:#fff}}
+</style></head><body><main>
+<h1>Package planner</h1>
+<p class="sub">Owner only. Type an item code, set the package price for it, add a comment. At the bottom you see the total profit. Nothing here is saved to the shop data and nothing goes on a bill.</p>
+
+<div class="card">
+  <div class="add">
+    <div><label for="code">Item code</label><input id="code" list="codes" inputmode="numeric" autocomplete="off" placeholder="e.g. 355"></div>
+    <div><label for="qty">Qty</label><input id="qty" type="number" min="1" step="any" value="1"></div>
+    <div class="cm"><label for="cmt">Comment (optional)</label><input id="cmt" autocomplete="off" placeholder="e.g. main tap for the basin"></div>
+    <div><button class="gold" id="addBtn" type="button">Add item</button></div>
+  </div>
+  <datalist id="codes"></datalist>
+  <div class="msg" id="msg" role="status"></div>
+</div>
+
+<div class="card wrap">
+  <table>
+    <thead><tr><th>#</th><th>Code</th><th>Item</th><th class="r">Qty</th><th class="r">Shop price</th><th class="r">Package price (each)</th><th class="r">Cost (each)</th><th class="r">Profit</th><th class="r">Margin</th><th>Comment</th><th></th></tr></thead>
+    <tbody id="rows"><tr><td colspan="11" style="color:#5b5f6b;padding:14px">No items yet. Type a code above and press Enter.</td></tr></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="tot">
+    <div><span>Items</span><b id="tItems">0</b></div>
+    <div><span>Shop price total</span><b id="tShop">Rs 0</b></div>
+    <div><span>Package price total</span><b id="tPkg">Rs 0</b></div>
+    <div><span>Cost total</span><b id="tCost">Rs 0</b></div>
+    <div class="big"><span>PROFIT if sold at this price</span><b id="tProfit">Rs 0</b></div>
+    <div class="big"><span>Margin (on selling price)</span><b id="tPct">0%</b></div>
+  </div>
+  <div class="row2">
+    <div><label for="over">One price for the whole package (optional)</label><input id="over" type="number" min="0" step="any" placeholder="e.g. 69900"></div>
+    <div id="acts" style="display:flex;gap:8px;width:auto">
+      <button type="button" id="copyBtn">Copy summary (private)</button>
+      <button type="button" id="printBtn">Print</button>
+      <button type="button" id="clearBtn">Clear all</button>
+    </div>
+  </div>
+  <div class="warn" id="warn"></div>
+  <div class="note">Margin = profit divided by the selling price. Cost is the shop's average cost. If you type one price for the whole package, it replaces the line prices in the totals. Your list stays on this computer until you press Clear all.</div>
+</div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  var ITEMS = {}, LINES = [], KEY = 'rbh_package_planner_v1';
+  var rs = function (n) { n = Math.round((+n || 0) * 100) / 100; return 'Rs ' + n.toLocaleString('en-LK', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); };
+  var r2 = function (n) { return Math.round((+n || 0) * 100) / 100; };
+  function h(tag, attrs, kids) { var e = document.createElement(tag); Object.keys(attrs || {}).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'on') Object.keys(attrs.on).forEach(function (ev) { e.addEventListener(ev, attrs.on[ev]); }); else e.setAttribute(k, attrs[k]); }); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+  function say(t, ok) { var m = $('msg'); m.textContent = t || ''; m.style.color = ok ? '#1d6b3a' : '#b3261e'; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ lines: LINES, over: $('over').value })); } catch (e) { /* no storage: still works */ } }
+  function restore() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.lines)) { LINES = s.lines.filter(function (l) { return l && l.code; }); $('over').value = s.over || ''; } } catch (e) { LINES = []; } }
+
+  function load() {
+    fetch('/api/item-prices', { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (x) {
+      if (!x.ok || !Array.isArray(x.j)) { say((x.j && x.j.error) || 'Could not load the items (owner only).'); return; }
+      var dl = $('codes'); dl.textContent = '';
+      x.j.forEach(function (p) { ITEMS[p.item_code] = { code: p.item_code, name: p.name, vcode: p.vendor_code || '', sell: +p.selling_price || 0, cost: +p.avg_cost || 0 }; dl.appendChild(h('option', { value: p.item_code, label: p.name })); });
+      draw();
+    }).catch(function () { say('Could not load the items. Check the connection and open this screen again.'); });
+  }
+
+  function add() {
+    var code = $('code').value.trim(), qty = parseFloat($('qty').value) || 0, p = ITEMS[code];
+    if (!code) { say('Type an item code first.'); return; }
+    if (!p) { say('Item code ' + code + ' is not in the shop. Check the code.'); return; }
+    if (!(qty > 0)) { say('Quantity must be more than 0.'); return; }
+    LINES.push({ code: code, qty: qty, price: p.sell, cmt: $('cmt').value.trim() });
+    $('code').value = ''; $('cmt').value = ''; $('qty').value = '1'; say(p.name + ' added.', true); save(); draw(); $('code').focus();
+  }
+
+  function calc() {
+    var t = { items: 0, shop: 0, pkg: 0, cost: 0, noCost: 0, noPrice: 0, loss: 0 };
+    LINES.forEach(function (l) { var p = ITEMS[l.code]; if (!p) return; t.items += l.qty; t.shop += l.qty * p.sell; t.pkg += l.qty * l.price; t.cost += l.qty * p.cost; if (!(p.cost > 0)) t.noCost++; if (!(l.price > 0)) t.noPrice++; if (l.price > 0 && p.cost > 0 && l.price < p.cost) t.loss++; });
+    var over = parseFloat($('over').value) || 0, used = over > 0 ? over : t.pkg, profit = used - t.cost;
+    return { t: t, used: used, over: over, profit: profit, pct: used > 0 ? profit / used * 100 : 0 };
+  }
+
+  function draw() {
+    var tb = $('rows'); tb.textContent = '';
+    if (!LINES.length) tb.appendChild(h('tr', {}, [h('td', { colspan: '11', style: 'color:#5b5f6b;padding:14px', text: 'No items yet. Type a code above and press Enter.' })]));
+    LINES.forEach(function (l, i) {
+      var p = ITEMS[l.code] || { name: '(not found)', sell: 0, cost: 0, vcode: '' };
+      var lp = (l.price - p.cost) * l.qty, pc = l.price > 0 ? (l.price - p.cost) / l.price * 100 : 0;
+      var cls = !(p.cost > 0) ? 'low' : lp < 0 ? 'neg' : pc < 15 ? 'low' : 'pos';
+      var priceIn = h('input', { type: 'number', min: '0', step: 'any', value: String(l.price), 'aria-label': 'Package price for ' + p.name, class: 'r', style: 'width:110px;text-align:right', on: { input: function () { l.price = parseFloat(this.value) || 0; save(); totals(); rowCells(i); }, change: draw } });
+      var qtyIn = h('input', { type: 'number', min: '0', step: 'any', value: String(l.qty), 'aria-label': 'Quantity', style: 'width:70px;text-align:right', on: { input: function () { l.qty = parseFloat(this.value) || 0; save(); totals(); rowCells(i); }, change: draw } });
+      var cmtIn = h('input', { value: l.cmt || '', 'aria-label': 'Comment', on: { input: function () { l.cmt = this.value; save(); } } });
+      var tr = h('tr', { 'data-i': String(i) }, [
+        h('td', { text: String(i + 1) }), h('td', { text: l.code }),
+        h('td', { class: 'name' }, [h('span', { text: p.name })]),
+        h('td', { class: 'r' }, [qtyIn]),
+        h('td', { class: 'r', text: rs(p.sell) }),
+        h('td', { class: 'r' }, [priceIn]),
+        h('td', { class: 'r', text: p.cost > 0 ? rs(p.cost) : 'no cost' }),
+        h('td', { class: 'r c-profit ' + cls, text: p.cost > 0 ? rs(lp) : '-' }),
+        h('td', { class: 'r c-pct ' + cls, text: p.cost > 0 ? (Math.round(pc * 10) / 10) + '%' : '-' }),
+        h('td', {}, [cmtIn]),
+        h('td', {}, [h('button', { type: 'button', class: 'rm', 'aria-label': 'Remove ' + p.name, text: 'x', on: { click: function () { LINES.splice(i, 1); save(); draw(); } } })])
+      ]);
+      tb.appendChild(tr);
+    });
+    totals();
+  }
+  function rowCells(i) {
+    var l = LINES[i], p = ITEMS[l.code], tr = $('rows').querySelector('tr[data-i="' + i + '"]'); if (!tr || !p) return;
+    var lp = (l.price - p.cost) * l.qty, pc = l.price > 0 ? (l.price - p.cost) / l.price * 100 : 0, cls = !(p.cost > 0) ? 'low' : lp < 0 ? 'neg' : pc < 15 ? 'low' : 'pos';
+    var a = tr.querySelector('.c-profit'), b = tr.querySelector('.c-pct');
+    a.className = 'r c-profit ' + cls; b.className = 'r c-pct ' + cls;
+    a.textContent = p.cost > 0 ? rs(lp) : '-'; b.textContent = p.cost > 0 ? (Math.round(pc * 10) / 10) + '%' : '-';
+  }
+  function totals() {
+    var c = calc(), t = c.t;
+    $('tItems').textContent = String(Math.round(t.items * 100) / 100);
+    $('tShop').textContent = rs(t.shop); $('tPkg').textContent = rs(c.used); $('tCost').textContent = rs(t.cost);
+    var pf = $('tProfit'); pf.textContent = rs(c.profit); pf.className = c.profit < 0 ? 'neg' : '';
+    $('tPct').textContent = (Math.round(c.pct * 10) / 10) + '%';
+    var w = [];
+    if (t.noCost) w.push(t.noCost + ' item(s) have no cost saved, so the real profit is lower than shown.');
+    if (t.loss && !c.over) w.push(t.loss + ' item(s) are priced below their cost.');
+    if (c.over > 0 && c.over < t.cost) w.push('The package price is below the total cost: this package makes a loss.');
+    if (c.over > 0) w.push('Using one price for the whole package (' + rs(c.over) + '). Shop price total is ' + rs(t.shop) + ', so the customer saves ' + rs(t.shop - c.over) + '.');
+    $('warn').textContent = w.join(' ');
+  }
+  function summary() {
+    var c = calc(), o = ['PACKAGE (private, has cost and profit)'];
+    LINES.forEach(function (l, i) { var p = ITEMS[l.code]; if (!p) return; o.push((i + 1) + '. [' + l.code + '] ' + p.name + ' x' + l.qty + ' | package ' + rs(l.price) + ' | cost ' + rs(p.cost) + (l.cmt ? ' | ' + l.cmt : '')); });
+    o.push('Shop price total: ' + rs(c.t.shop), 'Package price: ' + rs(c.used), 'Cost: ' + rs(c.t.cost), 'PROFIT: ' + rs(c.profit) + ' (' + (Math.round(c.pct * 10) / 10) + '%)');
+    return o.join('\n');
+  }
+
+  $('addBtn').addEventListener('click', add);
+  ['code', 'qty', 'cmt'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } }); });
+  $('over').addEventListener('input', function () { save(); totals(); });
+  $('copyBtn').addEventListener('click', function () { try { navigator.clipboard.writeText(summary()).then(function () { say('Copied. It has cost and profit: keep it private.', true); }, function () { say('Could not copy.'); }); } catch (e) { say('Could not copy.'); } });
+  $('printBtn').addEventListener('click', function () { window.print(); });
+  $('clearBtn').addEventListener('click', function () { if (!LINES.length || confirm('Clear the whole package list?')) { LINES = []; $('over').value = ''; save(); draw(); say(''); } });
+  window.PackagePlanner = { calc: calc, _set: function (items, lines, over) { ITEMS = items; LINES = lines; $('over').value = over || ''; draw(); } };
+  restore(); draw(); load(); $('code').focus();
+})();
+</script></body></html>
