@@ -34,9 +34,32 @@ td.name small{color:var(--mut);display:block}
 .warn{margin-top:8px;font-size:13px;color:var(--warn)}
 .row2{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}
 .row2>div{width:230px}
+.ov{position:fixed;inset:0;background:rgba(20,20,24,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:20px 12px;z-index:50}
+.dlg{background:#fff;border-radius:12px;max-width:560px;width:100%;padding:16px}
+.dlg h2{font-size:17px;margin:0 0 8px}
+.dlg .ck{display:flex;gap:8px;align-items:flex-start;padding:5px 0}
+.dlg .ck input{width:auto;min-height:0;margin-top:3px}
+.dlg .lst{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin:6px 0}
+.dlg .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dlg .priv{color:var(--bad);font-size:12px}
+.sv{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sv span{flex:1}.sv small{color:var(--mut);display:block}
+#cust{background:#fff;color:#111;max-width:820px;width:100%;padding:26px 30px;border-radius:6px}
+#cust .hd{display:flex;gap:14px;align-items:center;border-bottom:3px solid var(--gold);padding-bottom:10px;margin-bottom:10px}
+#cust .hd img{height:54px}
+#cust .hd b{font-size:20px;display:block}
+#cust .hd div{font-size:13px;color:#444}
+#cust h3{margin:6px 0;font-size:18px;letter-spacing:.06em}
+#cust table{min-width:0;font-size:14px}
+#cust th{color:#333}
+#cust .gt{display:flex;justify-content:space-between;font-size:18px;font-weight:700;border-top:2px solid var(--gold);margin-top:10px;padding-top:8px}
+#cust .sm{display:flex;justify-content:space-between;font-size:14px;margin-top:4px}
+#cust .pv{margin-top:10px;padding:8px;border:2px dashed var(--bad);color:var(--bad);font-size:13px}
+#cust .ft{margin-top:14px;font-size:12px;color:#555}
+#cust .ab{display:flex;gap:8px;margin-top:16px}
 .note{color:var(--mut);font-size:12px;margin-top:8px}
 @media(max-width:700px){.add{grid-template-columns:1fr 1fr}.add .cm{grid-column:1/-1}}
-@media print{.add,.rm,#acts{display:none}body{background:#fff}}
+@media print{body{background:#fff}main{display:none!important}.ov{position:static;background:none;padding:0;display:block}#cust{box-shadow:none;max-width:none;padding:0}#cust .ab,.dlg:not(#cust){display:none!important}}
 </style></head><body><main>
 <h1>Package planner</h1>
 <p class="sub">Owner only. Type an item code, set the package price for it, add a comment. At the bottom you see the total profit. Nothing here is saved to the shop data and nothing goes on a bill.</p>
@@ -70,14 +93,17 @@ td.name small{color:var(--mut);display:block}
   </div>
   <div class="row2">
     <div><label for="over">One price for the whole package (optional)</label><input id="over" type="number" min="0" step="any" placeholder="e.g. 69900"></div>
-    <div id="acts" style="display:flex;gap:8px;width:auto">
-      <button type="button" id="copyBtn">Copy summary (private)</button>
-      <button type="button" id="printBtn">Print</button>
-      <button type="button" id="clearBtn">Clear all</button>
-    </div>
+    <div><label for="pname">Package name (to save it)</label><input id="pname" autocomplete="off" placeholder="e.g. Standard bathroom"></div>
+  </div>
+  <div class="row2" id="acts" style="gap:8px">
+    <button type="button" class="gold" id="saveBtn">Save package</button>
+    <button type="button" id="openBtn">Open saved</button>
+    <button type="button" class="gold" id="custBtn">Customer copy (PDF / print)</button>
+    <button type="button" id="copyBtn">Copy summary (private)</button>
+    <button type="button" id="clearBtn">Clear all</button>
   </div>
   <div class="warn" id="warn"></div>
-  <div class="note">Margin = profit divided by the selling price. Cost is the shop's average cost. If you type one price for the whole package, it replaces the line prices in the totals. Your list stays on this computer until you press Clear all.</div>
+  <div class="note">Margin = profit divided by the selling price. Cost is the shop's average cost. If you type one price for the whole package, it replaces the line prices in the totals. Your list stays on this computer until you press Clear all. "Save package" keeps a named copy on this computer; "Customer copy" lets you pick the items and hides cost and profit.</div>
 </div>
 </main>
 <script>
@@ -170,11 +196,99 @@ td.name small{color:var(--mut);display:block}
     return o.join('\n');
   }
 
+  // ---------- save by name (kept in this browser) ----------
+  var SKEY = 'rbh_package_planner_saved_v1';
+  function saved() { try { var a = JSON.parse(localStorage.getItem(SKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function putSaved(a) { try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
+  function savePackage() {
+    var name = $('pname').value.trim();
+    if (!LINES.length) { say('Add at least one item before saving.'); return; }
+    if (!name) { say('Give the package a name first (the box next to Save).'); $('pname').focus(); return; }
+    var a = saved(), i = a.findIndex(function (x) { return x.name.toLowerCase() === name.toLowerCase(); });
+    if (i >= 0 && !confirm('A package called "' + a[i].name + '" is already saved. Replace it?')) return;
+    var rec = { name: name, lines: JSON.parse(JSON.stringify(LINES)), over: $('over').value, at: new Date().toISOString() };
+    if (i >= 0) a[i] = rec; else a.push(rec);
+    say(putSaved(a) ? 'Saved "' + name + '". Use Open saved to bring it back.' : 'Could not save in this browser.', true);
+  }
+  // ---------- dialogs ----------
+  function closeDlg() { var o = $('ov'); if (o) o.remove(); }
+  function openDlg(box) { closeDlg(); var o = h('div', { id: 'ov', class: 'ov', on: { mousedown: function (e) { if (e.target === o) closeDlg(); } } }, [box]); document.body.appendChild(o); }
+  function openSaved() {
+    var a = saved(), box = h('div', { class: 'dlg' }, [h('h2', { text: 'Saved packages' })]);
+    if (!a.length) box.appendChild(h('p', { class: 'sub', text: 'Nothing saved yet. Type a name next to "Package name" and press Save package.' }));
+    a.forEach(function (x, i) {
+      var cnt = x.lines.reduce(function (s, l) { return s + (+l.qty || 0); }, 0);
+      box.appendChild(h('div', { class: 'sv' }, [
+        h('span', {}, [h('b', { text: x.name }), h('small', { text: x.lines.length + ' lines, ' + cnt + ' pieces, saved ' + String(x.at || '').slice(0, 10) })]),
+        h('button', { type: 'button', class: 'gold', text: 'Open', on: { click: function () { if (LINES.length && !confirm('Replace the list on screen with "' + x.name + '"?')) return; LINES = JSON.parse(JSON.stringify(x.lines)); $('over').value = x.over || ''; $('pname').value = x.name; save(); draw(); closeDlg(); say('Opened "' + x.name + '".', true); } } }),
+        h('button', { type: 'button', text: 'Remove', on: { click: function () { if (confirm('Remove "' + x.name + '" from the saved list?')) { var b = saved(); b.splice(i, 1); putSaved(b); openSaved(); } } } })
+      ]));
+    });
+    box.appendChild(h('div', { class: 'btns' }, [h('button', { type: 'button', text: 'Close', on: { click: closeDlg } })]));
+    openDlg(box);
+  }
+  // ---------- customer copy: choose items and what the customer sees. Cost and profit are never shown unless you tick the private box. ----------
+  function custDialog() {
+    if (!LINES.length) { say('Add items first.'); return; }
+    var box = h('div', { class: 'dlg' }, [h('h2', { text: 'Customer copy (PDF / print)' }), h('p', { class: 'sub', text: 'Tick the items the customer should see.' })]);
+    var lst = h('div', { class: 'lst' }); var cks = [];
+    LINES.forEach(function (l, i) { var p = ITEMS[l.code] || { name: l.code }; var c = h('input', { type: 'checkbox', checked: 'checked' }); cks.push(c); lst.appendChild(h('label', { class: 'ck' }, [c, h('span', { text: p.name + ' x' + l.qty })])); });
+    box.appendChild(lst);
+    function opt(label, on, cls) { var c = h('input', { type: 'checkbox' }); if (on) c.checked = true; box.appendChild(h('label', { class: 'ck' }, [c, h('span', { class: cls || '', text: label })])); return c; }
+    var oPrice = opt('Show the price of each item (untick to show only the package total)', true), oCode = opt('Show item codes', false), oCmt = opt('Show my comments', false), oSave = opt('Show how much the customer saves', true);
+    var oPriv = opt('PRIVATE: also show cost and profit (only for me, never give this copy to a customer)', false, 'priv');
+    box.appendChild(h('div', { class: 'btns' }, [
+      h('button', { type: 'button', class: 'gold', text: 'Make the copy', on: { click: function () {
+        var idx = []; cks.forEach(function (c, i) { if (c.checked) idx.push(i); });
+        if (!idx.length) { say('Tick at least one item.'); return; }
+        custPaper(idx, { price: oPrice.checked, code: oCode.checked, cmt: oCmt.checked, save: oSave.checked, priv: oPriv.checked });
+      } } }), h('button', { type: 'button', text: 'Cancel', on: { click: closeDlg } })]));
+    openDlg(box);
+  }
+  function custPaper(idx, o) {
+    var sel = idx.map(function (i) { return LINES[i]; }), all = idx.length === LINES.length, over = parseFloat($('over').value) || 0;
+    var shop = 0, pkg = 0, cost = 0;
+    sel.forEach(function (l) { var p = ITEMS[l.code] || { sell: 0, cost: 0 }; shop += l.qty * p.sell; pkg += l.qty * l.price; cost += l.qty * p.cost; });
+    var total = all && over > 0 ? over : pkg, saveAmt = shop - total;
+    var paper = h('div', { id: 'cust', class: 'dlg' });
+    var logo = h('img', { src: '/brand/logo-header-400h.png', alt: '' }); logo.onerror = function () { logo.remove(); };
+    paper.appendChild(h('div', { class: 'hd' }, [logo, h('div', {}, [h('b', { text: 'ROYAL BATH HUB' }), h('div', { text: 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka' }), h('div', { text: 'Phone / WhatsApp: +94 74 035 5536  |  royalbathhub1@gmail.com' })])]));
+    var nm = $('pname').value.trim(), dt = new Date().toISOString().slice(0, 10);
+    paper.appendChild(h('h3', { text: 'PACKAGE QUOTATION' + (nm ? ': ' + nm.toUpperCase() : '') }));
+    paper.appendChild(h('div', { class: 'sm', text: 'Date: ' + dt }));
+    var heads = ['#'].concat(o.code ? ['Code'] : [], ['Item', 'Qty'], o.price ? ['Price', 'Amount'] : [], o.priv ? ['Cost (each)', 'Profit'] : []);
+    var tb = h('table', {}, [h('thead', {}, [h('tr', {}, heads.map(function (x, k) { var num = ['Qty', 'Price', 'Amount', 'Cost (each)', 'Profit'].indexOf(x) >= 0; return h('th', { class: num ? 'r' : '', text: x }); }))])]);
+    var body = h('tbody'); tb.appendChild(body);
+    sel.forEach(function (l, n) {
+      var p = ITEMS[l.code] || { name: l.code, cost: 0 }, cells = [h('td', { text: String(n + 1) })];
+      if (o.code) cells.push(h('td', { text: l.code }));
+      var nameTd = h('td', { text: p.name }); if (o.cmt && l.cmt) nameTd.appendChild(h('small', { style: 'display:block;color:#666', text: l.cmt })); cells.push(nameTd, h('td', { class: 'r', text: String(l.qty) }));
+      if (o.price) cells.push(h('td', { class: 'r', text: rs(l.price) }), h('td', { class: 'r', text: rs(l.price * l.qty) }));
+      if (o.priv) cells.push(h('td', { class: 'r', text: p.cost > 0 ? rs(p.cost) : 'no cost' }), h('td', { class: 'r', text: p.cost > 0 ? rs((l.price - p.cost) * l.qty) : '-' }));
+      body.appendChild(h('tr', {}, cells));
+    });
+    paper.appendChild(tb);
+    if (o.save && saveAmt > 0 && o.price) { paper.appendChild(h('div', { class: 'sm' }, [h('span', { text: 'Shop price for these items' }), h('span', { text: rs(shop) })])); paper.appendChild(h('div', { class: 'sm' }, [h('span', { text: 'You save' }), h('span', { text: rs(saveAmt) })])); }
+    paper.appendChild(h('div', { class: 'gt' }, [h('span', { text: 'PACKAGE PRICE' }), h('span', { text: rs(total) })]));
+    if (o.priv) paper.appendChild(h('div', { class: 'pv', text: 'PRIVATE: cost ' + rs(cost) + '   profit ' + rs(total - cost) + ' (' + (total > 0 ? Math.round((total - cost) / total * 1000) / 10 : 0) + '%). Do not give this copy to a customer.' }));
+    paper.appendChild(h('div', { class: 'ft', text: 'Thank you for choosing Royal Bath Hub. Find us on Google Maps: https://maps.app.goo.gl/2t5f6dTp35tpPnQL8' }));
+    var oldTitle = document.title;
+    paper.appendChild(h('div', { class: 'ab' }, [
+      h('button', { type: 'button', class: 'gold', text: 'Print / Save as PDF', on: { click: function () { document.title = (nm || 'Package') + ' ' + dt; window.print(); } } }),
+      h('button', { type: 'button', text: 'Back', on: { click: custDialog } }), h('button', { type: 'button', text: 'Close', on: { click: closeDlg } })]));
+    paper.appendChild(h('div', { class: 'ft ab', text: 'In the print window, choose "Save as PDF" as the printer to keep a PDF file.' }));
+    window.addEventListener('afterprint', function once() { window.removeEventListener('afterprint', once); document.title = oldTitle; });
+    openDlg(paper);
+  }
+
   $('addBtn').addEventListener('click', add);
+  $('saveBtn').addEventListener('click', savePackage);
+  $('openBtn').addEventListener('click', openSaved);
+  $('custBtn').addEventListener('click', custDialog);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDlg(); });
   ['code', 'qty', 'cmt'].forEach(function (id) { $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } }); });
   $('over').addEventListener('input', function () { save(); totals(); });
   $('copyBtn').addEventListener('click', function () { try { navigator.clipboard.writeText(summary()).then(function () { say('Copied. It has cost and profit: keep it private.', true); }, function () { say('Could not copy.'); }); } catch (e) { say('Could not copy.'); } });
-  $('printBtn').addEventListener('click', function () { window.print(); });
   $('clearBtn').addEventListener('click', function () { if (!LINES.length || confirm('Clear the whole package list?')) { LINES = []; $('over').value = ''; save(); draw(); say(''); } });
   window.PackagePlanner = { calc: calc, _set: function (items, lines, over) { ITEMS = items; LINES = lines; $('over').value = over || ''; draw(); } };
   restore(); draw(); load(); $('code').focus();
