@@ -15,6 +15,11 @@
     var d = sd.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 2); if (d.length > 2) o += '/' + d.slice(2, 4); if (d.length > 4) o += '/' + d.slice(4);
     if (sd.value !== o) { sd.value = o; var np = 0, cnt = 0; while (np < o.length && cnt < before) { if (/\d/.test(o[np])) cnt++; np++; } try { sd.setSelectionRange(np, np); } catch (e) {} }
   });
+  // 20 Nov (AJ): drop-down of the last 30 days to back-date a bill; typing dd/mm/yyyy still works
+  (function () { var sel = $('saleDay'); if (!sel) return; var DN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], t0 = Date.parse(api.todayISO() + 'T00:00:00Z');
+    for (var i = 0; i < 31; i++) { var iso = new Date(t0 - i * 86400000).toISOString().slice(0, 10), o = document.createElement('option'); o.value = iso; o.textContent = (i === 0 ? 'Today' : i === 1 ? 'Yesterday' : DN[new Date(iso + 'T00:00:00Z').getUTCDay()]) + ' ' + api.isoToDMY(iso); sel.appendChild(o); }
+    sel.addEventListener('change', function () { sd.value = api.isoToDMY(sel.value); });
+    sd.addEventListener('input', function () { var m = sd.value.length === 10 && api.dmyToISO(sd.value); sel.value = m && sel.querySelector('option[value="' + m + '"]') ? m : ''; }); })();
   // click anywhere in a field = caret goes exactly there (the anti-autofill readonly is lifted BEFORE the click lands)
     var smEl = $('salesman'); if (smEl) smEl.value = 'Jazeel';   // Jazeel is the default salesman on every bill (AJ 18 Nov); pick Ajmal for his own sales
   ['customerName', 'customerPhone', 'saleDate'].forEach(function (id) { var e = $(id); if (e) { e.addEventListener('pointerdown', function () { e.removeAttribute('readonly'); }); e.addEventListener('mousedown', function () { e.removeAttribute('readonly'); }); } });
@@ -161,7 +166,7 @@
     };
     if (editingId) askReason('Edit bill', 'Why is this bill being changed?', 'Save changes').then(function (rs) { if (rs) go(rs); }); else go();
   }
-  function clearForNext() { if ($('salesman')) $('salesman').value = 'Jazeel'; rows = []; extra = 0; $('customerName').value = ''; $('customerPhone').value = ''; $('chequeRef').value = ''; $('chequeDate').value = ''; $('splitCash').value = '0'; $('splitOther').value = '0'; $('paymentMethod').value = 'Cash'; sd.value = api.isoToDMY(api.todayISO()); wholesale = false; wsTag(); paymentUI(); showError(''); render(); }
+  function clearForNext() { if ($('salesman')) $('salesman').value = 'Jazeel'; rows = []; extra = 0; $('customerName').value = ''; $('customerPhone').value = ''; $('chequeRef').value = ''; $('chequeDate').value = ''; $('splitCash').value = '0'; $('splitOther').value = '0'; $('paymentMethod').value = 'Cash'; sd.value = api.isoToDMY(api.todayISO()); if ($('saleDay')) $('saleDay').selectedIndex = 0; wholesale = false; wsTag(); paymentUI(); showError(''); render(); }
   function endEdit() { editingId = null; $('editBanner').classList.add('hidden'); $('cancelEditBtn').classList.add('hidden'); $('genBtn').textContent = 'Generate Bill'; }
 
   // ---------- receipt ----------
