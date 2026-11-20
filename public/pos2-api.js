@@ -53,7 +53,7 @@
       if (b.error) return { error: b.error };
       p.payments = b.payments;
     } else p.payment_method = mode;
-    if (o.date && o.date !== todayISO() && !o.editing) p.sale_date = o.date;
+    if (o.date && (o.editing ? o.date !== o.origDate : o.date !== todayISO())) p.sale_date = o.date;
     if (o.wholesale && !o.editing) p.bill_type = 'wholesale';
     if (o.quoteId && !o.editing) p.quotation_id = o.quoteId;
     if (o.notes) p.notes = o.notes;

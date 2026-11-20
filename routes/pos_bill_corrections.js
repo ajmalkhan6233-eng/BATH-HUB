@@ -172,6 +172,14 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
             }
         }
 
+        // 20 Nov (AJ): an edit may change the bill day. Same rules as a new back-dated bill: a real day, never in the future. The old day is kept in pos_bill_history (old_version).
+        let newDay = null;
+        if (req.body && req.body.sale_date) {
+            const sd = String(req.body.sale_date);
+            const today = new Date(Date.now() + 19800000).toISOString().slice(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || isNaN(Date.parse(sd)) || sd > today) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Bill date must be a real day, not in the future' }); }
+            newDay = sd;
+        }
         const oldItems = await itemsOf(client, bill.id);
         await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'edit',$2,$3,$4)`,
             [bill.id, reason, whoOf(req), JSON.stringify({ bill, items: oldItems })]);
@@ -191,6 +199,8 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
             `UPDATE pos_bills SET customer_name=$1, customer_phone=$2, subtotal=$3, discount_pct=$4, discount_amount=$5, total=$6,
                     payment_method=$7, notes=$8, discount_override=$9 WHERE id=$10`,
             [p.customer_name, p.customer_phone, p.subtotal, p.pct, p.discount_amount, p.total, pmEdit, p.notes, override || bill.discount_override, bill.id]);
+        // created_at is stored as shop (Colombo) time: change the day, keep the time of day
+        if (newDay) await client.query(`UPDATE pos_bills SET created_at = $1::date + created_at::time WHERE id = $2`, [newDay, bill.id]);
         await client.query('COMMIT');
 
         const nb = (await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [bill.id])).rows[0];

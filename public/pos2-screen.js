@@ -5,7 +5,7 @@
   var api = Pos2Api, $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return 'Rs ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var rows = [], bills = [], currentBill = null, quotationMode = false, wholesale = false, discountLimit = 10, extra = 0, editingId = null, isOwner = false, quoteId = null, billedMap = {};
+  var rows = [], bills = [], currentBill = null, quotationMode = false, wholesale = false, discountLimit = 10, extra = 0, editingId = null, origBill = null, origDate = null, isOwner = false, quoteId = null, billedMap = {};
   var HELD = 'pos2_held';
 
   // ---------- date: dd/mm/yyyy ----------
@@ -15,6 +15,11 @@
     var d = sd.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 2); if (d.length > 2) o += '/' + d.slice(2, 4); if (d.length > 4) o += '/' + d.slice(4);
     if (sd.value !== o) { sd.value = o; var np = 0, cnt = 0; while (np < o.length && cnt < before) { if (/\d/.test(o[np])) cnt++; np++; } try { sd.setSelectionRange(np, np); } catch (e) {} }
   });
+  // 20 Nov (AJ): drop-down of the last 30 days to back-date a bill; typing dd/mm/yyyy still works
+  (function () { var sel = $('saleDay'); if (!sel) return; var DN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], t0 = Date.parse(api.todayISO() + 'T00:00:00Z');
+    for (var i = 0; i < 31; i++) { var iso = new Date(t0 - i * 86400000).toISOString().slice(0, 10), o = document.createElement('option'); o.value = iso; o.textContent = (i === 0 ? 'Today' : i === 1 ? 'Yesterday' : DN[new Date(iso + 'T00:00:00Z').getUTCDay()]) + ' ' + api.isoToDMY(iso); sel.appendChild(o); }
+    sel.addEventListener('change', function () { sd.value = api.isoToDMY(sel.value); });
+    sd.addEventListener('input', function () { var m = sd.value.length === 10 && api.dmyToISO(sd.value); sel.value = m && sel.querySelector('option[value="' + m + '"]') ? m : ''; }); })();
   // click anywhere in a field = caret goes exactly there (the anti-autofill readonly is lifted BEFORE the click lands)
     var smEl = $('salesman'); if (smEl) smEl.value = 'Jazeel';   // Jazeel is the default salesman on every bill (AJ 18 Nov); pick Ajmal for his own sales
   ['customerName', 'customerPhone', 'saleDate'].forEach(function (id) { var e = $(id); if (e) { e.addEventListener('pointerdown', function () { e.removeAttribute('readonly'); }); e.addEventListener('mousedown', function () { e.removeAttribute('readonly'); }); } });
@@ -126,10 +131,10 @@
   var modalDone = null;
   function closeModal(v) { $('modalBack').classList.add('hidden'); var f = modalDone; modalDone = null; if (f) f(v); }
   function modal(title, body, confirmText, fn) { $('modalTitle').textContent = title; $('modalBody').innerHTML = body; $('modalBack').classList.remove('hidden'); $('modalConfirm').classList.toggle('hidden', !confirmText); $('modalConfirm').textContent = confirmText || 'Confirm'; $('modalConfirm').onclick = function () { if (fn) fn(); }; modalDone = null; }
-  function askReason(title, label, btn) {
+  function askReason(title, label, btn, info, prefill) {
     return new Promise(function (res) {
-      modal(title, '<label>' + esc(label) + '</label><input id="reasonBox" style="width:100%" autocomplete="off">', btn, function () { var v = $('reasonBox').value.trim(); if (v.length < 3) { $('reasonBox').style.borderColor = 'var(--warn)'; return; } modalDone = null; $('modalBack').classList.add('hidden'); res(v); });
-      modalDone = function () { res(null); }; setTimeout(function () { var b = $('reasonBox'); if (b) b.focus(); }, 30);
+      modal(title, (info || '') + '<label>' + esc(label) + '</label><input id="reasonBox" style="width:100%" autocomplete="off" value="' + esc(prefill || '') + '">', btn, function () { var v = $('reasonBox').value.trim(); if (v.length < 3) { $('reasonBox').style.borderColor = 'var(--warn)'; return; } modalDone = null; $('modalBack').classList.add('hidden'); res(v); });
+      modalDone = function () { res(null); }; setTimeout(function () { var b = $('reasonBox'); if (b) { b.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); $('modalConfirm').click(); } }); b.focus(); b.select(); } }, 30);
     });
   }
   $('modalCancel').onclick = function () { closeModal(null); };
@@ -148,7 +153,7 @@
     var p = $('paymentMethod').value; if (p === 'Credit' && !$('customerName').value.trim() && !phone) { showError('A credit bill needs the customer name or phone.'); return; }
     var cd = $('chequeDate').value ? ' ' + api.isoToDMY($('chequeDate').value) : '';
     var t = totals();
-    var pl = api.billPayload({ rows: rows, disc: t.disc, salesman: ($('salesman') || {}).value, name: $('customerName').value.trim(), phone: phone, method: p, chequeRef: $('chequeRef').value.trim() ? $('chequeRef').value.trim() + cd : '', split: [{ method: 'cash', amount: $('splitCash').value }, { method: 'card', amount: $('splitOther').value }], date: iso, wholesale: wholesale, quoteId: quoteId, editing: !!editingId });
+    var pl = api.billPayload({ rows: rows, disc: t.disc, salesman: ($('salesman') || {}).value, name: $('customerName').value.trim(), phone: phone, method: p, chequeRef: $('chequeRef').value.trim() ? $('chequeRef').value.trim() + cd : '', split: [{ method: 'cash', amount: $('splitCash').value }, { method: 'card', amount: $('splitOther').value }], date: iso, wholesale: wholesale, quoteId: quoteId, editing: !!editingId, origDate: origDate });
     if (pl.error) { showError(pl.error); return; }
     var go = function (reason) {
       if (editingId) pl.payload.reason = reason;
@@ -159,10 +164,24 @@
         endEdit(); quoteId = null; return api.bill(fresh.id).then(function (full) { showReceipt(full || fresh, !wasEdit); clearForNext(); loadToday(); });
       }).catch(function (e) { showError(e.message); }).then(function () { gb.disabled = false; gb.textContent = editingId ? 'Save changes' : 'Generate Bill'; });
     };
-    if (editingId) askReason('Edit bill', 'Why is this bill being changed?', 'Save changes').then(function (rs) { if (rs) go(rs); }); else go();
+    if (editingId) { var ck = editCheck(iso, t); askReason('Edit bill', 'Why is this bill being changed?', 'Save changes', ck.html, ck.only === 'date' ? 'Date changed' : '').then(function (rs) { if (rs) go(rs); }); } else go();
   }
-  function clearForNext() { if ($('salesman')) $('salesman').value = 'Jazeel'; rows = []; extra = 0; $('customerName').value = ''; $('customerPhone').value = ''; $('chequeRef').value = ''; $('chequeDate').value = ''; $('splitCash').value = '0'; $('splitOther').value = '0'; $('paymentMethod').value = 'Cash'; sd.value = api.isoToDMY(api.todayISO()); wholesale = false; wsTag(); paymentUI(); showError(''); render(); }
-  function endEdit() { editingId = null; $('editBanner').classList.add('hidden'); $('cancelEditBtn').classList.add('hidden'); $('genBtn').textContent = 'Generate Bill'; }
+  // 20 Nov (AJ): before an edit is saved, list exactly what differs from the saved bill (so he can see only the date, or only what he meant, changed)
+  function editCheck(iso, t) {
+    var b = origBill || {}, ch = [], D = api.isoToDMY, old = (b.items || []).map(function (i) { return { k: (i.item_code || '') + '|' + i.item_name, q: Number(i.qty), p: Number(i.unit_price) }; });
+    if (iso !== origDate) ch.push({ k: 'date', m: 'Date: ' + D(origDate) + ' to ' + D(iso) });
+    if (($('customerName').value.trim()) !== (b.customer_name || '')) ch.push({ k: 'x', m: 'Customer name' });
+    if (($('customerPhone').value.trim()) !== (b.customer_phone || '')) ch.push({ k: 'x', m: 'Customer phone' });
+    var nw = rows.map(function (r) { return { k: (r.code || '') + '|' + r.name, q: Number(r.qty), p: Number(r.price) }; });
+    old.forEach(function (o) { var n = nw.filter(function (x) { return x.k === o.k; })[0]; if (!n) ch.push({ k: 'x', m: 'Removed: ' + o.k.split('|')[1] }); else if (n.q !== o.q || n.p !== o.p) ch.push({ k: 'x', m: o.k.split('|')[1] + ': qty ' + o.q + ' to ' + n.q + ', price ' + o.p + ' to ' + n.p }); });
+    nw.forEach(function (n) { if (!old.some(function (o) { return o.k === n.k; })) ch.push({ k: 'x', m: 'Added: ' + n.k.split('|')[1] }); });
+    if (Math.abs((Number(b.discount_amount) || 0) - t.disc) > 0.5) ch.push({ k: 'x', m: 'Discount: ' + money(b.discount_amount || 0) + ' to ' + money(t.disc) });
+    var only = ch.length && ch.every(function (c) { return c.k === 'date'; }) ? 'date' : '';
+    var head = !ch.length ? '<b>Nothing is different from the saved bill.</b>' : only ? '<b style="color:#1a7f37">Only the date is changing. Nothing else.</b>' : '<b>Changes found (' + ch.length + '):</b>';
+    return { only: only, html: '<div style="margin:0 0 10px">' + head + (only || !ch.length ? '' : '<br>' + ch.map(function (c) { return '&bull; ' + esc(c.m); }).join('<br>') ) + (only ? '<br>' + esc(ch[0].m) : '') + '</div>' };
+  }
+  function clearForNext() { if ($('salesman')) $('salesman').value = 'Jazeel'; rows = []; extra = 0; $('customerName').value = ''; $('customerPhone').value = ''; $('chequeRef').value = ''; $('chequeDate').value = ''; $('splitCash').value = '0'; $('splitOther').value = '0'; $('paymentMethod').value = 'Cash'; sd.value = api.isoToDMY(api.todayISO()); if ($('saleDay')) $('saleDay').selectedIndex = 0; wholesale = false; wsTag(); paymentUI(); showError(''); render(); }
+  function endEdit() { editingId = null; origBill = null; origDate = null; $('editBanner').classList.add('hidden'); $('cancelEditBtn').classList.add('hidden'); $('genBtn').textContent = 'Generate Bill'; }
 
   // ---------- receipt ----------
   function showReceipt(b, fresh) {
@@ -209,7 +228,7 @@
     });
   };
   $('editReceiptBtn').onclick = function () {
-    if (!currentBill) return; var b = currentBill; editingId = b.id;
+    if (!currentBill) return; var b = currentBill; editingId = b.id; origBill = b; origDate = new Date(b.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' }); sd.value = api.isoToDMY(origDate); if ($('saleDay')) $('saleDay').value = origDate;
     rows = (b.items || []).map(function (i) { return { code: i.item_code || '', name: i.item_name, qty: Number(i.qty), price: Number(i.unit_price), disc: '0', stock: null, cost: null, unit: '' }; });
     extra = Number(b.discount_amount) || 0; $('customerName').value = b.customer_name || ''; $('customerPhone').value = b.customer_phone || '';
     $('editBanner').textContent = 'Editing ' + b.bill_number + '. Change it and press Save changes.'; $('editBanner').classList.remove('hidden'); $('cancelEditBtn').classList.remove('hidden'); $('genBtn').textContent = 'Save changes';
