@@ -46,6 +46,22 @@ router.get('/items', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'could not build the item profit report' }); }
 });
 
+// 21 Nov (AJ): "real profit" = gross profit minus a small stock holding cost (2% of cost per month in stock by default, AJ let chat pick the rate). Estimate, read only, no interest.
+router.get('/real', async (req, res) => {
+  const from = iso(req.query.from), to = iso(req.query.to);
+  const rate = Number(req.query.rate) > 0 && Number(req.query.rate) <= 20 ? Number(req.query.rate) : 2;
+  try {
+    const sold = (await safe(`SELECT b.created_at, i.item_code, i.item_name, i.qty,
+              i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END AS revenue,
+              i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) AS cost
+         FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
+        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`)).map(r => ({ day: colombo(r.created_at), item_code: r.item_code, name: r.item_name, qty: r.qty, revenue: r.revenue, cost: r.cost })).filter(r => inRange(r.day, from, to));
+    const receipts = {};
+    for (const g of await safe(`SELECT split_part(item_description, ' - ', 1) AS code, grn_date::text AS d FROM grn_records WHERE grn_date IS NOT NULL`)) (receipts[String(g.code).trim()] = receipts[String(g.code).trim()] || []).push(g.d);
+    res.json(Object.assign({ estimate: true, note: 'Holding cost is an estimate (money tied up, space, damage), not interest: ' + rate + '% of cost per month the item sat in stock, counted from its latest GRN date. Items with no GRN date are not charged.' }, require('../utils/holding_cost').compute(sold, receipts, rate)));
+  } catch (e) { res.status(500).json({ error: 'could not build the real profit report' }); }
+});
+
 // 18 Nov (AJ): invoice profit for the phone Profit page. One row per bill: sale, cost, profit. Same cost rule as above. Read only.
 router.get('/bills', async (req, res) => {
   const from = iso(req.query.from), to = iso(req.query.to);

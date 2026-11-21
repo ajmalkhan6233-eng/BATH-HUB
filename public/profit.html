@@ -33,7 +33,7 @@ tr.total td{font-weight:800;border-top:2px solid var(--line)}.pos{color:var(--gr
 <script>
 (function () {
   'use strict';
-  var TABS = [['daily', 'Daily', 'day'], ['weekly', 'Weekly', 'week'], ['monthly', 'Monthly', 'month'], ['yearly', 'Yearly', 'year'], ['item', 'By item'], ['category', 'By category']];
+  var TABS = [['daily', 'Daily', 'day'], ['weekly', 'Weekly', 'week'], ['monthly', 'Monthly', 'month'], ['yearly', 'Yearly', 'year'], ['item', 'By item'], ['category', 'By category'], ['real', 'Real profit']];
   var tab = 'daily', last = null;
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -41,7 +41,7 @@ tr.total td{font-weight:800;border-top:2px solid var(--line)}.pos{color:var(--gr
   var cls = function (v) { return Number(v) < 0 ? 'neg' : 'pos'; };
   var iso = function (d) { return d.toISOString().slice(0, 10); };
   function defaults() {
-    var t = new Date(), f = new Date(); var days = { daily: 30, weekly: 84, monthly: 365, yearly: 1825, item: 30, category: 30 }[tab];
+    var t = new Date(), f = new Date(); var days = { daily: 30, weekly: 84, monthly: 365, yearly: 1825, item: 30, category: 30, real: 30 }[tab];
     f.setDate(f.getDate() - days); $('from').value = iso(f); $('to').value = iso(t);
   }
   function drawTabs() {
@@ -51,10 +51,10 @@ tr.total td{font-weight:800;border-top:2px solid var(--line)}.pos{color:var(--gr
   function msg(t) { $('msg').textContent = t || ''; }
   function load() {
     var isItem = tab === 'item' || tab === 'category', q = 'from=' + $('from').value + '&to=' + $('to').value;
-    var url = isItem ? '/api/profit/items?by=' + tab + '&' + q : '/api/profit?group=' + TABS.filter(function (x) { return x[0] === tab; })[0][2] + '&' + q;
+    var url = tab === 'real' ? '/api/profit/real?' + q : isItem ? '/api/profit/items?by=' + tab + '&' + q : '/api/profit?group=' + TABS.filter(function (x) { return x[0] === tab; })[0][2] + '&' + q;
     msg('Loading...');
     fetch(url, { credentials: 'same-origin' }).then(function (r) { if (r.status === 403) throw new Error('Owner only'); if (!r.ok) throw new Error('Could not load profit'); return r.json(); })
-      .then(function (j) { last = j; msg(''); isItem ? drawItems(j) : drawPeriods(j); })
+      .then(function (j) { last = j; msg(''); tab === 'real' ? drawReal(j) : isItem ? drawItems(j) : drawPeriods(j); })
       .catch(function (e) { msg(e.message); $('tbl').querySelector('tbody').innerHTML = '<tr><td class="state">' + esc(e.message) + '</td></tr>'; });
   }
   function kpi(l, v, c) { return '<div class="kpi"><span class="sm">' + l + '</span><b class="' + (c || '') + '">' + v + '</b></div>'; }
@@ -77,9 +77,19 @@ tr.total td{font-weight:800;border-top:2px solid var(--line)}.pos{color:var(--gr
     }).join('') : '<tr><td class="state" colspan="6">Nothing sold in these dates yet.</td></tr>';
     $('note').textContent = 'Cost of goods uses each item\'s average cost today (an estimate). Bill discounts are shared across the lines.';
   }
+  function drawReal(j) {
+    var t = j.total;
+    $('kpis').innerHTML = kpi('Sales', lkr(t.revenue)) + kpi('Gross profit', lkr(t.gross), cls(t.gross)) + kpi('Holding cost', lkr(-t.charge), 'neg') + kpi('Real profit', lkr(t.real), cls(t.real));
+    $('tbl').querySelector('thead').innerHTML = '<tr><th>Item</th><th>Qty</th><th>Sales</th><th>Gross</th><th>Days in stock</th><th>Holding cost</th><th>Real profit</th></tr>';
+    $('tbl').querySelector('tbody').innerHTML = j.rows.length ? j.rows.map(function (r) {
+      return '<tr><td>' + esc(r.name) + '</td><td>' + r.qty + '</td><td>' + lkr(r.revenue) + '</td><td>' + lkr(r.gross) + '</td><td>' + (r.days == null ? '-' : r.days) + '</td><td>' + lkr(-r.charge) + '</td><td class="' + cls(r.real) + '">' + lkr(r.real) + '</td></tr>';
+    }).join('') : '<tr><td class="state" colspan="7">Nothing sold in these dates yet.</td></tr>';
+    $('note').textContent = (j.note || '') + (j.lines_without_receipt_date ? ' ' + j.lines_without_receipt_date + ' sold line(s) have no GRN date, so no holding cost was counted on them.' : '');
+  }
   function csv() {
     if (!last) return; var rows = [], head;
-    if (last.by) { head = ['name', 'qty', 'sales', 'cost_of_goods', 'gross_profit', 'margin_pct']; rows = last.rows.map(function (r) { return [r.name, r.qty, r.revenue, r.cost, r.profit, r.margin_pct == null ? '' : r.margin_pct]; }); }
+    if (tab === 'real') { head = ['item', 'qty', 'sales', 'gross', 'days_in_stock', 'holding_cost', 'real_profit']; rows = last.rows.map(function (r) { return [r.name, r.qty, r.revenue, r.gross, r.days, r.charge, r.real]; }); }
+    else if (last.by) { head = ['name', 'qty', 'sales', 'cost_of_goods', 'gross_profit', 'margin_pct']; rows = last.rows.map(function (r) { return [r.name, r.qty, r.revenue, r.cost, r.profit, r.margin_pct == null ? '' : r.margin_pct]; }); }
     else { head = ['period', 'bills', 'sales', 'cost_of_goods', 'gross', 'expenses', 'salary', 'commissions', 'net']; rows = last.rows.concat([last.total]).map(function (r) { return [r.period, r.bills, r.sales, r.cogs, r.gross, r.expenses, r.salary, r.commissions, r.net]; }); }
     var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([[head].concat(rows).map(function (r) { return r.map(q).join(','); }).join('\n')], { type: 'text/csv' })); a.download = 'profit-' + tab + '-' + $('from').value + '-to-' + $('to').value + '.csv'; a.click();
