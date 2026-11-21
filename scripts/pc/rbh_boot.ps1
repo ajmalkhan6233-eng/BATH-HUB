@@ -9,7 +9,8 @@ $url = "http://127.0.0.1:$port"
 $log = Join-Path $root 'logs\boot.log'
 function Say($t) { New-Item -ItemType Directory -Force -Path (Split-Path $log) | Out-Null; Add-Content -Path $log -Value ((Get-Date -Format 'yyyy-MM-dd HH:mm') + ' | ' + $t) }
 function Health { try { return (Invoke-WebRequest "$url/health" -UseBasicParsing -TimeoutSec 4 -Headers @{ 'Cache-Control' = 'no-store' }).Content | ConvertFrom-Json } catch { return $null } }
-function Apex { try { $j = (pm2 jlist 2>$null | Out-String); $a = $j.IndexOf('['); if ($a -lt 0) { return $null }; return @(($j.Substring($a) | ConvertFrom-Json) | Where-Object { $_.name -eq 'apex-server' }) } catch { return $null } }
+# pm2 jlist holds env keys that differ only by case (Path/PATH), which Windows PowerShell's JSON reader refuses: count with node instead
+function Apex { try { $o = (pm2 jlist 2>$null | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const a=JSON.parse(s.slice(s.indexOf('[')));const m=a.filter(p=>p.name==='apex-server');console.log(m.length+' '+m.filter(p=>p.pm2_env.status==='online').length)}catch(e){console.log('x')}})" | Out-String).Trim(); if ($o -notmatch '^\d+ \d+$') { return $null }; $p = $o -split ' '; return @{ n = [int]$p[0]; on = [int]$p[1] } } catch { return $null } }
 
 # 1. wait up to 90 s for pm2 to answer
 $t = 0; while ($t -lt 90 -and $null -eq (Apex)) { Start-Sleep 5; $t += 5 }
@@ -17,7 +18,7 @@ $t = 0; while ($t -lt 90 -and $null -eq (Apex)) { Start-Sleep 5; $t += 5 }
 Push-Location $root; try { node (Join-Path $root 'scripts\pc\rbh_watchdog.js') | Out-Null } catch {} ; Pop-Location
 # 3. checks
 $h = $null; $t = 0; while ($t -lt 60 -and $null -eq $h) { $h = Health; if ($null -eq $h) { Start-Sleep 3; $t += 3 } }
-$apps = Apex; $n = if ($apps) { $apps.Count } else { 0 }; $on = if ($apps) { @($apps | Where-Object { $_.pm2_env.status -eq 'online' }).Count } else { 0 }
+$apps = Apex; $n = if ($apps) { $apps.n } else { 0 }; $on = if ($apps) { $apps.on } else { 0 }
 $disk = ''; try { $m = [regex]::Match((Get-Content (Join-Path $root 'public\service-worker.js') -Raw), "const VERSION = '([^']+)'"); if ($m.Success) { $disk = $m.Groups[1].Value } } catch {}
 $build = if ($h) { $h.build } else { '' }
 $ok = ($null -ne $h) -and ($n -eq 1) -and ($build -eq $disk)
