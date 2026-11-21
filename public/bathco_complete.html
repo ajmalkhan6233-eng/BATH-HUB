@@ -44,7 +44,7 @@ table{border-collapse:collapse;width:100%}
 }
 .login-box{
   background:var(--bg2);border:1px solid var(--card-border);border-radius:var(--radius);
-  padding:40px;width:360px;text-align:center;box-shadow:var(--shadow)
+  padding:clamp(20px,6vw,40px);width:min(360px,calc(100vw - 24px));box-sizing:border-box;text-align:center;box-shadow:var(--shadow)
 }
 .login-logo{font-size:48px;margin-bottom:12px}
 .login-title{font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px}
