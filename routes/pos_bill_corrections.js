@@ -200,7 +200,7 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
                     payment_method=$7, notes=$8, discount_override=$9 WHERE id=$10`,
             [p.customer_name, p.customer_phone, p.subtotal, p.pct, p.discount_amount, p.total, pmEdit, p.notes, override || bill.discount_override, bill.id]);
         // created_at is stored as shop (Colombo) time: change the day, keep the time of day
-        if (newDay) await client.query(`UPDATE pos_bills SET created_at = $1::date + created_at::time WHERE id = $2`, [newDay, bill.id]);
+        if (newDay) { const t = new Date(bill.created_at), p = (n, w = 2) => String(n).padStart(w, '0'); await client.query(`UPDATE pos_bills SET created_at = $1 WHERE id = $2`, [newDay + ' ' + p(t.getHours()) + ':' + p(t.getMinutes()) + ':' + p(t.getSeconds()), bill.id]); }   // wall-clock time of day kept as stored
         await client.query('COMMIT');
         // 21 Nov audit: a changed bill day is written to money_audit_log (who, old day, new day, reason). Never fails the save.
         if (newDay) { const od = new Date(bill.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' }); if (od !== newDay) require('../utils/moneyAudit').log(pool, { who: whoOf(req), action: 'pos_bill_date_change', table: 'pos_bills', id: bill.id, oldValue: od, newValue: newDay, reason }).catch(() => {}); }
