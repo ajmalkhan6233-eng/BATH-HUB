@@ -311,6 +311,15 @@ router.get('/invoice-receipts', async (req, res) => {
 });
 
 // Live check while the cashier types the number: { registered: true | false | null (cannot tell) }.
+// 21 Nov (AJ): a quiet running count of receipts that were NOT sent (no phone, or the send failed). Read only, never an alert.
+router.get('/invoice-receipts/unsent', async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT status, COUNT(*)::int AS n FROM receipt_queue WHERE created_at::date = CURRENT_DATE GROUP BY status`);
+    const by = {}; for (const x of r.rows) by[x.status] = x.n;
+    res.json({ today: { no_phone: by['no phone'] || 0, failed: by.failed || 0, sent: by.sent || 0 }, unsent: (by['no phone'] || 0) + (by.failed || 0) });
+  } catch (e) { res.json({ today: { no_phone: 0, failed: 0, sent: 0 }, unsent: 0 }); }   // table not made yet = nothing to count
+});
+
 router.get('/invoice-receipts/check-number', async (req, res) => {
     try {
         const phone = normalizePhone(req.query.phone);
