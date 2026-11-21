@@ -437,6 +437,11 @@ router.put('/grn-workbench/bill/:id', express.json({ limit: '14mb' }), async (re
         }
         await saveExtra(client, b.id, req.body);
         await client.query('COMMIT');
+        // 21 Nov audit: a changed bill date / due date / total / vendor / bill no is logged (who, old, new, reason). Reason is optional so saving is never blocked. Never fails the save.
+        try {
+            const who = (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || 'unknown', why = String((req.body && req.body.reason) || '').trim().slice(0, 300) || '(no reason typed)', day = (d) => (d instanceof Date ? d.toISOString() : String(d || '')).slice(0, 10);
+            for (const [fld, o, n] of [['bill_date', day(b.bill_date), day(p.bill_date)], ['due_date', day(b.due_date), day(p.due)], ['total', Number(b.total), Number(p.total)], ['vendor', b.vendor_name, p.vendor], ['bill_no', b.bill_no, p.bill_no]]) if (String(o) !== String(n)) require('../utils/moneyAudit').log(pool, { who, action: 'vendor_bill_' + fld + '_change', table: 'vendor_bills', id: b.id, oldValue: o, newValue: n, reason: why }).catch(() => {});
+        } catch (e) { /* audit never blocks the save */ }
         res.json({ ok: true, bill_id: b.id, grn_number: p.bill_no, vendor: p.vendor, total: p.total, due_date: p.due, photo: keepPhoto, items: results });
     } catch (e) {
         if (client) await client.query('ROLLBACK').catch(() => {});
