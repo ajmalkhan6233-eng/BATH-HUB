@@ -52,7 +52,8 @@ const deps = {
     return W.runOnce(deps);
 })().then(async r => {
     try {
-        const U = require('../../utils/autoUpdate').autoUpdate(root);
+        // 21 Nov (startup audit): auto-update is OFF (it was always 'blocked': the PC merges locally). Switch back on: set RBH_AUTOUPDATE=1.
+        const U = process.env.RBH_AUTOUPDATE === '1' ? require('../../utils/autoUpdate').autoUpdate(root) : { state: 'off' };
         if (U.state === 'updated') {
             await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE updated ' + U.files.length + ' files' + (U.deps ? ' (package.json changed: run npm install once)' : '') + (U.restart ? '; restarting apex-server' : '; no restart needed'));
             if (U.restart && !U.deps) { try { await deps.pm2Restart(); } catch (e) { await deps.appendLog(new Date().toISOString() + ' AUTOUPDATE restart failed: ' + String(e.message).slice(0, 100)); } }
