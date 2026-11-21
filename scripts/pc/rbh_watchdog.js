@@ -28,10 +28,12 @@ const deps = {
         const list = JSON.parse(out.slice(a, b + 1));
         return list.map(p => {
             const e = p.pm2_env || {};
-            return { name: p.name, status: e.status, errLog: e.pm_err_log_path, port: Number(e.PORT || (e.env && e.env.PORT)) || null };
+            return { id: p.pm_id, name: p.name, status: e.status, errLog: e.pm_err_log_path, port: Number(e.PORT || (e.env && e.env.PORT)) || null };
         });
     },
-    pm2Restart: () => pm2(['restart', W.APP]),
+    pm2Restart: id => pm2(['restart', id != null ? String(id) : W.APP]),   // by id: a restart by name would also wake a stopped twin
+    pm2Delete: id => pm2(['delete', String(id)]),
+    pm2Save: () => pm2(['save']),
     pm2Start: () => pm2(['start', `"${localConfig}"`, '--only', W.APP]),
     hasLocalConfig: async () => fs.existsSync(localConfig),
     readTail: async (file, n) => { try { return fs.readFileSync(file, 'utf8').split(/\r?\n/).slice(-n).join('\n'); } catch (e) { return ''; } },
