@@ -1,4 +1,7 @@
 'use strict';
+// 21 Nov (startup audit): the same error is logged once, then at most once an hour (it was every 6 s while the phone worker lacked /inbox).
+let _lastMsg = '', _lastAt = 0;
+function logQuiet(e) { const m = (e && e.message) || String(e), now = Date.now(); if (m !== _lastMsg || now - _lastAt > 3600000) { _lastMsg = m; _lastAt = now; console.error('[pocket-inbox]', m); } }
 /**
  * POCKET INBOX (19 Nov 2026). The phone app can now MAKE A BILL and ORDER STOCK. The phone locks the request with AJ's passcode and drops it in the
  * free Cloudflare mailbox (/inbox). This shop PC picks it up every few seconds, opens it with the same passcode (a wrong or forged one cannot open),
@@ -115,7 +118,7 @@ function start(pool, everyMs = Number(process.env.POCKET_POLL_MS) || 6000) {
   if (!snap.configured()) return null;
   ensureTable(pool).catch((e) => console.error('[pocket-inbox]', e.message));
   let busy = false;
-  return setInterval(() => { if (busy) return; busy = true; pollOnce(pool).catch((e) => console.error('[pocket-inbox]', e.message)).finally(() => { busy = false; }); }, everyMs).unref();
+  return setInterval(() => { if (busy) return; busy = true; pollOnce(pool).catch(logQuiet).finally(() => { busy = false; }); }, everyMs).unref();
 }
 
 module.exports = { open, clean, run, pollOnce, start, makeCaller, ensureTable };
