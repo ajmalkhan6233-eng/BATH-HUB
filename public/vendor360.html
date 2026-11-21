@@ -29,6 +29,28 @@ button:focus-visible,input:focus-visible,select:focus-visible,.v:focus-visible{o
 .drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}.drawer.on{display:block}
 .sheet{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--bg);padding:14px;overflow:auto;border-left:1px solid var(--line)}
 .sheet label{display:block;margin:8px 0 2px;font-size:14px;color:var(--muted)}.sheet input,.sheet select{width:100%}
+/* 21 Nov: Debit / Credit tables at the top; long lists scroll inside their own box */
+.ta{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) auto;border:2px solid var(--gold);border-radius:14px;overflow:hidden;margin:6px 0}
+.tc{display:flex;flex-direction:column;min-height:0}.tc+.tc{border-left:2px solid var(--gold)}
+.ta h4{margin:0;padding:5px 10px;font-size:15px;text-align:center}.ta .dh{background:rgba(192,57,43,.16);color:var(--red)}.ta .ch{background:rgba(46,139,87,.16);color:var(--green)}
+.tls{overflow:auto;flex:1;min-height:0;max-height:260px}
+.tl{display:flex;gap:8px;padding:3px 10px;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}.tl .tm{flex:1;min-width:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tl.chq b{opacity:.85}
+.wt{font-style:normal;font-size:11px;background:rgba(212,175,55,.25);border-radius:8px;padding:0 6px}
+.tt{display:flex;justify-content:space-between;padding:4px 10px;font-weight:800;border-top:2px solid var(--gold)}
+.tb{text-align:center;font-weight:800;font-size:15px;padding:4px;border-top:2px solid var(--gold);grid-column:1/-1}
+.nodue{color:var(--muted);font-size:13px;font-style:italic}
+.vhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.vhead .bar{margin:0}
+@media(max-width:700px){.ta{grid-template-columns:1fr}.tc+.tc{border-left:0;border-top:2px solid var(--gold)}}
+@media(min-width:900px){
+body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.app{flex:1;min-height:0;height:auto;overflow:hidden}.left{height:auto;position:static}
+.right,.app.pick .right{height:auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:6px 12px}
+#msg{min-height:0}#detail{display:flex;flex-direction:column;flex:1;min-height:0}
+.vhead button{min-height:34px;padding:2px 10px;font-size:14px}h2{font-size:18px}
+.kpis{margin:4px 0;gap:6px}.kpi{padding:2px 10px}.kpi b{font-size:17px}.kpi .sm{font-size:12px}
+.acct{flex:1 1 52%;min-height:140px;display:flex;flex-direction:column}.acct .ta{flex:1;min-height:0;margin:2px 0}.tls{max-height:none}
+.lower{flex:1 1 32%;min-height:110px;display:flex;flex-direction:column}.lower .tabs{margin-top:0}.lower .tabs button{min-height:32px;padding:2px 10px}.lower .wrap{flex:1;min-height:0;overflow:auto}
+}
 </style><link rel="stylesheet" href="/bathhub-logo.css">
 <link rel="stylesheet" href="/gemini-look.css"><link rel="stylesheet" href="/compact-all.css"></head><body>
 <div class="app" id="app">
