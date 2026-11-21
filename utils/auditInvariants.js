@@ -163,8 +163,8 @@ const CHECKS = [
     id: 'duplicate_cheques', name: 'no cheque number written twice', needs: needs('vendor_bill_cheques'),
     run: async (pool) => {
       const r = await pool.query(`SELECT cheque_no, COALESCE(bank,'') AS bank, COUNT(*)::int AS n, SUM(amount) AS total FROM vendor_bill_cheques
-        WHERE cheque_no IS NOT NULL AND TRIM(cheque_no) <> '' AND status <> 'CANCELLED' GROUP BY cheque_no, COALESCE(bank,'') HAVING COUNT(*) > 1`);
-      return r.rows.length ? res('RED', `${r.rows.length} cheque number(s) used twice`, r.rows) : res('OK', 'every cheque number is used once');
+        WHERE cheque_no IS NOT NULL AND TRIM(cheque_no) <> '' AND status <> 'CANCELLED' GROUP BY cheque_no, COALESCE(bank,'') HAVING COUNT(*) > COUNT(DISTINCT bill_id)`);   // 21 Nov (AJ): ONE cheque paying TWO bills is allowed (rows on different bills); the same cheque on the SAME bill twice is a double entry
+      return r.rows.length ? res('RED', `${r.rows.length} cheque number(s) entered twice on the same bill`, r.rows) : res('OK', 'no cheque is entered twice on the same bill');
     },
   },
   {
