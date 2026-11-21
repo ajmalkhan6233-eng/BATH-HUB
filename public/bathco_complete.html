@@ -284,7 +284,7 @@ table tr:last-child td{border-bottom:none}
     <ul class="sidebar-nav">
       <li class="nav-item active" data-page="dashboard"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-chart"/></svg></span><span class="nav-label">Dashboard</span></li>
       <li class="nav-item" data-page="daily-sales"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg></span><span class="nav-label">Daily Sales</span></li>
-      <li class="nav-item" data-page="stock"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg></span><span class="nav-label">Stock</span></li>
+      <li class="nav-item" data-page="stock" style="display:none" hidden><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg></span><span class="nav-label">Stock</span></li>
       <li class="nav-item" data-page="pos"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-cart"/></svg></span><span class="nav-label">POS Billing</span></li>
       <li class="nav-item" data-page="grn"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">GRN</span></li>
       <li class="nav-item" data-page="expenses"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg></span><span class="nav-label">Expenses</span></li>
@@ -1530,6 +1530,7 @@ document.querySelectorAll('.nav-item').forEach(el => {
 
 let _fromHash = false;
 function navigate(page) {
+  if (page === 'stock' && document.getElementById('page-stockmgr')) page = 'stockmgr';   // 21 Nov (AJ): the old "Stock (old view)" is retired; Stock opens Stock & items. Old page kept in the file, just never opened.
   if (!document.getElementById('page-' + page)) page = 'dashboard';           // unknown address -> Dashboard
   if (!_fromHash && location.hash !== '#/' + page) history.pushState(null, '', '#/' + page);
   document.getElementById('sidebar').classList.remove('open');               // phone: close the menu after choosing

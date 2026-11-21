@@ -84,7 +84,7 @@
     }
     function ensureStockMgr() {
       if (doc.getElementById('page-stockmgr') || typeof win.addFramePage !== 'function') return;
-      try { win.addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit code, name, category, price, picture', after: 'grn' }); } catch (e) {}
+      try { win.addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit code, name, category, price, picture', after: 'grn' }); if (location.hash === '#/stock') win.navigate('stockmgr'); } catch (e) {}
     }
     function ensureProfit() {
       if (doc.getElementById('page-profit') || typeof win.addFramePage !== 'function') return;
