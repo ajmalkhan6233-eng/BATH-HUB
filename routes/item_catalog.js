@@ -143,12 +143,17 @@ router.get('/items', async (req, res) => {
         const category = String(req.query.category || '').trim();
         const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
         const SUP = `, (SELECT COALESCE(NULLIF(p2.preferred_supplier,''), (SELECT g.supplier_name FROM grn_records g WHERE split_part(g.item_description, ' - ', 1) = p2.item_code AND COALESCE(g.supplier_name,'') <> '' ORDER BY g.grn_date DESC NULLS LAST, g.id DESC LIMIT 1)) FROM products p2 WHERE p2.id = products.id) AS supplier`;
+        const role = req.session && req.session.user && req.session.user.role;
+        const costCol = ['admin', 'owner'].includes(role) ? ', avg_cost' : '';   // 21 Nov (AJ): the owner sees the cost next to each item in the POS list; staff never get it
         const run = (extra, hasSup) => {
             const args = [category, req.query.low === '1' || req.query.low === 'true', esc(raw)];
-            const hay = `LOWER(COALESCE(name,'') || ' ' || COALESCE(item_code,'') || ' ' || COALESCE(vendor_code,'') || ' ' || COALESCE(category,'') || ' ' || COALESCE(selling_price::text,'')${hasSup ? " || ' ' || LOWER(COALESCE(supplier,''))" : ''})`;
-            const conds = words.map(w => { args.push(w); return `${hay} LIKE '%' || $${args.length} || '%'`; });
+            const hay = `LOWER(COALESCE(name,'') || ' ' || COALESCE(item_code,'') || ' ' || COALESCE(vendor_code,'') || ' ' || COALESCE(category,'')${hasSup ? " || ' ' || LOWER(COALESCE(supplier,''))" : ''})`;
+            // a PRICE only counts when typed in full (26000 or 26,000), never as a piece of a price: "169" must not find a 16,950 item
+            const conds = words.map(w => { args.push(w); const k = args.length; let c = `${hay} LIKE '%' || $${k} || '%'`;
+                if (/^\d{1,12}(\.\d+)?$/.test(w)) { args.push(w); c = `(${c} OR selling_price = $${args.length}::numeric)`; }
+                return c; });
             return pool.query(
-                `SELECT * FROM (SELECT ${ITEM_COLS}${extra} FROM products WHERE active = true AND ($1 = '' OR category = $1) AND ($2::boolean = false OR stock_level <= reorder_threshold)) t
+                `SELECT * FROM (SELECT ${ITEM_COLS}${costCol}${extra} FROM products WHERE active = true AND ($1 = '' OR category = $1) AND ($2::boolean = false OR stock_level <= reorder_threshold)) t
                   WHERE ${conds.length ? conds.join(' AND ') : 'true'}
                   ORDER BY (item_code = $3) DESC, (LOWER(name) = $3) DESC, (item_code LIKE $3 || '%') DESC, (LOWER(name) LIKE $3 || '%') DESC, item_code
                   LIMIT ${limit}`, args);
