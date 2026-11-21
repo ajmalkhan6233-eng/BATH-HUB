@@ -28,6 +28,7 @@ const as = role => ({
 const admin = as('admin');
 
 // 21 Nov: changing a bill's day on edit is saved AND written to money_audit_log (who, old day, new day, reason).
+const newBill = async () => (await admin.post('/api/pos-bills', { items: [{ item_name: 'Tap', qty: 2, unit_price: 500 }] })).body;
 const today = () => new Date(Date.now() + 19800000).toISOString().slice(0, 10);
 const yest = () => new Date(Date.now() + 19800000 - 864e5).toISOString().slice(0, 10);
 test('edit with a new day moves the bill and logs old day, new day, who and reason', async () => {
