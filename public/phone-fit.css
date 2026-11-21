@@ -8,4 +8,9 @@
   .topbar-right { max-width: 100%; justify-content: flex-end; row-gap: 4px; }
   .logout-btn { flex: 0 0 auto; }
   button { max-width: 100%; }
+  .tablescroll { overflow-x: auto; max-width: 100%; }   /* Daily Ledger: on a phone the sheet scrolls inside its card */
+  form.add { grid-template-columns: 1fr; }               /* Vendor ledger add form */
+  form.add input, form.add select { min-width: 0; width: 100%; }
 }
+/* GRN workbench Drafts drop-down opened off the right edge of a 1366 px window: open it to the left of its button */
+html body #draftsmenu .dd { left: auto; right: 0; }
