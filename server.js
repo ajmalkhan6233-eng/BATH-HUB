@@ -120,7 +120,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Must be first — bypasses all middleware so Railway's health probe always gets 200
-app.get('/health', (req, res) => res.json({ ok: true }));
+// 21 Nov (AJ startup audit): ONE build number. It is the VERSION line of public/service-worker.js (bumped every release); the footer label and the page refresh check read it from here.
+const APP_BUILD = (() => { try { return /const VERSION = '([^']+)'/.exec(fs.readFileSync(path.join(__dirname, 'public', 'service-worker.js'), 'utf8'))[1]; } catch (e) { return 'unknown'; } })();
+app.get('/health', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ok: true, build: APP_BUILD }); });
 // deep check: proves the database answers (watchdog can use this instead of /health)
 app.get('/health/deep', async (req, res) => { try { await require('./utils/pool').query('SELECT 1'); res.json({ ok: true, db: true }); } catch (e) { res.status(503).json({ ok: false, db: false }); } });
 
@@ -336,6 +338,9 @@ const CASH_IN_EXPR  = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
+// 21 Nov (AJ startup audit): old screens open the current one instead (files kept, not deleted).
+const RETIRED_PAGES = { '/pos_billing_old.html': '/owner#/pos', '/pos-preview.html': '/owner#/pos', '/home-gemini.html': '/owner', '/home-hud.html': '/owner', '/home_simple.html': '/owner', '/modern-demo.html': '/owner', '/ux-demo.html': '/owner', '/sale_commissions.html': '/sales-commission.html' };
+app.get(Object.keys(RETIRED_PAGES), (req, res) => res.redirect(302, RETIRED_PAGES[req.path]));
 app.get('/site', require('./utils/siteRedirect').siteRedirect());   // SITE_REDIRECT=netlify in .env sends /site to the real website; off by default
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
 app.use(require('./routes/site_catalogue'));   // website extras: /robots.txt, /sitemap.xml, /site with absolute links when SITE_URL is set, /api/site/catalogue.pdf (public)
@@ -344,7 +349,7 @@ app.get('/site', (req, res) => res.sendFile('public/website/index.html', { root:
 const PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || 'https://dapper-dieffenbachia-69d038.netlify.app';
 app.get('/bathhub.html', (req, res) => res.redirect(302, PUBLIC_SITE_URL));
 app.use(require('./middleware/staticFast')(path.join(__dirname, 'public')));   // SPEED: gzip + ETag for screens (middleware/staticFast.js); remove this line to turn off
-app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, f) => { if (/\.(png|jpe?g|webp|gif|ico|woff2?)$/i.test(f)) res.setHeader('Cache-Control', 'public, max-age=86400'); } }));   // SPEED: pictures and fonts kept 1 day on the phone
+app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, f) => { if (/\.(png|jpe?g|webp|gif|ico|woff2?)$/i.test(f)) res.setHeader('Cache-Control', 'public, max-age=86400'); else if (/\.(html?|js|css|json|webmanifest)$/i.test(f)) res.setHeader('Cache-Control', 'no-cache'); } }));   // SPEED: pictures and fonts kept 1 day on the phone
 
 // ─── LOGIN / LOGOUT / SESSION ─────────────────────────────────────────────────
 const logLoginAttempt = (username, success, ip, reason) =>
