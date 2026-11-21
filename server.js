@@ -3549,6 +3549,8 @@ if (require.main === module) {
         console.log(`[Royal Bath Hub] app ready on http://localhost:${PORT}`);
         require('./utils/extraAdmins').run(pool).catch(() => {});   // owner-level logins listed in config/extra_admins.json   // one clean line (the old banner still said "Your Business Name")
     });
+    // 21 Nov (startup audit): if the port is already taken, EXIT so pm2 retries; never keep running without listening (it looked online but answered nothing).
+    httpServer.on('error', e => { console.error('[Royal Bath Hub] cannot listen on port ' + PORT + ': ' + (e && e.code || e)); process.exit(1); });
     require('./utils/safety').installProcessGuards({ server: httpServer, pool });   // FIX 1: safe shutdown + no silent crashes
 }
 
