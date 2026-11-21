@@ -28,7 +28,9 @@ const as = role => ({
 const admin = as('admin');
 
 // 21 Nov: changing a bill's day on edit is saved AND written to money_audit_log (who, old day, new day, reason).
-const newBill = async () => (await admin.post('/api/pos-bills', { items: [{ item_name: 'Tap', qty: 2, unit_price: 500 }] })).body;
+// POST /api/pos-bills cannot run on the in-memory test DB (the bill-number query uses a regex operator it lacks), so the bill is inserted directly
+let seq = 0;
+const newBill = async () => { const r = await pool.query(`INSERT INTO pos_bills (bill_number, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, stock_deducted) VALUES ($1,1000,0,0,1000,'cash',false,false) RETURNING id`, ['T-' + (++seq)]); await pool.query(`INSERT INTO pos_bill_items (bill_id, item_name, qty, unit_price, line_total) VALUES ($1,'Tap',2,500,1000)`, [r.rows[0].id]); return { id: r.rows[0].id }; };
 const today = () => new Date(Date.now() + 19800000).toISOString().slice(0, 10);
 const yest = () => new Date(Date.now() + 19800000 - 864e5).toISOString().slice(0, 10);
 test('edit with a new day moves the bill and logs old day, new day, who and reason', async () => {
