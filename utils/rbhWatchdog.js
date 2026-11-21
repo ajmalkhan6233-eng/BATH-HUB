@@ -62,8 +62,19 @@ async function runOnce(d) {
     const say = line => d.appendLog(`${stamp} | ${line}`);
 
     // what does pm2 say about apex-server? (also tells us the port)
-    let info = null, pm2Ok = true;
-    try { const list = await d.pm2List(); info = list.find(a => a.name === APP) || null; } catch (e) { pm2Ok = false; }
+    // 21 Nov (AJ startup audit): at boot pm2 may not answer yet (its own resurrect is still starting). Starting a second copy then
+    // made TWO apex-server entries in pm2, and a restart by name woke both, so they fought over port 3100. So: wait for pm2 first,
+    // use the copy that is online, restart it by its id, and remove any extra entry (the same server.js, no files or data).
+    let info = null, pm2Ok = false, mine = [];
+    for (let i = 0; i < 4 && !pm2Ok; i++) {
+        try { mine = (await d.pm2List()).filter(a => a.name === APP); pm2Ok = true; } catch (e) { if (i < 3) await d.sleep(20000); }
+    }
+    info = mine.find(a => a.status === 'online') || mine[0] || null;
+    const extra = mine.filter(a => a !== info && a.id != null);
+    if (extra.length && d.pm2Delete) {
+        try { for (const x of extra) await d.pm2Delete(x.id); if (d.pm2Save) await d.pm2Save(); await say(`DUPLICATE | ${extra.length} extra ${APP} in pm2 (id ${extra.map(x => x.id).join(', ')}) removed, kept id ${info.id} | undo: pm2 start local_ops/ecosystem.local.config.js --only ${APP}`); }
+        catch (e) { await say(`DUPLICATE | ${extra.length} extra ${APP} in pm2, remove FAILED: ${String(e.message).slice(0, 100)}`); }
+    }
     const port = (info && info.port) || d.port || 3100;
     const url = `http://127.0.0.1:${port}/health`;
 
@@ -95,7 +106,7 @@ async function runOnce(d) {
         return { state: 'blocked', reason };
     }
 
-    try { if (action === 'start') await d.pm2Start(); else await d.pm2Restart(); }
+    try { if (action === 'start') await d.pm2Start(); else await d.pm2Restart(info && info.id); }
     catch (e) { await say(`DOWN | ${reason} | ${action} FAILED: ${String(e.message).slice(0, 120)}`); return { state: 'failed', reason }; }
 
     // wait for it to answer (up to 60 s)
