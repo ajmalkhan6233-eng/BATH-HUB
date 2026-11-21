@@ -136,22 +136,25 @@ const ITEM_COLS = `item_code, name, category, stock_level, reorder_threshold, se
 // GET /items?q=floor&category=Tiles&low=1&limit=50  -> active items, name or code contains q
 router.get('/items', async (req, res) => {
     try {
-        const q = String(req.query.q || '').trim().toLowerCase().replace(/[\\%_]/g, m => '\\' + m);
+        const raw = String(req.query.q || '').trim().toLowerCase();
+        const esc = t => t.replace(/[\\%_]/g, m => '\\' + m);
+        // 21 Nov (AJ): ONE box finds an item by code, name, vendor code, supplier, category or selling price (e.g. "26000" or "26,000"). Several words = every word must match somewhere. Cost is never searched or shown.
+        const words = raw.split(/\s+/).filter(Boolean).slice(0, 6).map(w => (/^[\d,]+(\.\d+)?$/.test(w) ? w.replace(/,/g, '') : w)).map(esc);
         const category = String(req.query.category || '').trim();
         const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
-        // 20 Nov (AJ): the POS search shows the supplier name next to each item. Read-only look: chosen supplier, else who sent it on the latest GRN.
         const SUP = `, (SELECT COALESCE(NULLIF(p2.preferred_supplier,''), (SELECT g.supplier_name FROM grn_records g WHERE split_part(g.item_description, ' - ', 1) = p2.item_code AND COALESCE(g.supplier_name,'') <> '' ORDER BY g.grn_date DESC NULLS LAST, g.id DESC LIMIT 1)) FROM products p2 WHERE p2.id = products.id) AS supplier`;
-        const run = (extra) => pool.query(
-            `SELECT ${ITEM_COLS}${extra} FROM products
-             WHERE active = true
-               AND ($1 = '' OR LOWER(name) LIKE '%' || $1 || '%' OR item_code LIKE '%' || $1 || '%' OR LOWER(COALESCE(vendor_code,'')) LIKE '%' || $1 || '%')
-               AND ($2 = '' OR category = $2)
-               AND ($3::boolean = false OR stock_level <= reorder_threshold)
-             ORDER BY item_code
-             LIMIT ${limit}`,
-            [q, category, req.query.low === '1' || req.query.low === 'true']);
+        const run = (extra, hasSup) => {
+            const args = [category, req.query.low === '1' || req.query.low === 'true', esc(raw)];
+            const hay = `LOWER(COALESCE(name,'') || ' ' || COALESCE(item_code,'') || ' ' || COALESCE(vendor_code,'') || ' ' || COALESCE(category,'') || ' ' || COALESCE(selling_price::text,'')${hasSup ? " || ' ' || LOWER(COALESCE(supplier,''))" : ''})`;
+            const conds = words.map(w => { args.push(w); return `${hay} LIKE '%' || $${args.length} || '%'`; });
+            return pool.query(
+                `SELECT * FROM (SELECT ${ITEM_COLS}${extra} FROM products WHERE active = true AND ($1 = '' OR category = $1) AND ($2::boolean = false OR stock_level <= reorder_threshold)) t
+                  WHERE ${conds.length ? conds.join(' AND ') : 'true'}
+                  ORDER BY (item_code = $3) DESC, (LOWER(name) = $3) DESC, (item_code LIKE $3 || '%') DESC, (LOWER(name) LIKE $3 || '%') DESC, item_code
+                  LIMIT ${limit}`, args);
+        };
         let r;
-        try { r = await run(SUP); } catch (e1) { r = await run(''); }   // older database without the supplier column: same list, no supplier
+        try { r = await run(SUP, true); } catch (e1) { r = await run('', false); }   // older database without the supplier column: same list, no supplier search
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: `Could not search items: ${e.message}` }); }
 });
