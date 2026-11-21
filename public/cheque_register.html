@@ -141,7 +141,8 @@ async function loadAlerts() {
   // Wider than the promised due date on purpose — Rule #1 is pay EARLY, so the
   // owner sees a cheque well before the last safe day to act, not right up against it.
   const res = await fetch('/api/cheque-register/due-soon?days=5');
-  const rows = await res.json();
+  const rows = res.ok ? await res.json().catch(() => null) : null;
+  if (!Array.isArray(rows)) { document.getElementById('alert-card').style.display = 'none'; return; }  // 21 Nov (startup audit): a server error shows a calm message, not a half-loaded crash.
   const card = document.getElementById('alert-card');
   const list = document.getElementById('alert-list');
   list.innerHTML = '';

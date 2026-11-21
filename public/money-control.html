@@ -223,7 +223,8 @@ const MODES = [
 
 async function load() {
   const res = await fetch('/api/money-control/dashboard');
-  const d = await res.json();
+  const d = res.ok ? await res.json().catch(() => null) : null;
+  if (!d || !Array.isArray(d.sales_by_mode)) { document.getElementById('today-label').textContent = 'Could not load, tap Refresh.'; return; }  // 21 Nov (startup audit): a server error shows a calm message, not a half-loaded crash.
 
   document.getElementById('today-label').textContent = d.date;
 

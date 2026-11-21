@@ -225,7 +225,8 @@ function badgeLabel(status, daysToDue) {
 async function loadLoans() {
   const qs = currentFilter ? ('?status=' + currentFilter) : '';
   const res = await fetch('/api/investor-loans' + qs);
-  const rows = await res.json();
+  const rows = res.ok ? await res.json().catch(() => null) : null;
+  if (!Array.isArray(rows)) { document.getElementById('loans-body').innerHTML = '<tr><td colspan="9">Could not load, tap Refresh.</td></tr>'; return; }  // 21 Nov (startup audit): a server error shows a calm message, not a half-loaded crash.
   const body = document.getElementById('loans-body');
   const empty = document.getElementById('loans-empty');
   body.innerHTML = '';

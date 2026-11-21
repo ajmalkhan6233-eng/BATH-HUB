@@ -222,12 +222,12 @@
       return r.ok ? 'Receipt sent to ' + r.d.to + '.' : (auto ? 'Receipt not sent, counted.' : 'Receipt not sent: ' + ((r.d && r.d.error) || r.status));
     }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = auto ? 'Receipt not sent, counted.' : 'Receipt not sent: ' + e.message; }).then(unsentTally);
   }
-  $('waBtn').onclick = function () { sendWa(false); };
-  $('waReceiptBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/receipt.png', '_blank'); };
-  $('rImgDl').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
-  $('printBtn').onclick = function () { window.print(); };
-  $('emailBtn').onclick = function () { if (this.dataset.href) location.href = this.dataset.href; };
-  $('voidBtn').onclick = function () {
+  if ($('waBtn')) $('waBtn').onclick = function () { sendWa(false); };
+  if ($('waReceiptBtn')) $('waReceiptBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/receipt.png', '_blank'); };
+  if ($('rImgDl')) $('rImgDl').onclick = function () { if (!currentBill) return; var a = document.createElement('a'); a.href = '/api/pos-bills/' + currentBill.id + '/receipt.png?download=1'; a.download = currentBill.bill_number + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  if ($('printBtn')) $('printBtn').onclick = function () { window.print(); };
+  if ($('emailBtn')) $('emailBtn').onclick = function () { if (this.dataset.href) location.href = this.dataset.href; };
+  if ($('voidBtn')) $('voidBtn').onclick = function () {
     if (!currentBill) return; askReason('Void this bill', 'Reason (stock goes back, the bill stays on record as VOID)', 'Void bill').then(function (rs) {
       if (!rs) return; api.voidBill(currentBill.id, rs).then(function (r) { if (!r.ok) { $('waReceiptMsg').textContent = (r.d && r.d.error) || 'Could not void.'; return; } api.bill(currentBill.id).then(function (b) { showReceipt(b, false); loadToday(); }); });
     });
