@@ -81,8 +81,10 @@
   }
   function focusField(i, f) { setTimeout(function () { var row = $('itemRows').querySelector('.item-row[data-index="' + i + '"]'), el = row && row.querySelector('[data-field="' + f + '"]'); if (el) { el.focus(); el.select(); } else $('scanBox').focus(); }, 30); }
   var seq = 0;
-  function openPicker() { $('picker').classList.remove('hidden'); $('picker').classList.add('open'); $('scanBox').value = ''; $('scanBox').focus(); renderPicker(); }
-  function renderPicker() {
+  // 21 Nov (AJ): the item list used to open ON TOP of the customer name and phone boxes. Always open it just under the customer row.
+  function placePicker() { var p = $('picker'), c = $('custRow'); if (!p || !c || !p.offsetParent) return; var top = c.getBoundingClientRect().bottom - p.offsetParent.getBoundingClientRect().top + 4; if (top > 0) p.style.top = Math.round(top) + 'px'; }
+  function openPicker() { $('picker').classList.remove('hidden'); $('picker').classList.add('open'); $('scanBox').value = ''; $('scanBox').focus(); placePicker(); renderPicker(); }
+  function renderPicker() { placePicker();
     var mine = ++seq, q = $('scanBox').value.trim();
     api.items(q, 60).then(function (found) {
       if (mine !== seq) return;
@@ -90,7 +92,7 @@
       $('pickerResults')._found = found; sel = -1;
     });
   }
-  var pt; $('scanBox').addEventListener('input', function () { $('picker').classList.add('open'); clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
+  var pt; $('scanBox').addEventListener('input', function () { $('picker').classList.add('open'); placePicker(); clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
   var sel = -1;
   function pickRows() { return [].slice.call($('pickerResults').querySelectorAll('.pick-row')); }
   function pickMark(n) { var r = pickRows(); if (!r.length) { sel = -1; return; } sel = Math.max(0, Math.min(r.length - 1, n)); r.forEach(function (x, i) { x.classList.toggle('selected', i === sel); }); r[sel].scrollIntoView({ block: 'nearest' }); }
@@ -148,7 +150,7 @@
   function generateBill() {
     showError(''); if (!rows.length) { showError('Add at least one item.'); return; }
     if (quotationMode) { return saveQuotation(); }
-    var phone = $('customerPhone').value.trim(); if (!phoneValid(phone)) { showError('Enter a valid Sri Lankan number (07x xxx xxxx) or an international number starting with + or 00.'); return; }
+    var phone = $('customerPhone').value.trim();   // 21 Nov (AJ): a missing or odd phone number never blocks or nags a sale; the WhatsApp receipt is just skipped and counted in the bottom line
     var iso = saleISO(); if (!iso) { showError('Type the date as dd/mm/yyyy.'); return; } if (iso > api.todayISO()) { showError('The bill date cannot be in the future.'); return; }
     var p = $('paymentMethod').value; if (p === 'Credit' && !$('customerName').value.trim() && !phone) { showError('A credit bill needs the customer name or phone.'); return; }
     var cd = $('chequeDate').value ? ' ' + api.isoToDMY($('chequeDate').value) : '';
@@ -184,7 +186,7 @@
   function endEdit() { editingId = null; origBill = null; origDate = null; $('editBanner').classList.add('hidden'); $('cancelEditBtn').classList.add('hidden'); $('genBtn').textContent = 'Generate Bill'; }
 
   // ---------- receipt ----------
-  function showReceipt(b, fresh) {
+  function showReceipt(b, fresh) { unsentTally();
     currentBill = b; var vd = !!b.voided;
     $('receiptMeta').innerHTML = '<span>' + esc(b.bill_number) + ' · ' + dmyOf(b.created_at) + (vd ? ' · <b style="color:var(--warn)">VOID</b>' : '') + '</span><span>' + esc(b.customer_name || 'Walk-in customer') + '</span>';
     $('rItems').innerHTML = (b.items || []).map(function (r) { return '<tr><td>' + esc(r.item_name) + '<br><small>' + esc(r.item_code || '') + '</small></td><td>' + Number(r.qty) + '</td><td>' + money(r.unit_price) + '</td><td>' + money(r.line_total) + '</td></tr>'; }).join('');
@@ -208,14 +210,17 @@
     if (fresh && $('waCheck').checked && b.customer_phone && !vd) sendWa(true);
   }
   function backToPOS() { $('receipt').classList.add('hidden'); $('formPanel').classList.remove('hidden'); $('picker').classList.remove('hidden'); renderPicker(); setTimeout(function () { var d = $('saleDate'); if (d) { d.removeAttribute('readonly'); d.focus(); d.select(); } }, 60); }
+  // quiet running count under the screen: receipts not sent today (no phone or failed). Information only.
+  function unsentTally() { fetch('/api/invoice-receipts/unsent', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { var el = document.getElementById('waTally'); if (!el || !d) return; el.textContent = d.unsent ? 'Receipts not sent today: ' + d.unsent + ' (no phone ' + d.today.no_phone + ', failed ' + d.today.failed + ')' : ''; }).catch(function () {}); }
+  setTimeout(unsentTally, 1500);
   function sendWa(auto) {
     if (!currentBill) return; var phone = (currentBill.customer_phone || '').trim();
     if (!phone) { if (auto) return; phone = (prompt('Customer WhatsApp number for this receipt (e.g. 0771234567):') || '').trim(); if (!phone) return; }
     $('waReceiptMsg').textContent = 'Sending the receipt…';
     api.sendReceipt(currentBill.id, phone).then(function (r) {
       if (r.status === 409 && r.d && r.d.code === 'already_sent') { if (auto) return 'Receipt was already sent to this customer.'; if (!confirm(r.d.error)) return 'Not sent again.'; return api.sendReceipt(currentBill.id, phone, true).then(function (r2) { return r2.ok ? 'Receipt sent to ' + r2.d.to + '.' : 'Receipt not sent: ' + ((r2.d && r2.d.error) || r2.status); }); }
-      return r.ok ? 'Receipt sent to ' + r.d.to + '.' : 'Receipt not sent: ' + ((r.d && r.d.error) || r.status);
-    }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = 'Receipt not sent: ' + e.message; });
+      return r.ok ? 'Receipt sent to ' + r.d.to + '.' : (auto ? 'Receipt not sent, counted.' : 'Receipt not sent: ' + ((r.d && r.d.error) || r.status));
+    }).then(function (m) { $('waReceiptMsg').textContent = m || ''; }).catch(function (e) { $('waReceiptMsg').textContent = auto ? 'Receipt not sent, counted.' : 'Receipt not sent: ' + e.message; }).then(unsentTally);
   }
   $('waBtn').onclick = function () { sendWa(false); };
   $('waReceiptBtn').onclick = function () { if (!currentBill) return; window.open('/api/pos-bills/' + currentBill.id + '/receipt.png', '_blank'); };
