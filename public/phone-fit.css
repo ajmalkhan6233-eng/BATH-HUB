@@ -1,0 +1,11 @@
+/* 21 Nov 2026 (startup audit, items 32 to 48): phone width only (max 700 px). Desktop is untouched.
+   Wide tables scroll inside their own box instead of widening the page; bars wrap so nothing (Sign Out, buttons) falls off the screen. */
+@media (max-width: 700px) {
+  html, body { max-width: 100vw; overflow-x: hidden; }
+  table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  input, select, textarea { max-width: 100%; box-sizing: border-box; }
+  .topbar, .topbar-right, .bar, .btns, .toolbar, .actions, .row-actions, .filters, .tabs, .chips, header { flex-wrap: wrap; }
+  .topbar-right { max-width: 100%; justify-content: flex-end; row-gap: 4px; }
+  .logout-btn { flex: 0 0 auto; }
+  button { max-width: 100%; }
+}
