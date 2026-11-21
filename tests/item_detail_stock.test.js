@@ -9,7 +9,7 @@ function run(body, dbRows) {
   const calls = [];
   const client = { release: jest.fn(), query: jest.fn(async (sql, p) => {
     calls.push([String(sql), p]);
-    if (/FOR UPDATE/.test(sql)) return { rows: [{ id: 1, stock_level: 10 }] };
+    if (/FOR UPDATE/.test(sql)) return { rows: [{ id: 1, stock_level: 10, name: 'A' }] };
     if (/UPPER\(item_code\)/.test(sql)) return { rows: dbRows || [] };
     if (/RETURNING/.test(sql)) return { rows: [{ item_code: '001', name: 'A', stock_level: 8, avg_cost: 100, selling_price: 300 }] };
     if (/information_schema/.test(sql)) return { rows: [] };
