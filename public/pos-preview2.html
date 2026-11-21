@@ -28,7 +28,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .field input{width:100%}
 /* 02 — Compact customer and document header */
 .customer-row{height:47px;flex:none;display:grid;grid-template-columns:minmax(170px,1.1fr) 145px minmax(175px,1fr) auto auto;align-items:center;gap:8px;padding:6px 9px}
-.customer-row .field{gap:2px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+.customer-row .field{gap:2px}.customer-row .datef{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:6px;row-gap:2px}.customer-row .datef label{grid-column:1/-1}.customer-row .datef select{height:31px;min-width:0;font-size:12px;padding:0 3px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
 .doc-tabs{display:flex;align-items:center;gap:6px}.tab{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:3px}.tab.active{background:var(--soft);border-color:#c8b47f;color:#614b1b;font-weight:700}
 .docline{display:flex;align-items:center;justify-content:space-between;min-height:30px;flex:none}
 .held-strip{height:25px;flex:none;padding:4px 9px;background:#f8f8f8;border:1px solid var(--line);color:#62696e;font-size:12px}
@@ -37,6 +37,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .left-work{min-height:0;display:flex;flex-direction:column;gap:6px}
 .item-head{display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;padding:6px 8px 4px;color:#70777c;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.35px}
 .item-rows{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--line);background:#fff;border-radius:3px}
+.item-rows:empty{background:#fbfaf5}.item-rows:empty::before{content:'Press F2 or tap + Add item, then type a code, name, vendor or price';display:block;padding:40px 14px;text-align:center;color:#9aa1a6;font-size:14px}
 .item-row{min-height:36px;display:grid;grid-template-columns:minmax(190px,1fr) 86px 112px 100px 112px 38px;gap:6px;align-items:center;padding:2px 8px;border-bottom:1px solid #eceeef}
 .item-row:last-child{border-bottom:0}.item-ident{min-width:0;display:flex;align-items:center;gap:7px}.item-ident .code-input{width:58px;flex:none;padding:5px 4px;text-align:center}.item-name{min-width:0;flex:1}.item-name strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.item-name small{display:block;color:#7a8085;font-size:10px;margin-top:2px}
 .code-input{width:100%;font-weight:700}.qtybox{display:flex;align-items:center;gap:3px}.qtybox button{width:23px;height:27px;border:1px solid var(--line);background:#f8f8f8;border-radius:2px;padding:0}.qtybox input{width:37px;text-align:center;padding:4px 2px;height:27px}
@@ -62,9 +63,9 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .popover{position:absolute;z-index:20;background:#fff;border:1px solid #bfc4c7;box-shadow:0 5px 18px #0002;border-radius:3px;padding:8px}
 .picker{left:10px;right:320px;top:130px;max-height:330px;display:flex;flex-direction:column}
 .picker-top{display:flex;gap:7px;margin-bottom:6px}.picker-top input{flex:1;height:35px}
-.picker-head,.pick-row{display:grid;grid-template-columns:75px minmax(150px,1fr) 65px 115px;gap:8px;align-items:center}
+.picker-head,.pick-row{display:grid;grid-template-columns:75px minmax(150px,1fr) 62px 65px 115px;gap:8px;align-items:center}
 .picker-head{font-size:10px;text-transform:uppercase;color:#737a7f;padding:5px 7px;border-bottom:1px solid var(--line)}
-.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
+.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-cost{text-align:right;color:#a9b0b5;font-size:11px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
 .tool-menu{right:14px;top:75px;width:190px;display:grid;gap:3px}.tool-menu button{text-align:left;border:0;background:#fff;padding:8px}.tool-menu button:hover{background:var(--soft)}
 .modal-back{position:fixed;inset:0;background:#0005;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:#fff;border:1px solid #aeb4b8;box-shadow:0 12px 35px #0003;width:min(600px,95vw);max-height:85vh;overflow:auto;padding:16px;border-radius:4px}
@@ -141,7 +142,8 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 <style id="pickerDock">
 #picker{position:static!important;left:auto!important;right:auto!important;top:auto!important;width:min(780px,100%);margin:6px auto 8px;max-height:260px;box-shadow:none;border:1px solid #cfd4d7;z-index:1}
 #picker .picker-results{max-height:150px}
-.picker-head,.pick-row{grid-template-columns:70px minmax(160px,1fr) 60px 100px}
+.picker-head,.pick-row{grid-template-columns:70px minmax(160px,1fr) 56px 56px 100px}
+@media(max-width:700px){.picker-head,.pick-row{grid-template-columns:60px minmax(100px,1fr) 44px 86px}.pick-cost,.picker-head span:nth-child(3){display:none}}.pick-cost{white-space:nowrap}
 </style>
 <style id="p0fit">
 /* P0: compact docked picker so 10 item lines fit at 1366x768; items scroll inside their own box */
@@ -167,7 +169,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
   .right-work{position:sticky;bottom:0;background:var(--panel,#fff);z-index:5}
 }
 </style>
-<style id="oneprice">@media(min-width:701px){.customer-row{grid-template-columns:145px minmax(170px,1.1fr) minmax(175px,1fr) auto auto!important}}#priceRow .field:first-child{display:none}</style><style id="pickmore">
+<style id="oneprice">@media(min-width:701px){.customer-row{grid-template-columns:250px minmax(170px,1.1fr) minmax(175px,1fr) auto auto!important}}#priceRow .field:first-child{display:none}</style><style id="pickmore">
 #picker{max-height:330px!important}
 #picker .picker-results{max-height:224px!important}
 #picker .pick-row{padding:3px 7px;white-space:nowrap}
@@ -193,7 +195,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
     <!-- 02 — Document type and compact customer details -->
     <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span><span class="muted" style="margin-left:10px">Salesman</span><select id="salesman" class="sm-pick" title="Who sold this bill"><option value="Jazeel">Jazeel</option><option value="Ajmal">Ajmal</option></select></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
-      <div class="field"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><select id="saleDay" title="Pick an earlier day" style="margin-top:4px"></select></div>
+      <div class="field datef"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><select id="saleDay" title="Pick an earlier day"></select></div>
       <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
@@ -248,7 +250,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 <!-- 05 — Item picker overlay -->
 <div class="popover picker hidden" id="picker">
   <div class="picker-top"><input id="scanBox" placeholder="Type item code or name / scan barcode…" autocomplete="off"><button class="secondary" id="camScanBtn">Camera scan</button><button class="secondary" id="pickerClose">Close</button></div>
-  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
+  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span style="text-align:right">Cost</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
   <div class="picker-results" id="pickerResults"></div>
   <div class="muted picker-note" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
 </div>

@@ -340,7 +340,7 @@ const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_re
 
 app.get(['/BATHCO_NATURE.html', '/dashboard.html'], (req, res) => res.redirect(302, '/owner'));   // the old owner app is retired (public/_archive)
 // 21 Nov (AJ startup audit): old screens open the current one instead (files kept, not deleted).
-const RETIRED_PAGES = { '/pos_billing_old.html': '/owner#/pos', '/pos-preview.html': '/owner#/pos', '/home-gemini.html': '/owner', '/home-hud.html': '/owner', '/home_simple.html': '/owner', '/modern-demo.html': '/owner', '/ux-demo.html': '/owner', '/sale_commissions.html': '/sales-commission.html' };
+const RETIRED_PAGES = { '/pos_billing_old.html': '/owner#/pos', '/pos-preview.html': '/owner#/pos', '/home-gemini.html': '/owner', '/home-hud.html': '/owner', '/home_simple.html': '/owner', '/modern-demo.html': '/owner', '/ux-demo.html': '/owner', '/sale_commissions.html': '/sales-commission.html', '/pos_billing.html': '/pos-preview2.html', '/layla_hub.html': '/owner', '/sync-review.html': '/owner' };
 app.get(Object.keys(RETIRED_PAGES), (req, res) => res.redirect(302, RETIRED_PAGES[req.path]));
 app.get('/site', require('./utils/siteRedirect').siteRedirect());   // SITE_REDIRECT=netlify in .env sends /site to the real website; off by default
 // Public website: no login, no owner data, no link to the owner app. Its only data comes from GET /api/site/public.
