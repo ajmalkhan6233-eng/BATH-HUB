@@ -121,8 +121,9 @@ const PORT = process.env.PORT || 3000;
 
 // Must be first — bypasses all middleware so Railway's health probe always gets 200
 // 21 Nov (AJ startup audit): ONE build number. It is the VERSION line of public/service-worker.js (bumped every release); the footer label and the page refresh check read it from here.
-const APP_BUILD = (() => { try { return /const VERSION = '([^']+)'/.exec(fs.readFileSync(path.join(__dirname, 'public', 'service-worker.js'), 'utf8'))[1]; } catch (e) { return 'unknown'; } })();
-app.get('/health', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ok: true, build: APP_BUILD }); });
+let _build = { t: 0, v: 'unknown' };   // re-read when the file changes, so a release shows at once without a restart
+const APP_BUILD = () => { try { const f = path.join(__dirname, 'public', 'service-worker.js'), t = fs.statSync(f).mtimeMs; if (t !== _build.t) _build = { t, v: /const VERSION = '([^']+)'/.exec(fs.readFileSync(f, 'utf8'))[1] }; } catch (e) { /* keep the last one */ } return _build.v; };
+app.get('/health', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ok: true, build: APP_BUILD() }); });
 // deep check: proves the database answers (watchdog can use this instead of /health)
 app.get('/health/deep', async (req, res) => { try { await require('./utils/pool').query('SELECT 1'); res.json({ ok: true, db: true }); } catch (e) { res.status(503).json({ ok: false, db: false }); } });
 
