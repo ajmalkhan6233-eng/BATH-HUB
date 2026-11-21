@@ -391,7 +391,10 @@
   // ---------- inside the owner app: no second menu; Quotation / Bill modes from the menu bar ----------
   try { if (window.self !== window.top) document.documentElement.classList.add('in-frame'); } catch (e) { document.documentElement.classList.add('in-frame'); }
   if (location.hash === '#quote') setMode(true);
-  window.addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.pq === 'quote') setMode(true); if (e.data.pq === 'bill') setMode(false); });
+  window.addEventListener('message', function (e) { if (e.origin !== location.origin || !e.data) return; if (e.data.pq === 'quote') setMode(true); if (e.data.pq === 'bill') setMode(false); if (e.data.pq === 'openbill') openBillById(e.data.id); });
+  // 21 Nov: open an existing bill (full receipt + Edit button) from another screen: message {pq:'openbill', id} or the address #bill=ID
+  function openBillById(id) { id = Number(id); if (!id) return; api.bill(id).then(function (b) { if (b && b.id) showReceipt(b, false); }); }
+  var hb = /^#bill=(\d+)$/.exec(location.hash || ''); if (hb) openBillById(hb[1]);
 
   // ---------- start ----------
   api.me().then(function (u) { isOwner = !!(u && u.role === 'admin'); });
