@@ -46,6 +46,14 @@
       }
       try { win.navigate('pos'); } catch (e) {}
     }
+    // 21 Nov: a bill number tapped inside another screen (Sales Commission) opens the full bill in POS, where Edit lives.
+    win.addEventListener('message', function (e) {
+      if (e.origin !== win.location.origin || !e.data || !e.data.rbhOpenBill) return;
+      var id = Number(e.data.rbhOpenBill), f = doc.getElementById('pos-frame'); if (!id || !f) return;
+      if (!f.getAttribute('src')) f.setAttribute('src', '/pos-preview2.html#bill=' + id);
+      else { try { f.contentWindow.postMessage({ pq: 'openbill', id: id }, win.location.origin); } catch (x) {} }
+      try { win.navigate('pos'); } catch (x) {}
+    });
     function go(k) {
       closeAll(); closeDrawer();
       if (k === 'sale:package') { ensurePkgPlanner(); try { win.navigate('pkgplan'); } catch (e) {} return; }   // 20 Nov: Building Packages = its own Package planner screen (the old POS side window was never loaded in the new POS)
