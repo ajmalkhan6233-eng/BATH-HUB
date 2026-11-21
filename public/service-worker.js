@@ -4,7 +4,7 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v143-posfix';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
+const VERSION = 'v144-onebuild';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
@@ -57,6 +57,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;       // writes and other sites: not ours
   if (url.pathname === '/setup.html' || url.pathname === '/setup') return;        // first-run page: never cached
+  if (url.pathname === '/health' || url.pathname.indexOf('/health/') === 0) return;   // 21 Nov: the build number must always be the live one, never a saved copy
   if (url.pathname === '/site' || url.pathname.startsWith('/website/')) return;      // public website: the owner app's saved copies never touch it
 
   if (url.pathname.startsWith('/api/')) {
