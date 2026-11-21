@@ -36,7 +36,7 @@ const yest = () => new Date(Date.now() + 19800000 - 864e5).toISOString().slice(0
 test('edit with a new day moves the bill and logs old day, new day, who and reason', async () => {
   const b = await newBill();
   const r = await admin.put('/api/pos-bills/' + b.id, { items: [{ item_name: 'Tap', qty: 2, unit_price: 500 }], payment_method: 'cash', sale_date: yest(), reason: 'date changed' });
-  expect(r.status).toBe(200);
+  expect({ s: r.status, e: r.body.error }).toEqual({ s: 200, e: undefined });
   expect(new Date(r.body.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })).toBe(yest());
   await new Promise(x => setTimeout(x, 150));
   const log = (await pool.query(`SELECT * FROM money_audit_log WHERE action='pos_bill_date_change' AND ref_id=$1`, [b.id])).rows;
