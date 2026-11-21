@@ -2,7 +2,7 @@
  * Items, stock, bills, void, edit, quotations, WhatsApp receipt all use the existing /api routes. Nothing is stored in this file. */
 (function () {
   'use strict';
-  var api = Pos2Api, $ = function (id) { return document.getElementById(id); };
+  var api = Pos2Api, stubs = {}, $ = function (id) { return document.getElementById(id) || (stubs[id] = stubs[id] || document.createElement('div')); };   // 21 Nov: a box this page does not have (the POS shown inside the ledger) gets an inert stand-in, so one missing box can never stop the whole screen
   var money = function (n) { return 'Rs ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var rows = [], bills = [], currentBill = null, quotationMode = false, wholesale = false, discountLimit = 10, extra = 0, editingId = null, origBill = null, origDate = null, isOwner = false, quoteId = null, billedMap = {};
@@ -82,7 +82,8 @@
   function focusField(i, f) { setTimeout(function () { var row = $('itemRows').querySelector('.item-row[data-index="' + i + '"]'), el = row && row.querySelector('[data-field="' + f + '"]'); if (el) { el.focus(); el.select(); } else $('scanBox').focus(); }, 30); }
   var seq = 0;
   // 21 Nov (AJ): the item list used to open ON TOP of the customer name and phone boxes. Always open it just under the customer row.
-  function placePicker() { var p = $('picker'), c = $('custRow'); if (!p || !c || !p.offsetParent) return; var top = c.getBoundingClientRect().bottom - p.offsetParent.getBoundingClientRect().top + 4; if (top > 0) p.style.top = Math.round(top) + 'px'; }
+  function placePicker() { var p = $('picker'), c = $('custRow'); if (!p || !c || !p.offsetParent) return; var low = c.getBoundingClientRect().bottom; [].forEach.call(c.querySelectorAll('input,select'), function (e) { var r = e.getBoundingClientRect(); if (r.height > 0 && r.bottom > low) low = r.bottom; });   /* the lowest box in the row, even if the row is shorter */
+    var top = low - p.offsetParent.getBoundingClientRect().top + 6; if (top > 0) p.style.top = Math.round(top) + 'px'; }
   function openPicker() { $('picker').classList.remove('hidden'); $('picker').classList.add('open'); $('scanBox').value = ''; $('scanBox').focus(); placePicker(); renderPicker(); }
   function renderPicker() { placePicker();
     var mine = ++seq, q = $('scanBox').value.trim();
