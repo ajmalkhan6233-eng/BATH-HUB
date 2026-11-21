@@ -202,6 +202,8 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
         // created_at is stored as shop (Colombo) time: change the day, keep the time of day
         if (newDay) await client.query(`UPDATE pos_bills SET created_at = $1::date + created_at::time WHERE id = $2`, [newDay, bill.id]);
         await client.query('COMMIT');
+        // 21 Nov audit: a changed bill day is written to money_audit_log (who, old day, new day, reason). Never fails the save.
+        if (newDay) { const od = new Date(bill.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' }); if (od !== newDay) require('../utils/moneyAudit').log(pool, { who: whoOf(req), action: 'pos_bill_date_change', table: 'pos_bills', id: bill.id, oldValue: od, newValue: newDay, reason }).catch(() => {}); }
 
         const nb = (await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [bill.id])).rows[0];
         const ni = (await pool.query(`SELECT id, item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;

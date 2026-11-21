@@ -39,8 +39,12 @@ router.put('/grn-cheques/:id', express.json(), async (req, res) => {
             const dup = await pool.query(`SELECT 1 FROM vendor_bill_cheques WHERE cheque_no=$1 AND COALESCE(bank,'')=COALESCE($2,'') AND status<>'CANCELLED' AND id<>$3 LIMIT 1`, [cheque_no, bank, id]);
             if (dup.rows.length) throw bad('Cheque ' + cheque_no + ' is already entered', 409);
         }
+        // 21 Nov audit: every cheque date / amount / number change is logged (who, old, new, reason). A reason is optional so saving is never blocked; the log then says none was typed.
+        const chg = [['cheque_date', cur.cheque_date, cheque_date], ['due_date', cur.due_date, due_date], ['amount', Number(cur.amount), amount], ['cheque_no', cur.cheque_no, cheque_no], ['bank', cur.bank, bank]].filter(([, o, n]) => n !== null && String(o == null ? '' : (o instanceof Date ? o.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' }) : o)) !== String(n));
         const r = await pool.query(`UPDATE vendor_bill_cheques SET cheque_no=$1, bank=$2, amount=$3, cheque_date=COALESCE($4::date,cheque_date), due_date=COALESCE($5::date,due_date) WHERE id=$6 RETURNING id`,
             [cheque_no, bank, amount, cheque_date, due_date, id]);
+        const who = (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || 'unknown', why = String(b.reason || '').trim().slice(0, 300) || '(no reason typed)';
+        for (const [f, o, n] of chg) require('../utils/moneyAudit').log(pool, { who, action: 'cheque_' + f + '_change', table: 'vendor_bill_cheques', id, oldValue: o instanceof Date ? o.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' }) : o, newValue: n, reason: why }).catch(() => {});
         res.json({ ok: true, id: r.rows[0].id });
     } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not save: ' + e.message }); }
 });
