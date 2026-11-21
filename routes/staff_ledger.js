@@ -109,8 +109,10 @@ router.get('/sales-commission', ownerOnly, async (req, res) => {
     // commission to pay = only bills from commission_from on (21 Nov: it used to add every bill in the range, even older ones)
     const by = {}; bills.forEach(b => { const k = b.salesman || 'not picked'; const o = by[k] = by[k] || { salesman: k, bills: 0, sales: 0, profit: 0, commission: 0 }; o.bills++; o.sales = r2(o.sales + Number(b.total)); o.profit = r2(o.profit + Number(b.gp)); o.commission = r2(o.commission + comOf(b)); });
     const bySalesman = Object.values(by);
+    // staff who have a daily salary set: the page shows their salary + commission + paid + remaining (21 Nov, AJ)
+    const ledgerStaff = await q(`SELECT s.id, s.name FROM staff s WHERE EXISTS (SELECT 1 FROM app_settings a WHERE a.key = 'staff_daily_salary_' || s.id) ORDER BY s.id`);
     res.json({
-      pct, commission_from: cfrom, from, to,
+      pct, commission_from: cfrom, from, to, ledger_staff: ledgerStaff,
       history: { bills: Number(hist.n), since: hist.first, sales: r2(hist.sales), profit: r2(hist.gp), commission_on_profit: r2(Number(hist.gp) * pct / 100), commission_on_sales: r2(Number(hist.sales) * pct / 100) },
       by_salesman: bySalesman, bills: bills.map(b => ({ id: b.id, bill: b.bill_number, time: b.t, salesman: b.salesman, total: r2(b.total), profit: r2(b.gp), commission: comOf(b) })),
     });

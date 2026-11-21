@@ -28,6 +28,29 @@ var back=function(n){return ymd(new Date(Date.now()+19800000-n*864e5))};
 var F=today(),T=today(),MODE='day',SEL=null,LAST=null;
 function load(from,to){F=from;T=to;$('sub').textContent='Loading...';
  fetch('/api/sales-commission?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to),{credentials:'same-origin'}).then(function(r){if(r.status===401||r.status===403)throw new Error('Please sign in as owner');if(!r.ok)throw new Error('Could not load');return r.json()}).then(draw).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
+// Salary + commission + paid + remaining, per day (uses the staff ledger: /api/staff-ledger). Money is only recorded when AJ taps Record payment and confirms.
+function loadStmt(d){
+ var s=(d.ledger_staff||[])[0],box=$('stmt');if(!s||!box)return;
+ var nm=s.name.charAt(0).toUpperCase()+s.name.slice(1);
+ fetch('/api/staff-ledger/'+s.id+'?from='+encodeURIComponent(d.from)+'&to='+encodeURIComponent(d.to),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error('Could not load salary');return r.json()}).then(function(L){
+  var days={},order=[];
+  L.lines.forEach(function(x){var o=days[x.date];if(!o){o=days[x.date]={salary:0,com:0,paid:0,other:0,bal:0};order.push(x.date)}
+   if(x.kind==='salary')o.salary+=x.earned||0;else if(x.kind==='commission')o.com+=x.earned||0;else if(x.kind==='paid')o.paid+=x.paid||0;else o.other+=(x.earned||0)-(x.paid||0);o.bal=x.balance});
+  var pays=L.lines.filter(function(x){return x.kind==='paid'&&x.id}).reverse();
+  var h='<div class="card"><b>'+esc(nm)+': salary + commission, paid and remaining</b><div class="k"><div><span>Remaining to pay '+esc(nm)+' (all days)</span><b>'+rs(L.totals.owed_to_him)+'</b></div></div>'
+  +'<table><thead><tr><th>Day</th><th class="n">Salary</th><th class="n">Commission</th><th class="n">Paid</th><th class="n">Remaining</th></tr></thead><tbody>'
+  +(order.length?order.slice().reverse().map(function(k){var o=days[k];return '<tr><td>'+esc(dmy(k))+(o.other?' <span class="sm">(adjust '+rs(o.other)+')</span>':'')+'</td><td class="n">'+(o.salary?rs(o.salary):'')+'</td><td class="n">'+(o.com?rs(o.com):'')+'</td><td class="n">'+(o.paid?rs(o.paid):'')+'</td><td class="n"><b>'+rs(o.bal)+'</b></td></tr>'}).join(''):'<tr><td colspan="5" class="sm">Nothing in this range.</td></tr>')
+  +'</tbody></table><div class="sm">Remaining = everything earned (salary + commission) minus everything paid, up to that day.</div>'
+  +'<div class="bar"><div><label>Paid on</label><input type="date" id="pd" value="'+esc(today())+'"></div><div><label>Amount (Rs)</label><input type="number" id="pa" min="1" step="any" style="width:130px"></div><div><label>Note</label><input type="text" id="pn" placeholder="optional"></div><button type="button" id="pg" class="on">Record payment</button></div><div id="pm" class="sm"></div>'
+  +(pays.length?'<details><summary class="sm">Payments recorded in this range ('+pays.length+')</summary><table><tbody>'+pays.map(function(p){return '<tr><td>'+esc(dmy(p.date))+'</td><td class="n">'+rs(p.paid)+'</td><td class="sm">'+esc(p.note||'')+'</td><td><a href="#" data-void="'+p.id+'">Undo</a></td></tr>'}).join('')+'</tbody></table></details>':'')+'</div>';
+  box.innerHTML=h;
+  $('pg').onclick=function(){var a=Number($('pa').value),day=$('pd').value;if(!(a>0)){$('pm').textContent='Type the amount paid.';return}
+   if(!confirm('Record Rs '+a.toLocaleString('en-LK')+' paid to '+nm+' on '+dmy(day)+'?'))return;
+   fetch('/api/staff-ledger/'+s.id,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:day,kind:'paid',amount:a,note:$('pn').value})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Could not save');loadStmt(d)})}).catch(function(e){$('pm').innerHTML='<span class="err">'+esc(e.message)+'</span>'})};
+  Array.prototype.forEach.call(box.querySelectorAll('a[data-void]'),function(a){a.onclick=function(e){e.preventDefault();var why=prompt('Why undo this payment? (nothing is deleted, it is marked cancelled)');if(!why||why.trim().length<3)return;
+   fetch('/api/staff-ledger/entry/'+a.dataset.void+'/void',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:why})}).then(function(){loadStmt(d)})}});
+ }).catch(function(e){box.innerHTML='<div class="sm err">'+esc(e.message)+'</div>'});
+}
 function draw(d){
  LAST=d;$('sub').textContent='';
  var pay=d.by_salesman.filter(function(s){return s.commission>0});
@@ -41,7 +64,8 @@ function draw(d){
   h+=d.bills.length?'<table><thead><tr><th>Date</th><th>Invoice</th><th>Salesman</th><th class="n">Commission</th></tr></thead><tbody>'+d.bills.map(function(b){return '<tr class="pick'+(b.id===SEL?' sel':'')+'" data-id="'+b.id+'" tabindex="0"><td>'+esc(dmy(b.time.slice(0,10)))+' '+esc(b.time.slice(11))+'</td><td>'+esc(b.bill)+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table><div class="sm">Tap an invoice to see its sale, profit and commission.</div>':'<div class="sm">No bills in this range.</div>';
  } else
  h+=keys.map(function(k){var o=days[k];return '<details class="card"><summary><b>'+esc(dmy(k))+'</b> <span class="sm">details</span></summary><div class="sm" style="margin:6px 0">'+o.bills.length+' bills &middot; sales '+rs(o.sales)+' &middot; profit '+rs(o.profit)+' &middot; commission '+rs(o.com)+'</div><table><thead><tr><th>Bill</th><th>Time</th><th>Salesman</th><th class="n">Total</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+o.bills.map(function(b){return '<tr><td><a href="/pos-preview2.html#bill='+b.id+'" data-bill="'+b.id+'" title="Open the full bill (Edit is there)">'+esc(b.bill)+'</a></td><td>'+esc(b.time.slice(11))+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+rs(b.total)+'</td><td class="n">'+rs(b.profit)+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table></details>'}).join('')||'<div class="sm">No bills in this range.</div>';
- $('out').innerHTML=h;
+ h+='<div id="stmt"></div>';
+ $('out').innerHTML=h;loadStmt(d);
  Array.prototype.forEach.call($('out').querySelectorAll('button[data-m]'),function(b){b.onclick=function(){MODE=b.dataset.m;SEL=null;draw(LAST)}});
  Array.prototype.forEach.call($('out').querySelectorAll('tr.pick'),function(r){var go=function(){SEL=+r.dataset.id;draw(LAST)};r.onclick=go;r.onkeydown=function(e){if(e.key==='Enter')go()}});
  Array.prototype.forEach.call($('out').querySelectorAll('a[data-bill]'),function(a){a.onclick=function(e){if(window.parent!==window){e.preventDefault();window.parent.postMessage({rbhOpenBill:+a.dataset.bill},location.origin)}}});
