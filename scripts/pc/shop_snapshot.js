@@ -78,6 +78,11 @@ const health = () => new Promise(res => { const r = http.get('http://127.0.0.1:'
   L.push('List price total ' + rs(listPrice) + ' | discount ' + rs(disc) + ' (' + pc(disc, listPrice) + ' of list) | bills with a discount ' + period.filter(b => b.discount > 0).length);
   L.push('Cost of goods ' + rs(T.cogs) + ' | gross profit ' + rs(T.gross) + ' (' + (T.margin_pct == null ? NF : T.margin_pct + '%') + ')');
   L.push('Expenses: rent/other ' + rs(T.expenses) + ' | salary ' + rs(T.salary) + ' | commission ' + rs(T.commissions) + (T.expenses + T.salary + T.commissions === 0 ? ' (none recorded in the app)' : '') + ' | net profit ' + rs(T.net) + ' (' + pc(T.net, T.sales) + ' of sales)');
+  { const st = {}; (((await safe("SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from')")) || [])).forEach(r => { st[r.key] = r.value; });
+    const rc = Number(st.running_cost_per_day || 0), rf = String(st.running_cost_from || '').slice(0, 10);
+    if (rc > 0 && rf) { const days = Math.max(0, Math.round((new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z') - new Date(rf + 'T00:00:00Z')) / 864e5) + 1);
+      const gpRun = bills.filter(b => b.day >= rf).reduce((a, b) => a + Number(b.total) - Number(b.cost), 0);
+      L.push('NET PROFIT (AJ rule): gross profit since ' + rf + ' ' + rs(gpRun) + ' minus ' + rs(rc) + ' a day x ' + days + ' days = ' + rs(gpRun - rc * days) + ' (the ' + rs(rc) + ' covers his and Jazeel salary, bills, transport, renovation credit, rough)'); } }
 
   // ---- c. Margins, best and worst items, biggest discounts
   const lines = ((await safe(`SELECT (b.created_at AT TIME ZONE 'Asia/Colombo')::date::text AS day, i.item_code, i.item_name, i.qty,
