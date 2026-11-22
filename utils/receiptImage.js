@@ -3,7 +3,10 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { SHOP, mapQrDataUrl } = require('./shopInfo');
 
-const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
+const TEMPLATE_OLD = path.join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt.html');
+const TEMPLATE_V2 = path.join(__dirname, '..', 'public', 'brand', 'receipt-template', 'receipt2.html');
+// 22 Nov (AJ said YES): the new see-through look is the default. To go back to the old paper look put RECEIPT_LOOK=old in .env and restart apex-server.
+const TEMPLATE = String(process.env.RECEIPT_LOOK || '').trim().toLowerCase() === 'old' ? TEMPLATE_OLD : TEMPLATE_V2;
 const DEFAULT_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
 const WIDTH = 1122, HEIGHT = 200, SCALE = 1.5;   // short viewport: the picture is as tall as the receipt, no empty black
 // Draws the receipt as a PNG. QR = the shop WhatsApp chat (never a personal number).
@@ -93,7 +96,7 @@ function idleSoon() {
   _idle = setTimeout(async () => { const p = _browserP; _browserP = null; try { const b = await p; await b.close(); } catch (e) {} }, 30 * 60000);   // 18 Nov: stay warm 30 min so the next receipt is near-instant
   if (_idle.unref) _idle.unref();
 }
-async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 } = {}) {
+async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000, template } = {}) {
   const data = cleanBill(bill);
   data.qr = await mapQrDataUrl();                                // QR of the Google Maps link (null if the library is missing: the link text still shows)
 
@@ -113,7 +116,7 @@ async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000 
     page.setDefaultTimeout(timeoutMs);
     await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: SCALE });
     await page.evaluateOnNewDocument(d => { window.RECEIPT_DATA = d; }, data);
-    await page.goto(pathToFileURL(TEMPLATE).href, { waitUntil: 'load' });
+    await page.goto(pathToFileURL(template || TEMPLATE).href, { waitUntil: 'load' });
     await page.waitForSelector('body[data-ready="1"]');
     await page.screenshot({ path: file, type: 'png', fullPage: true });
   } finally { try { if (page) await page.close(); } catch (e) {} idleSoon(); }
