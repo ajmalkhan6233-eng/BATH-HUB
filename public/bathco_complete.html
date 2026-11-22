@@ -1755,6 +1755,7 @@ function confetti() {
    DASHBOARD
 ───────────────────────────────────────────── */
 async function loadDashboard() {
+  return;   // 22 Nov (AJ): the old green/red dashboard is gone for good: it is not built, not even as loading boxes. Home is public/home_solid (#dash-solid).
   // Show skeletons
   const grid = document.getElementById('kpi-grid');
   grid.innerHTML = Array(6).fill(0).map(() => `
