@@ -19,12 +19,11 @@ if (ON) Object.assign(process.env, { DB_HOST: '127.0.0.1', DB_PORT: '5432', DB_N
     }
   });
   afterAll(async () => { await db.query(`DELETE FROM products WHERE name LIKE 'ZZR%'; DELETE FROM grn_records WHERE supplier_name LIKE 'ZZR%'; DROP TABLE IF EXISTS zzr_sale_items`); await db.end(); });
-  test('dry run: plan keeps Metro, orders the rest Fazal, Afam, Imran, Leo; changes nothing', async () => {
+  test('dry run: one series in vendor order Metro, Fazal, Leo, Afham, then the rest; changes nothing', async () => {
     const before = await codes(); const p = await R.plan(db);
-    const mine = p.map.filter(m => /^ZZR/.test(m.name)).map(m => m.name.replace('ZZR ', '') + ':' + m.old + '>' + m.new);
-    const metro = mine.find(x => x.startsWith('metro')); expect(metro).toBe('metro item:950>950');
-    const order = p.map.filter(m => /^ZZR/.test(m.name) && m.rank > 0).map(m => m.name);
-    expect(order).toEqual(['ZZR fazal item', 'ZZR afam item', 'ZZR imran item', 'ZZR leo item']);
+    expect(p.map.filter(m => /^ZZR/.test(m.name)).length).toBe(5);
+    const order = p.map.filter(m => /^ZZR/.test(m.name)).map(m => m.name);
+    expect(order).toEqual(['ZZR metro item', 'ZZR fazal item', 'ZZR leo item', 'ZZR afam item', 'ZZR imran item']);
     expect(await codes()).toBe(before);
   });
   test('apply updates products, sale lines, GRN text; undo restores everything', async () => {
