@@ -35,10 +35,13 @@
     var d = Math.round((Date.parse(due) - Date.parse(today)) / 86400000);
     return d < 0 ? Math.abs(d) + ' d overdue' : d === 0 ? 'today' : d === 1 ? 'tomorrow' : 'in ' + d + ' d';
   }
+  var HAY = typeof WeakMap === 'function' ? new WeakMap() : null;   // speed: each item list is lower-cased once, then reused on every key press
   function find(items, q, max) {   // phone search: every typed word must be in the name or code
     var w = String(q || '').toLowerCase().split(/\s+/).filter(Boolean); if (!w.length) return [];
-    var out = []; for (var i = 0; i < (items || []).length && out.length < (max || 30); i++) {
-      var t = (items[i][0] + ' ' + items[i][1]).toLowerCase(); if (w.every(function (x) { return t.indexOf(x) >= 0; })) out.push(items[i]);
+    items = items || []; var hay = HAY && HAY.get(items);
+    if (!hay) { hay = items.map(function (x) { return (x[0] + ' ' + x[1]).toLowerCase(); }); if (HAY) HAY.set(items, hay); }
+    var out = []; for (var i = 0; i < items.length && out.length < (max || 30); i++) {
+      var t = hay[i]; if (w.every(function (x) { return t.indexOf(x) >= 0; })) out.push(items[i]);
     } return out;
   }
   function throttleWait(fails) {   // seconds to wait after this many wrong tries in a row (0 for the first 4)
@@ -46,30 +49,49 @@
   }
   if (typeof window === 'undefined') { module.exports = { unlock: unlock, deriveKey: deriveKey, decryptWith: decryptWith, rs: rs, ago: ago, vs: vs, dueWord: dueWord, find: find, throttleWait: throttleWait }; return; }
 
-  // ---------- screen ----------
+  // ---------- screen (LOOK v5: Stone & Brass). Drawing only: no shop logic lives here. ----------
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function row(l, r, rcls) { var d = el('div', 'row'); d.appendChild(el('div', 'l', l)); d.appendChild(el('div', 'r' + (rcls ? ' ' + rcls : ''), r)); return d; }
+  function row2(t, s, r, rcls) {   // two-line row: title, small line under it, amount on the right
+    var d = el('div', 'row'), L = el('div', 'l'); L.appendChild(el('div', 't', t)); if (s) L.appendChild(el('div', 's', s)); d.appendChild(L);
+    if (r != null) { if (typeof r === 'string') d.appendChild(el('div', 'r' + (rcls ? ' ' + rcls : ''), r)); else d.appendChild(r); }
+    return d;
+  }
   // icons: Lucide (ISC licence), inline, fixed strings only
-  var ICONS = {"trend":"<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>","week":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/><path d=\"M8 14h.01\"/><path d=\"M12 14h.01\"/><path d=\"M16 14h.01\"/><path d=\"M8 18h.01\"/><path d=\"M12 18h.01\"/><path d=\"M16 18h.01\"/>","month":"<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>","cash":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","pay":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>","box":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>","top":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"/><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"/><path d=\"M4 22h16\"/><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"/><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"/><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"/>"};
+  var ICONS = {"trend":"<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>","cash":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","box":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>"};
   ICONS.home = "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>";
   ICONS.cart = "<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>";
-  ICONS.doc = "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>";
-  ICONS.face = "<path d=\"M3 7V5a2 2 0 0 1 2-2h2\"/><path d=\"M17 3h2a2 2 0 0 1 2 2v2\"/><path d=\"M21 17v2a2 2 0 0 1-2 2h-2\"/><path d=\"M7 21H5a2 2 0 0 1-2-2v-2\"/><path d=\"M8 14s1.5 2 4 2 4-2 4-2\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/>";
-  var TITLE_ICON = { 'Today': 'trend', 'This week': 'week', 'This month': 'month', 'Money in today': 'cash', 'To pay': 'pay', 'Stock': 'box', 'Best sellers this month': 'top', 'Face ID': 'face' };
   function icon(k) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>'; }
-  function card(title) { var c = el('div', 'card'); if (title) { var h = el('h2', null, title); var k = TITLE_ICON[title]; if (k) h.insertAdjacentHTML('afterbegin', '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>'); c.appendChild(h); } return c; }
-  function none() { return el('div', 'dim', 'No data yet'); }
-
-
-  // look only: numbers count up, bar shrinks on scroll
-  function countUp() {
-    document.querySelectorAll('#cards .big, #cards .grid .v').forEach(function (n) {
-      var m = /^Rs ([\d,]+)$/.exec(n.textContent); if (!m || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-      var to = Number(m[1].replace(/,/g, '')), t0 = performance.now(), D = 900;
-      (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = rs(to * e); if (k < 1) requestAnimationFrame(f); else n.textContent = rs(to); })(t0);
-    });
+  function pill(text, cls) { return el('span', 'pill' + (cls ? ' ' + cls : ''), text); }
+  function card(title, right) {
+    var c = el('div', 'card');
+    if (title) { var h = el('h2'); h.appendChild(el('span', null, title)); if (right) h.appendChild(typeof right === 'string' ? el('span', null, right) : right); c.appendChild(h); }
+    return c;
   }
-  window.addEventListener('scroll', function () {   // title shrinks in step with the finger (0 to 1 over 80px)
+  function none() { return el('div', 'note', 'No data yet'); }
+  function sgn(n) { return (n < 0 ? '-' : '') + rs(Math.abs(n || 0)); }
+  function cap(t) { t = String(t || 'other'); return t.charAt(0).toUpperCase() + t.slice(1); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function ledger(title, amount, pl, subs) {   // the big typographic number straight on the canvas
+    var d = el('div', 'ledger'), e = el('div', 'eyebrow'); e.appendChild(el('span', null, title)); if (pl) e.appendChild(pl); d.appendChild(e);
+    d.appendChild(el('div', 'big', typeof amount === 'string' ? amount : rs(amount)));
+    if (subs && subs.length) { var h = el('div', 'hsub'); subs.forEach(function (x) { h.appendChild(typeof x === 'string' ? el('span', null, x) : x); }); d.appendChild(h); }
+    return d;
+  }
+  function kv(k, v) { var s = el('span'); s.appendChild(document.createTextNode(k + ' ')); s.appendChild(el('b', null, v)); return s; }
+  function tile(k, v, cls) { var t = el('div', 'tile'); t.appendChild(el('div', 'k', k)); t.appendChild(el('div', 'v' + (cls ? ' ' + cls : ''), v)); return t; }
+  function tapCard(c, fn) { c.className += ' tapc'; c.setAttribute('role', 'button'); c.tabIndex = 0; c.addEventListener('click', fn); c.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return c; }
+  function segc(opts, on, fn) {   // segmented switch: [[value, label], ...]
+    var s = el('div', 'seg'); s.setAttribute('role', 'tablist');
+    opts.forEach(function (o) { var b = el('button', o[0] === on ? 'on' : '', o[1]); b.setAttribute('aria-pressed', o[0] === on ? 'true' : 'false'); b.addEventListener('click', function () { if (o[0] !== on) fn(o[0]); }); s.appendChild(b); });
+    return s;
+  }
+  function dueText(d, today) { var w = dueWord(d, today); return /overdue|no date/.test(w) ? w : 'due ' + w; }
+  function go(t) { var b = document.querySelector('#tabs .tab[data-tab="' + t + '"]'); if (b) b.click(); }
+  function duePill(due) { return due.overdue_count ? pill(due.overdue_count + ' overdue · ' + rs(due.overdue_amount), 'bad') : due.pending_dates ? pill(plural(due.pending_dates, 'bill needs a date', 'bills need a date'), 'amber') : pill('Nothing overdue', 'ok'); }
+
+  // title shrinks with the finger (0 to 1 over 80px); refresh icon turns once
+  window.addEventListener('scroll', function () {
     var y = window.scrollY, p = Math.max(0, Math.min(1, y / 80));
     document.documentElement.style.setProperty('--p', p.toFixed(3)); document.body.classList.toggle('scrolled', y > 24);
   }, { passive: true });
@@ -78,138 +100,157 @@
   var NODATA = 'No data yet. Update the shop PC app, then refresh.';
   function today0(s) { return new Date(Date.parse(s.at) + 5.5 * 3600e3).toISOString().slice(0, 10); }
   function tapRow(l, r, rcls, fn) { var d = row(l, r, rcls); d.className += ' tap'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.addEventListener('click', fn); d.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return d; }
-  function bigCard(title, amount, sub, cls) { var c = card(title); c.appendChild(el('div', 'big', rs(amount))); if (sub) c.appendChild(el('div', cls || 'dim', sub)); return c; }
+  function tapRow2(t, s, r, rcls, fn) { var d = row2(t, s, r, rcls); d.className += ' tap'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.addEventListener('click', fn); d.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return d; }
+  function bigCard(title, amount, sub, cls) { var c = card(title); c.appendChild(el('div', 'big md', rs(amount))); if (sub) c.appendChild(el('div', cls || 'note', sub)); return c; }
   function dayName(ymd) { var d = new Date(ymd + 'T00:00:00Z'); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ' ' + d.getUTCDate(); }
+  function bars(daily) {   // 14-day chart, pure CSS; the best day is brass
+    var w = el('div', 'chart'); w.setAttribute('aria-hidden', 'true');
+    var mx = Math.max.apply(null, daily.map(function (x) { return x.total; }).concat([1]));
+    daily.forEach(function (x) { var c = el('div', 'col'), f = el('div', 'fill' + (x.total === mx && mx > 1 ? ' peak' : '')); f.style.height = Math.max(3, Math.round(x.total / mx * 100)) + '%'; c.appendChild(f); c.appendChild(el('div', 'cl', String(Number(x.d.slice(8))))); w.appendChild(c); });
+    return w;
+  }
 
   // ---- detail sheet (slides up; close with the button, the dark area or Esc)
   function sheet(title, rowsArr, foot) {
     $('sheetT').textContent = title; var b = $('sheetB'); b.textContent = '';
     rowsArr.forEach(function (r) { b.appendChild(row(r[0], r[1], r[2])); });
-    if (foot) b.appendChild(el('div', 'dim foot', foot));
+    if (foot) b.appendChild(el('div', 'note foot', foot));
     $('sheet').hidden = false;
   }
   function closeSheet() { $('sheet').hidden = true; }
 
-  // ---- tabs
+  // ---- HOME: today in one look
   function rHome(s, box) {
-    var c = card('Today');
-    if (s.sales) {
-      c.appendChild(el('div', 'big', rs(s.sales.today)));
-      var v = vs(s.sales.today, s.sales.yesterday);
-      c.appendChild(el('div', v.cls, s.sales.bills_today + ' bills · ' + v.text));
-    } else c.appendChild(none());
-    box.appendChild(c);
-    if (s.sales) {
+    var sl = s.sales, pr = s.profit, pt = pr && pr.today;
+    if (sl) {
+      var v = vs(sl.today, sl.yesterday), subs = [plural(sl.bills_today || 0, 'bill', 'bills')];
+      if (pt) { subs.push(kv('Profit', sgn(pt.gross))); if (pr.run_per_day) subs.push(kv('Net', sgn(pt.net))); }
+      box.appendChild(ledger('Today’s sales', sl.today, pill(v.text, v.cls === 'up' ? 'ok' : v.cls === 'down' ? 'bad' : ''), subs));
       var g = el('div', 'grid');
-      [['This week', s.sales.week], ['This month', s.sales.month]].forEach(function (x) { var k = card(x[0]); k.appendChild(el('div', 'v', rs(x[1]))); g.appendChild(k); });
-      box.appendChild(g); g.style.marginBottom = '12px';
-    }
-    var p = card('Money in today');
-    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other'), rs(x.amount))); });
-    else p.appendChild(s.pays_today ? el('div', 'dim', 'Nothing yet today') : none());
+      [['This week', sl.week, pr && pr.week], ['This month', sl.month, pr && pr.month]].forEach(function (x) {
+        var k = card(x[0]); k.appendChild(el('div', 'v', rs(x[1]))); if (x[2]) k.appendChild(el('div', 'note', 'Profit ' + sgn(x[2].gross)));
+        g.appendChild(tapCard(k, function () { go('profit'); }));
+      });
+      box.appendChild(g);
+    } else { var c0 = card('Today'); c0.appendChild(none()); box.appendChild(c0); }
+
+    var tot = (s.pays_today || []).reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
+    var p = card('Money in today', s.pays_today && s.pays_today.length ? el('span', 'num', rs(tot)) : null);
+    if (s.pays_today && s.pays_today.length) { var g3 = el('div', 'grid3'); s.pays_today.forEach(function (x) { g3.appendChild(tile(cap(x.method), rs(x.amount))); }); p.appendChild(g3); }
+    else p.appendChild(s.pays_today ? el('div', 'note', 'Nothing yet today') : none());
     box.appendChild(p);
-    var d = card('To pay');
-    if (s.due) {
-      var od = el('div', null); var pill = el('span', 'pill ' + (s.due.overdue_count ? 'bad' : 'ok'), s.due.overdue_count ? s.due.overdue_count + ' cheque date passed · ' + rs(s.due.overdue_amount) : (s.due.pending_dates ? s.due.pending_dates + ' bill(s) need a payment date' : 'Nothing overdue'));
-      od.appendChild(pill); od.style.marginBottom = '6px'; d.appendChild(od);
-      var today = today0(s);
-      s.due.next.slice(0, 6).forEach(function (x) { d.appendChild(row((x.kind === 'cheque' ? 'Cheque · ' : '') + (x.who || '') + ' ' + dueWord(x.due, today), rs(x.amount), x.kind === 'cheque' && x.due && x.due < today ? 'down' : '')); });
-    } else d.appendChild(none());
-    box.appendChild(d);
-    var st = card('Stock');
-    if (s.stock) {
-      st.appendChild(row('Out of stock', String(s.stock.out), s.stock.out ? 'down' : ''));
-      st.appendChild(row('Running low', String(s.stock.low), s.stock.low ? 'down' : ''));
-      s.stock.low_list.slice(0, 8).forEach(function (x) { st.appendChild(row(x.name, x.qty + ' left (min ' + x.min + ')', 'dim')); });
-    } else st.appendChild(none());
-    box.appendChild(st);
+
+    var tv = s.vendors ? s.vendors.reduce(function (a, x) { return a + x.owed; }, 0) : null;
+    var d = card('To pay', s.due ? duePill(s.due) : null);
+    if (tv != null) d.appendChild(el('div', 'v', rs(tv)));
+    var ds = []; if (s.vendors) ds.push(plural(s.vendors.length, 'vendor', 'vendors')); if (s.cheques) ds.push(plural(s.cheques.length, 'cheque waiting', 'cheques waiting'));
+    if (ds.length) d.appendChild(el('div', 'note', ds.join(' · ')));
+    if (s.due) { var today = today0(s); s.due.next.slice(0, 3).forEach(function (x) { d.appendChild(row2((x.kind === 'cheque' ? 'Cheque · ' : '') + (x.who || ''), dueText(x.due, today), rs(x.amount), x.due && x.due < today ? 'down' : '')); }); }
+    if (tv == null && !s.due) d.appendChild(none());
+    box.appendChild(tapCard(d, function () { MV = 'pay'; go('money'); }));
+
+    var st = card('Stock watch', 'Tap to see');
+    if (s.stock) { var ps = el('div', 'pills'); ps.appendChild(pill(s.stock.out + ' out of stock', s.stock.out ? 'bad' : 'ok')); ps.appendChild(pill(s.stock.low + ' running low', s.stock.low ? 'amber' : 'ok')); st.appendChild(ps); }
+    else st.appendChild(none());
+    box.appendChild(tapCard(st, function () { STV = s.stock && s.stock.out ? 'out' : 'low'; go('stock'); }));
+
     var t = card('Best sellers this month');
-    if (s.top_month && s.top_month.length) s.top_month.forEach(function (x) { t.appendChild(row(x.name, rs(x.revenue))); });
-    else t.appendChild(s.top_month ? el('div', 'dim', 'No sales yet') : none());
+    if (s.top_month && s.top_month.length) s.top_month.slice(0, 5).forEach(function (x, i) { t.appendChild(row2((i + 1) + '. ' + x.name, x.qty != null ? x.qty + ' sold' : '', rs(x.revenue))); });
+    else t.appendChild(s.top_month ? el('div', 'note', 'No sales yet') : none());
     box.appendChild(t);
     faceCard(box); pairCard(box);
   }
 
+  // ---- fallback Profit view if profit.js is missing
   function rSales(s, box) {
-    box.appendChild(bigCard('Today', s.sales ? s.sales.today : 0, s.sales ? s.sales.bills_today + ' bills' : null));
+    box.appendChild(ledger('Today’s sales', s.sales ? s.sales.today : 0, null, s.sales ? [plural(s.sales.bills_today, 'bill', 'bills')] : null));
     var b = card('Bills today');
-    if (!s.bills) b.appendChild(el('div', 'dim', NODATA));
-    else if (!s.bills.length) b.appendChild(el('div', 'dim', 'No bills yet today'));
-    else s.bills.forEach(function (x) {
-      b.appendChild(tapRow(x.t + ' · ' + (x.who || 'Walk-in') + ' · ' + x.pay, rs(x.total), '', function () {
-        sheet('Bill ' + x.no, (x.lines || []).map(function (l) { return [l.n + ' × ' + l.q, rs(l.a)]; }).concat([['Total · ' + x.pay, rs(x.total), 'up']]), (x.lines && x.lines.length >= 12) ? 'First 12 lines shown.' : '');
-      }));
-    });
+    if (!s.bills) b.appendChild(el('div', 'note', NODATA));
+    else if (!s.bills.length) b.appendChild(el('div', 'note', 'No bills yet today'));
+    else s.bills.forEach(function (x) { b.appendChild(tapRow2(x.who || 'Walk-in', x.t + ' · ' + cap(x.pay), rs(x.total), '', function () { sheet('Bill ' + x.no, (x.lines || []).map(function (l) { return [l.n + ' × ' + l.q, rs(l.a)]; }).concat([['Total · ' + cap(x.pay), rs(x.total), 'up']]), ''); })); });
     box.appendChild(b);
-    var d = card('Last 14 days');
-    if (!s.daily) d.appendChild(el('div', 'dim', NODATA));
-    else {
-      var mx = Math.max.apply(null, s.daily.map(function (x) { return x.total; }).concat([1]));
-      s.daily.slice().reverse().forEach(function (x) {
-        var r = row(dayName(x.d) + ' · ' + x.n + ' bills', rs(x.total)); r.className += ' barrow';
-        var bar = el('div', 'bar'); bar.style.width = Math.round(x.total / mx * 100) + '%'; r.insertBefore(bar, r.firstChild); d.appendChild(r);
-      });
-    }
-    box.appendChild(d);
-    var t = card('Best sellers this month');
-    if (s.top_month && s.top_month.length) s.top_month.forEach(function (x) { t.appendChild(row(x.name + ' × ' + x.qty, rs(x.revenue))); });
-    else t.appendChild(s.top_month ? el('div', 'dim', 'No sales yet') : none());
-    box.appendChild(t);
+    if (s.daily && s.daily.length) { var d = card('Last 14 days'); d.appendChild(bars(s.daily)); box.appendChild(d); }
   }
 
+  // ---- STOCK: All · 0 left · Low, with an Order button on each item (act.js keeps the order list)
+  var STV = 'all', STQ = '';
+  function orderBtn(code, name) {
+    if (!EXTRA.addOrder) return null;
+    var b = el('button', 'add', '+ Order'); b.setAttribute('aria-label', 'Add ' + name + ' to the order list');
+    b.addEventListener('click', function (e) { e.stopPropagation(); EXTRA.addOrder(code, name); b.textContent = 'Added'; b.disabled = true; });
+    return b;
+  }
   function rStock(s, box) {
-    var c = card('Find an item');
-    var q = el('input', 'search'); q.type = 'search'; q.placeholder = 'Type name or code'; q.setAttribute('aria-label', 'Search items'); q.autocomplete = 'off';
-    var res = el('div', 'results'); c.appendChild(q); c.appendChild(res); box.appendChild(c);
-    function draw() {
-      res.textContent = '';
-      if (!s.items) { res.appendChild(el('div', 'dim', NODATA)); return; }
-      if (!q.value.trim()) { res.appendChild(el('div', 'dim', s.items.length + ' items. Type to search.')); return; }
-      var f = find(s.items, q.value, 30); if (!f.length) { res.appendChild(el('div', 'dim', 'No match')); return; }
-      f.forEach(function (x) { res.appendChild(row(x[1] + (x[0] ? ' · ' + x[0] : ''), x[2] + ' in stock · ' + rs(x[3]), x[2] <= 0 ? 'down' : '')); });
+    var st = s.stock;
+    box.appendChild(segc([['all', 'All' + (s.items ? ' (' + s.items.length.toLocaleString('en-US') + ')' : '')], ['out', '0 left' + (st ? ' (' + st.out + ')' : '')], ['low', 'Low' + (st ? ' (' + st.low + ')' : '')]], STV, function (v) { STV = v; render(snap); }));
+    EXTRA.stockExtras.forEach(function (f) { f(s, box); });
+    var c = card(null);
+    if (STV === 'all') {
+      var q = el('input', 'search'); q.type = 'search'; q.placeholder = 'Type item name or code'; q.setAttribute('aria-label', 'Search items'); q.autocomplete = 'off'; q.value = STQ;
+      var res = el('div', 'results'); c.appendChild(q); c.appendChild(res);
+      var draw = function () {
+        STQ = q.value; res.textContent = '';
+        if (!s.items) { res.appendChild(el('div', 'note', NODATA)); return; }
+        if (!q.value.trim()) { res.appendChild(el('div', 'note', s.items.length.toLocaleString('en-US') + ' items. Type a name or code.')); return; }
+        var f = find(s.items, q.value, 30); if (!f.length) { res.appendChild(el('div', 'note', 'No matching items. Try a shorter word.')); return; }
+        var frag = document.createDocumentFragment();
+        f.forEach(function (x) {
+          var r = row2(x[1], (x[0] ? x[0] + ' · ' : '') + rs(x[3]) + ' · ' + (x[2] <= 0 ? '0 left' : x[2] + ' in stock'), null);
+          if (x[2] <= 0) r.lastChild.lastChild.className = 's down';
+          var ob = orderBtn(x[0], x[1]); if (ob) r.appendChild(ob); frag.appendChild(r);
+        });
+        res.appendChild(frag);
+      };
+      q.addEventListener('input', draw); draw();
+    } else if (STV === 'out') {
+      if (!s.out_list) c.appendChild(el('div', 'note', NODATA));
+      else if (!s.out_list.length) c.appendChild(el('div', 'note', 'Nothing out of stock'));
+      else s.out_list.forEach(function (x) { var r = row2(x.name, (x.code ? x.code + ' · ' : '') + '0 left', null); r.lastChild.lastChild.className = 's down'; var ob = orderBtn(x.code, x.name); if (ob) r.appendChild(ob); c.appendChild(r); });
+    } else {
+      if (!st) c.appendChild(none());
+      else if (!st.low_list.length) c.appendChild(el('div', 'note', 'Nothing running low'));
+      else st.low_list.forEach(function (x) { var r = row2(x.name, (x.code ? x.code + ' · ' : '') + x.qty + ' left · min ' + x.min, null); r.lastChild.lastChild.className = 's warnc'; var ob = orderBtn(x.code, x.name); if (ob) r.appendChild(ob); c.appendChild(r); });
     }
-    q.addEventListener('input', draw); draw();
-    var o = card('Out of stock');
-    if (!s.out_list) o.appendChild(el('div', 'dim', NODATA));
-    else if (!s.out_list.length) o.appendChild(el('div', 'dim', 'Nothing out of stock'));
-    else s.out_list.forEach(function (x) { o.appendChild(row(x.name, x.code, 'dim')); });
-    box.appendChild(o);
-    var l = card('Running low');
-    if (s.stock && s.stock.low_list.length) s.stock.low_list.forEach(function (x) { l.appendChild(row(x.name, x.qty + ' left (min ' + x.min + ')', 'down')); });
-    else l.appendChild(s.stock ? el('div', 'dim', 'Nothing running low') : none());
-    box.appendChild(l);
+    box.appendChild(c);
   }
 
+  // ---- MONEY: To collect · To pay · Cheques
+  var MV = 'collect';
   function rMoney(s, box) {
     var today = today0(s);
-    var c = bigCard('Customers owe you', s.credit ? s.credit.total : 0, s.credit ? s.credit.list.length + (s.credit.list.length === 1 ? ' customer' : ' customers') : NODATA);
-    if (s.credit) s.credit.list.forEach(function (x) { c.appendChild(row(x.who + (x.oldest ? ' · ' + dueWord(x.oldest, today) : ''), rs(x.owed), x.oldest && x.oldest < today ? 'down' : '')); });
-    box.appendChild(c);
-    var tv = s.vendors ? s.vendors.reduce(function (a, v) { return a + v.owed; }, 0) : 0;
-    var v = bigCard('You owe vendors', tv, s.vendors ? s.vendors.length + (s.vendors.length === 1 ? ' vendor' : ' vendors') : NODATA);
-    if (s.vendors) s.vendors.forEach(function (x) {
-      v.appendChild(tapRow(x.who + (x.oldest ? ' · ' + dueWord(x.oldest, today) : ''), rs(x.owed), '', function () {
-        sheet(x.who, x.bills.map(function (b) { return ['Bill ' + (b.ref || '') + ' · ' + dueWord(b.due, today), rs(b.amount), '']; }).concat([['Total', rs(x.owed), 'up']]));
-      }));
-    });
-    box.appendChild(v);
-    var p = card('Money in today');
-    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other'), rs(x.amount))); });
-    else p.appendChild(s.pays_today ? el('div', 'dim', 'Nothing yet today') : none());
-    box.appendChild(p);
+    box.appendChild(segc([['collect', 'To collect'], ['pay', 'To pay'], ['cheques', 'Cheques']], MV, function (v) { MV = v; render(snap); }));
+    if (MV === 'collect') {
+      if (!s.credit) { box.appendChild(el('div', 'note', NODATA)); return; }
+      box.appendChild(ledger('Customers owe you', s.credit.total, pill(plural(s.credit.list.length, 'customer', 'customers'), s.credit.list.length ? 'amber' : 'ok')));
+      var c = card(null);
+      if (!s.credit.list.length) c.appendChild(el('div', 'note', 'Nobody owes you. All clear.'));
+      s.credit.list.forEach(function (x) { var late = x.oldest && x.oldest < today; c.appendChild(row2(x.who, x.oldest ? 'Oldest bill ' + dueWord(x.oldest, today).replace(' overdue', ' ago') : '', rs(x.owed), late ? 'down' : '')); });
+      box.appendChild(c);
+    } else if (MV === 'pay') {
+      if (!s.vendors) { box.appendChild(el('div', 'note', NODATA)); return; }
+      var tv = s.vendors.reduce(function (a, v) { return a + v.owed; }, 0);
+      box.appendChild(ledger('You owe vendors', tv, s.due ? duePill(s.due) : null, [plural(s.vendors.length, 'vendor', 'vendors') + ' · tap one for its bills']));
+      var v = card(null);
+      if (!s.vendors.length) v.appendChild(el('div', 'note', 'Nothing owed to vendors.'));
+      s.vendors.forEach(function (x) {
+        v.appendChild(tapRow2(x.who, x.oldest ? 'Oldest bill ' + dueText(x.oldest, today) : '', rs(x.owed), x.oldest && x.oldest < today ? 'down' : '', function () {
+          sheet(x.who, x.bills.map(function (b) { return ['Bill ' + (b.ref || '') + ' · ' + dueText(b.due, today), rs(b.amount), b.due && b.due < today ? 'down' : '']; }).concat([['Total', rs(x.owed), 'up']]));
+        }));
+      });
+      box.appendChild(v);
+    } else rCheques(s, box);
   }
 
   function rCheques(s, box) {
-    var today = today0(s), c = card('Cheques to clear');
-    if (!s.cheques) { c.appendChild(el('div', 'dim', NODATA)); box.appendChild(c); return; }
+    var today = today0(s);
+    if (!s.cheques) { box.appendChild(el('div', 'note', NODATA)); return; }
     var tot = s.cheques.reduce(function (a, x) { return a + x.amount; }, 0), od = s.cheques.filter(function (x) { return x.due && x.due < today; });
-    c.appendChild(el('div', 'big', rs(tot)));
-    var pill = el('span', 'pill ' + (od.length ? 'bad' : 'ok'), od.length ? od.length + ' overdue' : 'None overdue'); pill.style.marginBottom = '6px'; c.appendChild(pill);
-    if (!s.cheques.length) c.appendChild(el('div', 'dim', 'No cheques waiting'));
-    s.cheques.forEach(function (x) { c.appendChild(row((x.who || '') + ' · ' + (x.ref || '') + ' · ' + dueWord(x.due, today) + (x.status === 'held' ? ' · held' : ''), rs(x.amount), x.due && x.due < today ? 'down' : '')); });
+    box.appendChild(ledger('Cheques to clear', tot, pill(od.length ? od.length + ' overdue' : 'None overdue', od.length ? 'bad' : 'ok'), [plural(s.cheques.length, 'cheque', 'cheques')]));
+    var c = card(null);
+    if (!s.cheques.length) c.appendChild(el('div', 'note', 'No cheques waiting'));
+    s.cheques.forEach(function (x) { c.appendChild(row2(x.who || 'Cheque', (x.ref ? 'No. ' + x.ref + ' · ' : '') + dueText(x.due, today) + (x.status === 'held' ? ' · held' : ''), rs(x.amount), x.due && x.due < today ? 'down' : '')); });
     box.appendChild(c);
   }
-
 
   var EXTRA = { profit: null, sell: null, stockExtras: [] };
   // ---- hooks for the modules (profit.js, act.js). They get the screen helpers and a way to send a LOCKED request to the shop PC.
@@ -233,31 +274,36 @@
     if (r.status === 404) return null; if (!r.ok) throw new Error('Could not reach the shop mailbox (' + r.status + ').');
     return decryptWith(ckey, await r.json());
   }
-  window.RBHP = { EXTRA: EXTRA, LS: LS, rs: rs, el: el, row: row, card: card, bigCard: bigCard, tapRow: tapRow, sheet: sheet, closeSheet: closeSheet, find: find, none: none, toShop: toShop, fromShop: fromShop, snap: function () { return snap; }, redraw: function () { if (snap) render(snap); } };
+  window.RBHP = { EXTRA: EXTRA, LS: LS, rs: rs, el: el, row: row, row2: row2, card: card, pill: pill, segc: segc, ledger: ledger, kv: kv, tile: tile, bars: bars, sgn: sgn, cap: cap, plural: plural, bigCard: bigCard, tapRow: tapRow, tapRow2: tapRow2, sheet: sheet, closeSheet: closeSheet, find: find, none: none, toShop: toShop, fromShop: fromShop, go: go, tab: function () { return tab; }, snap: function () { return snap; }, redraw: function () { if (snap) render(snap); } };
   // Tabs are modules. profit.js adds Profit, act.js adds Sell and the Order card. If a module is missing the app still works.
   var TABS = [['home', 'Home', 'home', rHome], ['profit', 'Profit', 'trend', function (s, b) { if (EXTRA.profit) EXTRA.profit(s, b); else rSales(s, b); }],
-    ['sell', 'Sell', 'cart', function (s, b) { if (EXTRA.sell) EXTRA.sell(s, b); else b.appendChild(el('div', 'dim', 'Sell is not loaded.')); }],
-    ['stock', 'Stock', 'box', function (s, b) { rStock(s, b); EXTRA.stockExtras.forEach(function (f) { f(s, b); }); }],
-    ['money', 'Money', 'cash', function (s, b) { rMoney(s, b); rCheques(s, b); }]];
+    ['sell', 'Sell', 'cart', function (s, b) { if (EXTRA.sell) EXTRA.sell(s, b); else b.appendChild(el('div', 'note', 'Sell is not loaded.')); }],
+    ['stock', 'Stock', 'box', rStock],
+    ['money', 'Money', 'cash', rMoney]];
   function drawTabs() {
     var n = $('tabs'); n.textContent = '';
     TABS.forEach(function (t) {
-      var b = document.createElement('button'); b.className = 'tab' + (t[0] === tab ? ' on' : ''); b.setAttribute('aria-label', t[1]); b.setAttribute('aria-current', t[0] === tab ? 'page' : 'false');
+      var b = document.createElement('button'); b.className = 'tab' + (t[0] === tab ? ' on' : ''); b.dataset.tab = t[0]; b.setAttribute('aria-label', t[1]); b.setAttribute('aria-current', t[0] === tab ? 'page' : 'false');
       b.insertAdjacentHTML('afterbegin', icon(t[2])); b.appendChild(el('span', null, t[1]));
       b.addEventListener('click', function () { tab = t[0]; closeSheet(); window.scrollTo(0, 0); if (snap) render(snap); });
       n.appendChild(b);
     });
   }
 
+  var drawnTab = null;
   function render(s) {
     var box = $('cards'); box.textContent = ''; drawTabs();
+    if (drawnTab !== tab) { box.style.animation = 'none'; void box.offsetWidth; box.style.animation = ''; drawnTab = tab; }   // calm fade only when the tab changes
     var f = TABS.filter(function (t) { return t[0] === tab; })[0]; (f ? f[3] : rHome)(s, box);
-    countUp();
+    if (EXTRA.after) EXTRA.after(tab);
     var w = $('when'); w.textContent = 'Updated ' + ago(s.at);
     var stale = (Date.now() - Date.parse(s.at)) / 60000 > STALE_MIN;
     w.className = 'sub' + (stale ? ' stale' : '');
     if (stale) w.textContent += ' · shop PC may be off';
+    if (navigator.onLine === false) { w.textContent = 'Offline · saved copy, ' + ago(s.at); w.className = 'sub stale'; }
   }
+  window.addEventListener('online', function () { if (snap) render(snap); });
+  window.addEventListener('offline', function () { if (snap) render(snap); });
 
   // ---- Face ID (WebAuthn): the phone asks for your face; only then it opens the key it kept from your last passcode entry.
   // Honest limit: this keeps a stranger out of the app on your unlocked phone. The key sits in this app's private storage, not inside the Face ID chip.
@@ -284,8 +330,8 @@
   function faceCard(box) {
     faceAvailable().then(function (ok) {
       if (!ok && !faceOn()) return;
-      var c = card('Face ID'), msg = el('div', 'dim', faceOn() ? 'Face ID is on. Next time, look at the phone to open.' : 'Open with a look instead of typing the passcode.');
-      var b = el('button', faceOn() ? '' : 'gold', faceOn() ? 'Turn Face ID off' : 'Turn Face ID on'); b.style.marginTop = '10px';
+      var c = card('Face ID'), msg = el('div', 'note', faceOn() ? 'Face ID is on. Next time, look at the phone to open.' : 'Open with a look instead of typing the passcode.');
+      var b = el('button', faceOn() ? 'wide' : 'gold wide', faceOn() ? 'Turn Face ID off' : 'Turn Face ID on'); b.style.marginTop = '10px';
       b.addEventListener('click', function () {
         b.disabled = true;
         (faceOn() ? faceOff() : faceEnable()).then(function () { render(snap); }, function (e) { msg.textContent = (e && e.name === 'NotAllowedError') ? 'Cancelled.' : (e && e.message) || 'Could not turn on.'; b.disabled = false; });
@@ -295,18 +341,26 @@
   }
 
   // Designer preview: open index.html#demo to see every card with FAKE numbers. No network, no passcode.
-  var DEMO = { v: 2, at: new Date().toISOString(), sales: { today: 184500, bills_today: 14, yesterday: 152000, week: 640000, month: 2310000 },
-    pays_today: [{ method: 'cash', amount: 96500 }, { method: 'card', amount: 64000 }, { method: 'bank', amount: 24000 }],
-    top_month: [{ name: 'Basin mixer tap', qty: 40, revenue: 320000 }, { name: 'Wall tile 30x60', qty: 220, revenue: 286000 }, { name: 'Shower set', qty: 18, revenue: 252000 }],
-    stock: { items: 480, out: 6, low: 11, low_list: [{ code: 'A1', name: 'Basin mixer tap', qty: 2, min: 6 }, { code: 'B2', name: 'PVC pipe 1 inch', qty: 4, min: 20 }] },
-    due: { overdue_count: 2, overdue_amount: 185000, next: [{ kind: 'bill', who: 'Sample Vendor', ref: 'B1', due: '2026-11-08', amount: 120000 }, { kind: 'cheque', who: 'Sample Supplier', ref: 'C9', due: '2026-11-14', amount: 65000 }] },
-    bills: [{ no: 'B-1001', t: '16:42', who: 'Sample Customer', total: 42500, pay: 'cash', lines: [{ n: 'Basin mixer tap', q: 1, a: 32500 }, { n: 'PVC pipe 1 inch', q: 4, a: 10000 }] }, { no: 'B-1000', t: '15:10', who: '', total: 9800, pay: 'card', lines: [{ n: 'Shower head', q: 2, a: 9800 }] }],
-    daily: [0, 1, 2, 3, 4, 5, 6].map(function (i) { var d = new Date(Date.now() - (6 - i) * 86400000).toISOString().slice(0, 10); return { d: d, total: 90000 + i * 17000, n: 6 + i }; }),
-    items: [['A1', 'Basin mixer tap', 2, 32500], ['B2', 'PVC pipe 1 inch', 4, 2500], ['C3', 'Wall tile 30x60', 220, 1300], ['D4', 'Shower head', 0, 4900]],
-    out_list: [{ code: 'D4', name: 'Shower head' }],
-    credit: { total: 275000, list: [{ who: 'Sample Builder', owed: 175000, oldest: '2026-10-20' }, { who: 'Sample Contractor', owed: 100000, oldest: '2026-11-20' }] },
-    vendors: [{ who: 'Sample Vendor', owed: 120000, oldest: '2026-11-08', bills: [{ ref: 'B1', due: '2026-11-08', amount: 120000 }] }],
-    cheques: [{ who: 'Sample Supplier', ref: 'C9', due: '2026-11-14', amount: 65000, status: 'pending' }, { who: 'Sample Vendor', ref: 'C7', due: '2026-11-05', amount: 40000, status: 'held' }] };
+  var DEMO = (function () {
+    var D = function (n) { return new Date(Date.now() + 5.5 * 3600e3 + n * 86400000).toISOString().slice(0, 10); };
+    var daily = []; for (var i = 13; i >= 0; i--) daily.push({ d: D(-i), total: [96000, 121000, 88000, 143000, 102000, 167000, 0, 112000, 138000, 240000, 129000, 151000, 118000, 184500][13 - i], n: 6 + (i % 5) });
+    return { v: 2, at: new Date().toISOString(),
+      sales: { today: 184500, bills_today: 14, yesterday: 152000, week: 942000, month: 3480000 },
+      profit: { run_per_day: 25000, today: { sales: 184500, cost: 136300, gross: 48200, net: 23200, bills: 14, no_cost: 0 }, yesterday: { sales: 152000, cost: 114000, gross: 38000, net: 13000, bills: 11, no_cost: 0 },
+        week: { sales: 942000, cost: 700000, gross: 242000, net: 67000, bills: 61, no_cost: 0 }, month: { sales: 3480000, cost: 2585000, gross: 895000, net: 345000, bills: 214, no_cost: 3 },
+        items: [{ name: 'Concealed cistern dual flush', qty: 42, revenue: 378000, profit: 96000 }, { name: 'Thermostatic rain mixer', qty: 18, revenue: 252000, profit: 71000 }, { name: 'Wall tile 30x60', qty: 220, revenue: 286000, profit: 52000 }] },
+      pays_today: [{ method: 'cash', amount: 96500 }, { method: 'card', amount: 64000 }, { method: 'online', amount: 24000 }],
+      top_month: [{ name: 'Concealed cistern dual flush', qty: 42, revenue: 378000 }, { name: 'Wall tile 30x60', qty: 220, revenue: 286000 }, { name: 'Thermostatic rain mixer', qty: 18, revenue: 252000 }, { name: 'Basin mixer tap', qty: 40, revenue: 220000 }],
+      stock: { items: 2480, out: 2, low: 3, low_list: [{ code: 'A1', name: 'Basin mixer tap', qty: 2, min: 6 }, { code: 'B2', name: 'PVC pipe 1 inch', qty: 4, min: 20 }, { code: 'E5', name: 'Angle valve 1/2 inch', qty: 3, min: 10 }] },
+      due: { overdue_count: 1, overdue_amount: 120000, next: [{ kind: 'bill', who: 'Sample Vendor', ref: 'B1', due: D(-3), amount: 120000 }, { kind: 'cheque', who: 'Sample Supplier', ref: 'C9', due: D(2), amount: 65000 }, { kind: 'bill', who: 'Sample Tiles', ref: 'T4', due: D(6), amount: 210000 }] },
+      bills: [{ no: 'B-1014', t: '16:42', who: 'Sample Customer', total: 42500, pay: 'cash', profit: 9100, lines: [{ n: 'Basin mixer tap', q: 1, a: 32500 }, { n: 'PVC pipe 1 inch', q: 4, a: 10000 }] }, { no: 'B-1013', t: '15:10', who: '', total: 9800, pay: 'card', profit: 2400, lines: [{ n: 'Shower head', q: 2, a: 9800 }] }, { no: 'B-1012', t: '13:55', who: 'Sample Builder', total: 132200, pay: 'online', profit: 36700, lines: [{ n: 'Concealed cistern dual flush', q: 6, a: 54000 }, { n: 'Wall tile 30x60', q: 60, a: 78200 }] }],
+      daily: daily,
+      items: [['A1', 'Basin mixer tap', 2, 32500, 1], ['B2', 'PVC pipe 1 inch', 4, 2500, 2], ['C3', 'Wall tile 30x60', 220, 1300, 3], ['D4', 'Shower head', 0, 4900, 4], ['E5', 'Angle valve 1/2 inch', 3, 1800, 5], ['F6', 'Concealed cistern dual flush', 14, 9000, 6], ['G7', 'Thermostatic rain mixer', 5, 14000, 7], ['H8', 'Rimless wall-hung commode', 6, 48500, 8], ['J9', 'Floor drain matt black', 0, 3200, 9], ['K10', 'Brass pillar tap', 27, 12800, 10]],
+      out_list: [{ code: 'D4', name: 'Shower head' }, { code: 'J9', name: 'Floor drain matt black' }],
+      credit: { total: 275000, list: [{ who: 'Sample Builder', owed: 175000, oldest: D(-33) }, { who: 'Sample Contractor', owed: 100000, oldest: D(-4) }] },
+      vendors: [{ who: 'Sample Vendor', owed: 120000, oldest: D(-3), bills: [{ ref: 'B1', due: D(-3), amount: 120000 }] }, { who: 'Sample Tiles', owed: 210000, oldest: D(6), bills: [{ ref: 'T4', due: D(6), amount: 210000 }] }],
+      cheques: [{ who: 'Sample Supplier', ref: 'C9', due: D(2), amount: 65000, status: 'pending' }, { who: 'Sample Vendor', ref: 'C7', due: D(-2), amount: 40000, status: 'held' }] };
+  })();
 
   function show(which) { $('gate').hidden = which !== 'gate'; $('app').hidden = which !== 'app'; $('tabs').hidden = which !== 'app'; if (which !== 'app') closeSheet(); }
   function gateMsg(t) { $('gateMsg').textContent = t || ''; }
@@ -329,10 +383,10 @@
   function isHome() { return window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
   function pairCard(box) {
     var link = pairLink(); if (!link || isHome()) return;
-    var c = card('Home-screen app'), msg = el('div', 'dim', 'The Home Screen icon needs the pairing link once. Copy it here, open the icon, paste it.');
-    var b = el('button', 'gold', 'Copy pairing link'); b.style.marginTop = '10px';
+    var c = card('Home-screen app'), msg = el('div', 'note', 'The Home Screen icon needs the pairing link once. Copy it here, open the icon, paste it.');
+    var b = el('button', 'gold wide', 'Copy pairing link'); b.style.marginTop = '10px';
     b.addEventListener('click', function () {
-      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { msg.textContent = 'Copied. Open the Home Screen icon and paste it.'; }, function () { msg.textContent = 'Could not copy. Press and hold the link below, then Copy.'; var t = el('input', ''); t.value = link; t.readOnly = true; t.style.marginTop = '8px'; c.appendChild(t); });
+      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { msg.textContent = 'Copied. Open the Home Screen icon and paste it.'; }, function () { msg.textContent = 'Could not copy. Press and hold the link below, then Copy.'; var t = el('input', 'inp'); t.value = link; t.readOnly = true; t.style.marginTop = '8px'; c.appendChild(t); });
     });
     c.appendChild(msg); c.appendChild(b); box.appendChild(c);
   }
@@ -413,6 +467,6 @@
     if (pairFromText($('pairIn').value)) { $('pairIn').value = ''; gateMsg('Paired. Now type your passcode.'); pairUi(); } else gateMsg('That is not the pairing link. Copy the whole link.');
   });
   pairUi();
-  if (demoMode) { snap = DEMO; render(DEMO); show('app'); var q = /[?&]tab=(\w+)/.exec(location.search); if (q) { tab = q[1]; render(DEMO); } } else showGate();
+  if (demoMode) document.addEventListener('DOMContentLoaded', function () { snap = DEMO; var q = /[?&]tab=(\w+)/.exec(location.search); if (q) tab = q[1]; render(DEMO); show('app'); }); else showGate();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 })();

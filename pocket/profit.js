@@ -1,50 +1,62 @@
-/* RBH Pocket: PROFIT tab (module). Shows profit by invoice, by item and net. Read-only: it only draws numbers the shop PC already sent. */
+/* RBH Pocket: PROFIT tab (module). Shows profit by invoice, by item and net. Read-only: it only draws numbers the shop PC already sent.
+   LOOK v5: one period switch (Today · Week · Month), the big number is NET when a running cost is set, else profit. */
 (function () {
   'use strict';
   if (typeof window === 'undefined' || !window.RBHP) return;
-  var P = window.RBHP, el = P.el, rs = P.rs, row = P.row, card = P.card;
-  var view = 'inv';
-  function sgn(n) { return (n < 0 ? '-' : '') + rs(Math.abs(n)); }
+  var P = window.RBHP, el = P.el, rs = P.rs, card = P.card, sgn = P.sgn;
+  var view = 'inv', per = 'today';
   function pct(g, sales) { return sales > 0 ? Math.round(g / sales * 100) + '%' : '-'; }
+  function line(k, v, cls) { var r = el('div', 'sumrow'); r.appendChild(el('span', null, k)); r.appendChild(el('span', 'num' + (cls ? ' ' + cls : ''), v)); return r; }
 
   function draw(s, box) {
     var p = s.profit;
-    if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'dim', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
-    var t = card('Profit today'); t.appendChild(el('div', 'big', sgn(p.today.gross)));
-    t.appendChild(el('div', 'dim', 'Sales ' + rs(p.today.sales) + ' · cost ' + rs(p.today.cost) + ' · ' + pct(p.today.gross, p.today.sales)));
-    if (p.today.no_cost) t.appendChild(el('div', 'dim', p.today.no_cost + ' line(s) have no cost yet, so profit is a little high.'));
-    box.appendChild(t);
-    var g = el('div', 'grid'); g.style.marginBottom = '12px';
-    [['This week', p.week], ['This month', p.month]].forEach(function (x) { var k = card(x[0]); k.appendChild(el('div', 'v', sgn(x[1].gross))); k.appendChild(el('div', 'dim', 'on ' + rs(x[1].sales))); g.appendChild(k); });
-    box.appendChild(g);
-    var n = card('Net after running cost');
-    n.appendChild(row('Today', sgn(p.today.net))); n.appendChild(row('This week', sgn(p.week.net))); n.appendChild(row('This month', sgn(p.month.net)));
-    n.appendChild(el('div', 'dim', p.run_per_day ? 'Running cost counted: ' + rs(p.run_per_day) + ' a day (rent, salary, living).' : 'No running cost set yet, so net equals profit.'));
-    box.appendChild(n);
-    var bar = el('div', 'seg'); bar.style.cssText = 'display:flex;gap:8px;margin:4px 0 12px';
-    [['inv', 'By invoice'], ['item', 'By item']].forEach(function (x) {
-      var b = el('button', view === x[0] ? 'gold' : '', x[1]); b.style.flex = '1'; b.addEventListener('click', function () { view = x[0]; P.redraw(); }); bar.appendChild(b);
-    });
-    box.appendChild(bar);
+    if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'note', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
+    box.appendChild(P.segc([['today', 'Today'], ['week', 'This week'], ['month', 'This month']], per, function (v) { per = v; P.redraw(); }));
+    var x = p[per] || p.today, run = !!p.run_per_day, main = run ? x.net : x.gross;
+    var title = (per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month') + ' · ' + (run ? 'net profit' : 'profit');
+    box.appendChild(P.ledger(title, sgn(main), P.pill(pct(x.gross, x.sales) + ' margin', x.gross >= 0 ? 'ok' : 'bad'), [P.kv('Sales', rs(x.sales)), P.kv('Cost', rs(x.cost))]));
+
+    if (x.no_cost) {
+      var w = card('Heads-up · missing cost', P.pill(P.plural(x.no_cost, 'line', 'lines'), 'amber')); w.className += ' warn';
+      w.appendChild(el('div', 'note', x.no_cost + ' sold line(s) have no cost yet, so profit shows a little high. Add the cost on the shop PC.'));
+      box.appendChild(w);
+    }
+
+    var b = card('Breakdown');
+    b.appendChild(line('Sales', rs(x.sales)));
+    b.appendChild(line('Cost of goods', rs(x.cost)));
+    b.appendChild(line('Profit', sgn(x.gross), x.gross >= 0 ? 'up' : 'down'));
+    if (run) b.appendChild(line('Running cost (rent, salary, living)', '− ' + rs(x.gross - x.net)));
+    var t = line(run ? 'Net profit' : 'Net (no running cost set)', sgn(run ? x.net : x.gross)); t.className += ' total'; t.lastChild.className = 'tot'; b.appendChild(t);
+    b.appendChild(el('div', 'note', run ? 'Running cost counted: ' + rs(p.run_per_day) + ' a day.' : 'No running cost set yet, so net equals profit.'));
+    b.lastChild.style.marginTop = '6px';
+    box.appendChild(b);
+
+    box.appendChild(P.segc([['inv', 'By invoice (today)'], ['item', 'By item (month)']], view, function (v) { view = v; P.redraw(); }));
     if (view === 'inv') {
-      var c = card('Bills today');
-      if (!s.bills) c.appendChild(el('div', 'dim', 'No data yet'));
-      else if (!s.bills.length) c.appendChild(el('div', 'dim', 'No bills yet today'));
-      else s.bills.forEach(function (x) {
-        c.appendChild(P.tapRow(x.t + ' · ' + (x.who || 'Walk-in'), sgn(x.profit || 0) + ' of ' + rs(x.total), '', function () {
-          P.sheet('Bill ' + x.no, (x.lines || []).map(function (l) { return [l.n + ' × ' + l.q, rs(l.a)]; }).concat([['Sale', rs(x.total)], ['Profit', sgn(x.profit || 0), 'up']]), '');
+      var c = card('Bills today', s.bills ? P.plural(s.bills.length, 'bill', 'bills') : null);
+      if (!s.bills) c.appendChild(el('div', 'note', 'No data yet'));
+      else if (!s.bills.length) c.appendChild(el('div', 'note', 'No bills yet today'));
+      else s.bills.forEach(function (bl) {
+        c.appendChild(P.tapRow2(bl.who || 'Walk-in', bl.t + ' · ' + P.cap(bl.pay) + ' · ' + rs(bl.total), sgn(bl.profit || 0), (bl.profit || 0) >= 0 ? 'up' : 'down', function () {
+          P.sheet('Bill ' + bl.no, (bl.lines || []).map(function (l) { return [l.n + ' × ' + l.q, rs(l.a)]; }).concat([['Sale · ' + P.cap(bl.pay), rs(bl.total)], ['Profit', sgn(bl.profit || 0), 'up']]), (bl.lines && bl.lines.length >= 12) ? 'First 12 lines shown.' : '');
         }));
       });
       box.appendChild(c);
     } else {
       var d = card('Best items this month (by profit)');
-      if (!p.items.length) d.appendChild(el('div', 'dim', 'No sales yet this month'));
-      p.items.forEach(function (x) { d.appendChild(row(x.name + ' × ' + x.qty, sgn(x.profit) + ' · ' + pct(x.profit, x.revenue))); });
+      if (!p.items || !p.items.length) d.appendChild(el('div', 'note', 'No sales yet this month'));
+      (p.items || []).forEach(function (it, i) { d.appendChild(P.row2((i + 1) + '. ' + it.name, it.qty + ' sold · ' + rs(it.revenue) + ' · ' + pct(it.profit, it.revenue), sgn(it.profit), it.profit >= 0 ? 'up' : 'down')); });
       box.appendChild(d);
     }
-    var dl = card('Last 14 days sales'); var mx = Math.max.apply(null, (s.daily || []).map(function (x) { return x.total; }).concat([1]));
-    (s.daily || []).slice().reverse().forEach(function (x) { var r = row(x.d.slice(5) + ' · ' + x.n + ' bills', rs(x.total)); r.className += ' barrow'; var b = el('div', 'bar'); b.style.width = Math.round(x.total / mx * 100) + '%'; r.insertBefore(b, r.firstChild); dl.appendChild(r); });
-    box.appendChild(dl);
+
+    if (s.daily && s.daily.length) {
+      var mx = s.daily.reduce(function (a, y) { return y.total > a.total ? y : a; }, s.daily[0]);
+      var dl = card('Last ' + s.daily.length + ' days sales', el('span', 'num', 'Best ' + rs(mx.total)));
+      dl.appendChild(P.bars(s.daily));
+      var lt = s.daily[s.daily.length - 1]; dl.appendChild(P.row2('Latest day · ' + lt.d.slice(5), P.plural(lt.n, 'bill', 'bills'), rs(lt.total)));
+      box.appendChild(dl);
+    }
   }
   P.EXTRA.profit = draw;
 })();
