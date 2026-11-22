@@ -66,6 +66,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/pc/hook_secret_guard.js"
+          }
+        ]
+      }
     ]
   }
 }
