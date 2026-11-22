@@ -32,3 +32,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 
 - 16 Nov: every invoice is checked against earlier ones first (invoice no., vendor, codes, prices) before loading. Vendor list must have one row per vendor.
 - 22 Nov: every new commode/comet AND ceramic sink item must say Square or Round in its name (item create asks). Item names carry NO 'Grade B'; colour goes last; Beige is written Ivory; supplier and category always filled.
+- 22 Nov 2026: Chat reads AI_BRIDGE/SHOP_SNAPSHOT.md at the start of every chat and before answering money questions (AJ).
