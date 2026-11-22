@@ -31,4 +31,4 @@ Rule (AJ, 22 Oct): whenever AJ teaches a new word, sentence, way of doing busine
 - 16 Nov: When AJ says "done" it is done: do not keep saying UNVERIFIED or ask him to double-check. Gaps get closed later. He wants everything pushed at once and one paste: check bridge.
 
 - 16 Nov: every invoice is checked against earlier ones first (invoice no., vendor, codes, prices) before loading. Vendor list must have one row per vendor.
-- 22 Nov: every new commode/comet item must say Square or Round in its name (item create asks). Item names carry NO 'Grade B'; colour goes last; Beige is written Ivory; supplier and category always filled.
+- 22 Nov: every new commode/comet AND ceramic sink item must say Square or Round in its name (item create asks). Item names carry NO 'Grade B'; colour goes last; Beige is written Ivory; supplier and category always filled.

@@ -77,9 +77,11 @@ const sameNameKey = n => String(n || '').toLowerCase().replace(/[^\p{L}\p{M}\p{N
 async function createItem(fields, opts = {}) {
     const name = String(fields.name || '').trim();
     if (!name) { const e = new Error('Item name is required'); e.status = 400; throw e; }
-    // AJ 22 Nov: a commode must say Square or Round in its name (sinks, sets and parts are not asked).
-    if (/\b(commode|comet|wc)\b/i.test(name) && !/\b(sink|basin)\b/i.test(name) && !/\b(square|round)\b/i.test(name) && !fields.allowNoShape) {
-        const e = new Error('Is this commode Square or Round? Put Square or Round in the name.'); e.status = 400; throw e;
+    // AJ 22 Nov: a commode (and a ceramic sink/basin) must say Square or Round in its name. Taps, wastes, brackets etc. are not asked.
+    const isCommode = /\b(commode|comet|wc)\b/i.test(name);
+    const isCeramicSink = /\b(sink|basin)\b/i.test(name) && !/\b(tap|mixer|waste|bracket|strainer|stand|cabinet|trap|cock|valve|hose|pipe|matt|drain|plug)\b/i.test(name);
+    if ((isCommode || isCeramicSink) && !/\b(square|round)\b/i.test(name) && !fields.allowNoShape) {
+        const e = new Error('Is this ' + (isCommode ? 'commode' : 'sink') + ' Square or Round? Put Square or Round in the name.'); e.status = 400; throw e;
     }
     const num = (v, label) => {
         if (v === undefined || v === null || v === '') return 0;
