@@ -141,7 +141,7 @@ router.get('/items', async (req, res) => {
         // 21 Nov (AJ): ONE box finds an item by code, name, vendor code, supplier, category or selling price (e.g. "26000" or "26,000"). Several words = every word must match somewhere. Cost is never searched or shown.
         const words = raw.split(/\s+/).filter(Boolean).slice(0, 6).map(w => (/^[\d,]+(\.\d+)?$/.test(w) ? w.replace(/,/g, '') : w)).map(esc);
         const category = String(req.query.category || '').trim();
-        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 2000);   // 22 Nov (AJ): POS shows ALL items (about 400), so the cap is 2000
         const SUP = `, (SELECT COALESCE(NULLIF(p2.preferred_supplier,''), (SELECT g.supplier_name FROM grn_records g WHERE split_part(g.item_description, ' - ', 1) = p2.item_code AND COALESCE(g.supplier_name,'') <> '' ORDER BY g.grn_date DESC NULLS LAST, g.id DESC LIMIT 1)) FROM products p2 WHERE p2.id = products.id) AS supplier`;
         const role = req.session && req.session.user && req.session.user.role;
         const costCol = ['admin', 'owner'].includes(role) ? ', avg_cost' : '';   // 21 Nov (AJ): the owner sees the cost next to each item in the POS list; staff never get it
