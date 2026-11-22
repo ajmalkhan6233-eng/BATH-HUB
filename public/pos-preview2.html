@@ -138,7 +138,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 @media(max-width:1000px){.right-work{grid-template-columns:1fr}}
 .item-foot .gen-row{margin-left:6px}.item-foot .gen-row button{min-height:36px;padding:0 28px;font-size:15px;flex:none}.item-foot .status-note{margin-left:8px}
 .payment-card{grid-template-columns:minmax(0,1fr)!important}
-.rno{flex:none;width:20px;text-align:right;font-weight:700;color:#70777c;font-size:12px}.item-row .line-total{font-weight:700}</style>
+.rno{flex:none;width:20px;text-align:right;font-weight:700;color:#70777c;font-size:12px}.item-row .line-total{font-weight:700}.rcost{flex:none;width:96px;text-align:right;color:#a3a9ad;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}#lineProfits{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:5px 10px;border-top:1px solid #eceeef;color:#a3a9ad;font-size:12px;font-variant-numeric:tabular-nums}#lineProfits[hidden]{display:none}#lineProfits .lp-list span{margin-right:12px}#lineProfits .neg{color:#c98a8a}#lineProfits .lp-total{flex:none;font-weight:700;color:#8b9196}</style>
 <style id="pickerDock">
 #picker{position:static!important;left:auto!important;right:auto!important;top:auto!important;width:min(780px,100%);margin:6px auto 8px;max-height:260px;box-shadow:none;border:1px solid #cfd4d7;z-index:1}
 #picker .picker-results{max-height:150px}
@@ -208,6 +208,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
       <div class="left-work">
         <div class="item-head"><span># &nbsp;Item / code</span><span>Qty</span><span>Selling price (Rs)</span><span>Discount</span><span style="text-align:right">Line total (Rs)</span><span></span></div>
         <div class="item-rows" id="itemRows" aria-label="Bill items"></div>
+        <div id="lineProfits" hidden></div>
         <div class="item-foot">
           <button class="gold wide" id="addItemBtn">＋ Add item</button>
           <button class="secondary" id="holdBtn">Hold bill</button>

@@ -47,14 +47,14 @@
   // ---------- draw ----------
   function render() {
     $('itemRows').innerHTML = rows.map(function (r, i) {
-      return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><span class="rno">' + (i + 1) + '</span><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong title="Double-click to edit the name on this bill">' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div></div>' +
+      return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><span class="rno">' + (i + 1) + '</span><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong title="Double-click to edit the name on this bill">' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div>' + (r.cost != null ? '<span class="rcost" title="Cost price (owner only)">cost ' + money(r.cost).replace('Rs ', '') + '</span>' : '') + '</div>' +
         '<div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="' + r.qty + '" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>' +
         '<input class="price-input" data-field="price" value="' + effPrice(r).toFixed(2) + '" inputmode="decimal" aria-label="Selling price"><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
         '<input class="price-input line-total" data-field="total" value="' + lineTotal(r).toFixed(2) + '" inputmode="decimal" aria-label="Line total" title="Type the line total: the price follows"><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>';
     }).join('');
     var t = totals();
     $('itemCount').textContent = rows.length + ' items'; $('netTotal').textContent = money(t.net);
-    profitSoon(t);
+    profitSoon(t); lineProfits(t);
     $('miniList').innerHTML = rows.map(function (r) { return '<div class="mini-line"><span>' + esc(r.code) + ' · ' + esc(r.name) + ' × ' + r.qty + '</span><strong>' + money(lineTotal(r)) + '</strong></div>'; }).join('') || '<div class="muted" style="padding:12px 0">No items added</div>';
     if (document.activeElement !== $('sellPrice')) $('sellPrice').value = t.net.toFixed(2);
     if (document.activeElement !== $('discountAmt')) $('discountAmt').value = t.disc.toFixed(2);
@@ -67,6 +67,15 @@
     $('stockWarning').textContent = low.length ? 'Stock warning: ' + low.map(function (r) { return r.code; }).join(', ') + ' · only ' + low.map(function (r) { return r.stock; }).join(', ') + ' in stock' : '';
     $('stockWarning').style.color = low.length ? 'var(--warn)' : '';
     var last = bills[0]; if (last) { $('lastBillLabel').textContent = 'Last bill: ' + last.bill_number; $('docRef').textContent = 'Bill last ' + last.bill_number; }
+  }
+  // 22 Nov (AJ): owner only. One light line under the items: profit of line 1, line 2, line 3 ... and the bill total in the corner. Hidden when no cost is known (staff never get a cost).
+  function lineProfits(t) {
+    var el = $('lineProfits'); if (!el) return; var have = rows.filter(function (r) { return r.code && r.cost != null; });
+    if (!have.length) { el.hidden = true; el.textContent = ''; return; }
+    var fmt = function (n) { return Number(n).toLocaleString('en-LK', { maximumFractionDigits: 0 }); }, sum = 0;
+    var parts = rows.map(function (r, i) { if (!r.code) return ''; if (r.cost == null) return '<span>' + (i + 1) + ': —</span>'; var p = lineTotal(r) - r.qty * r.cost; sum += p; return '<span' + (p < 0 ? ' class="neg"' : '') + '>' + (i + 1) + ': ' + fmt(p) + '</span>'; }).join('');
+    var tot = t.profit != null ? t.profit : sum;
+    el.innerHTML = '<div class="lp-list"><b>Profit</b> ' + parts + '</div><div class="lp-total">Total ' + fmt(tot) + '</div>'; el.hidden = false;
   }
   var ptm, pseq = 0;   // profit comes from the owner-only /api/sale-profit; staff get nothing back, so the box stays empty
   function profitSoon(t) { clearTimeout(ptm); if (!rows.some(function (r) { return r.code; })) { $('profitValue').textContent = ''; return; } var mine = ++pseq; ptm = setTimeout(function () { api.profit(rows, t.disc).then(function (j) { if (mine !== pseq) return; $('profitValue').textContent = j ? Number(j.profit).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; }); }, 350); }
