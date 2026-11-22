@@ -61,10 +61,19 @@
   var ICONS = {"trend":"<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>","cash":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","box":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><path d=\"m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7\"/><path d=\"m7.5 4.27 9 5.15\"/>"};
   ICONS.home = "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>";
   ICONS.cart = "<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>";
+  ICONS.coins = "<circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\"/><path d=\"M7 6h1v4\"/><path d=\"m16.71 13.88.7.71-2.82 2.82\"/>";
+  ICONS.cal = "<path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/>";
+  ICONS.truck = "<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>";
+  ICONS.cheque = "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>";
+  ICONS.users = "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>";
+  ICONS.alert = "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>";
+  ICONS.down = "<path d=\"M12 5v14\"/><path d=\"m19 12-7 7-7-7\"/>";
+  ICONS.list = "<path d=\"M3 12h.01\"/><path d=\"M3 18h.01\"/><path d=\"M3 6h.01\"/><path d=\"M8 12h13\"/><path d=\"M8 18h13\"/><path d=\"M8 6h13\"/>";
+  ICONS.star = "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>";
   function icon(k) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[k] + '</svg>'; }
   function pill(text, cls) { return el('span', 'pill' + (cls ? ' ' + cls : ''), text); }
   function card(title, right) {
-    var c = el('div', 'card');
+    var c = el('div', 'card' + (title ? '' : ' nohead'));
     if (title) { var h = el('h2'); h.appendChild(el('span', null, title)); if (right) h.appendChild(typeof right === 'string' ? el('span', null, right) : right); c.appendChild(h); }
     return c;
   }
@@ -101,6 +110,10 @@
   function today0(s) { return new Date(Date.parse(s.at) + 5.5 * 3600e3).toISOString().slice(0, 10); }
   function tapRow(l, r, rcls, fn) { var d = row(l, r, rcls); d.className += ' tap'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.addEventListener('click', fn); d.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return d; }
   function tapRow2(t, s, r, rcls, fn) { var d = row2(t, s, r, rcls); d.className += ' tap'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.addEventListener('click', fn); d.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return d; }
+  function irow(k, col, t, sb, r, rcls, fn) {   // iPhone Settings-style row: coloured icon square, title, small line, value, chevron when tappable
+    var d = fn ? tapRow2(t, sb, r, rcls, fn) : row2(t, sb, r, rcls); d.className += ' ir';
+    var i = el('span', 'ico'); i.style.background = 'var(--' + col + ')'; i.innerHTML = icon(k); d.insertBefore(i, d.firstChild); return d;
+  }
   function bigCard(title, amount, sub, cls) { var c = card(title); c.appendChild(el('div', 'big md', rs(amount))); if (sub) c.appendChild(el('div', cls || 'note', sub)); return c; }
   function dayName(ymd) { var d = new Date(ymd + 'T00:00:00Z'); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ' ' + d.getUTCDate(); }
   function bars(daily) {   // 14-day chart, pure CSS; the best day is brass
@@ -119,40 +132,46 @@
   }
   function closeSheet() { $('sheet').hidden = true; }
 
-  // ---- HOME: today in one look
+  // ---- HOME: today in one look, as plain iPhone lists. Every row opens its detail.
   function rHome(s, box) {
-    var sl = s.sales, pr = s.profit, pt = pr && pr.today;
+    var sl = s.sales, pr = s.profit, pt = pr && pr.today, today = today0(s);
+    var g = card('Sales and money in');
     if (sl) {
-      var v = vs(sl.today, sl.yesterday), subs = [plural(sl.bills_today || 0, 'bill', 'bills')];
-      if (pt) { subs.push(kv('Profit', sgn(pt.gross))); if (pr.run_per_day) subs.push(kv('Net', sgn(pt.net))); }
-      box.appendChild(ledger('Today’s sales', sl.today, pill(v.text, v.cls === 'up' ? 'ok' : v.cls === 'down' ? 'bad' : ''), subs));
-      var g = el('div', 'grid');
-      [['This week', sl.week, pr && pr.week], ['This month', sl.month, pr && pr.month]].forEach(function (x) {
-        var k = card(x[0]); k.appendChild(el('div', 'v', rs(x[1]))); if (x[2]) k.appendChild(el('div', 'note', 'Profit ' + sgn(x[2].gross)));
-        g.appendChild(tapCard(k, function () { go('profit'); }));
-      });
-      box.appendChild(g);
-    } else { var c0 = card('Today'); c0.appendChild(none()); box.appendChild(c0); }
-
+      var v = vs(sl.today, sl.yesterday);
+      g.appendChild(irow('trend', 'green', 'Sales', plural(sl.bills_today || 0, 'bill', 'bills') + ' · ' + v.text, rs(sl.today), '', function () { EXTRA.per = 'today'; go('profit'); }));
+      if (pt) g.appendChild(irow('coins', 'blue', 'Profit', pr.run_per_day ? 'Net ' + sgn(pt.net) + ' after running cost' : 'Sales minus cost', sgn(pt.gross), pt.gross < 0 ? 'down' : '', function () { EXTRA.per = 'today'; go('profit'); }));
+    }
     var tot = (s.pays_today || []).reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
-    var p = card('Money in today', s.pays_today && s.pays_today.length ? el('span', 'num', rs(tot)) : null);
-    if (s.pays_today && s.pays_today.length) { var g3 = el('div', 'grid3'); s.pays_today.forEach(function (x) { g3.appendChild(tile(cap(x.method), rs(x.amount))); }); p.appendChild(g3); }
-    else p.appendChild(s.pays_today ? el('div', 'note', 'Nothing yet today') : none());
-    box.appendChild(p);
+    if (s.pays_today) g.appendChild(irow('cash', 'teal', 'Money in', s.pays_today.length ? s.pays_today.map(function (x) { return cap(x.method); }).join(' · ') : 'Nothing yet today', rs(tot), '', function () {
+      sheet('Money in today', s.pays_today.map(function (x) { return [cap(x.method), rs(x.amount)]; }).concat([['Total', rs(tot), 'up']]));
+    }));
+    if (!g.querySelector('.row')) g.appendChild(none());
+    box.appendChild(g);
 
-    var tv = s.vendors ? s.vendors.reduce(function (a, x) { return a + x.owed; }, 0) : null;
-    var d = card('To pay', s.due ? duePill(s.due) : null);
-    if (tv != null) d.appendChild(el('div', 'v', rs(tv)));
-    var ds = []; if (s.vendors) ds.push(plural(s.vendors.length, 'vendor', 'vendors')); if (s.cheques) ds.push(plural(s.cheques.length, 'cheque waiting', 'cheques waiting'));
-    if (ds.length) d.appendChild(el('div', 'note', ds.join(' · ')));
-    if (s.due) { var today = today0(s); s.due.next.slice(0, 3).forEach(function (x) { d.appendChild(row2((x.kind === 'cheque' ? 'Cheque · ' : '') + (x.who || ''), dueText(x.due, today), rs(x.amount), x.due && x.due < today ? 'down' : '')); }); }
-    if (tv == null && !s.due) d.appendChild(none());
-    box.appendChild(tapCard(d, function () { MV = 'pay'; go('money'); }));
+    if (sl) {
+      var w = card('This week and month');
+      w.appendChild(irow('cal', 'indigo', 'This week', pr && pr.week ? 'Profit ' + sgn(pr.week.gross) : '', rs(sl.week), '', function () { EXTRA.per = 'week'; go('profit'); }));
+      w.appendChild(irow('cal', 'purple', 'This month', pr && pr.month ? 'Profit ' + sgn(pr.month.gross) : '', rs(sl.month), '', function () { EXTRA.per = 'month'; go('profit'); }));
+      box.appendChild(w);
+    }
 
-    var st = card('Stock watch', 'Tap to see');
-    if (s.stock) { var ps = el('div', 'pills'); ps.appendChild(pill(s.stock.out + ' out of stock', s.stock.out ? 'bad' : 'ok')); ps.appendChild(pill(s.stock.low + ' running low', s.stock.low ? 'amber' : 'ok')); st.appendChild(ps); }
-    else st.appendChild(none());
-    box.appendChild(tapCard(st, function () { STV = s.stock && s.stock.out ? 'out' : 'low'; go('stock'); }));
+    var m = card('Money');
+    if (s.vendors) { var tv = s.vendors.reduce(function (a, x) { return a + x.owed; }, 0);
+      m.appendChild(irow('truck', 'orange', 'To pay vendors', s.due && s.due.overdue_count ? s.due.overdue_count + ' overdue · ' + rs(s.due.overdue_amount) : plural(s.vendors.length, 'vendor', 'vendors'), rs(tv), '', function () { MV = 'pay'; go('money'); })); }
+    if (s.cheques) { var tc = s.cheques.reduce(function (a, x) { return a + x.amount; }, 0), oc = s.cheques.filter(function (x) { return x.due && x.due < today; }).length;
+      m.appendChild(irow('cheque', 'pink', 'Cheques to clear', oc ? oc + ' overdue' : plural(s.cheques.length, 'cheque', 'cheques'), rs(tc), '', function () { MV = 'cheques'; go('money'); })); }
+    if (s.credit) m.appendChild(irow('users', 'blue', 'Customers owe you', plural(s.credit.list.length, 'customer', 'customers'), rs(s.credit.total), '', function () { MV = 'collect'; go('money'); }));
+    if (!m.querySelector('.row')) m.appendChild(none());
+    box.appendChild(m);
+    var due = m.querySelector('.row .s'); if (due && s.due && s.due.overdue_count) due.className = 's down';
+
+    var st = card('Stock');
+    if (s.stock) {
+      st.appendChild(irow('alert', 'red', 'Out of stock', 'Tap to order', String(s.stock.out), s.stock.out ? 'down' : '', function () { STV = 'out'; go('stock'); }));
+      st.appendChild(irow('down', 'orange', 'Running low', 'Below the minimum', String(s.stock.low), '', function () { STV = 'low'; go('stock'); }));
+      st.appendChild(irow('list', 'gray', 'All items', 'Search name or code', s.items ? s.items.length.toLocaleString('en-US') : '', '', function () { STV = 'all'; go('stock'); }));
+    } else st.appendChild(none());
+    box.appendChild(st);
 
     var t = card('Best sellers this month');
     if (s.top_month && s.top_month.length) s.top_month.slice(0, 5).forEach(function (x, i) { t.appendChild(row2((i + 1) + '. ' + x.name, x.qty != null ? x.qty + ' sold' : '', rs(x.revenue))); });
@@ -294,7 +313,9 @@
   function render(s) {
     var box = $('cards'); box.textContent = ''; drawTabs();
     if (drawnTab !== tab) { box.style.animation = 'none'; void box.offsetWidth; box.style.animation = ''; drawnTab = tab; }   // calm fade only when the tab changes
-    var f = TABS.filter(function (t) { return t[0] === tab; })[0]; (f ? f[3] : rHome)(s, box);
+    var f = TABS.filter(function (t) { return t[0] === tab; })[0];
+    box.appendChild(el('div', 'ltitle', tab === 'home' ? 'Today' : f ? f[1] : 'Today'));   // iPhone large title
+    (f ? f[3] : rHome)(s, box);
     if (EXTRA.after) EXTRA.after(tab);
     var w = $('when'); w.textContent = 'Updated ' + ago(s.at);
     var stale = (Date.now() - Date.parse(s.at)) / 60000 > STALE_MIN;

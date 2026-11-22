@@ -1,5 +1,5 @@
 /* RBH Pocket: PROFIT tab (module). Shows profit by invoice, by item and net. Read-only: it only draws numbers the shop PC already sent.
-   LOOK v5: one period switch (Today · Week · Month), the big number is NET when a running cost is set, else profit. */
+   LOOK v6 (plain iPhone): one period switch (Today · Week · Month), the big number is NET when a running cost is set, else profit. */
 (function () {
   'use strict';
   if (typeof window === 'undefined' || !window.RBHP) return;
@@ -10,6 +10,7 @@
 
   function draw(s, box) {
     var p = s.profit;
+    if (P.EXTRA.per) { per = P.EXTRA.per; P.EXTRA.per = null; }   // Home row tapped: open that period
     if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'note', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
     box.appendChild(P.segc([['today', 'Today'], ['week', 'This week'], ['month', 'This month']], per, function (v) { per = v; P.redraw(); }));
     var x = p[per] || p.today, run = !!p.run_per_day, main = run ? x.net : x.gross;
@@ -26,7 +27,7 @@
     b.appendChild(line('Sales', rs(x.sales)));
     b.appendChild(line('Cost of goods', rs(x.cost)));
     b.appendChild(line('Profit', sgn(x.gross), x.gross >= 0 ? 'up' : 'down'));
-    if (run) b.appendChild(line('Running cost (rent, salary, living)', '− ' + rs(x.gross - x.net)));
+    if (run) b.appendChild(line('Running cost', '− ' + rs(x.gross - x.net)));
     var t = line(run ? 'Net profit' : 'Net (no running cost set)', sgn(run ? x.net : x.gross)); t.className += ' total'; t.lastChild.className = 'tot'; b.appendChild(t);
     b.appendChild(el('div', 'note', run ? 'Running cost counted: ' + rs(p.run_per_day) + ' a day.' : 'No running cost set yet, so net equals profit.'));
     b.lastChild.style.marginTop = '6px';
