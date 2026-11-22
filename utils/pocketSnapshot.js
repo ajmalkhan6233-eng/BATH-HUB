@@ -14,6 +14,8 @@ const NV = `LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NU
 const num = (x) => Number(x) || 0;
 const ymd = (d) => (d instanceof Date ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : (d ? String(d).slice(0, 10) : null));
 
+const iso = (d) => d.toISOString().slice(0, 10);
+
 async function rows(pool, sql, params) { try { return (await pool.query(sql, params)).rows; } catch (e) { console.error('[pocket]', e.message); return null; } }
 
 /** Plain object, only what the phone shows. Any part that fails to read comes back as null (the phone shows "no data"). */
@@ -78,8 +80,8 @@ async function build(pool, now = new Date()) {
   const undated = dueItems.filter((x) => x.kind === 'bill' && !x.due);
 
   // profit (gross = sales - cost; "net" = gross - the running cost per day AJ set, from the day he set it)
-  const sl = new Date(now.getTime() + 5.5 * 3600e3), tdy = ymd(sl), yst = ymd(new Date(sl.getTime() - 86400e3));
-  const mon = tdy.slice(0, 8) + '01', wk = ymd(new Date(sl.getTime() - ((sl.getUTCDay() + 6) % 7) * 86400e3));
+  const sl = new Date(now.getTime() + 5.5 * 3600e3), tdy = iso(sl), yst = iso(new Date(sl.getTime() - 86400e3));   // sl is already shifted to Sri Lanka time, so read its UTC parts (ymd would shift it twice on a PC that is already on SL time)
+  const mon = tdy.slice(0, 8) + '01', wk = iso(new Date(sl.getTime() - ((sl.getUTCDay() + 6) % 7) * 86400e3));
   const set = {}; (pSet || []).forEach((r) => { set[r.key] = r.value; });
   const rc = num(set.running_cost_per_day), rcFrom = String(set.running_cost_from || tdy).slice(0, 10);
   const sumP = (from, to) => (pBills || []).filter((b) => ymd(b.d) >= from && ymd(b.d) <= to).reduce((a, b) => { a.sales += num(b.total); a.cost += num(b.cost); a.n++; a.nc += num(b.no_cost); return a; }, { sales: 0, cost: 0, n: 0, nc: 0 });
