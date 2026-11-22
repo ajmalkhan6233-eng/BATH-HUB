@@ -11,6 +11,14 @@
   var tabBtn = function (name) { var all = document.querySelectorAll('#tabs .tab'); for (var i = 0; i < all.length; i++) if (all[i].getAttribute('aria-label') === name) return all[i]; return null; };
   var svgOf = function (node) { var s = node && node.querySelector('svg'); return s ? s.outerHTML : ''; };
 
+  // ---------- light / dark: Auto follows the iPhone setting; Light or Dark is kept on this phone only
+  var SUN = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+  function theme() { var t = null; try { t = localStorage.getItem('rbh_theme'); } catch (e) {} return t === 'light' || t === 'dark' ? t : 'auto'; }
+  function setTheme(t) {
+    try { if (t === 'auto') localStorage.removeItem('rbh_theme'); else localStorage.setItem('rbh_theme', t); } catch (e) {}
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+  }
+
   // ---------- left slide menu
   var drawer = document.createElement('div'); drawer.className = 'drawer'; drawer.setAttribute('aria-hidden', 'true');
   drawer.innerHTML = '<div class="dscrim"></div><div class="dpanel" role="dialog" aria-modal="true" aria-label="Menu"><div class="dhead"><b><span>RBH</span> Pocket</b><small id="dwhen"></small></div><div class="dlist" id="dlist"></div></div>';
@@ -28,6 +36,9 @@
     var sep = document.createElement('div'); sep.className = 'dsep'; L.appendChild(sep);
     if ($('refresh')) item('Refresh now', svgOf($('refresh')), false, function () { $('refresh').click(); });
     if ($('lock')) item('Lock app', svgOf($('lock')), false, function () { $('lock').click(); });
+    var th = theme(), nx = th === 'auto' ? 'light' : th === 'light' ? 'dark' : 'auto';
+    item('Look: ' + th.charAt(0).toUpperCase() + th.slice(1) + ' (tap for ' + nx + ')', SUN, false, function () { setTheme(nx); });
+    var ad = document.createElement('div'); ad.className = 'daddr'; ad.textContent = 'Royal Bath Hub · 173/1 Kandy Road, Thihariya'; L.appendChild(ad);
     $('dwhen').textContent = ($('when') && $('when').textContent) || '';
   }
   function x() { var m = getComputedStyle(dpanel).transform; if (!m || m === 'none') return -W; try { return new DOMMatrix(m).m41; } catch (e) { return -W; } }
