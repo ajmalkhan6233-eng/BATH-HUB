@@ -127,7 +127,7 @@
     if (s.top_month && s.top_month.length) s.top_month.forEach(function (x) { t.appendChild(row(x.name, rs(x.revenue))); });
     else t.appendChild(s.top_month ? el('div', 'dim', 'No sales yet') : none());
     box.appendChild(t);
-    faceCard(box);
+    faceCard(box); pairCard(box);
   }
 
   function rSales(s, box) {
@@ -319,6 +319,24 @@
     history.replaceState(null, '', location.pathname + location.search);
   }
 
+  function pairFromText(txt) {
+    var i = String(txt || '').indexOf('#'); var h = i >= 0 ? txt.slice(i + 1) : String(txt || '').trim();
+    var q = new URLSearchParams(h), t = q.get('t'), w = q.get('w');
+    if (!(t && w && /^https:\/\//.test(w))) return false;
+    LS.set('rbh_t', t); LS.set('rbh_w', w.replace(/\/+$/, '')); return true;
+  }
+  function pairLink() { var t = LS.get('rbh_t'), w = LS.get('rbh_w'); return (t && w) ? location.origin + location.pathname + '#t=' + encodeURIComponent(t) + '&w=' + encodeURIComponent(w) : ''; }
+  function isHome() { return window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+  function pairCard(box) {
+    var link = pairLink(); if (!link || isHome()) return;
+    var c = card('Home-screen app'), msg = el('div', 'dim', 'The Home Screen icon needs the pairing link once. Copy it here, open the icon, paste it.');
+    var b = el('button', 'gold', 'Copy pairing link'); b.style.marginTop = '10px';
+    b.addEventListener('click', function () {
+      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { msg.textContent = 'Copied. Open the Home Screen icon and paste it.'; }, function () { msg.textContent = 'Could not copy. Press and hold the link below, then Copy.'; var t = el('input', ''); t.value = link; t.readOnly = true; t.style.marginTop = '8px'; c.appendChild(t); });
+    });
+    c.appendChild(msg); c.appendChild(b); box.appendChild(c);
+  }
+
   async function fetchSealed() {
     var w = LS.get('rbh_w'), t = LS.get('rbh_t');
     if (!w || !t) throw new Error('This phone is not paired yet. Open your pairing link once.');
@@ -390,7 +408,11 @@
     if (hiddenAt && Date.now() - hiddenAt > GRACE_MIN * 60000) { hiddenAt = 0; lock(); return; }
     hiddenAt = 0; if ((Date.now() - Date.parse(snap.at)) / 60000 > 10) load(false).catch(function () {});   // quiet catch-up
   });
-  if (!LS.get('rbh_w')) $('gateText').textContent = 'Open your pairing link once, then enter your passcode';
+  function pairUi() { var un = !LS.get('rbh_w'); $('pairBox').hidden = !un; if (un) $('gateText').textContent = 'Paste your pairing link once, then enter your passcode'; }
+  $('pairBtn').addEventListener('click', function () {
+    if (pairFromText($('pairIn').value)) { $('pairIn').value = ''; gateMsg('Paired. Now type your passcode.'); pairUi(); } else gateMsg('That is not the pairing link. Copy the whole link.');
+  });
+  pairUi();
   if (demoMode) { snap = DEMO; render(DEMO); show('app'); var q = /[?&]tab=(\w+)/.exec(location.search); if (q) { tab = q[1]; render(DEMO); } } else showGate();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 })();
