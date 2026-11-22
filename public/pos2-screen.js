@@ -301,6 +301,17 @@
     var a = $(p2[0]); if (!a) return;
     a.addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; e.preventDefault(); var b = $(p2[1]); if (b) { b.removeAttribute('readonly'); b.focus(); if (b.select && p2[1] !== 'scanBox') b.select(); } });
   });
+  // 22 Nov (AJ): press Enter on a known customer's name and his phone number appears in the phone box (only when that box is empty; the name is matched against the saved customers, exact first, then the only name that starts with what was typed)
+  var custList = null;
+  function loadCusts() { return custList ? Promise.resolve(custList) : fetch('/api/customers', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { custList = Array.isArray(d) ? d : (d && Array.isArray(d.rows) ? d.rows : []); return custList; }).catch(function () { return []; }); }
+  var cnEl = $('customerName'); if (cnEl) cnEl.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return; var q = cnEl.value.trim().toLowerCase(), ph = $('customerPhone'); if (!q || !ph || ph.value.trim()) return;
+    loadCusts().then(function (list) {
+      var withPh = list.filter(function (c) { return c && c.name && c.phone; }), hit = withPh.filter(function (c) { return String(c.name).trim().toLowerCase() === q; })[0];
+      if (!hit) { var pre = withPh.filter(function (c) { return String(c.name).trim().toLowerCase().indexOf(q) === 0; }); if (pre.length === 1) hit = pre[0]; }
+      if (hit && !ph.value.trim()) { cnEl.value = hit.name; ph.value = hit.phone; ph.removeAttribute('readonly'); ph.focus(); ph.select(); }
+    });
+  });
   setTimeout(function () { if (document.activeElement === document.body && $('saleDate')) { $('saleDate').focus(); $('saleDate').select(); } }, 900);
   function showHeld() {
     var h = loadHeld(); if (!h.length) { modal('Held bills', '<p>No held bills.</p>'); return; }
