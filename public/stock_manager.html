@@ -49,7 +49,7 @@ var ALL=[],SUPS=[],PEND={},$=function(i){return document.getElementById(i)};
 function fmt(n){return Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function h(t,p,k){var e=document.createElement(t);for(var a in(p||{})){if(a==='text')e.textContent=p[a];else if(a==='class')e.className=p[a];else if(a.slice(0,2)==='on')e[a]=p[a];else e.setAttribute(a,p[a])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
 function jf(u,m,b){return fetch(u,{method:m||'GET',credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}},function(){return{ok:false,j:{error:'Unexpected reply'}}})})}
-var BASE=['Fittings','Accessories','Bathroom','Tiles','Taps','Mirrors','Showers','Sanitaryware'];
+var BASE=['Fittings','Accessories','Bathroom','Tiles','Ceramic','Taps','Mirrors','Showers','Sanitaryware'];
 function cats(){var s={};BASE.forEach(function(c){s[c]=1});ALL.forEach(function(x){if(x.category)s[x.category]=1});return Object.keys(s).sort()}
 function loadSups(){jf('/api/suppliers').then(function(x){if(x.ok&&Array.isArray(x.j)){SUPS=x.j.map(function(z){return z.name}).filter(Boolean)}})}
 function sups(){var s={};SUPS.forEach(function(v){s[v]=1});ALL.forEach(function(x){if(x.supplier)s[x.supplier]=1});return Object.keys(s).sort()}
