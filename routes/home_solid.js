@@ -30,13 +30,14 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const S = { today: agg(b => day(b) === today), yesterday: agg(b => day(b) === ymd(1)), month: agg(b => day(b) >= monthStart), all: agg(() => true) };
     Object.values(S).forEach(o => { o.sales = r2(o.sales); o.profit = r2(o.profit); });
     // 18 Nov (AJ): a permanent running cost per day (his 5,000, Jazeel 3,500, food, electricity, petrol, transport, commission, all inside it), counted from a start day.
-    const set = {}; (await q("SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from','commission_pct')").catch(() => [])).forEach(r => { set[r.key] = r.value; });
+    const set = {}; (await q("SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from','commission_pct','commission_from')").catch(() => [])).forEach(r => { set[r.key] = r.value; });
     const rc = Number(set.running_cost_per_day || 0), rcFrom = String(set.running_cost_from || today).slice(0, 10), cpct = Number(set.commission_pct || 5);
     const dayGp = {}; bills.forEach(b => { const k = day(b); dayGp[k] = (dayGp[k] || 0) + Number(b.total) - Number(b.cost); });
     const daysSince = Math.max(0, Math.round((new Date(today + 'T00:00:00Z') - new Date(rcFrom + 'T00:00:00Z')) / 864e5) + 1);
     const gpSince = Object.keys(dayGp).filter(k => k >= rcFrom).reduce((a, k) => a + dayGp[k], 0);
     const weekStart = ymd((new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7);   // Monday
-    const jazGp = bills.filter(b => b.salesman === 'Jazeel' && day(b) >= weekStart).reduce((a, b) => a + Number(b.total) - Number(b.cost), 0);
+    const comFrom = String(set.commission_from || '2026-11-18').slice(0, 10);   // 22 Nov (AJ): same rule as Sales Commission: only bills from commission_from
+    const jazGp = bills.filter(b => b.salesman === 'Jazeel' && day(b) >= weekStart && day(b) >= comFrom).reduce((a, b) => a + Number(b.total) - Number(b.cost), 0);
     const result = { per_day: rc, from: rcFrom, today: today >= rcFrom ? r2(S.today.profit - rc) : null, since: r2(gpSince - rc * daysSince), days: daysSince, commission_pct: cpct, jazeel_week: r2(jazGp * cpct / 100), unassigned: bills.filter(b => !b.salesman && day(b) >= rcFrom).length };
     const billsBad = bills.filter(b => Math.abs(Number(b.items) - Number(b.discount_amount || 0) - Number(b.total)) > 1).length;
 
