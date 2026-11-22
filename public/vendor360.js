@@ -56,7 +56,7 @@
     var after = v.outstanding_balance - (v.cheques_issued != null ? v.cheques_issued : (v.cheques_pending || 0));
     $('detail').innerHTML = '<div class="vhead"><h2>' + esc(v.vendor_name) + '</h2>' +
       '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Payment voucher</button></div></div>' +
-      '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? 'bad' : 'good') + '</div>' +
+      '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? (v.overdue > 0 ? 'bad' : '') : 'good')   // 22 Nov: red only when a real due date has passed + '</div>' +
       (v.overdue > 0 ? '<div class="sm bad">Overdue: ' + rs(v.overdue) + '</div>' : '') +
       '<div id="acct" class="acct"><div class="state">Loading...</div></div>' +
       '<div class="lower"><div class="tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-t="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
@@ -68,7 +68,7 @@
   }
   function loadAcct() {
     var name = S.cur, box = $('acct'); if (!box) return;
-    var done = function () { if (S.cur === name && $('acct')) $('acct').innerHTML = tAccount(S.data.statement); };
+    var done = function () { if (S.cur === name && $('acct')) $('acct').innerHTML = tAccount(S.data.statement, (S.vendors.filter(function (x) { return x.vendor_name === name; })[0] || {}).overdue > 0); };
     if (S.data.statement) return done();
     get('/' + encodeURIComponent(name) + '/statement').then(function (r) { S.data.statement = r; done(); })
       .catch(function (e) { if (S.cur === name && $('acct')) $('acct').innerHTML = '<div class="state bad">' + esc(e.message) + ' <button type="button" id="retryA">Try again</button></div>'; var b = $('retryA'); if (b) b.onclick = loadAcct; });
@@ -89,7 +89,7 @@
   }
   var STATE = { PAID: ['Paid', 'good'], CHEQUE_ISSUED: ['Cheque issued', ''], PART_COVERED: ['Part covered', ''], UNPAID: ['Unpaid', 'bad'] };
   // AJ 12 Nov: "hara bara" ledger, Debit on the left and Credit on the right, cheques inside the credit side. 21 Nov: long lists scroll inside their own box.
-  function tAccount(st) {
+  function tAccount(st, late) {
     var rows = st.rows || [], debs = rows.filter(function (r) { return Number(r.debit) > 0; }), crs = rows.filter(function (r) { return Number(r.credit) > 0; });
     var pc = {}, order = [];
     (st.pending_cheques || []).forEach(function (c) { var k = c.cheque_no || '?'; if (!pc[k]) { pc[k] = { no: k, bank: c.bank, due: c.due_date, amt: 0 }; order.push(k); } pc[k].amt += Number(c.amount || 0); });
@@ -103,7 +103,7 @@
     var bal = dT - cT - pT;
     return '<div class="ta"><div class="tc"><h4 class="dh">DEBIT (Dr) - bills we owe</h4><div class="tls">' + L + '</div><div class="tt"><span>Total</span><span>' + rs(dT) + '</span></div></div>' +
       '<div class="tc"><h4 class="ch">CREDIT (Cr) - paid and cheques</h4><div class="tls">' + R + '</div><div class="tt"><span>Total</span><span>' + rs(cT + pT) + '</span></div></div>' +
-      '<div class="tb" style="color:' + (bal > 0 ? 'var(--red,#c0392b)' : 'var(--green,#2e8b57)') + '">' + (bal > 0 ? 'Still to pay: ' : bal < 0 ? 'Paid extra: ' : 'Balanced: ') + rs(Math.abs(bal)) + (pT ? '  (cheques waiting to clear are counted as paid here)' : '') + '</div></div>';
+      '<div class="tb" style="color:' + (bal > 0 ? (late ? 'var(--red,#c0392b)' : 'var(--ink)') : 'var(--green,#2e8b57)') + '">' + (bal > 0 ? 'Still to pay: ' : bal < 0 ? 'Paid extra: ' : 'Balanced: ') + rs(Math.abs(bal)) + (pT ? '  (cheques waiting to clear are counted as paid here)' : '') + '</div></div>';
   }
   // 21 Nov: no due date = calm grey note, never red. Red only when a real due date has passed (server sets b.overdue only then).
   var NODUE = '<span class="nodue">No due date, extra time given</span>';
