@@ -139,21 +139,24 @@
     if (sl) {
       var v = vs(sl.today, sl.yesterday);
       g.appendChild(irow('trend', 'green', 'Sales', plural(sl.bills_today || 0, 'bill', 'bills') + ' · ' + v.text, rs(sl.today), '', function () { EXTRA.per = 'today'; go('profit'); }));
-      if (pt) g.appendChild(irow('coins', 'blue', 'Profit', 'Sales minus cost', sgn(pt.gross), pt.gross < 0 ? 'down' : '', function () { EXTRA.per = 'today'; go('profit'); }));
     }
     var tot = (s.pays_today || []).reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
-    if (s.pays_today) g.appendChild(irow('cash', 'teal', 'Money in', s.pays_today.length ? s.pays_today.map(function (x) { return cap(x.method); }).join(' · ') : 'Nothing yet today', rs(tot), '', function () {
-      sheet('Money in today', s.pays_today.map(function (x) { return [cap(x.method), rs(x.amount)]; }).concat([['Total', rs(tot), 'up']]));
-    }));
+    if (s.pays_today) (s.pays_today.length ? s.pays_today : []).forEach(function (x) { g.appendChild(irow('cash', 'teal', cap(x.method), 'Money in today', rs(x.amount), '', null)); });
     if (!g.querySelector('.row')) g.appendChild(none());
     box.appendChild(g);
 
     if (sl) {
       var w = card('This week and month');
-      w.appendChild(irow('cal', 'indigo', 'This week', pr && pr.week ? 'Profit ' + sgn(pr.week.gross) : '', rs(sl.week), '', function () { EXTRA.per = 'week'; go('profit'); }));
-      w.appendChild(irow('cal', 'purple', 'This month', pr && pr.month ? 'Profit ' + sgn(pr.month.gross) : '', rs(sl.month), '', function () { EXTRA.per = 'month'; go('profit'); }));
+      w.appendChild(irow('cal', 'indigo', 'This week', '', rs(sl.week), '', function () { EXTRA.per = 'week'; go('profit'); }));
+      w.appendChild(irow('cal', 'purple', 'This month', '', rs(sl.month), '', function () { EXTRA.per = 'month'; go('profit'); }));
       box.appendChild(w);
     }
+
+    var up = card('Coming up');   // AJ 22 Nov: what is about to fall due (cheques now; his lease and other dates when he gives them)
+    (s.cheques || []).filter(function (x) { return x.due; }).sort(function (a, b) { return a.due < b.due ? -1 : 1; }).slice(0, 4).forEach(function (x) {
+      up.appendChild(irow('cheque', 'pink', 'Cheque · ' + (x.who || ''), x.due < today ? 'Date passed' : x.due.slice(8, 10) + '-' + x.due.slice(5, 7), rs(x.amount), x.due < today ? 'down' : '', function () { MV = 'cheques'; go('money'); }));
+    });
+    if (up.querySelector('.row')) box.appendChild(up);
 
     var m = card('Money');
     if (s.vendors) { var tv = s.vendors.reduce(function (a, x) { return a + x.owed; }, 0);

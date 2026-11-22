@@ -23,11 +23,13 @@
     var LITE = 'color:#8e8e93;font-weight:400';   // AJ: gross and net numbers light, not bold
     var b = card((per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month'));
     b.appendChild(line('Sales', rs(x.sales)));
+    var c = line('Cost of goods', '− ' + rs(x.cost)); c.lastChild.setAttribute('style', LITE); b.appendChild(c);
     var g = line('Gross profit', sgn(x.gross)); g.lastChild.setAttribute('style', LITE); b.appendChild(g);
     if (run) {
-      var hide = !showNet;
-      var t = line('Net profit', hide ? '•••• tap' : sgn(x.net)); t.lastChild.setAttribute('style', LITE);
-      t.style.cursor = 'pointer'; t.addEventListener('click', function () { showNet = !showNet; P.redraw(); }); b.appendChild(t);
+      var hide = !showNet, HID = '•••• tap';
+      var r = line('Running cost', hide ? HID : '− ' + rs(x.gross - x.net)); r.lastChild.setAttribute('style', LITE); b.appendChild(r);
+      var t = line('Net profit', hide ? HID : sgn(x.net)); t.lastChild.setAttribute('style', LITE);
+      [r, t].forEach(function (n) { n.style.cursor = 'pointer'; n.addEventListener('click', function () { showNet = !showNet; P.redraw(); }); }); b.appendChild(t);
     }
     box.appendChild(b);
 
