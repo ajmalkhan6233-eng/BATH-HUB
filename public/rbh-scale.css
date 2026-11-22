@@ -1,0 +1,10 @@
+/* BLOCK: rbh-scale (AJ 22 Nov). At browser zoom 100% the owner app looks like it does at 90%. Set by rbh-scale.js (class rbh-s90 on <html>).
+   Computer screens only. Remove the link and the script tag in bathco_complete.html to undo. */
+@media (min-width:900px){
+  html.rbh-s90{zoom:.9}
+  /* viewport units are NOT scaled by zoom, so give back the missing 10% */
+  html.rbh-s90 .app-wrapper,html.rbh-s90 .main-content{min-height:calc(100vh/.9)}
+  html.rbh-s90 .sidebar{height:calc(100dvh/.9)}
+  html.rbh-s90 #pos-frame,html.rbh-s90 iframe[id^="frame-"]{height:calc(100dvh/.9 - 100px) !important}
+  html.rbh-s90 .main-content .page.active{min-height:calc(100dvh/.9 - 96px)}
+}
