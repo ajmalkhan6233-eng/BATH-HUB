@@ -2501,6 +2501,12 @@
         if (seq !== loadSeq) return;
         if (pr.ok){
           const pj = await pr.json();
+          // 22 Nov (AJ: totals = real finished bills only): a row copied "from POS" whose bill is no longer on this day (moved or voided) leaves, so the day is never counted twice
+          if (Array.isArray(pj.rows)){
+            const posNow = new Set(pj.rows.map(r=>String(r.receipt||"").trim().toUpperCase()));
+            const keep = rows.filter(r=>!(/from POS/i.test(String(r.remarks||"")) && /^RBH-S\d+$/i.test(String(r.receipt||"").trim()) && !posNow.has(String(r.receipt).trim().toUpperCase())));
+            if (keep.length !== rows.length){ rows = keep.length ? keep : [blankRow()]; autoFilled = true; }
+          }
           if (pj.rows && pj.rows.length){
             if (!rows.some(rowHasData)){ rows = pj.rows.map(r=>Object.assign(blankRow(), r)); autoFilled = true; }
             else {
