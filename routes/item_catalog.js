@@ -77,6 +77,10 @@ const sameNameKey = n => String(n || '').toLowerCase().replace(/[^\p{L}\p{M}\p{N
 async function createItem(fields, opts = {}) {
     const name = String(fields.name || '').trim();
     if (!name) { const e = new Error('Item name is required'); e.status = 400; throw e; }
+    // AJ 22 Nov: a commode must say Square or Round in its name (sinks, sets and parts are not asked).
+    if (/\b(commode|comet|wc)\b/i.test(name) && !/\b(sink|basin)\b/i.test(name) && !/\b(square|round)\b/i.test(name) && !fields.allowNoShape) {
+        const e = new Error('Is this commode Square or Round? Put Square or Round in the name.'); e.status = 400; throw e;
+    }
     const num = (v, label) => {
         if (v === undefined || v === null || v === '') return 0;
         const n = Number(v);

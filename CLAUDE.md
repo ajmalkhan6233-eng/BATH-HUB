@@ -65,3 +65,4 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 ## FACTS TO KEEP (17 Nov 2026)
 - Vendor and bill amounts (Leo, Lucky, Cool Lanka, Maheshan) live in the PRIVATE bridge repo (DATA/SHOP_LATEST, PRIVATE_FROM_APP_REPO), never in this PUBLIC repo.
 - RULE: a vendor RETURN must carry its item lines (code, qty, rate), not just a total. A GRN whose Bill total and Paid differ must carry a REASON (No change given / Discount given / Goods returned / Short delivered / Other + note). Saving is never blocked; no reason = amber, reason saved = green.
+- RULE (AJ 22 Nov): every new commode/comet item must say Square or Round in its name; item create asks (route returns "Is this commode Square or Round?"). Item names carry NO "Grade B"; colour goes last; Beige is written Ivory; supplier and category are always filled.
