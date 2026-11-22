@@ -87,7 +87,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
   <nav class="appnav" aria-label="Application navigation">
     <button>Home</button><button class="active">POS</button><button>Daily Ledger</button><button>Inventory ▾</button><button>Vendors ▾</button><button>Sales ▾</button><button>Banking &amp; Money ▾</button><button>Customers &amp; Online ▾</button><button>Layla</button><button>Reports ▾</button><button>File ▾</button>
   </nav>
-  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="holdBtnTop">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
+  <div class="toolbar"><div class="toolbar-left"><span class="screen-title">POS Billing</span><span class="pill" id="lastBillLabel">Last bill: …</span></div><div class="toolbar-right" id="posTools"><button class="secondary small" id="toolsBtn">Bill tools ▾</button><button class="secondary small" id="newBillTop">New bill / Clear bill</button><button class="secondary small" id="holdBtnTop">Hold bill</button><span class="clock" id="clock">--:--:--</span><button class="secondary small" onclick="alert('Demo screen — sign-in is not connected.')">Sign Out</button></div></div>
   <main id="formPanel">
     <div class="message hidden" id="editBanner" style="background:#fff4d6;padding:6px 10px;border-radius:3px;color:#5a4300"></div>
     <!-- 02 — Document type and compact customer details -->
@@ -154,7 +154,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 
 <!-- 06 — Bill tools menu -->
 <div class="popover tool-menu hidden" id="toolMenu">
-  <button id="lastBtn">Last bill</button><button id="findBtn">Find bill</button><button id="quoteBtn">Load quotation</button><button id="quoteSaveBtn">Save quotation</button><button id="wholesaleBtn">Wholesale bill: OFF</button><button id="clearAllBtn">Clear bill</button>
+  <button id="lastBtn">Last bill</button><button id="findBtn">Find bill</button><button id="quoteBtn">Load quotation</button><button id="quoteSaveBtn">Save quotation</button><button id="wholesaleBtn">Wholesale bill: OFF</button><button id="clearAllBtn">New bill / Clear bill</button>
 </div>
 
 <!-- 07 — Utility modal panels -->
