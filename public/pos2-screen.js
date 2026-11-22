@@ -364,7 +364,9 @@
 
   // ---------- tools ----------
   function wsTag() { var b = $('wholesaleBtn'); b.textContent = 'Wholesale bill: ' + (wholesale ? 'ON' : 'OFF'); b.style.fontWeight = wholesale ? '700' : ''; }
-  function clearBill() { if (rows.length && !confirm('Clear everything on the screen?')) return; endEdit(); clearForNext(); }
+  function newBill() { if (rows.length && !confirm('Start a new bill? Everything on this bill will be cleared.')) return; endEdit(); clearForNext(); backToPOS(); }
+  function clearBill() { if (rows.length && !confirm('Clear everything on the screen?')) return; endEdit(); clearForNext(); backToPOS(); }
+  if ($('newBillTop')) $('newBillTop').onclick = newBill;
   $('toolMenu').addEventListener('click', function (e) { var id = e.target.id; if (!id) return; $('toolMenu').classList.add('hidden');
     if (id === 'findBtn') findBill(); if (id === 'lastBtn') lastBill(); if (id === 'quoteBtn') loadQuotes(); if (id === 'quoteSaveBtn') { if (!rows.length) showError('Add at least one item first.'); else saveQuotation(); }
     if (id === 'wholesaleBtn') { wholesale = !wholesale; wsTag(); } if (id === 'clearAllBtn') clearBill(); });
