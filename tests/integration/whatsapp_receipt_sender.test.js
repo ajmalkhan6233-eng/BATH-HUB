@@ -111,7 +111,7 @@ describe('sending', () => {
     expect(r.rows.length).toBeGreaterThan(0); expect(r.rows[0].phone_last3).toBe('219');
   });
   test('caption text is exactly the approved one: ONLY the Google Maps link (the picture already shows address, phone, email, thank-you)', () => expect(S.CAPTION).toBe(
-    'Find us on Google Maps: https://maps.app.goo.gl/2t5f6dTp35tpPnQL8'));
+    'Find us on Google Maps: https://maps.app.goo.gl/EDmktX9CP3ZBYfrq8'));
 });
 
 // Live test: ONLY to the owner's own number and ONLY when WHATSAPP_LIVE=true and keys exist. Otherwise skipped.

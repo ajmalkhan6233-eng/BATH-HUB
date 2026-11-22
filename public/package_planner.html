@@ -271,7 +271,7 @@ td.name small{color:var(--mut);display:block}
     if (o.save && saveAmt > 0 && o.price) { paper.appendChild(h('div', { class: 'sm' }, [h('span', { text: 'Shop price for these items' }), h('span', { text: rs(shop) })])); paper.appendChild(h('div', { class: 'sm' }, [h('span', { text: 'You save' }), h('span', { text: rs(saveAmt) })])); }
     paper.appendChild(h('div', { class: 'gt' }, [h('span', { text: 'PACKAGE PRICE' }), h('span', { text: rs(total) })]));
     if (o.priv) paper.appendChild(h('div', { class: 'pv', text: 'PRIVATE: cost ' + rs(cost) + '   profit ' + rs(total - cost) + ' (' + (total > 0 ? Math.round((total - cost) / total * 1000) / 10 : 0) + '%). Do not give this copy to a customer.' }));
-    paper.appendChild(h('div', { class: 'ft', text: 'Thank you for choosing Royal Bath Hub. Find us on Google Maps: https://maps.app.goo.gl/2t5f6dTp35tpPnQL8' }));
+    paper.appendChild(h('div', { class: 'ft', text: 'Thank you for choosing Royal Bath Hub. Find us on Google Maps: https://maps.app.goo.gl/EDmktX9CP3ZBYfrq8' }));
     var oldTitle = document.title;
     paper.appendChild(h('div', { class: 'ab' }, [
       h('button', { type: 'button', class: 'gold', text: 'Print / Save as PDF', on: { click: function () { document.title = (nm || 'Package') + ' ' + dt; window.print(); } } }),

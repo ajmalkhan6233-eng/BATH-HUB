@@ -6,7 +6,7 @@ const SHOP = {
     address: 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka',
     phone: '+94 74 035 5536',
     email: 'royalbathhub1@gmail.com',
-    mapsUrl: 'https://maps.app.goo.gl/2t5f6dTp35tpPnQL8',
+    mapsUrl: 'https://maps.app.goo.gl/EDmktX9CP3ZBYfrq8',
 };
 
 // Text lines for the WhatsApp message (WhatsApp makes the link tappable by itself).
