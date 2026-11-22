@@ -14,27 +14,21 @@
     if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'note', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
     box.appendChild(P.segc([['today', 'Today'], ['week', 'This week'], ['month', 'This month']], per, function (v) { per = v; P.redraw(); }));
     var x = p[per] || p.today, run = !!p.run_per_day, main = x.gross;
-    var title = (per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month') + ' · profit';
-    box.appendChild(P.ledger(title, sgn(main), P.pill(pct(x.gross, x.sales) + ' margin', x.gross >= 0 ? 'ok' : 'bad'), [P.kv('Sales', rs(x.sales)), P.kv('Cost', rs(x.cost))]));
-
     if (x.no_cost) {
       var w = card('Heads-up · missing cost', P.pill(P.plural(x.no_cost, 'line', 'lines'), 'amber')); w.className += ' warn';
       w.appendChild(el('div', 'note', x.no_cost + ' sold line(s) have no cost yet, so profit shows a little high. Add the cost on the shop PC.'));
       box.appendChild(w);
     }
 
-    var b = card('Breakdown');
+    var LITE = 'color:#8e8e93;font-weight:400';   // AJ: gross and net numbers light, not bold
+    var b = card((per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month'));
     b.appendChild(line('Sales', rs(x.sales)));
-    b.appendChild(line('Cost of goods', rs(x.cost)));
-    b.appendChild(line('Profit', sgn(x.gross), x.gross >= 0 ? 'up' : 'down'));
+    var g = line('Gross profit', sgn(x.gross)); g.lastChild.setAttribute('style', LITE); b.appendChild(g);
     if (run) {
-      var hide = !showNet, HID = '••••';
-      b.appendChild(line('Running cost', hide ? HID : '− ' + rs(x.gross - x.net)));
-      var t = line('Net profit', hide ? HID + ' tap to show' : sgn(x.net)); t.className += ' total'; t.lastChild.className = 'tot';
+      var hide = !showNet;
+      var t = line('Net profit', hide ? '•••• tap' : sgn(x.net)); t.lastChild.setAttribute('style', LITE);
       t.style.cursor = 'pointer'; t.addEventListener('click', function () { showNet = !showNet; P.redraw(); }); b.appendChild(t);
-      b.appendChild(el('div', 'note', hide ? 'Net profit is hidden. Tap it to show.' : 'Running cost counted: ' + rs(p.run_per_day) + ' a day. Tap to hide.'));
-    } else b.appendChild(el('div', 'note', 'No running cost set yet.'));
-    b.lastChild.style.marginTop = '6px';
+    }
     box.appendChild(b);
 
     box.appendChild(P.segc([['inv', 'By invoice (today)'], ['item', 'By item (month)']], view, function (v) { view = v; P.redraw(); }));
