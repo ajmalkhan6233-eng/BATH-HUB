@@ -119,4 +119,94 @@ router.get('/sales-commission', ownerOnly, async (req, res) => {
   } catch (e) { console.error('[sales_commission]', e.message); res.status(500).json({ error: 'Could not load commission' }); }
 });
 
+// ---- Salary + commission statement (AJ 22 Nov): one page, by day / by invoice, and a PDF like a payslip. No bill amounts are shown, only invoice numbers and the commission each earned.
+//   GET /api/staff-statement/:staffId?from=&to=        JSON
+//   GET /api/staff-statement/:staffId/pdf?from=&to=    PDF (A4)
+//   "He took" and "Paid" both deduct; they are saved as kind 'paid' (took = note starts with "Took:").
+async function buildStatement(id, from, to) {
+  const st = (await q('SELECT id, name FROM staff WHERE id = $1', [id]))[0]; if (!st) return null;
+  await accrueSalary(id);
+  const pretty = st.name.charAt(0).toUpperCase() + st.name.slice(1);
+  const rows = await q(`SELECT id, to_char(entry_date,'YYYY-MM-DD') d, kind, amount, note FROM staff_ledger WHERE staff_id = $1 AND voided = FALSE ORDER BY entry_date, id`, [id]);
+  const pct = Number(await setting('commission_pct') || 5), cfrom = String(await setting('commission_from') || '2026-11-18').slice(0, 10);
+  const bills = await q(`SELECT b.bill_number bn, to_char(b.created_at::date,'YYYY-MM-DD') d,
+      (b.total - COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)) gp
+    FROM pos_bills b WHERE LOWER(COALESCE(b.salesman,'')) = LOWER($1) AND b.created_at::date >= $2::date AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
+    ORDER BY b.created_at, b.id`, [st.name, cfrom]);
+  const days = {}; const day = d => (days[d] = days[d] || { date: d, salary: 0, invoices: [], commission: 0, deductions: [], adjust: 0 });
+  rows.forEach(r => {
+    const o = day(r.d), a = Number(r.amount);
+    if (r.kind === 'salary') o.salary = r2(o.salary + a);
+    else if (r.kind === 'paid') o.deductions.push({ id: r.id, what: /^took:/i.test(r.note || '') ? 'Taken by ' + pretty : 'Paid to ' + pretty, amount: a, note: String(r.note || '').replace(/^took:\s*/i, '') });
+    else if (r.kind === 'adjust_up') o.adjust = r2(o.adjust + a); else if (r.kind === 'adjust_down') o.adjust = r2(o.adjust - a);
+  });
+  const gpDay = {}; bills.forEach(b => { const o = day(b.d); o.invoices.push({ bill: b.bn, commission: r2(Number(b.gp) * pct / 100) }); gpDay[b.d] = (gpDay[b.d] || 0) + Number(b.gp); });
+  Object.keys(gpDay).forEach(d => { const o = days[d]; o.commission = r2(gpDay[d] * pct / 100); const sum = r2(o.invoices.reduce((t, x) => t + x.commission, 0)); if (o.invoices.length) o.invoices[o.invoices.length - 1].commission = r2(o.invoices[o.invoices.length - 1].commission + (o.commission - sum)); });
+  const list = Object.values(days).sort((a, b) => (a.date < b.date ? -1 : 1));
+  let owed = 0, opening = 0; const out = [], tot = { salary: 0, commission: 0, deducted: 0, adjust: 0 };
+  list.forEach(o => {
+    if (from && o.date < from) { owed = r2(owed + o.salary + o.commission + o.adjust - o.deductions.reduce((t, x) => t + x.amount, 0)); opening = owed; return; }
+    if (to && o.date > to) return;
+    const ded = r2(o.deductions.reduce((t, x) => t + x.amount, 0));
+    owed = r2(owed + o.salary + o.commission + o.adjust - ded);
+    tot.salary = r2(tot.salary + o.salary); tot.commission = r2(tot.commission + o.commission); tot.deducted = r2(tot.deducted + ded); tot.adjust = r2(tot.adjust + o.adjust);
+    out.push(Object.assign({}, o, { closing: owed }));
+  });
+  const name = st.name.charAt(0).toUpperCase() + st.name.slice(1);
+  return { staff: { id: st.id, name }, from: from || (list[0] && list[0].date) || null, to: to || null, pct, commission_from: cfrom, opening, days: out, totals: Object.assign(tot, { net_payable: owed }), as_at: new Date().toISOString() };
+}
+router.get('/staff-statement/:staffId', ownerOnly, async (req, res) => {
+  try {
+    const id = Number(req.params.staffId); if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad staff id' });
+    const d = await buildStatement(id, isDay(req.query.from) ? req.query.from : null, isDay(req.query.to) ? req.query.to : null);
+    if (!d) return res.status(404).json({ error: 'staff not found' }); res.json(d);
+  } catch (e) { console.error('[staff_statement]', e.message); res.status(500).json({ error: 'Could not load the statement' }); }
+});
+const rsf = n => Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const he = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dmy = d => String(d).split('-').reverse().join('-');
+function statementHtml(d) {
+  let shop = { name: 'ROYAL BATH HUB', address: 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka', phone: '+94 74 035 5536', email: 'royalbathhub1@gmail.com' };
+  try { Object.assign(shop, require('../utils/shopInfo').SHOP || {}); } catch (e) {}
+  const body = d.days.map(o => {
+    const lines = [];
+    if (o.salary) lines.push(['Daily salary', o.salary, null]);
+    o.invoices.forEach(i => lines.push(['Sales commission, invoice ' + i.bill, i.commission, null]));
+    if (o.adjust) lines.push(['Adjustment', o.adjust > 0 ? o.adjust : null, o.adjust < 0 ? -o.adjust : null]);
+    o.deductions.forEach(x => lines.push([x.what + (x.note ? ' (' + x.note + ')' : ''), null, x.amount]));
+    if (!lines.length) lines.push(['No entries', null, null]);
+    return lines.map((l, i) => '<tr class="' + (i === 0 ? 'first' : '') + '"><td class="d">' + (i === 0 ? he(dmy(o.date)) : '') + '</td><td>' + he(l[0]) + '</td><td class="n">' + (l[1] != null ? rsf(l[1]) : '') + '</td><td class="n">' + (l[2] != null ? rsf(l[2]) : '') + '</td><td class="n b">' + (i === lines.length - 1 ? rsf(o.closing) : '') + '</td></tr>').join('');
+  }).join('');
+  const T = d.totals;
+  return '<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:14mm 14mm 16mm}*{box-sizing:border-box}body{font:11px/1.45 "Segoe UI",Arial,sans-serif;color:#111;margin:0}' +
+    '.top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #8f670a;padding-bottom:8px}.top h1{font-size:20px;letter-spacing:2px;margin:0;color:#8f670a}.top div{font-size:10px;color:#444;text-align:right}' +
+    'h2{font-size:15px;margin:14px 0 2px;letter-spacing:.5px}.meta{display:flex;gap:30px;margin:6px 0 10px;font-size:11px}.meta b{display:block;font-size:12px}' +
+    '.sum{display:flex;gap:0;border:1px solid #bbb;margin:8px 0 12px}.sum div{flex:1;padding:6px 8px;border-right:1px solid #ddd}.sum div:last-child{border:0;background:#f6efdc}.sum span{display:block;font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.6px}.sum b{font-size:13px}' +
+    'table{width:100%;border-collapse:collapse}th{background:#1a1a1a;color:#fff;text-align:left;padding:5px 6px;font-size:9.5px;text-transform:uppercase;letter-spacing:.6px}th.n,td.n{text-align:right;white-space:nowrap}td{padding:3px 6px;border-bottom:1px solid #eee;vertical-align:top}tr.first td{border-top:1px solid #bbb}td.d{width:72px;font-weight:600;white-space:nowrap}td.b{font-weight:700}tr{page-break-inside:avoid}' +
+    '.foot{margin-top:22px;display:flex;justify-content:space-between;font-size:10px;color:#555}.sig{margin-top:34px;display:flex;justify-content:space-between}.sig div{width:44%;border-top:1px solid #333;padding-top:3px;font-size:10px}.note{font-size:9px;color:#777;margin-top:10px}</style></head><body>' +
+    '<div class="top"><h1>' + he(shop.name) + '</h1><div>' + he(shop.address) + '<br>Tel ' + he(shop.phone) + ' &middot; ' + he(shop.email) + '</div></div>' +
+    '<h2>SALARY &amp; COMMISSION STATEMENT</h2><div class="meta"><div><span>Employee</span><b>' + he(d.staff.name) + '</b></div><div><span>Period</span><b>' + he(dmy(d.from || '')) + ' to ' + he(dmy(d.to || new Date(Date.now() + 19800000).toISOString().slice(0, 10))) + '</b></div><div><span>Commission</span><b>' + d.pct + '% of profit, per invoice</b></div><div><span>Issued</span><b>' + he(dmy(new Date(Date.now() + 19800000).toISOString().slice(0, 10))) + '</b></div></div>' +
+    '<div class="sum"><div><span>Brought forward</span><b>Rs ' + rsf(d.opening) + '</b></div><div><span>Salary</span><b>Rs ' + rsf(T.salary) + '</b></div><div><span>Commission</span><b>Rs ' + rsf(T.commission) + '</b></div><div><span>Paid / taken</span><b>Rs ' + rsf(T.deducted) + '</b></div><div><span>Net payable</span><b>Rs ' + rsf(T.net_payable) + '</b></div></div>' +
+    '<table><thead><tr><th>Date</th><th>Description</th><th class="n">Earned (Rs)</th><th class="n">Paid / taken (Rs)</th><th class="n">Balance (Rs)</th></tr></thead><tbody>' + body + '</tbody></table>' +
+    '<div class="sig"><div>Prepared by (Royal Bath Hub)</div><div>Received by (' + he(d.staff.name) + ')</div></div><div class="note">Computer-generated statement. Commission is shown per invoice number; bill amounts are not shown. Balance = salary + commission minus everything paid or taken, up to that day.</div></body></html>';
+}
+let pdfChain = Promise.resolve();
+router.get('/staff-statement/:staffId/pdf', ownerOnly, async (req, res) => {
+  try {
+    const id = Number(req.params.staffId); if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad staff id' });
+    const d = await buildStatement(id, isDay(req.query.from) ? req.query.from : null, isDay(req.query.to) ? req.query.to : null);
+    if (!d) return res.status(404).json({ error: 'staff not found' });
+    const html = statementHtml(d);
+    const job = pdfChain.then(async () => {
+      const puppeteer = require('puppeteer'); const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      try { const page = await browser.newPage(); await page.setContent(html, { waitUntil: 'load', timeout: 30000 }); return Buffer.from(await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true })); }
+      finally { await browser.close().catch(() => {}); }
+    });
+    pdfChain = job.catch(() => {});
+    const buf = await job;
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="salary_statement_' + d.staff.name + '_' + (d.to || new Date().toISOString().slice(0, 10)) + '.pdf"' }); res.send(buf);
+  } catch (e) { console.error('[staff_statement_pdf]', e.message); res.status(500).json({ error: 'Could not make the PDF' }); }
+});
+
+router.statementHtml = statementHtml;
 module.exports = router;

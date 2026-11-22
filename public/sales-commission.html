@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sales commission | Royal Bath Hub</title>
+<title>Salary &amp; commission | Royal Bath Hub</title>
 <link rel="stylesheet" href="/rbh-font.css"><script src="/bathhub-theme.js"></script>
 <style>
 :root{--bg:#f8f9fa;--card:#fff;--line:#dbe0e8;--ink:#0f172a;--muted:#596577;--gold:#8f670a;--red:#b3261e;--green:#1b7a46}
@@ -12,67 +12,65 @@ h1{font-size:19px;margin:0 0 4px}.sm{color:var(--muted);font-size:13px}.k{displa
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:10px 0}.bar label{display:block;font-size:12px;color:var(--muted)}.bar input,.bar button{font:inherit;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:4px 10px}
 table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:8px 0}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--muted)}.n{text-align:right;white-space:nowrap}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0}button.on{background:var(--gold);color:#fff;border-color:var(--gold)}tr.pick{cursor:pointer}tr.pick:hover,tr.sel{background:rgba(143,103,10,.12)}summary{cursor:pointer;min-height:32px}a{color:var(--gold)}.err{color:var(--red)}
+
+.pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;background:rgba(143,103,10,.15)}.gold{background:var(--gold);color:#fff;border-color:var(--gold)}td.d{white-space:nowrap}tr.dayhead td{background:rgba(143,103,10,.08);font-weight:600}
 </style></head><body>
-<h1>Sales commission</h1>
-<div class="sm" id="sub"></div>
+<h1>Salary &amp; commission</h1>
+<div class="sm" id="sub">Loading...</div>
 <div id="out"></div>
 <script>
 (function(){'use strict';
 var $=function(i){return document.getElementById(i)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
-var rs=function(n){return 'Rs '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2})};
+var rs=function(n){return 'Rs '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})};
 var dmy=function(d){return String(d).split('-').reverse().join('-')};
 var ymd=function(d){return d.toISOString().slice(0,10)};
 var today=function(){return ymd(new Date(Date.now()+19800000))};
 var back=function(n){return ymd(new Date(Date.now()+19800000-n*864e5))};
-var F=today(),T=today(),MODE='day',SEL=null,LAST=null;
-function load(from,to){F=from;T=to;$('sub').textContent='Loading...';
- fetch('/api/sales-commission?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to),{credentials:'same-origin'}).then(function(r){if(r.status===401||r.status===403)throw new Error('Please sign in as owner');if(!r.ok)throw new Error('Could not load');return r.json()}).then(draw).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
-// Salary + commission + paid + remaining, per day (uses the staff ledger: /api/staff-ledger). Money is only recorded when AJ taps Record payment and confirms.
-function loadStmt(d){
- var s=(d.ledger_staff||[])[0],box=$('stmt');if(!s||!box)return;
- var nm=s.name.charAt(0).toUpperCase()+s.name.slice(1);
- fetch('/api/staff-ledger/'+s.id+'?from='+encodeURIComponent(d.from)+'&to='+encodeURIComponent(d.to),{credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error('Could not load salary');return r.json()}).then(function(L){
-  var days={},order=[];
-  L.lines.forEach(function(x){var o=days[x.date];if(!o){o=days[x.date]={salary:0,com:0,paid:0,other:0,bal:0};order.push(x.date)}
-   if(x.kind==='salary')o.salary+=x.earned||0;else if(x.kind==='commission')o.com+=x.earned||0;else if(x.kind==='paid')o.paid+=x.paid||0;else o.other+=(x.earned||0)-(x.paid||0);o.bal=x.balance});
-  var pays=L.lines.filter(function(x){return x.kind==='paid'&&x.id}).reverse();
-  var h='<div class="card"><b>'+esc(nm)+': salary + commission, paid and remaining</b><div class="k"><div><span>Remaining to pay '+esc(nm)+' (all days)</span><b>'+rs(L.totals.owed_to_him)+'</b></div></div>'
-  +'<table><thead><tr><th>Day</th><th class="n">Salary</th><th class="n">Commission</th><th class="n">Paid</th><th class="n">Remaining</th></tr></thead><tbody>'
-  +(order.length?order.slice().reverse().map(function(k){var o=days[k];return '<tr><td>'+esc(dmy(k))+(o.other?' <span class="sm">(adjust '+rs(o.other)+')</span>':'')+'</td><td class="n">'+(o.salary?rs(o.salary):'')+'</td><td class="n">'+(o.com?rs(o.com):'')+'</td><td class="n">'+(o.paid?rs(o.paid):'')+'</td><td class="n"><b>'+rs(o.bal)+'</b></td></tr>'}).join(''):'<tr><td colspan="5" class="sm">Nothing in this range.</td></tr>')
-  +'</tbody></table><div class="sm">Remaining = everything earned (salary + commission) minus everything paid, up to that day.</div>'
-  +'<div class="bar"><div><label>Paid on</label><input type="date" id="pd" value="'+esc(today())+'"></div><div><label>Amount (Rs)</label><input type="number" id="pa" min="1" step="any" style="width:130px"></div><div><label>Note</label><input type="text" id="pn" placeholder="optional"></div><button type="button" id="pg" class="on">Record payment</button></div><div id="pm" class="sm"></div>'
-  +(pays.length?'<details><summary class="sm">Payments recorded in this range ('+pays.length+')</summary><table><tbody>'+pays.map(function(p){return '<tr><td>'+esc(dmy(p.date))+'</td><td class="n">'+rs(p.paid)+'</td><td class="sm">'+esc(p.note||'')+'</td><td><a href="#" data-void="'+p.id+'">Undo</a></td></tr>'}).join('')+'</tbody></table></details>':'')+'</div>';
-  box.innerHTML=h;
-  $('pg').onclick=function(){var a=Number($('pa').value),day=$('pd').value;if(!(a>0)){$('pm').textContent='Type the amount paid.';return}
-   if(!confirm('Record Rs '+a.toLocaleString('en-LK')+' paid to '+nm+' on '+dmy(day)+'?'))return;
-   fetch('/api/staff-ledger/'+s.id,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:day,kind:'paid',amount:a,note:$('pn').value})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Could not save');loadStmt(d)})}).catch(function(e){$('pm').innerHTML='<span class="err">'+esc(e.message)+'</span>'})};
-  Array.prototype.forEach.call(box.querySelectorAll('a[data-void]'),function(a){a.onclick=function(e){e.preventDefault();var why=prompt('Why undo this payment? (nothing is deleted, it is marked cancelled)');if(!why||why.trim().length<3)return;
-   fetch('/api/staff-ledger/entry/'+a.dataset.void+'/void',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:why})}).then(function(){loadStmt(d)})}});
- }).catch(function(e){box.innerHTML='<div class="sm err">'+esc(e.message)+'</div>'});
-}
-function draw(d){
- LAST=d;$('sub').textContent='';
- var pay=d.by_salesman.filter(function(s){return s.commission>0});
- var days={};d.bills.forEach(function(b){var k=b.time.slice(0,10);var o=days[k]=days[k]||{bills:[],sales:0,profit:0,com:0};o.bills.push(b);o.sales+=b.total;o.profit+=b.profit;o.com+=b.commission});
- var keys=Object.keys(days).sort().reverse();
- var h='<div class="bar"><button type="button" data-n="0">1 day</button><button type="button" data-n="1">2 days</button><button type="button" data-n="6">1 week</button><div><label>From</label><input type="date" id="f" value="'+esc(d.from)+'"></div><div><label>To</label><input type="date" id="t" value="'+esc(d.to)+'"></div><button id="go" type="button">Show</button></div>';
+var STAFF=null,D=null,MODE='day',F='',T='';
+function api(u,o){o=o||{};o.credentials='same-origin';return fetch(u,o).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Could not load');return j})})}
+function init(){
+ api('/api/sales-commission').then(function(d){STAFF=(d.ledger_staff||[])[0];if(!STAFF){$('sub').textContent='No salaried staff is set up yet.';return}load()}).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message.indexOf('Owner')>=0?'Please sign in as owner':e.message)+'</span>'})}
+function load(){api('/api/staff-statement/'+STAFF.id).then(function(d){D=d;if(!F)F=back(6);if(!T)T=today();draw()}).catch(function(e){$('sub').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
+// rows of the chosen range with a running opening balance worked out from the full history
+function view(){var open=D.opening||0,days=[];D.days.forEach(function(o){
+  var ded=o.deductions.reduce(function(t,x){return t+x.amount},0),net=o.salary+o.commission+o.adjust-ded;
+  if(o.date<F){open=o.closing;return}if(o.date>T)return;days.push(o)});
+ return {open:open,days:days}}
+function draw(){
+ var V=view(),nm=D.staff.name,tot={s:0,c:0,d:0};V.days.forEach(function(o){tot.s+=o.salary;tot.c+=o.commission;tot.d+=o.deductions.reduce(function(t,x){return t+x.amount},0)});
+ $('sub').textContent='';
+ var h='<div class="k"><div><span>Owed to '+esc(nm)+' now (salary + commission, less paid / taken)</span><b>'+rs(D.totals.net_payable)+'</b></div></div>';
+ h+='<div class="bar"><button type="button" data-n="0">1 day</button><button type="button" data-n="1">2 days</button><button type="button" data-n="6">1 week</button><button type="button" data-n="all">All</button><div><label>From</label><input type="date" id="f" value="'+esc(F)+'"></div><div><label>To</label><input type="date" id="t" value="'+esc(T)+'"></div><button id="go" type="button">Show</button><button id="pdf" type="button" class="gold">Download PDF</button></div>';
  h+='<div class="bar"><button type="button" data-m="day"'+(MODE==='day'?' class="on"':'')+'>By day</button><button type="button" data-m="inv"'+(MODE==='inv'?' class="on"':'')+'>By invoice</button></div>';
- h+='<div class="k">'+(pay.map(function(s){return '<div><span>'+esc(s.salesman)+' commission to pay</span><b>'+rs(s.commission)+'</b></div>'}).join('')||'<div><span>Commission to pay</span><b>'+rs(0)+'</b></div>')+'</div>';
- if(MODE==='inv'){var sb=d.bills.filter(function(b){return b.id===SEL})[0];
-  h+=sb?'<div class="card"><b>'+esc(sb.bill)+'</b> <span class="sm">'+esc(dmy(sb.time.slice(0,10)))+' '+esc(sb.time.slice(11))+' &middot; '+esc(sb.salesman||'not picked')+'</span><div class="k"><div><span>Sale</span><b>'+rs(sb.total)+'</b></div><div><span>Profit</span><b>'+rs(sb.profit)+'</b></div><div><span>Commission</span><b>'+rs(sb.commission)+'</b></div></div><a href="/pos-preview2.html#bill='+sb.id+'" data-bill="'+sb.id+'">Open full bill (edit)</a> &nbsp; <button type="button" id="clr">Clear</button></div>':'';
-  h+=d.bills.length?'<table><thead><tr><th>Date</th><th>Invoice</th><th>Salesman</th><th class="n">Commission</th></tr></thead><tbody>'+d.bills.map(function(b){return '<tr class="pick'+(b.id===SEL?' sel':'')+'" data-id="'+b.id+'" tabindex="0"><td>'+esc(dmy(b.time.slice(0,10)))+' '+esc(b.time.slice(11))+'</td><td>'+esc(b.bill)+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table><div class="sm">Tap an invoice to see its sale, profit and commission.</div>':'<div class="sm">No bills in this range.</div>';
- } else
- h+=keys.map(function(k){var o=days[k];return '<details class="card"><summary><b>'+esc(dmy(k))+'</b> <span class="sm">details</span></summary><div class="sm" style="margin:6px 0">'+o.bills.length+' bills &middot; sales '+rs(o.sales)+' &middot; profit '+rs(o.profit)+' &middot; commission '+rs(o.com)+'</div><table><thead><tr><th>Bill</th><th>Time</th><th>Salesman</th><th class="n">Total</th><th class="n">Profit</th><th class="n">Commission</th></tr></thead><tbody>'+o.bills.map(function(b){return '<tr><td><a href="/pos-preview2.html#bill='+b.id+'" data-bill="'+b.id+'" title="Open the full bill (Edit is there)">'+esc(b.bill)+'</a></td><td>'+esc(b.time.slice(11))+'</td><td>'+esc(b.salesman||'not picked')+'</td><td class="n">'+rs(b.total)+'</td><td class="n">'+rs(b.profit)+'</td><td class="n">'+(b.commission?rs(b.commission):'')+'</td></tr>'}).join('')+'</tbody></table></details>'}).join('')||'<div class="sm">No bills in this range.</div>';
- h+='<div id="stmt"></div>';
- $('out').innerHTML=h;loadStmt(d);
- Array.prototype.forEach.call($('out').querySelectorAll('button[data-m]'),function(b){b.onclick=function(){MODE=b.dataset.m;SEL=null;draw(LAST)}});
- Array.prototype.forEach.call($('out').querySelectorAll('tr.pick'),function(r){var go=function(){SEL=+r.dataset.id;draw(LAST)};r.onclick=go;r.onkeydown=function(e){if(e.key==='Enter')go()}});
- Array.prototype.forEach.call($('out').querySelectorAll('a[data-bill]'),function(a){a.onclick=function(e){if(window.parent!==window){e.preventDefault();window.parent.postMessage({rbhOpenBill:+a.dataset.bill},location.origin)}}});
- if($('clr'))$('clr').onclick=function(){SEL=null;draw(LAST)};
- $('go').onclick=function(){load($('f').value,$('t').value)};
- Array.prototype.forEach.call($('out').querySelectorAll('button[data-n]'),function(b){b.onclick=function(){load(back(+b.dataset.n),today())}});
+ h+='<div class="k"><div><span>Brought forward</span><b>'+rs(V.open)+'</b></div><div><span>Salary</span><b>'+rs(tot.s)+'</b></div><div><span>Commission</span><b>'+rs(tot.c)+'</b></div><div><span>Paid / taken</span><b>'+rs(tot.d)+'</b></div></div>';
+ if(MODE==='day'){
+  h+='<table><thead><tr><th>Day</th><th class="n">Salary</th><th class="n">Commission</th><th class="n">Paid / taken</th><th class="n">Balance</th></tr></thead><tbody>'+(V.days.length?V.days.slice().reverse().map(function(o){var ded=o.deductions.reduce(function(t,x){return t+x.amount},0);
+   return '<tr><td class="d">'+esc(dmy(o.date))+(o.invoices.length?' <span class="pill">'+o.invoices.length+' invoice'+(o.invoices.length>1?'s':'')+'</span>':'')+'</td><td class="n">'+(o.salary?rs(o.salary):'')+'</td><td class="n">'+(o.commission?rs(o.commission):'')+'</td><td class="n">'+(ded?rs(ded):'')+'</td><td class="n"><b>'+rs(o.closing)+'</b></td></tr>'}).join(''):'<tr><td colspan="5" class="sm">Nothing in this range.</td></tr>')+'</tbody></table>';
+ } else {
+  h+='<table><thead><tr><th>Day</th><th>What</th><th class="n">Earned</th><th class="n">Paid / taken</th><th class="n">Balance</th></tr></thead><tbody>';
+  if(!V.days.length)h+='<tr><td colspan="5" class="sm">Nothing in this range.</td></tr>';
+  V.days.slice().reverse().forEach(function(o){var L=[];
+   o.deductions.slice().reverse().forEach(function(x){L.push(['<a href="#" data-void="'+x.id+'" title="Undo">'+esc(x.what)+(x.note?' ('+esc(x.note)+')':'')+'</a>',null,x.amount])});
+   o.invoices.slice().reverse().forEach(function(i){L.push(['Commission, invoice '+esc(i.bill),i.commission,null])});
+   if(o.adjust)L.push(['Adjustment',o.adjust>0?o.adjust:null,o.adjust<0?-o.adjust:null]);
+   if(o.salary)L.push(['Daily salary',o.salary,null]);
+   L.forEach(function(l,i){h+='<tr><td class="d">'+(i===0?esc(dmy(o.date)):'')+'</td><td>'+l[0]+'</td><td class="n">'+(l[1]!=null?rs(l[1]):'')+'</td><td class="n">'+(l[2]!=null?rs(l[2]):'')+'</td><td class="n">'+(i===0?'<b>'+rs(o.closing)+'</b>':'')+'</td></tr>'})});
+  h+='</tbody></table><div class="sm">Tap a Paid / Taken line to undo it (nothing is deleted).</div>';
+ }
+ h+='<div class="card"><b>Record money</b><div class="sm">Every day tell me what '+esc(nm)+' took, or what you paid him. Both come off what he is owed.</div><div class="bar"><div><label>Date</label><input type="date" id="ed" value="'+esc(today())+'"></div><div><label>Amount (Rs)</label><input type="number" id="ea" min="1" step="any" inputmode="decimal" style="width:130px"></div><div><label>Note</label><input type="text" id="en" placeholder="optional"></div><button type="button" id="took" class="gold">He took</button><button type="button" id="paid" class="gold">I paid</button></div><div id="em" class="sm"></div></div>';
+ $('out').innerHTML=h;
+ Array.prototype.forEach.call($('out').querySelectorAll('button[data-m]'),function(b){b.onclick=function(){MODE=b.dataset.m;draw()}});
+ Array.prototype.forEach.call($('out').querySelectorAll('button[data-n]'),function(b){b.onclick=function(){if(b.dataset.n==='all'){F='2000-01-01'}else F=back(+b.dataset.n);T=today();draw()}});
+ $('go').onclick=function(){F=$('f').value||F;T=$('t').value||T;draw()};
+ $('pdf').onclick=function(){var f=F==='2000-01-01'?'':F;window.open('/api/staff-statement/'+STAFF.id+'/pdf?from='+encodeURIComponent(f)+'&to='+encodeURIComponent(T),'_blank')};
+ function rec(kind){var a=Number($('ea').value),day=$('ed').value;if(!(a>0)){$('em').textContent='Type the amount.';return}
+  var word=kind==='took'?'TOOK':'was PAID';if(!confirm(nm+' '+word+' '+rs(a)+' on '+dmy(day)+'. Save it?'))return;
+  var note=($('en').value||'').trim();if(kind==='took')note='Took: '+note;
+  api('/api/staff-ledger/'+STAFF.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:day,kind:'paid',amount:a,note:note})}).then(load).catch(function(e){$('em').innerHTML='<span class="err">'+esc(e.message)+'</span>'})}
+ $('took').onclick=function(){rec('took')};$('paid').onclick=function(){rec('paid')};
+ Array.prototype.forEach.call($('out').querySelectorAll('a[data-void]'),function(a){a.onclick=function(e){e.preventDefault();var why=prompt('Why undo this? (it is marked cancelled, not deleted)');if(!why||why.trim().length<3)return;api('/api/staff-ledger/entry/'+a.dataset.void+'/void',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:why})}).then(load)}});
 }
-load(F,T);
+init();
 })();
 </script></body></html>
