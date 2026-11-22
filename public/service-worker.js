@@ -4,7 +4,7 @@
 //    (pages show "saved copy"). Login, setup, auth, system and admin routes are never cached.
 //  - /api writes (POST/PUT/PATCH/DELETE) are never touched here: the page's offline queue (offline-queue.js) handles them.
 //  - Versioned caches; old versions are deleted on activate; the data cache is wiped on logout (message 'clear-api').
-const VERSION = 'v144-vendor360';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
+const VERSION = 'v149-boot';   // v25: Send to Layla door (layla-door.js); v24: new RBH logo
 const STATIC_CACHE = 'apex-static-' + VERSION;
 const API_CACHE = 'apex-api-' + VERSION;
 
@@ -51,6 +51,9 @@ async function tellClients(msg) {
 
 // PC off / tunnel down: the proxy ANSWERS with 502/503/504/52x instead of failing, so treat those like "offline" and use the saved copy.
 const isDown = (res) => res && (res.status === 502 || res.status === 503 || res.status === 504 || (res.status >= 520 && res.status <= 530));
+const WAIT_PAGE = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Royal Bath Hub</title>' +
+  '<body style="margin:0;height:100vh;display:grid;place-items:center;background:#F6EFDC;color:#0B1B3A;font:18px system-ui,sans-serif;text-align:center"><div><b>Royal Bath Hub is starting...</b><p>Waiting for the shop app. This page opens by itself.</p></div>' +
+  '<script>(function t(){fetch("/health",{cache:"no-store"}).then(function(r){if(r.ok)location.reload();else setTimeout(t,3000)},function(){setTimeout(t,3000)})})()</script>';
 const fetchT = (req, ms) => new Promise((ok, no) => { const t = setTimeout(() => no(new Error('slow')), ms || 8000); fetch(req).then((r) => { clearTimeout(t); ok(r); }, (e) => { clearTimeout(t); no(e); }); });
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -85,14 +88,16 @@ self.addEventListener('fetch', (event) => {
   // pages, scripts, fonts, images: network first, saved copy when offline
   event.respondWith((async () => {
     try {
-      const res = await fetchT(req);
+      const res = await fetchT(req, req.mode === 'navigate' ? 20000 : 8000);
       if (isDown(res)) throw new Error('server down');
       if (res.ok && !res.redirected) { const copy = res.clone(); caches.open(STATIC_CACHE).then(c => c.put(req, copy)); }
       return res;
     } catch (e) {
+      // 22 Nov (AJ boot photo): a page opened before the server answers got a half-saved shell (old sidebar look, old numbers).
+      // Now a page gets a 'starting' note that reloads by itself the moment /health answers: one design, live numbers only.
+      if (req.mode === 'navigate') return new Response(WAIT_PAGE, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
       const cached = await caches.match(req, { cacheName: STATIC_CACHE, ignoreSearch: true });
       if (cached) return cached;
-      if (req.mode === 'navigate') { const shell = await caches.match('/owner', { cacheName: STATIC_CACHE }); if (shell) return shell; }
       return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
     }
   })());
