@@ -299,6 +299,9 @@
     setInterval(tick, 700); setTimeout(tick, 300);
   })();
   ['customerName', 'customerPhone'].forEach(function (id) { var e = $(id); if (e) { e.setAttribute('autocomplete', 'nope'); e.setAttribute('data-lpignore', 'true'); } });
+  // 22 Nov (AJ): no old-number suggestions (the browser's saved-entries list) on any money/qty/code box; only the customer boxes keep their own rule above
+  (function () { var off = function (e) { if (e && e.tagName === 'INPUT' && e.id !== 'customerName' && e.id !== 'customerPhone') { e.setAttribute('autocomplete', 'off'); e.setAttribute('data-lpignore', 'true'); } };
+    document.querySelectorAll('input').forEach(off); document.addEventListener('focusin', function (ev) { off(ev.target); }, true); })();
   var cn = $('customerName'); if (cn) cn.addEventListener('input', function () {
     var v = cn.value, o = v.replace(/(^|[\s.\-'])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); });
     if (o !== v) { var st = cn.selectionStart; cn.value = o; try { cn.setSelectionRange(st, st); } catch (e) {} }
