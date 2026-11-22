@@ -50,10 +50,17 @@ LIVE.md = you write (newest on top). CHAT_LOG.md = chat writes. Chat reads LIVE.
 AGENTS.md | AI_MEMORY/NOW.md | AI_MEMORY/NOT_DONE.md | docs/INSTALLED.md | .claude/skills/ (rbh-ux before any screen, rbh-qa before any test run, rbh-blocks before any code change) | cloud test copy: bash scripts/dev/cloud_rig.sh.
 SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux, rbh-qa, rbh-blocks, rbh-erp, rbh-halal as needed) and name it in the LIVE line.
 
-## AJMAL'S REPORTING + PUSH RULES (added 17 Nov 2026)
-- REPORT FORMAT (AJ 18 Nov, HARD): NO bullet dots. Numbered lists only: DONE: 1, 2, 3. NOT DONE: 1, 2, 3. Numbers must match everywhere (stock = GRN = vendors = cheques = bills); any mismatch is discussed with AJ straight away, then logged to chat.
-- Reports: max 5 short lines, answer first, plain words, one status word last (GREEN, DONE, BLOCKED, NEEDS YOU, UNVERIFIED) plus the next step. Say "heads-up", never "problems". Anything Aj must copy goes in its own code block. Never say done unless a check ran.
-- 15-MINUTE PUSH RULE: work is committed and pushed to the shared `work` branch at least every 15 minutes, and AI_MEMORY/LIVE.md is updated. The Windows task `RBH_Autosave_LIVE` (scripts/autosave_live.js) does this for the state line automatically; code is still committed by hand with a clear message.
+## HARD RULES (AJ 22 Nov 2026, override anything older)
+1. Nothing is DONE without a signed-in screen check; otherwise say UNVERIFIED.
+2. Audit and fix in the SAME run, never audit-only.
+3. Before building, check it is not already built (AI_BRIDGE/BUILT_CHECK_*.md).
+4. Item codes are locked (DB trigger rbh_item_code_lock). Only scripts/renumber_item_codes.js may change them.
+5. Totals count real finished bills only (void bills out). One shared money function, so every screen shows the same number.
+6. One address (localhost:3100/owner), one port, one design, one build label. The label only goes UP (VERSION in public/service-worker.js).
+7. Backup before any data change.
+8. Stop at 80% weekly usage: finish the step, push, stop.
+9. Doubts go to a file (AI_BRIDGE/CONCERNS_<date>.md), safe default, never ask AJ.
+10. Reports: 6 lines max, numbered (no bullet dots), DONE, NOT DONE, one status word. Say "heads-up". Push work + LIVE.md every 15 min.
 
 ## FACTS TO KEEP (17 Nov 2026)
 - Vendor and bill amounts (Leo, Lucky, Cool Lanka, Maheshan) live in the PRIVATE bridge repo (DATA/SHOP_LATEST, PRIVATE_FROM_APP_REPO), never in this PUBLIC repo.
