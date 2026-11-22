@@ -38,7 +38,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const weekStart = ymd((new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7);   // Monday
     const comFrom = String(set.commission_from || '2026-11-18').slice(0, 10);   // 22 Nov (AJ): same rule as Sales Commission: only bills from commission_from
     const jazGp = bills.filter(b => b.salesman === 'Jazeel' && day(b) >= weekStart && day(b) >= comFrom).reduce((a, b) => a + Number(b.total) - Number(b.cost), 0);
-    let bd = []; try { bd = JSON.parse(set.running_cost_breakdown || '[]'); } catch (e) {}
+    let bd = []; try { const v = set.running_cost_breakdown; bd = Array.isArray(v) ? v : JSON.parse(v || '[]'); } catch (e) {}
     const result = { breakdown: bd, per_day: rc, from: rcFrom, today: today >= rcFrom ? r2(S.today.profit - rc) : null, since: r2(gpSince - rc * daysSince), days: daysSince, commission_pct: cpct, jazeel_week: r2(jazGp * cpct / 100), unassigned: bills.filter(b => !b.salesman && day(b) >= rcFrom).length };
     const billsBad = bills.filter(b => Math.abs(Number(b.items) - Number(b.discount_amount || 0) - Number(b.total)) > 1).length;
 
