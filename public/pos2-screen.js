@@ -47,10 +47,10 @@
   // ---------- draw ----------
   function render() {
     $('itemRows').innerHTML = rows.map(function (r, i) {
-      return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong>' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div></div>' +
+      return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><span class="rno">' + (i + 1) + '</span><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong title="Double-click to edit the name on this bill">' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div></div>' +
         '<div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="' + r.qty + '" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>' +
         '<input class="price-input" data-field="price" value="' + effPrice(r).toFixed(2) + '" inputmode="decimal" aria-label="Selling price"><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
-        '<div class="line-total">' + money(lineTotal(r)).replace('Rs ', '') + '</div><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>';
+        '<input class="price-input line-total" data-field="total" value="' + lineTotal(r).toFixed(2) + '" inputmode="decimal" aria-label="Line total" title="Type the line total: the price follows"><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>';
     }).join('');
     var t = totals();
     $('itemCount').textContent = rows.length + ' items'; $('netTotal').textContent = money(t.net);
@@ -108,11 +108,18 @@
   $('pickerResults').addEventListener('click', function (e) { var row = e.target.closest('[data-code]'); if (!row) return; var it = ($('pickerResults')._found || []).filter(function (x) { return x.code === row.dataset.code; })[0]; if (it) addItem(it); });
 
   $('itemRows').addEventListener('click', function (e) { var row = e.target.closest('.item-row'); if (!row) return; var i = +row.dataset.index, a = e.target.dataset.act; if (a === 'remove') rows.splice(i, 1); if (a === 'plus') rows[i].qty += 1; if (a === 'minus') rows[i].qty = Math.max(0.01, rows[i].qty - 1); if (a) render(); });
+  $('itemRows').addEventListener('dblclick', function (e) {   // 22 Nov (AJ): double-click the item name to edit it on this bill (the stock item itself is not changed)
+    var st = e.target.closest('.item-name strong'); if (!st) return; var row = st.closest('.item-row'), r = rows[+row.dataset.index]; if (!r) return;
+    var inp = document.createElement('input'); inp.value = r.name; inp.style.cssText = 'width:100%;font-weight:700'; st.replaceWith(inp); inp.focus(); inp.select();
+    var done = false; function fin(ok) { if (done) return; done = true; if (ok && inp.value.trim()) r.name = inp.value.trim(); render(); }
+    inp.addEventListener('keydown', function (k) { if (k.key === 'Enter') { k.preventDefault(); fin(true); } else if (k.key === 'Escape') fin(false); }); inp.addEventListener('blur', function () { fin(true); });
+  });
   $('itemRows').addEventListener('change', function (e) {
     var row = e.target.closest('.item-row'); if (!row) return; var r = rows[+row.dataset.index], f = e.target.dataset.field;
     if (f === 'code') { api.itemByCode(e.target.value).then(function (it) { if (it) { r.code = it.code; r.name = it.name; r.stock = it.stock; r.price = it.price; r.list = it.price; r.disc = '0'; r.cost = it.cost; r.unit = it.unit; r.sqm = it.sqm; scanMsg(''); } else scanMsg('Item code not found. Use Down arrow to browse.', true); render(); }); return; }
     if (f === 'qty') r.qty = Math.max(0.01, Number(e.target.value) || 1);
     if (f === 'price') setPrice(r, e.target.value);
+    if (f === 'total') { var T = Math.max(0, parseFloat(String(e.target.value).replace(/,/g, '')) || 0); if (r.qty > 0) setPrice(r, T / r.qty); }
     if (f === 'disc') r.disc = e.target.value || '0';
     render();
   });
