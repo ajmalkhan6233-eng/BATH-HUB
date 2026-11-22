@@ -4,7 +4,7 @@
   'use strict';
   if (typeof window === 'undefined' || !window.RBHP) return;
   var P = window.RBHP, el = P.el, rs = P.rs, card = P.card, sgn = P.sgn;
-  var view = 'inv', per = 'today';
+  var view = 'inv', per = 'today', showNet = false;   // net profit stays hidden until AJ taps it (people can look over his shoulder)
   function pct(g, sales) { return sales > 0 ? Math.round(g / sales * 100) + '%' : '-'; }
   function line(k, v, cls) { var r = el('div', 'sumrow'); r.appendChild(el('span', null, k)); r.appendChild(el('span', 'num' + (cls ? ' ' + cls : ''), v)); return r; }
 
@@ -13,8 +13,8 @@
     if (P.EXTRA.per) { per = P.EXTRA.per; P.EXTRA.per = null; }   // Home row tapped: open that period
     if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'note', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
     box.appendChild(P.segc([['today', 'Today'], ['week', 'This week'], ['month', 'This month']], per, function (v) { per = v; P.redraw(); }));
-    var x = p[per] || p.today, run = !!p.run_per_day, main = run ? x.net : x.gross;
-    var title = (per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month') + ' · ' + (run ? 'net profit' : 'profit');
+    var x = p[per] || p.today, run = !!p.run_per_day, main = x.gross;
+    var title = (per === 'today' ? 'Today' : per === 'week' ? 'This week' : 'This month') + ' · profit';
     box.appendChild(P.ledger(title, sgn(main), P.pill(pct(x.gross, x.sales) + ' margin', x.gross >= 0 ? 'ok' : 'bad'), [P.kv('Sales', rs(x.sales)), P.kv('Cost', rs(x.cost))]));
 
     if (x.no_cost) {
@@ -27,9 +27,13 @@
     b.appendChild(line('Sales', rs(x.sales)));
     b.appendChild(line('Cost of goods', rs(x.cost)));
     b.appendChild(line('Profit', sgn(x.gross), x.gross >= 0 ? 'up' : 'down'));
-    if (run) b.appendChild(line('Running cost', '− ' + rs(x.gross - x.net)));
-    var t = line(run ? 'Net profit' : 'Net (no running cost set)', sgn(run ? x.net : x.gross)); t.className += ' total'; t.lastChild.className = 'tot'; b.appendChild(t);
-    b.appendChild(el('div', 'note', run ? 'Running cost counted: ' + rs(p.run_per_day) + ' a day.' : 'No running cost set yet, so net equals profit.'));
+    if (run) {
+      var hide = !showNet, HID = '••••';
+      b.appendChild(line('Running cost', hide ? HID : '− ' + rs(x.gross - x.net)));
+      var t = line('Net profit', hide ? HID + ' tap to show' : sgn(x.net)); t.className += ' total'; t.lastChild.className = 'tot';
+      t.style.cursor = 'pointer'; t.addEventListener('click', function () { showNet = !showNet; P.redraw(); }); b.appendChild(t);
+      b.appendChild(el('div', 'note', hide ? 'Net profit is hidden. Tap it to show.' : 'Running cost counted: ' + rs(p.run_per_day) + ' a day. Tap to hide.'));
+    } else b.appendChild(el('div', 'note', 'No running cost set yet.'));
     b.lastChild.style.marginTop = '6px';
     box.appendChild(b);
 

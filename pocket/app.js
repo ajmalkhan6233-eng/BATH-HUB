@@ -139,7 +139,7 @@
     if (sl) {
       var v = vs(sl.today, sl.yesterday);
       g.appendChild(irow('trend', 'green', 'Sales', plural(sl.bills_today || 0, 'bill', 'bills') + ' · ' + v.text, rs(sl.today), '', function () { EXTRA.per = 'today'; go('profit'); }));
-      if (pt) g.appendChild(irow('coins', 'blue', 'Profit', pr.run_per_day ? 'Net ' + sgn(pt.net) + ' after running cost' : 'Sales minus cost', sgn(pt.gross), pt.gross < 0 ? 'down' : '', function () { EXTRA.per = 'today'; go('profit'); }));
+      if (pt) g.appendChild(irow('coins', 'blue', 'Profit', 'Sales minus cost', sgn(pt.gross), pt.gross < 0 ? 'down' : '', function () { EXTRA.per = 'today'; go('profit'); }));
     }
     var tot = (s.pays_today || []).reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
     if (s.pays_today) g.appendChild(irow('cash', 'teal', 'Money in', s.pays_today.length ? s.pays_today.map(function (x) { return cap(x.method); }).join(' · ') : 'Nothing yet today', rs(tot), '', function () {
@@ -460,13 +460,15 @@
     catch (e) { gateMsg(e && e.name === 'NotAllowedError' ? 'Face ID cancelled. Type your passcode.' : (e && e.message) || 'Face ID did not work. Type your passcode.'); }
     $('face').disabled = false;
   }
-  function lock() { passcode = null; ckey = null; ckeySalt = null; snap = null; $('cards').textContent = ''; showGate(); }
+  function lock() { demoMode = (location.hash || '') === '#demo'; passcode = null; ckey = null; ckeySalt = null; snap = null; $('cards').textContent = ''; showGate(); }
   function showGate() { $('face').hidden = !faceOn(); show('gate'); }
 
   var demoMode = (location.hash || '') === '#demo';
   if (!demoMode) pairFromHash();
   $('unlock').addEventListener('click', open);
   $('face').addEventListener('click', openFace);
+  // "Go": the showing-friends mode. Fake figures only, no network, no passcode, nothing real is opened. Lock returns to the gate.
+  $('goDemo').addEventListener('click', function () { demoMode = true; snap = DEMO; tab = 'home'; render(DEMO); show('app'); });
   $('pass').addEventListener('keydown', function (e) { if (e.key === 'Enter') open(); });
   $('lock').addEventListener('click', lock);
   $('sheetX').addEventListener('click', closeSheet); $('sheetScrim').addEventListener('click', closeSheet);
