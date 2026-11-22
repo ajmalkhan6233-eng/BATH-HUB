@@ -12,13 +12,13 @@
     if (!p) { var c0 = card('Profit'); c0.appendChild(el('div', 'dim', 'No profit numbers yet. Update the shop PC app, then refresh.')); box.appendChild(c0); return; }
     var t = card('Profit today'); t.appendChild(el('div', 'big', sgn(p.today.gross)));
     t.appendChild(el('div', 'dim', 'Sales ' + rs(p.today.sales) + ' · cost ' + rs(p.today.cost) + ' · ' + pct(p.today.gross, p.today.sales)));
-    if (p.today.no_cost) t.appendChild(el('div', 'dim', p.today.no_cost + ' line(s) have no cost yet, so profit is a little high.'));
+    if (p.today.no_cost) t.appendChild(el('div', 'warn', 'Heads-up: ' + p.today.no_cost + ' line(s) have no cost yet, so profit is a little high.'));
     box.appendChild(t);
     var g = el('div', 'grid'); g.style.marginBottom = '12px';
     [['This week', p.week], ['This month', p.month]].forEach(function (x) { var k = card(x[0]); k.appendChild(el('div', 'v', sgn(x[1].gross))); k.appendChild(el('div', 'dim', 'on ' + rs(x[1].sales))); g.appendChild(k); });
     box.appendChild(g);
     var n = card('Net after running cost');
-    n.appendChild(row('Today', sgn(p.today.net))); n.appendChild(row('This week', sgn(p.week.net))); n.appendChild(row('This month', sgn(p.month.net)));
+    n.appendChild(row('Today', sgn(p.today.net), p.today.net < 0 ? 'down' : 'up')); n.appendChild(row('This week', sgn(p.week.net), p.week.net < 0 ? 'down' : 'up')); n.appendChild(row('This month', sgn(p.month.net), p.month.net < 0 ? 'down' : 'up'));
     n.appendChild(el('div', 'dim', p.run_per_day ? 'Running cost counted: ' + rs(p.run_per_day) + ' a day (rent, salary, living).' : 'No running cost set yet, so net equals profit.'));
     box.appendChild(n);
     var bar = el('div', 'seg'); bar.style.cssText = 'display:flex;gap:8px;margin:4px 0 12px';

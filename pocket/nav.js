@@ -11,6 +11,12 @@
   var tabBtn = function (name) { var all = document.querySelectorAll('#tabs .tab'); for (var i = 0; i < all.length; i++) if (all[i].getAttribute('aria-label') === name) return all[i]; return null; };
   var svgOf = function (node) { var s = node && node.querySelector('svg'); return s ? s.outerHTML : ''; };
 
+  // ---------- theme (dark by default, follows the phone; the menu can force one). Only the word dark/light is stored.
+  var THEME = { get: function () { try { return localStorage.getItem('rbh_theme'); } catch (e) { return null; } }, set: function (v) { try { localStorage.setItem('rbh_theme', v); } catch (e) {} } };
+  var isLight = function () { var t = document.documentElement.getAttribute('data-theme'); return t ? t === 'light' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches); };
+  function applyTheme(t) { document.documentElement.setAttribute('data-theme', t); var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', t === 'light' ? '#f6f4ef' : '#0b0b0c'); }
+  if (THEME.get() === 'light' || THEME.get() === 'dark') applyTheme(THEME.get());
+
   // ---------- left slide menu
   var drawer = document.createElement('div'); drawer.className = 'drawer'; drawer.setAttribute('aria-hidden', 'true');
   drawer.innerHTML = '<div class="dscrim"></div><div class="dpanel" role="dialog" aria-modal="true" aria-label="Menu"><div class="dhead"><b><span>RBH</span> Pocket</b><small id="dwhen"></small></div><div class="dlist" id="dlist"></div></div>';
@@ -26,6 +32,8 @@
     }
     for (var i = 0; i < t.length; i++) (function (tb) { var n = tb.getAttribute('aria-label'); item(n, svgOf(tb), n === now, function () { tb.click(); }); })(t[i]);
     var sep = document.createElement('div'); sep.className = 'dsep'; L.appendChild(sep);
+    var sun = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    item('Theme: ' + (isLight() ? 'Light' : 'Dark') + ' (tap to switch)', sun, false, function () { var nx = isLight() ? 'dark' : 'light'; applyTheme(nx); THEME.set(nx); });
     if ($('refresh')) item('Refresh now', svgOf($('refresh')), false, function () { $('refresh').click(); });
     if ($('lock')) item('Lock app', svgOf($('lock')), false, function () { $('lock').click(); });
     $('dwhen').textContent = ($('when') && $('when').textContent) || '';

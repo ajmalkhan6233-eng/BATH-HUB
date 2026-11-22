@@ -63,12 +63,18 @@
 
   // look only: numbers count up, bar shrinks on scroll
   function countUp() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('#cards .fig').forEach(function (n) {
+      var to = Number(n.dataset.to), t0 = performance.now(), D = 280; if (!isFinite(to)) return;
+      (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = Math.round(to * e).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(f); else n.textContent = Math.round(to).toLocaleString('en-US'); })(t0);
+    });
     document.querySelectorAll('#cards .big, #cards .grid .v').forEach(function (n) {
-      var m = /^Rs ([\d,]+)$/.exec(n.textContent); if (!m || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-      var to = Number(m[1].replace(/,/g, '')), t0 = performance.now(), D = 900;
+      var m = /^Rs ([\d,]+)$/.exec(n.textContent); if (!m) return;
+      var to = Number(m[1].replace(/,/g, '')), t0 = performance.now(), D = 280;
       (function f(t) { var k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3); n.textContent = rs(to * e); if (k < 1) requestAnimationFrame(f); else n.textContent = rs(to); })(t0);
     });
   }
+  window.addEventListener('online', function () { if (snap) render(snap); }); window.addEventListener('offline', function () { if (snap) render(snap); });
   window.addEventListener('scroll', function () {   // title shrinks in step with the finger (0 to 1 over 80px)
     var y = window.scrollY, p = Math.max(0, Math.min(1, y / 80));
     document.documentElement.style.setProperty('--p', p.toFixed(3)); document.body.classList.toggle('scrolled', y > 24);
@@ -78,7 +84,8 @@
   var NODATA = 'No data yet. Update the shop PC app, then refresh.';
   function today0(s) { return new Date(Date.parse(s.at) + 5.5 * 3600e3).toISOString().slice(0, 10); }
   function tapRow(l, r, rcls, fn) { var d = row(l, r, rcls); d.className += ' tap'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.addEventListener('click', fn); d.addEventListener('keydown', function (e) { if (e.key === 'Enter') fn(); }); return d; }
-  function bigCard(title, amount, sub, cls) { var c = card(title); c.appendChild(el('div', 'big', rs(amount))); if (sub) c.appendChild(el('div', cls || 'dim', sub)); return c; }
+  function figNode(cls, amount) { var d = el('div', cls); d.appendChild(el('span', 'rs-pre', 'Rs')); var f = el('span', 'fig', Math.round(Number(amount) || 0).toLocaleString('en-US')); f.dataset.to = String(Math.round(Number(amount) || 0)); d.appendChild(f); return d; }
+  function bigCard(title, amount, sub, cls) { var c = card(title); c.appendChild(figNode('big', amount)); if (sub) c.appendChild(el('div', cls || 'dim', sub)); return c; }
   function dayName(ymd) { var d = new Date(ymd + 'T00:00:00Z'); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ' ' + d.getUTCDate(); }
 
   // ---- detail sheet (slides up; close with the button, the dark area or Esc)
@@ -91,21 +98,36 @@
   function closeSheet() { $('sheet').hidden = true; }
 
   // ---- tabs
+  function heroCell(label, amount, line1, cls1, line2) {
+    var c = el('div', 'hero-cell'); c.appendChild(el('div', 'k', label));
+    c.appendChild(figNode('hero-num', amount));
+    if (line1) { var m = el('div', 'hero-meta'); m.appendChild(el('span', cls1 || 'dim', line1)); if (line2) m.appendChild(el('span', 'dim', line2)); c.appendChild(m); }
+    return c;
+  }
   function rHome(s, box) {
-    var c = card('Today');
+    var c = card('Today'); c.className += ' hero-glow';
     if (s.sales) {
-      c.appendChild(el('div', 'big', rs(s.sales.today)));
-      var v = vs(s.sales.today, s.sales.yesterday);
-      c.appendChild(el('div', v.cls, s.sales.bills_today + ' bills · ' + v.text));
+      var v = vs(s.sales.today, s.sales.yesterday), pt = s.profit && s.profit.today, run = s.profit && s.profit.run_per_day;
+      var sp = el('div', 'hero-split');
+      sp.appendChild(heroCell('Sales', s.sales.today, v.text, v.cls, s.sales.bills_today + ' bills'));
+      if (pt) { var pv = run ? pt.net : pt.gross; sp.appendChild(heroCell('Profit', pv, run ? 'after running cost' : 'before costs', pv < 0 ? 'down' : 'gold')); }
+      if (sp.children.length < 2) sp.className += ' one';
+      c.appendChild(sp);
+      if (s.vendors) {
+        var tv0 = s.vendors.reduce(function (a, x) { return a + x.owed; }, 0), ov = el('div', 'owed-strip tap'); ov.setAttribute('role', 'button'); ov.tabIndex = 0;
+        ov.appendChild(el('span', 'lbl', 'Owed to vendors')); ov.appendChild(el('span', 'val', rs(tv0)));
+        var goMoney = function () { var b = document.querySelector('#tabs .tab[aria-label="Money"]'); if (b) b.click(); };
+        ov.addEventListener('click', goMoney); ov.addEventListener('keydown', function (e) { if (e.key === 'Enter') goMoney(); }); c.appendChild(ov);
+      }
     } else c.appendChild(none());
     box.appendChild(c);
     if (s.sales) {
       var g = el('div', 'grid');
       [['This week', s.sales.week], ['This month', s.sales.month]].forEach(function (x) { var k = card(x[0]); k.appendChild(el('div', 'v', rs(x[1]))); g.appendChild(k); });
-      box.appendChild(g); g.style.marginBottom = '12px';
+      box.appendChild(g);
     }
     var p = card('Money in today');
-    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other'), rs(x.amount))); });
+    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other').replace(/^./, function (m) { return m.toUpperCase(); }), rs(x.amount))); });
     else p.appendChild(s.pays_today ? el('div', 'dim', 'Nothing yet today') : none());
     box.appendChild(p);
     var d = card('To pay');
@@ -118,13 +140,16 @@
     box.appendChild(d);
     var st = card('Stock');
     if (s.stock) {
-      st.appendChild(row('Out of stock', String(s.stock.out), s.stock.out ? 'down' : ''));
-      st.appendChild(row('Running low', String(s.stock.low), s.stock.low ? 'down' : ''));
-      s.stock.low_list.slice(0, 8).forEach(function (x) { st.appendChild(row(x.name, x.qty + ' left (min ' + x.min + ')', 'dim')); });
+      var sg = el('div', 'grid');
+      [['Out of stock', s.stock.out, 'down'], ['Running low', s.stock.low, 'warnc']].forEach(function (x) { var k = el('div', 'hero-cell'); k.appendChild(el('div', 'k', x[0])); k.appendChild(el('div', 'v ' + (x[1] ? (x[2] === 'down' ? 'down' : 'warn') : 'dim'), String(x[1]))); sg.appendChild(k); });
+      st.appendChild(sg);
+      if (!s.stock.low_list.length) st.appendChild(el('div', 'dim', 'Nothing running low'));
+      s.stock.low_list.slice(0, 8).forEach(function (x) { st.appendChild(row(x.name, x.qty <= 0 ? '0 left' : x.qty + ' left (min ' + x.min + ')', x.qty <= 0 ? 'down' : 'warn')); });
     } else st.appendChild(none());
     box.appendChild(st);
     var t = card('Best sellers this month');
-    if (s.top_month && s.top_month.length) s.top_month.forEach(function (x) { t.appendChild(row(x.name, rs(x.revenue))); });
+    if (s.top_month && s.top_month.length) { var mxr = Math.max.apply(null, s.top_month.map(function (x) { return x.revenue; }).concat([1]));
+      s.top_month.forEach(function (x, i) { var r = row((i + 1) + '. ' + x.name, rs(x.revenue)); r.className += ' barrow'; var bar = el('div', 'bar'); bar.style.width = Math.max(4, Math.round(x.revenue / mxr * 100)) + '%'; r.insertBefore(bar, r.firstChild); t.appendChild(r); }); }
     else t.appendChild(s.top_month ? el('div', 'dim', 'No sales yet') : none());
     box.appendChild(t);
     faceCard(box); pairCard(box);
@@ -194,7 +219,7 @@
     });
     box.appendChild(v);
     var p = card('Money in today');
-    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other'), rs(x.amount))); });
+    if (s.pays_today && s.pays_today.length) s.pays_today.forEach(function (x) { p.appendChild(row(String(x.method || 'other').replace(/^./, function (m) { return m.toUpperCase(); }), rs(x.amount))); });
     else p.appendChild(s.pays_today ? el('div', 'dim', 'Nothing yet today') : none());
     box.appendChild(p);
   }
@@ -254,9 +279,10 @@
     var f = TABS.filter(function (t) { return t[0] === tab; })[0]; (f ? f[3] : rHome)(s, box);
     countUp();
     var w = $('when'); w.textContent = 'Updated ' + ago(s.at);
-    var stale = (Date.now() - Date.parse(s.at)) / 60000 > STALE_MIN;
-    w.className = 'sub' + (stale ? ' stale' : '');
-    if (stale) w.textContent += ' · shop PC may be off';
+    var stale = (Date.now() - Date.parse(s.at)) / 60000 > STALE_MIN, off = typeof navigator !== 'undefined' && navigator.onLine === false;
+    w.className = 'sub' + (stale || off ? ' stale' : '');
+    if (off) w.textContent = 'Offline · showing saved numbers · ' + w.textContent.toLowerCase();
+    else if (stale) w.textContent += ' · shop PC may be off';
   }
 
   // ---- Face ID (WebAuthn): the phone asks for your face; only then it opens the key it kept from your last passcode entry.
@@ -295,7 +321,7 @@
   }
 
   // Designer preview: open index.html#demo to see every card with FAKE numbers. No network, no passcode.
-  var DEMO = { v: 2, at: new Date().toISOString(), sales: { today: 184500, bills_today: 14, yesterday: 152000, week: 640000, month: 2310000 },
+  var DEMO = { v: 3, at: new Date().toISOString(), sales: { today: 184500, bills_today: 14, yesterday: 152000, week: 640000, month: 2310000 },
     pays_today: [{ method: 'cash', amount: 96500 }, { method: 'card', amount: 64000 }, { method: 'bank', amount: 24000 }],
     top_month: [{ name: 'Basin mixer tap', qty: 40, revenue: 320000 }, { name: 'Wall tile 30x60', qty: 220, revenue: 286000 }, { name: 'Shower set', qty: 18, revenue: 252000 }],
     stock: { items: 480, out: 6, low: 11, low_list: [{ code: 'A1', name: 'Basin mixer tap', qty: 2, min: 6 }, { code: 'B2', name: 'PVC pipe 1 inch', qty: 4, min: 20 }] },
@@ -306,7 +332,9 @@
     out_list: [{ code: 'D4', name: 'Shower head' }],
     credit: { total: 275000, list: [{ who: 'Sample Builder', owed: 175000, oldest: '2026-10-20' }, { who: 'Sample Contractor', owed: 100000, oldest: '2026-11-20' }] },
     vendors: [{ who: 'Sample Vendor', owed: 120000, oldest: '2026-11-08', bills: [{ ref: 'B1', due: '2026-11-08', amount: 120000 }] }],
-    cheques: [{ who: 'Sample Supplier', ref: 'C9', due: '2026-11-14', amount: 65000, status: 'pending' }, { who: 'Sample Vendor', ref: 'C7', due: '2026-11-05', amount: 40000, status: 'held' }] };
+    cheques: [{ who: 'Sample Supplier', ref: 'C9', due: '2026-11-14', amount: 65000, status: 'pending' }, { who: 'Sample Vendor', ref: 'C7', due: '2026-11-05', amount: 40000, status: 'held' }],
+    profit: { run_per_day: 20000, today: { sales: 184500, cost: 139000, gross: 45500, net: 25500, bills: 14, no_cost: 1 }, yesterday: { sales: 152000, cost: 118000, gross: 34000, net: 14000, bills: 9, no_cost: 0 }, week: { sales: 640000, cost: 489000, gross: 151000, net: 11000, bills: 52, no_cost: 2 }, month: { sales: 2310000, cost: 1760000, gross: 550000, net: -50000, bills: 160, no_cost: 3 },
+      items: [{ name: 'Basin mixer tap', qty: 40, revenue: 320000, cost: 214000, profit: 106000 }, { name: 'Shower set', qty: 18, revenue: 252000, cost: 190000, profit: 62000 }] } };
 
   function show(which) { $('gate').hidden = which !== 'gate'; $('app').hidden = which !== 'app'; $('tabs').hidden = which !== 'app'; if (which !== 'app') closeSheet(); }
   function gateMsg(t) { $('gateMsg').textContent = t || ''; }
