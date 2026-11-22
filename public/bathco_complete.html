@@ -288,7 +288,7 @@ table tr:last-child td{border-bottom:none}
       <li class="nav-item" data-page="pos"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-cart"/></svg></span><span class="nav-label">POS Billing</span></li>
       <li class="nav-item" data-page="grn"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">GRN</span></li>
       <li class="nav-item" data-page="expenses"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-wallet"/></svg></span><span class="nav-label">Expenses</span></li>
-      <li class="nav-item" data-page="cheques"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg></span><span class="nav-label">Cheques</span></li>
+      <li class="nav-item" data-page="cheques" style="display:none" hidden><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg></span><span class="nav-label">Cheques</span></li>
       <li class="nav-item" data-page="vendors"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg></span><span class="nav-label">Vendors</span></li>
       <li class="nav-item" data-page="salary"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-briefcase"/></svg></span><span class="nav-label">Salary &amp; Costs</span></li>
       <li class="nav-item" data-page="docinbox"><span class="nav-icon"><svg class="bh-icon" aria-hidden="true"><use href="#i-inbox"/></svg></span><span class="nav-label">Document Inbox</span></li>
@@ -1530,7 +1530,8 @@ document.querySelectorAll('.nav-item').forEach(el => {
 
 let _fromHash = false;
 function navigate(page) {
-  if (page === 'stock' && document.getElementById('page-stockmgr')) page = 'stockmgr';   // 21 Nov (AJ): the old "Stock (old view)" is retired; Stock opens Stock & items. Old page kept in the file, just never opened.
+  if (page === 'stock' && document.getElementById('page-stockmgr')) page = 'stockmgr';
+  if (page === 'cheques') page = 'chequereg';   // 22 Nov (AJ): the old Cheques page (all LKR 0) is retired; Cheques opens the real Cheque Register   // 21 Nov (AJ): the old "Stock (old view)" is retired; Stock opens Stock & items. Old page kept in the file, just never opened.
   if (!document.getElementById('page-' + page)) page = 'dashboard';           // unknown address -> Dashboard
   if (!_fromHash && location.hash !== '#/' + page) history.pushState(null, '', '#/' + page);
   document.getElementById('sidebar').classList.remove('open');               // phone: close the menu after choosing

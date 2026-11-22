@@ -14,7 +14,7 @@
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['dueboard', 'Due Board (bills and cheques by due date)'], ['purchasing', 'Purchasing']]],
     ['Sales', [['pos', 'POS Billing'], ['salescomm', 'Sales Commission'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['allbills', 'All bills (view, download, edit, cancel)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown']]],
-    ['Banking & Money', [['cheques', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
+    ['Banking & Money', [['chequereg', 'Cheques'], ['expenses', 'Expenses'], ['loans', 'Friend & Investor Loans'], ['moneycontrol', 'Money Control'], ['moneyplan', 'Money Plan'], ['salary', 'Salary & Costs'], ['bank-accounts', 'Bank accounts', true]]],
     ['Customers & Online', [['enquiries', 'Enquiries'], ['replies', 'Reply Drafts'], ['content', 'Content'], ['webcat', 'Website Catalogue'], ['website', 'Website'], ['tilegallery', 'Tile Gallery'], ]],
     ['Layla', [['layla', 'Layla (all AI in one place)']]],
     ['Reports', [
