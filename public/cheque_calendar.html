@@ -8,52 +8,52 @@
 <!-- BLOCK: cheque calendar. Read-only. Data: GET /api/grn-cheques (vendor_bill_cheques). Big numbers on purpose (uncle reads it). -->
 <style>
   *{box-sizing:border-box}
-  body{margin:0;background:#fffdf7;color:#111;font-size:22px}
-  .wrap{padding:12px 14px 40px;max-width:1900px;margin:0 auto}
-  .ttl{font-size:36px;font-weight:800;margin:4px 0 10px}
-  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
-  .bar b{font-size:24px}
-  .btn{font:inherit;font-size:26px;font-weight:700;min-height:60px;min-width:60px;padding:6px 18px;border:3px solid #111;border-radius:12px;background:#fff;color:#111;cursor:pointer}
+  body{margin:0;background:#fffdf7;color:#111;font-size:14px}
+  .wrap{padding:10px 14px 30px;max-width:1100px;margin:0 auto}
+  .ttl{font-size:22px;font-weight:800;margin:2px 0 8px}
+  .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+  .bar b{font-size:14px}
+  .btn{font:inherit;font-size:14px;font-weight:600;min-height:32px;min-width:34px;padding:2px 12px;border:1.5px solid #888;border-radius:8px;background:#fff;color:#111;cursor:pointer}
   .btn.on{background:#111;color:#fff}
-  .sum{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 14px}
-  .sum div{border:3px solid #111;border-radius:12px;padding:8px 16px;font-size:24px;background:#fff}
-  .sum b{font-size:34px;display:block}
-  .months{display:grid;gap:14px}
-  .m{border:3px solid #111;border-radius:14px;background:#fff;padding:8px}
+  .sum{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px}
+  .sum div{border:1.5px solid #ccc;border-radius:10px;padding:5px 12px;font-size:12px;background:#fff}
+  .sum b{font-size:18px;display:block}
+  .months{display:grid;gap:10px}
+  .m{border:1.5px solid #ccc;border-radius:12px;background:#fff;padding:6px}
   .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .mh .mt{margin:0;font-size:clamp(20px,2.2vw,38px);font-weight:800}
-  .mh span{font-size:clamp(16px,1.6vw,26px);font-weight:700}
-  .g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
-  .dow{text-align:center;font-weight:800;font-size:clamp(14px,1.4vw,22px);background:#eee;border-radius:6px;padding:3px 0}
-  .d{min-width:0;min-height:var(--ch,86px);border:2px solid #bbb;border-radius:8px;padding:2px 4px;background:#fff;cursor:default;overflow:hidden}
-  .d .n{font-size:var(--dn,30px);font-weight:800;line-height:1.05}
-  .d .a{font-size:var(--am,20px);font-weight:800;line-height:1.1;margin-top:2px}
+  .mh .mt{margin:0;font-size:15px;font-weight:800}
+  .mh span{font-size:12px;font-weight:600}
+  .g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+  .dow{text-align:center;font-weight:700;font-size:11px;background:#f0f0f0;border-radius:5px;padding:1px 0}
+  .d{min-width:0;min-height:var(--ch,40px);border:1.5px solid #ddd;border-radius:6px;padding:1px 3px;background:#fff;cursor:default;overflow:hidden}
+  .d .n{font-size:var(--dn,13px);font-weight:700;line-height:1.05}
+  .d .a{font-size:var(--am,11px);font-weight:700;line-height:1.1;margin-top:1px}
   .d .w{font-size:calc(var(--am,20px) - 4px);font-weight:700;color:#0b4a8f}
   .d .mb{font-size:calc(var(--am,20px) - 4px);font-weight:800;color:#0b4a8f;background:#e3efff;border-radius:5px;padding:0 3px;margin-top:2px}
   .d.out{background:#f4f4f4;border-color:#e2e2e2;color:#aaa}
-  .d.today{border-color:#d00;box-shadow:0 0 0 3px #d00 inset}
+  .d.today{border-color:#d00;box-shadow:0 0 0 1px #d00 inset}
   .d.due{background:#ffe9a8;border-color:#a87a00;cursor:pointer}
   .d.clr{background:#c9f0cf;border-color:#1c7a2e;cursor:pointer}
   .d.bnc{background:#ffc9c9;border-color:#b00;cursor:pointer}
-  .d.sel{outline:5px solid #111}
-  .key{display:flex;flex-wrap:wrap;gap:12px;font-size:22px;margin:6px 0 14px;font-weight:700}
-  .key i{display:inline-block;width:30px;height:22px;border:2px solid #111;border-radius:5px;vertical-align:middle;margin-right:6px}
-  .lt{font-size:32px;font-weight:800;margin:20px 0 8px}
-  table{width:100%;border-collapse:collapse;font-size:24px;background:#fff}
-  th,td{border:2px solid #999;padding:8px 10px;text-align:left}
-  th{background:#eee;font-size:22px}
+  .d.sel{outline:2px solid #111}
+  .key{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin:4px 0 8px;font-weight:600}
+  .key i{display:inline-block;width:16px;height:12px;border:1px solid #888;border-radius:3px;vertical-align:middle;margin-right:6px}
+  .lt{font-size:16px;font-weight:800;margin:12px 0 6px}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+  th,td{border:1px solid #ccc;padding:4px 8px;text-align:left}
+  th{background:#f0f0f0;font-size:12px}
   td.r,th.r{text-align:right;white-space:nowrap}
   .st{font-weight:800;padding:2px 10px;border-radius:8px;border:2px solid #111;white-space:nowrap}
   .st.W{background:#ffe9a8}.st.C{background:#c9f0cf}.st.B{background:#ffc9c9}
-  tr.dayhead td{background:#222;color:#fff;font-size:26px;font-weight:800}
+  tr.dayhead td{background:#333;color:#fff;font-size:13px;font-weight:700}
   #list{overflow-x:auto}
-  .msg{font-size:26px;padding:20px;border:3px dashed #999;border-radius:12px}
-  @media (max-width:700px){.btn{font-size:22px;min-height:54px;padding:4px 12px}}
-  .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:6px 0 14px}
-  .sd{border:3px solid #111;border-radius:12px;background:#fff;padding:6px 8px;min-width:0}
-  .sd.we{background:#f1f1f1}.sd.td{border-color:#d00;box-shadow:0 0 0 3px #d00 inset}
-  .sd .t{font-size:20px;font-weight:800}.sd .a{font-size:26px;font-weight:800;color:#8a5a00}.sd .p{font-size:20px;font-weight:800;color:#0b4a8f}.sd .z{font-size:18px;color:#777}
-  .sh{font-size:30px;font-weight:800;margin:14px 0 2px}.sn{font-size:20px;color:#444;margin-bottom:4px}
+  .msg{font-size:14px;padding:12px;border:2px dashed #bbb;border-radius:10px}
+  @media (max-width:700px){.btn{font-size:13px;min-height:30px;padding:2px 8px}}
+  .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:4px 0 8px}
+  .sd{border:1.5px solid #ccc;border-radius:8px;background:#fff;padding:3px 6px;min-width:0}
+  .sd.we{background:#f1f1f1}.sd.td{border-color:#d00;box-shadow:0 0 0 1px #d00 inset}
+  .sd .t{font-size:11px;font-weight:700}.sd .a{font-size:13px;font-weight:700;color:#8a5a00}.sd .p{font-size:11px;font-weight:700;color:#0b4a8f}.sd .z{font-size:10px;color:#777}
+  .sh{font-size:15px;font-weight:800;margin:8px 0 2px}.sn{font-size:11px;color:#555;margin-bottom:3px}
   @media (max-width:700px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="/bathhub-a11y.js" defer></script></head>
@@ -149,7 +149,7 @@ function draw(){
   box.textContent = '';
   var W = window.innerWidth, cols = W < 700 ? 1 : W < 1100 ? Math.min(N, 2) : N;
   box.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0,1fr))';
-  var dn = N === 1 ? 44 : N === 2 ? 38 : N === 3 ? 28 : N === 4 ? 22 : 18, am = N === 1 ? 30 : N === 2 ? 26 : N === 3 ? 20 : N === 4 ? 15 : 13, ch = N === 1 ? 110 : N === 2 ? 96 : N === 3 ? 82 : N === 4 ? 66 : 58;
+  var dn = N === 1 ? 18 : N === 2 ? 15 : N === 3 ? 13 : N === 4 ? 11 : 10, am = N === 1 ? 14 : N === 2 ? 12 : N === 3 ? 11 : N === 4 ? 9 : 8, ch = N === 1 ? 56 : N === 2 ? 46 : N === 3 ? 40 : N === 4 ? 34 : 30;
   box.style.setProperty('--dn', dn + 'px'); box.style.setProperty('--am', am + 'px'); box.style.setProperty('--ch', ch + 'px');
   var first = null, last = null, rangeCh = [];
   for (var i = 0; i < N; i++) {
