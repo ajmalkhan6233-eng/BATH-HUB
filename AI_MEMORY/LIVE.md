@@ -1,4 +1,4 @@
-AUTOSAVE 2026-11-23 17:12 SL | branch work @ 00182a5 | last: Cheque calendar: small, equal boxes, one-line chips, 4-chip key (v170) | uncommitted files: 1 | server health: ok
+AUTOSAVE 2026-11-23 17:27 SL | branch work @ 0ba4720 | last: autosave: LIVE.md state line 2026-11-23 17:12 | uncommitted files: 1 | server health: ok
 17:04 | PC | RBH_CHEQUE_CALENDAR_TIDY_23NOV | DONE | small calendar: equal 40px boxes (checked 1366px: 3 cards, no sideways scroll), 1 title, 4-chip key, K amounts, Fridays tinted; 'wrote' chip stays removed as before; 1920 not shot (page max 1100px) | AJ: Ctrl+F5 twice, open Cheque Calendar
 AUTOSAVE 2026-11-23 16:57 SL | branch work @ 8b47d34 | last: autosave: LIVE.md state line 2026-11-23 16:42 | uncommitted files: 1 | server health: ok
 17 Nov 11:50 | Leo 10887 fix + Lucky Trading V1018/V1017 + POS task | DONE on DB (backup 11:15 passed, apex-server restarted, health ok) | Ajmal: Ctrl+F5 twice; merge this branch into work to get the Vendor 360 "In our favour" label
