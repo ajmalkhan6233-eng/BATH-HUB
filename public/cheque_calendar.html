@@ -70,7 +70,7 @@
   </div>
   <div class="sh">Next 14 days: money the bank needs</div><div class="sn">Gold = cheque date is that day. Blue = likely, because we write on Friday / Saturday and it usually arrives Monday / Tuesday.</div><div class="strip" id="strip"></div>
   <div class="sum" id="sum"></div>
-  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">~ maybe = Friday/Saturday cheque, usually Mon/Tue &nbsp; ✎ = day we wrote it</span><span id="kn"></span></div>
+  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">~ maybe = Friday/Saturday cheque, usually Mon/Tue</span><span id="kn"></span></div>
   <div id="msg"></div>
   <div class="months" id="months"></div>
   <div class="lt" id="lt">All cheques in these months</div>
@@ -173,10 +173,8 @@ function draw(){
       var cell = el('div', cls);
       cell.appendChild(el('div', 'n', day));
       if (du.length) cell.appendChild(el('div', 'a', short(sum(du))));
-      if (wv.length) cell.appendChild(el('div', 'w', N <= 3 ? '✎ wrote ' + short(sum(wv)) : '✎'));
       var mbo = (MB[k] || []).filter(function(x){ return du.indexOf(x) < 0; }); if (mbo.length) cell.appendChild(el('div', 'mb', N <= 3 ? '~ maybe ' + short(sum(mbo)) : '~' + short(sum(mbo))));
-      if ((du.length || wv.length || mbo.length) && !(du.length || wv.length)) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
-      if (du.length || wv.length) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
+      if (du.length) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
       g.appendChild(cell);
     }
     mm.appendChild(g); box.appendChild(mm);
@@ -188,7 +186,7 @@ function draw(){
   [['Waiting to clear', 'Rs ' + money(sum(wait)), wait.length + ' cheques'], ['Already cleared', 'Rs ' + money(sum(clr)), clr.length + ' cheques'], ['Total written (all time, waiting)', 'Rs ' + money(sum(ALL.filter(function(c){ return c.status === 'ISSUED'; }))), '']].forEach(function(a){
     var dv = el('div'); var bb = el('b', null, a[1]); dv.appendChild(bb); dv.appendChild(document.createTextNode(a[0] + (a[2] ? ' · ' + a[2] : ''))); s.appendChild(dv); });
   // list
-  var shown = SEL ? ALL.filter(function(c){ return c.due_date === SEL || c.cheque_date === SEL; }) : inR;
+  var shown = SEL ? ALL.filter(function(c){ return c.due_date === SEL; }) : inR;
   document.getElementById('lt').textContent = SEL ? 'Cheques on ' + nice(SEL) + ' (tap the day again to see all)' : 'All cheques in these months';
   drawList(shown); drawStrip();
   document.getElementById('kn').textContent = N >= 4 ? 'Small numbers are thousands: 120 = Rs 120,000' : '';
@@ -199,14 +197,14 @@ function drawList(rows){
   if (!rows.length) { box.appendChild(el('div', 'msg', 'No cheques in this view.')); return; }
   rows = rows.slice().sort(function(a, b){ return (a.due_date || '').localeCompare(b.due_date || '') || a.id - b.id; });
   var t = el('table'), hd = el('tr');
-  [['Comes to bank', ''], ['Vendor', ''], ['Cheque no', ''], ['Amount (Rs)', 'r'], ['We wrote it', ''], ['Status', '']].forEach(function(h){ var th = el('th', h[1], h[0]); hd.appendChild(th); });
+  [['Comes to bank', ''], ['Vendor', ''], ['Cheque no', ''], ['Amount (Rs)', 'r'], ['Status', '']].forEach(function(h){ var th = el('th', h[1], h[0]); hd.appendChild(th); });
   t.appendChild(hd);
   var lastD = null;
   rows.forEach(function(c){
-    if (c.due_date !== lastD) { lastD = c.due_date; var dr = el('tr', 'dayhead'), td = el('td', null, nice(c.due_date) + '  ·  ' + daysLeft(c.due_date) + '  ·  Rs ' + money(sum(rows.filter(function(x){ return x.due_date === c.due_date; })))); td.colSpan = 6; dr.appendChild(td); t.appendChild(dr); }
+    if (c.due_date !== lastD) { lastD = c.due_date; var dr = el('tr', 'dayhead'), td = el('td', null, nice(c.due_date) + '  ·  ' + daysLeft(c.due_date) + '  ·  Rs ' + money(sum(rows.filter(function(x){ return x.due_date === c.due_date; })))); td.colSpan = 5; dr.appendChild(td); t.appendChild(dr); }
     var tr = el('tr');
     tr.appendChild(el('td', null, nice(c.due_date))); tr.appendChild(el('td', null, c.vendor_name || c.payee || '')); tr.appendChild(el('td', null, c.cheque_no || '-'));
-    tr.appendChild(el('td', 'r', money(c.amount))); tr.appendChild(el('td', null, nice(c.cheque_date)));
+    tr.appendChild(el('td', 'r', money(c.amount)));
     var sc = el('td'); sc.appendChild(el('span', 'st ' + stOf(c), stWord(c))); tr.appendChild(sc); t.appendChild(tr);
   });
   box.appendChild(t);
