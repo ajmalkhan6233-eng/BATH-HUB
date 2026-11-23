@@ -95,7 +95,7 @@
     opts.forEach(function (o) { var b = el('button', o[0] === on ? 'on' : '', o[1]); b.setAttribute('aria-pressed', o[0] === on ? 'true' : 'false'); b.addEventListener('click', function () { if (o[0] !== on) fn(o[0]); }); s.appendChild(b); });
     return s;
   }
-  function dueText(d, today) { var w = dueWord(d, today); return /overdue|no date/.test(w) ? w : 'due ' + w; }
+  function dueText(d, today) { return d ? window.RBHD.full(d, today) : 'no date'; }   // 23 Nov: ONE date style everywhere (dates.js)
   function go(t) { var b = document.querySelector('#tabs .tab[data-tab="' + t + '"]'); if (b) b.click(); }
   function duePill(due) { return due.overdue_count ? pill(due.overdue_count + ' overdue · ' + rs(due.overdue_amount), 'bad') : due.pending_dates ? pill(plural(due.pending_dates, 'bill needs a date', 'bills need a date'), 'amber') : pill('Nothing overdue', 'ok'); }
 
@@ -154,7 +154,7 @@
 
     var up = card('Coming up');   // AJ 22 Nov: what is about to fall due (cheques now; his lease and other dates when he gives them)
     (s.cheques || []).filter(function (x) { return x.due; }).sort(function (a, b) { return a.due < b.due ? -1 : 1; }).slice(0, 4).forEach(function (x) {
-      up.appendChild(irow('cheque', 'pink', 'Cheque · ' + (x.who || ''), x.due < today ? 'Date passed' : x.due.slice(8, 10) + '-' + x.due.slice(5, 7), rs(x.amount), x.due < today ? 'down' : '', function () { MV = 'cheques'; go('money'); }));
+      up.appendChild(irow('cheque', 'pink', 'Cheque · ' + (x.who || ''), window.RBHD.full(x.due, today), rs(x.amount), x.due < today ? 'down' : '', function () { MV = 'cheques'; go('money'); }));
     });
     if (up.querySelector('.row')) box.appendChild(up);
 
@@ -246,7 +246,7 @@
       box.appendChild(ledger('Customers owe you', s.credit.total, pill(plural(s.credit.list.length, 'customer', 'customers'), s.credit.list.length ? 'amber' : 'ok')));
       var c = card(null);
       if (!s.credit.list.length) c.appendChild(el('div', 'note', 'Nobody owes you. All clear.'));
-      s.credit.list.forEach(function (x) { var late = x.oldest && x.oldest < today; c.appendChild(row2(x.who, x.oldest ? 'Oldest bill ' + dueWord(x.oldest, today).replace(' overdue', ' ago') : '', rs(x.owed), late ? 'down' : '')); });
+      s.credit.list.forEach(function (x) { var late = x.oldest && x.oldest < today; c.appendChild(row2(x.who, x.oldest ? 'Oldest bill ' + window.RBHD.full(x.oldest, today) : '', rs(x.owed), late ? 'down' : '')); });
       box.appendChild(c);
     } else if (MV === 'pay') {
       if (!s.vendors) { box.appendChild(el('div', 'note', NODATA)); return; }

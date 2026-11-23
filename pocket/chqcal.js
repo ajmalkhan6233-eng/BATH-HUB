@@ -12,10 +12,7 @@
   var key = function (y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); };
   function sum(a) { return a.reduce(function (t, c) { return t + (c.amount || 0); }, 0); }
   function short(v) { return v >= 1e6 ? (Math.round(v / 1e5) / 10) + 'M' : v >= 1000 ? (Math.round(v / 100) / 10) + 'K' : String(Math.round(v)); }
-  function nice(k, today) {   // "Fri 25 Dec 2026 · in 32 days"
-    var d = new Date(k + 'T00:00:00Z'), n = Math.round((Date.parse(k) - Date.parse(today)) / 86400000);
-    return DW[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MN[d.getUTCMonth()].slice(0, 3) + ' ' + d.getUTCFullYear() + ' · ' + (n === 0 ? 'today' : n > 0 ? 'in ' + n + (n === 1 ? ' day' : ' days') : Math.abs(n) + (n === -1 ? ' day ago' : ' days ago'));
-  }
+  function nice(k, today) { return window.RBHD.full(k, today); }   // "Fri 25 Dec 2026 · in 32 days" (dates.js)
   function setZ(v, s, box) { Z = Math.max(1, Math.min(3, v)); P.redraw(); }
 
   function draw(s, box, today) {
@@ -65,7 +62,7 @@
     pinch(wrap); box.appendChild(wrap);
   }
   function day(k, L, today) {
-    var rows = L.map(function (c) { return [(c.who || 'Cheque') + (c.ref ? ' · No. ' + c.ref : '') + (c.wrote ? ' · wrote ' + c.wrote.slice(8) + '-' + c.wrote.slice(5, 7) : '') + ' · ' + (c.st === 'C' ? 'cleared' : c.st === 'B' ? 'bounced' : 'waiting'), rs(c.amount), c.st === 'B' ? 'down' : '']; });
+    var rows = L.map(function (c) { return [(c.who || 'Cheque') + (c.ref ? ' · No. ' + c.ref : '') + (c.wrote ? ' · wrote ' + window.RBHD.nice(c.wrote) : '') + ' · ' + (c.st === 'C' ? 'cleared' : c.st === 'B' ? 'bounced' : 'waiting'), rs(c.amount), c.st === 'B' ? 'down' : '']; });
     rows.push(['Total', rs(sum(L)), 'up']);
     P.sheet(nice(k, today), rows);
   }
@@ -79,5 +76,5 @@
     }, { passive: true });
     node.addEventListener('touchend', function () { d0 = 0; }, { passive: true });
   }
-  P.EXTRA.chqcal = function (s, box) { draw(s, box, new Date(Date.parse(s.at) + 5.5 * 3600e3).toISOString().slice(0, 10)); };
+  P.EXTRA.chqcal = function (s, box) { draw(s, box, window.RBHD.today(s)); };
 })();

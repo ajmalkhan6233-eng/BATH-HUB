@@ -123,13 +123,12 @@
       sq = q.value; res.textContent = '';
       if (!s.items) { res.appendChild(el('div', 'note', 'No data yet. Update the shop PC app, then refresh.')); return; }
       var frag = document.createDocumentFragment();
-      if (!q.value.trim()) {
-        if (!cart.length) { res.appendChild(el('div', 'note', 'Type a name or code. Tap + Add, then Review bill.')); return; }
-        frag.appendChild(el('div', 'lbl', 'In this bill')); frag.lastChild.style.marginTop = '12px';
-        cart.forEach(function (l) { frag.appendChild(itemRow([l.code, l.name, l.stock, l.price, l.pid])); });
+      if (!q.value.trim()) {   // 23 Nov (AJ): every item is listed by default; the list scrolls inside its own box
+        s.items.slice(0, 600).forEach(function (x) { frag.appendChild(itemRow(x)); });
+        if (s.items.length > 600) frag.appendChild(el('div', 'note', 'Showing the first 600. Type a name or code to find the rest.'));
         res.appendChild(frag); return;
       }
-      var f = P.find(s.items, q.value, 30); if (!f.length) { res.appendChild(el('div', 'note', 'No matching items. Try a shorter word or the code.')); return; }
+      var f = P.find(s.items, q.value, 60); if (!f.length) { res.appendChild(el('div', 'note', 'No matching items. Try a shorter word or the code.')); return; }
       f.forEach(function (x) { frag.appendChild(itemRow(x)); }); res.appendChild(frag);
     }
     q.addEventListener('input', draw); draw();

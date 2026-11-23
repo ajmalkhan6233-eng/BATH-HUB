@@ -54,8 +54,8 @@
     if (s.daily && s.daily.length) {
       var mx = s.daily.reduce(function (a, y) { return y.total > a.total ? y : a; }, s.daily[0]);
       var dl = card('Last ' + s.daily.length + ' days sales', el('span', 'num', 'Best ' + rs(mx.total)));
-      dl.appendChild(P.bars(s.daily));
-      var lt = s.daily[s.daily.length - 1]; dl.appendChild(P.row2('Latest day · ' + lt.d.slice(5), P.plural(lt.n, 'bill', 'bills'), rs(lt.total)));
+      dl.appendChild(P.bars(s.daily)); dl.appendChild(el('div', 'note', window.RBHD.nice(s.daily[0].d) + '  →  ' + window.RBHD.nice(s.daily[s.daily.length - 1].d)));
+      var lt = s.daily[s.daily.length - 1]; dl.appendChild(P.row2('Latest day · ' + window.RBHD.nice(lt.d), P.plural(lt.n, 'bill', 'bills'), rs(lt.total)));
       box.appendChild(dl);
     }
   }

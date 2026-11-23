@@ -262,3 +262,5 @@ main#app[hidden]~.bar2{display:none!important}
 .cc-wrap.z1 .cc-d{min-height:22px}.cc-wrap.z1 .cc-n{font-size:8px}.cc-wrap.z1 .cc-a{font-size:7px}.cc-wrap.z1 .cc-mt{font-size:12px}.cc-wrap.z1 .cc-dow{font-size:8px}
 .cc-wrap.z3 .cc-d{min-height:48px;padding-top:3px}.cc-wrap.z3 .cc-n{font-size:15px;font-weight:700}.cc-wrap.z3 .cc-a{font-size:11px}.cc-wrap.z3 .cc-dow{font-size:11px}.cc-wrap.z3 .cc-mt{font-size:16px}
 .cc-note{font-size:10px;color:var(--ink2);text-align:center}
+
+.results{max-height:60dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:8px}
