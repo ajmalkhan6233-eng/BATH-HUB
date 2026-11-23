@@ -23,11 +23,12 @@ async function queueReceiptForBill(pool, bill, opts = {}) {
     try {
         await ensureTables(pool);
         const ref = String(bill.bill_number);
-        const have = await pool.query(`SELECT id FROM receipt_queue WHERE sale_reference = $1 LIMIT 1`, [ref]);
-        if (have.rows.length) return { status: 'already_queued', queue_id: have.rows[0].id };
-
+        const have = await pool.query(`SELECT id, status FROM receipt_queue WHERE sale_reference = $1 LIMIT 1`, [ref]);
         const phone = sender.normalizeWhatsappPhone(bill.customer_phone);
-        const ins = await pool.query(
+        // 23 Nov (AJ, S037): a bill saved with NO phone, then edited to add one, must now get its receipt. Only a 'no phone' row is revived; a sent one is never re-sent.
+        if (have.rows.length && !(have.rows[0].status === 'no phone' && phone)) return { status: 'already_queued', queue_id: have.rows[0].id };
+        if (have.rows.length) await pool.query(`UPDATE receipt_queue SET customer_phone = $1, status = 'queued', amount = $2 WHERE id = $3`, [String(bill.customer_phone || '').slice(0, 30), Number(bill.total) || null, have.rows[0].id]);
+        const ins = have.rows.length ? { rows: [have.rows[0]] } : await pool.query(
             `INSERT INTO receipt_queue (customer_phone, sale_reference, amount, status) VALUES ($1,$2,$3,$4) RETURNING id`,
             [String(bill.customer_phone || '').slice(0, 30), ref, Number(bill.total) || null, phone ? 'queued' : 'no phone']);
         const id = ins.rows[0].id;

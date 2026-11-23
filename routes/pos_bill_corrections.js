@@ -207,6 +207,10 @@ router.put('/pos-bills/:id', ownerOnly, async (req, res) => {
 
         const nb = (await pool.query(`SELECT * FROM pos_bills WHERE id = $1`, [bill.id])).rows[0];
         const ni = (await pool.query(`SELECT id, item_name, item_code, qty, unit_price, line_total FROM pos_bill_items WHERE bill_id = $1 ORDER BY id`, [bill.id])).rows;
+        if (nb.customer_phone && nb.customer_phone !== bill.customer_phone) {   // 23 Nov (AJ, S037): phone added or changed on edit -> link the customer and send the receipt
+            try { await require('./invoice_receipts').attachCustomer(nb.id); } catch (e) { console.warn('[bill edit] customer link skipped:', e.message); }
+            try { require('../utils/autoReceipt').afterSale(pool, { ...nb, items: ni }); } catch (e) {}
+        }
         res.json({ ...nb, items: ni, edited_by: whoOf(req), stock_adjusted: billDeducted(bill) });
     } catch (e) {
         await client.query('ROLLBACK').catch(() => {});
