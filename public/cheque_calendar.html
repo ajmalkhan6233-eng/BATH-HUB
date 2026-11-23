@@ -9,34 +9,34 @@
 <style>
   *{box-sizing:border-box}
   body{margin:0;background:#fffdf7;color:#111;font-size:14px}
-  .wrap{padding:10px 14px 30px;max-width:1100px;margin:0 auto}
-  .ttl{font-size:22px;font-weight:800;margin:2px 0 8px}
+  .wrap{padding:6px 10px 20px;max-width:1100px;margin:0 auto}
+  .ttl{display:none}   /* embedded in the app shell, which already shows the title */
   .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
   .bar b{font-size:14px}
-  .btn{font:inherit;font-size:14px;font-weight:600;min-height:32px;min-width:34px;padding:2px 12px;border:1.5px solid #888;border-radius:8px;background:#fff;color:#111;cursor:pointer}
+  .btn{font:inherit;font-size:12px;font-weight:600;min-height:26px;min-width:30px;padding:1px 9px;border:1.5px solid #888;border-radius:8px;background:#fff;color:#111;cursor:pointer}
   .btn.on{background:#111;color:#fff}
   .sum{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px}
-  .sum div{border:1.5px solid #ccc;border-radius:10px;padding:5px 12px;font-size:12px;background:#fff}
-  .sum b{font-size:18px;display:block}
+  .sum div{border:1px solid #ccc;border-radius:8px;padding:3px 10px;font-size:11px;background:#fff}
+  .sum b{font-size:14px;display:block}
   .months{display:grid;gap:10px}
-  .m{border:1.5px solid #ccc;border-radius:12px;background:#fff;padding:6px}
-  .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .mh .mt{margin:0;font-size:15px;font-weight:800}
-  .mh span{font-size:12px;font-weight:600}
+  .m{border:1.5px solid #ccc;border-radius:10px;background:#fff;padding:6px;min-width:0}
+  .mh{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;min-height:20px;white-space:nowrap}
+  .mh .mt{margin:0;font-size:14px;font-weight:800}
+  .mh span{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
   .g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
-  .dow{text-align:center;font-weight:700;font-size:11px;background:#f0f0f0;border-radius:5px;padding:1px 0}
-  .d{min-width:0;min-height:var(--ch,40px);border:1.5px solid #ddd;border-radius:6px;padding:1px 3px;background:#fff;cursor:default;overflow:hidden}
-  .d .n{font-size:var(--dn,13px);font-weight:700;line-height:1.05}
-  .d .a{font-size:var(--am,11px);font-weight:700;line-height:1.1;margin-top:1px}
-  .d .w{font-size:calc(var(--am,20px) - 4px);font-weight:700;color:#0b4a8f}
-  .d .mb{font-size:calc(var(--am,20px) - 4px);font-weight:800;color:#0b4a8f;background:#e3efff;border-radius:5px;padding:0 3px;margin-top:2px}
+  .dow{text-align:center;font-weight:700;font-size:10px;background:#f0f0f0;border-radius:4px;padding:0}
+  .d{min-width:0;height:40px;border:1px solid #ddd;border-radius:5px;padding:1px 3px;background:#fff;cursor:default;overflow:hidden}
+  .d .n{font-size:11px;font-weight:700;line-height:1.1}
+  .d.fri{background:#fffaf0}
+  .d .a,.d .mb{font-size:10px;font-weight:700;line-height:1.15;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .d .mb{color:#0b4a8f;background:#e3efff;border-radius:4px;padding:0 2px}
   .d.out{background:#f4f4f4;border-color:#e2e2e2;color:#aaa}
   .d.today{border-color:#d00;box-shadow:0 0 0 1px #d00 inset}
   .d.due{background:#ffe9a8;border-color:#a87a00;cursor:pointer}
   .d.clr{background:#c9f0cf;border-color:#1c7a2e;cursor:pointer}
   .d.bnc{background:#ffc9c9;border-color:#b00;cursor:pointer}
   .d.sel{outline:2px solid #111}
-  .key{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin:4px 0 8px;font-weight:600}
+  .key{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;margin:4px 0 8px;font-weight:600}
   .key i{display:inline-block;width:16px;height:12px;border:1px solid #888;border-radius:3px;vertical-align:middle;margin-right:6px}
   .lt{font-size:16px;font-weight:800;margin:12px 0 6px}
   table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
@@ -70,7 +70,7 @@
   </div>
   <div class="sh">Next 14 days: money the bank needs</div><div class="sn">Gold = cheque date is that day. Blue = likely, because we write on Friday / Saturday and it usually arrives Monday / Tuesday.</div><div class="strip" id="strip"></div>
   <div class="sum" id="sum"></div>
-  <div class="key"><span><i style="background:#ffe9a8"></i>Cheque comes to the bank (waiting)</span><span><i style="background:#c9f0cf"></i>Cleared (paid)</span><span><i style="background:#ffc9c9"></i>Bounced</span><span style="color:#0b4a8f">~ maybe = Friday/Saturday cheque, usually Mon/Tue</span><span id="kn"></span></div>
+  <div class="key"><span><i style="background:#ffe9a8"></i>Waiting</span><span><i style="background:#e3efff"></i>Maybe (Fri/Sat cheque, usually Mon/Tue)</span><span><i style="background:#c9f0cf"></i>Cleared</span><span><i style="background:#fff;border-color:#d00"></i>Today</span></div>
   <div id="msg"></div>
   <div class="months" id="months"></div>
   <div class="lt" id="lt">All cheques in these months</div>
@@ -87,7 +87,7 @@ function pad(x){ return (x < 10 ? '0' : '') + x; }
 function key(y, m, d){ return y + '-' + pad(m + 1) + '-' + pad(d); }
 function todayKey(){ var t = new Date(); return key(t.getFullYear(), t.getMonth(), t.getDate()); }
 function money(v){ return Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
-function short(v){ v = Number(v || 0); if (N <= 2 || v < 1000) return money(v); var k = v / 1000; return (Math.round(k * 10) / 10) + (N >= 4 ? '' : 'K'); }
+function short(v){ v = Number(v || 0); if (v < 1000) return money(v); return (Math.round(v / 100) / 10) + 'K'; }
 function nice(k){ if (!k) return '-'; var p = k.split('-'); return parseInt(p[2], 10) + ' ' + MN[parseInt(p[1], 10) - 1].slice(0, 3) + ' ' + p[0]; }
 function el(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
 function stOf(c){ return c.status === 'CLEARED' ? 'C' : c.status === 'BOUNCED' ? 'B' : 'W'; }
@@ -147,33 +147,34 @@ function sum(a){ return a.reduce(function(s, c){ return s + Number(c.amount || 0
 function draw(){
   var bk = bucket(), MB = maybeMap(), tk = todayKey(), box = document.getElementById('months');
   box.textContent = '';
-  var W = window.innerWidth, cols = W < 700 ? 1 : W < 1100 ? Math.min(N, 2) : N;
+  var W = window.innerWidth, cols = W < 700 ? 1 : W < 1000 ? Math.min(N, 2) : Math.min(N, 3);
   box.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0,1fr))';
-  var dn = N === 1 ? 18 : N === 2 ? 15 : N === 3 ? 13 : N === 4 ? 11 : 10, am = N === 1 ? 14 : N === 2 ? 12 : N === 3 ? 11 : N === 4 ? 9 : 8, ch = N === 1 ? 56 : N === 2 ? 46 : N === 3 ? 40 : N === 4 ? 34 : 30;
-  box.style.setProperty('--dn', dn + 'px'); box.style.setProperty('--am', am + 'px'); box.style.setProperty('--ch', ch + 'px');
+
   var first = null, last = null, rangeCh = [];
   for (var i = 0; i < N; i++) {
     var d0 = new Date(base.getFullYear(), base.getMonth() + i, 1), y = d0.getFullYear(), m = d0.getMonth();
     var days = new Date(y, m + 1, 0).getDate(), lead = d0.getDay();
     if (i === 0) first = key(y, m, 1); last = key(y, m, days);
-    var mm = el('div', 'm'), mh = el('div', 'mh'); mh.appendChild(el('div', 'mt', (N >= 4 ? MN[m].slice(0, 3) : MN[m]) + ' ' + y));
+    var mm = el('div', 'm'), mh = el('div', 'mh'); mh.appendChild(el('div', 'mt', MN[m] + ' ' + y));
     var mTot = 0, mCnt = 0;
     for (var dd = 1; dd <= days; dd++) { var L = bk.due[key(y, m, dd)]; if (L) { L.forEach(function(c){ if (c.status === 'ISSUED') { mTot += Number(c.amount || 0); mCnt++; } }); } }
-    mh.appendChild(el('span', null, mCnt ? (N >= 4 ? 'Rs ' + short(mTot) : 'Waiting: Rs ' + money(mTot) + ' (' + mCnt + ')') : (N >= 4 ? '-' : 'Nothing waiting')));
+    mh.appendChild(el('span', null, mCnt ? 'Waiting: Rs ' + money(mTot) + ' (' + mCnt + ')' : 'Nothing waiting'));
     mm.appendChild(mh);
     var g = el('div', 'g');
-    DW.forEach(function(w){ g.appendChild(el('div', 'dow', N >= 4 ? w.charAt(0) : w)); });
+    DW.forEach(function(w){ g.appendChild(el('div', 'dow', w)); });
     for (var b = 0; b < lead; b++) g.appendChild(el('div', 'd out'));
     for (var day = 1; day <= days; day++) {
       var k = key(y, m, day), du = bk.due[k] || [], wv = bk.wr[k] || [];
       var cls = 'd', st = null;
       if (du.length) { st = du.some(function(c){ return c.status === 'BOUNCED'; }) ? 'bnc' : du.some(function(c){ return c.status === 'ISSUED'; }) ? 'due' : 'clr'; cls += ' ' + st; }
       if (k === tk) cls += ' today';
+      if (new Date(y, m, day).getDay() === 5) cls += ' fri';
       if (SEL === k) cls += ' sel';
       var cell = el('div', cls);
       cell.appendChild(el('div', 'n', day));
       if (du.length) cell.appendChild(el('div', 'a', short(sum(du))));
-      var mbo = (MB[k] || []).filter(function(x){ return du.indexOf(x) < 0; }); if (mbo.length) cell.appendChild(el('div', 'mb', N <= 3 ? '~ maybe ' + short(sum(mbo)) : '~' + short(sum(mbo))));
+      var mbo = (MB[k] || []).filter(function(x){ return du.indexOf(x) < 0; }); if (mbo.length) cell.appendChild(el('div', 'mb', '~ ' + short(sum(mbo))));
+      if (du.length || mbo.length) cell.title = (du.length ? 'Due Rs ' + money(sum(du)) + '. ' : '') + (mbo.length ? 'Maybe Rs ' + money(sum(mbo)) : '');
       if (du.length) { (function(kk){ cell.addEventListener('click', function(){ SEL = (SEL === kk ? null : kk); draw(); }); })(k); }
       g.appendChild(cell);
     }
@@ -189,7 +190,7 @@ function draw(){
   var shown = SEL ? ALL.filter(function(c){ return c.due_date === SEL; }) : inR;
   document.getElementById('lt').textContent = SEL ? 'Cheques on ' + nice(SEL) + ' (tap the day again to see all)' : 'All cheques in these months';
   drawList(shown); drawStrip();
-  document.getElementById('kn').textContent = N >= 4 ? 'Small numbers are thousands: 120 = Rs 120,000' : '';
+  
   Array.prototype.forEach.call(document.querySelectorAll('[data-n]'), function(b){ b.classList.toggle('on', Number(b.getAttribute('data-n')) === N); });
 }
 function drawList(rows){
