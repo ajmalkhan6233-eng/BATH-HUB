@@ -62,7 +62,7 @@
     pinch(wrap); box.appendChild(wrap);
   }
   function day(k, L, today) {
-    var rows = L.map(function (c) { return [(c.who || 'Cheque') + (c.ref ? ' · No. ' + c.ref : '') + (c.wrote ? ' · wrote ' + window.RBHD.nice(c.wrote) : '') + ' · ' + (c.st === 'C' ? 'cleared' : c.st === 'B' ? 'bounced' : 'waiting'), rs(c.amount), c.st === 'B' ? 'down' : '']; });
+    var rows = L.map(function (c) { return [(c.who || 'Cheque') + (c.ref ? ' · No. ' + c.ref : '') + ' · ' + (c.st === 'C' ? 'cleared' : c.st === 'B' ? 'bounced' : 'waiting'), rs(c.amount), c.st === 'B' ? 'down' : '']; });
     rows.push(['Total', rs(sum(L)), 'up']);
     P.sheet(nice(k, today), rows);
   }
