@@ -20,7 +20,7 @@ async function rows(pool, sql, params) { try { return (await pool.query(sql, par
 
 /** Plain object, only what the phone shows. Any part that fails to read comes back as null (the phone shows "no data"). */
 async function build(pool, now = new Date()) {
-  const [tot, pays, low, stock, bills, cheques, top, billsToday, linesToday, daily, items, outList, credit, pBills, pItems, pSet] = await Promise.all([
+  const [tot, pays, low, stock, bills, chqAll, top, billsToday, linesToday, daily, items, outList, credit, pBills, pItems, pSet] = await Promise.all([
     rows(pool, `SELECT
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE),0) AS today, COUNT(*) FILTER (WHERE d = CURRENT_DATE) AS bills_today,
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE - 1),0) AS yesterday,
@@ -39,7 +39,7 @@ async function build(pool, now = new Date()) {
       LEFT JOIN (SELECT bill_id, SUM(amount) AS paid FROM vendor_payments GROUP BY bill_id) p ON p.bill_id = b.id
       LEFT JOIN (SELECT bill_id, SUM(amount) AS cn FROM vendor_credit_notes GROUP BY bill_id) n ON n.bill_id = b.id
       WHERE b.voided = false AND b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) > 0 ORDER BY b.due_date NULLS LAST, b.id LIMIT 200`),
-    rows(pool, `SELECT payee, cheque_no, amount, due_date, status FROM cheque_register WHERE status IN ('pending','held') ORDER BY due_date, id LIMIT 200`),
+    rows(pool, `SELECT b.vendor_name AS payee, c.cheque_no, c.amount, c.due_date, c.cheque_date, c.status FROM vendor_bill_cheques c JOIN vendor_bills b ON b.id = c.bill_id WHERE b.voided = false AND (c.status = 'ISSUED' OR (c.status IN ('CLEARED','BOUNCED') AND c.due_date >= CURRENT_DATE - 60)) ORDER BY c.due_date, c.id LIMIT 400`),   // 23 Nov: the real cheque table (same as the PC Cheque Calendar), not the retired register
     rows(pool, `SELECT i.item_name AS name, SUM(i.qty) AS qty, SUM(i.line_total) AS revenue FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id ${NV}
         AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date GROUP BY 1 ORDER BY 3 DESC LIMIT 8`),
     // ---- v2 (tabs): all read-only, small, capped ----
@@ -70,6 +70,7 @@ async function build(pool, now = new Date()) {
   const byBill = new Map();
   (linesToday || []).forEach((l) => { const a = byBill.get(l.bill_id) || []; a.push({ n: l.item_name, q: num(l.qty), a: num(l.line_total) }); byBill.set(l.bill_id, a); });
   const t = tot && tot[0];
+  const cheques = chqAll ? chqAll.filter((r) => r.status === 'ISSUED') : null;   // waiting only (Home, Money list)
   const today = ymd(new Date(now.getTime() + 5.5 * 3600e3));        // Sri Lanka date, for overdue maths
   const dueItems = [
     ...(bills || []).map((r) => ({ kind: 'bill', who: r.vendor_name, ref: r.bill_no, due: ymd(r.due_date), amount: num(r.owed) })),
@@ -113,7 +114,8 @@ async function build(pool, now = new Date()) {
     vendors: bills ? Object.values(bills.reduce((m, r) => { const k = r.vendor_name || '?'; const o = m[k] || (m[k] = { who: k, owed: 0, oldest: null, bills: [] });
       o.owed += num(r.owed); const d = ymd(r.due_date); if (d && (!o.oldest || d < o.oldest)) o.oldest = d; if (o.bills.length < 8) o.bills.push({ ref: r.bill_no, due: d, amount: num(r.owed) }); return m; }, {}))
       .sort((a, b) => b.owed - a.owed).slice(0, 40) : null,
-    cheques: cheques ? cheques.map((r) => ({ who: r.payee, ref: r.cheque_no, due: ymd(r.due_date), amount: num(r.amount), status: r.status })) : null,
+    cheques: cheques ? cheques.map((r) => ({ who: r.payee, ref: r.cheque_no, due: ymd(r.due_date), amount: num(r.amount), status: 'pending' })) : null,
+    chq_cal: chqAll ? chqAll.map((r) => ({ who: r.payee, ref: r.cheque_no, due: ymd(r.due_date), wrote: ymd(r.cheque_date), amount: num(r.amount), st: r.status === 'CLEARED' ? 'C' : r.status === 'BOUNCED' ? 'B' : 'W' })) : null,
   };
 }
 

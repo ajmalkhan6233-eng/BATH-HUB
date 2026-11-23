@@ -268,6 +268,7 @@
     if (!s.cheques) { box.appendChild(el('div', 'note', NODATA)); return; }
     var tot = s.cheques.reduce(function (a, x) { return a + x.amount; }, 0), od = s.cheques.filter(function (x) { return x.due && x.due < today; });
     box.appendChild(ledger('Cheques to clear', tot, pill(od.length ? od.length + ' overdue' : 'None overdue', od.length ? 'bad' : 'ok'), [plural(s.cheques.length, 'cheque', 'cheques')]));
+    if (EXTRA.chqcal) EXTRA.chqcal(s, box);   // AJ 23 Nov: the calendar, same as the PC
     var c = card(null);
     if (!s.cheques.length) c.appendChild(el('div', 'note', 'No cheques waiting'));
     s.cheques.forEach(function (x) { c.appendChild(row2(x.who || 'Cheque', (x.ref ? 'No. ' + x.ref + ' · ' : '') + dueText(x.due, today) + (x.status === 'held' ? ' · held' : ''), rs(x.amount), x.due && x.due < today ? 'down' : '')); });
@@ -383,6 +384,7 @@
       out_list: [{ code: 'D4', name: 'Shower head' }, { code: 'J9', name: 'Floor drain matt black' }],
       credit: { total: 275000, list: [{ who: 'Sample Builder', owed: 175000, oldest: D(-33) }, { who: 'Sample Contractor', owed: 100000, oldest: D(-4) }] },
       vendors: [{ who: 'Sample Vendor', owed: 120000, oldest: D(-3), bills: [{ ref: 'B1', due: D(-3), amount: 120000 }] }, { who: 'Sample Tiles', owed: 210000, oldest: D(6), bills: [{ ref: 'T4', due: D(6), amount: 210000 }] }],
+      chq_cal: [{ who: 'Sample Supplier', ref: 'C9', due: D(2), wrote: D(-1), amount: 65000, st: 'W' }, { who: 'Sample Vendor', ref: 'C7', due: D(-2), wrote: D(-9), amount: 40000, st: 'W' }, { who: 'Sample Tiles', ref: 'C5', due: D(-6), wrote: D(-14), amount: 90000, st: 'C' }, { who: 'Sample Tiles', ref: 'C11', due: D(9), wrote: D(0), amount: 210000, st: 'W' }, { who: 'Sample Supplier', ref: 'C12', due: D(9), wrote: D(0), amount: 55000, st: 'W' }, { who: 'Sample Vendor', ref: 'C3', due: D(-11), wrote: D(-20), amount: 30000, st: 'B' }, { who: 'Sample Vendor', ref: 'C14', due: D(21), wrote: D(5), amount: 120000, st: 'W' }],
       cheques: [{ who: 'Sample Supplier', ref: 'C9', due: D(2), amount: 65000, status: 'pending' }, { who: 'Sample Vendor', ref: 'C7', due: D(-2), amount: 40000, status: 'held' }] };
   })();
 
