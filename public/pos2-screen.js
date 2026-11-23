@@ -102,6 +102,7 @@
       $('pickerResults')._found = found; sel = -1;
     });
   }
+  $('scanBox').addEventListener('click', function () { $('picker').classList.remove('hidden'); $('picker').classList.add('open'); placePicker(); renderPicker(); });   // 23 Nov (AJ): touching the item box opens the list (it only opened after typing)
   var pt; $('scanBox').addEventListener('input', function () { $('picker').classList.add('open'); placePicker(); clearTimeout(pt); pt = setTimeout(renderPicker, 200); });
   var sel = -1;
   function pickRows() { return [].slice.call($('pickerResults').querySelectorAll('.pick-row')); }
