@@ -243,22 +243,22 @@ main#app[hidden]~.bar2{display:none!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:380px){.ltitle{font-size:30px}.big{font-size:30px}}
 
-/* Cheque calendar (chqcal.js) */
-.cc-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 16px 8px 0}
-.cc-s{border-radius:10px;padding:6px 8px;background:var(--fill)}.cc-s b{display:block;font-size:15px;font-weight:600}.cc-s span{font-size:11px;color:var(--ink2)}
+/* Cheque calendar (chqcal.js) - compact (AJ 23 Nov: too big) */
+.cc-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:2px 16px 6px 0}
+.cc-s{border-radius:8px;padding:4px 6px;background:var(--fill)}.cc-s b{display:block;font-size:12px;font-weight:600}.cc-s span{font-size:10px;color:var(--ink2)}
 .cc-w b{color:#B26B00}.cc-c b{color:#1E8E3E}.cc-b b{color:#D70015}
-.cc-bar{display:flex;gap:6px;align-items:center;margin:4px 16px 4px 0}.cc-gap{flex:1}
-.cc-btn{min-width:44px;min-height:40px;padding:0 12px;border-radius:10px;background:var(--fill);color:var(--blue);font-size:16px;font-weight:600}.cc-btn:disabled{opacity:.35}.cc-btn:active{opacity:.6}
-.cc-key{font-size:11px;color:var(--ink2);margin:6px 16px 10px 0}
-.cc-wrap{display:grid;gap:12px;margin-top:10px;touch-action:pan-y}
-.cc-m{border-radius:16px;padding:10px 8px;background:var(--glass);border:.5px solid var(--glassb)}
-.cc-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 4px 8px}.cc-mt{font-size:17px;font-weight:700}.cc-mw{font-size:12px;color:#B26B00;font-weight:600}
-.cc-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
-.cc-dow{text-align:center;font-size:11px;font-weight:600;color:var(--ink2)}
-.cc-d{min-height:46px;border-radius:8px;border:1.5px solid transparent;background:var(--fill);padding:2px 1px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;color:var(--ink);font:inherit;overflow:hidden}
-.cc-d.out{background:transparent}.cc-n{font-size:14px;font-weight:600}.cc-a{font-size:11px;font-weight:700;line-height:1.1}
+.cc-bar{display:flex;gap:4px;align-items:center;margin:2px 16px 2px 0}.cc-gap{flex:1}
+.cc-btn{min-width:34px;min-height:30px;padding:0 8px;border-radius:8px;background:var(--fill);color:var(--blue);font-size:13px;font-weight:600}.cc-btn:disabled{opacity:.35}.cc-btn:active{opacity:.6}
+.cc-key{font-size:10px;color:var(--ink2);margin:4px 16px 6px 0}
+.cc-wrap{display:grid;gap:8px;margin-top:8px;touch-action:pan-y}
+.cc-m{border-radius:12px;padding:6px 5px;background:var(--glass);border:.5px solid var(--glassb)}
+.cc-mh{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin:0 3px 4px}.cc-mt{font-size:14px;font-weight:700}.cc-mw{font-size:10px;color:#B26B00;font-weight:600}
+.cc-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.cc-dow{text-align:center;font-size:9px;font-weight:600;color:var(--ink2)}
+.cc-d{min-height:30px;border-radius:6px;border:1.5px solid transparent;background:var(--fill);padding:1px 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;color:var(--ink);font:inherit;overflow:hidden;line-height:1.1}
+.cc-d.out{background:transparent}.cc-n{font-size:11px;font-weight:600}.cc-a{font-size:9px;font-weight:700}
 .cc-d.due{background:#FFE9A8;color:#5a3d00}.cc-d.clr{background:#C9F0CF;color:#0d4d1b}.cc-d.bnc{background:#FFC9C9;color:#7a0010}
-.cc-d.today{border-color:var(--red)}.cc-d.sel{outline:3px solid var(--ink)}
-.cc-wrap.z1 .cc-d{min-height:34px}.cc-wrap.z1 .cc-n{font-size:11px}.cc-wrap.z1 .cc-a{font-size:9px}.cc-wrap.z1 .cc-mt{font-size:14px}
-.cc-wrap.z3 .cc-d{min-height:78px;padding-top:6px}.cc-wrap.z3 .cc-n{font-size:22px;font-weight:700}.cc-wrap.z3 .cc-a{font-size:13px}.cc-wrap.z3 .cc-dow{font-size:13px}.cc-wrap.z3 .cc-mt{font-size:21px}
-.cc-note{font-size:11px;color:var(--ink2);text-align:center}
+.cc-d.today{border-color:var(--red)}.cc-d.sel{outline:2px solid var(--ink)}
+.cc-wrap.z1 .cc-d{min-height:22px}.cc-wrap.z1 .cc-n{font-size:8px}.cc-wrap.z1 .cc-a{font-size:7px}.cc-wrap.z1 .cc-mt{font-size:12px}.cc-wrap.z1 .cc-dow{font-size:8px}
+.cc-wrap.z3 .cc-d{min-height:48px;padding-top:3px}.cc-wrap.z3 .cc-n{font-size:15px;font-weight:700}.cc-wrap.z3 .cc-a{font-size:11px}.cc-wrap.z3 .cc-dow{font-size:11px}.cc-wrap.z3 .cc-mt{font-size:16px}
+.cc-note{font-size:10px;color:var(--ink2);text-align:center}
