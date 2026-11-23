@@ -6,5 +6,6 @@ const pool = require('../../utils/pool'), sender = require('../../utils/whatsapp
   const q = (await pool.query(`SELECT id, status FROM receipt_queue WHERE sale_reference = $1 ORDER BY id DESC LIMIT 1`, [no])).rows[0];
   if (!q) { console.log('No receipt row for ' + no); process.exit(1); }
   if (q.status === 'sent') { console.log(no + ' was already sent. Not sending twice.'); process.exit(0); }
+  if (q.status !== 'queued') await pool.query(`UPDATE receipt_queue SET status = 'queued', attempts = 0, last_error = NULL WHERE id = $1`, [q.id]);   // failed / no-phone rows are reset so the sender takes them
   const r = await sender.sendReceiptForQueueItem(pool, q.id); console.log(no + ': ' + JSON.stringify(r)); process.exit(0);
 })().catch(e => { console.log('ERR', e.message); process.exit(1); });
