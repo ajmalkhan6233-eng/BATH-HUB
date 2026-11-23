@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
+    "test:module": "jest --passWithNoTests",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
     "start": "node server.js",
