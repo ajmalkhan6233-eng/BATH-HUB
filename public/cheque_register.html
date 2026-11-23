@@ -22,7 +22,7 @@
   header h1{margin:0;font-size:20px;font-weight:600;}
   header .sub{color:var(--gold-300);font-size:14px;margin-top:4px;}
   main{max-width:900px;margin:0 auto;padding:20px 16px;}
-  .card{background:var(--bg-surface);border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .card{clear:both;position:relative;background:var(--bg-surface);border:1px solid #e2dccb;border-radius:var(--radius);padding:20px;margin-bottom:16px;}
   .card h2{font-size:15px;margin:0 0 14px;color:var(--text-primary);}
   .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
   @media(max-width:560px){.grid3{grid-template-columns:1fr;}}
@@ -32,7 +32,7 @@
   .btn:hover{background:var(--gold-primary);}
   .btn-sm{padding:5px 10px;font-size:12px;margin-right:4px;}
   table{width:100%;border-collapse:collapse;font-size:14px;}
-  th{text-align:left;color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border-strong);position:sticky;top:0;background:var(--bg-surface);}
+  th{z-index:2;text-align:left;color:var(--text-muted);font-weight:600;font-size:12px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border-strong);position:sticky;top:0;background:var(--bg-surface);}
   td{padding:8px;border-bottom:1px solid var(--border-subtle);vertical-align:top;}
   tr:hover{background:var(--stone-100);}
   .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;}
@@ -55,7 +55,7 @@
 <body class="tight-cols">
 
 <header>
-  <h1>Cheque Register</h1>
+  <h1>Cheque Register <a class="btn" href="/owner#/chequecal" style="float:right;text-decoration:none;font-size:13px;padding:6px 14px">Calendar</a></h1>
   <div class="sub">Cheques the shop writes out — suppliers, investors, anyone owed</div>
 </header>
 
@@ -156,6 +156,14 @@ async function loadAlerts() {
   });
 }
 
+// Mon 24 Nov 2026 + days left (noon-local parse so the weekday never slips a day)
+function dueText(c) {
+  const d = new Date(String(c.due_date).slice(0, 10) + 'T12:00:00');
+  if (isNaN(d)) return esc(c.due_date);
+  const left = Math.round((d - new Date(new Date().toDateString() + ' 12:00:00')) / 864e5);
+  const lt = c.status !== 'pending' ? '' : left < 0 ? ` <b style="color:var(--red-600)">${-left}d overdue</b>` : left === 0 ? ' <b style="color:var(--red-600)">today</b>' : ` <span style="color:var(--text-muted)">${left}d left</span>`;
+  return d.toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'}) + lt;
+}
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 async function loadCheques() {
   const qs = currentFilter ? ('?status=' + currentFilter) : '';
@@ -169,7 +177,7 @@ async function loadCheques() {
   rows.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${esc(c.due_date)}</td>
+      <td style="white-space:nowrap">${dueText(c)}</td>
       <td>${esc(c.payee)}${c.notes ? `<br><span style="color:var(--text-muted);font-size:12px;">${esc(c.notes)}</span>` : ''}</td>
       <td>${esc(c.bank) || '—'}${c.cheque_no ? ' · #' + esc(c.cheque_no) : ''}</td>
       <td>${money(c.amount)}</td>
