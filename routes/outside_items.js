@@ -95,6 +95,14 @@ async function pendingRows(db) {
   const now = Date.now();
   return rows.map(r => ({ ...r, age_days: Math.floor((now - new Date(r.created_at).getTime()) / 86400000) }));
 }
+// AJ 24 Nov: how much we must pay the outside shops for the items taken today (real cost once typed, else the estimate x qty)
+router.get('/outside-items/today-pay', guard, async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT item_name, qty, COALESCE(real_cost, est_cost) AS cost, (real_cost IS NOT NULL) AS real FROM outside_cost_pending WHERE created_at::date = CURRENT_DATE AND status <> 'cancelled' ORDER BY id`);
+    const items = r.rows.map(x => ({ name: x.item_name, qty: Number(x.qty), cost: Number(x.cost), real: x.real, pay: Math.round(Number(x.qty) * Number(x.cost) * 100) / 100 }));
+    res.json({ total: Math.round(items.reduce((t, i) => t + i.pay * 100, 0)) / 100, items });
+  } catch (e) { res.json({ total: 0, items: [] }); }
+});
 router.get('/outside-items/pending', guard, async (req, res) => {
   try { await sweep(pool).catch(() => {}); const rows = await pendingRows(pool); res.json({ pending: rows, overdue: rows.filter(r => r.age_days > OVERDUE_DAYS).length }); }
   catch (e) { res.json({ pending: [], overdue: 0 }); }

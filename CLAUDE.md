@@ -72,3 +72,5 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 
 
 VENDOR WORKFLOW (AJ 24 Nov): bill -> GRN -> cheques allocated per bill -> return note (item line, stock and payable) -> balance per bill -> Vendor 360 'Vendor statement' (receipt design, routes/vendor_voucher.js + public/brand/voucher-template/voucher.html). Worked example in docs/AJ_LEARNED.md. Check for an existing return before creating one.
+
+VERSION LOCK (AJ 24 Nov): the app is locked at Version 1.0 (docs/V1_LOCK.md). Change nothing in app files without bumping VERSION and re-locking (node scripts/lock_version.js). Never add or restyle without Ajmal saying so.

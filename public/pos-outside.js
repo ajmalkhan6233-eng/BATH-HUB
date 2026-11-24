@@ -69,8 +69,34 @@
     if (foot && add && !foot.querySelector('.outside-btn')) { var b2 = mkBtn(); add.insertAdjacentElement('afterend', b2); }
   }
   // The server decides: owner/admin always, the cashier only when the owner switched it on in Settings (default off).
-  fetch('/api/outside-items/allowed', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-    if (d && d.allowed) mount();
-  }).catch(function () { /* no button when unknown */ });
+  // 24 Nov (AJ): the answer is asked again until the server really answers (the page can open before the login is ready), and the button is re-checked every 2 s, so it never disappears until a refresh.
+  var allowed = false, tries = 0;
+  function pay() {
+    if (!allowed) return;
+    fetch('/api/outside-items/today-pay', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d) return; var foot = document.querySelector('.item-foot'); if (!foot) return;
+      var c = $('outPay'); if (!c) { c = el('span', 'margin-left:8px;padding:3px 9px;border:1px solid #c9a24a;border-radius:12px;background:#fff8e6;font-size:12px;font-weight:700;color:#5a4300;white-space:nowrap'); c.id = 'outPay'; c.title = 'Total to pay the outside shops for items taken today'; foot.appendChild(c); }
+      c.textContent = 'Outside shops to pay today: Rs ' + Number(d.total || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      c.title = (d.items || []).map(function (i) { return i.name + ' ' + i.qty + ' x ' + i.cost + (i.real ? '' : ' (estimate)'); }).join(', ') || 'Nothing today';
+    }).catch(function () {});
+  }
+  function check() {
+    fetch('/api/outside-items/allowed', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d) { if (++tries < 20) setTimeout(check, 1500); return; }
+      if (d.allowed && !allowed) { allowed = true; setInterval(function () { mount(); sizeBox(); }, 2000); setInterval(pay, 60000); mount(); pay(); }
+    }).catch(function () { if (++tries < 20) setTimeout(check, 1500); });
+  }
+  // the item list can be pulled bigger or smaller (arrow in the corner); the size is remembered on this computer
+  var st = document.createElement('style');
+  st.textContent = '#picker{max-height:none!important}#picker .picker-results{resize:vertical;overflow:auto;min-height:90px;max-height:80vh!important}';
+  document.head.appendChild(st);
+  var ro = null;
+  function sizeBox() {
+    var r = document.querySelector('#picker .picker-results'); if (!r || r.dataset.rs) return; r.dataset.rs = '1';
+    var h = Number(localStorage.getItem('rbh_pick_h')); if (h >= 90) r.style.height = h + 'px';
+    if (window.ResizeObserver) { ro = new ResizeObserver(function () { var x = r.offsetHeight; if (x >= 90) localStorage.setItem('rbh_pick_h', String(x)); }); ro.observe(r); }
+  }
+  check(); setInterval(sizeBox, 2000);
+  var oldSave = save; save = function () { oldSave(); setTimeout(pay, 1500); };
   window.PosOutside = { open: open };
 })();

@@ -17,7 +17,7 @@
   function count() { return cart.reduce(function (a, l) { return a + l.qty; }, 0); }
   function pct() {   // the shop PC takes the discount as a percent (0 to 100, two decimals). Rs is turned into that percent here.
     var v = Number(dval) || 0, s = sub(), p = dmode === 'pct' ? v : (s > 0 ? v / s * 100 : 0);
-    return Math.round(Math.max(0, Math.min(100, p)) * 100) / 100;
+    return Math.round(Math.max(0, Math.min(100, p)) * 1e6) / 1e6;   // 6 decimals: the shop PC multiplies exactly, so Rs 350 off Rs 1,850 stays Rs 350.00 (two decimals made it 349.98, AJ 24 Nov)
   }
   function total() { return Math.round(sub() * (1 - pct() / 100) * 100) / 100; }
   function online() { return navigator.onLine !== false; }
@@ -166,7 +166,7 @@
       if (sumBox.sub) sumBox.sub.textContent = rs(sub());
       if (sumBox.disc) sumBox.disc.textContent = (sub() - total() > 0 ? '− ' : '') + rs(sub() - total());
       if (sumBox.tot) sumBox.tot.textContent = rs(total());
-      if (sumBox.hint) sumBox.hint.textContent = !(Number(dval) > 0) ? '' : dmode === 'rs' ? '= ' + pct() + '% off (the shop PC counts in %)' : '= ' + rs(sub() - total()) + ' off';
+      if (sumBox.hint) sumBox.hint.textContent = !(Number(dval) > 0) ? '' : dmode === 'rs' ? '= ' + pct().toFixed(2) + '% off (the shop PC counts in %)' : '= ' + rs(sub() - total()) + ' off';
       bar();
     }
     var c = card('This bill', P.plural(count(), 'item', 'items'));

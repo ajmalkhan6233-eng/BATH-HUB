@@ -33,9 +33,11 @@ function load(){
   fetch('/api/outside-items/pending', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(j){
     var box = document.getElementById('list'); box.textContent = '';
     if (!j.pending || !j.pending.length) { box.textContent = 'Nothing pending. All outside item costs are confirmed.'; return; }
+    var tot = j.pending.reduce(function(t, p){ return t + p.qty * p.est_cost; }, 0); box.appendChild(el('div', 't', 'Total to pay outside shops for these items: Rs ' + money(tot)));
     j.pending.forEach(function(p){
       var c = el('div', 'c' + (p.age_days > 2 ? ' old' : ''));
       c.appendChild(el('div', 't', p.item_code + '  ' + p.item_name));
+      c.appendChild(el('div', 't', 'Pay outside shop: Rs ' + money(p.qty * p.est_cost) + ' (estimate)'));
       c.appendChild(el('div', 'm', 'Qty ' + money(p.qty) + ' · sold at Rs ' + money(p.sell_price) + ' each · estimated cost Rs ' + money(p.est_cost) + ' each · ' + p.age_days + ' day(s) ago'));
       var r = el('div', 'r'), cost = el('input'), why = el('input'), btn = el('button', null, 'Save real cost'), msg = el('div', 'msg');
       cost.placeholder = 'Real cost each'; cost.setAttribute('inputmode', 'decimal'); why.placeholder = 'Reason (e.g. supplier bill)'; why.style.flex = '1 1 160px';

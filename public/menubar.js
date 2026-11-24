@@ -11,6 +11,7 @@
   'use strict';
   // [group, [[key, label, soon?], ...]]
   var MAP = [
+    ['Edit', [['editsearch', 'Find and edit anything']]],
     ['Inventory', [['grn', 'GRN (enter vendor bills, cheques, sales)'], ['stockmgr', 'Stock & items (double-click to edit)'], ['pending', 'Awaiting delivery'], ['helper', 'Prices and reorder'], ['barcode', 'Barcode'], ['stickers', 'Stickers']]],
     ['Vendors', [['vendorsum', 'Vendors overview'], ['vendor360', 'Vendor 360'], ['vendors', 'Pay vendors'], ['vendorledger', 'Vendor ledger'], ['vendorcredit', 'Vendor credit'], ['vendorreturns', 'Return / discount'], ['chequereg', 'Cheque register'], ['chequecal', 'Cheque Calendar'], ['dueboard', 'Due Board (bills and cheques by due date)'], ['purchasing', 'Purchasing']]],
     ['Sales', [['pos', 'POS Billing'], ['salescomm', 'Sales Commission'], ['dailyledger', 'Daily Ledger (sales, expenses, cheques)'], ['allbills', 'All bills (view, download, edit, cancel)'], ['sale:quote', 'Quotation'], ['sale:package', 'Building Packages'], ['daily-sales', 'Daily Sales'], ['saleshub', 'Sale Tools (ledger, customers, credit)'], ['dailybreakdown', 'Daily Breakdown']]],
@@ -35,7 +36,7 @@
     var doc = win.document;
     if (doc.getElementById('rbh-menubar')) return;
     var nav = function (k) { return doc.querySelector('.sidebar-nav [data-page="' + k + '"]'); };
-    var exists = function (k) { return k.indexOf('sale:') === 0 ? (!!nav('pos') || !!doc.getElementById('page-pos')) : (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
+    var exists = function (k) { if (k === 'editsearch') return true; return k.indexOf('sale:') === 0 ? (!!nav('pos') || !!doc.getElementById('page-pos')) : (k === 'pending' || k === 'helper' || k === 'logins' || k === 'stickers') ? typeof win.addFramePage === 'function' : k.indexOf('profit:') === 0 ? !!doc.getElementById('page-profit') || typeof win.addFramePage === 'function' : k.indexOf('rep:') === 0 ? !!nav('reportshub') || !!doc.getElementById('page-reportshub') || typeof win.addFramePage === 'function' : (!!nav(k) || !!doc.getElementById('page-' + k)); };
     var labelOf = function (k, fallback) { if (k === '--' || k === 'reports' || k === 'reportshub' || k.indexOf(':') > 0) return fallback; var n = nav(k); var l = n && n.querySelector('.nav-label'); return (l && l.textContent.trim()) || fallback; };
     // Quotation and Building Packages open the POS screen in Quotation mode (public/pos-quote.js listens for the message).
     function openPos(m) {
@@ -54,8 +55,51 @@
       else { try { f.contentWindow.postMessage({ pq: 'openbill', id: id }, win.location.origin); } catch (x) {} }
       try { win.navigate('pos'); } catch (x) {}
     });
+    // 24 Nov (AJ): Edit = one search box. Type a bill, GRN, vendor bill, cheque, credit or return note; "Edit" opens the screen where the real edit lives.
+    function openEdit() {
+      var old = doc.getElementById('rbh-edit'); if (old) { old.remove(); }
+      var back = doc.createElement('div'); back.id = 'rbh-edit'; back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding-top:8vh';
+      var box = doc.createElement('div'); box.style.cssText = 'background:#fff;color:#111;border-radius:12px;width:min(640px,94vw);max-height:80vh;overflow:auto;padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.4);font:15px system-ui,sans-serif';
+      box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Edit: search');
+      box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">Edit: find anything</b><button type="button" id="rbh-edit-x" style="border:0;background:none;font-size:24px;cursor:pointer;min-width:44px;min-height:44px">&times;</button></div>' +
+        '<input id="rbh-edit-q" autocomplete="off" placeholder="Bill no, GRN no, vendor bill, cheque no, credit / return note, name" style="width:100%;font-size:16px;padding:10px;border:2px solid #c9a24b;border-radius:8px;margin:8px 0;box-sizing:border-box">' +
+        '<div id="rbh-edit-msg" style="font-size:12px;color:#666;min-height:18px">Type at least 2 letters or numbers.</div><div id="rbh-edit-res"></div>';
+      back.appendChild(box); doc.body.appendChild(back);
+      var q = box.querySelector('#rbh-edit-q'), res = box.querySelector('#rbh-edit-res'), msg = box.querySelector('#rbh-edit-msg'), t = null, seq = 0;
+      function close() { back.remove(); }
+      box.querySelector('#rbh-edit-x').onclick = close; back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
+      doc.addEventListener('keydown', function esc(e) { if (!doc.getElementById('rbh-edit')) { doc.removeEventListener('keydown', esc); return; } if (e.key === 'Escape') { close(); doc.removeEventListener('keydown', esc); } });
+      function act(r) {
+        close();
+        if (r.type === 'bill') { win.postMessage({ rbhOpenBill: r.id }, win.location.origin); return; }
+        var to = r.type === 'grn' ? 'grn' : r.type === 'cheque_reg' ? 'chequereg' : 'vendor360';
+        try { navigator.clipboard.writeText(String(r.type === 'grn' || r.type === 'cheque_reg' ? r.ref : (r.vendor || r.ref))); } catch (e) { /* copy is a help only */ }
+        go(to);
+      }
+      function draw(rows) {
+        res.textContent = '';
+        rows.forEach(function (r) {
+          var row = doc.createElement('div'); row.style.cssText = 'display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #eee';
+          var tag = doc.createElement('span'); tag.textContent = r.label; tag.style.cssText = 'flex:none;font-size:11px;font-weight:700;background:#fff3d1;border:1px solid #c9a24b;border-radius:10px;padding:2px 8px;min-width:96px;text-align:center';
+          var mid = doc.createElement('div'); mid.style.cssText = 'flex:1;min-width:0'; var b = doc.createElement('b'); b.textContent = r.ref; var sm = doc.createElement('div'); sm.style.cssText = 'font-size:12px;color:#555'; sm.textContent = (r.text || '') + (r.date ? ' · ' + r.date : '') + ' · Rs ' + Number(r.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+          mid.appendChild(b); mid.appendChild(sm);
+          var eb = doc.createElement('button'); eb.type = 'button'; eb.textContent = 'Edit'; eb.style.cssText = 'flex:none;min-height:40px;padding:0 16px;border:0;border-radius:8px;background:#c9a24b;font-weight:700;cursor:pointer'; eb.onclick = function () { act(r); };
+          row.appendChild(tag); row.appendChild(mid); row.appendChild(eb); res.appendChild(row);
+        });
+      }
+      q.addEventListener('input', function () {
+        clearTimeout(t); var v = q.value.trim(); if (v.length < 2) { res.textContent = ''; msg.textContent = 'Type at least 2 letters or numbers.'; return; }
+        t = setTimeout(function () { var n = ++seq; msg.textContent = 'Searching...';
+          fetch('/api/edit-search?q=' + encodeURIComponent(v), { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); }).then(function (x) {
+            if (n !== seq) return; if (!x.ok) { msg.textContent = (x.d && x.d.error) || 'Could not search'; res.textContent = ''; return; }
+            var rows = x.d.results || []; msg.textContent = rows.length ? rows.length + ' found. Tap Edit to open it where it can be changed.' : 'Nothing found for "' + v + '".'; draw(rows);
+          }).catch(function () { if (n === seq) msg.textContent = 'No connection'; }); }, 250);
+      });
+      q.focus();
+    }
     function go(k) {
       closeAll(); closeDrawer();
+      if (k === 'editsearch') { openEdit(); return; }
       if (k === 'sale:package') { ensurePkgPlanner(); try { win.navigate('pkgplan'); } catch (e) {} return; }   // 20 Nov: Building Packages = its own Package planner screen (the old POS side window was never loaded in the new POS)
       if (k.indexOf('sale:') === 0) { openPos(k.slice(5)); return; }
       if (k === 'pos') { openPos('bill'); return; }
@@ -149,10 +193,10 @@
         b.onclick = function (e) { e.stopPropagation(); var on = top.classList.contains('on'); closeAll(); if (!on) { top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } }; if (items.length === 1) { b.textContent = g[0]; b.onclick = function (e) { e.stopPropagation(); go(items[0][0]); }; }
         top.appendChild(b); top.appendChild(list); bar.appendChild(top);
         // 20 Nov (AJ): on a mouse screen the drop-down opens when the cursor rests on the menu name, and closes shortly after it leaves; click still works, touch is unchanged
-        if (items.length > 1 && window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+        if (items.length > 1 && window.matchMedia && window.matchMedia('(hover: hover), (any-hover: hover), (pointer: fine), (any-pointer: fine)').matches) {
           var ht; b.onclick = function (e) { e.stopPropagation(); if (!top.classList.contains('on')) { closeAll(); top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } };
           top.addEventListener('mouseenter', function () { clearTimeout(ht); if (!top.classList.contains('on')) { closeAll(); top.classList.add('on'); b.setAttribute('aria-expanded', 'true'); } });
-          top.addEventListener('mouseleave', function () { ht = setTimeout(function () { top.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); }, 250); });
+          top.addEventListener('mouseleave', function () { ht = setTimeout(function () { top.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); }, 400); });
         }
       });
       var body = doc.getElementById('rbh-dbody'); body.innerHTML = '';

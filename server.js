@@ -652,6 +652,7 @@ app.use('/api/corrections', require('./routes/corrections'));   // admin-only ed
 app.use('/api/admin-core', require('./routes/admin_core'));   // admin-only users (add/disable/role/reset/force logout/history) + audit log
 app.use('/api/system', require('./routes/backup_status'));      // admin-only: backups (now/list/download), RESTORE (typed word + PIN + safety backup), status
 app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (shop, targets, WhatsApp switch), /api/menu-config*
+app.use('/api', require('./routes/edit_search'));           // Edit menu: one search for bills, GRNs, vendor bills, cheques, credit / return notes (owner/admin, read only)
 app.use('/api', require('./routes/outside_items'));        // POS "+ Outside" items: /api/outside-items* (owner/admin)
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
