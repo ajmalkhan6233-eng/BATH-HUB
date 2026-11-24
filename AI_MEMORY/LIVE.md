@@ -1,3 +1,4 @@
+AUTOSAVE 2026-11-24 10:57 SL | branch work @ d68f247 | last: Install report 24 Nov (txt) + two AJ rules in CLAUDE.md | uncommitted files: 1 | server health: ok
 10:55 | PC | INSTALL_REPORT_24NOV | DONE | all 24 skills re-checked present; 2 rules added to CLAUDE.md | AJ: none
 AUTOSAVE 2026-11-24 10:42 SL | branch work @ 466ce55 | last: autosave: LIVE.md state line 2026-11-24 10:27 | uncommitted files: 1 | server health: ok
 10:02 | PC | SKILLS_INSTALL_24NOV | DONE | 24 items installed user-level, skips: insecure-defaults, supabase; Impeccable hooks/binary not added; SKILL.md not read in full | AJ: restart Claude Code once. Report AI_BRIDGE/SKILLS_INSTALL_24NOV_REPORT.md
