@@ -121,7 +121,7 @@
   }, true);
   // 24 Nov (AJ): the item list is a FLOATING window: drag its header row to move it, pull the corner arrow to resize it. It never pushes the bill down. Size and place are remembered.
   var st = document.createElement('style');
-  st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px);height:var(--ph,300px);max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:9999;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open .picker-head{cursor:move;user-select:none;background:#fff8e6}';
+  st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px);height:var(--ph,300px);max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:9999;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open .picker-head{cursor:move;user-select:none;background:#fff8e6}#picker.open.pk-empty{height:auto!important;min-height:0!important;resize:none!important}#picker.open.pk-empty .picker-head,#picker.open.pk-empty .picker-results,#picker.open.pk-empty .picker-note{display:none!important}';
   document.head.appendChild(st);
   function fl() {
     var p = document.getElementById('picker'); if (!p || p.dataset.fl) return; p.dataset.fl = '1';
@@ -136,6 +136,8 @@
       document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
     });
   }
+  // nothing to list -> the window shrinks to the search bar, so the bill lines use the space
+  setInterval(function () { var p = document.getElementById('picker'); if (p) p.classList.toggle('pk-empty', !p.querySelector('.pick-row')); }, 300);
   setInterval(fl, 1000);
   window.PosOutside = { open: open };
 })();
