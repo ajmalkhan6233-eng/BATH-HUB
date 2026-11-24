@@ -89,6 +89,8 @@
     focusField(idx, 'qty');
   }
   window.PosAddItem = function (item, qty) { var ex = rows.filter(function (r) { return r.code && r.code === item.code; })[0], base = ex ? ex.qty : 0; addItem(item); var r = rows.filter(function (x) { return x.code === item.code; })[0]; if (r) { r.qty = base + Number(qty || 1); render(); } };   // used by pos-outside.js
+  window.PosGetLine = function (code) { var r = rows.filter(function (x) { return x.code === code; })[0]; return r ? { name: r.name, qty: r.qty, price: r.price, cost: r.cost } : null; };   // 24 Nov: double-click on an outside line
+  window.PosEditLine = function (code, patch) { var r = rows.filter(function (x) { return x.code === code; })[0]; if (!r) return; Object.keys(patch).forEach(function (k) { r[k] = patch[k]; }); if (patch.price != null) r.list = patch.price; render(); };
   function focusField(i, f) { setTimeout(function () { var row = $('itemRows').querySelector('.item-row[data-index="' + i + '"]'), el = row && row.querySelector('[data-field="' + f + '"]'); if (el) { el.focus(); el.select(); } else $('scanBox').focus(); }, 30); }
   var seq = 0;
   // 21 Nov (AJ): the item list used to open ON TOP of the customer name and phone boxes. Always open it just under the customer row.

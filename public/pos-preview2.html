@@ -190,6 +190,11 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 .datepick{position:absolute;left:0;bottom:0;width:100%;height:100%;opacity:0;pointer-events:none;border:0;padding:0}
 .datechip{flex:none;height:29px;padding:0 9px;font-size:12px;border:1px solid #c9ced1;background:#fff;border-radius:14px;cursor:pointer;color:#33383b}.datechip.on{background:#c9a24a;border-color:#a8832f;color:#111;font-weight:700}
 </style>
+<style id="v101">/* v1.0.1 (AJ 24 Nov): one + Outside and one scan (in the item box only); the customer line never overlaps */
+.item-foot #scanBtn,.item-foot .outside-btn{display:none!important}
+.cust-sum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:22px;display:block}.cust-sum em{float:none!important;margin-left:12px}
+.customer-row.folded{height:auto!important;min-height:30px;overflow:hidden}.customer-row.folded #autoWa{display:none!important}
+</style>
 </head>
 <body>
 <div class="shell">
