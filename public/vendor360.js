@@ -37,7 +37,7 @@
     box.innerHTML = rows.map(function (v) {
       return '<button type="button" class="v" role="listitem" data-v="' + esc(v.vendor_name) + '"' + (S.cur === v.vendor_name ? ' aria-current="true"' : '') + '>' +
         '<span><b>' + esc(v.vendor_name) + '</b><small>' + v.total_bills + ' bill' + (v.total_bills === 1 ? '' : 's') + (v.has_bounced ? ' · bounced cheque' : '') + '</small></span>' +
-        '<span class="amt ' + (v.overdue > 0 ? 'bad' : '') + '">' + rs(v.outstanding_balance) + (v.overdue > 0 ? ' !' : '') + '</span></button>';
+        '<span class="stm" role="button" tabindex="0" data-st="' + esc(v.vendor_name) + '">Statement</span><span class="amt ' + (v.overdue > 0 ? 'bad' : '') + '">' + rs(v.outstanding_balance) + (v.overdue > 0 ? ' !' : '') + '</span></button>';
     }).join('');
   }
 
@@ -186,7 +186,7 @@
   }
 
   /* ---------- events ---------- */
-  $('list').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (b) select(b.getAttribute('data-v')); });
+  $('list').addEventListener('click', function (e) { var st = e.target.closest('[data-st]'); if (st) { e.stopPropagation(); window.openVendorVoucher(st.getAttribute('data-st')); return; } var b = e.target.closest('[data-v]'); if (b) select(b.getAttribute('data-v')); });
   $('q').addEventListener('input', function () { S.q = this.value; drawList(); });
   document.querySelector('.chips').addEventListener('click', function (e) {
     var b = e.target.closest('[data-f]'); if (!b) return; S.filter = b.getAttribute('data-f');

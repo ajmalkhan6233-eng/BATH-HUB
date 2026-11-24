@@ -4,7 +4,7 @@ const data = { voucher_no: 'VS-T', date: '24 Nov 2026', shop: { name: 'Shop', ad
 test('vendor statement page: title, one block per bill, total due, credit-note line', () => {
   const h = vv.html(data);
   expect(h).toContain('VENDOR STATEMENT');
-  expect(h).toContain('Balance on this bill');
+  expect(h).toContain('STATEMENT OF ACCOUNT');
   expect(h).toContain('TOTAL DUE TO');
   expect(h).toContain('Please issue a credit note');
   expect(h).toContain('"balance":250');

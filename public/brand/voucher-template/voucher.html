@@ -79,7 +79,7 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 .settle .sr.sub{font-weight:700;color:#0b4f4d;font-size:13px;letter-spacing:1px;padding:9px 0 5px;border-bottom:1px solid #c9a24b}
 .settle .sr.tot{font-weight:700;border-bottom:1px solid #c9a24b}
 .settle .sr span small{display:block;font-size:11.5px;color:#46506a;font-weight:500}
-.due{margin-top:22px}
+.led td,.led th{padding:8px 7px;font-size:12.5px}.led td:nth-child(2){white-space:normal}.led th:nth-child(2){text-align:left}.led small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.led td.pd{color:#7a4b00}.due{margin-top:22px}
 .due .sr.bal{margin:0;border-radius:13px;font-size:17px}
 .due .sr.bal b{font-size:26px}
 .addr{font-size:12.5px;color:#e6eef0;margin-top:4px;line-height:1.5}
@@ -94,7 +94,8 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 <div class="card"><small>FROM</small><b id="shop"></b><span id="addr"></span></div>
 <div class="card"><small>TO</small><b id="vendor"></b><span id="date"></span></div>
 </div>
-<div id="bills"></div>
+<h3>STATEMENT OF ACCOUNT</h3><table class="led"><thead><tr><th>DATE</th><th>DETAILS</th><th class="n">DEBIT</th><th class="n">CREDIT</th><th class="n">BALANCE</th></tr></thead><tbody id="led"></tbody><tfoot><tr class="sum"><td colspan="2">TOTAL (RS.)</td><td class="n" id="tdr"></td><td class="n" id="tcr"></td><td class="n" id="tbl"></td></tr></tfoot></table>
+<h3>SUMMARY</h3><div class="settle" id="sumry"></div>
 <div class="settle due"><div class="sr bal"><span id="duel"></span><b id="dueb"></b></div></div>
 <div class="endcard"><div id="note"></div></div>
 </div>
@@ -113,21 +114,26 @@ if(V.bg)$('bg').style.backgroundImage='url("'+V.bg+'")';
 $('vno').textContent=V.voucher_no;$('shop').textContent=V.shop.name;
 $('addr').innerHTML=esc(V.shop.address)+'<br>'+esc(V.shop.phone)+(V.shop.email?'  |  '+esc(V.shop.email):'');
 $('vendor').textContent=V.vendor.name;$('date').textContent='Date: '+day(new Date(Date.now()+19800000).toISOString());
-const row=(l,r,cls,sub)=>'<div class="sr '+(cls||'')+'"><span>'+l+(sub?'<small>'+sub+'</small>':'')+'</span><b>'+r+'</b></div>';
-$('bills').innerHTML=V.bills.map(b=>{
-  let h='<div class="bill"><h3>YOUR BILL '+esc(b.bill_no)+' · '+day(b.bill_date)+(b.grn_no&&b.grn_no!==b.bill_no?' · GRN '+esc(b.grn_no):'')+'</h3><div class="settle">';
-  h+=row('Bill total',money(b.total));
-  (b.returns||[]).forEach(r=>{h+=row('Less: goods returned, '+(r.qty!==''?esc(r.qty)+' × ':'')+esc(r.item)+(r.rate?' ('+esc(r.qty)+' × '+money(r.rate).replace('.00','')+')':''),'−'+money(r.amount),'',day(r.date))});
-  if((b.returns||[]).length)h+=row('Net payable',money(b.net_payable),'tot');
-  if((b.cheques||[]).length||(b.cash||[]).length){
-    const banks=[...new Set(b.cheques.map(c=>c.bank).filter(Boolean))].join(', ');
-    if(b.cheques.length)h+='<div class="sr sub"><span>PAID BY '+(banks?esc(banks)+' ':'')+'CHEQUES</span></div>';
-    b.cheques.forEach(c=>{h+=row('No. '+esc(c.no)+' · dated '+day(c.date),money(c.amount))});
-    (b.cash||[]).forEach(c=>{h+=row('Paid '+esc(c.method)+' · '+day(c.date),money(c.amount))});
-    h+=row('Total paid',money(b.paid),'tot');
-  } else h+=row('Paid','0.00');
-  h+='<div class="sr bal"><span>Balance on this bill</span><b>'+money(b.balance)+'</b></div></div></div>';
-  return h}).join('');
+const C=x=>Math.round(Number(x||0)*100),M=c=>money(c/100),today=new Date(Date.now()+19800000).toISOString().slice(0,10);
+const ev=[];
+V.bills.forEach(b=>{
+  ev.push({d:String(b.bill_date).slice(0,10),o:0,ref:'Invoice '+esc(b.bill_no)+(b.grn_no&&b.grn_no!==b.bill_no?' (GRN '+esc(b.grn_no)+')':''),dr:C(b.total),cr:0});
+  (b.returns||[]).forEach(r=>ev.push({d:String(r.date).slice(0,10),o:1,ref:'Goods returned: '+(r.qty!==''?esc(r.qty)+' × ':'')+esc(r.item),sub:r.rate?'Return note, '+esc(r.qty)+' × '+money(r.rate).replace('.00','')+'. Credit note requested.':'Credit note requested.',dr:0,cr:C(r.amount)}));
+  (b.cheques||[]).forEach(c=>ev.push({d:String(c.date).slice(0,10),o:2,ref:'Cheque No. '+esc(c.no)+(c.bank?' ('+esc(c.bank)+')':''),sub:String(c.date).slice(0,10)>today?'Post-dated, on credit until it clears':'',pd:String(c.date).slice(0,10)>today,dr:0,cr:C(c.amount)}));
+  (b.cash||[]).forEach(c=>ev.push({d:String(c.date).slice(0,10),o:2,ref:'Payment ('+esc(c.method)+')',dr:0,cr:C(c.amount)}));
+});
+ev.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:a.o-b.o);
+let bal=0,tdr=0,tcr=0;
+$('led').innerHTML=ev.map(e=>{bal+=e.dr-e.cr;tdr+=e.dr;tcr+=e.cr;return '<tr><td>'+day(e.d)+'</td><td><b>'+e.ref+'</b>'+(e.sub?'<small>'+e.sub+'</small>':'')+'</td><td class="n">'+(e.dr?M(e.dr):'')+'</td><td class="n'+(e.pd?' pd':'')+'">'+(e.cr?M(e.cr):'')+'</td><td class="n"><b>'+M(bal)+'</b></td></tr>'}).join('');
+$('tdr').textContent=M(tdr);$('tcr').textContent=M(tcr);$('tbl').textContent=M(bal);
+const retC=C(V.returns_total),chqC=V.bills.reduce((t,b)=>t+(b.cheques||[]).reduce((u,c)=>u+C(c.amount),0),0),cashC=V.bills.reduce((t,b)=>t+(b.cash||[]).reduce((u,c)=>u+C(c.amount),0),0);
+const srow=(l,r,cls)=>'<div class="sr '+(cls||'')+'"><span>'+l+'</span><b>'+r+'</b></div>';
+let sm=srow('Total billed (invoices)','Rs. '+M(tdr));
+if(retC)sm+=srow('Less: goods returned','(Rs. '+M(retC)+')');
+if(chqC)sm+=srow('Less: cheques given (post-dated, on credit until they clear)','(Rs. '+M(chqC)+')');
+if(cashC)sm+=srow('Less: payments made','(Rs. '+M(cashC)+')');
+if(V.bills.length>1)V.bills.forEach(b=>{sm+=srow('Balance on invoice '+esc(b.bill_no),'Rs. '+money(b.balance),'tot')});
+$('sumry').innerHTML=sm;
 $('duel').textContent='TOTAL DUE TO '+String(V.vendor.name).toUpperCase();$('dueb').textContent='Rs '+money(V.balance);
 const rt=V.returns_total>0;
 $('note').innerHTML=(rt?'Please issue a credit note for the returned goods, Rs '+money(V.returns_total).replace('.00','')+'.<br>':'')+(V.cheques_total>0?'Cheques are post-dated as shown above (on credit until they clear).':'');
