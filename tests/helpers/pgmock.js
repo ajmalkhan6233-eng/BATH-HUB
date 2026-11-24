@@ -20,6 +20,8 @@ const REWRITES = [
     [/^\s*(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT)\s+\w+\s*;?\s*$/i, 'SELECT 1'],
     [/SUBSTRING\(bill_number FROM '-\(\[0-9\]\+\)\$'\)/g, 'SUBSTRING(bill_number, 14)'],
     [/item_code ~ '\^\[0-9\]\{1,9\}\$'/g, 'item_code IS NOT NULL'],
+    // new bill numbers (RBH-S001 style): pg-mem has no regex operator, so the next number is just the count + 1 (tests only)
+    [/SELECT COALESCE\(MAX\(SUBSTRING\(bill_number FROM '\^' \|\| \$1 \|\| '\(\[0-9\]\+\)\$'\)::int\), 0\) \+ 1 AS n FROM pos_bills WHERE bill_number ~ \('\^' \|\| \$1 \|\| '\[0-9\]\+\$'\)/g, 'SELECT COUNT(*) + 1 AS n FROM pos_bills WHERE $1 IS NOT NULL'],
     [/\(SELECT SUM\((?:pm|p)\.amount\) FROM investor_loan_payments (?:pm|p) WHERE (?:pm|p)\.loan_id = l\.id\)/g, '0'],
 ];
 const fix = q => {

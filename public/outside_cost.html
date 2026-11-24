@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outside items: cost pending - Royal Bath Hub</title>
+<!-- BLOCK: outside items, cost pending list. Owner/admin only. Data: GET /api/outside-items/pending, POST /api/outside-items/:id/real-cost -->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#fffdf7;color:#111;font:14px system-ui,sans-serif}
+  .wrap{padding:10px 14px 30px;max-width:900px;margin:0 auto}
+  h1{font-size:18px;margin:6px 0}
+  .note{font-size:12px;color:#555;margin-bottom:8px}
+  .c{border:1.5px solid #ccc;border-radius:10px;background:#fff;padding:8px 10px;margin:8px 0}
+  .c.old{border-color:#b00;background:#fff3f3}
+  .t{font-weight:700}.m{font-size:12px;color:#555;margin:2px 0}
+  .r{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  input{font:inherit;padding:6px 8px;border:1px solid #bbb;border-radius:6px}
+  button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:6px;background:#c9a24a;color:#111;cursor:pointer}
+  .msg{font-size:12px;margin-top:4px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Outside items: real cost not entered yet</h1>
+  <div class="note">The cost on these sales is an estimate. Type the real cost per piece and the reason; the profit is recalculated. Red = over 2 days.</div>
+  <div id="list">Loading...</div>
+</div>
+<script>
+function el(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+function money(v){ return Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+function load(){
+  fetch('/api/outside-items/pending', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(j){
+    var box = document.getElementById('list'); box.textContent = '';
+    if (!j.pending || !j.pending.length) { box.textContent = 'Nothing pending. All outside item costs are confirmed.'; return; }
+    j.pending.forEach(function(p){
+      var c = el('div', 'c' + (p.age_days > 2 ? ' old' : ''));
+      c.appendChild(el('div', 't', p.item_code + '  ' + p.item_name));
+      c.appendChild(el('div', 'm', 'Qty ' + money(p.qty) + ' · sold at Rs ' + money(p.sell_price) + ' each · estimated cost Rs ' + money(p.est_cost) + ' each · ' + p.age_days + ' day(s) ago'));
+      var r = el('div', 'r'), cost = el('input'), why = el('input'), btn = el('button', null, 'Save real cost'), msg = el('div', 'msg');
+      cost.placeholder = 'Real cost each'; cost.setAttribute('inputmode', 'decimal'); why.placeholder = 'Reason (e.g. supplier bill)'; why.style.flex = '1 1 160px';
+      btn.addEventListener('click', function(){
+        btn.disabled = true; msg.textContent = 'Saving...';
+        fetch('/api/outside-items/' + p.id + '/real-cost', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cost: Number(String(cost.value).replace(/,/g, '')), reason: why.value }) })
+          .then(function(x){ return x.json().then(function(d){ return { ok: x.ok, d: d }; }); })
+          .then(function(x){ btn.disabled = false; if (!x.ok) { msg.textContent = (x.d && x.d.error) || 'Could not save'; return; } load(); })
+          .catch(function(){ btn.disabled = false; msg.textContent = 'No connection'; });
+      });
+      r.appendChild(cost); r.appendChild(why); r.appendChild(btn); c.appendChild(r); c.appendChild(msg); box.appendChild(c);
+    });
+  }).catch(function(){ document.getElementById('list').textContent = 'Could not load the list.'; });
+}
+load();
+</script>
+</body>
+</html>

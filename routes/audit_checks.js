@@ -18,6 +18,7 @@ router.get('/audit-checks', async (req, res) => {
       vendor_bill_cheques: await q(`SELECT status, COUNT(*) AS n, COALESCE(SUM(amount),0) AS amount FROM vendor_bill_cheques GROUP BY status`),
       cheque_register: await q(`SELECT status, COUNT(*) AS n, COALESCE(SUM(amount),0) AS amount FROM cheque_register GROUP BY status`),
     },
+    outside_items: await require('./outside_items').auditInfo(pool),   // pending real costs (over 2 days = flagged) and outside items whose stock is not 0
     dup_vendors: await q(`SELECT lower(regexp_replace(vendor_name,'[^a-zA-Z0-9]','','g')) AS k, string_agg(DISTINCT vendor_name, ' | ') AS names FROM vendor_bills GROUP BY 1 HAVING COUNT(DISTINCT vendor_name) > 1`),
   });
 });

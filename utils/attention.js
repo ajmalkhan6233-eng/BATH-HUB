@@ -13,6 +13,8 @@ async function collect(pool) {
   if (pd && pd.n > 0) out.push({ level: 'amber', text: 'Vendor items not delivered yet: ' + pd.n, go: '/pending_delivery.html' });
   const pr = await q(pool, `SELECT COUNT(*)::int n FROM grn_records WHERE status='PENDING_REVIEW'`);
   if (pr && pr.n > 0) out.push({ level: 'amber', text: 'Stock-in lines waiting for your price check: ' + pr.n, go: null });
-  return out;
+  const oc = await q(pool, `SELECT COUNT(*)::int n, COUNT(*) FILTER (WHERE created_at < NOW() - INTERVAL '2 days')::int old FROM outside_cost_pending WHERE status='pending'`);
+  if (oc && oc.n > 0) out.push({ level: oc.old > 0 ? 'red' : 'amber', text: 'Outside items, real cost not entered: ' + oc.n + (oc.old > 0 ? ' (' + oc.old + ' over 2 days)' : ''), go: '/outside_cost.html' });
+  return out.sort((a, b) => (a.level === 'red' ? 0 : 1) - (b.level === 'red' ? 0 : 1));
 }
 module.exports = { collect };
