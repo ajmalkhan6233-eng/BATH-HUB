@@ -75,6 +75,7 @@
   <div class="card">
     <h2>Write a new cheque</h2>
     <div class="grid3">
+      <div><label>Cheque photo</label><input id="n-photo" type="file" accept="image/jpeg,image/png" capture="environment" onchange="readChequePhoto(this)"><span id="n-photo-msg" style="font-size:11px;color:var(--text-muted)"></span></div>
       <div><label>Cheque no.</label><input id="n-no" placeholder="optional"></div>
       <div><label>Bank</label><input id="n-bank" placeholder="optional"></div>
       <div><label>Payee</label><input id="n-payee" placeholder="who is this for"></div>
@@ -162,7 +163,8 @@ function dueText(c) {
   if (isNaN(d)) return esc(c.due_date);
   const left = Math.round((d - new Date(new Date().toDateString() + ' 12:00:00')) / 864e5);
   const lt = c.status !== 'pending' ? '' : left < 0 ? ` <b style="color:var(--red-600)">${-left}d overdue</b>` : left === 0 ? ' <b style="color:var(--red-600)">today</b>' : ` <span style="color:var(--text-muted)">${left}d left</span>`;
-  return d.toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'}) + lt;
+  const wd = d.getDay(), wk = c.status === 'pending' && (wd === 6 || wd === 0) ? ` <span style="background:#ffe0b2;color:#7a3d00;border-radius:8px;padding:0 6px;font-size:11px;font-weight:700">${wd === 6 ? 'Saturday' : 'Sunday'}: bank takes Monday</span>` : '';
+  return d.toLocaleDateString('en-GB', {weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'}) + wk + lt;
 }
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 async function loadCheques() {
@@ -191,6 +193,25 @@ async function loadCheques() {
   });
 }
 
+async function readChequePhoto(inp) {
+  const f = inp.files && inp.files[0], msg = document.getElementById('n-photo-msg');
+  if (!f) return;
+  msg.textContent = ' reading on this PC...';
+  try {
+    const url = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); });
+    const res = await fetch('/api/cheque-photo/read', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({photo_data_url: url})});
+    const d = await res.json();
+    if (!res.ok) { msg.textContent = ' ' + (d.error || 'could not read'); return; }
+    const x = d.fields || {};
+    if (x.cheque_no) document.getElementById('n-no').value = x.cheque_no;
+    if (x.bank) document.getElementById('n-bank').value = x.bank;
+    if (x.payee) document.getElementById('n-payee').value = x.payee;
+    if (x.amount) document.getElementById('n-amount').value = x.amount;
+    if (x.date) document.getElementById('n-due').value = x.date;
+    const nt = document.getElementById('n-notes'); if (!nt.value) nt.value = 'photo: ' + d.photo;
+    msg.textContent = ' ' + d.note;
+  } catch (e) { msg.textContent = ' could not read the photo'; }
+}
 async function createCheque() {
   const cheque_no = document.getElementById('n-no').value.trim();
   const bank = document.getElementById('n-bank').value.trim();

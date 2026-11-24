@@ -11,7 +11,8 @@
   body{margin:0;background:#fffdf7;color:#111;font-size:14px}
   .wrap{padding:6px 10px 20px;max-width:1100px;margin:0 auto}
   .ttl{display:none}   /* embedded in the app shell, which already shows the title */
-  .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+  .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;position:sticky;top:0;z-index:20;background:#fffdf7;padding:4px 0;border-bottom:1px solid #eadfbd}
+  .wk{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;background:#ffe0b2;color:#7a3d00;font-size:11px;font-weight:700}
   .bar b{font-size:14px}
   .btn{font:inherit;font-size:12px;font-weight:600;min-height:26px;min-width:30px;padding:1px 9px;border:1.5px solid #888;border-radius:8px;background:#fff;color:#111;cursor:pointer}
   .btn.on{background:#111;color:#fff}
@@ -90,6 +91,7 @@ function money(v){ return Number(v || 0).toLocaleString('en-US', { maximumFracti
 function short(v){ v = Number(v || 0); if (v < 1000) return money(v); return (Math.round(v / 100) / 10) + 'K'; }
 function nice(k){ if (!k) return '-'; var p = k.split('-'); return parseInt(p[2], 10) + ' ' + MN[parseInt(p[1], 10) - 1].slice(0, 3) + ' ' + p[0]; }
 function el(t, c, x){ var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+function wkend(c){ var k = c.cheque_date || c.due_date; if (!k) return ''; var d = new Date(k + 'T12:00:00').getDay(); return d === 6 ? 'Saturday cheque: bank takes it Monday' : d === 0 ? 'Sunday cheque: bank takes it Monday' : ''; }
 function stOf(c){ return c.status === 'CLEARED' ? 'C' : c.status === 'BOUNCED' ? 'B' : 'W'; }
 function stWord(c){ return c.status === 'CLEARED' ? 'CLEARED' : c.status === 'BOUNCED' ? 'BOUNCED' : 'WAITING'; }
 function daysLeft(k){ var a = new Date(k + 'T00:00:00'), b = new Date(todayKey() + 'T00:00:00'); var n = Math.round((a - b) / 86400000);
@@ -204,7 +206,7 @@ function drawList(rows){
   rows.forEach(function(c){
     if (c.due_date !== lastD) { lastD = c.due_date; var dr = el('tr', 'dayhead'), td = el('td', null, nice(c.due_date) + '  ·  ' + daysLeft(c.due_date) + '  ·  Rs ' + money(sum(rows.filter(function(x){ return x.due_date === c.due_date; })))); td.colSpan = 5; dr.appendChild(td); t.appendChild(dr); }
     var tr = el('tr');
-    tr.appendChild(el('td', null, nice(c.due_date))); tr.appendChild(el('td', null, c.vendor_name || c.payee || '')); tr.appendChild(el('td', null, c.cheque_no || '-'));
+    tr.appendChild(el('td', null, nice(c.due_date))); var vt = el('td', null, c.vendor_name || c.payee || ''); if (wkend(c)) vt.appendChild(el('span', 'wk', wkend(c))); tr.appendChild(vt); tr.appendChild(el('td', null, c.cheque_no || '-'));
     tr.appendChild(el('td', 'r', money(c.amount)));
     var sc = el('td'); sc.appendChild(el('span', 'st ' + stOf(c), stWord(c))); tr.appendChild(sc); t.appendChild(tr);
   });
