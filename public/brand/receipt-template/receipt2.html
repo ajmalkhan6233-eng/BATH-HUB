@@ -194,7 +194,7 @@ function renderReceipt(d) {
 
     const tdPrice = document.createElement('td');
     tdPrice.className = 'num listp';
-    tdPrice.textContent = n(it.price);
+    tdPrice.textContent = n(amt / (it.qty || 1));   // 24 Nov (AJ): customer sees the price he pays per piece, never the marked price
     tr.appendChild(tdPrice);
 
     const tdAmt = document.createElement('td');
@@ -205,19 +205,11 @@ function renderReceipt(d) {
     $('rows').appendChild(tr);
   });
 
-  const disc = offered;
-  const calculatedTotal = sub - disc;
-  const finalTotal = d.total != null ? Number(d.total) : calculatedTotal;
-
-  $('sub').textContent = 'Rs. ' + n(sub);
-  if (disc > 0) {
-    $('discRow').style.display = 'flex';
-    $('disc').textContent = '- Rs. ' + n(disc);
-  } else {
-    $('discRow').style.display = 'none';
-  }
+  const finalTotal = d.total != null ? Number(d.total) : sub - offered;
+  $('sub').parentElement.style.display = 'none';   // 24 Nov (AJ): no Subtotal, no Discount, no "You saved": only the lines and the total, like the paper bill
+  $('discRow').style.display = 'none';
   $('total').textContent = 'Rs. ' + n(finalTotal);
-  $('saveNote').textContent = disc > 0 ? 'You saved Rs. ' + n(disc) + (sub > 0 ? ' (' + (disc / sub * 100).toFixed(1) + '%)' : '') : '';
+  $('saveNote').textContent = '';
 
   const payMethod = String(d.paymentMethod || '').trim().toLowerCase();
   if (payMethod && payMethod !== 'unknown' && payMethod !== 'cash') {

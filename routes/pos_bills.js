@@ -540,30 +540,20 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         const sym = branding.currency_symbol || 'Rs';
         drawRow('Item', 'Qty', 'Amount', { bold: true });
         y += 2;
-        for (const it of bill.items) {
-            drawRow(it.item_name, String(it.qty), `${sym} ${Number(it.line_total).toFixed(2)}`);
-        }
+        // 24 Nov (AJ): the customer sees the price he pays per line (the discount is spread over the lines) and the total, never the marked price
+        const grossSum = bill.items.reduce((a, it) => a + Number(it.line_total), 0), keepF = grossSum > 0 ? Number(bill.total) / grossSum : 1;
+        let usedAmt = 0;
+        bill.items.forEach((it, ix) => {
+            const amt = ix === bill.items.length - 1 ? Math.round((Number(bill.total) - usedAmt) * 100) / 100 : Math.round(Number(it.line_total) * keepF);
+            usedAmt += amt;
+            drawRow(it.item_name, String(it.qty), `${sym} ${amt.toFixed(2)}`);
+        });
         y += 4;
         doc.strokeColor('#ccc').lineWidth(0.5).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
         y += 8;
 
-        doc.font('Helvetica').fontSize(8.5).fillColor('#000')
-            .text(`${Number(bill.discount_amount) > 0 ? 'Real price' : 'Subtotal'}: ${sym} ${Number(bill.subtotal).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
-        y = doc.y + 2;
-        if (Number(bill.discount_amount) > 0) {
-            doc.fillColor('#8b6f47')
-                .text(`Discount (${Number(bill.discount_pct)}%): -${sym} ${Number(bill.discount_amount).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' })
-                .fillColor('#000');
-            y = doc.y + 2;
-        }
         doc.font('Helvetica-Bold').fontSize(11)
-            .text(`${Number(bill.discount_amount) > 0 ? 'Price given' : 'Total'}: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
-        if (Number(bill.discount_amount) > 0) {
-            y = doc.y + 2;
-            doc.font('Helvetica-Bold').fontSize(9).fillColor('#8b6f47')
-                .text(`You saved: ${sym} ${Number(bill.discount_amount).toFixed(2)} (${Number(bill.discount_pct)}%)`, MARGIN, y, { width: CONTENT_W, align: 'right' })
-                .fillColor('#000');
-        }
+            .text(`Total: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
         y = doc.y + 2;
         doc.font('Helvetica').fontSize(8)
             .text(`Payment: ${(bill.payment_method || 'cash').toUpperCase()}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
