@@ -75,13 +75,17 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 .pair{display:flex;gap:14px;align-items:flex-start}.col{flex:1;min-width:0}.pair th{padding:9px 7px;font-size:9.5px;letter-spacing:1px}.pair td{padding:8px 7px;font-size:12.5px}.pair td:first-child{white-space:normal}.pair small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.pair h3{margin-top:22px}
 /* 24 Nov (AJ): per-bill statement layout, same vivid receipt look (picture, see-through cards, gold logo, amber balance) */
 /* 24 Nov (AJ): the middle of the top banner is see-through, like the customer receipt: the bathroom picture (tap, basin, bath) shows between the logo and the title */
-.top{background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,27,58),.92) 0%,rgba(var(--hdr-rgb,11,27,58),.7) 26%,rgba(var(--hdr-rgb,11,27,58),.06) 46%,rgba(var(--hdr-rgb,11,27,58),.06) 66%,rgba(var(--hdr-rgb,11,27,58),.62) 86%,rgba(var(--hdr-rgb,11,27,58),.8) 100%),var(--bg-top,none)!important;background-size:cover!important;background-position:center!important;backdrop-filter:none!important}
+.top{background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,27,58),.5) 0%,rgba(var(--hdr-rgb,11,27,58),.18) 34%,rgba(var(--hdr-rgb,11,27,58),0) 55%,rgba(var(--hdr-rgb,11,27,58),.12) 75%,rgba(var(--hdr-rgb,11,27,58),.4) 100%),var(--bg-top,none)!important;background-color:transparent!important;background-size:cover!important;background-position:center!important;backdrop-filter:none!important;align-items:center}
+.top .t small,.top .t b{text-shadow:0 2px 8px #000,0 0 4px #000}
+.qrtop{display:flex;flex-direction:column;align-items:center;gap:4px;margin-left:auto;margin-right:26px}.qrtop img{width:96px;height:96px;background:#fffffff0;padding:4px;border-radius:8px;box-shadow:0 4px 10px #0007;filter:none}.qrtop b{font:700 12px system-ui,sans-serif;color:#fff;text-shadow:0 1px 4px #000,0 0 3px #000;white-space:nowrap}
+.card,.settle,.endcard{background-color:rgba(255,255,255,.42)!important}.row .card:first-child{background-color:transparent!important}
+table{background:rgba(255,255,255,.38)!important}tr:nth-child(even) td{background:rgba(251,246,233,.3)!important}td{background:rgba(255,255,255,.12)}
 .bill{margin-top:6px}
 .bill h3{margin:20px 0 8px}
 .settle .sr.sub{font-weight:700;color:#0b4f4d;font-size:13px;letter-spacing:1px;padding:9px 0 5px;border-bottom:1px solid #c9a24b}
 .settle .sr.tot{font-weight:700;border-bottom:1px solid #c9a24b}
 .settle .sr span small{display:block;font-size:11.5px;color:#46506a;font-weight:500}
-.led td,.led th{padding:8px 7px;font-size:12.5px}.led td:nth-child(2){white-space:normal}.led th:nth-child(2){text-align:left}.led small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.led td.pd{color:#7a4b00}.shopbox .si{display:flex;justify-content:space-between;align-items:center;gap:16px}.shopbox #sinfo{font-size:13px;line-height:1.7}.shopbox #qr{width:104px;height:104px;flex:none;background:#fff;padding:4px;border-radius:8px}.due{margin-top:22px}
+.led td,.led th{padding:8px 7px;font-size:12.5px}.led td:nth-child(2){white-space:normal}.led th:nth-child(2){text-align:left}.led small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.led td.pd{color:#7a4b00}.due{margin-top:22px}
 .due .sr.bal{margin:0;border-radius:13px;font-size:17px}
 .due .sr.bal b{font-size:26px}
 .addr{font-size:12.5px;color:#e6eef0;margin-top:4px;line-height:1.5}
@@ -89,7 +93,7 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 </style></head><body>
 <div class="sheet" id="sheet">
 <div class="bgfall"></div><div class="bgimg" id="bg"></div><div class="bgveil"></div>
-<div class="top"><img id="logo" alt="Royal Bath Hub"><div class="t"><small>VENDOR STATEMENT</small><b id="vno"></b></div></div>
+<div class="top"><img id="logo" alt="Royal Bath Hub"><div class="qrtop"><img id="qr" alt="Map QR"><b id="qph"></b></div><div class="t"><small>VENDOR STATEMENT</small><b id="vno"></b></div></div>
 <div class="gold"></div>
 <div class="body">
 <div class="row">
@@ -100,7 +104,7 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 <h3>SUMMARY</h3><div class="settle" id="sumry"></div>
 <div class="settle due"><div class="sr bal"><span id="duel"></span><b id="dueb"></b></div></div>
 <div class="endcard"><div id="note"></div></div>
-<div class="endcard shopbox"><div class="si"><div id="sinfo"></div><img id="qr" alt="Map QR"></div></div>
+
 </div>
 <div class="thanks" id="foot"></div>
 </div>
@@ -141,6 +145,6 @@ $('sumry').innerHTML=sm;
 $('duel').textContent='TOTAL DUE TO '+String(V.vendor.name).toUpperCase();$('dueb').textContent='Rs '+money(V.balance);
 const rt=V.returns_total>0;
 $('note').innerHTML=(rt?'Please issue a credit note for the returned goods, Rs '+money(V.returns_total).replace('.00','')+'.<br>':'')+(V.cheques_total>0?'Cheques are post-dated as shown above (on credit until they clear).':'');
-$('sinfo').innerHTML='<b>'+esc(V.shop.name)+'</b><br>Phone / WhatsApp: <b>'+esc(V.shop.phone)+'</b><br>'+esc(V.shop.address)+'<br>'+esc(V.shop.email||'')+'<br>Find us on Google Maps (scan the code)';if(V.qr)$('qr').src=V.qr;else $('qr').style.display='none';
+if(V.qr)$('qr').src=V.qr;else $('qr').style.display='none';$('qph').textContent='WhatsApp '+V.shop.phone;
 $('foot').textContent='අප හා සම්බන්ධ වුවාට ස්තූතියි! / Thank you';
 </script></body></html>
