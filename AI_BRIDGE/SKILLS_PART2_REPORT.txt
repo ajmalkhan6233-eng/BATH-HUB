@@ -1,0 +1,5 @@
+SKILLS INSTALL REPORT 24NOV
+ACTIVE added (11): ad-creative, canvas-design, copywriting, handoff, i18n-localization, internal-comms, karpathy-coder, month-end-close, social, theme-factory, vendor-management
+ACTIVE already there (6): executing-plans, mcp-builder, systematic-debugging, verification-before-completion, webapp-testing, writing-plans
+VAULT stored, disabled (35): a11y-audit, ads, agent-memory, claude-coach, commercial-policy, competitor-profiling, content-strategy, copy-editing, customer-research, deep-work, emails, finishing-a-development-branch, free-tools, human-gate, launch, lead-magnets, llm-cost-optimizer, marketing-ideas, marketing-plan, offers, onboarding, pricing, procurement-optimizer, receiving-code-review, referrals, requesting-code-review, schema, seo-audit, skill-creator, skill-retro, sms, test-driven-development, using-superpowers, web-artifacts-builder, weekly-review
+Move a vault folder into C:\Users\Sony\.claude\skills to switch it on. Restart Claude Code to load.

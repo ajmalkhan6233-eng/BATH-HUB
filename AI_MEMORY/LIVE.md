@@ -1,3 +1,4 @@
+11:13 | PC | RBH_SMOOTH_24NOV | PARTIAL | step2 skills installed (11 new active, 35 in vault, SKILL.md checked); step3 global CLAUDE.md router/RAM/showcase added; step1 RAM: browser windows NOT closed (cannot see unsaved work), nothing killed; ai-bridge commit+push of 5 files DENIED by auto mode | AJ: restart Claude Code; say push ai-bridge or run git add/commit/push there yourself
 AUTOSAVE 2026-11-24 11:12 SL | branch work @ 691d803 | last: autosave: LIVE.md state line 2026-11-24 10:57 | uncommitted files: 1 | server health: ok
 10:55 | PC | INSTALL_REPORT_24NOV | DONE | all 24 skills re-checked present; 2 rules added to CLAUDE.md | AJ: none
 AUTOSAVE 2026-11-24 10:42 SL | branch work @ 466ce55 | last: autosave: LIVE.md state line 2026-11-24 10:27 | uncommitted files: 1 | server health: ok
