@@ -69,3 +69,6 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 ## AJMAL RULES (24 Nov)
 - MINIMUM WORK FOR AJ: do it yourself, no questions.
 - When chat gets heavy, write the handoff and tell AJ to start fresh.
+
+
+VENDOR WORKFLOW (AJ 24 Nov): bill -> GRN -> cheques allocated per bill -> return note (item line, stock and payable) -> balance per bill -> Vendor 360 'Vendor statement' (receipt design, routes/vendor_voucher.js + public/brand/voucher-template/voucher.html). Worked example in docs/AJ_LEARNED.md. Check for an existing return before creating one.

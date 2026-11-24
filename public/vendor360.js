@@ -55,7 +55,7 @@
     var tabs = [['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN']];
     var after = v.outstanding_balance - (v.cheques_issued != null ? v.cheques_issued : (v.cheques_pending || 0));
     $('detail').innerHTML = '<div class="vhead"><h2>' + esc(v.vendor_name) + '</h2>' +
-      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Payment voucher</button></div></div>' +
+      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
       '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? (v.overdue > 0 ? 'bad' : '') : 'good') + '</div>' +
       (v.overdue > 0 ? '<div class="sm bad">Overdue: ' + rs(v.overdue) + '</div>' : '') +
       '<div id="acct" class="acct"><div class="state">Loading...</div></div>' +
