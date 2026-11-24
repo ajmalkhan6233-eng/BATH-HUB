@@ -8,6 +8,7 @@
   var P = window.RBHP, el = P.el, rs = P.rs, card = P.card;
   var cart = [], pay = 'cash', dmode = 'rs', dval = '', cust = '', phone = '', busy = false, last = null, msg = '', mcls = '', view = 'find', sq = '';
   var ocart = [], vendor = '', onote = '', omsg = '', obusy = false;
+  var Q = window.RBHQ ? window.RBHQ.make({ LS: P.LS, toShop: function (c) { return P.toShop(c); }, fromShop: function (id) { return P.fromShop(id); } }) : null, draining = false;
   var MAXLINES = 30;   // the shop PC takes 1 to 30 lines in one bill
 
   // ---------- bill maths (one place, so every number on the screen agrees)
@@ -54,8 +55,8 @@
     } else if (cart.length && !last) {
       if (tab === 'sell' && view === 'bill') {
         left.appendChild(el('div', 'k', 'Total to collect · ' + P.cap(pay))); left.appendChild(el('div', 'tot', rs(total())));
-        var ok = online() && !busy && cart.length <= MAXLINES;
-        btn = el('button', 'gold', busy ? 'Sending…' : !online() ? 'Connect to send' : 'Send bill'); btn.disabled = !ok; btn.addEventListener('click', sendBill);
+        var ok = !busy && cart.length <= MAXLINES;
+        btn = el('button', 'gold', busy ? 'Sending…' : 'Send bill'); btn.disabled = !ok; btn.addEventListener('click', sendBill);
       } else {
         left.appendChild(el('div', 'k', 'This bill · ' + P.plural(count(), 'item', 'items'))); left.appendChild(el('div', 'tot', rs(total())));
         btn = el('button', 'gold', 'Review bill'); btn.addEventListener('click', function () { view = 'bill'; if (P.tab() === 'sell') { P.redraw(); window.scrollTo(0, 0); } else P.go('sell'); });
@@ -78,29 +79,52 @@
     var nb = el('button', 'wide', 'New bill'); nb.addEventListener('click', function () { last = null; view = 'find'; sq = ''; P.redraw(); }); box.appendChild(nb);
   }
 
+  function newId() { return Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(12)), function (x) { return (x < 16 ? '0' : '') + x.toString(16); }).join(''); }
+  // AJ 24 Nov: the bill is SAVED on the phone first (one id), then sent. The spinner never runs more than about 16 seconds; if the shop PC is off the bill waits in "Pending bills" and goes by itself.
   async function sendBill() {
     if (busy || !cart.length) return;
-    if (!online()) { say('Offline. Connect to send. Nothing was sent.', 'amber'); P.redraw(); return; }
     if (cart.length > MAXLINES) { say('One bill can have up to ' + MAXLINES + ' lines. Split it into two bills.', 'bad'); P.redraw(); return; }
+    if (!Q) { say('Heads-up: this phone app needs a refresh (pull down).', 'bad'); P.redraw(); return; }
+    Q.add({ type: 'bill', pay: pay, disc: pct(), name: cust, phone: phone,
+      items: cart.map(function (l) { return { pid: l.pid, code: l.code, qty: l.qty, price: l.price }; }) }, rs(total()) + ' · ' + P.plural(count(), 'item', 'items') + (cust ? ' · ' + cust : ''), newId());
+    cart = []; dval = ''; cust = ''; phone = ''; view = 'find'; sq = '';
     busy = true; say('Sending to the shop PC…', 'pulse'); P.redraw();
-    try {
-      var id = await P.toShop({ type: 'bill', pay: pay, disc: pct(), name: cust, phone: phone,
-        items: cart.map(function (l) { return { pid: l.pid, code: l.code, qty: l.qty, price: l.price }; }) });
-      P.LS.set('rbh_pending', JSON.stringify({ id: id, at: Date.now(), kind: 'bill' }));
-      say('Waiting for the bill number from the shop PC (up to 90 seconds)…', 'pulse'); P.redraw();
-      var a = await answer(id, 90);
-      if (!a) say('Sent. The shop PC has not answered yet (it may be off). It is saved. Do NOT send it again, check this tab in a minute.', 'amber');
-      else if (!a.ok) { say('Heads-up: bill not made. ' + (a.error || 'unknown'), 'bad'); P.LS.del('rbh_pending'); }
-      else { last = a; cart = []; dval = ''; cust = ''; phone = ''; say(''); view = 'find'; sq = ''; P.LS.del('rbh_pending'); }
-    } catch (e) { say('Heads-up: ' + (e.message || 'could not send.'), 'bad'); }
-    busy = false; P.redraw();
+    await drain(true); busy = false; P.redraw();
   }
+  // one pass over the saved bills: send what is not sent, collect answers. Used by the Send button, "Send now", a timer and "back online".
+  async function drain(justSent) {
+    if (!Q || draining) return; draining = true;
+    try {
+      var q = await Q.tick(), done = false;
+      q.forEach(function (it) {
+        if (!it.answer) return; done = true; Q.remove(it.id);
+        if (it.answer.ok) { last = it.answer; say(''); } else say('Heads-up: bill not made. ' + (it.answer.error || 'unknown'), 'bad');
+      });
+      if (!done) { var left = Q.load(); if (left.length) say(justSent ? 'Saved on this phone. It will be sent when the shop PC is on (see Pending bills).' : '', justSent ? 'amber' : ''); else if (justSent) say(''); }
+    } finally { draining = false; }
+    if (!justSent) P.redraw();
+  }
+  function pendingList(box) {
+    var items = Q ? Q.load() : []; if (!items.length) return;
+    var c = el('div', 'status amber'); c.appendChild(el('b', null, 'Pending bills (' + items.length + ')'));
+    items.forEach(function (it) {
+      var r = el('div', null); r.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:8px';
+      var t = new Date(it.at), hm = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2);
+      r.appendChild(el('span', null, it.label + ' · ' + hm + (it.posted ? ' · sent, waiting for the shop PC' : ' · saved, not sent yet')));
+      var go = el('button', null, 'Send now'), del = el('button', null, 'Delete'); go.style.minHeight = del.style.minHeight = '44px';
+      go.addEventListener('click', function () { say('Sending…', 'pulse'); P.redraw(); drain(true).then(function () { P.redraw(); }); });
+      del.addEventListener('click', function () { if (window.confirm(it.posted ? 'This bill may already be at the shop. Take it off THIS list only?' : 'Delete this saved bill? It was not sent.')) { Q.remove(it.id); P.redraw(); } });
+      r.appendChild(go); r.appendChild(del); c.appendChild(r);
+    });
+    box.appendChild(c);
+  }
+  if (Q) { setInterval(function () { if (Q.load().length) drain(false); }, 20000); window.addEventListener('online', function () { drain(false); }); document.addEventListener('visibilitychange', function () { if (!document.hidden && Q.load().length) drain(false); }); }
 
   function status(box) { if (!msg) return; var m = el('div', 'status' + (mcls ? ' ' + mcls : ''), msg); m.setAttribute('role', 'status'); box.appendChild(m); }
 
   // ---------- SELL: find view
   function findView(s, box) {
-    status(box);
+    status(box); pendingList(box);
     var c = card('Find items', s.items ? s.items.length.toLocaleString('en-US') + ' items' : null);
     var q = el('input', 'search'); q.type = 'search'; q.placeholder = 'Type item name or code'; q.autocomplete = 'off'; q.setAttribute('aria-label', 'Find item'); q.value = sq;
     var res = el('div', 'results'); c.appendChild(q); c.appendChild(res); box.appendChild(c);

@@ -286,7 +286,7 @@
   }
   async function toShop(cmd) {   // phone -> locked inbox. Returns the request id.
     var w = LS.get('rbh_w'), t = LS.get('rbh_t'); if (!w || !t) throw new Error('This phone is not paired yet.');
-    var id = enc64(crypto.getRandomValues(new Uint8Array(12))).replace(/[+/=]/g, 'x'); cmd.id = id; cmd.ts = Date.now();
+    var id = cmd.id || enc64(crypto.getRandomValues(new Uint8Array(12))).replace(/[+/=]/g, 'x'); cmd.id = id; cmd.ts = Date.now();
     var r = await fetch(w + '/inbox', { method: 'POST', headers: { 'X-Read-Token': t, 'Content-Type': 'application/json' }, body: JSON.stringify(await encryptWith(cmd)) });
     if (r.status === 429) throw new Error('Too many waiting. Try again in a minute.');
     if (!r.ok) throw new Error('Could not reach the shop mailbox (' + r.status + ').');
