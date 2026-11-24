@@ -45,7 +45,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const st = (await q(`SELECT COALESCE(SUM(stock_level),0) units, COALESCE(SUM(GREATEST(stock_level,0)*avg_cost),0) cost, COALESCE(SUM(GREATEST(stock_level,0)*selling_price),0) sell,
         COUNT(*) FILTER (WHERE stock_level > 0) items, COUNT(*) FILTER (WHERE stock_level < 0) neg,
         COUNT(*) FILTER (WHERE stock_level > 0 AND COALESCE(selling_price,0) = 0) nosell FROM products WHERE active IS NOT FALSE`))[0];
-    const stockAll = Number((await q('SELECT COALESCE(SUM(stock_level),0) s FROM products WHERE active IS NOT FALSE'))[0].s);
+    const stockAll = Number((await q('SELECT COALESCE(SUM(stock_level),0) s FROM products WHERE active IS NOT FALSE AND item_code !~ '^(SP|OSH|OUT)-''))[0].s);   // special items (bought for one customer) net to 0 when billed: not part of this check
 
     const vb = await q('SELECT * FROM vendor_bills WHERE voided = FALSE');
     const ids = vb.map(b => b.id);
@@ -70,8 +70,8 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
 
     const grn = (await q('SELECT COALESCE(SUM(total_amount),0) amt, COALESCE(SUM(quantity),0) qty FROM grn_records'))[0];
     const pend = Number((await q("SELECT COALESCE(SUM(amount),0) s FROM vendor_pending_items WHERE status = 'PENDING'").catch(() => [{ s: 0 }]))[0].s);
-    const sold = Number((await q(`SELECT COALESCE(SUM(i.qty),0) s FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id WHERE ${LIVE}`))[0].s);
-    const ret = Number((await q('SELECT COALESCE(SUM(qty),0) s FROM vendor_return_lines').catch(() => [{ s: 0 }]))[0].s);
+    const sold = Number((await q(`SELECT COALESCE(SUM(i.qty),0) s FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id WHERE ${LIVE} AND i.item_code !~ '^(SP|OSH|OUT)-'`))[0].s);
+    const ret = Number((await q('SELECT COALESCE(SUM(qty),0) s FROM vendor_return_lines WHERE item_code !~ \'^(SP|OSH|OUT)-\'').catch(() => [{ s: 0 }]))[0].s);
     const opening = Number((await q("SELECT COALESCE(SUM(qty_change),0) s FROM stock_movements WHERE reason = 'opening_stock_confirmed'").catch(() => [{ s: 0 }]))[0].s);   // stock AJ confirmed by hand (no GRN), e.g. item 331
     const stockGap = r2(stockAll - (Number(grn.qty) - sold - ret + opening));
     const grnGap = r2(billed - Number(grn.amt) - pend);
@@ -93,6 +93,36 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     cache = { at: Date.now(), body };
     res.json(body);
   } catch (e) { console.error('[home_solid]', e.message); res.status(500).json({ error: 'Could not load Home numbers' }); }
+});
+
+// 24 Nov (AJ): click a red line on Home -> see WHICH items, then fix with one click (asks first). Owner only.
+async function gapRows() {
+  return (await q(`SELECT p.item_code, p.name, p.stock_level::float AS stock,
+      COALESCE((SELECT SUM(quantity) FROM grn_records g WHERE split_part(g.item_description,' - ',1) = p.item_code),0)::float AS grn,
+      COALESCE((SELECT SUM(i.qty) FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id WHERE i.item_code = p.item_code AND ${LIVE}),0)::float AS sold,
+      COALESCE((SELECT SUM(qty) FROM vendor_return_lines l WHERE l.item_code = p.item_code),0)::float AS ret,
+      COALESCE((SELECT SUM(qty_change) FROM stock_movements m WHERE m.item_code = p.item_code AND m.reason = 'opening_stock_confirmed'),0)::float AS op
+    FROM products p WHERE p.active IS NOT FALSE AND p.item_code !~ '^(SP|OSH|OUT)-' ORDER BY p.item_code`))
+    .map(x => ({ ...x, explained: r2(x.grn - x.sold - x.ret + x.op), gap: r2(x.stock - (x.grn - x.sold - x.ret + x.op)) })).filter(x => Math.abs(x.gap) > 0.001);
+}
+router.get('/home-solid/stock-gap', ownerOnly, async (req, res) => { try { res.json({ items: await gapRows() }); } catch (e) { console.error('[home_solid gap]', e.message); res.status(500).json({ error: 'Could not list the items' }); } });
+// mode "confirm": the shelf count is right, the books just lack the paper (adds an opening-stock line, stock unchanged).
+// mode "set": the books are right, the shelf number is wrong (stock is set to the explained figure; the change is written in the stock history).
+router.post('/home-solid/stock-fix', ownerOnly, express.json(), async (req, res) => {
+  const code = String(req.body && req.body.item_code || ''), mode = String(req.body && req.body.mode || '');
+  if (!code || !['confirm', 'set'].includes(mode)) return res.status(400).json({ error: 'Bad request' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const row = (await gapRows()).find(x => x.item_code === code);
+    if (!row) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'This item has no gap now' }); }
+    const by = (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || null;
+    const L = require('../utils/stock_ledger');
+    if (mode === 'confirm') await L.record(client, { item_code: code, qty_change: row.gap, reason: 'opening_stock_confirmed', ref_type: 'home_check', note: 'Owner confirmed the shelf stock is right (Home check)', created_by: by });
+    else { await client.query('UPDATE products SET stock_level = $2 WHERE item_code = $1', [code, row.explained]); await L.record(client, { item_code: code, qty_change: -row.gap, reason: 'stock_correction', ref_type: 'home_check', note: 'Owner set stock to the books figure (Home check)', created_by: by }); }
+    await client.query('COMMIT'); cache = null; res.json({ ok: true });
+  } catch (e) { await client.query('ROLLBACK').catch(() => {}); console.error('[home_solid fix]', e.message); res.status(500).json({ error: 'Could not fix this item' }); }
+  finally { client.release(); }
 });
 
 module.exports = router;

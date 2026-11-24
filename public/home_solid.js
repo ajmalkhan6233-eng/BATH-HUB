@@ -34,10 +34,34 @@
       tile('Stock at selling', rs(K.sell), K.no_price ? K.no_price + ' items without price' : 'all priced', K.no_price > 0) +
       tile('We owe vendors', rs(V.owed), V.overdue > 0 ? rs(V.overdue) + ' cheque date passed, confirm cleared' : (V.pending_bills ? V.pending_bills + ' bill' + (V.pending_bills === 1 ? '' : 's') + ' pending: confirm payment date' : 'all dates set'), V.overdue > 0) +
       tile('Cheques to pay', rs(C.amount), C.count + ' cheques' + (nx ? ' · next ' + dm(nx.due) + ' ' + rs(nx.amount) : '')) +
-      '</div><div class="hs-c"><div class="hs-l">Do the numbers match?</div>' + d.checks.map(function (c) { return '<div><span class="' + (c.ok ? 'ok' : 'no') + '">' + (c.ok ? '✓' : '!') + '</span><span>' + esc(c.label) + (c.note ? ' <span class="hs-s' + (c.ok ? '' : ' hs-w') + '">(' + esc(c.note) + ')</span>' : '') + '</span></div>'; }).join('') + '</div>' +
+      '</div><div class="hs-c"><div class="hs-l">Do the numbers match?</div>' + d.checks.map(function (c) { return '<div' + (!c.ok && c.key === 'stock' ? ' data-fix="stock" style="cursor:pointer;text-decoration:underline" title="Tap to see which items"' : '') + '><span class="' + (c.ok ? 'ok' : 'no') + '">' + (c.ok ? '✓' : '!') + '</span><span>' + esc(c.label) + (c.note ? ' <span class="hs-s' + (c.ok ? '' : ' hs-w') + '">(' + esc(c.note) + ')</span>' : '') + '</span></div>'; }).join('') + '</div>' +
       '<div class="hs-c"><div class="hs-l">Where the ' + rs(R.per_day) + ' a day goes (rough)</div>' + (R.breakdown || []).map(function (x) { return '<div><span style="flex:1">' + esc(x.label) + '</span><b>' + rs(x.amount) + '</b></div>'; }).join('') + '</div>' +
       '<div class="hs-c"><div class="hs-l">Owed most</div>' + V.top.map(function (v) { return '<div><span style="flex:1">' + esc(v.name) + '</span><b>' + rs(v.owed) + '</b></div>'; }).join('') + '</div>';
   }
+  // red stock line: tap -> list of the items that do not match, each with two safe buttons (asks before it changes anything)
+  function fixBox() {
+    var back = document.createElement('div'); back.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center';
+    var bx = document.createElement('div'); bx.style.cssText = 'background:#fff;color:#111;border-radius:12px;width:min(720px,95vw);max-height:85vh;overflow:auto;padding:14px 16px;font:14px system-ui,sans-serif';
+    back.appendChild(bx); document.body.appendChild(back); back.addEventListener('mousedown', function (e) { if (e.target === back) back.remove(); });
+    function go() {
+      bx.innerHTML = '<b style="font-size:16px">Stock that the books do not explain</b> <button type="button" id="hsx" style="float:right;border:0;background:none;font-size:22px;cursor:pointer">&times;</button><div style="margin:6px 0;color:#555">Books = bought (GRN) - sold - returned. Pick what is true for each item.</div><div id="hsl">Loading...</div>';
+      bx.querySelector('#hsx').onclick = function () { back.remove(); };
+      fetch('/api/home-solid/stock-gap', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) {
+        var l = bx.querySelector('#hsl'); if (!d.items || !d.items.length) { l.textContent = 'Nothing left to fix. Press Refresh on Home.'; return; }
+        l.innerHTML = ''; d.items.forEach(function (x) {
+          var r = document.createElement('div'); r.style.cssText = 'border-top:1px solid #ddd;padding:8px 0';
+          r.innerHTML = '<b>' + esc(x.item_code) + '</b> ' + esc(x.name) + '<div style="color:#555">Shelf stock ' + x.stock + ' · books say ' + x.explained + ' (bought ' + x.grn + ', sold ' + x.sold + ', returned ' + x.ret + ') · difference ' + x.gap + '</div>';
+          [['confirm', 'Shelf is right: confirm ' + x.stock], ['set', 'Books are right: set stock to ' + x.explained]].forEach(function (m) {
+            var b = document.createElement('button'); b.type = 'button'; b.textContent = m[1]; b.style.cssText = 'margin:6px 8px 0 0;min-height:38px;padding:0 12px;border-radius:8px;border:1px solid #c9a24b;background:#fff8e6;cursor:pointer';
+            b.onclick = function () { if (!confirm(m[1] + ' for ' + x.item_code + '?')) return; b.disabled = true; fetch('/api/home-solid/stock-fix', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_code: x.item_code, mode: m[0] }) }).then(function (z) { return z.json(); }).then(function (z) { if (z.error) alert(z.error); go(); load(); }); };
+            r.appendChild(b);
+          }); l.appendChild(r);
+        });
+      }).catch(function () { bx.querySelector('#hsl').textContent = 'Could not load the list.'; });
+    }
+    go();
+  }
+  document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('[data-fix="stock"]'); if (t) fixBox(); });
   function load() {
     if (busy || !box) return; busy = true;
     fetch('/api/home-solid', { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Please log in as owner' : 'Could not load numbers'); return r.json(); })
