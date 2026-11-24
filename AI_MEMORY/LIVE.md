@@ -1,3 +1,4 @@
+10:02 | PC | SKILLS_INSTALL_24NOV | DONE | 24 items installed user-level, skips: insecure-defaults, supabase; Impeccable hooks/binary not added; SKILL.md not read in full | AJ: restart Claude Code once. Report AI_BRIDGE/SKILLS_INSTALL_24NOV_REPORT.md
 AUTOSAVE 2026-11-24 09:57 SL | branch work @ a74258f | last: autosave: LIVE.md state line 2026-11-24 09:30 | uncommitted files: 1 | server health: ok
 17:04 | PC | RBH_CHEQUE_CALENDAR_TIDY_23NOV | DONE | small calendar: equal 40px boxes (checked 1366px: 3 cards, no sideways scroll), 1 title, 4-chip key, K amounts, Fridays tinted; 'wrote' chip stays removed as before; 1920 not shot (page max 1100px) | AJ: Ctrl+F5 twice, open Cheque Calendar
 AUTOSAVE 2026-11-23 16:57 SL | branch work @ 8b47d34 | last: autosave: LIVE.md state line 2026-11-23 16:42 | uncommitted files: 1 | server health: ok
