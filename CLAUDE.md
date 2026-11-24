@@ -65,3 +65,7 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 ## FACTS TO KEEP (17 Nov 2026)
 - Vendor and bill amounts (Leo, Lucky, Cool Lanka, Maheshan) live in the PRIVATE bridge repo (DATA/SHOP_LATEST, PRIVATE_FROM_APP_REPO), never in this PUBLIC repo.
 - RULE: a vendor RETURN must carry its item lines (code, qty, rate), not just a total. A GRN whose Bill total and Paid differ must carry a REASON (No change given / Discount given / Goods returned / Short delivered / Other + note). Saving is never blocked; no reason = amber, reason saved = green.
+
+## AJMAL RULES (24 Nov)
+- MINIMUM WORK FOR AJ: do it yourself, no questions.
+- When chat gets heavy, write the handoff and tell AJ to start fresh.
