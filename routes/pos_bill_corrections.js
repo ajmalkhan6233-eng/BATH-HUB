@@ -83,6 +83,7 @@ const itemsOf = async (client, id) => (await client.query(
 async function voidInside(client, bill, reason, req) {
     const items = await itemsOf(client, bill.id);
     const restored = billDeducted(bill) ? await giveStockBack(client, items) : [];
+    try { await require('./outside_items').takeBackAfterVoid(client, restored); } catch (e) { console.error('[outside void]', e.message); }   // outside items stay at 0
     await client.query(`INSERT INTO pos_bill_voids (bill_id, reason, voided_by, stock_restored) VALUES ($1,$2,$3,$4)`,
         [bill.id, reason, whoOf(req), JSON.stringify(restored)]);
     await client.query(`INSERT INTO pos_bill_history (bill_id, action, reason, changed_by, old_version) VALUES ($1,'void',$2,$3,$4)`,

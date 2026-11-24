@@ -1,5 +1,5 @@
 /* POS "+ Outside" item (AJ 24 Nov). Own module: remove the script tag and the button is gone.
-   Owner/admin only (the popup asks for profit and cost; the customer and the cashier never see them).
+   Shown to owner/admin always, and to the cashier only if the owner switched it on in Settings (default off). The customer never sees cost or profit.
    Popup: item name, qty, selling price (each), rough profit (each), cost (each, optional). All boxes start EMPTY.
    Save -> POST /api/outside-items (code OUT-001..., stock +qty so the sale nets it to 0) -> the line is added to the bill. */
 (function () {
@@ -68,9 +68,9 @@
     if (top && !top.querySelector('.outside-btn')) { var scan = $('scanBox'); var b1 = mkBtn(); if (scan && scan.nextSibling) top.insertBefore(b1, scan.nextSibling); else top.appendChild(b1); }
     if (foot && add && !foot.querySelector('.outside-btn')) { var b2 = mkBtn(); add.insertAdjacentElement('afterend', b2); }
   }
-  fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
-    var u = me && (me.user || me); var role = u && u.role;
-    if (role === 'owner' || role === 'admin') mount();
-  }).catch(function () { /* no button when the role is unknown */ });
+  // The server decides: owner/admin always, the cashier only when the owner switched it on in Settings (default off).
+  fetch('/api/outside-items/allowed', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (d && d.allowed) mount();
+  }).catch(function () { /* no button when unknown */ });
   window.PosOutside = { open: open };
 })();

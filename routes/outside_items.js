@@ -1,11 +1,15 @@
 'use strict';
 // OUTSIDE ITEMS (AJ 24 Nov): an item the shop does not stock, bought from outside for one customer. ONE isolated module.
-//   POST /api/outside-items               owner/admin: name, qty, price (each), profit (each) or cost (each) -> code OUT-001..., stock +qty
+//   POST /api/outside-items               owner/admin (cashier too if the owner switches it on in Settings): name, qty, price (each),
+//                                         profit (each) or cost (each) -> code OUT-001..., stock +qty
+//   GET  /api/outside-items/allowed       anyone logged in: may this user see the "+ Outside" button?
 //   GET  /api/outside-items/pending       owner/admin: cost still an ESTIMATE (oldest first, with age in days)
 //   POST /api/outside-items/:id/real-cost owner/admin: real cost + reason -> sold lines and profit are recalculated
 // The bill itself goes through the normal POS route (so it counts in sales, profit and the daily breakdown, mixed with the shop).
 // Stock: with POS_DEDUCT_STOCK=true the sale takes qty out, so this module puts qty IN first and the item nets to 0.
 // With it off, the sale does not touch stock, so this module does not either (also nets to 0).
+// Cancelled bill: a VOID gives the stock back, so takeBackAfterVoid() (called from the void route) takes it out again;
+// a bill that was never made (cart dropped) is swept after STALE_HOURS: sweep() takes the unsold qty out and cancels the entry.
 // shortcut: repeat purchases of one code share one avg_cost (the latest estimate); lines are re-costed per entry by time window. Fine for rough costs.
 const express = require('express');
 const pool = require('../utils/pool');
@@ -16,6 +20,7 @@ const isOwner = req => ['admin', 'owner'].includes(roleOf(req));
 const deductOn = () => String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
 const keyOf = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 const OVERDUE_DAYS = 2;
+const STALE_HOURS = 12;
 
 let ready = null;
 function ensure() {
@@ -28,6 +33,10 @@ function ensure() {
   return ready;
 }
 const guard = (req, res, next) => isOwner(req) ? next() : res.status(403).json({ error: 'Only the owner or admin can use outside items' });
+// Settings > "Let the cashier use + Outside" (default OFF). The owner always may.
+async function cashierOn() { try { return await require('../utils/appSettings').getBool(pool, 'pos_outside_cashier', null, false); } catch (e) { return false; } }
+async function mayUse(req) { return isOwner(req) || (roleOf(req) === 'cashier' && await cashierOn()); }
+const guardUse = async (req, res, next) => (await mayUse(req)) ? next() : res.status(403).json({ error: 'Outside items are not switched on for this login' });
 
 function check(b) {
   const name = String((b && b.name) || '').trim();
@@ -45,11 +54,14 @@ function check(b) {
   return { name, qty: money2(qty), price: money2(price), cost: money2(cost), profit: money2(profit) };
 }
 
-router.post('/outside-items', guard, async (req, res) => {
+router.get('/outside-items/allowed', async (req, res) => { res.json({ allowed: await mayUse(req) }); });
+
+router.post('/outside-items', guardUse, async (req, res) => {
   const v = check(req.body); if (v.error) return res.status(400).json({ error: v.error });
   let client;
   try {
     await ensure();
+    await sweep(pool).catch(() => {});
     client = await pool.connect();
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(24112024)');
@@ -84,9 +96,23 @@ async function pendingRows(db) {
   return rows.map(r => ({ ...r, age_days: Math.floor((now - new Date(r.created_at).getTime()) / 86400000) }));
 }
 router.get('/outside-items/pending', guard, async (req, res) => {
-  try { const rows = await pendingRows(pool); res.json({ pending: rows, overdue: rows.filter(r => r.age_days > OVERDUE_DAYS).length }); }
+  try { await sweep(pool).catch(() => {}); const rows = await pendingRows(pool); res.json({ pending: rows, overdue: rows.filter(r => r.age_days > OVERDUE_DAYS).length }); }
   catch (e) { res.json({ pending: [], overdue: 0 }); }
 });
+
+// The bill lines sold under one estimate entry: from its time until the next entry for the same code. Voided bills are marked.
+async function windowLines(db, e) {
+  const later = (await db.query(`SELECT id, created_at FROM outside_cost_pending WHERE item_code = $1 AND id > $2 ORDER BY id`, [e.item_code, e.id])).rows;
+  const from = new Date(e.created_at).getTime(), lim = later.length ? new Date(later[0].created_at).getTime() : null;
+  const bm = new Map((await db.query(`SELECT id, created_at FROM pos_bills`)).rows.map(r => [r.id, new Date(r.created_at).getTime()]));
+  let voided = new Set(); try { voided = new Set((await db.query(`SELECT bill_id FROM pos_bill_voids`)).rows.map(r => r.bill_id)); } catch (err) { /* no void table yet */ }
+  const lines = [];
+  for (const it of (await db.query(`SELECT id, bill_id, qty, unit_cost FROM pos_bill_items WHERE item_code = $1`, [e.item_code])).rows) {
+    const t = bm.get(it.bill_id); if (t === undefined || t < from || (lim !== null && t >= lim)) continue;
+    lines.push({ id: it.id, qty: Number(it.qty), unit_cost: it.unit_cost, voided: voided.has(it.bill_id) });
+  }
+  return { lines, hasLater: later.length > 0 };
+}
 
 router.post('/outside-items/:id/real-cost', guard, async (req, res) => {
   const id = Number(req.params.id), cost = Number(req.body && req.body.cost), reason = String((req.body && req.body.reason) || '').trim();
@@ -99,18 +125,14 @@ router.post('/outside-items/:id/real-cost', guard, async (req, res) => {
     const e = (await client.query(`SELECT * FROM outside_cost_pending WHERE id = $1`, [id])).rows[0];
     if (!e) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Not found' }); }
     if (e.status !== 'pending') { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Real cost was already entered for this one' }); }
-    const real = money2(cost), est = Number(e.est_cost), from = new Date(e.created_at).getTime();
-    const later = (await client.query(`SELECT id, created_at FROM outside_cost_pending WHERE item_code = $1 AND id > $2 ORDER BY id`, [e.item_code, e.id])).rows;
-    const lim = later.length ? new Date(later[0].created_at).getTime() : null;
-    const bm = new Map((await client.query(`SELECT id, created_at FROM pos_bills`)).rows.map(r => [r.id, new Date(r.created_at).getTime()]));
-    const its = (await client.query(`SELECT id, bill_id, qty, unit_cost FROM pos_bill_items WHERE item_code = $1`, [e.item_code])).rows;
+    const real = money2(cost), est = Number(e.est_cost);
+    const w = await windowLines(client, e);
     let lines = 0, qtySum = 0;
-    for (const it of its) {
-      const t = bm.get(it.bill_id); if (t === undefined || t < from || (lim !== null && t >= lim)) continue;
+    for (const it of w.lines) {
       if (it.unit_cost != null && Math.abs(Number(it.unit_cost) - est) > 0.005) continue;   // only lines still on the estimate
-      await client.query(`UPDATE pos_bill_items SET unit_cost = $2 WHERE id = $1`, [it.id, real]); lines++; qtySum += Number(it.qty);
+      await client.query(`UPDATE pos_bill_items SET unit_cost = $2 WHERE id = $1`, [it.id, real]); lines++; if (!it.voided) qtySum += it.qty;
     }
-    if (!later.length) await client.query(`UPDATE products SET avg_cost = $2 WHERE item_code = $1`, [e.item_code, real]);
+    if (!w.hasLater) await client.query(`UPDATE products SET avg_cost = $2 WHERE item_code = $1`, [e.item_code, real]);
     const by = (req.session && req.session.user && (req.session.user.username || req.session.user.name)) || null;
     await client.query(`UPDATE outside_cost_pending SET status = 'confirmed', real_cost = $2, reason = $3, confirmed_by = $4, confirmed_at = CURRENT_TIMESTAMP WHERE id = $1`, [id, real, reason.slice(0, 300), by]);
     await client.query('COMMIT');
@@ -120,6 +142,56 @@ router.post('/outside-items/:id/real-cost', guard, async (req, res) => {
     console.error('[outside-items real-cost]', err.message); res.status(500).json({ error: 'Could not save the real cost' });
   } finally { if (client) client.release(); }
 });
+
+// A bill was voided: the void gave the stock back (+qty), but an outside item must stay at 0, so take it out again.
+// Called inside the void transaction with the list the void restored. Never breaks the void.
+async function takeBackAfterVoid(client, restored) {
+  if (!deductOn() || !Array.isArray(restored)) return 0;
+  let n = 0;
+  await client.query('SAVEPOINT outside_void');
+  try {
+    for (const r of restored) {
+      const code = String(r && r.item_code || ''); if (!/^OUT-\d+$/.test(code)) continue;
+      const q = Number(r.qty); if (!(q > 0)) continue;
+      await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $2 WHERE item_code = $1`, [code, q]);
+      await require('../utils/stock_ledger').recordSafe(client, { item_code: code, qty_change: -q, reason: 'outside_void', ref_type: 'outside_item', ref_id: code, note: 'bill voided: outside item stays at 0' }); n++;
+    }
+    await client.query('RELEASE SAVEPOINT outside_void');
+  } catch (e) { await client.query('ROLLBACK TO SAVEPOINT outside_void').catch(() => {}); console.error('[outside void]', e.message); return 0; }
+  return n;
+}
+
+// A cart that was dropped (never billed): after STALE_HOURS the unsold qty is taken back out and the entry is cancelled.
+async function sweep(db) {
+  if (!deductOn()) return 0;
+  await ensure();
+  const cutoff = Date.now() - STALE_HOURS * 3600000;
+  const items = (await db.query(`SELECT o.item_code, p.stock_level FROM outside_items o JOIN products p ON p.item_code = o.item_code WHERE COALESCE(p.stock_level,0) > 0`)).rows;
+  let freed = 0;
+  for (const it of items) {
+    const ents = (await db.query(`SELECT * FROM outside_cost_pending WHERE item_code = $1 AND status = 'pending' ORDER BY id`, [it.item_code])).rows;
+    const lastAny = (await db.query(`SELECT created_at FROM outside_cost_pending WHERE item_code = $1 ORDER BY id DESC LIMIT 1`, [it.item_code])).rows[0];
+    if (!lastAny || new Date(lastAny.created_at).getTime() > cutoff) continue;   // a bill may still be on its way
+    const c = await db.connect();
+    try {
+      await c.query('BEGIN');
+      const now = Number((await c.query(`SELECT stock_level FROM products WHERE item_code = $1`, [it.item_code])).rows[0].stock_level);
+      if (now > 0) {
+        await c.query(`UPDATE products SET stock_level = stock_level - $2 WHERE item_code = $1`, [it.item_code, now]);
+        await require('../utils/stock_ledger').recordSafe(c, { item_code: it.item_code, qty_change: -now, reason: 'outside_cancel', ref_type: 'outside_item', ref_id: it.item_code, note: 'never billed: outside item put back to 0' });
+        freed += now;
+      }
+      for (const e of ents) {
+        if (new Date(e.created_at).getTime() > cutoff) continue;
+        const w = await windowLines(c, e);
+        if (!w.lines.some(l => !l.voided)) await c.query(`UPDATE outside_cost_pending SET status = 'cancelled' WHERE id = $1`, [e.id]);
+      }
+      await c.query('COMMIT');
+    } catch (e) { await c.query('ROLLBACK').catch(() => {}); console.error('[outside sweep]', e.message); }
+    finally { c.release(); }
+  }
+  return freed;
+}
 
 // For the auditor and the home strip. Never throws.
 async function auditInfo(db) {
@@ -135,3 +207,5 @@ async function auditInfo(db) {
 module.exports = router;
 module.exports.auditInfo = auditInfo;
 module.exports.check = check;
+module.exports.takeBackAfterVoid = takeBackAfterVoid;
+module.exports.sweep = sweep;

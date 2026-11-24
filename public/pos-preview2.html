@@ -28,7 +28,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .field input{width:100%}
 /* 02 — Compact customer and document header */
 .customer-row{height:47px;flex:none;display:grid;grid-template-columns:minmax(170px,1.1fr) 145px minmax(175px,1fr) auto auto;align-items:center;gap:8px;padding:6px 9px}
-.customer-row .field{gap:2px}.customer-row .datef{display:grid;grid-template-columns:100px minmax(0,1fr);column-gap:6px;row-gap:2px}.customer-row .datef label{grid-column:1/-1}.customer-row .datef select{height:31px;min-width:0;font-size:12px;padding:0 3px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
+.customer-row .field{gap:2px}.customer-row .datef{display:grid;grid-template-columns:minmax(0,1fr);row-gap:2px}.customer-row .datef label{grid-column:1/-1}.customer-row .datef select{height:31px;min-width:0;font-size:12px;padding:0 3px}.customer-row input{height:29px}.customer-row .check{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}
 .doc-tabs{display:flex;align-items:center;gap:6px}.tab{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:3px}.tab.active{background:var(--soft);border-color:#c8b47f;color:#614b1b;font-weight:700}
 .docline{display:flex;align-items:center;justify-content:space-between;min-height:30px;flex:none}
 .held-strip{height:25px;flex:none;padding:4px 9px;background:#f8f8f8;border:1px solid var(--line);color:#62696e;font-size:12px}
@@ -195,7 +195,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
     <!-- 02 — Document type and compact customer details -->
     <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span><span class="muted" style="margin-left:10px">Salesman</span><select id="salesman" class="sm-pick" title="Who sold this bill"><option value="Jazeel">Jazeel</option><option value="Ajmal">Ajmal</option></select></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
-      <div class="field datef"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><select id="saleDay" title="Pick an earlier day"></select></div>
+      <div class="field datef"><label for="saleDate">Date</label><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" title="Today. Type an earlier date (dd/mm/yyyy) to back-date a bill."></div>
       <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>
@@ -280,5 +280,6 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 <script src="pos-cart.js"></script>
 <script src="pos2-api.js"></script>
 <script src="pos2-screen.js"></script>
+<script src="pos-outside.js"></script>
 </body>
 </html>

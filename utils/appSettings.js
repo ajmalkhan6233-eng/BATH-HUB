@@ -16,6 +16,7 @@ const SCHEMA = {
     brand_primary:         { def: '#C9A227', check: v => (typeof v === 'string' && HEX.test(v)) ? null : 'brand_primary must be a hex colour like #C9A227' },
     brand_accent:          { def: '#1F2937', check: v => (typeof v === 'string' && HEX.test(v)) ? null : 'brand_accent must be a hex colour like #1F2937' },
     dashboard_sales_target:{ def: 100000, check: v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1e9) ? null : 'dashboard_sales_target must be a number, 0 or more' },
+    pos_outside_cashier:   { def: false, check: v => typeof v === 'boolean' ? null : 'pos_outside_cashier must be true or false' },
     whatsapp_draft_only:   { def: true, check: v => typeof v === 'boolean' ? null : 'whatsapp_draft_only must be true or false' },
 };
 const PUBLIC_KEYS = ['shop_name', 'tagline', 'brand_primary', 'brand_accent', 'opening_hours', 'dashboard_sales_target'];

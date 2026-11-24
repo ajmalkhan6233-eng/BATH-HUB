@@ -5,6 +5,7 @@ const ALLOW = [
   ['GET', /^\/api\/me$/], ['POST', /^\/api\/logout$/],
   ['GET', /^\/api\/items(\?|$)/], ['GET', /^\/api\/branding$/],
   ['POST', /^\/api\/pos-bills$/], ['GET', /^\/api\/pos-bills(\/today|\/discount-cap)?$/], ['GET', /^\/api\/pos-bills\/\d+(\/pdf)?$/],
+  ['POST', /^\/api\/outside-items$/], ['GET', /^\/api\/outside-items\/allowed$/],   // the route itself checks the Settings switch (default OFF)
   ['GET', /^\/api\/discount-rules$/], ['GET', /^\/api\/customers$/],
   ['POST', /^\/api\/invoice-receipts\/send$/], ['GET', /^\/api\/invoice-receipts\/check-number$/],
   ['GET', /^\/api\/quotations(\/\d+)?$/], ['POST', /^\/api\/quotations$/], ['GET', /^\/api\/pos-ledger\/quotation-billed$/],
