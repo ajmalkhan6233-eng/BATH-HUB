@@ -57,8 +57,8 @@
     back = el('div', 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center');
     var box = el('div', 'background:#fff;color:#111;border-radius:10px;padding:14px 16px;width:min(360px,92vw);box-shadow:0 8px 30px rgba(0,0,0,.35)');
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
-    box.appendChild(el('div', 'font-size:16px;font-weight:800;margin-bottom:4px', editing ? 'Edit outside item ' + editing : 'Outside item'));
-    box.appendChild(el('div', 'font-size:11px;color:#666;margin-bottom:4px', 'Bought outside for this customer. Price and profit are per piece.'));
+    box.appendChild(el('div', 'font-size:16px;font-weight:800;margin-bottom:4px', editing ? 'Edit special item ' + editing : 'Special item'));
+    box.appendChild(el('div', 'font-size:11px;color:#666;margin-bottom:4px', 'Bought from another shop for this customer. Price and profit are per piece.'));
     box.appendChild(field('Item name', 'outName', ''));
     box.appendChild(field('Qty', 'outQty', ''));
     box.appendChild(field('Selling price (each)', 'outPrice', ''));
@@ -78,7 +78,7 @@
       fetch('/api/outside-items/item/' + encodeURIComponent(editing), { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (!d || !back) return; editInfo = d; if (!ln) { $('outName').value = d.name; $('outPrice').value = d.price; } $('outCost').value = d.cost; $('outProfit').value = Math.round((Number($('outPrice').value || d.price) - d.cost) * 100) / 100; }); }
   }
 
-  function mkBtn() { var b = el('button', '', '+ Outside'); b.type = 'button'; b.className = 'secondary outside-btn'; b.title = 'Sell an item bought from outside'; b.onclick = open; return b; }
+  function mkBtn() { var b = el('button', '', '+ Special item'); b.type = 'button'; b.className = 'secondary outside-btn'; b.title = 'Sell an item bought from another shop'; b.onclick = open; return b; }
   function mount() {
     var top = document.querySelector('#picker .picker-top'), foot = document.querySelector('.item-foot'), add = $('addItemBtn');
     if (top && !top.querySelector('.outside-btn')) { var scan = $('scanBox'); var b1 = mkBtn(); if (scan && scan.nextSibling) top.insertBefore(b1, scan.nextSibling); else top.appendChild(b1); }
@@ -90,46 +90,42 @@
     if (!allowed) return;
     fetch('/api/outside-items/today-pay', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) return; var foot = document.querySelector('.item-foot'); if (!foot) return;
-      var c = $('outPay'); if (!c) { c = el('span', 'margin-left:8px;padding:3px 9px;border:1px solid #c9a24a;border-radius:12px;background:#fff8e6;font-size:12px;font-weight:700;color:#5a4300;white-space:nowrap'); c.id = 'outPay'; c.title = 'Total to pay the outside shops for items taken today'; foot.appendChild(c); }
-      c.textContent = 'Outside shops to pay: today Rs ' + Number(d.total || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' \u00b7 all Rs ' + Number(d.all_total || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      var c = $('outPay'); if (!c) { c = el('span', 'margin-left:8px;padding:3px 9px;border:1px solid #c9a24a;border-radius:12px;background:#fff8e6;font-size:12px;font-weight:700;color:#5a4300;white-space:nowrap'); c.id = 'outPay'; c.title = 'Total to pay the shops for items taken today'; foot.appendChild(c); }
+      c.textContent = 'Shops to pay: today Rs ' + Number(d.total || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' \u00b7 all Rs ' + Number(d.all_total || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
       c.title = (d.items || []).map(function (i) { return i.name + ' ' + i.qty + ' x ' + i.cost + (i.real ? '' : ' (estimate)'); }).join(', ') || 'Nothing today';
     }).catch(function () {});
   }
   function check() {
     fetch('/api/outside-items/allowed', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) { if (++tries < 20) setTimeout(check, 1500); return; }
-      if (d.allowed && !allowed) { allowed = true; setInterval(function () { mount(); sizeBox(); }, 2000); setInterval(pay, 60000); mount(); pay(); }
+      if (d.allowed && !allowed) { allowed = true; setInterval(function () { mount(); }, 2000); setInterval(pay, 60000); mount(); pay(); }
     }).catch(function () { if (++tries < 20) setTimeout(check, 1500); });
   }
-  // the item list can be pulled bigger or smaller (arrow in the corner); the size is remembered on this computer
-  var st = document.createElement('style');
-  st.textContent = '#picker{max-height:none!important}#picker .picker-results{overflow:auto;min-height:60px;max-height:80vh!important}';
-  document.head.appendChild(st);
-  var ro = null;
-  function sizeBox() {
-    var r = document.querySelector('#picker .picker-results'); if (!r || r.dataset.rs) return; r.dataset.rs = '1';
-    var h = Number(localStorage.getItem('rbh_pick_h')); if (h >= 90) r.style.height = h + 'px';
-    if (window.ResizeObserver) { ro = new ResizeObserver(function () { var x = r.offsetHeight; if (x >= 90) localStorage.setItem('rbh_pick_h', String(x)); }); ro.observe(r); }
-  }
-  check(); setInterval(sizeBox, 2000);
+  check();
+
   var oldSave = save; save = function () { oldSave(); setTimeout(pay, 1500); };
   document.addEventListener('dblclick', function (e) {
     var row = e.target.closest && e.target.closest('.item-row'); if (!row || e.target.closest('[data-field="price"],[data-field="qty"],[data-field="disc"],button')) return;
     var c = row.querySelector('[data-field="code"]'), code = c ? String(c.value || '').trim() : '';
-    if (/^(OUT|OSH)-\d+$/.test(code) && allowed) open(code);
+    if (/^(OUT|OSH|SP)-\d+$/.test(code) && allowed) open(code);
   });
-  // one grip under the search box: drag it to make the item list bigger or smaller (remembered)
-  function grip() {
-    var top = document.querySelector('#picker .picker-top'), res = document.querySelector('#picker .picker-results'); if (!top || !res || $('pickGrip')) return;
-    var g = el('div', 'cursor:ns-resize;text-align:center;font-size:11px;color:#8a6d2f;background:#fff8e6;border:1px dashed #c9a24a;border-radius:6px;margin:3px 0;padding:1px 0;user-select:none;touch-action:none', '\u2195 drag to make the list bigger or smaller'); g.id = 'pickGrip';
-    top.insertAdjacentElement('afterend', g);
-    var y0 = 0, h0 = 0;
-    function mv(ev) { var y = (ev.touches ? ev.touches[0].clientY : ev.clientY); var h = Math.max(60, Math.min(window.innerHeight * 0.8, h0 + y - y0)); res.style.height = h + 'px'; res.style.maxHeight = 'none'; }
-    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', up); try { localStorage.setItem('rbh_pick_h', String(res.offsetHeight)); } catch (x) {} }
-    function dn(ev) { ev.preventDefault(); y0 = ev.touches ? ev.touches[0].clientY : ev.clientY; h0 = res.offsetHeight; document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up); document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', up); }
-    g.addEventListener('mousedown', dn); g.addEventListener('touchstart', dn, { passive: false });
-    var h = Number(localStorage.getItem('rbh_pick_h')); if (h >= 60) { res.style.height = h + 'px'; res.style.maxHeight = 'none'; }
+  // 24 Nov (AJ): the item list is a FLOATING window: drag its header row to move it, pull the corner arrow to resize it. It never pushes the bill down. Size and place are remembered.
+  var st = document.createElement('style');
+  st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px)!important;height:var(--ph,300px)!important;max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:9999;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open .picker-head{cursor:move;user-select:none;background:#fff8e6}';
+  document.head.appendChild(st);
+  function fl() {
+    var p = document.getElementById('picker'); if (!p || p.dataset.fl) return; p.dataset.fl = '1';
+    try { var o = JSON.parse(localStorage.getItem('rbh_pick_box') || '{}'); ['pl', 'pt', 'pw', 'ph'].forEach(function (k) { if (o[k] > 0) p.style.setProperty('--' + k, o[k] + 'px'); }); } catch (x) {}
+    function keep(k, v) { var o = {}; try { o = JSON.parse(localStorage.getItem('rbh_pick_box') || '{}'); } catch (x) {} o[k] = v; localStorage.setItem('rbh_pick_box', JSON.stringify(o)); }
+    if (window.ResizeObserver) new ResizeObserver(function () { if (p.classList.contains('open') && p.offsetWidth > 300) { p.style.setProperty('--pw', p.offsetWidth + 'px'); p.style.setProperty('--ph', p.offsetHeight + 'px'); keep('pw', p.offsetWidth); keep('ph', p.offsetHeight); } }).observe(p);
+    p.addEventListener('mousedown', function (ev) {
+      if (!ev.target.closest('.picker-head')) return; ev.preventDefault();
+      var x0 = ev.clientX, y0 = ev.clientY, l0 = p.offsetLeft, t0 = p.offsetTop;
+      function mv(e) { var l = Math.max(0, Math.min(window.innerWidth - 120, l0 + e.clientX - x0)), t = Math.max(0, Math.min(window.innerHeight - 40, t0 + e.clientY - y0)); p.style.setProperty('--pl', l + 'px'); p.style.setProperty('--pt', t + 'px'); }
+      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); keep('pl', parseInt(p.style.getPropertyValue('--pl'), 10) || p.offsetLeft); keep('pt', parseInt(p.style.getPropertyValue('--pt'), 10) || p.offsetTop); }
+      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+    });
   }
-  setInterval(grip, 1500);
+  setInterval(fl, 1000);
   window.PosOutside = { open: open };
 })();

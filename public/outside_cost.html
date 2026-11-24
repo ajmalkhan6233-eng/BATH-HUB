@@ -3,7 +3,7 @@
 <head><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Outside items: cost pending - Royal Bath Hub</title>
+<title>Special items: cost pending - Royal Bath Hub</title>
 <!-- BLOCK: outside items, cost pending list. Owner/admin only. Data: GET /api/outside-items/pending, POST /api/outside-items/:id/real-cost -->
 <style>
   *{box-sizing:border-box}
@@ -22,7 +22,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Outside items: real cost not entered yet</h1>
+  <h1>Special items: real cost not entered yet</h1>
   <div class="note">The cost on these sales is an estimate. Type the real cost per piece and the reason; the profit is recalculated. Red = over 2 days.</div>
   <div id="list">Loading...</div>
 </div>
@@ -32,7 +32,7 @@ function money(v){ return Number(v || 0).toLocaleString('en-US', { maximumFracti
 function load(){
   fetch('/api/outside-items/pending', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(j){
     var box = document.getElementById('list'); box.textContent = '';
-    if (!j.pending || !j.pending.length) { box.textContent = 'Nothing pending. All outside item costs are confirmed.'; return; }
+    if (!j.pending || !j.pending.length) { box.textContent = 'Nothing pending. All special item costs are confirmed.'; return; }
     var tot = j.pending.reduce(function(t, p){ return t + p.qty * p.est_cost; }, 0); box.appendChild(el('div', 't', 'Total to pay outside shops for these items: Rs ' + money(tot)));
     j.pending.forEach(function(p){
       var c = el('div', 'c' + (p.age_days > 2 ? ' old' : ''));

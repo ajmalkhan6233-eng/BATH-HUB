@@ -36,7 +36,7 @@ const guard = (req, res, next) => isOwner(req) ? next() : res.status(403).json({
 // Settings > "Let the cashier use + Outside" (default OFF). The owner always may.
 async function cashierOn() { try { return await require('../utils/appSettings').getBool(pool, 'pos_outside_cashier', null, false); } catch (e) { return false; } }
 async function mayUse(req) { return isOwner(req) || (roleOf(req) === 'cashier' && await cashierOn()); }
-const guardUse = async (req, res, next) => (await mayUse(req)) ? next() : res.status(403).json({ error: 'Outside items are not switched on for this login' });
+const guardUse = async (req, res, next) => (await mayUse(req)) ? next() : res.status(403).json({ error: 'Special items are not switched on for this login' });
 
 function check(b) {
   const name = String((b && b.name) || '').trim();
@@ -66,15 +66,12 @@ router.post('/outside-items', guardUse, async (req, res) => {
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(24112024)');
     const key = keyOf(v.name);
-    let code = ((await client.query(`SELECT item_code FROM outside_items WHERE name_key = $1`, [key])).rows[0] || {}).item_code;
-    if (!code) {
-      const mx = (await client.query(`SELECT item_code FROM outside_items`)).rows.reduce((m, r) => Math.max(m, parseInt(String(r.item_code).slice(4), 10) || 0), 0);
-      code = 'OSH-' + String(mx + 1).padStart(3, '0');   // 24 Nov (AJ): new outside items are OSH-001...; older OUT-00x codes stay as they are
-      await client.query(`INSERT INTO outside_items (item_code, name, name_key) VALUES ($1,$2,$3)`, [code, v.name, key]);
-    }
+    const mx = (await client.query(`SELECT item_code FROM outside_items`)).rows.reduce((m, r) => Math.max(m, parseInt(String(r.item_code).replace(/\D/g, ''), 10) || 0), 0);
+    const code = 'SP-' + String(mx + 1).padStart(3, '0');   // 24 Nov (AJ): every special item is its own item (same name again = new code), SP-001...
+    await client.query(`INSERT INTO outside_items (item_code, name, name_key) VALUES ($1,$2,$3)`, [code, v.name, key + '|' + code]);
     const p = await client.query(`SELECT item_code FROM products WHERE item_code = $1 LIMIT 1`, [code]);
     if (p.rows.length) await client.query(`UPDATE products SET name = $2, selling_price = $3, avg_cost = $4, active = true WHERE item_code = $1`, [code, v.name, v.price, v.cost]);
-    else await client.query(`INSERT INTO products (item_code, name, category, stock_level, reorder_threshold, selling_price, avg_cost, active) VALUES ($1,$2,'Outside',0,0,$3,$4,true)`, [code, v.name, v.price, v.cost]);
+    else await client.query(`INSERT INTO products (item_code, name, category, stock_level, reorder_threshold, selling_price, avg_cost, active) VALUES ($1,$2,'Special',0,0,$3,$4,true)`, [code, v.name, v.price, v.cost]);
     if (deductOn()) {
       await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) + $2 WHERE item_code = $1`, [code, v.qty]);
       await require('../utils/stock_ledger').recordSafe(client, { item_code: code, qty_change: v.qty, reason: 'outside_in', ref_type: 'outside_item', ref_id: code, note: 'bought outside for a customer; the sale takes it out again' });
@@ -85,7 +82,7 @@ router.post('/outside-items', guardUse, async (req, res) => {
     res.json({ item_code: code, name: v.name, qty: v.qty, price: v.price, cost: v.cost, pending_id: ins.rows[0].id, stock_in: deductOn() });
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
-    console.error('[outside-items]', e.message); res.status(500).json({ error: 'Could not save the outside item' });
+    console.error('[outside-items]', e.message); res.status(500).json({ error: 'Could not save the special item' });
   } finally { if (client) client.release(); }
 });
 
@@ -98,23 +95,22 @@ async function pendingRows(db) {
 // AJ 24 Nov (v1.0.1): open an outside item again from the bill (double-click) and change its name, price or cost
 router.get('/outside-items/item/:code', guard, async (req, res) => {
   try {
-    const code = String(req.params.code); if (!/^(OUT|OSH)-\d+$/.test(code)) return res.status(400).json({ error: 'Not an outside item' });
-    const it = (await pool.query(`SELECT name FROM outside_items WHERE item_code = $1`, [code])).rows[0]; if (!it) return res.status(404).json({ error: 'Outside item not found' });
+    const code = String(req.params.code); if (!/^(OUT|OSH|SP)-\d+$/.test(code)) return res.status(400).json({ error: 'Not a special item' });
+    const it = (await pool.query(`SELECT name FROM outside_items WHERE item_code = $1`, [code])).rows[0]; if (!it) return res.status(404).json({ error: 'Special item not found' });
     const p = (await pool.query(`SELECT selling_price, avg_cost FROM products WHERE item_code = $1`, [code])).rows[0] || {};
     const e = (await pool.query(`SELECT id, status, real_cost FROM outside_cost_pending WHERE item_code = $1 ORDER BY id DESC LIMIT 1`, [code])).rows[0] || {};
     res.json({ item_code: code, name: it.name, price: Number(p.selling_price || 0), cost: Number(p.avg_cost || 0), pending_id: e.status === 'pending' ? e.id : null, status: e.status || null });
   } catch (e) { res.status(500).json({ error: 'Could not read the outside item' }); }
 });
 router.put('/outside-items/:code', guard, async (req, res) => {
-  const code = String(req.params.code); if (!/^(OUT|OSH)-\d+$/.test(code)) return res.status(400).json({ error: 'Not an outside item' });
+  const code = String(req.params.code); if (!/^(OUT|OSH|SP)-\d+$/.test(code)) return res.status(400).json({ error: 'Not a special item' });
   const v = check({ ...(req.body || {}), qty: 1 }); if (v.error) return res.status(400).json({ error: v.error });
   let client;
   try {
     await ensure(); client = await pool.connect(); await client.query('BEGIN');
-    if (!(await client.query(`SELECT 1 FROM outside_items WHERE item_code = $1`, [code])).rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Outside item not found' }); }
+    if (!(await client.query(`SELECT 1 FROM outside_items WHERE item_code = $1`, [code])).rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Special item not found' }); }
     const key = keyOf(v.name);
-    if ((await client.query(`SELECT 1 FROM outside_items WHERE name_key = $1 AND item_code <> $2`, [key, code])).rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'Another outside item already has this name' }); }
-    await client.query(`UPDATE outside_items SET name = $2, name_key = $3 WHERE item_code = $1`, [code, v.name, key]);
+    await client.query(`UPDATE outside_items SET name = $2, name_key = $3 WHERE item_code = $1`, [code, v.name, key + '|' + code]);
     await client.query(`UPDATE products SET name = $2, selling_price = $3, avg_cost = $4 WHERE item_code = $1`, [code, v.name, v.price, v.cost]);
     const pend = await client.query(`UPDATE outside_cost_pending SET item_name = $2, sell_price = $3, est_cost = $4, est_profit = $5 WHERE id = (SELECT MAX(id) FROM outside_cost_pending WHERE item_code = $1 AND status = 'pending') RETURNING id`, [code, v.name, v.price, v.cost, v.profit]);
     await client.query('COMMIT');
@@ -187,7 +183,7 @@ async function takeBackAfterVoid(client, restored) {
   await client.query('SAVEPOINT outside_void');
   try {
     for (const r of restored) {
-      const code = String(r && r.item_code || ''); if (!/^(OUT|OSH)-\d+$/.test(code)) continue;
+      const code = String(r && r.item_code || ''); if (!/^(OUT|OSH|SP)-\d+$/.test(code)) continue;
       const q = Number(r.qty); if (!(q > 0)) continue;
       await client.query(`UPDATE products SET stock_level = COALESCE(stock_level, 0) - $2 WHERE item_code = $1`, [code, q]);
       await require('../utils/stock_ledger').recordSafe(client, { item_code: code, qty_change: -q, reason: 'outside_void', ref_type: 'outside_item', ref_id: code, note: 'bill voided: outside item stays at 0' }); n++;
