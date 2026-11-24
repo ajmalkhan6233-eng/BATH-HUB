@@ -13,7 +13,7 @@
       '<label style="display:block;font-size:14px;color:#5b6070">WhatsApp number (leave empty to use the saved one)</label>' +
       '<input id="vvPh" inputmode="tel" placeholder="0771234567" style="width:100%;min-height:44px;font-size:16px;border:1px solid #c9a24b;border-radius:10px;padding:8px;margin:4px 0 8px">' +
       '<div style="display:flex;gap:8px"><button id="vvSend" type="button" style="flex:1;min-height:48px;border:0;border-radius:12px;background:#C9A24B;color:#0B1B3A;font-weight:700;font-size:16px">Send on WhatsApp</button>' +
-      '<a id="vvSave" download="vendor-statement.png" style="flex:0 0 auto;min-height:48px;display:flex;align-items:center;padding:0 14px;border:1px solid #c9a24b;border-radius:12px;color:#0B1B3A;text-decoration:none">Picture</a><a id="vvPdf" href="' + url.replace('/preview', '/pdf') + '" target="_blank" rel="noopener" style="flex:0 0 auto;min-height:48px;display:flex;align-items:center;padding:0 14px;border:1px solid #c9a24b;border-radius:12px;color:#0B1B3A;text-decoration:none">PDF</a></div>' +
+      '<a id="vvSave" download="vendor-statement.png" style="flex:0 0 auto;min-height:48px;display:flex;align-items:center;padding:0 14px;border:1px solid #c9a24b;border-radius:12px;color:#0B1B3A;text-decoration:none">Picture</a></div>' +
       '<div id="vvMsg" role="status" style="min-height:24px;margin-top:8px;font-size:15px"></div>';
     box.appendChild(card); document.body.appendChild(box);
     function close() { box.remove(); }
