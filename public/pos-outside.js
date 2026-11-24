@@ -73,6 +73,12 @@
     row.appendChild(c); row.appendChild(s); box.appendChild(row);
     back.appendChild(box); back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
     document.addEventListener('keydown', function esc(e) { if (!back) { document.removeEventListener('keydown', esc); return; } if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+    var order = ['outName', 'outQty', 'outPrice', 'outProfit', 'outCost'];   // Enter moves to the next box; Enter in the last box saves
+    back.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.target.tagName !== 'INPUT' || e.target.type === 'checkbox') return;
+      var i = order.indexOf(e.target.id); if (i < 0) return; e.preventDefault();
+      if (i < order.length - 1) { var n = $(order[i + 1]); n.focus(); n.select && n.select(); } else if ($('outSave')) $('outSave').click();
+    });
     document.body.appendChild(back); $('outName').focus();
     if (editing) { var ln = typeof window.PosGetLine === 'function' ? window.PosGetLine(editing) : null; if (ln) { $('outName').value = ln.name || ''; $('outQty').value = ln.qty; $('outPrice').value = ln.price; }
       fetch('/api/outside-items/item/' + encodeURIComponent(editing), { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { if (!d || !back) return; editInfo = d; if (!ln) { $('outName').value = d.name; $('outPrice').value = d.price; } $('outCost').value = d.cost; $('outProfit').value = Math.round((Number($('outPrice').value || d.price) - d.cost) * 100) / 100; }); }
@@ -104,11 +110,15 @@
   check();
 
   var oldSave = save; save = function () { oldSave(); setTimeout(pay, 1500); };
-  document.addEventListener('dblclick', function (e) {
-    var row = e.target.closest && e.target.closest('.item-row'); if (!row || e.target.closest('[data-field="price"],[data-field="qty"],[data-field="disc"],button')) return;
-    var c = row.querySelector('[data-field="code"]'), code = c ? String(c.value || '').trim() : '';
-    if (/^(OUT|OSH|SP)-\d+$/.test(code) && allowed) open(code);
-  });
+  // double-click a special item line (SP-nnn) -> same window, filled in. Two quick clicks are counted by hand, because the bill redraws its lines after the first click and a browser dblclick event is then lost.
+  var lastClick = { t: 0, code: '' };
+  document.addEventListener('click', function (e) {
+    var row = e.target.closest && e.target.closest('.item-row'); if (!row || e.target.closest('[data-field="price"],[data-field="qty"],[data-field="disc"],[data-field="total"],button')) return;
+    var c = row.querySelector('[data-field="code"]'), code = c ? String(c.value || '').trim() : '', now = Date.now();
+    if (!/^(OUT|OSH|SP)-\d+$/.test(code)) { lastClick = { t: 0, code: '' }; return; }
+    if (lastClick.code === code && now - lastClick.t < 600) { lastClick = { t: 0, code: '' }; if (allowed) open(code); return; }
+    lastClick = { t: now, code: code };
+  }, true);
   // 24 Nov (AJ): the item list is a FLOATING window: drag its header row to move it, pull the corner arrow to resize it. It never pushes the bill down. Size and place are remembered.
   var st = document.createElement('style');
   st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px)!important;height:var(--ph,300px)!important;max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:9999;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open .picker-head{cursor:move;user-select:none;background:#fff8e6}';
