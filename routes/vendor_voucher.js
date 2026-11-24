@@ -17,7 +17,7 @@ const inv = require('./invoice_receipts');
 
 const router = express.Router();
 const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'voucher-template', 'voucher.html');
-const LOGO = path.join(__dirname, '..', 'public', 'brand', 'logo-rbh-full.webp');
+const LOGO = path.join(__dirname, '..', 'public', 'receipt-logo.png');
 const BG = ['bg.jpg', 'bg.jpeg', 'bg.png', 'bg.webp'].map(f => path.join(__dirname, '..', 'public', 'brand', 'voucher-template', f));
 const CHROME = [process.env.CHROME_PATH, 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'].filter(Boolean);
@@ -83,7 +83,7 @@ function html(data) {
   const th = require('../utils/receiptTheme').pickFor('v' + Math.floor(Math.random() * 1000000));
   const setBg = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_bg.jpg') : null;
   const bg = setBg && fs.existsSync(setBg) ? setBg : BG.find(f => fs.existsSync(f));
-  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
+  const full = { ...data, logo: dataUri(LOGO, 'image/png'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const json = JSON.stringify(full).replace(/</g, '\\u003c');
   return tpl.replace(/\/\*DATA\*\/[\s\S]*?\/\*END\*\//, () => '/*DATA*/' + json + '/*END*/');
@@ -98,12 +98,12 @@ async function png(data, asPdf) {
   try {
     browser = await puppeteer.launch({ executablePath: chrome, headless: true, userDataDir: profile, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
     const page = await browser.newPage();
-    await page.setViewport({ width: 800, height: 900, deviceScaleFactor: 3 });
+    await page.setViewport({ width: 800, height: 900, deviceScaleFactor: 4 });
     await page.setContent(html(data), { waitUntil: 'load' });
     const h = await page.evaluate(() => document.getElementById('sheet').getBoundingClientRect().height);
-    await page.setViewport({ width: 800, height: Math.ceil(h), deviceScaleFactor: 3 });
+    await page.setViewport({ width: 800, height: Math.ceil(h), deviceScaleFactor: 4 });
     if (asPdf) return Buffer.from(await page.pdf({ width: '800px', height: Math.ceil(h) + 'px', printBackground: true, pageRanges: '1' }));
-    return Buffer.from(await page.screenshot({ type: 'jpeg', quality: 95, clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
+    return Buffer.from(await page.screenshot({ type: 'jpeg', quality: 93, clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
   } finally { if (browser) await browser.close().catch(() => {}); fs.rm(profile, { recursive: true, force: true }, () => {}); }
 }
 

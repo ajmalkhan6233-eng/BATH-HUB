@@ -74,6 +74,9 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 .row .card:first-child #shop{font-size:23px;letter-spacing:2px;background:linear-gradient(180deg,#fffbd0 0%,#ffe27a 30%,#e8b030 56%,#fff0a0 80%,#d9a02a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.8px #6b4a0d;text-shadow:none;filter:drop-shadow(0 1px 0 #6b4a0d) drop-shadow(0 2px 0 #54390a) drop-shadow(0 3px 1px #0006)}
 .pair{display:flex;gap:14px;align-items:flex-start}.col{flex:1;min-width:0}.pair th{padding:9px 7px;font-size:9.5px;letter-spacing:1px}.pair td{padding:8px 7px;font-size:12.5px}.pair td:first-child{white-space:normal}.pair small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.pair h3{margin-top:22px}
 /* 24 Nov (AJ): per-bill statement layout, same vivid receipt look (picture, see-through cards, gold logo, amber balance) */
+/* 24 Nov (AJ): same top as the customer receipt: the full long logo (RBH tap, shower and bath) fills a black band */
+.top{display:block!important;padding:0!important;background:#0b0b0c!important;line-height:0}.top img{display:block;width:100%!important;height:auto!important;max-width:none!important;filter:none!important}
+.tagbar{position:relative;display:flex;justify-content:space-between;align-items:center;background:#0b0b0c;color:#e0b95a;padding:9px 26px;border-top:1px solid #c9a24b;font-size:13px;letter-spacing:4px;font-weight:700}.tagbar b{font:700 17px Georgia,serif;letter-spacing:1px;color:#ffe08a}
 .bill{margin-top:6px}
 .bill h3{margin:20px 0 8px}
 .settle .sr.sub{font-weight:700;color:#0b4f4d;font-size:13px;letter-spacing:1px;padding:9px 0 5px;border-bottom:1px solid #c9a24b}
@@ -87,7 +90,8 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 </style></head><body>
 <div class="sheet" id="sheet">
 <div class="bgfall"></div><div class="bgimg" id="bg"></div><div class="bgveil"></div>
-<div class="top"><img id="logo" alt="Royal Bath Hub"><div class="t"><small>VENDOR STATEMENT</small><b id="vno"></b></div></div>
+<div class="top"><img id="logo" alt="Royal Bath Hub"></div>
+<div class="tagbar"><span>VENDOR STATEMENT</span><b id="vno"></b></div>
 <div class="gold"></div>
 <div class="body">
 <div class="row">
