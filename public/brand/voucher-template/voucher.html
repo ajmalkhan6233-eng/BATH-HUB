@@ -74,6 +74,8 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 .row .card:first-child #shop{font-size:23px;letter-spacing:2px;background:linear-gradient(180deg,#fffbd0 0%,#ffe27a 30%,#e8b030 56%,#fff0a0 80%,#d9a02a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.8px #6b4a0d;text-shadow:none;filter:drop-shadow(0 1px 0 #6b4a0d) drop-shadow(0 2px 0 #54390a) drop-shadow(0 3px 1px #0006)}
 .pair{display:flex;gap:14px;align-items:flex-start}.col{flex:1;min-width:0}.pair th{padding:9px 7px;font-size:9.5px;letter-spacing:1px}.pair td{padding:8px 7px;font-size:12.5px}.pair td:first-child{white-space:normal}.pair small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.pair h3{margin-top:22px}
 /* 24 Nov (AJ): per-bill statement layout, same vivid receipt look (picture, see-through cards, gold logo, amber balance) */
+/* 24 Nov (AJ): the middle of the top banner is see-through, like the customer receipt: the bathroom picture (tap, basin, bath) shows between the logo and the title */
+.top{background-image:linear-gradient(90deg,rgba(var(--hdr-rgb,11,27,58),.92) 0%,rgba(var(--hdr-rgb,11,27,58),.7) 26%,rgba(var(--hdr-rgb,11,27,58),.06) 46%,rgba(var(--hdr-rgb,11,27,58),.06) 66%,rgba(var(--hdr-rgb,11,27,58),.62) 86%,rgba(var(--hdr-rgb,11,27,58),.8) 100%),var(--bg-top,none)!important;background-size:cover!important;background-position:center!important;backdrop-filter:none!important}
 .bill{margin-top:6px}
 .bill h3{margin:20px 0 8px}
 .settle .sr.sub{font-weight:700;color:#0b4f4d;font-size:13px;letter-spacing:1px;padding:9px 0 5px;border-bottom:1px solid #c9a24b}
@@ -112,6 +114,7 @@ const V=VOUCHER;
 if(V.logo)$('logo').src=V.logo;else $('logo').style.display='none';
 if(V.hdr){document.documentElement.style.setProperty('--hdr',V.hdr);document.documentElement.style.setProperty('--hdr-rgb',V.hdrRgb)}
 if(V.bg)$('bg').style.backgroundImage='url("'+V.bg+'")';
+if(V.top)document.querySelector('.top').style.setProperty('--bg-top','url("'+V.top+'")');
 $('vno').textContent=V.voucher_no;$('shop').textContent=V.shop.name;
 $('addr').innerHTML=esc(V.shop.address)+'<br>'+esc(V.shop.phone)+(V.shop.email?'  |  '+esc(V.shop.email):'');
 $('vendor').textContent=V.vendor.name;$('date').textContent='Date: '+day(new Date(Date.now()+19800000).toISOString());

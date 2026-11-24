@@ -85,7 +85,8 @@ function html(data) {
   const th = require('../utils/receiptTheme').pickFor('v' + Math.floor(Math.random() * 1000000));
   const setBg = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_bg.jpg') : null;
   const bg = setBg && fs.existsSync(setBg) ? setBg : BG.find(f => fs.existsSync(f));
-  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
+  const topF = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_top.jpg') : null;   // the bathroom picture strip the customer receipt shows behind its top banner
+  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), top: topF && fs.existsSync(topF) ? dataUri(topF, 'image/jpeg') : '', bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const json = JSON.stringify(full).replace(/</g, '\\u003c');
   return tpl.replace(/\/\*DATA\*\/[\s\S]*?\/\*END\*\//, () => '/*DATA*/' + json + '/*END*/');
