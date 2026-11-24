@@ -14,10 +14,11 @@ const path = require('path');
 const axios = require('axios');
 const pool = require('../utils/pool');
 const inv = require('./invoice_receipts');
+const { SHOP, mapQrDataUrl } = require('../utils/shopInfo');
 
 const router = express.Router();
 const TEMPLATE = path.join(__dirname, '..', 'public', 'brand', 'voucher-template', 'voucher.html');
-const LOGO = path.join(__dirname, '..', 'public', 'receipt-logo.png');
+const LOGO = path.join(__dirname, '..', 'public', 'brand', 'logo-rbh-full.webp');
 const BG = ['bg.jpg', 'bg.jpeg', 'bg.png', 'bg.webp'].map(f => path.join(__dirname, '..', 'public', 'brand', 'voucher-template', f));
 const CHROME = [process.env.CHROME_PATH, 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'].filter(Boolean);
@@ -59,7 +60,8 @@ async function build(vendor, only) {
   const key = vendor.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'VEN';
   const out = {
     voucher_no: `VS-${ymd.replace(/-/g, '')}-${key}`, date: today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
-    shop: { name: process.env.SHOP_NAME || 'Royal Bath Hub', address: 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka', phone: '+94 74 035 5536', email: 'royalbathhub1@gmail.com' },
+    shop: { name: process.env.SHOP_NAME || SHOP.name, address: SHOP.address, phone: SHOP.phone, email: SHOP.email, mapsUrl: SHOP.mapsUrl },
+    qr: await mapQrDataUrl().catch(() => null),
     vendor: { name: vendor, phone: (vrow && vrow.phone) || '' },
     received_by: (m => m ? `Mr. ${m[1].trim()}, ${m[2].trim().replace(/\bPvt\b/i, '(Pvt)')}` : vendor)(vendor.match(/^(.+?)\s*\((.+)\)$/)),
     bills: bills.map(b => {
@@ -83,7 +85,7 @@ function html(data) {
   const th = require('../utils/receiptTheme').pickFor('v' + Math.floor(Math.random() * 1000000));
   const setBg = th.set ? path.join(__dirname, '..', 'public', 'brand', 'receipt-sets', 'set' + th.set + '_bg.jpg') : null;
   const bg = setBg && fs.existsSync(setBg) ? setBg : BG.find(f => fs.existsSync(f));
-  const full = { ...data, logo: dataUri(LOGO, 'image/png'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
+  const full = { ...data, logo: dataUri(LOGO, 'image/webp'), bg: bg ? dataUri(bg, mimeOf(bg)) : '', hdr: th.hex, hdrRgb: th.rgb };
   const tpl = fs.readFileSync(TEMPLATE, 'utf8');
   const json = JSON.stringify(full).replace(/</g, '\\u003c');
   return tpl.replace(/\/\*DATA\*\/[\s\S]*?\/\*END\*\//, () => '/*DATA*/' + json + '/*END*/');
