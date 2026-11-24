@@ -73,6 +73,17 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 .row .card:first-child span{color:#e6eef0}
 .row .card:first-child #shop{font-size:23px;letter-spacing:2px;background:linear-gradient(180deg,#fffbd0 0%,#ffe27a 30%,#e8b030 56%,#fff0a0 80%,#d9a02a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.8px #6b4a0d;text-shadow:none;filter:drop-shadow(0 1px 0 #6b4a0d) drop-shadow(0 2px 0 #54390a) drop-shadow(0 3px 1px #0006)}
 .pair{display:flex;gap:14px;align-items:flex-start}.col{flex:1;min-width:0}.pair th{padding:9px 7px;font-size:9.5px;letter-spacing:1px}.pair td{padding:8px 7px;font-size:12.5px}.pair td:first-child{white-space:normal}.pair small{display:block;font-size:10.5px;color:#46506a;font-weight:500}.pair h3{margin-top:22px}
+/* 24 Nov (AJ): per-bill statement layout, same vivid receipt look (picture, see-through cards, gold logo, amber balance) */
+.bill{margin-top:6px}
+.bill h3{margin:20px 0 8px}
+.settle .sr.sub{font-weight:700;color:#0b4f4d;font-size:13px;letter-spacing:1px;padding:9px 0 5px;border-bottom:1px solid #c9a24b}
+.settle .sr.tot{font-weight:700;border-bottom:1px solid #c9a24b}
+.settle .sr span small{display:block;font-size:11.5px;color:#46506a;font-weight:500}
+.due{margin-top:22px}
+.due .sr.bal{margin:0;border-radius:13px;font-size:17px}
+.due .sr.bal b{font-size:26px}
+.addr{font-size:12.5px;color:#e6eef0;margin-top:4px;line-height:1.5}
+.thanks{position:relative;background:#0b1b3ae6;color:#fff;text-align:center;font-size:13px;padding:13px;letter-spacing:.5px}
 </style></head><body>
 <div class="sheet" id="sheet">
 <div class="bgfall"></div><div class="bgimg" id="bg"></div><div class="bgveil"></div>
@@ -80,51 +91,45 @@ h3{box-shadow:inset 0 2px 0 #fff,0 4px 0 #c9a24b88,0 10px 14px #0b1b3a44}
 <div class="gold"></div>
 <div class="body">
 <div class="row">
-<div class="card"><small>PAID BY</small><b id="shop"></b><span id="date"></span></div>
-<div class="card"><small>PAY TO</small><b id="vendor"></b><span id="vphone"></span></div>
+<div class="card"><small>FROM</small><b id="shop"></b><span id="addr"></span></div>
+<div class="card"><small>TO</small><b id="vendor"></b><span id="date"></span></div>
 </div>
-<div class="pair">
-<div class="col"><h3>BILLS (GRN AND INVOICES)</h3>
-<table><thead><tr><th>GRN / INVOICE</th><th>DATE</th><th class="n">AMOUNT</th><th class="n">BALANCE</th></tr></thead><tbody id="bills"></tbody><tfoot><tr class="sum"><td colspan="2">TOTAL (RS.)</td><td class="n" id="ta"></td><td class="n" id="tbal"></td></tr></tfoot></table></div>
-<div class="col"><h3>CHEQUES GIVEN</h3>
-<table><thead><tr><th>CHEQUE NO.</th><th>DATE</th><th class="n">AMOUNT</th></tr></thead><tbody id="chq"></tbody><tfoot><tr class="sum"><td colspan="2">TOTAL (RS.)</td><td class="n" id="tb2"></td></tr></tfoot></table></div>
+<div id="bills"></div>
+<div class="settle due"><div class="sr bal"><span id="duel"></span><b id="dueb"></b></div></div>
+<div class="endcard"><div id="note"></div></div>
 </div>
-<div id="retbox" style="display:none"><h3>LESS: RETURNS</h3>
-<table><thead><tr><th>ITEM</th><th class="n">QTY</th><th>DATE</th><th class="n">AMOUNT (RS.)</th></tr></thead><tbody id="rets"></tbody><tfoot><tr class="sum"><td colspan="3">SUB-TOTAL</td><td class="n" id="tr2"></td></tr></tfoot></table></div>
-<h3>SETTLEMENT SUMMARY</h3>
-<div class="settle">
-<div class="sr"><span>Total purchases (invoices)</span><b id="sa"></b></div>
-<div class="sr" id="srr" style="display:none"><span>Less: returns</span><b id="srb"></b></div>
-<div class="sr" id="srn" style="display:none"><span>Net payable</span><b id="srnb"></b></div>
-<div class="sr"><span>Less: cheques given (post-dated)</span><b id="sbb"></b></div>
-<div class="sr bal"><span>BALANCE TO PAY NOW</span><b id="sbal"></b></div>
-</div>
-<div class="endcard"><div id="note"></div><div id="words"></div><div class="who"><span>Issued by: <b id="sigA"></b></span><span>Received by: <b id="sigB"></b></span></div></div>
-</div>
-<div class="foot" id="foot"></div>
+<div class="thanks" id="foot"></div>
 </div>
 <script>
 // The server swaps the sample between the two markers. Designers: keep the markers and the field names.
-const VOUCHER = /*DATA*/{"voucher_no":"PV-SAMPLE","date":"11 Nov 2026","shop":{"name":"Royal Bath Hub","address":"No. 173/1, Kandy Road, Thihariya","phone":"074 035 5536"},"vendor":{"name":"Fawaz (Fazaal Hardware Pvt Ltd)","phone":""},"received_by":"Mr. Fawaz, Fazaal Hardware (Pvt) Ltd","bills":[{"grn_no":"GRN-0001","bill_no":"G1CR008289","bill_date":"2026-10-20","total":292450}],"cheques":[{"no":"704927","bank":"HNB","date":"2027-02-04","amount":150000}],"bills_total":292450,"cheques_total":150000,"balance":142450,"logo":"","bg":""}/*END*/;
+const VOUCHER = /*DATA*/{"voucher_no":"VS-SAMPLE","date":"24 Nov 2026","shop":{"name":"Royal Bath Hub","address":"No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka","phone":"+94 74 035 5536","email":"royalbathhub1@gmail.com"},"vendor":{"name":"Sample Vendor","phone":""},"bills":[{"bill_no":"B1","bill_date":"2026-10-09","total":1000,"returns":[],"returns_total":0,"net_payable":1000,"cheques":[],"cash":[],"paid":0,"balance":1000}],"returns":[],"returns_total":0,"cheques_total":0,"balance":1000}/*END*/;
 const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const day=d=>{const x=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(x)?esc(d||''):x.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})};
+const day=d=>{const x=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(x)?esc(d||''):String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+x.getFullYear()};
 const V=VOUCHER;
 if(V.logo)$('logo').src=V.logo;else $('logo').style.display='none';
 if(V.hdr){document.documentElement.style.setProperty('--hdr',V.hdr);document.documentElement.style.setProperty('--hdr-rgb',V.hdrRgb)}
 if(V.bg)$('bg').style.backgroundImage='url("'+V.bg+'")';
-$('vno').textContent=V.voucher_no;$('vendor').textContent=V.vendor.name;$('vphone').textContent=V.vendor.phone||'';
-$('shop').textContent=V.shop.name;$('date').textContent='Date: '+V.date;
-$('bills').innerHTML=V.bills.map(b=>'<tr><td><b>'+esc(b.grn_no||b.bill_no)+'</b>'+(b.grn_no&&b.grn_no!==b.bill_no?'<small>Inv '+esc(b.bill_no)+'</small>':'')+'</td><td>'+day(b.bill_date)+'</td><td class="n">'+money(b.total)+'</td><td class="n"><b>'+money(b.balance!=null?b.balance:b.total)+'</b></td></tr>').join('');
-$('chq').innerHTML=V.cheques.map(c=>'<tr><td><b>'+esc(c.no)+'</b>'+(c.bank?'<small>'+esc(c.bank)+'</small>':'')+'</td><td>'+day(c.date)+'</td><td class="n">'+money(c.amount)+'</td></tr>').join('');
-V.returns=V.returns||[];if(V.returns.length){$('retbox').style.display='';$('srr').style.display='';$('srn').style.display='';$('rets').innerHTML=V.returns.map(r=>'<tr><td>'+esc(r.item)+'</td><td class="n">'+esc(r.qty)+'</td><td>'+day(r.date)+'</td><td class="n">'+money(r.amount)+'</td></tr>').join('');$('tr2').textContent=money(V.returns_total);$('srb').textContent='(Rs. '+money(V.returns_total)+')';$('srnb').textContent='Rs. '+money(V.net_payable)}
-$('ta').textContent=money(V.bills_total);$('tbal').textContent=money(V.bills.reduce((t,b)=>t+Number(b.balance!=null?b.balance:b.total),0));$('tb2').textContent=money(V.cheques_total);
-$('sa').textContent='Rs. '+money(V.bills_total);$('sbb').textContent='(Rs. '+money(V.cheques_total)+')';$('sbal').textContent='Rs. '+money(V.balance);
-const W1=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],W2=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
-const w3=n=>{let s='';if(n>=100){s+=W1[Math.floor(n/100)]+' Hundred';n%=100;if(n)s+=' and '}if(n>=20){s+=W2[Math.floor(n/10)]+(n%10?' '+W1[n%10]:'')}else if(n)s+=W1[n];return s};
-const words=x=>{x=Math.round(Number(x||0)*100);let r=Math.floor(x/100),c=x%100;if(!r&&!c)return 'Rupees Zero Only';const P=[[1e6,'Million'],[1e3,'Thousand']];let o=[];for(const[v,nm]of P){if(r>=v){o.push(w3(Math.floor(r/v))+' '+nm);r%=v}}if(r)o.push(w3(r));let t='Rupees '+o.join(' ').replace(/ Thousand (\w+ Hundred)/,' Thousand $1');if(c)t+=' and '+w3(c)+' Cents';return t+' Only'};
-$('note').innerHTML='Cheques given (post-dated, on credit until they clear): <b>Rs. '+money(V.cheques_total)+'</b>'+(V.returns.length?'<br>Please issue a credit note for the returned goods, Rs. '+money(V.returns_total)+'.':'');
-$('words').textContent='Balance to pay now: '+words(V.balance)+'.';
-$('sigA').textContent=V.shop.name;$('sigB').textContent=V.received_by||V.vendor.name;
-$('foot').textContent=V.shop.name+'  |  '+V.shop.phone;
+$('vno').textContent=V.voucher_no;$('shop').textContent=V.shop.name;
+$('addr').innerHTML=esc(V.shop.address)+'<br>'+esc(V.shop.phone)+(V.shop.email?'  |  '+esc(V.shop.email):'');
+$('vendor').textContent=V.vendor.name;$('date').textContent='Date: '+day(new Date(Date.now()+19800000).toISOString());
+const row=(l,r,cls,sub)=>'<div class="sr '+(cls||'')+'"><span>'+l+(sub?'<small>'+sub+'</small>':'')+'</span><b>'+r+'</b></div>';
+$('bills').innerHTML=V.bills.map(b=>{
+  let h='<div class="bill"><h3>YOUR BILL '+esc(b.bill_no)+' · '+day(b.bill_date)+(b.grn_no&&b.grn_no!==b.bill_no?' · GRN '+esc(b.grn_no):'')+'</h3><div class="settle">';
+  h+=row('Bill total',money(b.total));
+  (b.returns||[]).forEach(r=>{h+=row('Less: goods returned, '+(r.qty!==''?esc(r.qty)+' × ':'')+esc(r.item)+(r.rate?' ('+esc(r.qty)+' × '+money(r.rate).replace('.00','')+')':''),'−'+money(r.amount),'',day(r.date))});
+  if((b.returns||[]).length)h+=row('Net payable',money(b.net_payable),'tot');
+  if((b.cheques||[]).length||(b.cash||[]).length){
+    const banks=[...new Set(b.cheques.map(c=>c.bank).filter(Boolean))].join(', ');
+    if(b.cheques.length)h+='<div class="sr sub"><span>PAID BY '+(banks?esc(banks)+' ':'')+'CHEQUES</span></div>';
+    b.cheques.forEach(c=>{h+=row('No. '+esc(c.no)+' · dated '+day(c.date),money(c.amount))});
+    (b.cash||[]).forEach(c=>{h+=row('Paid '+esc(c.method)+' · '+day(c.date),money(c.amount))});
+    h+=row('Total paid',money(b.paid),'tot');
+  } else h+=row('Paid','0.00');
+  h+='<div class="sr bal"><span>Balance on this bill</span><b>'+money(b.balance)+'</b></div></div></div>';
+  return h}).join('');
+$('duel').textContent='TOTAL DUE TO '+String(V.vendor.name).toUpperCase();$('dueb').textContent='Rs '+money(V.balance);
+const rt=V.returns_total>0;
+$('note').innerHTML=(rt?'Please issue a credit note for the returned goods, Rs '+money(V.returns_total).replace('.00','')+'.<br>':'')+(V.cheques_total>0?'Cheques are post-dated as shown above (on credit until they clear).':'');
+$('foot').textContent='අප හා සම්බන්ධ වුවාට ස්තූතියි! / Thank you';
 </script></body></html>

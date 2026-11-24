@@ -44,11 +44,12 @@ async function build(vendor, only) {
   if (!bills.length) throw err(404, 'No open bills found for ' + vendor);
   const ch = (await pool.query(`SELECT cheque_no, MAX(bank) AS bank, MIN(cheque_date) AS cheque_date, SUM(amount) AS amount
     FROM vendor_bill_cheques WHERE bill_id = ANY($1::int[]) AND COALESCE(UPPER(status),'') <> 'CANCELLED' GROUP BY cheque_no ORDER BY MIN(cheque_date), cheque_no`, [bills.map(b => b.id)])).rows;
-  const allc = (await pool.query(`SELECT bill_id, amount FROM vendor_bill_cheques WHERE bill_id = ANY($1::int[]) AND COALESCE(UPPER(status),'') <> 'CANCELLED'`, [bills.map(b => b.id)])).rows;
+  const allc = (await pool.query(`SELECT bill_id, amount, cheque_no, bank, cheque_date FROM vendor_bill_cheques WHERE bill_id = ANY($1::int[]) AND COALESCE(UPPER(status),'') <> 'CANCELLED'`, [bills.map(b => b.id)])).rows;
   const notes = (await pool.query(`SELECT id, bill_id, note_no, amount, note_date, reason FROM vendor_credit_notes WHERE bill_id = ANY($1::int[]) ORDER BY note_date, id`, [bills.map(b => b.id)])).rows;
-  const rl = notes.length ? (await pool.query(`SELECT credit_note_id, item_code, item_name, qty, amount FROM vendor_return_lines WHERE credit_note_id = ANY($1::int[]) ORDER BY id`, [notes.map(n => n.id)]).catch(() => ({ rows: [] }))).rows : [];
+  const rl = notes.length ? (await pool.query(`SELECT credit_note_id, item_code, item_name, qty, rate, amount FROM vendor_return_lines WHERE credit_note_id = ANY($1::int[]) ORDER BY id`, [notes.map(n => n.id)]).catch(() => ({ rows: [] }))).rows : [];
+  const pays = (await pool.query(`SELECT bill_id, amount, method, paid_at FROM vendor_payments WHERE bill_id = ANY($1::int[]) ORDER BY paid_at, id`, [bills.map(b => b.id)]).catch(() => ({ rows: [] }))).rows;
   const returns = [];
-  for (const n of notes) { const ls = rl.filter(l => l.credit_note_id === n.id); if (ls.length) ls.forEach(l => returns.push({ item: `${l.item_code || ''} ${l.item_name || ''}`.trim(), qty: Number(l.qty), date: iso(n.note_date), amount: Number(l.amount) })); else returns.push({ item: String(n.reason || n.note_no || 'Credit note').replace(/^RETURN:\s*/i, ''), qty: '', date: iso(n.note_date), amount: Number(n.amount) }); }
+  for (const n of notes) { const ls = rl.filter(l => l.credit_note_id === n.id); if (ls.length) ls.forEach(l => returns.push({ bill_id: n.bill_id, item: `${l.item_name || l.item_code || ''}`.trim(), qty: Number(l.qty), rate: Number(l.rate), date: iso(n.note_date), amount: Number(l.amount) })); else returns.push({ bill_id: n.bill_id, item: String(n.reason || n.note_no || 'Credit note').replace(/^RETURN:\s*/i, ''), qty: '', date: iso(n.note_date), amount: Number(n.amount) }); }
   const vrow = (await pool.query(`SELECT phone FROM vendors WHERE name_key = lower(regexp_replace($1, '\\s+', ' ', 'g')) OR lower(name) = lower($1) LIMIT 1`, [vendor]).catch(() => ({ rows: [] }))).rows[0];
   const bills_total = bills.reduce((s, b) => s + Math.round(Number(b.total) * 100), 0) / 100;
   const returns_total = returns.reduce((s, r) => s + Math.round(r.amount * 100), 0) / 100;
@@ -56,16 +57,25 @@ async function build(vendor, only) {
   const today = new Date(Date.now() + 5.5 * 3600e3);   // Sri Lanka date
   const ymd = today.toISOString().slice(0, 10);
   const key = vendor.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'VEN';
-  return {
+  const out = {
     voucher_no: `VS-${ymd.replace(/-/g, '')}-${key}`, date: today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
-    shop: { name: process.env.SHOP_NAME || 'Royal Bath Hub', address: 'No. 173/1, Kandy Road, Thihariya', phone: '074 035 5536' },
+    shop: { name: process.env.SHOP_NAME || 'Royal Bath Hub', address: 'No. 173/1, Kandy Road, Thihariya, Kalagedihena, Sri Lanka', phone: '+94 74 035 5536', email: 'royalbathhub1@gmail.com' },
     vendor: { name: vendor, phone: (vrow && vrow.phone) || '' },
     received_by: (m => m ? `Mr. ${m[1].trim()}, ${m[2].trim().replace(/\bPvt\b/i, '(Pvt)')}` : vendor)(vendor.match(/^(.+?)\s*\((.+)\)$/)),
-    bills: bills.map(b => { const paid = Math.round(100 * (allc.filter(c => c.bill_id === b.id).reduce((t, c) => t + Number(c.amount), 0) + notes.filter(n => n.bill_id === b.id).reduce((t, n) => t + Number(n.amount), 0))) / 100; return { grn_no: b.grn_no || '', grn_date: b.grn_date ? iso(b.grn_date) : '', bill_no: b.bill_no, bill_date: iso(b.bill_date), total: Number(b.total), balance: Math.round((Number(b.total) - paid) * 100) / 100 }; }),
+    bills: bills.map(b => {
+      const cq = allc.filter(c => c.bill_id === b.id).map(c => ({ no: c.cheque_no, bank: String(c.bank || '').replace(/,.*$/, ''), date: iso(c.cheque_date), amount: Number(c.amount) }));
+      const cash = pays.filter(x => x.bill_id === b.id).map(x => ({ date: iso(x.paid_at), method: x.method || 'Cash', amount: Number(x.amount) }));
+      const rt = returns.filter(r => r.bill_id === b.id);
+      const sumA = a => Math.round(a.reduce((t, x) => t + Math.round(x.amount * 100), 0)) / 100;
+      const net = Math.round((Number(b.total) - sumA(rt)) * 100) / 100, paid = Math.round((sumA(cq) + sumA(cash)) * 100) / 100;
+      return { grn_no: b.grn_no || '', grn_date: b.grn_date ? iso(b.grn_date) : '', bill_no: b.bill_no, bill_date: iso(b.bill_date), total: Number(b.total), returns: rt, returns_total: sumA(rt), net_payable: net, cheques: cq, cash, paid, balance: Math.round((net - paid) * 100) / 100 };
+    }),
     cheques: ch.map(c => ({ no: c.cheque_no, bank: String(c.bank || '').replace(/,.*$/, ''), date: iso(c.cheque_date), amount: Number(c.amount) })),
     returns, returns_total, net_payable: Math.round((bills_total - returns_total) * 100) / 100,
-    bills_total, cheques_total, balance: Math.round((bills_total - returns_total - cheques_total) * 100) / 100,
+    bills_total, cheques_total, balance: 0,
   };
+  out.balance = Math.round(out.bills.reduce((t, b) => t + Math.round(b.balance * 100), 0)) / 100;
+  return out;
 }
 
 function html(data) {
@@ -93,7 +103,7 @@ async function png(data, asPdf) {
     const h = await page.evaluate(() => document.getElementById('sheet').getBoundingClientRect().height);
     await page.setViewport({ width: 800, height: Math.ceil(h), deviceScaleFactor: 2 });
     if (asPdf) return Buffer.from(await page.pdf({ width: '800px', height: Math.ceil(h) + 'px', printBackground: true, pageRanges: '1' }));
-    return Buffer.from(await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
+    return Buffer.from(await page.screenshot({ type: 'jpeg', quality: 92, clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
   } finally { if (browser) await browser.close().catch(() => {}); fs.rm(profile, { recursive: true, force: true }, () => {}); }
 }
 
@@ -101,7 +111,7 @@ const only = q => (q ? String(q).split(',').map(s => s.trim()).filter(Boolean) :
 
 router.get('/vendor-voucher/data', async (req, res) => { try { res.json(await build(req.query.vendor, only(req.query.bills))); } catch (e) { fail(res, e, 'Could not build the voucher'); } });
 router.get('/vendor-voucher/html', async (req, res) => { try { res.type('html').send(html(await build(req.query.vendor, only(req.query.bills)))); } catch (e) { fail(res, e, 'Could not build the voucher'); } });
-router.get('/vendor-voucher/preview', async (req, res) => { try { res.type('png').send(await png(await build(req.query.vendor, only(req.query.bills)))); } catch (e) { fail(res, e, 'Could not draw the voucher'); } });
+router.get('/vendor-voucher/preview', async (req, res) => { try { res.type('jpeg').send(await png(await build(req.query.vendor, only(req.query.bills)))); } catch (e) { fail(res, e, 'Could not draw the voucher'); } });
 
 router.get('/vendor-voucher/pdf', async (req, res) => { try { res.type('pdf').send(await png(await build(req.query.vendor, only(req.query.bills)), true)); } catch (e) { fail(res, e, 'Could not make the PDF'); } });
 
@@ -118,7 +128,7 @@ router.post('/vendor-voucher/send', async (req, res) => {
     const caption = `${d.shop.name}\nVendor statement ${d.voucher_no}\nInvoices: Rs ${money(d.bills_total)}${d.returns_total ? '\nReturns: Rs ' + money(d.returns_total) : ''}\nCheques: Rs ${money(d.cheques_total)}\nRemaining: Rs ${money(d.balance)}`;
     try {
       await axios.post(process.env.WHATSAPP_API_URL || 'http://localhost:3001/send', { to: phone, message: caption,
-        media: { data: buf.toString('base64'), mimetype: 'image/png', filename: `${d.voucher_no}.png` } }, { timeout: 30000, maxBodyLength: Infinity });
+        media: { data: buf.toString('base64'), mimetype: 'image/jpeg', filename: `${d.voucher_no}.jpg` } }, { timeout: 30000, maxBodyLength: Infinity });
     } catch (e) { throw err(502, e.response ? 'WhatsApp bridge refused it: ' + (e.response.data && e.response.data.error || e.message) : 'WhatsApp bridge is not reachable, nothing was sent'); }
     await pool.query(`INSERT INTO vendor_voucher_log (vendor, voucher_no, phone_last3, status) VALUES ($1,$2,$3,'sent')`, [d.vendor.name, d.voucher_no, String(phone).slice(-3)]).catch(() => {});
     res.json({ sent: true, to: phone, voucher_no: d.voucher_no });
