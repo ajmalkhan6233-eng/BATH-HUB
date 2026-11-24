@@ -98,12 +98,12 @@ async function png(data, asPdf) {
   try {
     browser = await puppeteer.launch({ executablePath: chrome, headless: true, userDataDir: profile, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] });
     const page = await browser.newPage();
-    await page.setViewport({ width: 800, height: 900, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 800, height: 900, deviceScaleFactor: 3 });
     await page.setContent(html(data), { waitUntil: 'load' });
     const h = await page.evaluate(() => document.getElementById('sheet').getBoundingClientRect().height);
-    await page.setViewport({ width: 800, height: Math.ceil(h), deviceScaleFactor: 2 });
+    await page.setViewport({ width: 800, height: Math.ceil(h), deviceScaleFactor: 3 });
     if (asPdf) return Buffer.from(await page.pdf({ width: '800px', height: Math.ceil(h) + 'px', printBackground: true, pageRanges: '1' }));
-    return Buffer.from(await page.screenshot({ type: 'jpeg', quality: 92, clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
+    return Buffer.from(await page.screenshot({ type: 'jpeg', quality: 95, clip: { x: 0, y: 0, width: 800, height: Math.ceil(h) } }));
   } finally { if (browser) await browser.close().catch(() => {}); fs.rm(profile, { recursive: true, force: true }, () => {}); }
 }
 
