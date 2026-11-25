@@ -2632,7 +2632,7 @@ async function viewVendorPayments(id, name) {
 }
 
 async function saveVendorPayment() {
-  toast('Vendor payments — connect /api/supplier_payments endpoint', 'info');
+  if (window.RBHVendorPay) await window.RBHVendorPay.save(); else toast('Please refresh the page and try again', 'info');
 }
 
 /* ─────────────────────────────────────────────
