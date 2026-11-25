@@ -1,4 +1,5 @@
 AUTOSAVE 2026-11-25 10:57 SL | branch work @ 04e3f1e | last: v1.1.0 confirmed by Ajmal: freeze rule for shop app and Pocket | uncommitted files: 1 | server health: ok
+11:03 | PC | AJ_ONE_CLICK | DONE v1.1.3 (screen UNVERIFIED) | repeated clicks saved nothing (0 payments/cheques today); one click = one save on main app + POS, button greys out with a please-wait note | AJ: Ctrl+F5 twice
 11:01 | PC | AJ_RECORD_PAYMENT | DONE v1.1.2 (screen UNVERIFIED) | Record Payment now saves: oldest bills first, owner only; cheque goes to bill + cheque register; dry run rolled back OK | AJ: Ctrl+F5 twice
 10:59 | PC | AJ_VENDOR_PAY_PANEL | DONE v1.1.1 (screen UNVERIFIED) | Vendors > Add Payment: right side shows supplier outstanding, deducts the typed amount live; HEADS-UP: Record Payment button there saves nothing (old placeholder) | AJ: Ctrl+F5 twice
 10:55 | PC | AJ_CONFIRMED_1.1.0 | DONE | PC app + Pocket (pocket-v22) frozen as v1.1.0-confirmed; no change without AJ's own yes in chat, even for bridge tasks | AJ: Ctrl+F5 twice, bottom left shows v1.1.0
