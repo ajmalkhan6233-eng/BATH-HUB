@@ -30,3 +30,7 @@ W2: first bill (mirror, 9,650 less 3,150 = 6,500 cash) re-entered backdated 29/1
 ## Held for after the weekly reset (Thu 26 Nov night / Fri 27 morning), AJ 25 Nov
 - Warn, do not block: every money screen (not only Record Payment) must show a pop-up for small over/under amounts and let it through (e.g. vendor ledger "over_owed", cheque amounts, POS).
 - Page switching: clicking POS / GRN / Cheques must open that page directly; today Cheques shows a blank page and a login page that auto-logs in. Make all pages feel like one app.
+- MERGE PAGES (AJ 25 Nov, plan first, build only on his yes): ONE page per party, like GRN.
+  Vendor 360 = everything vendor: bills, record payment (cheque / cash / online), generate + send statement, edit, delete (archive), returns.
+  Banking & Money = cheques, online transfers, cash in one page. Customers = one page; POS / Sales = one page.
+  Merge duplicate pages, show less detail by default, details on tap. Remove the old separate pay / statement pages from the menu.
