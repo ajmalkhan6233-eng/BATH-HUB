@@ -34,3 +34,4 @@ W2: first bill (mirror, 9,650 less 3,150 = 6,500 cash) re-entered backdated 29/1
   Vendor 360 = everything vendor: bills, record payment (cheque / cash / online), generate + send statement, edit, delete (archive), returns.
   Banking & Money = cheques, online transfers, cash in one page. Customers = one page; POS / Sales = one page.
   Merge duplicate pages, show less detail by default, details on tap. Remove the old separate pay / statement pages from the menu.
+- AJ's to-do list (money + held work) lives in the PRIVATE bridge repo: AI_BRIDGE/AJ_TODO.md. When AJ asks about tasks, read it and answer from it.
