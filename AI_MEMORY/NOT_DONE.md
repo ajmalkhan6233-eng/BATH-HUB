@@ -26,3 +26,7 @@
 N29: vendor codes 001-211 ready (Imran door 209 sell 10,500; Afham fan lights 210-211, no price). Waiting: PC run set_vendor_codes.js. Heads-up: 9 unclear prices (181,182,183,186,196,204,205,206,207); GRN entries for 065, 071, 072; 4 free units; 'colleague missed GRN items' to the last codes [Approve] [Wait] [Disregard]
 W1: WAITING (AJ fixes on the PC): 4 free units (PR7531-R, CR7533-R, CR7533-L, PR7544-L at cost 0) and 9 unclear selling prices (181,182,183,186,196,204,205,206,207).
 W2: first bill (mirror, 9,650 less 3,150 = 6,500 cash) re-entered backdated 29/10/2026 by scripts/rebill_first_bill.js (date is a safe default, change with --date).
+
+## Held for after the weekly reset (Thu 26 Nov night / Fri 27 morning), AJ 25 Nov
+- Warn, do not block: every money screen (not only Record Payment) must show a pop-up for small over/under amounts and let it through (e.g. vendor ledger "over_owed", cheque amounts, POS).
+- Page switching: clicking POS / GRN / Cheques must open that page directly; today Cheques shows a blank page and a login page that auto-logs in. Make all pages feel like one app.

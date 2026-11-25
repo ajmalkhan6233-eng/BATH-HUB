@@ -45,10 +45,16 @@
     if (!confirm('Save ' + body.method + ' ' + rs(body.amount) + ' to ' + name + ', dated ' + body.date + (body.ref ? ', ref ' + body.ref : '') + '?')) return;
     busy = true;
     try {
-      var r = await fetch('/api/vendor-pay', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      var d = await r.json().catch(function () { return {}; });
+      var r, d;
+      for (var tries = 0; tries < 3; tries++) {   // a warning (more than owed / same payment again) asks, then saves
+        r = await fetch('/api/vendor-pay', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        d = await r.json().catch(function () { return {}; });
+        if (r.ok || (d.code !== 'over' && d.code !== 'same')) break;
+        if (!confirm('HEADS-UP: ' + d.error + '\n\nPress OK to save it anyway, or Cancel to change it.')) return say('Not saved', 'info');
+        body[d.code === 'over' ? 'confirm_over' : 'confirm_same'] = true;
+      }
       if (!r.ok) return say(d.error || 'Could not save. Nothing was saved.', 'error');
-      say('Saved: ' + rs(d.amount) + ' on bill ' + d.parts.map(function (p) { return p.bill_no; }).join(', ') + '. Left to pay (not covered): ' + rs(d.left_to_pay), 'success');
+      say('Saved: ' + rs(d.amount) + ' on bill ' + d.parts.map(function (p) { return p.bill_no; }).join(', ') + (d.over > 0 ? '. Extra ' + rs(d.over) + ' noted as overpaid' : '. Left to pay (not covered): ' + rs(d.left_to_pay)), 'success');
       $('vend-amt').value = ''; $('vend-ref').value = ''; at = 0; load(); draw(); if (typeof root.loadVendors === 'function') { var keep = sel.value; await root.loadVendors(); sel.value = keep; draw(); }
     } catch (e) { say('No connection. Check the cheque list before trying again.', 'error'); } finally { busy = false; }
   } };

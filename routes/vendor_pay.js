@@ -39,8 +39,11 @@ async function record(client, input, who) {
     b.free = L.billStatus(b, ch, pay, cn).uncovered;
   }
   const free = r2(bills.reduce((a, b) => a + b.free, 0));
-  const parts = allocate(bills, amount);
-  if (!parts) throw stop(409, free > 0 ? 'Only Rs ' + free.toFixed(2) + ' is not yet paid or covered by a cheque for this supplier.' : 'Nothing is left to pay: every bill is paid or already covered by a cheque.');
+  // 25 Nov (AJ): paying more than owed (rounding, or a bigger cheque and change back) is a WARNING, never a block
+  const over = r2(Math.max(0, amount - free));
+  if (over > 0 && input.confirm_over !== true) throw Object.assign(stop(409, 'You owe this supplier Rs ' + free.toFixed(2) + ' (not yet paid or covered). You are paying Rs ' + amount.toFixed(2) + ', which is Rs ' + over.toFixed(2) + ' MORE.'), { code: 'over' });
+  const parts = allocate(bills, r2(amount - over));
+  if (over > 0) { const last = parts[parts.length - 1]; if (last) last.amount = r2(last.amount + over); else { const b = bills[bills.length - 1]; parts.push({ id: b.id, bill_no: b.bill_no, amount: over }); } }
   const vendor = bills[0].vendor_name;
   if (method === 'CHEQUE') {
     const dup = await client.query("SELECT 1 FROM vendor_bill_cheques WHERE cheque_no = $1 AND status <> 'CANCELLED' UNION ALL SELECT 1 FROM cheque_register WHERE cheque_no = $1", [ref]);
@@ -50,10 +53,10 @@ async function record(client, input, who) {
     await client.query("INSERT INTO cheque_register (cheque_no, payee, amount, due_date, status, notes) VALUES ($1,$2,$3,$4,'pending',$5)", [ref, vendor, amount, due, 'Supplier payment: bill ' + parts.map((p) => p.bill_no).join(', ')]);
   } else {
     const same = await client.query("SELECT 1 FROM vendor_payments v JOIN vendor_bills b ON b.id = v.bill_id WHERE LOWER(TRIM(b.vendor_name)) = LOWER($1) AND v.paid_at = $2 AND v.method = $3 AND v.created_at > NOW() - INTERVAL '2 minutes' GROUP BY v.created_at HAVING SUM(v.amount) = $4", [name, date, method, amount]);
-    if (same.rowCount) throw stop(409, 'The same payment was saved a moment ago. It was not saved twice.');
+    if (same.rowCount && input.confirm_same !== true) throw Object.assign(stop(409, 'The same payment (same supplier, amount and date) was saved a moment ago.'), { code: 'same' });
     for (const p of parts) await client.query('INSERT INTO vendor_payments (branch_id, bill_id, amount, method, paid_at, note, created_by) VALUES (1,$1,$2,$3,$4,$5,$6)', [p.id, p.amount, method, date, ref || null, who]);
   }
-  return { vendor, method, amount, parts, left_to_pay: r2(free - amount) };
+  return { vendor, method, amount, parts, over, left_to_pay: r2(Math.max(0, free - amount)) };
 }
 
 const router = express.Router();
@@ -71,7 +74,7 @@ router.post('/', express.json(), async (req, res) => {
   } catch (e) {
     if (client) await client.query('ROLLBACK').catch(() => {});
     if (!e.http) console.error('[vendor-pay]', e.message);
-    res.status(e.http || 500).json({ error: e.http ? e.message : 'Could not save the payment. Nothing was saved.' });
+    res.status(e.http || 500).json({ error: e.http ? e.message : 'Could not save the payment. Nothing was saved.', code: e.http ? e.code : undefined });
   } finally { if (client) client.release(); }
 });
 
