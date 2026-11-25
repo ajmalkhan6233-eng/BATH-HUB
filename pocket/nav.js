@@ -6,7 +6,7 @@
   if (typeof document === 'undefined') return;
   var $ = function (id) { return document.getElementById(id); };
   var app = $('app'), sheet = $('sheet'), cards = $('cards');
-  var scrollAt = {}, pushed = 0, drawerPushed = false, sheetPushed = false;
+  var scrollAt = {}, pushed = 0, drawerPushed = false, sheetPushed = false, skipPop = false;
   var cur = function () { var b = document.querySelector('#tabs [aria-current="page"]'); return b ? b.getAttribute('aria-label') : 'Home'; };
   var tabBtn = function (name) { var all = document.querySelectorAll('#tabs .tab'); for (var i = 0; i < all.length; i++) if (all[i].getAttribute('aria-label') === name) return all[i]; return null; };
   var svgOf = function (node) { var s = node && node.querySelector('svg'); return s ? s.outerHTML : ''; };
@@ -105,10 +105,12 @@
   if (sheet && window.MutationObserver) {
     new MutationObserver(function () {
       if (!sheet.hidden && !sheetPushed) { try { history.pushState({ rbh: 2 }, ''); sheetPushed = true; } catch (x) {} }
-      if (sheet.hidden && sheetPushed) { sheetPushed = false; if (history.state && history.state.rbh === 2) { try { history.back(); } catch (x) {} } }
+      if (sheet.hidden && sheetPushed) { sheetPushed = false; if (history.state && history.state.rbh === 2) { skipPop = true; try { history.back(); } catch (x) {} } }
+      if (!sheet.hidden) { var pn = sheet.querySelector('.panel'); if (pn) pn.style.animation = ''; }
     }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
   }
   window.addEventListener('popstate', function () {
+    if (skipPop) { skipPop = false; return; }   // our own back() after Close: stay on this tab
     if (isOpen) { drawerPushed = false; settle(false); return; }
     if (sheet && !sheet.hidden) { sheetPushed = false; $('sheetX').click(); return; }
     if (cur() !== 'Home') { pushed = 0; var h = tabBtn('Home'); if (h) h.click(); } else pushed = 0;
@@ -123,7 +125,7 @@
     panel.addEventListener('touchmove', function (e) { if (y0 == null) return; var y = e.touches[0].clientY, n = Date.now(); dy = Math.max(0, y - y0); if (n > lt) sv = (y - ly) / (n - lt); ly = y; lt = n; panel.style.transform = 'translateY(' + dy + 'px)'; }, { passive: true });
     panel.addEventListener('touchend', function () {
       if (y0 == null) return; y0 = null; panel.style.transition = ''; panel.style.transform = '';
-      if (dy > 90 || sv > .5) $('sheetX').click(); else panel.style.animation = '';
+      if (dy > 90 || sv > .5) $('sheetX').click();   // animation stays off after a tap: restarting it here moved Close away before the tap landed
     });
   }
 

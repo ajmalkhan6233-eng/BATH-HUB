@@ -45,7 +45,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
     const st = (await q(`SELECT COALESCE(SUM(stock_level),0) units, COALESCE(SUM(GREATEST(stock_level,0)*avg_cost),0) cost, COALESCE(SUM(GREATEST(stock_level,0)*selling_price),0) sell,
         COUNT(*) FILTER (WHERE stock_level > 0) items, COUNT(*) FILTER (WHERE stock_level < 0) neg,
         COUNT(*) FILTER (WHERE stock_level > 0 AND COALESCE(selling_price,0) = 0) nosell FROM products WHERE active IS NOT FALSE`))[0];
-    const stockAll = Number((await q('SELECT COALESCE(SUM(stock_level),0) s FROM products WHERE active IS NOT FALSE AND item_code !~ '^(SP|OSH|OUT)-''))[0].s);   // special items (bought for one customer) net to 0 when billed: not part of this check
+    const stockAll = Number((await q(`SELECT COALESCE(SUM(stock_level),0) s FROM products WHERE active IS NOT FALSE AND item_code !~ '^(SP|OSH|OUT)-'`))[0].s);   // special items (bought for one customer) net to 0 when billed: not part of this check
 
     const vb = await q('SELECT * FROM vendor_bills WHERE voided = FALSE');
     const ids = vb.map(b => b.id);
