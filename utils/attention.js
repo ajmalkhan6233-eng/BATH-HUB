@@ -1,23 +1,25 @@
 'use strict';
 // NEEDS ATTENTION strip for the dashboard (AJ 24 Oct): the things only AJ can fix, big and colour-coded, red first. Every query is optional.
 async function q(pool, sql) { try { return (await pool.query(sql)).rows[0]; } catch (e) { return null; } }
+// 25 Nov (AJ): tap a line -> see WHICH ones. One short text per row; at most 100 rows.
+async function list(pool, sql) { try { return (await pool.query(sql + ' LIMIT 100')).rows.map(r => Object.values(r).filter(v => v !== null && v !== '').join(' · ')); } catch (e) { return []; } }
 async function collect(pool) {
   const out = [];
   const bw = await q(pool, `SELECT COUNT(*)::int n, COALESCE(SUM(ABS(diff_amount)),0)::numeric amt FROM vendor_bill_watch WHERE status='OPEN'`);
-  if (bw && bw.n > 0) out.push({ level: 'red', text: 'Vendor bill mismatch: Rs ' + Math.round(bw.amt).toLocaleString('en-US') + ' (' + bw.n + ')', go: '/pending_delivery.html' });
+  if (bw && bw.n > 0) out.push({ level: 'red', text: 'Vendor bill mismatch: Rs ' + Math.round(bw.amt).toLocaleString('en-US') + ' (' + bw.n + ')', go: '/pending_delivery.html', list: await list(pool, `SELECT vendor_name, bill_no, 'Rs ' || ROUND(diff_amount), note FROM vendor_bill_watch WHERE status='OPEN' ORDER BY id`) });
   const ch = await q(pool, `SELECT COUNT(*)::int n FROM vendor_bill_cheques WHERE status='ISSUED' AND due_date <= CURRENT_DATE + 2`);
-  if (ch && ch.n > 0) out.push({ level: 'red', text: 'Cheques due within 2 days: ' + ch.n, go: null });
+  if (ch && ch.n > 0) out.push({ level: 'red', text: 'Cheques due within 2 days: ' + ch.n, go: null, list: await list(pool, `SELECT b.vendor_name, 'cheque ' || c.cheque_no, 'Rs ' || ROUND(c.amount), 'due ' || to_char(c.due_date,'DD/MM/YYYY') FROM vendor_bill_cheques c JOIN vendor_bills b ON b.id=c.bill_id WHERE c.status='ISSUED' AND c.due_date <= CURRENT_DATE + 2 ORDER BY c.due_date`) });
   const ow = await q(pool, `SELECT COUNT(*)::int n FROM oversold_owed WHERE status='OPEN'`);
-  if (ow && ow.n > 0) out.push({ level: 'amber', text: 'Items you owe customers: ' + ow.n, go: null });
+  if (ow && ow.n > 0) out.push({ level: 'amber', text: 'Items you owe customers: ' + ow.n, go: null, list: await list(pool, `SELECT COALESCE(customer_name,'Walk-in'), customer_phone, bill_number, COALESCE(item_code,'') || ' ' || item_name, 'owe ' || ROUND(qty_short) FROM oversold_owed WHERE status='OPEN' ORDER BY id`) });
   const pd = await q(pool, `SELECT COUNT(*)::int n FROM vendor_pending_items WHERE status='WAITING'`);
-  if (pd && pd.n > 0) out.push({ level: 'amber', text: 'Vendor items not delivered yet: ' + pd.n, go: '/pending_delivery.html' });
+  if (pd && pd.n > 0) out.push({ level: 'amber', text: 'Vendor items not delivered yet: ' + pd.n, go: '/pending_delivery.html', list: await list(pool, `SELECT vendor_name, bill_no, item_name, 'qty ' || ROUND(qty), 'Rs ' || ROUND(amount) FROM vendor_pending_items WHERE status='WAITING' ORDER BY id`) });
   const pr = await q(pool, `SELECT COUNT(*)::int n FROM grn_records WHERE status='PENDING_REVIEW'`);
-  if (pr && pr.n > 0) out.push({ level: 'amber', text: 'Stock-in lines waiting for your price check: ' + pr.n, go: null });
+  if (pr && pr.n > 0) out.push({ level: 'amber', text: 'Stock-in lines waiting for your price check: ' + pr.n, go: null, list: await list(pool, `SELECT supplier_name, grn_number, item_description, 'qty ' || ROUND(quantity) FROM grn_records WHERE status='PENDING_REVIEW' ORDER BY id DESC`) });
   const oc = await q(pool, `SELECT COUNT(*)::int n, COUNT(*) FILTER (WHERE created_at < NOW() - INTERVAL '2 days')::int old FROM outside_cost_pending WHERE status='pending'`);
-  if (oc && oc.n > 0) out.push({ level: oc.old > 0 ? 'red' : 'amber', text: 'Outside items, real cost not entered: ' + oc.n + (oc.old > 0 ? ' (' + oc.old + ' over 2 days)' : ''), go: '/outside_cost.html' });
+  if (oc && oc.n > 0) out.push({ level: oc.old > 0 ? 'red' : 'amber', text: 'Special items, real cost not entered: ' + oc.n + (oc.old > 0 ? ' (' + oc.old + ' over 2 days)' : ''), go: '/outside_cost.html', list: await list(pool, `SELECT item_code, item_name, 'qty ' || ROUND(qty), 'estimated cost Rs ' || ROUND(est_cost), 'sells Rs ' || ROUND(sell_price), to_char(created_at,'DD/MM') FROM outside_cost_pending WHERE status='pending' ORDER BY id`) });
   // 24 Nov: a return note we raised stays open until the vendor's own credit note number is typed in (the RET- number is ours)
   const cn = await q(pool, `SELECT COUNT(*)::int n, COALESCE(SUM(amount),0)::float s FROM vendor_credit_notes WHERE note_no LIKE 'RET-%'`);
-  if (cn && cn.n > 0) out.push({ level: 'amber', text: 'Credit note requested from vendors: ' + cn.n + ' (Rs ' + Math.round(cn.s).toLocaleString('en-US') + ')', go: '/vendor360.html' });
+  if (cn && cn.n > 0) out.push({ level: 'amber', text: 'Credit note requested from vendors: ' + cn.n + ' (Rs ' + Math.round(cn.s).toLocaleString('en-US') + ')', go: '/vendor360.html', list: await list(pool, `SELECT b.vendor_name, n.note_no, 'Rs ' || ROUND(n.amount), to_char(n.note_date,'DD/MM'), n.reason FROM vendor_credit_notes n LEFT JOIN vendor_bills b ON b.id=n.bill_id WHERE n.note_no LIKE 'RET-%' ORDER BY n.id`) });
   return out.sort((a, b) => (a.level === 'red' ? 0 : 1) - (b.level === 'red' ? 0 : 1));
 }
 module.exports = { collect };
