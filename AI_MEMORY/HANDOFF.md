@@ -1,3 +1,5 @@
+# HANDOFF 25 Nov: v1.1.4 on branch work; read the PRIVATE bridge AI_BRIDGE/HANDOFF_PC_25NOV.md and AJ_TODO.md first. Wait for the weekly reset; no app change without AJ's yes.
+
 # HANDOFF (2026-10-11, tasks 21 + 22 done on branch work)
 - Branch `work` = Royal Bath Hub output (never master). Latest report: AI_MEMORY/LATEST_REPORT.md. I worked on local branch work-tasks and pushed it to origin work (git push origin work-tasks:work).
 - New this round: cheque alerts (utils/chequeAlerts.js, wired in layla_owner/boot.js), GRN/cheque photo draft (layla_owner/paperIntake.js + paperDeps.js), supplier price alerts (utils/supplierPriceAlerts.js, hooked in routes/grn_manual.js), catalogue feed with category + in_stock (routes/catalogue_feed.js), website health check (scripts/website_health_check.js, Windows task RBH_Website_Health 08:30), dynamic SQL ratchet test, vendor CLEARED number, public/sync-review.html.
