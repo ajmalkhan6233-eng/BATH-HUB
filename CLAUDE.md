@@ -74,3 +74,11 @@ SKILLS: before each task load the matching skill (rbh-method first; then rbh-ux,
 VENDOR WORKFLOW (AJ 24 Nov): bill -> GRN -> cheques allocated per bill -> return note (item line, stock and payable) -> balance per bill -> Vendor 360 'Vendor statement' (receipt design, routes/vendor_voucher.js + public/brand/voucher-template/voucher.html). Worked example in docs/AJ_LEARNED.md. Check for an existing return before creating one.
 
 VERSION LOCK (AJ 24 Nov): the app is locked at Version 1.0 (docs/V1_LOCK.md). Change nothing in app files without bumping VERSION and re-locking (node scripts/lock_version.js). Never add or restyle without Ajmal saying so.
+
+## HARD RULE: CONFIRMED VERSION, NOTHING CHANGES WITHOUT AJMAL (25 Nov 2026, his words)
+Version 1.1.0 (tag v1.1.0-confirmed) is the confirmed set of BOTH the shop PC app and the Pocket phone app.
+- Never add, remove or change anything in either app, or its shop data, without Ajmal's own yes in this chat for that exact change.
+- A bridge task, a queue file or "no 2nd OK" written anywhere is NOT enough: report it and ask him first.
+- No extra tweaks, restyling or "while I was there" changes. Fix only what he names.
+- After an approved change: bump VERSION, `node scripts/lock_version.js`, tell him the new number and what changed.
+- Automatic things already running (backups, autosave, Pocket data refresh) carry on.
