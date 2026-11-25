@@ -93,6 +93,22 @@ async function pendingRows(db) {
   return rows.map(r => ({ ...r, age_days: Math.floor((now - new Date(r.created_at).getTime()) / 86400000) }));
 }
 // AJ 24 Nov (v1.0.1): open an outside item again from the bill (double-click) and change its name, price or cost
+// 25 Nov (AJ): money of ONE saved bill, owner only: what to pay the shops for its special items, profit, margin
+router.get('/outside-items/bill/:id', guard, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); if (!(id > 0)) return res.status(400).json({ error: 'Bad bill' });
+    const b = (await pool.query('SELECT total FROM pos_bills WHERE id = $1', [id])).rows[0]; if (!b) return res.status(404).json({ error: 'Bill not found' });
+    const r = (await pool.query(`SELECT i.item_code AS code, i.qty, COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) AS cost FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = $1`, [id])).rows;
+    res.json(billMoney(Number(b.total), r));
+  } catch (e) { console.error('[outside-items]', e.message); res.status(500).json({ error: 'Could not read the bill' }); }
+});
+function billMoney(total, lines) {
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const cost = lines.reduce((a, l) => a + Number(l.qty) * Number(l.cost), 0);
+  const shops = lines.filter((l) => /^(SP|OSH|OUT)-/.test(String(l.code || ''))).reduce((a, l) => a + Number(l.qty) * Number(l.cost), 0);
+  return { shops_to_pay: r2(shops), profit: r2(total - cost), margin: total > 0 ? Math.round((total - cost) / total * 1000) / 10 : 0, no_cost: lines.filter((l) => !Number(l.cost)).length };
+}
+
 router.get('/outside-items/item/:code', guard, async (req, res) => {
   try {
     const code = String(req.params.code); if (!/^(OUT|OSH|SP)-\d+$/.test(code)) return res.status(400).json({ error: 'Not a special item' });
@@ -241,3 +257,4 @@ module.exports.auditInfo = auditInfo;
 module.exports.check = check;
 module.exports.takeBackAfterVoid = takeBackAfterVoid;
 module.exports.sweep = sweep;
+module.exports.billMoney = billMoney;

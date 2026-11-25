@@ -21,6 +21,7 @@
   [].forEach.call(document.querySelectorAll('.datechip'), function (c) { c.addEventListener('click', function () { setISO(ago(Number(c.getAttribute('data-ago')))); }); });
   sd.addEventListener('click', function () { pk.max = today(); try { if (pk.showPicker) pk.showPicker(); } catch (e) { /* the typed box still works */ } });
   pk.addEventListener('change', function () { if (pk.value) setISO(pk.value); });
+  var ar = document.getElementById('dateArrow'); if (ar) ar.addEventListener('click', function () { pk.max = today(); try { pk.showPicker(); } catch (e) { sd.focus(); } });
   sd.addEventListener('input', sync);
   setInterval(sync, 1500);   // the screen resets the box after each bill without an event
   sync();

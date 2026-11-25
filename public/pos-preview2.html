@@ -195,7 +195,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 .cust-sum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:22px;display:block}.cust-sum em{float:none!important;margin-left:12px}
 .customer-row.folded{height:auto!important;min-height:30px;overflow:hidden}.customer-row.folded #autoWa{display:none!important}
 </style>
-</head>
+<style id="j25">/* AJ 25 Nov: shop-to-pay, profit and margin never sit on the new-bill screen; they show inside a saved bill */ #outPay,#lineProfits,#profitValue{display:none!important}</style></head>
 <body>
 <div class="shell">
   <!-- 01 — Application navigation (visual shell; other modules are not wired here) -->
@@ -209,7 +209,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
     <!-- 02 — Document type and compact customer details -->
     <div class="docline"><div class="doc-tabs"><button class="tab active" id="billTab">Bill</button><button class="tab" id="quotationTab">Quotation</button><span class="muted" id="docRef">Bill last …</span><span class="muted" style="margin-left:10px">Salesman</span><select id="salesman" class="sm-pick" title="Who sold this bill"><option value="Jazeel">Jazeel</option><option value="Ajmal">Ajmal</option></select></div><span class="muted" id="modeLabel">New sale · LKR</span></div>
     <section class="card customer-row" id="custRow"><button type="button" class="cust-sum hidden" id="custSum" title="Tap to change customer details"></button>
-      <div class="field datef"><label for="saleDate">Date</label><div class="daterow"><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" title="Tap for the calendar, or type an earlier date (dd/mm/yyyy) to back-date a bill."><input id="salePick" class="datepick" type="date" tabindex="-1" aria-hidden="true"><button type="button" class="datechip" data-ago="0">Today</button><button type="button" class="datechip" data-ago="1">Yesterday</button></div></div>
+      <div class="field datef"><label for="saleDate">Date</label><div class="daterow"><input id="saleDate" type="text" inputmode="numeric" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" title="Tap for the calendar, or type an earlier date (dd/mm/yyyy) to back-date a bill."><input id="salePick" class="datepick" type="date" tabindex="-1" aria-hidden="true"><button type="button" class="secondary small" id="dateArrow" aria-label="Choose an earlier date" title="Choose an earlier date">&#9662;</button></div></div>
       <div class="field"><label for="customerName">Customer</label><input id="customerName" placeholder="Walk-in customer" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="field"><label for="customerPhone">WhatsApp / Phone</label><input id="customerPhone" placeholder="077 123 4567 or +61 424 795 184" autocomplete="nope" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <label class="check" id="autoWa"><input type="checkbox" id="waCheck" checked> WhatsApp receipt</label>

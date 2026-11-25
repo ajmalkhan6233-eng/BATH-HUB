@@ -208,7 +208,7 @@
 
   // ---------- receipt ----------
   function showReceipt(b, fresh) { unsentTally();
-    currentBill = b; var vd = !!b.voided;
+    currentBill = b; var vd = !!b.voided; $('receipt').dataset.billId = b.id || '';
     $('receiptMeta').innerHTML = '<span>' + esc(b.bill_number) + ' · ' + dmyOf(b.created_at) + (vd ? ' · <b style="color:var(--warn)">VOID</b>' : '') + '</span><span>' + esc(b.customer_name || 'Walk-in customer') + '</span>';
     $('rItems').innerHTML = (b.items || []).map(function (r) { return '<tr><td>' + esc(r.item_name) + '<br><small>' + esc(r.item_code || '') + '</small></td><td>' + Number(r.qty) + '</td><td>' + money(r.unit_price) + '</td><td>' + money(r.line_total) + '</td></tr>'; }).join('');
     var pay = (b.payments && b.payments.length) ? b.payments.map(function (p) { return p.method + ' ' + money(p.amount); }).join(' + ') : (b.payment_method || '');
@@ -349,7 +349,7 @@
   // ---------- find bill / last bill ----------
   function openBill(id) { api.bill(id).then(function (b) { if (b) { closeModal(null); showReceipt(b, false); } }); }
   function findBill(openToday) {
-    modal('Find bill', '<div class="findbar"><label>Date</label><input id="findDate" style="width:110px" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" autocomplete="nope"><button class="secondary small" id="fdToday">Today</button><button class="secondary small" id="fdYest">Yesterday</button><button class="secondary small" id="fdAll">All days</button></div>' +
+    modal('Find bill', '<div class="findbar"><label>Date</label><input id="findDate" style="width:110px" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" autocomplete="nope"><input type="date" id="fdPick" tabindex="-1" aria-hidden="true" style="width:0;height:0;opacity:0;border:0;padding:0"><button class="secondary small" id="fdArrow" aria-label="Choose a date" title="Choose a date">&#9662;</button><button class="secondary small hidden" id="fdToday">Today</button><button class="secondary small hidden" id="fdYest">Yesterday</button><button class="secondary small hidden" id="fdAll">All days</button></div>' +
       '<div class="findbar"><input id="findBox" style="flex:1" placeholder="Bill number, customer or phone (e.g. RBH-S012)" autocomplete="nope"></div><div id="findResults"></div>');
     var inp = $('findBox'), out = $('findResults'), dt = $('findDate'), tm;
     function iso(off) { var d = new Date(Date.now() + 19800000 - (off || 0) * 86400000); return d.toISOString().slice(0, 10); }
@@ -367,6 +367,8 @@
     }
     dt.oninput = function () { var v = dt.value.replace(/[^0-9]/g, '').slice(0, 8); if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4); else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2); dt.value = v; clearTimeout(tm); tm = setTimeout(run, 250); };
     inp.oninput = function () { clearTimeout(tm); tm = setTimeout(run, 200); };
+    $('fdArrow').onclick = function () { var p = $('fdPick'); p.max = iso(0); p.value = api.dmyToISO(dt.value) || iso(0); try { p.showPicker(); } catch (e) { dt.focus(); } };
+    $('fdPick').onchange = function () { if (this.value) { dt.value = api.isoToDMY(this.value); run(); } };
     $('fdToday').onclick = function () { setDay(0); }; $('fdYest').onclick = function () { setDay(1); }; $('fdAll').onclick = function () { dt.value = ''; run(); };
     out.onclick = function (e) { if (e.target.dataset.open) openBill(e.target.dataset.open); };
     setDay(0); inp.focus();
@@ -404,7 +406,7 @@
   $('toolMenu').addEventListener('click', function (e) { var id = e.target.id; if (!id) return; $('toolMenu').classList.add('hidden');
     if (id === 'findBtn') findBill(); if (id === 'lastBtn') lastBill(); if (id === 'quoteBtn') loadQuotes(); if (id === 'quoteSaveBtn') { if (!rows.length) showError('Add at least one item first.'); else saveQuotation(); }
     if (id === 'wholesaleBtn') { wholesale = !wholesale; wsTag(); } if (id === 'clearAllBtn') clearBill(); });
-  $('toolsBtn').onclick = $('toolsBtnBottom').onclick = function () { $('toolMenu').classList.toggle('hidden'); };
+  $('toolsBtn').onclick = $('toolsBtnBottom').onclick = function () { var m = $('toolMenu'), r = this.getBoundingClientRect(); m.classList.toggle('hidden'); if (m.classList.contains('hidden') || !m.offsetParent) return; var o = m.offsetParent.getBoundingClientRect(); m.style.right = 'auto'; m.style.left = Math.round(Math.max(4, Math.min(r.left, window.innerWidth - m.offsetWidth - 8) - o.left)) + 'px'; m.style.top = Math.round(r.bottom + 2 - o.top) + 'px'; };
   $('holdBtn').onclick = $('holdBtnTop').onclick = holdBill; $('heldBtn').onclick = showHeld; $('recallTop').onclick = showHeld; $('findTop').onclick = function () { findBill(true); }; $('heldPanel').onclick = showHeld;
   $('addItemBtn').onclick = $('scanBtn').onclick = openPicker; $('pickerClose').onclick = function () { $('picker').classList.remove('open'); $('scanBox').value = ''; };
   $('camScanBtn').onclick = function () { if (window.PosCamScan && PosCamScan.open) PosCamScan.open(function (code) { api.itemByCode(code).then(function (it) { if (it) addItem(it); else scanMsg('No item with that code.', true); }); }); else modal('Camera scan', 'The camera scanner is on the old POS screen for now.'); };

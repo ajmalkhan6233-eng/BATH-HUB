@@ -121,22 +121,41 @@
   }, true);
   // 24 Nov (AJ): the item list is a FLOATING window: drag its header row to move it, pull the corner arrow to resize it. It never pushes the bill down. Size and place are remembered.
   var st = document.createElement('style');
-  st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px);height:var(--ph,300px);max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:40;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open .picker-head{cursor:move;user-select:none;background:#fff8e6}#picker.open.pk-empty{height:auto!important;min-height:0!important;resize:none!important}#picker.open.pk-empty .picker-head,#picker.open.pk-empty .picker-results,#picker.open.pk-empty .picker-note{display:none!important}';
+  st.textContent = '#picker.open{position:fixed!important;left:var(--pl,120px)!important;top:var(--pt,150px)!important;right:auto!important;width:var(--pw,720px);height:var(--ph,300px);max-width:98vw;max-height:95vh!important;min-width:340px;min-height:150px;margin:0!important;resize:both;overflow:hidden!important;display:flex!important;flex-direction:column;z-index:40;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.35);border:2px solid #c9a24a;border-radius:10px}#picker.open .picker-results{flex:1 1 auto;max-height:none!important;height:auto!important;overflow:auto!important;min-height:40px}#picker.open{cursor:move}#picker.open .pick-row,#picker.open button{cursor:pointer}#picker.open input{cursor:text}#picker.open .picker-head{user-select:none;background:#fff8e6}#picker.open.pk-empty{height:auto!important;min-height:0!important;resize:none!important}#picker.open.pk-empty .picker-head,#picker.open.pk-empty .picker-results,#picker.open.pk-empty .picker-note{display:none!important}';
   document.head.appendChild(st);
   function fl() {
     var p = document.getElementById('picker'); if (!p || p.dataset.fl) return; p.dataset.fl = '1';
     try { var o = JSON.parse(localStorage.getItem('rbh_pick_box') || '{}'); ['pl', 'pt', 'pw', 'ph'].forEach(function (k) { if (o[k] > 0) p.style.setProperty('--' + k, o[k] + 'px'); }); } catch (x) {}
     function keep(k, v) { var o = {}; try { o = JSON.parse(localStorage.getItem('rbh_pick_box') || '{}'); } catch (x) {} o[k] = v; localStorage.setItem('rbh_pick_box', JSON.stringify(o)); }
     if (window.ResizeObserver) new ResizeObserver(function () { if (p.classList.contains('open') && p.offsetWidth > 300) { p.style.setProperty('--pw', p.offsetWidth + 'px'); p.style.setProperty('--ph', p.offsetHeight + 'px'); keep('pw', p.offsetWidth); keep('ph', p.offsetHeight); } }).observe(p);
-    p.addEventListener('mousedown', function (ev) {
-      if (!ev.target.closest('.picker-head')) return; ev.preventDefault();
+    // 25 Nov (AJ): drag from ANY empty part of the window (mouse or touch); never from boxes, buttons, rows, the scroll bar or the resize corner
+    p.addEventListener('pointerdown', function (ev) {
+      var t = ev.target, r = p.getBoundingClientRect();
+      if (t.closest('input,button,select,textarea,label,a,.pick-row')) return;
+      if (ev.clientX > r.right - 20 && ev.clientY > r.bottom - 20) return;
+      if (t.classList.contains('picker-results') && ev.offsetX >= t.clientWidth) return;
+      ev.preventDefault();
       var x0 = ev.clientX, y0 = ev.clientY, l0 = p.offsetLeft, t0 = p.offsetTop;
-      function mv(e) { var l = Math.max(0, Math.min(window.innerWidth - 120, l0 + e.clientX - x0)), t = Math.max(0, Math.min(window.innerHeight - 40, t0 + e.clientY - y0)); p.style.setProperty('--pl', l + 'px'); p.style.setProperty('--pt', t + 'px'); }
-      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); keep('pl', parseInt(p.style.getPropertyValue('--pl'), 10) || p.offsetLeft); keep('pt', parseInt(p.style.getPropertyValue('--pt'), 10) || p.offsetTop); }
-      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+      function mv(e) { var l = Math.max(0, Math.min(window.innerWidth - 120, l0 + e.clientX - x0)), tp = Math.max(0, Math.min(window.innerHeight - 40, t0 + e.clientY - y0)); p.style.setProperty('--pl', l + 'px'); p.style.setProperty('--pt', tp + 'px'); }
+      function up() { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); keep('pl', parseInt(p.style.getPropertyValue('--pl'), 10) || p.offsetLeft); keep('pt', parseInt(p.style.getPropertyValue('--pt'), 10) || p.offsetTop); }
+      document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
     });
+    p.style.touchAction = 'none';
   }
-  // nothing to list -> the window shrinks to the search bar, so the bill lines use the space
+  // 25 Nov (AJ): inside a saved bill (owner only): what to pay the shops, profit and margin of THAT bill
+  var moneyFor = '';
+  setInterval(function () {
+    var rc = document.getElementById('receipt'), meta = document.getElementById('receiptMeta'); if (!rc || !meta) return;
+    var id = rc.classList.contains('hidden') ? '' : (rc.dataset.billId || '');
+    if (id === moneyFor) return; moneyFor = id;
+    var box = $('billMoney'); if (box) box.remove(); if (!id) return;
+    fetch('/api/outside-items/bill/' + encodeURIComponent(id), { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d || moneyFor !== id) return;
+      var f = function (v) { return 'Rs ' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); };
+      var x = el('div', 'font-size:12px;color:#5a4300;background:#fff8e6;border:1px solid #c9a24a;border-radius:6px;padding:4px 10px;margin:4px 0', 'Only you: shop to pay ' + f(d.shops_to_pay) + '  |  profit ' + f(d.profit) + '  |  margin ' + d.margin + '%' + (d.no_cost ? '  (' + d.no_cost + ' line without cost)' : '')); x.id = 'billMoney';
+      var old = $('billMoney'); if (old) old.remove(); meta.insertAdjacentElement('afterend', x);
+    }).catch(function () {});
+  }, 500);
   setInterval(function () { var p = document.getElementById('picker'); if (p) p.classList.toggle('pk-empty', !p.querySelector('.pick-row')); }, 300);
   setInterval(fl, 1000);
   window.PosOutside = { open: open };
