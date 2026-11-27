@@ -31,7 +31,7 @@ async function main() {
     const pass = process.env.BACKUP_PASSPHRASE || '';
     const encDir = path.join(bk, 'files', '_enc'), encDb = path.join(bk, 'db', 'latest.sql.gz.enc');
     if ((fs.existsSync(encDir) || fs.existsSync(encDb)) && pass.length < 8) { console.log('STOP: set BACKUP_PASSPHRASE (the backup password) first, then run again.'); process.exit(1); }
-    if (fs.existsSync(encDir)) { let n = 0; for (const f of fs.readdirSync(encDir)) { const dest = path.join(target, f.replace(/\.enc$/, '').split('__').join(path.sep)); fs.mkdirSync(path.dirname(dest), { recursive: true }); await decryptFile(path.join(encDir, f), dest, pass); n++; } console.log('Decrypted ' + n + ' secret/data files (.env, data).'); }
+    if (fs.existsSync(encDir)) { let n = 0; for (const f of fs.readdirSync(encDir)) { if (!/\.enc$/.test(f)) continue; const dest = path.join(target, f.replace(/\.enc$/, '').split('__').join(path.sep)); fs.mkdirSync(path.dirname(dest), { recursive: true }); await decryptFile(path.join(encDir, f), dest, pass); n++; } console.log('Decrypted ' + n + ' secret/data files (.env, data).'); }
     if (process.argv.includes('--no-db')) return;
     let dump = path.join(bk, 'db', 'latest.sql.gz');
     if (fs.existsSync(encDb)) { dump = path.join(os.tmpdir(), 'rbh_restore_' + Date.now() + '.sql.gz'); await decryptFile(encDb, dump, pass); }

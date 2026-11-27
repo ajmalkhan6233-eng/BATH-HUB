@@ -14,7 +14,10 @@ const { encryptFile } = require('../../utils/backupCrypto');
 
 const root = path.resolve(__dirname, '..', '..');
 const BRANCH = 'rbh-backup', MAX_FILE = 50 * 1024 * 1024, EVERY_MS = 55 * 60 * 1000, SQUASH_AT = 250;
-const SKIP_DIRS = new Set(['node_modules', '.git', 'backups', 'logs', 'tmp', '.cache']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'backups', 'logs', 'tmp', '.cache', '.wwebjs_auth', '.wwebjs_cache', 'wwebjs_auth', 'session', 'sessions', 'Cache', 'Code Cache', 'GPUCache', 'Service Worker', 'puppeteer', '.local-chromium', 'chrome-profile']);   // WhatsApp login/browser caches are huge, rebuildable (re-scan the QR), and never worth backing up
+const MAX_FILE_SECRET = 20 * 1024 * 1024;   // encrypted folders: nothing bigger than 20 MB (the DB dump has its own rule)
+const crypto = require('crypto');
+const sha = f => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const log = [];
 const say = m => { log.push(m); console.log(m); };
 
@@ -112,7 +115,8 @@ async function run(opts = {}) {
     fs.readdirSync(path.join(dir, 'db', 'daily')).sort().slice(0, -14).forEach(f => fs.unlinkSync(path.join(dir, 'db', 'daily', f)));
 
     // 2) code (tracked + untracked, not ignored) and the private folders
-    for (const d of ['code', 'files']) fs.rmSync(path.join(dir, d), { recursive: true, force: true });
+    fs.rmSync(path.join(dir, 'code'), { recursive: true, force: true });
+    try { for (const e of fs.readdirSync(path.join(dir, 'files'))) if (e !== '_enc') fs.rmSync(path.join(dir, 'files', e), { recursive: true, force: true }); } catch (e) { /* first run */ }   // keep files/_enc: its hashes tell us what did not change
     const list = git(root, ['ls-files', '-co', '--exclude-standard', '-z']).split('\0').filter(Boolean);
     for (const f of list) copyTree(path.join(root, f), path.join(dir, 'code', f), stats);
     for (const f of ['uploads', 'drafts_inbox', 'config', 'local_ops']) copyTree(path.join(root, f), path.join(dir, 'files', f), stats);
@@ -121,7 +125,18 @@ async function run(opts = {}) {
     fs.rmSync(secretTmp, { recursive: true, force: true }); fs.mkdirSync(secretDir, { recursive: true });
     for (const f of ['.env', 'data']) copyTree(path.join(root, f), path.join(secretTmp, f), stats);
     (function walk(d) { for (const e of fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }) : []) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else secretFiles.push(p); } })(secretTmp);
-    for (const p of secretFiles) { const rel = path.relative(secretTmp, p).replace(/[\\/]/g, '__'); await encryptFile(p, path.join(secretDir, rel + '.enc'), pass); }
+    // encrypt only what CHANGED since last time (a fresh encryption of the same file looks new to git and would re-upload everything)
+    const hashFile = path.join(secretDir, '_hashes.json'); let old = {}; try { old = JSON.parse(fs.readFileSync(hashFile, 'utf8')); } catch (e) { /* first run */ }
+    const fresh = {}; let enc = 0, kept = 0;
+    for (const p of secretFiles) {
+        if (fs.statSync(p).size > MAX_FILE_SECRET) { stats.skipped.push('private/' + path.relative(secretTmp, p)); continue; }
+        const rel = path.relative(secretTmp, p).replace(/[\\/]/g, '__'), out = path.join(secretDir, rel + '.enc'), h = sha(p); fresh[rel] = h;
+        if (old[rel] === h && fs.existsSync(out)) { kept++; continue; }
+        await encryptFile(p, out, pass); enc++;
+    }
+    for (const rel of Object.keys(old)) if (!fresh[rel]) fs.rmSync(path.join(secretDir, rel + '.enc'), { force: true });   // file was deleted
+    fs.writeFileSync(hashFile, JSON.stringify(fresh));
+    say('private files: ' + enc + ' encrypted, ' + kept + ' unchanged');
     fs.rmSync(secretTmp, { recursive: true, force: true });
     let appCommit = ''; try { appCommit = git(root, ['rev-parse', 'HEAD']); } catch (e) { /* ignore */ }
     fs.writeFileSync(path.join(dir, 'MANIFEST.json'), JSON.stringify({ at: new Date().toISOString(), app_commit: appCommit, db_bytes: dumpBytes, files: stats.files, skipped_big_files: stats.skipped, restore: 'node scripts/pc/restore_from_backup.js' }, null, 1));
@@ -134,8 +149,10 @@ async function run(opts = {}) {
     let count = 0; try { count = Number(git(dir, ['rev-list', '--count', 'HEAD'])); } catch (e) { /* empty */ }
     if (firstEnc) count = SQUASH_AT + 1; // drop old history that still holds plain .env / DB
     if (count > SQUASH_AT) { git(dir, ['checkout', '-q', '--orphan', 'tmp_squash']); git(dir, ['add', '-A']); git(dir, ['commit', '-q', '-m', 'backup (history squashed) ' + new Date().toISOString()]); git(dir, ['branch', '-M', BRANCH]); say('history squashed'); }
-    try { git(dir, ['push', '-q', 'origin', BRANCH]); }
-    catch (e) { try { git(dir, ['push', '-q', '--force-with-lease', 'origin', BRANCH]); } catch (e2) { try { git(dir, ['push', '-q', '-f', 'origin', BRANCH]); } catch (e3) { return status(false, 'Push failed: ' + String(e3.message).split('\n')[0].slice(0, 160)); } } }
+    try { git(dir, ['gc', '-q', '--auto'], { timeout: 600000 }); const sz = git(dir, ['count-objects', '-vH']).split('\n').filter(l => /size-pack|^size:/.test(l)).join(' ; '); say('repo size: ' + sz); } catch (e) { /* only info */ }
+    const P = ['-c', 'http.postBuffer=524288000', '-c', 'http.lowSpeedLimit=1000', '-c', 'http.lowSpeedTime=120'], PT = { timeout: 1200000 };   // 20 min, gives up only if the line stays dead for 2 min
+    try { git(dir, [...P, 'push', '-q', 'origin', BRANCH], PT); }
+    catch (e) { try { git(dir, [...P, 'push', '-q', '--force-with-lease', 'origin', BRANCH], PT); } catch (e2) { try { git(dir, [...P, 'push', '-q', '-f', 'origin', BRANCH], PT); } catch (e3) { return status(false, 'Push failed: ' + String(e3.message).split('\n')[0].slice(0, 160)); } } }
     return status(true, 'Backed up: DB ' + Math.round(dumpBytes / 1024) + ' KB, ' + stats.files + ' files' + (stats.skipped.length ? ', skipped ' + stats.skipped.length + ' big file(s)' : ''), { skipped: stats.skipped });
 }
 
