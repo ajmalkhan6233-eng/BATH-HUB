@@ -1,4 +1,5 @@
-// routes/pos_bills.js
+
+const MC = require('../utils/moneyCore');   // shared money core (void rule)// routes/pos_bills.js
 // POS BILL GENERATOR for Royal Bath Hub Thihariya — a standalone, own-table bill/receipt
 // feature. Own Pool, same conventions as investor_loans.js / sale_commissions.js.
 //
@@ -350,7 +351,7 @@ router.get('/pos-bills/summary', async (req, res) => {
         const pm = await pool.query(
             `SELECT method, COUNT(DISTINCT bill_id) AS bills, SUM(amount) AS amount FROM (
                SELECT p.bill_id, lower(p.method) AS method, p.amount FROM pos_bill_payments p JOIN pos_bills b ON b.id = p.bill_id
-                 LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date
+                 ${MC.LIVE_JOIN} AND b.created_at::date BETWEEN $1::date AND $2::date
                UNION ALL
                SELECT b.id, lower(COALESCE(b.payment_method,'cash')), b.total FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id
                  LEFT JOIN (SELECT DISTINCT bill_id FROM pos_bill_payments) pp ON pp.bill_id = b.id

@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('./moneyCore');   // shared money core (void rule)
 /**
  * AUDIT INVARIANTS (read-only). One file, one job: ask the database "do the numbers agree with each other?"
  * Only SELECT / SHOW statements. Safe to run on the live database; never writes, never alters.
@@ -147,7 +148,7 @@ const CHECKS = [
         FROM products p
         LEFT JOIN (SELECT TRIM(split_part(item_description, ' - ', 1)) AS code, SUM(quantity) AS qty FROM grn_records GROUP BY 1) g ON g.code = p.item_code
         LEFT JOIN (SELECT i.item_code, SUM(i.qty) AS qty FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id
-                   LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND i.item_code IS NOT NULL GROUP BY i.item_code) s ON s.item_code = p.item_code
+                   ${MC.LIVE_JOIN} AND i.item_code IS NOT NULL GROUP BY i.item_code) s ON s.item_code = p.item_code
         WHERE p.item_code IS NOT NULL AND p.active = true`);
       const gaps = {};
       for (const x of r.rows) gaps[x.item_code] = round2(Number(x.stock) - (Number(x.grn_in) - Number(x.sold)));

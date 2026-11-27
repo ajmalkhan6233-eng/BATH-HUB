@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('../utils/moneyCore');   // shared money core (void rule)
 // Customer 360: one place to see a customer (invoices, credit owed, payments, advances held, returns, quotes). Owner or admin only.
 // Reads POS bills (void bills out), credit_customers, advance orders, quotations. The ONE write: record a payment against a credit invoice
 // (new table customer_payments, and credit_customers.paid goes up in the same transaction). Mounted at /api/customer360 in server.js.
@@ -18,7 +19,7 @@ function createCustomer360Router({ pool, requireAuth } = {}) {
   pool.query(`CREATE TABLE IF NOT EXISTS customer_payments (id SERIAL PRIMARY KEY, credit_id INT NOT NULL, customer_id INT, amount NUMERIC(14,2) NOT NULL, method VARCHAR(30), paid_at DATE NOT NULL DEFAULT CURRENT_DATE, note TEXT, created_by VARCHAR(100), created_at TIMESTAMP DEFAULT NOW())`).catch(() => {});
 
   const BILLS = `SELECT b.id, b.bill_number, b.customer_name, b.customer_phone, b.total, b.payment_method, b.created_at FROM pos_bills b
-    WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`;
+    WHERE ${MC.LIVE}`;
 
   router.get('/list', async (req, res) => {
     try {

@@ -11,7 +11,8 @@ const roleOf = req => (req.session && req.session.user && req.session.user.role)
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 const r2 = n => Math.round(Number(n || 0) * 100) / 100;
 const q = (sql, p) => pool.query(sql, p).then(r => r.rows);
-const LIVE = 'NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)';
+const MC = require('../utils/moneyCore');
+const LIVE = MC.LIVE;   // the shared void rule
 
 let cache = null;   // 15 s memory copy
 router.get('/home-solid', ownerOnly, async (req, res) => {
@@ -19,7 +20,7 @@ router.get('/home-solid', ownerOnly, async (req, res) => {
   try {
     const bills = await q(`SELECT b.id, b.created_at::date AS d, b.total, b.discount_amount, b.salesman,
         (SELECT COALESCE(SUM(i.line_total),0) FROM pos_bill_items i WHERE i.bill_id = b.id) AS items,
-        (SELECT COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id) AS cost
+        (SELECT COALESCE(SUM(i.qty * ${MC.COST}),0) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id) AS cost
       FROM pos_bills b WHERE ${LIVE}`);
     const today = (await q('SELECT CURRENT_DATE::text AS d'))[0].d;
     const day = x => (typeof x.d === 'string' ? x.d.slice(0, 10) : new Date(x.d.getTime() - x.d.getTimezoneOffset() * 60000).toISOString().slice(0, 10));   // the app returns dates as text; a plain pg Date is a local-midnight Date

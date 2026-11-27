@@ -8,7 +8,7 @@ const router = express.Router();
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 const num = v => (v === null || v === undefined ? 0 : Number(v));
-const NV = `LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL`; // live (not voided) bills
+const NV = require('../utils/moneyCore').LIVE_JOIN; // live (not voided) bills
 
 let blockErrs = [];   // 16 Nov: names of the blocks that failed in the current run; sent to the screen so it can say so and try again (never a silent LKR 0)
 async function safe(label, fn) { try { return await fn(); } catch (e) { console.error(`[dashboard_pro] ${label}:`, e.message); blockErrs.push(label); return null; } }

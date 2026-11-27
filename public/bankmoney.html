@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><script>if (window.top === window.self) location.replace('/owner#/bankmoney');   // one app (AJ 27 Nov): opened alone -> open inside /owner, no separate login</script><link rel="stylesheet" href="/rbh-font.css"><script src="/rbh-early.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Banking & Money | Royal Bath Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><style>
+:root{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--gold:#C9A24B;--red:#b3261e;--green:#1b7a46;--muted:#5b6070;--sel:rgba(201,162,75,.18)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14)}}
+:root[data-theme=dark],:root[data-theme=gold],:root[data-theme=water]{--bg:#0a1632;--ink:#F6EFDC;--card:#10224a;--line:rgba(232,207,138,.25);--muted:#b7bccb;--sel:rgba(232,207,138,.14)}
+:root[data-theme=light]{--bg:#F6EFDC;--ink:#0B1B3A;--card:#fffdf7;--line:rgba(11,27,58,.15);--muted:#5b6070;--sel:rgba(201,162,75,.18)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh}
+.left,.right{padding:12px;min-width:0}.right{display:none}
+.app.pick .left{display:none}.app.pick .right{display:block}
+@media(min-width:900px){.app{grid-template-columns:30% 70%}.left{border-right:1px solid var(--line);height:100vh;overflow:auto;position:sticky;top:0}.right{display:block}.app.pick .left{display:block}.back{display:none!important}}
+h1{font-size:20px;margin:4px 0 10px}h2{font-size:17px;margin:0}
+input,select,button,textarea{font:inherit;font-size:16px;color:inherit;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 10px;max-width:100%}
+button{background:var(--gold);color:#0B1B3A;font-weight:600;cursor:pointer;border:0}button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible,.v:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.search{width:100%}.chips{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.chips button{min-height:44px;background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}.chips button[aria-pressed=true]{background:var(--sel);border-color:var(--gold);font-weight:700}
+.v{display:flex;justify-content:space-between;gap:8px;align-items:center;min-height:56px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:6px 0;cursor:pointer;width:100%;text-align:left;color:var(--ink)}
+.stm{flex:none;margin-left:auto;padding:6px 10px;border:1.5px solid var(--gold);border-radius:10px;font-size:12px;font-weight:700;background:#fff8e6;color:#14213d}.v[aria-current=true]{background:var(--sel);border-color:var(--gold)}.v b{display:block}.v small{color:var(--muted)}
+.amt{font-weight:700;white-space:nowrap}.bad{color:var(--red)}.good{color:var(--green)}.sm{color:var(--muted);font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}@media(min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}.kpi b{display:block;font-size:20px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;margin-top:6px}
+.tabs button{background:transparent;color:var(--ink);border-radius:10px 10px 0 0;border:1px solid transparent;font-weight:500;white-space:nowrap}.tabs button[aria-selected=true]{border-color:var(--line);border-bottom-color:var(--bg);background:var(--sel);font-weight:700}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:13px;color:var(--muted)}td.n,th.n{text-align:right}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;border:1px solid var(--line)}.state{padding:24px 8px;text-align:center;color:var(--muted)}
+#msg{min-height:22px}.back{margin-bottom:8px}
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10}.drawer.on{display:block}
+.sheet{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--bg);padding:14px;overflow:auto;border-left:1px solid var(--line)}
+.sheet label{display:block;margin:8px 0 2px;font-size:14px;color:var(--muted)}.sheet input,.sheet select{width:100%}
+/* 21 Nov: Debit / Credit tables at the top; long lists scroll inside their own box */
+.ta{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) auto;border:2px solid var(--gold);border-radius:14px;overflow:hidden;margin:6px 0}
+.tc{display:flex;flex-direction:column;min-height:0}.tc+.tc{border-left:2px solid var(--gold)}
+.ta h4{margin:0;padding:5px 10px;font-size:15px;text-align:center}.ta .dh{background:rgba(192,57,43,.16);color:var(--red)}.ta .ch{background:rgba(46,139,87,.16);color:var(--green)}
+.tls{overflow:auto;flex:1;min-height:0;max-height:260px}
+.tl{display:flex;gap:8px;padding:3px 10px;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}.tl .tm{flex:1;min-width:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tl.chq b{opacity:.85}
+.wt{font-style:normal;font-size:11px;background:rgba(212,175,55,.25);border-radius:8px;padding:0 6px}
+.tt{display:flex;justify-content:space-between;padding:4px 10px;font-weight:800;border-top:2px solid var(--gold)}
+.tb{text-align:center;font-weight:800;font-size:15px;padding:4px;border-top:2px solid var(--gold);grid-column:1/-1}
+.nodue{color:var(--muted);font-size:13px;font-style:italic}
+.vhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.vhead .bar{margin:0}
+@media(max-width:700px){.ta{grid-template-columns:1fr}.tc+.tc{border-left:0;border-top:2px solid var(--gold)}}
+@media(min-width:900px){
+body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.app{flex:1;min-height:0;height:auto;overflow:hidden}.left{height:auto;position:static}
+.right,.app.pick .right{height:auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:6px 12px}
+#msg{min-height:0}#detail{display:flex;flex-direction:column;flex:1;min-height:0}
+.vhead button{min-height:34px;padding:2px 10px;font-size:14px}h2{font-size:18px}
+.kpis{margin:4px 0;gap:6px}.kpi{padding:2px 10px}.kpi b{font-size:17px}.kpi .sm{font-size:12px}
+.acct{flex:1 1 52%;min-height:140px;display:flex;flex-direction:column}.acct .ta{flex:1;min-height:0;margin:2px 0}.tls{max-height:none}
+.lower{flex:1 1 32%;min-height:110px;display:flex;flex-direction:column}.lower .tabs{margin-top:0}.lower .tabs button{min-height:32px;padding:2px 10px}.lower .wrap{flex:1;min-height:0;overflow:auto}
+}
+
+.go{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.go a{padding:10px 14px;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none;min-height:44px;display:flex;align-items:center}</style></head><body><div style="padding:12px;max-width:980px;margin:auto"><h1>Banking & Money</h1><div class="sm" id="asof"></div><div class="kpis" id="k"></div><div id="msg" class="sm"></div><h2>Cheques given (we pay)</h2><div class="wrap"><table id="g"></table></div><h2 style="margin-top:14px">Cheques received (customers)</h2><div class="wrap"><table id="r"></table></div><div class="go" id="go"></div></div>
+<script>
+var rs=function(n){return 'Rs. '+Math.round(Number(n)||0).toLocaleString('en-US')};
+function K(t,v,c){return '<div class="kpi"><span class="sm">'+t+'</span><b class="'+(c||'')+'">'+v+'</b></div>'}
+function T(id,l){document.getElementById(id).innerHTML=l.length?'<tr><th>Cheque</th><th>Name</th><th>Due</th><th>Amount</th></tr>'+l.map(function(c){return '<tr><td>'+(c.cheque_no||'-')+'</td><td>'+(c.payee||'')+'</td><td>'+(c.due||'')+'</td><td class="amt">'+rs(c.amount)+'</td></tr>'}).join(''):'<tr><td class="sm">None waiting</td></tr>'}
+fetch('/api/bank-money/overview',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(d){
+if(d.error){document.getElementById('msg').textContent=d.error;return}
+document.getElementById('asof').textContent='As of '+d.as_of;
+document.getElementById('k').innerHTML=K('Sales today',rs(d.sales.today.sales))+K('Gross profit today',rs(d.sales.today.gross))+K('Sales this month',rs(d.sales.month.sales))+K('Gross profit this month',rs(d.sales.month.gross))+K('Cheques we owe',rs(d.cheques_given.total),'bad')+K('Due in 30 days',rs(d.cheques_given.next30))+K('Cheques coming in',rs(d.cheques_received.total),'good')+K('Customers owe us',rs(d.customers_owe))+K('Expenses this month',rs(d.expenses_month))+K('Staff commission this month',rs(d.commission_month));
+T('g',d.cheques_given.next);T('r',d.cheques_received.next);
+document.getElementById('go').innerHTML=[['chequereg','Cheque register'],['chequecal','Cheque Calendar'],['expenses','Expenses'],['loans','Loans'],['moneycontrol','Money Control']].map(function(x){return '<a href="/owner#/'+x[0]+'" target="_top">'+x[1]+'</a>'}).join('');
+}).catch(function(){document.getElementById('msg').textContent='Could not load. Try Refresh.'});
+</script></body></html>

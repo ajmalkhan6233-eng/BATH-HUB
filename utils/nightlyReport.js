@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('./moneyCore');   // shared money core (void rule)
 /**
  * Quick win 3: nightly report (after 21:00 Sri Lanka): sales, expenses, net profit as short text + a PDF.
  * The text goes through the notify queue, so the owner reads it in the ONE 06:00 message (rule 11). Money data: owner only.
@@ -11,7 +12,7 @@ const rs = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-LK', { maximumFracti
 async function dayFigures(pool, day) {
   const d = (await pool.query(`SELECT COALESCE(SUM(total_sale),0) AS s, COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS e, COUNT(*) AS n FROM daily_summary WHERE report_date = $1`, [day])).rows[0];
   if (Number(d.n) > 0) return { sales: Number(d.s), gp: Number(d.gp), exp: Number(d.e), source: 'daily summary' };
-  const b = (await pool.query(`SELECT COALESCE(SUM(b.total),0) AS s FROM pos_bills b WHERE b.created_at::date = $1 AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`, [day])).rows[0];
+  const b = (await pool.query(`SELECT COALESCE(SUM(b.total),0) AS s FROM pos_bills b WHERE b.created_at::date = $1 AND ${MC.LIVE}`, [day])).rows[0];
   return { sales: Number(b.s), gp: null, exp: null, source: 'POS bills (daily summary not entered yet)' };
 }
 function reportText(day, f) {

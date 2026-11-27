@@ -7,7 +7,7 @@ const router = express.Router();
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 
-const LIVE = 'LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL';
+const LIVE = require('../utils/moneyCore').LIVE_JOIN;
 const P = {
   today: "b.created_at::date = CURRENT_DATE",
   yesterday: "b.created_at::date = CURRENT_DATE - 1",

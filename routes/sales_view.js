@@ -1,4 +1,5 @@
-// Customer bills (sales) for ONE chosen day or range, by hour or by day. Read only. Voided bills are left out of totals.
+
+const MC = require('../utils/moneyCore');   // shared money core (void rule)// Customer bills (sales) for ONE chosen day or range, by hour or by day. Read only. Voided bills are left out of totals.
 const express = require('express');
 const pool = require('../utils/pool');
 const router = express.Router();
@@ -13,7 +14,7 @@ router.get('/sales-view', async (req, res) => {
         if (to < from) return res.status(400).json({ error: 'The end date is before the start date' });
         if ((Date.parse(to) - Date.parse(from)) / 864e5 > 400) return res.status(400).json({ error: 'Pick 400 days or less' });
         const by = req.query.by === 'hour' ? 'hour' : 'day';
-        const base = `FROM pos_bills b LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL AND b.created_at::date BETWEEN $1::date AND $2::date`;
+        const base = `FROM pos_bills b ${MC.LIVE_JOIN} AND b.created_at::date BETWEEN $1::date AND $2::date`;
         const g = by === 'hour' ? `EXTRACT(HOUR FROM b.created_at)::int` : `to_char(b.created_at::date,'YYYY-MM-DD')`;
         const rows = (await pool.query(`SELECT ${g} AS k, COUNT(*) AS bills, SUM(b.total) AS total, SUM(b.discount_amount) AS discount ${base} GROUP BY 1 ORDER BY 1`, [from, to])).rows
             .map(r => ({ key: r.k, bills: Number(r.bills), total: n2(r.total), discount: n2(r.discount) }));

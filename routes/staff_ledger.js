@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('../utils/moneyCore');   // shared money core (void rule)
 // Staff ledger (AJ 18 Nov 2026): one statement per staff member: salary earned each day, commission earned, what was paid, what was borrowed and repaid, the balance.
 // Owner/admin only. Own table staff_ledger. Commission is NOT stored: it is worked out live from the POS bills the person sold
 // (salesman on the bill, 5% of gross profit, from commission_from), so a voided bill takes its commission away automatically.
@@ -45,7 +46,7 @@ router.get('/staff-ledger/:staffId', ownerOnly, async (req, res) => {
     const pct = Number(await setting('commission_pct') || 5), from = String(await setting('commission_from') || '2026-11-18').slice(0, 10);
     const comm = await q(`SELECT to_char(b.created_at::date,'YYYY-MM-DD') d, COUNT(*) n, SUM(b.total) sales,
         SUM(b.total - COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)) gp
-      FROM pos_bills b WHERE LOWER(COALESCE(b.salesman,'')) = LOWER($1) AND b.created_at::date >= $2::date AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
+      FROM pos_bills b WHERE LOWER(COALESCE(b.salesman,'')) = LOWER($1) AND b.created_at::date >= $2::date AND ${MC.LIVE}
       GROUP BY 1 ORDER BY 1`, [st.name, from]);
     const all = rows.filter(r => !r.voided).map(r => ({ d: r.d, id: r.id, kind: r.kind, amount: Number(r.amount), note: r.note }))
       .concat(comm.map(c => ({ d: c.d, id: null, kind: 'commission', amount: r2(Number(c.gp) * pct / 100), note: c.n + ' bill' + (c.n > 1 ? 's' : '') + ', profit ' + r2(c.gp) + ', ' + pct + '%' })))
@@ -64,7 +65,7 @@ router.get('/staff-ledger/:staffId', ownerOnly, async (req, res) => {
     const shown = lines.filter(l => (!f || l.date >= f) && (!t || l.date <= t));
     // what 5% would have been on everything sold so far (information only: commission counts from commission_from)
     const info = (await q(`SELECT COUNT(*) n, COALESCE(SUM(b.total),0) sales, COALESCE(SUM(b.total - COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)),0) gp
-      FROM pos_bills b WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`))[0];
+      FROM pos_bills b WHERE ${MC.LIVE}`))[0];
     res.json({
       staff: st, as_at: new Date().toISOString(), commission_pct: pct, commission_from: from, lines: shown, voided: rows.filter(r => r.voided).map(r => ({ id: r.id, date: r.d, kind: r.kind, amount: Number(r.amount), reason: r.void_reason })),
       totals: Object.assign({}, tot, { owed_to_him: owed, loan_he_owes: loan }),
@@ -101,7 +102,7 @@ router.get('/sales-commission', ownerOnly, async (req, res) => {
     const pct = Number(await setting('commission_pct') || 5), cfrom = String(await setting('commission_from') || '2026-11-18').slice(0, 10);
     const from = isDay(req.query.from) ? req.query.from : cfrom, to = isDay(req.query.to) ? req.query.to : new Date(Date.now() + 19800000).toISOString().slice(0, 10);
     const COST = `COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)`;
-    const LIVE = 'NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)';
+    const LIVE = require('../utils/moneyCore').LIVE;
     const hist = (await q(`SELECT COUNT(*) n, COALESCE(SUM(b.total),0) sales, COALESCE(SUM(b.total - ${COST}),0) gp, MIN(to_char(b.created_at::date,'YYYY-MM-DD')) first FROM pos_bills b WHERE ${LIVE}`))[0];
     const bills = await q(`SELECT b.id, b.bill_number, to_char(b.created_at,'YYYY-MM-DD HH24:MI') t, COALESCE(b.salesman,'') salesman, b.total, (b.total - ${COST}) gp FROM pos_bills b
       WHERE ${LIVE} AND b.created_at::date BETWEEN $1::date AND $2::date ORDER BY b.created_at DESC, b.id DESC LIMIT 300`, [from, to]);
@@ -131,7 +132,7 @@ async function buildStatement(id, from, to) {
   const pct = Number(await setting('commission_pct') || 5), cfrom = String(await setting('commission_from') || '2026-11-18').slice(0, 10);
   const bills = await q(`SELECT b.bill_number bn, to_char(b.created_at::date,'YYYY-MM-DD') d,
       (b.total - COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id),0)) gp
-    FROM pos_bills b WHERE LOWER(COALESCE(b.salesman,'')) = LOWER($1) AND b.created_at::date >= $2::date AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
+    FROM pos_bills b WHERE LOWER(COALESCE(b.salesman,'')) = LOWER($1) AND b.created_at::date >= $2::date AND ${MC.LIVE}
     ORDER BY b.created_at, b.id`, [st.name, cfrom]);
   const days = {}; const day = d => (days[d] = days[d] || { date: d, salary: 0, invoices: [], commission: 0, deductions: [], adjust: 0 });
   rows.forEach(r => {

@@ -6,7 +6,7 @@
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
-    ['2 Sales', ['pos', 'saleshub', 'customer360']],
+    ['2 Sales', ['pos', 'saleshub', 'customer360', 'bankmoney']],
     ['Vendors', ['vendor360', 'chequereg', 'chequecal']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
@@ -90,6 +90,7 @@
       addFramePage({ key: 'allbills', label: 'All bills', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-clipboard"/></svg>', url: '/all-bills.html', sub: 'View, download, edit or cancel any customer or vendor bill', after: 'pos' });
       addFramePage({ key: 'vendor360', label: 'Vendor 360', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-truck"/></svg>', url: '/vendor360.html', sub: 'One vendor: bills, payments, cheques, statement', after: 'vendorsum' });
       addFramePage({ key: 'customer360', label: 'Customer 360', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/customer360.html', sub: 'One customer: bills, credit, payments, advances, quotes', after: 'saleshub' });
+      addFramePage({ key: 'bankmoney', label: 'Banking & Money', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-link"/></svg>', url: '/bankmoney.html', sub: 'Cheques given and coming, cash, expenses, one money position', after: 'customer360' });
       addFramePage({ key: 'salescomm', label: 'Sales Commission', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-tag"/></svg>', url: '/sales-commission.html', sub: 'Commission per salesman, bill by bill, and the rough total so far', after: 'pos' });
       addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
       var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';

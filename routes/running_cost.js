@@ -44,10 +44,8 @@ router.get('/', async (req, res) => {
   try {
     const s = await settings();
     const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
-    const g = (await pool.query(`SELECT COALESCE(SUM(b.total - c.cost), 0) AS gross, COUNT(*) AS bills FROM pos_bills b
-        CROSS JOIN LATERAL (SELECT COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)), 0) AS cost FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id) c
-       WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) AND (b.created_at + INTERVAL '0')::date >= $1::date`, [s.from])).rows[0];
-    res.json({ settings: s, to: today, bills: Number(g.bills), ...compute(s, daysBetween(s.from, today), Number(g.gross)) });
+    const g = await require('../utils/moneyCore').range(pool, s.from, null);   // shared money core
+    res.json({ settings: s, to: today, bills: Number(g.n), ...compute(s, daysBetween(s.from, today), Number(g.gross)) });
   } catch (e) { console.error('[running-cost]', e.message); res.status(500).json({ error: 'Could not work out the running cost' }); }
 });
 router.put('/', express.json(), async (req, res) => {

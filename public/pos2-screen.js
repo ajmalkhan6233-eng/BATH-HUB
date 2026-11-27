@@ -213,7 +213,7 @@
     $('rItems').innerHTML = (b.items || []).map(function (r) { return '<tr><td>' + esc(r.item_name) + '<br><small>' + esc(r.item_code || '') + '</small></td><td>' + Number(r.qty) + '</td><td>' + money(r.unit_price) + '</td><td>' + money(r.line_total) + '</td></tr>'; }).join('');
     var pay = (b.payments && b.payments.length) ? b.payments.map(function (p) { return p.method + ' ' + money(p.amount); }).join(' + ') : (b.payment_method || '');
     $('rTotals').innerHTML = 'Subtotal: ' + money(b.subtotal) + (Number(b.discount_amount) > 0 ? '<br>Discount: ' + money(b.discount_amount) : '') + '<br>Total: <b>' + money(b.total) + '</b><br>Payment: ' + esc(pay) + (vd && b.void_reason ? '<br>Void reason: ' + esc(b.void_reason) : '');
-    $('voidBtn').classList.toggle('hidden', vd || !isOwner); $('editReceiptBtn').classList.toggle('hidden', vd || !isOwner);
+    $('voidBtn').classList.toggle('hidden', vd || !isOwner); $('editReceiptBtn').classList.toggle('hidden', vd);   // 27 Nov (AJ): Edit always shows on a saved bill; the server still decides who may save the change
     $('waReceiptMsg').textContent = ''; $('billAttach').textContent = '';
     var mt = 'mailto:?subject=' + encodeURIComponent('Your bill from Royal Bath Hub') + '&body=' + encodeURIComponent(b.bill_number + '\nTotal ' + money(b.total) + '\nRoyal Bath Hub, 074 035 5536');
     $('emailBtn').dataset.href = mt;
@@ -435,7 +435,7 @@
   var hb = /^#bill=(\d+)$/.exec(location.hash || ''); if (hb) openBillById(hb[1]);
 
   // ---------- start ----------
-  api.me().then(function (u) { isOwner = !!(u && u.role === 'admin'); });
+  api.me().then(function (u) { isOwner = !!(u && (u.role === 'admin' || u.role === 'owner')); });
   api.cap().then(function (c) { if (c && c.max_allowed != null) discountLimit = Number(c.max_allowed); });
   paymentUI(); render(); loadToday();
   window.Pos2 = { clearForNext: function () { clearForNext(); render(); }, rows: function () { return rows; }, addItem: addItem, totals: totals, generateBill: generateBill, loadToday: loadToday };

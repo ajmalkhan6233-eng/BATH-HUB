@@ -10,6 +10,7 @@ const router = express.Router();
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
 const ownerOnly = (req, res, next) => (['admin', 'owner'].includes(roleOf(req)) ? next() : res.status(403).json({ error: 'Owner only' }));
 const iso = s => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) ? s : null);
+const MC = require('../utils/moneyCore');
 const colombo = d => new Date(new Date(d).getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
 const inRange = (day, from, to) => !((from && day < from) || (to && day > to));
 // a table that does not exist yet means "nothing recorded", not an error
@@ -21,11 +22,7 @@ router.get('/', async (req, res) => {
   const group = ['day', 'week', 'month', 'year'].includes(req.query.group) ? req.query.group : 'day';
   const from = iso(req.query.from), to = iso(req.query.to);
   try {
-    const bills = (await safe(`SELECT b.id, b.created_at, b.total, b.discount_amount,
-              COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)), 0) AS cost, COUNT(i.id) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS no_cost
-         FROM pos_bills b LEFT JOIN pos_bill_items i ON i.bill_id = b.id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) GROUP BY b.id`))
-      .map(b => ({ day: colombo(b.created_at), total: b.total, discount: b.discount_amount, cost: b.cost, no_cost: b.no_cost })).filter(b => inRange(b.day, from, to));
+    const bills = await MC.liveBills(pool, { from, to });   // one shared money core: same bills, same cost rule as every other screen
     const expenses = (await safe(`SELECT report_date::text AS day, amount FROM expenses_detail`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
     const salaries = (await safe(`SELECT pay_date::text AS day, amount FROM staff_salary`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
     const commissions = (await safe(`SELECT sale_date::text AS day, commission_amount AS amount FROM sale_commissions`)).filter(r => r.day && inRange(r.day.slice(0, 10), from, to)).map(r => ({ day: r.day.slice(0, 10), amount: r.amount }));
@@ -41,7 +38,7 @@ router.get('/items', async (req, res) => {
               i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END AS revenue,
               i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) AS cost, p.category
          FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`)).filter(r => inRange(colombo(r.created_at), from, to));
+        WHERE ${MC.LIVE}`)).filter(r => inRange(colombo(r.created_at), from, to));
     res.json({ by, estimate: true, rows: P.rollup(rows, by === 'category' ? 'category' : 'item') });
   } catch (e) { res.status(500).json({ error: 'could not build the item profit report' }); }
 });
@@ -55,7 +52,7 @@ router.get('/real', async (req, res) => {
               i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END AS revenue,
               i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) AS cost
          FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`)).map(r => ({ day: colombo(r.created_at), item_code: r.item_code, name: r.item_name, qty: r.qty, revenue: r.revenue, cost: r.cost })).filter(r => inRange(r.day, from, to));
+        WHERE ${MC.LIVE}`)).map(r => ({ day: colombo(r.created_at), item_code: r.item_code, name: r.item_name, qty: r.qty, revenue: r.revenue, cost: r.cost })).filter(r => inRange(r.day, from, to));
     const receipts = {};
     for (const g of await safe(`SELECT split_part(item_description, ' - ', 1) AS code, grn_date::text AS d FROM grn_records WHERE grn_date IS NOT NULL`)) (receipts[String(g.code).trim()] = receipts[String(g.code).trim()] || []).push(g.d);
     res.json(Object.assign({ estimate: true, note: 'Holding cost is an estimate (money tied up, space, damage), not interest: ' + rate + '% of cost per month the item sat in stock, counted from its latest GRN date. Items with no GRN date are not charged.' }, require('../utils/holding_cost').compute(sold, receipts, rate)));
@@ -70,7 +67,7 @@ router.get('/bills', async (req, res) => {
               COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)), 0) AS cost,
               COUNT(i.id) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS no_cost
          FROM pos_bills b LEFT JOIN pos_bill_items i ON i.bill_id = b.id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) GROUP BY b.id ORDER BY b.created_at DESC LIMIT 500`))
+        WHERE ${MC.LIVE} GROUP BY b.id ORDER BY b.created_at DESC LIMIT 500`))
       .map(b => ({ id: b.id, no: b.bill_number, day: colombo(b.created_at), time: new Date(new Date(b.created_at).getTime() + 5.5 * 3600 * 1000).toISOString().slice(11, 16), customer: b.customer_name || '', salesman: b.salesman || '', sale: P.round2(b.total), cost: P.round2(b.cost), profit: P.round2(Number(b.total) - Number(b.cost)), no_cost: Number(b.no_cost) }))
       .filter(b => inRange(b.day, from, to));
     res.json({ estimate: true, rows });

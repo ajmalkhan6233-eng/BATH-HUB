@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('./moneyCore');   // shared money core (void rule)
 /**
  * Task 25: the rest of the owner automations (ideas 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 18). Same rules as utils/automations.js:
  * every text goes through enqueue() = the notify queue = the ONE 06:00 message (rule 11); money data goes only to the owner;
@@ -53,7 +54,7 @@ const slowText = ({ limit, rows }) => `SLOW STOCK (${rows.length}): nothing sold
 // ---- 12 review request: drafts for bills 2 to 3 days old (owner forwards them himself) ----
 async function reviewBills(pool, today) {
   return (await pool.query(`SELECT customer_name, customer_phone FROM pos_bills b WHERE b.customer_phone IS NOT NULL AND b.customer_phone <> ''
-      AND b.created_at::date <= $1 AND b.created_at::date >= $2 AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) LIMIT 8`, [addDays(today, -2), addDays(today, -3)])).rows;
+      AND b.created_at::date <= $1 AND b.created_at::date >= $2 AND ${MC.LIVE} LIMIT 8`, [addDays(today, -2), addDays(today, -3)])).rows;
 }
 const reviewDraft = (rows, link) => `REVIEW REQUESTS (${rows.length}), DRAFT, you send them:\n` + rows.map((x) => `- ${x.customer_phone} ${x.customer_name || ''}`).join('\n') +
   `\nText: "Thank you for shopping at Royal Bath Hub! If you were happy, a short review helps us a lot: ${link || '(add the Google review link in config/business.json)'}"`;

@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('./moneyCore');   // shared money core (void rule)
 // WEEKLY COMMISSION (AJ 24 Oct 2026): 5% of GROSS PROFIT (price - cost), paid weekly, after voids.
 // A line sold at or below cost earns nothing (losses are NOT taken off other lines). A line with no known cost earns nothing and is counted for AJ.
 // Report goes into the single 06:00 message (Rule 11) every Sunday, covering the 7 days that ended yesterday. Estimate: uses each item's average cost today.
@@ -21,7 +22,7 @@ function compute(rows, pct) {
 async function weekRows(pool, from, to) {   // from/to inclusive Sri Lanka dates
   return (await pool.query(`SELECT i.line_total * CASE WHEN b.subtotal > 0 THEN b.total / b.subtotal ELSE 1 END AS revenue, i.qty * COALESCE(p.avg_cost, 0) AS cost
       FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
-     WHERE (b.created_at AT TIME ZONE 'Asia/Colombo')::date BETWEEN $1 AND $2 AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)`, [from, to])).rows;
+     WHERE (b.created_at AT TIME ZONE 'Asia/Colombo')::date BETWEEN $1 AND $2 AND ${MC.LIVE}`, [from, to])).rows;
 }
 const fmt = n => 'Rs ' + Math.round(n).toLocaleString('en-US');
 function message(from, to, c) {

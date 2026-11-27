@@ -9,7 +9,8 @@
 const crypto = require('crypto');
 
 const ITER = 310000;                 // PBKDF2 rounds. The phone app (pocket/app.js) must use the same number.
-const NV = `LEFT JOIN pos_bill_voids v ON v.bill_id = b.id WHERE v.bill_id IS NULL`;   // live (not voided) bills
+const MC = require('./moneyCore');
+const NV = MC.LIVE_JOIN;   // live (not voided) bills
 
 const num = (x) => Number(x) || 0;
 const ymd = (d) => (d instanceof Date ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : (d ? String(d).slice(0, 10) : null));
@@ -57,12 +58,12 @@ async function build(pool, now = new Date()) {
     rows(pool, `SELECT b.id, b.created_at::date AS d, b.total, COALESCE(SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)),0) AS cost,
           COUNT(i.id) FILTER (WHERE COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0) = 0) AS no_cost
         FROM pos_bills b LEFT JOIN pos_bill_items i ON i.bill_id = b.id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date - 7
+        WHERE ${MC.LIVE} AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date - 7
         GROUP BY b.id`),
     rows(pool, `SELECT i.item_name AS name, SUM(i.qty) AS qty, SUM(i.line_total) AS revenue,
           SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) AS cost
         FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date
+        WHERE ${MC.LIVE} AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date
         GROUP BY 1 ORDER BY SUM(i.line_total) - SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) DESC LIMIT 25`),
     rows(pool, `SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from')`),
   ]);
@@ -93,9 +94,14 @@ async function build(pool, now = new Date()) {
   const profit = pBills ? { run_per_day: rc, today: mk(tdy, tdy), yesterday: mk(yst, yst), week: mk(wk, tdy), month: mk(mon, tdy),
     items: (pItems || []).map((r) => ({ name: r.name, qty: num(r.qty), revenue: Math.round(num(r.revenue)), cost: Math.round(num(r.cost)), profit: Math.round(num(r.revenue) - num(r.cost)) })) } : null;
 
+  // 27 Nov (AJ): staff commission on the phone, from the SAME money core as the PC app (Sales commission ledger)
+  let commission = null;
+  try { commission = {}; for (const [k, f] of [['today', tdy], ['week', wk], ['month', mon]]) { const c = await MC.commission(pool, f, tdy); commission[k] = { total: c.total, rows: c.rows.map((r) => ({ who: r.name, sales: Math.round(r.sales), commission: Math.round(r.commission) })) }; } } catch (e) { commission = null; }
+
   return {
     v: 3,
     profit,
+    commission,
     at: now.toISOString(),
     sales: t ? { today: num(t.today), bills_today: num(t.bills_today), yesterday: num(t.yesterday), week: num(t.week), month: num(t.month) } : null,
     pays_today: pays ? pays.map((r) => ({ method: r.method, amount: num(r.amount) })) : null,

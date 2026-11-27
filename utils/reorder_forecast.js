@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('./moneyCore');   // shared money core (void rule)
 // REORDER FORECAST (queue job 2): how fast each item really sells, how many days of stock are left, and how much to order to cover the next 30 days.
 // Suggestions only. Nothing is ordered or sent by itself; the owner approves. Own module: reads POS sales, writes nothing.
 const RO = require('./reorder');
@@ -24,7 +25,7 @@ async function load(pool) {
       (SELECT g.supplier_name FROM grn_records g WHERE g.item_description LIKE p.item_code || ' - %' ORDER BY g.id DESC LIMIT 1) AS vendor,
       COALESCE((SELECT SUM(i.qty) FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id
         WHERE i.item_code = p.item_code AND b.created_at >= NOW() - INTERVAL '${WINDOW_DAYS} days'
-        AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)), 0) AS sold
+        AND ${MC.LIVE}), 0) AS sold
     FROM products p WHERE p.active IS NOT FALSE ORDER BY p.name`);
   const list = suggest(r.rows);
   return { window_days: WINDOW_DAYS, cover_days: COVER_DAYS, items: list, vendors: byVendor(list) };

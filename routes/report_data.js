@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('../utils/moneyCore');   // shared money core (void rule)
 // Data for the owner Reports screen (read only, owner or admin only).
 //   GET /api/report-data/sales?group=day|week|month&from=YYYY-MM-DD&to=YYYY-MM-DD
 //        -> rows { period, bills, sales, discount, profit_est, lines_without_cost }. Voided bills are left out.
@@ -27,7 +28,7 @@ router.get('/report-data/sales', ownerOnly, async (req, res) => {
          FROM pos_bills b
          LEFT JOIN pos_bill_items i ON i.bill_id = b.id
          LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
+        WHERE ${MC.LIVE}
         GROUP BY b.id ORDER BY b.created_at`);
     const by = new Map();
     for (const b of r.rows) {

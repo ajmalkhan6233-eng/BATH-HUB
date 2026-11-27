@@ -1,4 +1,5 @@
-// routes/daily_sales_live.js: LIVE DAILY SALES from POS bills (READ ONLY, isolated module)
+
+const MC = require('../utils/moneyCore');   // shared money core (void rule)// routes/daily_sales_live.js: LIVE DAILY SALES from POS bills (READ ONLY, isolated module)
 //
 // Problem: a bill saved in POS goes only to pos_bills, but Daily Sales and the Dashboard read only daily_summary
 // (the day sheets), so a day's sales stayed 0 until the sheet was filled in.
@@ -91,7 +92,7 @@ router.get('/daily-sales-live/:date/rows', async (req, res) => {
         const b = (await pool.query(
             `SELECT b.id, b.bill_number, b.customer_name, b.salesman, b.total, COALESCE(b.payment_method,'cash') AS pm, b.created_at,
                     COALESCE((SELECT SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) FROM pos_bill_items i LEFT JOIN products p ON p.item_code = i.item_code WHERE i.bill_id = b.id), 0) AS cost
-             FROM pos_bills b WHERE b.created_at::date = $1::date AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id)
+             FROM pos_bills b WHERE b.created_at::date = $1::date AND ${MC.LIVE}
              ORDER BY b.created_at, b.id`, [req.params.date])).rows;
         const pays = (await pool.query(`SELECT bill_id, method, SUM(amount) AS amount FROM pos_bill_payments WHERE bill_id = ANY($1::int[]) GROUP BY bill_id, method`, [b.map(x => x.id)]).catch(() => ({ rows: [] }))).rows;
         const rows = b.map(x => {

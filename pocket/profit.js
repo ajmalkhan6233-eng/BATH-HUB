@@ -33,6 +33,14 @@
     }
     box.appendChild(b);
 
+    var cm = s.commission && s.commission[per];   // staff commission for the same period (27 Nov, AJ)
+    if (cm) {
+      var cc = card('Staff commission', el('span', 'num', rs(cm.total)));
+      if (!cm.rows.length) cc.appendChild(el('div', 'note', 'No commission recorded for this period'));
+      cm.rows.forEach(function (r) { cc.appendChild(P.row2(r.who, 'on sales ' + rs(r.sales), rs(r.commission), '')); });
+      box.appendChild(cc);
+    }
+
     box.appendChild(P.segc([['inv', 'By invoice (today)'], ['item', 'By item (month)']], view, function (v) { view = v; P.redraw(); }));
     if (view === 'inv') {
       var c = card('Bills today', s.bills ? P.plural(s.bills.length, 'bill', 'bills') : null);

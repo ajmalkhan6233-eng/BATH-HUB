@@ -1,4 +1,5 @@
 'use strict';
+const MC = require('../utils/moneyCore');   // shared money core (void rule)
 // ADVANCE ORDERS (AJ 27 Nov): a customer pays part first, goods are NOT delivered, the bill stays OPEN.
 // Design: NEW table only. An open order is not a sale, takes no stock and is in no sales total. When the customer pays the rest,
 // the POS screen creates the normal bill through the normal /pos-bills route (stock, totals, receipt as always), then calls /settled.
@@ -113,7 +114,7 @@ router.get('/pos-advance/:id', async (req, res) => {
     await ready; const pid = Number(req.params.id); if (!Number.isInteger(pid) || pid < 1) return res.status(404).json({ error: 'not found' }); const o = await load(pid);
     if (!o) return res.status(404).json({ error: 'not found' });
     // retry safety: if the bill was already made for this order but the order was not marked, say so (never bill twice)
-    const b = await pool.query(`SELECT b.id, b.bill_number FROM pos_bills b WHERE b.notes = $1 AND NOT EXISTS (SELECT 1 FROM pos_bill_voids v WHERE v.bill_id = b.id) ORDER BY b.id DESC LIMIT 1`, ['Advance order ' + o.order_no]).catch(() => ({ rows: [] }));
+    const b = await pool.query(`SELECT b.id, b.bill_number FROM pos_bills b WHERE b.notes = $1 AND ${MC.LIVE} ORDER BY b.id DESC LIMIT 1`, ['Advance order ' + o.order_no]).catch(() => ({ rows: [] }));
     o.existing_bill = b.rows[0] || null;
     res.json(o);
   } catch (e) { res.status(500).json({ error: e.message }); }
