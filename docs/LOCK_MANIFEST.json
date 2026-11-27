@@ -1,6 +1,6 @@
 {
- "version": "1.5.1",
- "locked_at": "2026-11-27T13:54:28.472Z",
+ "version": "1.5.2",
+ "locked_at": "2026-11-27T13:55:16.249Z",
  "files": {
   "cloudflare/pocket_worker.js": "a84b0c0fce813248",
   "cloudflare/worker.js": "c7bbea8eb15527bb",
@@ -161,7 +161,7 @@
   "public/pos-polish.css": "f9d12e7a26c9b9d2",
   "public/pos-polish.js": "5e2edcadc69821e9",
   "public/pos-preview.html": "571755b3bde77e96",
-  "public/pos-preview2.html": "0cabcecb8ef27480",
+  "public/pos-preview2.html": "42e841a0888cec26",
   "public/pos-profit.js": "4652508aefe6ee46",
   "public/pos-quote.css": "7ddf5549e8dc305f",
   "public/pos-quote.js": "f03794fae0bbda50",
@@ -197,7 +197,7 @@
   "public/sales-commission.html": "305b9de48afb1200",
   "public/saved-dropdown.js": "a4f6042f0a748373",
   "public/saved-tick.js": "4a6128d7b827bf26",
-  "public/service-worker.js": "0a1c13056668024c",
+  "public/service-worker.js": "e8f2f0173ca45a44",
   "public/settings.html": "ca1a6f34a00d4350",
   "public/setup.html": "ce95157624a0ced1",
   "public/shell-fit.js": "a7c0524f499516ad",
