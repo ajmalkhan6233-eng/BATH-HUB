@@ -1,6 +1,6 @@
 {
- "version": "1.1.8",
- "locked_at": "2026-11-27T04:58:48.681Z",
+ "version": "1.1.9",
+ "locked_at": "2026-11-27T05:51:36.375Z",
  "files": {
   "cloudflare/pocket_worker.js": "a84b0c0fce813248",
   "cloudflare/worker.js": "c7bbea8eb15527bb",
@@ -192,7 +192,7 @@
   "public/sales-commission.html": "363e0952274795a9",
   "public/saved-dropdown.js": "a4f6042f0a748373",
   "public/saved-tick.js": "4a6128d7b827bf26",
-  "public/service-worker.js": "9c7e817c2d6c70b4",
+  "public/service-worker.js": "f1d473279f1cae9e",
   "public/settings.html": "ca1a6f34a00d4350",
   "public/setup.html": "ce95157624a0ced1",
   "public/shell-fit.js": "a7c0524f499516ad",
@@ -229,7 +229,7 @@
   "public/vendor-voucher.js": "9db0e9f99b17bc76",
   "public/vendor/chart.umd.min.js": "0e2326c6868072be",
   "public/vendor360.html": "dec2d74146c6a63a",
-  "public/vendor360.js": "1309c9c8f31835f9",
+  "public/vendor360.js": "aa8e6e44e6427df3",
   "public/vendor_returns.html": "493275a853933fb7",
   "public/vendors_overview.html": "ddd603a73172f9d6",
   "public/website-editor.js": "ee8d89135e863b08",

@@ -52,10 +52,10 @@
   function drawDetail() {
     var v = S.vendors.filter(function (x) { return x.vendor_name === S.cur; })[0];
     if (!v) { $('detail').innerHTML = '<div class="state">Pick a vendor on the left.</div>'; return; }
-    var tabs = [['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN']];
+    var tabs = [['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN'], ['ret', 'Returns & credit notes']];
     var after = v.outstanding_balance - (v.cheques_issued != null ? v.cheques_issued : (v.cheques_pending || 0));
     $('detail').innerHTML = '<div class="vhead"><h2>' + esc(v.vendor_name) + '</h2>' +
-      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
+      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" id="nr">+ Return / discount</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
       '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? (v.overdue > 0 ? 'bad' : '') : 'good') + '</div>' +
       (v.overdue > 0 ? '<div class="sm bad">Overdue: ' + rs(v.overdue) + '</div>' : '') +
       '<div id="acct" class="acct"><div class="state">Loading...</div></div>' +
@@ -63,6 +63,7 @@
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div></div>';
     $('nb').onclick = function () { openDrawer('bill'); };
     $('np').onclick = function () { openDrawer('pay'); };
+    $('nr').onclick = function () { openReturn(); };   // 27 Nov (AJ): returns inside Vendor 360, no jumping to another window
     $('pr').onclick = function () { var h = document.querySelector('#detail .vhead h2'), n = h.textContent; if (n === 'Lucky Trading') h.textContent = 'Zamir'; window.print(); h.textContent = n; };   // statements print "Zamir"
     $('vv').onclick = function () { window.openVendorVoucher(S.cur); };
   }
@@ -74,9 +75,9 @@
       .catch(function (e) { if (S.cur === name && $('acct')) $('acct').innerHTML = '<div class="state bad">' + esc(e.message) + ' <button type="button" id="retryA">Try again</button></div>'; var b = $('retryA'); if (b) b.onclick = loadAcct; });
   }
   function loadTab() {
-    var name = S.cur, tab = S.tab, path = { bills: '/bills', pay: '/bills', grn: '/grns' }[tab] || '/bills';
+    var name = S.cur, tab = S.tab, path = { bills: '/bills', pay: '/bills', grn: '/grns', ret: '/statement' }[tab] || '/bills';
     var body = $('tabbody'); if (!body) return;
-    var key = tab === 'pay' ? 'bills' : tab;
+    var key = tab === 'pay' ? 'bills' : tab === 'ret' ? 'statement' : tab;
     var done = function () { if (S.cur === name && S.tab === tab) drawBody(); };
     if (S.data[key]) return done();
     body.innerHTML = '<div class="state">Loading...</div>';
@@ -124,6 +125,11 @@
       body.innerHTML = table([['Date'], ['What'], ['Amount', 1], ['Status'], ['Bill']], rows.map(function (r) {
         return '<tr><td>' + r[1] + '</td><td>' + esc(r[2]) + '</td><td class="n">' + r[3] + '</td><td><span class="chip ' + (r[4] === 'BOUNCED' ? 'bad' : r[4] === 'CLEARED' || r[4] === 'Paid' ? 'good' : '') + '">' + esc(r[4]) + '</span></td><td>' + esc(r[5] || '') + '</td></tr>';
       }), 'No payments or cheques yet.');
+    } else if (t === 'ret') {
+      var nr = ((d.statement && d.statement.rows) || []).filter(function (r) { return r.tx_type === 'CREDIT_NOTE'; });
+      body.innerHTML = table([['Date'], ['Credit note'], ['What'], ['Amount', 1]], nr.map(function (r) {
+        return '<tr><td>' + day(r.tx_date) + '</td><td>' + esc(r.reference || '') + '</td><td>' + esc(r.description || '') + '</td><td class="n">' + rs(r.credit) + '</td></tr>';
+      }), 'No returns or credit notes for this vendor yet.');
     } else if (t === 'grn') {
       body.innerHTML = table([['GRN'], ['Date'], ['Lines', 1], ['Total', 1]], (d.grn.grns || []).map(function (g) {
         return '<tr class="grnrow" tabindex="0" role="button" data-grn="' + esc(g.grn_number) + '" style="cursor:pointer"><td>' + esc(g.grn_number) + '</td><td>' + day(g.grn_date) + '</td><td class="n">' + g.lines + '</td><td class="n">' + rs(g.total) + '</td></tr>';
@@ -134,6 +140,11 @@
   }
 
   /* ---------- side drawer: New bill / Record payment (drafts kept in this browser) ---------- */
+  function openReturn() {   // the existing, tested returns form, shown inside this window; list refreshes when closed
+    $('sheet').innerHTML = '<h2>Return / discount · ' + esc(S.cur) + '</h2><iframe src="/vendor_returns.html" title="Return" style="width:100%;height:70vh;border:0"></iframe><div class="bar"><button type="button" class="ghost" id="dc">Close</button></div>';
+    $('dr').classList.add('on');
+    $('dc').onclick = function () { $('dr').classList.remove('on'); delete S.data.statement; delete S.data.bills; drawDetail(); loadAcct(); loadTab(); };
+  }
   function openDrawer(kind) {
     var name = S.cur, key = 'draft_vendor_' + kind + '_' + name, draft = {};
     try { draft = JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) {}
