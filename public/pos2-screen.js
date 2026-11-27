@@ -75,7 +75,7 @@
     var fmt = function (n) { return Number(n).toLocaleString('en-LK', { maximumFractionDigits: 0 }); }, sum = 0;
     var parts = rows.map(function (r, i) { if (!r.code) return ''; if (r.cost == null) return '<span>' + (i + 1) + ': —</span>'; var p = lineTotal(r) - r.qty * r.cost; sum += p; return '<span' + (p < 0 ? ' class="neg"' : '') + '>' + (i + 1) + ': ' + fmt(p) + '</span>'; }).join('');
     var tot = t.profit != null ? t.profit : sum;
-    el.innerHTML = '<div class="lp-list"><b>Profit</b> ' + parts + '</div><div class="lp-total">Profit total ' + fmt(tot) + '</div>'; el.hidden = false;
+    el.innerHTML = '<div class="lp-list">' + parts + '</div><div class="lp-total">' + fmt(tot) + '</div>'; el.hidden = false;
   }
   var ptm, pseq = 0;   // profit comes from the owner-only /api/sale-profit; staff get nothing back, so the box stays empty
   function profitSoon(t) { clearTimeout(ptm); if (!rows.some(function (r) { return r.code; })) { $('profitValue').textContent = ''; return; } var mine = ++pseq; ptm = setTimeout(function () { api.profit(rows, t.disc).then(function (j) { if (mine !== pseq) return; $('profitValue').textContent = j ? Number(j.profit).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; }); }, 350); }
