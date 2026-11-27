@@ -30,7 +30,7 @@
   function lineDiscount(r) { var raw = String(r.disc == null ? '0' : r.disc).trim(); if (/%$/.test(raw)) return r.qty * r.price * Math.max(0, parseFloat(raw) || 0) / 100; return Math.max(0, parseFloat(raw) || 0) * r.qty; }
   function effPrice(r) { return r.qty > 0 ? Math.max(0, r.price - lineDiscount(r) / r.qty) : r.price; }
   function setPrice(r, typed) {   // list price stays permanent; a lower typed price becomes a per-unit discount automatically
-    typed = Math.max(0, Number(typed) || 0); if (r.list == null) r.list = r.price;
+    typed = Math.max(0, Number(typed) || 0); if (r.list == null) r.list = r.price; r.typed = true;
     if (typed <= r.list) { r.price = r.list; r.disc = String(Math.round((r.list - typed) * 100) / 100); } else { r.price = typed; r.disc = '0'; }
   }
   function lineTotal(r) { return Math.max(0, r.qty * r.price - lineDiscount(r)); }
@@ -129,11 +129,11 @@
   });
   $('itemRows').addEventListener('change', function (e) {
     var row = e.target.closest('.item-row'); if (!row) return; var r = rows[+row.dataset.index], f = e.target.dataset.field;
-    if (f === 'code') { api.itemByCode(e.target.value).then(function (it) { if (it) { r.code = it.code; r.name = it.name; r.stock = it.stock; r.price = it.price; r.list = it.price; r.disc = '0'; r.cost = it.cost; r.unit = it.unit; r.sqm = it.sqm; scanMsg(''); } else scanMsg('Item code not found. Use Down arrow to browse.', true); render(); }); return; }
+    if (f === 'code') { api.itemByCode(e.target.value).then(function (it) { if (it) { r.code = it.code; r.name = it.name; r.stock = it.stock; r.price = it.price; r.list = it.price; r.disc = '0'; r.typed = false; r.cost = it.cost; r.unit = it.unit; r.sqm = it.sqm; scanMsg(''); } else scanMsg('Item code not found. Use Down arrow to browse.', true); render(); }); return; }
     if (f === 'qty') r.qty = Math.max(0.01, Number(e.target.value) || 1);
     if (f === 'price') setPrice(r, e.target.value);
     if (f === 'total') { var T = Math.max(0, parseFloat(String(e.target.value).replace(/,/g, '')) || 0); if (r.qty > 0) setPrice(r, T / r.qty); }
-    if (f === 'disc') r.disc = e.target.value || '0';
+    if (f === 'disc') { r.disc = e.target.value || '0'; r.typed = false; }
     render();
   });
   $('itemRows').addEventListener('keydown', function (e) {

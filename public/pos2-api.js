@@ -40,9 +40,12 @@
 
   // payload for POST/PUT /api/pos-bills. rows: [{code,name,qty,price}], disc: total Rs off (line + extra)
   function billPayload(o) {
-    var lines = o.rows.map(function (r) { return { item_name: r.name, item_code: r.code || undefined, qty: Number(r.qty), unit_price: Number(r.price) }; });
+    // 27 Nov (AJ): a price typed on a line (r.typed) is saved as that line's price, so the bill shows it; it is no longer spread over all lines as one discount
+    var off = function (r) { return r.typed ? Math.max(0, parseFloat(r.disc) || 0) : 0; };
+    var lines = o.rows.map(function (r) { return { item_name: r.name, item_code: r.code || undefined, qty: Number(r.qty), unit_price: money2(Number(r.price) - off(r)) }; });
+    var billDisc = Math.max(0, money2(o.disc - o.rows.reduce(function (s, r) { return s + off(r) * Number(r.qty); }, 0)));
     var subtotal = money2(lines.reduce(function (s, l) { return s + money2(money2(l.qty) * money2(l.unit_price)); }, 0));
-    var pct = subtotal > 0 ? Math.round(o.disc / subtotal * 1e8) / 1e6 : 0;
+    var pct = subtotal > 0 ? Math.round(billDisc / subtotal * 1e8) / 1e6 : 0;
     var p = { customer_name: o.name || null, customer_phone: o.phone || null, items: lines, discount_pct: pct };
     if (o.salesman) p.salesman = o.salesman;
     var mode = String(o.method || 'cash').toLowerCase();
