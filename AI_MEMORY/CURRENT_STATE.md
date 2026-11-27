@@ -1,3 +1,5 @@
+UPDATE 27 Nov 15:30: app 1.3.3 live on shop PC. Built since 1.1.9: Return/Refund/Exchange, All bills tab, Reserved tab, Advance receipt + advance cash in day sheet, Vendor 360 cheque payment, one-window pages, encrypted hourly backup (branch rbh-backup), security update. AJ has NOT yet seen these on screen. Pending: restore test, fresh-window Ajmal123 test, Customers + Banking one window. Read bridge AI_BRIDGE/START_HERE.md, STATE_AUTO.md, SYSTEM_MAP.md first.
+
 # CURRENT_STATE (2026-10-01)
 
 - Branch: master, 2 commits ahead of origin (not pushed); working tree clean
