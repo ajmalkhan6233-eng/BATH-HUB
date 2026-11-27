@@ -655,6 +655,7 @@ app.use('/api', require('./routes/app_settings'));      // /api/app-settings* (s
 app.use('/api', require('./routes/edit_search'));           // Edit menu: one search for bills, GRNs, vendor bills, cheques, credit / return notes (owner/admin, read only)
 app.use('/api', require('./routes/outside_items'));        // POS "+ Outside" items: /api/outside-items* (owner/admin)
 app.use('/api', require('./routes/pos_bills'));            // routes are relative (/pos-bills etc) -> /api/pos-bills*
+app.use('/api', require('./routes/pos_advance'));          // 27 Nov (AJ): advance orders, open bill until the customer pays the rest
 app.use('/api', require('./routes/daily_sales_live'));      // READ-ONLY live daily sales from POS bills (open days only; a day sheet always wins) -> /api/daily-sales-live/*
 app.use('/api', require('./routes/daily_ledger_sheet'));   // READ-ONLY one-click daily balancing sheet (xlsx) -> /api/daily-ledger-sheet/:date.xlsx
 app.use('/api', require('./routes/cheque_photo'));         // Upload cheque: photo saved in uploads/cheques/<date>, read by local Tesseract, prefilled form

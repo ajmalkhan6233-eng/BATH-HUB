@@ -438,5 +438,5 @@
   api.me().then(function (u) { isOwner = !!(u && u.role === 'admin'); });
   api.cap().then(function (c) { if (c && c.max_allowed != null) discountLimit = Number(c.max_allowed); });
   paymentUI(); render(); loadToday();
-  window.Pos2 = { rows: function () { return rows; }, addItem: addItem, totals: totals, generateBill: generateBill, loadToday: loadToday };
+  window.Pos2 = { clearForNext: function () { clearForNext(); render(); }, rows: function () { return rows; }, addItem: addItem, totals: totals, generateBill: generateBill, loadToday: loadToday };
 }());
