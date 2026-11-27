@@ -21,23 +21,12 @@ router.get('/report-data/sales', ownerOnly, async (req, res) => {
   const group = ['day', 'week', 'month'].includes(req.query.group) ? req.query.group : 'day';
   const from = iso(req.query.from), to = iso(req.query.to);
   try {
-    const r = await pool.query(
-      `SELECT b.id, b.created_at, b.total, b.discount_amount,
-              COALESCE(SUM(i.qty * COALESCE(p.avg_cost, 0)), 0) AS cost,
-              COUNT(i.id) FILTER (WHERE p.id IS NULL) AS no_cost
-         FROM pos_bills b
-         LEFT JOIN pos_bill_items i ON i.bill_id = b.id
-         LEFT JOIN products p ON p.item_code = i.item_code
-        WHERE ${MC.LIVE}
-        GROUP BY b.id ORDER BY b.created_at`);
     const by = new Map();
-    for (const b of r.rows) {
-      const day = colombo(b.created_at);
-      if ((from && day < from) || (to && day > to)) continue;
-      const k = periodOf(day, group);
+    for (const b of await MC.liveBills(pool, { from, to })) {   // shared money core: same bills, same cost rule as every other screen
+      const k = periodOf(b.day, group);
       const o = by.get(k) || { period: k, bills: 0, sales: 0, discount: 0, profit_est: 0, lines_without_cost: 0 };
-      o.bills += 1; o.sales += Number(b.total); o.discount += Number(b.discount_amount);
-      o.profit_est += Number(b.total) - Number(b.cost); o.lines_without_cost += Number(b.no_cost);
+      o.bills += 1; o.sales += b.total; o.discount += b.discount;
+      o.profit_est += b.total - b.cost; o.lines_without_cost += b.no_cost;
       by.set(k, o);
     }
     const rows = [...by.values()].sort((a, b) => (a.period < b.period ? 1 : -1)).map(o => ({ ...o, sales: Math.round(o.sales * 100) / 100, discount: Math.round(o.discount * 100) / 100, profit_est: Math.round(o.profit_est * 100) / 100 }));
