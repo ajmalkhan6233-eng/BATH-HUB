@@ -7,7 +7,7 @@
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
     ['2 Sales', ['pos', 'salescomm', 'allbills', 'daily-sales', 'saleshub']],
-    ['Vendors', ['vendors', 'vendorsum', 'vendor360', 'vendorledger', 'vendorcredit', 'vendorreturns', 'chequereg', 'chequecal']],
+    ['Vendors', ['vendor360', 'chequereg', 'chequecal']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],
     ['6 Stock', ['stockmgr', 'stock', 'prices', 'stickers', 'labels']],

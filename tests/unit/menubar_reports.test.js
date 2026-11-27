@@ -32,5 +32,5 @@ test('GRN is the first item of Inventory (was Stock) and no longer under Vendors
   expect(inv).toEqual(expect.arrayContaining(['stockmgr', 'pending', 'helper', 'barcode', 'stickers']));
   const ven = group('Vendors')[1].map(i => i[0]);
   expect(ven).not.toContain('grn');
-  expect(ven).toEqual(expect.arrayContaining(['vendorsum', 'vendor360', 'vendors', 'vendorledger', 'vendorcredit', 'vendorreturns', 'chequereg', 'purchasing']));
+  expect(ven).toEqual(expect.arrayContaining(['vendor360', 'chequereg', 'purchasing']));   // 27 Nov (AJ): separate vendor pages hidden from the menu, Vendor 360 holds them
 });

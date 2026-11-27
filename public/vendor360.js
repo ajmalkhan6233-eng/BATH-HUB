@@ -55,7 +55,7 @@
     var tabs = [['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN'], ['ret', 'Returns & credit notes']];
     var after = v.outstanding_balance - (v.cheques_issued != null ? v.cheques_issued : (v.cheques_pending || 0));
     $('detail').innerHTML = '<div class="vhead"><h2>' + esc(v.vendor_name) + '</h2>' +
-      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" id="nr">+ Return / discount</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
+      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" id="nr">+ Return / discount</button><button type="button" class="ghost" id="pm">Pay: cheques, many bills</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
       '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? (v.overdue > 0 ? 'bad' : '') : 'good') + '</div>' +
       (v.overdue > 0 ? '<div class="sm bad">Overdue: ' + rs(v.overdue) + '</div>' : '') +
       '<div id="acct" class="acct"><div class="state">Loading...</div></div>' +
@@ -63,6 +63,7 @@
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div></div>';
     $('nb').onclick = function () { openDrawer('bill'); };
     $('np').onclick = function () { openDrawer('pay'); };
+    $('pm').onclick = function () { try { var n = window.parent.document.querySelector('.sidebar-nav [data-page="vendors"]'); if (n) n.click(); else window.open('/bathco_complete.html#vendors'); } catch (_) { window.open('/bathco_complete.html#vendors'); } };   // the old Pay vendors page stays, hidden from the menu
     $('nr').onclick = function () { openReturn(); };   // 27 Nov (AJ): returns inside Vendor 360, no jumping to another window
     $('pr').onclick = function () { var h = document.querySelector('#detail .vhead h2'), n = h.textContent; if (n === 'Lucky Trading') h.textContent = 'Zamir'; window.print(); h.textContent = n; };   // statements print "Zamir"
     $('vv').onclick = function () { window.openVendorVoucher(S.cur); };
