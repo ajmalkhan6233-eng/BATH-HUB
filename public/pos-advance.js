@@ -64,6 +64,7 @@
   function count() { J('/api/pos-advance?status=open').then(function (r) { if (r.ok && r.d) btn.textContent = 'Reserved (' + r.d.count + ')'; }); }
   count(); setInterval(count, 60000);
   btn.onclick = list;
+  if (/[?&]reserved=1/.test(location.search)) setTimeout(function () { try { list(); } catch (_) {} }, 700);   // Sales window tab 'Reserved' opens this list straight away
   var ov = null;
   function modal(html) { close(); ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px';
     ov.innerHTML = '<div style="background:#fff;border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.3)">' + html + '<div style="text-align:right;margin-top:10px"><button type="button" class="secondary" id="advClose">Close</button></div></div>';
