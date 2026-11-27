@@ -667,6 +667,7 @@ app.use('/api', require('./routes/items_import'));         // CSV item import (d
 app.use('/api/vendor-ledger', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_ledger')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor bills + cheques ledger (Build 1); login enforced by the global /api auth gate
 app.use('/api/vendor-pay', require('./middleware/idempotency')({ pool: require('./utils/pool') }), require('./routes/vendor_pay'));   // Record Payment to a supplier (owner only)
 app.use('/api/vendor360', require('./routes/vendor360')({ pool: require('./utils/pool') })); // Vendor 360 (read-only, owner only)
+app.use('/api/customer360', require('./routes/customer360')({ pool: require('./utils/pool') })); // Customer 360 (owner only; one write: payment on a credit invoice)
 app.use('/api/grn-invoice', require('./routes/grn_invoice')({ pool: require('./utils/pool') })); // GRN invoice page + edit (owner only)
 app.use('/api/vendor-credit', require('./routes/vendor_credit')({ pool: require('./utils/pool'), branchOf: () => 1 })); // vendor credit view: owed, cheque not written, written not cleared, owed after 1/2/3 months (read only); login enforced by the global /api auth gate
 app.use('/api', require('./routes/money_plan')({ pool: require('./utils/pool'), branchOf: () => 1 })); // money plan + morning brief (Builds 6-7): /api/money/*, /api/morning-brief; read-only on finance tables
