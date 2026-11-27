@@ -55,7 +55,7 @@
     var tabs = [['bills', 'Bills'], ['pay', 'Payments & cheques'], ['grn', 'GRN'], ['ret', 'Returns & credit notes']];
     var after = v.outstanding_balance - (v.cheques_issued != null ? v.cheques_issued : (v.cheques_pending || 0));
     $('detail').innerHTML = '<div class="vhead"><h2>' + esc(v.vendor_name) + '</h2>' +
-      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" id="nr">+ Return / discount</button><button type="button" class="ghost" id="pm">Pay: cheques, many bills</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
+      '<div class="bar"><button type="button" id="nb">+ New bill</button><button type="button" id="np">+ Record payment</button><button type="button" id="nr">+ Return / discount</button><button type="button" id="ncm">+ Credit memo</button><button type="button" id="nor">+ New order</button><button type="button" class="ghost" id="pm">Pay: cheques, many bills</button><button type="button" class="ghost" id="pr">Print</button><button type="button" id="vv">Vendor statement</button></div></div>' +
       '<div class="kpis">' + kpi('Total bought (Debit)', rs(v.total_billed)) + kpi('Paid and cleared', rs(v.total_paid), 'good') + kpi('Cheques waiting to clear', rs(v.cheques_pending || 0)) + kpi(after < 0 ? 'In our favour after cheques' : 'Still to pay after cheques', rs(Math.abs(after)), after > 0 ? (v.overdue > 0 ? 'bad' : '') : 'good') + '</div>' +
       (v.overdue > 0 ? '<div class="sm bad">Overdue: ' + rs(v.overdue) + '</div>' : '') +
       '<div id="acct" class="acct"><div class="state">Loading...</div></div>' +
@@ -63,6 +63,7 @@
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div></div>';
     $('nb').onclick = function () { openDrawer('bill'); };
     $('np').onclick = function () { openDrawer('pay'); };
+    $('ncm').onclick = openCredit; $('nor').onclick = openOrder;
     $('pm').onclick = function () { try { var n = window.parent.document.querySelector('.sidebar-nav [data-page="vendors"]'); if (n) n.click(); else window.open('/bathco_complete.html#vendors'); } catch (_) { window.open('/bathco_complete.html#vendors'); } };   // the old Pay vendors page stays, hidden from the menu
     $('nr').onclick = function () { openReturn(); };   // 27 Nov (AJ): returns inside Vendor 360, no jumping to another window
     $('pr').onclick = function () { var h = document.querySelector('#detail .vhead h2'), n = h.textContent; if (n === 'Lucky Trading') h.textContent = 'Zamir'; window.print(); h.textContent = n; };   // statements print "Zamir"
@@ -114,17 +115,17 @@
     if (t === 'bills') {
       body.innerHTML = table([['Bill'], ['Date'], ['Due'], ['Total', 1], ['Owed', 1], ['Status']], d.bills.bills.map(function (b) {
         var s = STATE[b.state] || [b.state, ''], nd = !b.due_date, cls = s[1] === 'bad' && nd ? '' : s[1];
-        return '<tr><td>' + esc(b.bill_no || '#' + b.id) + '</td><td>' + day(b.bill_date) + '</td><td class="' + (b.overdue ? 'bad' : '') + '">' + (nd ? NODUE : day(b.due_date)) + '</td><td class="n">' + rs(b.total) + '</td><td class="n">' + rs(b.outstanding) + '</td><td><span class="chip ' + cls + '">' + s[0] + (b.overdue ? ' · overdue' : '') + '</span></td></tr>';
+        return '<tr><td>' + esc(b.bill_no || '#' + b.id) + '</td><td>' + day(b.bill_date) + '</td><td class="' + (b.overdue ? 'bad' : '') + '">' + (nd ? NODUE : day(b.due_date)) + '</td><td class="n">' + rs(b.total) + '</td><td class="n">' + rs(b.outstanding) + '</td><td><span class="chip ' + cls + '">' + s[0] + (b.overdue ? ' · overdue' : '') + '</span> <button type="button" class="ghost sm" data-void="' + b.id + '" data-vb="' + esc(b.bill_no || '#' + b.id) + '">Void</button></td></tr>';
       }), 'No bills yet.');
     } else if (t === 'pay') {
       var rows = [];
       d.bills.bills.forEach(function (b) {
         (b.payments || []).forEach(function (p) { rows.push(['payment', day(p.paid_at), p.method || 'payment', rs(p.amount), 'Paid', b.bill_no]); });
-        (b.cheques || []).forEach(function (c) { rows.push(['cheque', day(c.due_date), 'Cheque ' + (c.cheque_no || '') + (c.bank ? ' (' + c.bank + ')' : ''), rs(c.amount), c.status, b.bill_no]); });
+        (b.cheques || []).forEach(function (c) { rows.push(['cheque', day(c.due_date), 'Cheque ' + (c.cheque_no || '') + (c.bank ? ' (' + c.bank + ')' : ''), rs(c.amount), c.status, b.bill_no, c.id]); });
       });
       rows.sort(function (a, b) { return a[1] < b[1] ? 1 : -1; });
       body.innerHTML = table([['Date'], ['What'], ['Amount', 1], ['Status'], ['Bill']], rows.map(function (r) {
-        return '<tr><td>' + r[1] + '</td><td>' + esc(r[2]) + '</td><td class="n">' + r[3] + '</td><td><span class="chip ' + (r[4] === 'BOUNCED' ? 'bad' : r[4] === 'CLEARED' || r[4] === 'Paid' ? 'good' : '') + '">' + esc(r[4]) + '</span></td><td>' + esc(r[5] || '') + '</td></tr>';
+        return '<tr><td>' + r[1] + '</td><td>' + esc(r[2]) + '</td><td class="n">' + r[3] + '</td><td><span class="chip ' + (r[4] === 'BOUNCED' ? 'bad' : r[4] === 'CLEARED' || r[4] === 'Paid' ? 'good' : '') + '">' + esc(r[4]) + '</span>' + (r[6] && r[4] === 'ISSUED' ? ' <button type="button" class="ghost sm" data-cq="' + r[6] + '" data-st="clear">Cleared</button> <button type="button" class="ghost sm" data-cq="' + r[6] + '" data-st="bounce">Bounced</button> <button type="button" class="ghost sm" data-cq="' + r[6] + '" data-st="cancel">Cancel</button>' : '') + '</td><td>' + esc(r[5] || '') + '</td></tr>';
       }), 'No payments or cheques yet.');
     } else if (t === 'ret') {
       var nr = ((d.statement && d.statement.rows) || []).filter(function (r) { return r.tx_type === 'CREDIT_NOTE'; });
@@ -220,6 +221,35 @@
     });
     var first = form.querySelector('input,select'); if (first) first.focus();
   }
+  /* ---------- 27 Nov: everything for one vendor in this window (AJ): cheque status, void bill, credit memo, new order ---------- */
+  function post(url, body) { return fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return r.ok ? j : Promise.reject(new Error(j.error || 'Not saved')); }); }); }
+  function afterSave(msg) { closeDrawer(); say(msg); delete S.data.bills; delete S.data.statement; refresh(); }
+  function reasonDrawer(title, intro, needReason, go) {   // small form: optional reason, one confirm button
+    $('sheet').innerHTML = '<h2>' + esc(title) + '</h2><form id="df" novalidate><p class="sm">' + esc(intro) + '</p>' + (needReason ? '<label for="why">Reason (3 letters or more)</label><input id="why" type="text" autocomplete="off">' : '') + '<div class="bar"><button type="submit">Confirm</button><button type="button" class="ghost" id="dc">Cancel</button></div><div id="de" class="sm bad" role="alert"></div></form>';
+    $('dr').classList.add('on'); $('dc').onclick = closeDrawer;
+    $('df').addEventListener('submit', function (e) { e.preventDefault(); var w = needReason ? ($('why').value || '').trim() : ''; if (needReason && w.length < 3) { $('de').textContent = 'Write a short reason.'; return; } go(w).catch(function (x) { $('de').textContent = x.message; }); });
+    var f = $('why'); if (f) f.focus();
+  }
+  function openCredit() {
+    var bills = ((S.data.bills && S.data.bills.bills) || []);
+    if (!bills.length) { say('Open the Bills tab first, then try again.'); S.tab = 'bills'; drawDetail(); loadTab(); return; }
+    $('sheet').innerHTML = '<h2>Credit memo · ' + esc(S.cur) + '</h2><form id="df" novalidate><label for="cb">Which bill</label><select id="cb">' + bills.map(function (b) { return '<option value="' + b.id + '">' + esc(b.bill_no || '#' + b.id) + ' · owed ' + rs(b.outstanding) + '</option>'; }).join('') + '</select>' +
+      '<label for="cn">Credit memo number</label><input id="cn" type="text" autocomplete="off"><label for="ca">Amount (Rs.)</label><input id="ca" type="number" inputmode="decimal" min="0" step="0.01"><label for="cd">Date</label><input id="cd" type="date" value="' + today() + '"><label for="cr">Reason</label><input id="cr" type="text" autocomplete="off">' +
+      '<div class="bar"><button type="submit">Save</button><button type="button" class="ghost" id="dc">Cancel</button></div><div id="de" class="sm bad" role="alert"></div></form>';
+    $('dr').classList.add('on'); $('dc').onclick = closeDrawer;
+    $('df').addEventListener('submit', function (e) { e.preventDefault(); if (!(Number($('ca').value) > 0)) { $('de').textContent = 'Enter the amount.'; return; }
+      post('/api/vendor-ledger/bills/' + $('cb').value + '/credit-notes', { note_no: $('cn').value.trim() || undefined, amount: Number($('ca').value), note_date: $('cd').value, reason: $('cr').value.trim() || undefined }).then(function () { afterSave('Credit memo saved.'); }).catch(function (x) { $('de').textContent = x.message; }); });
+  }
+  function openOrder() {   // the existing Purchasing screen (purchase orders, PO to GRN match), shown inside this window
+    $('sheet').innerHTML = '<h2>New order · ' + esc(S.cur) + '</h2><iframe src="/purchasing.html" title="Purchasing" style="width:100%;height:72vh;border:0"></iframe><div class="bar"><button type="button" class="ghost" id="dc">Close</button></div>';
+    $('dr').classList.add('on'); $('dc').onclick = function () { $('dr').classList.remove('on'); delete S.data.grn; if (S.tab === 'grn') loadTab(); };
+  }
+  document.addEventListener('click', function (e) {
+    var v = e.target.closest('[data-void]'), c = e.target.closest('[data-cq]');
+    if (v) { var id = v.getAttribute('data-void'); reasonDrawer('Void bill ' + v.getAttribute('data-vb'), 'The bill stays on record, marked void, and leaves the totals. Only the owner can do this.', true, function (w) { return post('/api/vendor-ledger/bills/' + id + '/void', { reason: w }).then(function () { afterSave('Bill voided.'); }); }); }
+    if (c) { var cid = c.getAttribute('data-cq'), st = c.getAttribute('data-st'), nm = { clear: 'Cheque cleared', bounce: 'Cheque bounced', cancel: 'Cancel cheque' }[st];
+      reasonDrawer(nm, st === 'clear' ? 'The bank paid it. Only the owner can do this.' : 'It is put back on the bill as unpaid. Only the owner can do this.', st !== 'clear', function (w) { return post('/api/vendor-ledger/cheques/' + cid + '/' + st, { reason: w }).then(function () { afterSave(nm + '.'); }); }); }
+  });
   function closeDrawer() { $('dr').classList.remove('on'); }
 
   function refresh() {
