@@ -105,9 +105,11 @@
     fetch('/api/outside-items/allowed', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) { if (++tries < 20) setTimeout(check, 1500); return; }
       if (d.allowed && !allowed) { allowed = true; setInterval(function () { mount(); }, 2000); setInterval(pay, 60000); mount(); pay(); }
-    }).catch(function () { if (++tries < 20) setTimeout(check, 1500); });
+      else if (!allowed) setTimeout(check, 5000);   // 27 Nov (AJ): "Special item" vanished until refresh when the first answer came back "not allowed" (login not ready). Keep asking until the server says yes.
+    }).catch(function () { setTimeout(check, 5000); });
   }
   check();
+  window.addEventListener('focus', function () { if (!allowed) check(); });
 
   var oldSave = save; save = function () { oldSave(); setTimeout(pay, 1500); };
   // double-click a special item line (SP-nnn) -> same window, filled in. Two quick clicks are counted by hand, because the bill redraws its lines after the first click and a browser dblclick event is then lost.
