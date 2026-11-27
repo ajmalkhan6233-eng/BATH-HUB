@@ -6,7 +6,7 @@
   var GROUPS = [
     ['Dashboard', ['dashboard']],
     ['1 GRN + Payable', ['grn']],
-    ['2 Sales', ['pos', 'salescomm', 'allbills', 'daily-sales', 'saleshub']],
+    ['2 Sales', ['pos', 'saleshub']],
     ['Vendors', ['vendor360', 'chequereg', 'chequecal']],
     ['4 Money', ['expenses', 'dailybreakdown', 'moneycontrol', 'moneyplan', 'salary', 'staff', 'reports', 'reportshub']],
     ['5 Loans', ['loans']],

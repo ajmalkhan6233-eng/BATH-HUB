@@ -15,7 +15,7 @@ iframe{flex:1;width:100%;border:0;border-top:2px solid var(--c-ink);background:v
 (function(){
 var SETS={
  grn:[['Purchasing','/purchasing.html'],['Documents','/documents.html']],
- sales:[['Daily ledger','/daily-entry-v2.html'],['POS + ledger','/pos-ledger.html'],['Customers','/customers.html'],['Credit & aging','/credit_aging.html'],['Quotations','/quotations.html']]
+ sales:[['All bills','/all-bills.html'],['Daily ledger','/daily-entry-v2.html'],['POS + ledger','/pos-ledger.html'],['Customers','/customers.html'],['Credit & aging','/credit_aging.html'],['Quotations','/quotations.html'],['Commission','/sales-commission.html'],['Daily breakdown','/daily-breakdown.html']]
 };
 var q=new URLSearchParams(location.search),set=SETS[q.get('set')]||SETS.grn,t=document.getElementById('t'),f=document.getElementById('f');
 function go(i){Array.prototype.forEach.call(t.children,function(b,j){b.className=j===i?'on':''});f.src=set[i][1]}
