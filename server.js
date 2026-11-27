@@ -697,6 +697,7 @@ app.use('/api', require('./routes/due_board'));   // /api/due-board (owner: vend
 app.use('/api', require('./routes/dashboard_breakdown'));   // /api/dashboard-pro/breakdown/:key (owner: click a number, see what is inside; read-only)
 app.use('/api', require('./routes/audit_checks'));            // read-only audit checks (19 Nov): duplicate codes, no-cost items, two cheque lists
 app.use('/api/profit', require('./routes/profit'));          // /api/profit, /api/profit/items (gross and net profit; read-only, owner only)
+app.use('/api/running-cost', require('./routes/running_cost')); // gross profit minus daily running cost, owner only
 app.use('/api/sale-profit', require('./routes/sale_profit')); // live profit of the sale on screen (owner only, read-only) -> /api/sale-profit
 app.use('/api', require('./routes/report_data'));       // /api/report-data/* (owner Reports screen, read only)
 app.use('/api', require('./routes/staff_logins'));         // /staff-logins (admin only: create cashier + PIN)

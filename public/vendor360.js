@@ -63,7 +63,7 @@
       '<div id="tabbody" class="wrap"><div class="state">Loading...</div></div></div>';
     $('nb').onclick = function () { openDrawer('bill'); };
     $('np').onclick = function () { openDrawer('pay'); };
-    $('pr').onclick = function () { window.print(); };
+    $('pr').onclick = function () { var h = document.querySelector('#detail .vhead h2'), n = h.textContent; if (n === 'Lucky Trading') h.textContent = 'Zamir'; window.print(); h.textContent = n; };   // statements print "Zamir"
     $('vv').onclick = function () { window.openVendorVoucher(S.cur); };
   }
   function loadAcct() {

@@ -52,18 +52,19 @@ async function build(vendor, only) {
   const returns = [];
   for (const n of notes) { const ls = rl.filter(l => l.credit_note_id === n.id); if (ls.length) ls.forEach(l => returns.push({ bill_id: n.bill_id, item: `${l.item_name || l.item_code || ''}`.trim(), qty: Number(l.qty), rate: Number(l.rate), date: iso(n.note_date), amount: Number(l.amount) })); else returns.push({ bill_id: n.bill_id, item: String(n.reason || n.note_no || 'Credit note').replace(/^RETURN:\s*/i, ''), qty: '', date: iso(n.note_date), amount: Number(n.amount) }); }
   const vrow = (await pool.query(`SELECT phone FROM vendors WHERE name_key = lower(regexp_replace($1, '\\s+', ' ', 'g')) OR lower(name) = lower($1) LIMIT 1`, [vendor]).catch(() => ({ rows: [] }))).rows[0];
+  const shown = require('../utils/printName')(vendor);   // statements print this name
   const bills_total = bills.reduce((s, b) => s + Math.round(Number(b.total) * 100), 0) / 100;
   const returns_total = returns.reduce((s, r) => s + Math.round(r.amount * 100), 0) / 100;
   const cheques_total = ch.reduce((s, c) => s + Math.round(Number(c.amount) * 100), 0) / 100;
   const today = new Date(Date.now() + 5.5 * 3600e3);   // Sri Lanka date
   const ymd = today.toISOString().slice(0, 10);
-  const key = vendor.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'VEN';
+  const key = shown.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'VEN';
   const out = {
     voucher_no: `VS-${ymd.replace(/-/g, '')}-${key}`, date: today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }),
     shop: { name: process.env.SHOP_NAME || SHOP.name, address: SHOP.address, phone: SHOP.phone, email: SHOP.email, mapsUrl: SHOP.mapsUrl },
     qr: await mapQrDataUrl().catch(() => null),
-    vendor: { name: vendor, phone: (vrow && vrow.phone) || '' },
-    received_by: (m => m ? `Mr. ${m[1].trim()}, ${m[2].trim().replace(/\bPvt\b/i, '(Pvt)')}` : vendor)(vendor.match(/^(.+?)\s*\((.+)\)$/)),
+    vendor: { name: shown, phone: (vrow && vrow.phone) || '' },
+    received_by: (m => m ? `Mr. ${m[1].trim()}, ${m[2].trim().replace(/\bPvt\b/i, '(Pvt)')}` : shown)(shown.match(/^(.+?)\s*\((.+)\)$/)),
     bills: bills.map(b => {
       const cq = allc.filter(c => c.bill_id === b.id).map(c => ({ no: c.cheque_no, bank: String(c.bank || '').replace(/,.*$/, ''), date: iso(c.cheque_date), amount: Number(c.amount) }));
       const cash = pays.filter(x => x.bill_id === b.id).map(x => ({ date: iso(x.paid_at), method: x.method || 'Cash', amount: Number(x.amount) }));
