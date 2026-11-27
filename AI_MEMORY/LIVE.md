@@ -1,4 +1,4 @@
-AUTOSAVE 2026-11-27 11:12 SL | branch work @ 6d8f47c | last: autosave: LIVE.md state line 2026-11-27 10:57 | uncommitted files: 1 | server health: ok
+AUTOSAVE 2026-11-27 11:27 SL | branch work @ 24a0349 | last: 1.1.9: Vendor 360 now has Returns & credit notes tab and + Return / di | uncommitted files: 1 | server health: ok
 14:15 | PC | Task K Metro GRN entered | DONE, checked in database; screen UNVERIFIED | other tasks on hold
 11:06 | PC | AJ_OVERPAY_WARN | DONE v1.1.4 (screen UNVERIFIED) | Record Payment: paying more than owed shows a warning and can be saved; rest is in NOT_DONE for after reset | AJ: Ctrl+F5 twice
 11:03 | PC | AJ_ONE_CLICK | DONE v1.1.3 (screen UNVERIFIED) | repeated clicks saved nothing (0 payments/cheques today); one click = one save on main app + POS, button greys out with a please-wait note | AJ: Ctrl+F5 twice
