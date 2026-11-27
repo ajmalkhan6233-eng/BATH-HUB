@@ -93,6 +93,21 @@ router.get('/pos-advance', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+router.get('/pos-advance/:id/pdf', async (req, res) => {   // 27 Nov (AJ): the advance receipt is drawn with the SAME design as the normal bill
+  try {
+    await ready; const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(404).json({ error: 'not found' });
+    const o = await load(id); if (!o) return res.status(404).json({ error: 'not found' });
+    const items = (o.items || []).map(l => ({ item_name: l.item_name, item_code: l.item_code, qty: l.qty, unit_price: l.unit_price, line_total: l.line_total != null ? Number(l.line_total) : Number(l.qty) * Number(l.unit_price) }));
+    const bill = { bill_number: o.order_no, created_at: o.created_at, customer_name: o.customer_name, customer_phone: o.customer_phone, items, subtotal: o.subtotal, total: o.total, payment_method: o.advance_method };
+    const disc = money2(Number(o.subtotal) - Number(o.total));
+    const paid = (o.payments || []).filter(p => Number(p.amount) > 0).map(p => String(p.method).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i).join(' + ') || String(o.advance_method).toUpperCase();
+    await require('./pos_bills').renderBillPdf(res, bill, { docLabel: o.status === 'cancelled' ? 'ADVANCE RECEIPT (CANCELLED)' : 'ADVANCE RECEIPT', numberLabel: 'Order No',
+      pre: disc > 0 ? [['Total', o.subtotal], ['Discount', disc]] : [], totalLabel: 'Net total',
+      post: [['Advance received', o.advance_amount], ['BALANCE TO PAY', o.balance, true]], payLabel: 'Advance paid by: ' + paid,
+      note: o.status === 'open' ? 'ORDER OPEN · GOODS NOT DELIVERED' : o.status === 'settled' ? 'PAID IN FULL · bill ' + (o.bill_number || '') : 'ORDER CANCELLED' });
+  } catch (e) { if (!res.headersSent) res.status(500).json({ error: e.message }); }
+});
+
 router.get('/pos-advance/:id', async (req, res) => {
   try {
     await ready; const pid = Number(req.params.id); if (!Number.isInteger(pid) || pid < 1) return res.status(404).json({ error: 'not found' }); const o = await load(pid);
@@ -127,6 +142,9 @@ router.post('/pos-advance/:id/cancel', async (req, res) => {
     if (!reason) return res.status(400).json({ error: 'Give the reason (and say how the advance is returned).' });
     await pool.query(`UPDATE pos_advance_orders SET status='cancelled', cancel_reason=$1, cancelled_at=CURRENT_TIMESTAMP WHERE id=$2 AND status='open'`, [reason.slice(0, 300), id]);
     if (o.stock_reserved) { await moveStock(o.items, +1, o.order_no, 'reserve_release'); await pool.query('UPDATE pos_advance_orders SET stock_reserved=false WHERE id=$1', [id]); }
+    // the advance goes back to the customer: one negative row per method so the day cash shows the money leaving
+    const net = await pool.query('SELECT method, SUM(amount) AS s FROM pos_advance_payments WHERE order_id=$1 GROUP BY method HAVING SUM(amount) <> 0', [id]);
+    for (const x of net.rows) await pool.query('INSERT INTO pos_advance_payments (order_id, amount, method, reference) VALUES ($1,$2,$3,$4)', [id, -Number(x.s), x.method, 'advance returned: ' + reason.slice(0, 80)]);
     res.json(await load(id));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -157,7 +175,7 @@ router.post('/pos-advance/:id/reopen', async (req, res) => {
       const v = await pool.query('SELECT 1 FROM pos_bill_voids WHERE bill_id=$1', [o.bill_id]).catch(() => ({ rows: [] }));
       if (!v.rows.length) return res.status(409).json({ error: 'The bill for this order is still active. Void the bill first if it must be reopened.' });
     }
-    await pool.query(`UPDATE pos_advance_orders SET status='open', bill_id=NULL, bill_number=NULL, settled_at=NULL, cancelled_at=NULL, cancel_reason=NULL WHERE id=$1`, [id]);
+    await pool.query(`UPDATE pos_advance_orders SET status='open', bill_id=NULL, bill_number=NULL, settled_at=NULL, cancelled_at=NULL, cancel_reason=NULL, advance_amount=(SELECT COALESCE(SUM(amount),0) FROM pos_advance_payments WHERE order_id=$1) WHERE id=$1`, [id]);
     if (!o.stock_reserved && await moveStock(o.items, -1, o.order_no, 'reserve')) await pool.query('UPDATE pos_advance_orders SET stock_reserved=true WHERE id=$1', [id]);
     res.json(await load(id));
   } catch (e) { res.status(500).json({ error: e.message }); }

@@ -125,6 +125,15 @@ const health = () => new Promise(res => { const r = http.get('http://127.0.0.1:'
   L.push('Cheques due in the next 14 days (date, amount): ' + (ch ? (ch.length ? ch.map(r => r.d + ' ' + rs(r.amount)).join(' | ') : 'none') : NF));
   L.push('Cash in hand: NOT FOUND (the app keeps no running cash-in-hand figure; today\'s cash in is above)');
 
+  // ---- e2. Advance orders and returns (27 Nov, AJ): the chat must see ADV-nnn. No customer names here (same rule as the rest of this file).
+  const adv = await safe(`SELECT o.order_no, o.status, o.total, o.advance_amount, o.created_at::date::text AS d, (SELECT string_agg(DISTINCT l->>'item_name', ', ') FROM jsonb_array_elements(o.items) l) AS items
+      FROM pos_advance_orders o WHERE o.status = 'open' OR o.created_at >= now() - interval '7 days' ORDER BY o.id DESC LIMIT 12`);
+  const advToday = await safe(`SELECT COALESCE(SUM(amount),0) AS s FROM pos_advance_payments WHERE (paid_at AT TIME ZONE 'Asia/Colombo')::date = (now() AT TIME ZONE 'Asia/Colombo')::date`);
+  const rets = await safe(`SELECT COUNT(*)::int AS n, COALESCE(-SUM(b.total),0) AS s FROM pos_sale_returns r JOIN pos_bills b ON b.id = r.return_bill_id WHERE (r.created_at AT TIME ZONE 'Asia/Colombo')::date = (now() AT TIME ZONE 'Asia/Colombo')::date`);
+  L.push('', '## Advance orders (goods reserved, not sales yet) and returns');
+  L.push('Advance money taken today (not a sale): ' + (advToday && advToday[0] ? rs(advToday[0].s) : NF) + ' | returns today: ' + (rets && rets[0] ? rets[0].n + ' for ' + rs(rets[0].s) : NF));
+  L.push('Orders (no, status, total, advance, date, items): ' + (adv ? (adv.length ? adv.map(r => r.order_no + ' ' + r.status + ' ' + rs(r.total) + ' adv ' + rs(r.advance_amount) + ' ' + r.d + ' ' + String(r.items || '').slice(0, 40)).join(' // ') : 'none') : NF));
+
   // ---- f. Open tasks (customer names and long numbers redacted)
   const names = new Set(); for (const r of (await safe(`SELECT DISTINCT customer_name AS n FROM pos_bills WHERE customer_name IS NOT NULL UNION SELECT DISTINCT name FROM customers WHERE name IS NOT NULL`)) || []) { const n = String(r.n || '').trim(); if (n.length >= 4 && !/^(walk-in customer|cash)$/i.test(n)) names.add(n); }
   const clean = s => { let o = String(s || ''); for (const n of names) o = o.split(n).join('[customer]'); return o.replace(/\+?\d[\d ]{8,}\d/g, '[number]').replace(/[^\x20-\x7E]/g, '').slice(0, 130); };

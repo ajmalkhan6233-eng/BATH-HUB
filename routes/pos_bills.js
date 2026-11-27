@@ -319,8 +319,9 @@ router.get('/pos-bills/today', async (req, res) => {
             `SELECT id, bill_number, customer_name, subtotal, discount_pct, discount_amount, total, payment_method, discount_override, source, created_at, (v.bill_id IS NOT NULL) AS voided
              FROM pos_bills LEFT JOIN pos_bill_voids v ON v.bill_id = pos_bills.id WHERE created_at::date = $1::date ORDER BY created_at DESC, id DESC LIMIT 200`, [date]);
         const bills = r.rows.map(b => ({ ...b, subtotal: Number(b.subtotal), discount_amount: Number(b.discount_amount), total: Number(b.total) }));
+        const advance = await require('../utils/advanceCash').advanceDay(pool, date);   // 27 Nov: advance money is not a sale; shown on its own
         res.json({
-            date, count: bills.filter(b => !b.voided).length,
+            date, advance, count: bills.filter(b => !b.voided).length,
             total: money2(bills.filter(b => !b.voided).reduce((a, b) => a + b.total, 0)),
             discount: money2(bills.filter(b => !b.voided).reduce((a, b) => a + b.discount_amount, 0)),
             bills,
@@ -360,8 +361,9 @@ router.get('/pos-bills/summary', async (req, res) => {
             subtotal: money2(x.subtotal), discount: money2(x.discount), total: money2(x.total),
         })).sort((a, b) => a.payment_method.localeCompare(b.payment_method));
         const sum = k => money2(by_payment.reduce((a, x) => a + x[k], 0));
+        const advance = from === to ? await require('../utils/advanceCash').advanceDay(pool, from) : null;
         res.json({
-            from, to, bills: by_payment.reduce((a, x) => a + x.bills, 0),
+            from, to, advance, bills: by_payment.reduce((a, x) => a + x.bills, 0),
             subtotal: sum('subtotal'), discount: sum('discount'), total: sum('total'), by_payment, by_method,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -460,7 +462,14 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
     try {
         const bill = await loadBill(req.params.id);
         if (!bill) return res.status(404).json({ error: 'not found' });
+        await renderBillPdf(res, bill, {});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
+// The one bill design. 27 Nov (AJ): the advance receipt uses it too (opts: docLabel, numberLabel, pre / post lines, payLabel, note).
+async function renderBillPdf(res, bill, opts) {
+    try {
+        opts = opts || {};
         let branding = { company_name: 'Royal Bath Hub Thihariya', tagline: '', currency_symbol: 'Rs' };
         try {
             const fs = require('fs');
@@ -513,7 +522,8 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         y += 8;
 
         doc.font('Helvetica').fontSize(8).fillColor('#000');
-        doc.text(`Bill No: ${bill.bill_number}`, MARGIN, y, { width: CONTENT_W }); y = doc.y + 1;
+        if (opts.docLabel) { doc.font('Helvetica-Bold').fontSize(10).fillColor('#0a4531').text(opts.docLabel, MARGIN, y, { width: CONTENT_W, align: 'center' }); y = doc.y + 4; doc.font('Helvetica').fontSize(8).fillColor('#000'); }
+        doc.text(`${opts.numberLabel || 'Bill No'}: ${bill.bill_number}`, MARGIN, y, { width: CONTENT_W }); y = doc.y + 1;
         doc.text(`Date: ${new Date(bill.created_at).toLocaleString('en-LK')}`, MARGIN, y, { width: CONTENT_W }); y = doc.y + 1;
         if (bill.customer_name) { doc.text(`Customer: ${bill.customer_name}`, MARGIN, y, { width: CONTENT_W }); y = doc.y + 1; }
         if (bill.customer_phone) { doc.text(`Phone: ${bill.customer_phone}`, MARGIN, y, { width: CONTENT_W }); y = doc.y + 1; }
@@ -552,12 +562,16 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         doc.strokeColor('#ccc').lineWidth(0.5).moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).stroke();
         y += 8;
 
+        (opts.pre || []).forEach(l => { doc.font('Helvetica').fontSize(8).text(`${l[0]}: ${sym} ${Number(l[1]).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' }); y = doc.y + 1; });
         doc.font('Helvetica-Bold').fontSize(11)
-            .text(`Total: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+            .text(`${opts.totalLabel || 'Total'}: ${sym} ${Number(bill.total).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
         y = doc.y + 2;
+        (opts.post || []).forEach(l => { doc.font(l[2] ? 'Helvetica-Bold' : 'Helvetica').fontSize(l[2] ? 11 : 8).text(`${l[0]}: ${sym} ${Number(l[1]).toFixed(2)}`, MARGIN, y, { width: CONTENT_W, align: 'right' }); y = doc.y + 2; });
         doc.font('Helvetica').fontSize(8)
-            .text(`Payment: ${(bill.payment_method || 'cash').toUpperCase()}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
-        y = doc.y + 14;
+            .text(opts.payLabel || `Payment: ${(bill.payment_method || 'cash').toUpperCase()}`, MARGIN, y, { width: CONTENT_W, align: 'right' });
+        y = doc.y + 6;
+        if (opts.note) { doc.font('Helvetica-Bold').fontSize(8).fillColor('#8a2b0a').text(opts.note, MARGIN, y, { width: CONTENT_W, align: 'center' }); y = doc.y; }
+        y += 8;
 
         doc.fontSize(7).fillColor('#5c4033')
             .text('Thank you for shopping with us!', MARGIN, y, { width: CONTENT_W, align: 'center' });
@@ -573,7 +587,8 @@ router.get('/pos-bills/:id/pdf', async (req, res) => {
         if (qr) doc.image(qr, cx - 28, doc.y + 6, { width: 56 });
 
         doc.end();
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
+    } catch (e) { if (!res.headersSent) res.status(500).json({ error: e.message }); }
+}
 
 module.exports = router;
+module.exports.renderBillPdf = renderBillPdf;

@@ -1,5 +1,5 @@
 /* pos-advance.js (AJ 27 Nov): ADVANCE ORDER. The customer pays part now, goods are NOT delivered, the bill stays OPEN.
-   Pick payment method "Advance (goods later)", type the advance, press Generate: an open order + advance receipt is made (no stock out, no sale counted).
+   Pick payment method "Advance (goods later)", type the advance, press Generate: an open order + advance receipt is made (item reserved out of stock, no sale counted).
    "Advance (n)" button lists open orders; "Settle" takes the rest of the money and makes the normal bill. Own module: remove the script tag and nothing else changes. */
 (function () {
   'use strict';
@@ -19,7 +19,7 @@
   box.innerHTML = '<div class="field"><label for="advAmt">Advance paid now (Rs)</label><input id="advAmt" inputmode="decimal" placeholder="0"></div>' +
     '<div class="field"><label for="advMethod">Advance paid by</label><select id="advMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="online">Online transfer</option><option value="cheque">Cheque</option></select></div>' +
     '<div class="field" id="advRefRow" style="display:none"><label for="advRef">Cheque number / bank and date</label><input id="advRef"></div>' +
-    '<div class="message" id="advNote" style="font-size:12px;color:#5a4300">Bill stays OPEN. Goods are not delivered and no stock is taken until the rest is paid.</div>';
+    '<div class="message" id="advNote" style="font-size:12px;color:#5a4300">Bill stays OPEN. The item is reserved for the customer (taken out of stock) and goods are not delivered until the rest is paid. This is not a sale yet.</div>';
   sel.parentNode.parentNode.insertBefore(box, sel.parentNode.nextSibling);
   function show() { var on = sel.value === 'Advance'; box.style.display = on ? '' : 'none'; gen.textContent = on ? 'Save advance order' : (gen.textContent === 'Save advance order' ? 'Generate Bill' : gen.textContent); $('advRefRow').style.display = $('advMethod').value === 'cheque' ? '' : 'none'; }
   sel.addEventListener('change', show); $('advMethod').addEventListener('change', show); show();
@@ -46,7 +46,10 @@
   }
 
   // 3) advance receipt (printable)
-  function printReceipt(o) {
+  function printReceipt(o) {   // 27 Nov (AJ): same design as the normal bill (server PDF). The old plain page is kept below as a fallback.
+    var w2 = window.open('/api/pos-advance/' + o.id + '/pdf', '_blank'); if (w2) return; printReceiptPlain(o);
+  }
+  function printReceiptPlain(o) {
     var w = window.open('', '_blank'); if (!w) { err('Saved ' + o.order_no + '. Allow pop-ups to print the receipt.'); return; }
     var items = (typeof o.items === 'string' ? JSON.parse(o.items) : o.items) || [];
     w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc(o.order_no) + '</title><style>body{font:14px Arial;max-width:360px;margin:12px auto;color:#111}h2,h3{text-align:center;margin:4px 0}table{width:100%;border-collapse:collapse}td,th{padding:3px 2px;text-align:left;border-bottom:1px dotted #aaa}td:last-child,th:last-child{text-align:right}.box{border:2px solid #111;padding:6px;margin:10px 0;text-align:center;font-weight:700}.r{text-align:right;line-height:1.7}</style>' +

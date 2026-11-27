@@ -2,6 +2,7 @@
 // GET /api/daily-ledger-sheet/:date.xlsx  (YYYY-MM-DD)  -> every sale with its receipt number (money IN),
 // money OUT (expenses, supplier payments), and the balance. Reads pos_bills, pos_bill_payments, pos_bill_voids,
 // expenses_detail, supplier_payments. Writes nothing. Golden core untouched.
+const { advanceDay } = require('../utils/advanceCash');
 const express = require('express');
 const XLSX = require('xlsx');
 const pool = require('../utils/pool');
@@ -33,15 +34,19 @@ router.get('/daily-ledger-sheet/:date', async (req, res) => {
             if (!b.voided) { tot[m in tot ? m : 'other'] += a; sales += a; }
         });
     });
+    // 27 Nov (AJ): advances are drawer money but NOT sales. Shown on their own lines; the drawer cash takes them in and takes the applied part out on the settle day.
+    const adv = await advanceDay(pool, d);
+    adv.rows.forEach(x => IN.push([x.order_no, x.time, x.customer, x.method, x.ref, x.amount, 'ADVANCE (not a sale yet)']));
     const out = n(exp.reduce((s, x) => s + Number(x.amount), 0) + sup.reduce((s, x) => s + Number(x.amount), 0));
-    const cashIn = n(tot.cash);
+    const cashIn = n(tot.cash + adv.received.cash - adv.applied.cash);
     const OUT = [['What', 'Detail', 'Amount (OUT)']];
     exp.forEach(x => OUT.push(['Expense: ' + x.category, x.description, n(x.amount)]));
     sup.forEach(x => OUT.push(['Supplier paid: ' + (x.name || ''), (x.method || '') + ' ' + x.notes, n(x.amount)]));
     const SUM = [['Daily balancing sheet', d], [],
         ['Money IN (all sales)', n(sales)], ['  Cash', cashIn], ['  Card', n(tot.card)], ['  Online', n(tot.online)], ['  Cheque (not cash yet)', n(tot.cheque)], ['  Credit (customer owes us)', n(tot.credit)], [],
+        ['  Advances received today (not sales)', n(adv.received.total)], ['  Advance already taken on earlier days, settled today', n(-adv.applied.total)],
         ['Money OUT (expenses + supplier payments)', out], [],
-        ['Cash left from the day (cash in - money out)', n(cashIn - out)], ['Bills counted', bills.filter(b => !b.voided).length], ['Bills voided', bills.filter(b => b.voided).length]];
+        ['Cash left from the day (cash sales + advance cash - advance already counted - money out)', n(cashIn - out)], ['Bills counted', bills.filter(b => !b.voided).length], ['Bills voided', bills.filter(b => b.voided).length]];
     const wb = XLSX.utils.book_new();
     [['Summary', SUM], ['Sales IN', IN], ['Money OUT', OUT]].forEach(([nm, rows]) => {
         const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = [{ wch: 34 }, { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 20 }];

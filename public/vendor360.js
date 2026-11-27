@@ -156,7 +156,8 @@
     } else {
       var open = ((S.data.bills && S.data.bills.bills) || []).filter(function (b) { return b.outstanding > 0; });
       html += '<label for="bill_id">Which bill</label><select id="bill_id">' + (open.length ? open.map(function (b) { return '<option value="' + b.id + '"' + (String(draft.bill_id) === String(b.id) ? ' selected' : '') + '>' + esc(b.bill_no || '#' + b.id) + ' · owed ' + rs(b.outstanding) + '</option>'; }).join('') : '<option value="">No open bills</option>') + '</select>' +
-        f('amount', 'Amount (Rs.)', 'number', 'inputmode="decimal" min="0" step="0.01"') + '<label for="method">How paid</label><select id="method"><option>cash</option><option>bank transfer</option></select>' + f('paid_at', 'Date paid', 'date');
+        f('amount', 'Amount (Rs.)', 'number', 'inputmode="decimal" min="0" step="0.01"') + '<label for="method">How paid</label><select id="method"><option>cash</option><option>bank transfer</option><option value="cheque"' + (draft.method === 'cheque' ? ' selected' : '') + '>cheque</option></select>' + f('paid_at', 'Date paid', 'date') +
+        '<div id="chq" style="display:none">' + f('cheque_no', 'Cheque number', 'text', 'autocomplete="off" inputmode="numeric"') + f('bank', 'Bank', 'text', 'autocomplete="off"') + f('cheque_date', 'Cheque date', 'date') + '<div class="sm" id="spread"></div></div>';
     }
     html += '<div class="bar"><button type="submit">Save</button><button type="button" class="ghost" id="dc">Cancel</button></div><div id="de" class="sm bad" role="alert"></div></form>';
     $('sheet').innerHTML = html; $('dr').classList.add('on');
@@ -165,6 +166,21 @@
     if (kind === 'pay' && !$('paid_at').value) $('paid_at').value = today();
     form.addEventListener('input', function () { var o = {}; [].forEach.call(form.querySelectorAll('input,select'), function (e) { o[e.id] = e.value; }); try { localStorage.setItem(key, JSON.stringify(o)); } catch (_) {} });
     $('dc').onclick = closeDrawer;
+    if (kind === 'pay') {
+      var openBills = function () { return ((S.data.bills && S.data.bills.bills) || []).filter(function (b) { return b.outstanding > 0; }).sort(function (a, b) { return String(a.bill_date).localeCompare(String(b.bill_date)); }); };
+      var plan = function () {   // chosen bill first, then oldest bills, until the amount is used up
+        var amt = Number($('amount').value) || 0, ob = openBills(), sel = $('bill_id').value, out = [];
+        ob.sort(function (a, b) { return (String(a.id) === sel ? -1 : 0) - (String(b.id) === sel ? -1 : 0); });
+        ob.forEach(function (b) { if (amt > 0) { var t = Math.min(amt, b.outstanding); out.push({ b: b, amount: t }); amt = Math.round((amt - t) * 100) / 100; } });
+        return { rows: out, extra: amt };
+      };
+      var upd = function () {
+        var c = $('method').value === 'cheque'; $('chq').style.display = c ? '' : 'none';
+        if (c && !$('cheque_date').value) $('cheque_date').value = $('paid_at').value || today();
+        var p = plan(); $('spread').textContent = c && p.rows.length > 1 ? 'One cheque, shared over: ' + p.rows.map(function (x) { return (x.b.bill_no || '#' + x.b.id) + ' ' + rs(x.amount); }).join(', ') + (p.extra > 0 ? ' (Rs. ' + p.extra + ' more than all open bills)' : '') : '';
+      };
+      ['method', 'amount', 'bill_id'].forEach(function (id) { $(id).addEventListener('input', upd); $(id).addEventListener('change', upd); }); upd();
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault(); var err = $('de'); err.textContent = '';
       var v = function (id) { return ($(id).value || '').trim(); }, url, body;
@@ -177,6 +193,22 @@
         url = '/api/vendor-ledger/bills/' + v('bill_id') + '/payments'; body = { amount: Number(v('amount')), method: v('method'), paid_at: v('paid_at') };
       }
       var btn = form.querySelector('[type=submit]'); btn.disabled = true;
+      function saveCheque() {   // one cheque, one row per bill it pays (same cheque number)
+        if (!v('cheque_no')) { err.textContent = 'Enter the cheque number.'; return; }
+        if (!v('cheque_date')) { err.textContent = 'Enter the cheque date.'; return; }
+        var p = plan(); if (!p.rows.length) { err.textContent = 'No open bill to pay.'; return; }
+        if (p.extra > 0) { err.textContent = 'Amount is more than all open bills by Rs. ' + p.extra + '.'; return; }
+        btn.disabled = true; var done = 0;
+        (function next() {
+          if (done >= p.rows.length) { try { localStorage.removeItem(key); } catch (_) {} closeDrawer(); say('Cheque saved on ' + p.rows.length + ' bill(s).'); refresh(); return; }
+          var r = p.rows[done], b = { cheque_no: v('cheque_no'), bank: v('bank') || undefined, amount: r.amount, cheque_date: v('cheque_date') };
+          fetch('/api/vendor-ledger/bills/' + r.b.id + '/cheques', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) })
+            .then(function (x) { return x.json().then(function (j) { return { ok: x.ok, j: j }; }); })
+            .then(function (o) { if (!o.ok) { btn.disabled = false; err.textContent = (o.j.error || 'Not saved') + (done ? ' (first ' + done + ' bill(s) already saved: check the list)' : ''); if (done) refresh(); return; } done++; next(); })
+            .catch(function () { btn.disabled = false; err.textContent = 'Not saved. Try again.'; });
+        })();
+      }
+      if (kind === 'pay' && v('method') === 'cheque') { btn.disabled = false; return saveCheque(); }
       var send = window.OfflineSave ? OfflineSave.post(url, body) : fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { return r.ok ? { ok: true, response: j } : { ok: false, error: j.error }; }); });
       Promise.resolve(send).then(function (o) {
         btn.disabled = false;

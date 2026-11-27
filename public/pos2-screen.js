@@ -49,7 +49,7 @@
     $('itemRows').innerHTML = rows.map(function (r, i) {
       return '<div class="item-row" data-index="' + i + '"><div class="item-ident"><span class="rno">' + (i + 1) + '</span><input class="code-input" data-field="code" value="' + esc(r.code) + '" aria-label="Item code" title="Enter item code or press Down to browse"><div class="item-name"><strong title="Double-click to edit the name on this bill">' + esc(r.name) + '</strong><small>' + esc(r.unit || '') + (r.sqm ? ' · ' + r.sqm + ' sqm/box' : '') + (r.stock != null && isFinite(r.stock) ? ' · stock ' + r.stock : '') + '</small></div>' + (r.cost != null ? '<span class="rcost" title="Cost price (owner only)">cost ' + money(r.cost).replace('Rs ', '') + '</span>' : '') + '</div>' +
         '<div class="qtybox"><button data-act="minus" aria-label="Decrease quantity">−</button><input data-field="qty" value="' + r.qty + '" inputmode="decimal" aria-label="Quantity"><button data-act="plus" aria-label="Increase quantity">+</button></div>' +
-        '<input class="price-input" data-field="price" value="' + effPrice(r).toFixed(2) + '" inputmode="decimal" aria-label="Selling price"><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
+        '<div class="pcell"><input class="price-input" data-field="price" value="' + effPrice(r).toFixed(2) + '" inputmode="decimal" aria-label="Selling price">' + (lineDiscount(r) > 0 ? '<small class="lh">List ' + Number(r.price).toLocaleString('en-LK', { maximumFractionDigits: 2 }) + ' less ' + Number(lineDiscount(r) / (r.qty || 1)).toLocaleString('en-LK', { maximumFractionDigits: 2 }) + '</small>' : '') + '</div><input class="disc-input" data-field="disc" value="' + esc(r.disc) + '" aria-label="Discount rupees or percent">' +
         '<input class="price-input line-total" data-field="total" value="' + lineTotal(r).toFixed(2) + '" inputmode="decimal" aria-label="Line total" title="Type the line total: the price follows"><button class="remove" data-act="remove" aria-label="Remove item">×</button></div>';
     }).join('');
     var t = totals();
@@ -75,7 +75,7 @@
     var fmt = function (n) { return Number(n).toLocaleString('en-LK', { maximumFractionDigits: 0 }); }, sum = 0;
     var parts = rows.map(function (r, i) { if (!r.code) return ''; if (r.cost == null) return '<span>' + (i + 1) + ': —</span>'; var p = lineTotal(r) - r.qty * r.cost; sum += p; return '<span' + (p < 0 ? ' class="neg"' : '') + '>' + (i + 1) + ': ' + fmt(p) + '</span>'; }).join('');
     var tot = t.profit != null ? t.profit : sum;
-    el.innerHTML = '<div class="lp-list"><b>Profit</b> ' + parts + '</div><div class="lp-total">Total ' + fmt(tot) + '</div>'; el.hidden = false;
+    el.innerHTML = '<div class="lp-list"><b>Profit</b> ' + parts + '</div><div class="lp-total">Profit total ' + fmt(tot) + '</div>'; el.hidden = false;
   }
   var ptm, pseq = 0;   // profit comes from the owner-only /api/sale-profit; staff get nothing back, so the box stays empty
   function profitSoon(t) { clearTimeout(ptm); if (!rows.some(function (r) { return r.code; })) { $('profitValue').textContent = ''; return; } var mine = ++pseq; ptm = setTimeout(function () { api.profit(rows, t.disc).then(function (j) { if (mine !== pseq) return; $('profitValue').textContent = j ? Number(j.profit).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''; }); }, 350); }
