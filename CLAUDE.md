@@ -1,5 +1,5 @@
 # CLAUDE.md for Royal Bath Hub (under 5 KB: trim, never grow)
-**FIRST, ALWAYS: read docs/AJ_NEEDS.md (AJ's own words, mandatory every new window), then this file, then SYNC** (pull bridge + branch, LIVE.md top, compare heads). Then read docs/HANDOFF_LATEST.md. Never work off a stale picture. Never hand AJ the work.
+**FIRST, ALWAYS: read docs/AJ_NEEDS.md, then this file, then SYNC** (pull bridge + branch; run `node pc/refresh_state.cjs` in the bridge, read AI_BRIDGE/START_HERE.md, STATE_AUTO.md, SYSTEM_MAP.md, LIVE.md top). Then docs/HANDOFF_LATEST.md. Never work off a stale picture. Never hand AJ the work.
 
 ## WHO AJ IS AND HOW HE TALKS
 Ajmal Khan ("AJ"). Owner of Royal Bath Hub (BATH-HUB), 173/1 Kandy Road, Thihariya. NOT a developer. Voice-to-text: read garbled words kindly ("cloud.md"=CLAUDE.md, "bath code"=BATHCO_TEMPLATE, "Claude Code"=you on the PC). Halal, honest, privacy-first. No "Bathco".
