@@ -53,15 +53,15 @@
       '<h2>Royal Bath Hub</h2><div style="text-align:center;font-size:12px">173/1 Kandy Road, Thihariya · 074 035 5536</div><h3>ADVANCE RECEIPT</h3><div class="box">ORDER OPEN · GOODS NOT DELIVERED</div>' +
       '<div>' + esc(o.order_no) + ' · ' + dmy(o.created_at) + '<br>' + esc(o.customer_name || '') + ' ' + esc(o.customer_phone || '') + '</div><table><tr><th>Item</th><th>Qty</th><th>Rs</th></tr>' +
       items.map(function (i) { return '<tr><td>' + esc(i.item_name) + '</td><td>' + Number(i.qty) + '</td><td>' + money(i.line_total).replace('Rs ', '') + '</td></tr>'; }).join('') + '</table>' +
-      '<div class="r">Order total: ' + money(o.total) + '<br>Advance received (' + esc(o.advance_method) + '): <b>' + money(o.advance_amount) + '</b><br><b>Balance to pay: ' + money(o.balance) + '</b></div>' +
+      '<div class="r">' + (Number(o.subtotal) > Number(o.total) ? 'Total: ' + money(o.subtotal) + '<br>Discount: ' + money(Number(o.subtotal) - Number(o.total)) + '<br>' : '') + 'Net total: ' + money(o.total) + '<br>Advance received (' + esc(o.advance_method) + '): <b>' + money(o.advance_amount) + '</b><br><b>Balance to pay: ' + money(o.balance) + '</b></div>' +
       '<div style="font-size:11px;text-align:center;margin-top:12px">Goods are delivered after the balance is paid. Please keep this receipt. Thank you.</div><script>setTimeout(function(){window.print()},300)<\/script>');
     w.document.close();
   }
 
   // 4) list of open orders + settle
-  var btn = document.createElement('button'); btn.className = 'secondary'; btn.id = 'advListBtn'; btn.textContent = 'Advance (0)'; btn.type = 'button';
+  var btn = document.createElement('button'); btn.className = 'secondary'; btn.id = 'advListBtn'; btn.textContent = 'Reserved (0)'; btn.type = 'button';
   var held = $('heldBtn'); if (held && held.parentNode) held.parentNode.insertBefore(btn, held.nextSibling); else if (foot) foot.appendChild(btn);
-  function count() { J('/api/pos-advance?status=open').then(function (r) { if (r.ok && r.d) btn.textContent = 'Advance (' + r.d.count + ')'; }); }
+  function count() { J('/api/pos-advance?status=open').then(function (r) { if (r.ok && r.d) btn.textContent = 'Reserved (' + r.d.count + ')'; }); }
   count(); setInterval(count, 60000);
   btn.onclick = list;
   var ov = null;

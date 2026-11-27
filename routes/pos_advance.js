@@ -9,12 +9,30 @@ const money2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const roleOf = req => (req.session && req.session.user && req.session.user.role) || 'staff';
 const ADV_METHODS = ['cash', 'card', 'online', 'cheque'];
 
+const deductsStock = () => String(process.env.POS_DEDUCT_STOCK).toLowerCase() === 'true';
+// 27 Nov (AJ): a reserved item is taken OUT of stock when the advance is saved (the customer has reserved it). Giving it back is exact:
+// on cancel, and on settle (the real bill takes it out again, so net = one deduction). Only when POS_DEDUCT_STOCK=true, like normal bills.
+async function moveStock(items, sign, orderNo, reason) {
+  if (!deductsStock()) return false;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const l of items) {
+      if (!l.item_code) continue;
+      await client.query('UPDATE products SET stock_level = COALESCE(stock_level, 0) + $1 WHERE item_code = $2 AND active = true', [sign * Number(l.qty), l.item_code]);
+      await require('../utils/stock_ledger').recordSafe(client, { item_code: l.item_code, qty_change: sign * Number(l.qty), reason, ref_type: 'pos_advance', ref_id: orderNo });
+    }
+    await client.query('COMMIT');
+    return true;
+  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+}
 const ready = pool.query(`CREATE TABLE IF NOT EXISTS pos_advance_orders (
   id SERIAL PRIMARY KEY, order_no VARCHAR(20) UNIQUE, customer_name VARCHAR(150), customer_phone VARCHAR(30),
   items JSONB NOT NULL, subtotal NUMERIC(12,2) NOT NULL, discount_pct NUMERIC(12,6) NOT NULL DEFAULT 0, total NUMERIC(12,2) NOT NULL,
   advance_amount NUMERIC(12,2) NOT NULL, advance_method VARCHAR(20) NOT NULL, advance_ref TEXT, salesman VARCHAR(30), notes TEXT,
   status VARCHAR(12) NOT NULL DEFAULT 'open', bill_id INT, bill_number VARCHAR(30), cancel_reason TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, settled_at TIMESTAMP, cancelled_at TIMESTAMP)`)
+  .then(() => pool.query('ALTER TABLE pos_advance_orders ADD COLUMN IF NOT EXISTS stock_reserved BOOLEAN NOT NULL DEFAULT false'))
   .then(() => pool.query(`CREATE TABLE IF NOT EXISTS pos_advance_payments (id SERIAL PRIMARY KEY, order_id INT NOT NULL REFERENCES pos_advance_orders(id), amount NUMERIC(12,2) NOT NULL, method VARCHAR(20) NOT NULL, reference TEXT, paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`)).catch(e => console.error('[pos_advance] schema', e.message));
 
 router.post('/pos-advance', async (req, res) => {
@@ -51,6 +69,7 @@ router.post('/pos-advance', async (req, res) => {
     const no = 'ADV-' + String(r.rows[0].id).padStart(3, '0');
     await pool.query('UPDATE pos_advance_orders SET order_no=$1 WHERE id=$2', [no, r.rows[0].id]);
     await pool.query('INSERT INTO pos_advance_payments (order_id, amount, method, reference) VALUES ($1,$2,$3,$4)', [r.rows[0].id, adv, method, ref]);
+    if (await moveStock(items, -1, no, 'reserve')) await pool.query('UPDATE pos_advance_orders SET stock_reserved=true WHERE id=$1', [r.rows[0].id]);
     res.json(await load(r.rows[0].id));
   } catch (e) { res.status(500).json({ error: 'Could not save the advance order: ' + e.message }); }
 });
@@ -93,6 +112,7 @@ router.post('/pos-advance/:id/settled', async (req, res) => {
     const bill = await pool.query('SELECT id, bill_number, notes FROM pos_bills WHERE id=$1', [Number(req.body && req.body.bill_id)]);
     if (!bill.rows[0] || bill.rows[0].notes !== 'Advance order ' + o.order_no) return res.status(400).json({ error: 'That bill is not this order\'s bill.' });
     await pool.query(`UPDATE pos_advance_orders SET status='settled', bill_id=$1, bill_number=$2, settled_at=CURRENT_TIMESTAMP WHERE id=$3 AND status='open'`, [bill.rows[0].id, bill.rows[0].bill_number, id]);
+    if (o.stock_reserved) { await moveStock(o.items, +1, o.order_no, 'reserve_release'); await pool.query('UPDATE pos_advance_orders SET stock_reserved=false WHERE id=$1', [id]); }
     res.json(await load(id));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -106,6 +126,7 @@ router.post('/pos-advance/:id/cancel', async (req, res) => {
     const reason = String(req.body && req.body.reason || '').trim();
     if (!reason) return res.status(400).json({ error: 'Give the reason (and say how the advance is returned).' });
     await pool.query(`UPDATE pos_advance_orders SET status='cancelled', cancel_reason=$1, cancelled_at=CURRENT_TIMESTAMP WHERE id=$2 AND status='open'`, [reason.slice(0, 300), id]);
+    if (o.stock_reserved) { await moveStock(o.items, +1, o.order_no, 'reserve_release'); await pool.query('UPDATE pos_advance_orders SET stock_reserved=false WHERE id=$1', [id]); }
     res.json(await load(id));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -137,6 +158,7 @@ router.post('/pos-advance/:id/reopen', async (req, res) => {
       if (!v.rows.length) return res.status(409).json({ error: 'The bill for this order is still active. Void the bill first if it must be reopened.' });
     }
     await pool.query(`UPDATE pos_advance_orders SET status='open', bill_id=NULL, bill_number=NULL, settled_at=NULL, cancelled_at=NULL, cancel_reason=NULL WHERE id=$1`, [id]);
+    if (!o.stock_reserved && await moveStock(o.items, -1, o.order_no, 'reserve')) await pool.query('UPDATE pos_advance_orders SET stock_reserved=true WHERE id=$1', [id]);
     res.json(await load(id));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
