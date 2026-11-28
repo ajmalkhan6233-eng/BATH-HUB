@@ -116,8 +116,8 @@ const TABS=[
  }},
  {k:'range',l:'Daily Range',run:async()=>{
    const f=$('rf')?$('rf').value:mstart(),t=$('rt')?$('rt').value:tod();
-   const d=await api('/api/daily-summary?from='+encodeURIComponent(f)+'&to='+encodeURIComponent(t));
-   const tot=k=>d.reduce((a,r)=>a+(Number(r[k])||0),0);
+   const d=await api('/api/daily-range?from='+encodeURIComponent(f)+'&to='+encodeURIComponent(t));
+   const tot=k=>d.length&&d.every(r=>r[k]==null)?null:d.reduce((a,r)=>a+(Number(r[k])||0),0);
    return '<div class="bar"><div><label>From</label><input type="date" id="rf" value="'+E(f)+'"></div><div><label>To</label><input type="date" id="rt" value="'+E(t)+'"></div><button class="gold" id="rgo">Show</button><button id="csv">Export CSV</button></div>'
     +kv([['Days',d.length],['Total sale',N(tot('total_sale'))],['Expenses',N(tot('total_expenses'))],['Gross profit',N(tot('gross_profit'))],['Net profit',N(tot('net_profit')),tot('net_profit')<0?'neg':'']])
     +'<div class="card">'+table(['Date','Cash','Card','Online','Credit','Total sale','Expenses','Gross profit','Net profit'],d.map(r=>[r.date_str||r.report_date,N(r.cash_sale),N(r.card_sale),N(r.online_sale),N(r.credit_sale),N(r.total_sale),N(r.total_expenses),N(r.gross_profit),N(r.net_profit)]),1)+'</div>';

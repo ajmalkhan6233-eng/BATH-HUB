@@ -3,6 +3,7 @@
 // Own pool, own router — mounted from server.js, does not touch existing routes.
 // ═══════════════════════════════════════════════════════════════════════════
 const { Pool } = require('pg');
+const billSheet = require('../utils/billSheet');
 require('dotenv').config();
 const express = require('express');
 const { todayLK, monthLK } = require('../utils/lkTime');
@@ -400,6 +401,13 @@ router.get('/api/pnl', async (req, res) => {
                 COUNT(*) as days_included
             FROM daily_summary
             WHERE report_date BETWEEN $1 AND $2`, [from, to]);
+        if (!Number(r.rows[0].days_included)) {
+            const bills = await billSheet.rows(pool, from, to);
+            if (bills.length) {
+                const t = billSheet.total(bills);
+                return res.json({ from, to, total_sale: t.sales, gross_profit: t.gross_profit, total_expenses: null, net_profit: null, cash_out_total: null, days_included: t.days, note: 'No day sheet typed: sales and gross profit are from the POS bills. Expenses and net are PENDING.' });
+            }
+        }
         res.json({ from, to, ...r.rows[0] });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -445,7 +453,8 @@ router.get('/api/vat-report', async (req, res) => {
             pool.query(`SELECT COALESCE(SUM(total_sale),0) as total_sale FROM daily_summary WHERE report_date BETWEEN $1 AND $2`, [from, to]),
             pool.query(`SELECT COALESCE(SUM(total_amount),0) as total_purchases FROM grn_records WHERE grn_date BETWEEN $1 AND $2`, [from, to]),
         ]);
-        const totalSale = Number(sales.rows[0].total_sale);
+        let totalSale = Number(sales.rows[0].total_sale);
+        if (!totalSale) totalSale = billSheet.total(await billSheet.rows(pool, from, to)).sales;   // no day sheet typed: sales from the POS bills
         const totalPurchases = Number(purchases.rows[0].total_purchases);
         // Sale/purchase totals are VAT-inclusive in source data -> back out the VAT component.
         const output_vat = Math.round((totalSale - totalSale/(1+VAT_RATE)) * 100) / 100;

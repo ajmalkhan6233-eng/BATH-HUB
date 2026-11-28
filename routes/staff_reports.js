@@ -19,6 +19,7 @@
 //   rep_top_slow_items        -> BLOCKED, no source data — built=false
 
 const { marginPct } = require('../utils/margin');
+const billSheet = require('../utils/billSheet');
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
@@ -285,7 +286,20 @@ router.get('/monthly-trends', async (req, res) => {
             GROUP BY 1
             ORDER BY 1
         `);
+        if (!r.rows.length) {
+            return res.json(billSheet.group(await billSheet.rows(pool), 'monthly').map(m => ({ month: m.period.slice(0, 7), total_sale: m.sales, gross_profit: m.gross_profit, total_expenses: null, net_profit: null, days_recorded: m.days })));
+        }
         res.json(r.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════ REPORTS: DAILY RANGE (day sheet, else POS bills) ═══════════════════════
+router.get('/daily-range', async (req, res) => {
+    try {
+        const { from, to } = req.query, ymd = /^\d{4}-\d{2}-\d{2}$/;
+        if (!ymd.test(from || '') || !ymd.test(to || '')) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD)' });
+        const r = await pool.query(`SELECT *, TO_CHAR(report_date,'YYYY-MM-DD') AS date_str FROM daily_summary WHERE report_date BETWEEN $1 AND $2 ORDER BY report_date`, [from, to]);
+        res.json(r.rows.length ? r.rows : await billSheet.rows(pool, from, to));
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -311,6 +325,12 @@ router.get('/daily-digest', async (req, res) => {
             `, [date]);
             if (r.rows.length) fallbackNote = `No daily_summary row for ${date} — showing most recent available (${r.rows[0].report_date}).`;
         }
+        const exact = r.rows.length && !fallbackNote;
+        const bill = exact ? null : (await billSheet.rows(pool, date, date))[0];
+        if (bill) {
+            const text = `${date}: Total Sale LKR ${Number(bill.total_sale).toLocaleString('en-US')}, Gross Profit ${bill.gross_profit === null ? 'PENDING' : 'LKR ' + Number(bill.gross_profit).toLocaleString('en-US')}, Expenses PENDING, Net Profit PENDING (from POS bills).`;
+            return res.json({ found: true, requested_date: date, fallback_note: 'No day sheet typed: sales and gross profit are from the POS bills. Expenses and net are PENDING.', ...bill, summary_text: text });
+        }
         if (!r.rows.length) return res.json({ found: false, requested_date: date, message: 'No daily_summary data available at all.' });
         const d = r.rows[0];
         const summary_text = `${d.report_date}: Total Sale LKR ${Number(d.total_sale).toLocaleString('en-US')}, ` +
@@ -334,6 +354,15 @@ router.get('/cashflow-forecast', async (req, res) => {
             ) recent
         `, [trailDays]);
         const row = r.rows[0];
+        if (!row.days_used || row.days_used === '0') {
+            const bills = (await billSheet.rows(pool)).slice(-trailDays);
+            if (bills.length) {
+                const avg = billSheet.total(bills).sales / bills.length;
+                return res.json({ estimate: true, disclaimer: `Simple ESTIMATE from the last ${bills.length} selling days of POS bills. Expenses are not typed, so no net profit forecast.`,
+                    trailing_days_used: bills.length, trailing_avg_daily_sale: avg, trailing_avg_daily_expenses: null, trailing_avg_daily_net_profit: null, trailing_avg_cash_in_hand: null,
+                    forecast_next_7_days_sale: avg * 7, forecast_next_7_days_net_profit: null, forecast_next_30_days_sale: avg * 30, forecast_next_30_days_net_profit: null });
+            }
+        }
         if (!row.days_used || row.days_used === '0') return res.json({ estimate: false, message: 'No daily_summary rows available to base a forecast on.' });
         const avgNet = Number(row.avg_net_profit) || 0;
         const avgSale = Number(row.avg_sale) || 0;
@@ -390,6 +419,14 @@ router.get('/heatmap', async (req, res) => {
             GROUP BY 1,2
             ORDER BY 1
         `);
+        if (!r.rows.length) {
+            const names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], m = new Map();
+            for (const d of await billSheet.rows(pool)) {
+                const n = new Date(d.report_date + 'T00:00:00Z').getUTCDay(), o = m.get(n) || { dow_num: n, dow_name: names[n], day_count: 0, total_sale: 0 };
+                o.day_count += 1; o.total_sale += d.total_sale; o.avg_sale = o.total_sale / o.day_count; m.set(n, o);
+            }
+            r.rows = [...m.values()].sort((a, b) => a.dow_num - b.dow_num);
+        }
         res.json({
             caveat: 'Hour-of-day, per-staff, and per-category breakdowns are NOT computable — no timestamped sale, salesperson-attributed sale, or category-attributed sale data exists anywhere in this database (lasersoft_invoices is date-only with no time or staff column; daily_summary is shop-wide totals). This shows the one real granular dimension available: sales pattern by day-of-week, aggregated from daily_summary.',
             rows: r.rows,

@@ -202,7 +202,8 @@ $('wa').onclick=async function(){
   var t=s.reduce(function(a,r){return {sales:a.sales+Number(r.sales),gp:a.gp+Number(r.gross_profit),exp:a.exp+Number(r.expenses)};},{sales:0,gp:0,exp:0});
   var company='Audit Summary';
   try{var b=await fetch('/api/branding').then(function(r){return r.json();});if(b&&b.company_name)company=b.company_name+' — Audit Summary';}catch(e){}
-  var message='*'+company+'*\n'+R.from+' to '+R.to+'\nSales: LKR '+f0(t.sales)+'\nGross Profit: LKR '+f0(t.gp)+'\nExpenses: LKR '+f0(t.exp)+'\nNet Profit: LKR '+f0(t.gp-t.exp);
+  if(s.length&&s.every(function(r){return r.expenses==null;}))t.exp=null;
+  var message='*'+company+'*\n'+R.from+' to '+R.to+'\nSales: LKR '+f0(t.sales)+'\nGross Profit: LKR '+f0(t.gp)+'\nExpenses: LKR '+f0(t.exp)+'\nNet Profit: LKR '+f0(t.exp===null?null:t.gp-t.exp);
   try{var r=await api('/send',{method:'POST',body:JSON.stringify({to:num,message:message})});alert(r.success?'Sent.':'Failed: '+(r.error||'unknown'));}
   catch(e){alert('Send failed: '+e.message);}
 };

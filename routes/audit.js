@@ -4,6 +4,7 @@
 // flags section combining the existing CHECKER (daily_reconciliation_check.js)
 // with new item-level checks from audit_invoice_items.
 const { Pool } = require('pg');
+const billSheet = require('../utils/billSheet');
 require('dotenv').config();
 const express = require('express');
 const XLSX = require('xlsx');
@@ -59,6 +60,10 @@ router.get('/api/audit/summary', async (req, res) => {
             FROM daily_summary
             WHERE report_date BETWEEN $1 AND $2
             GROUP BY 1 ORDER BY 1`, [from, to]);
+        if (!r.rows.length) {
+            return res.json(billSheet.group(await billSheet.rows(pool, from, to), unit === 'day' ? 'daily' : unit === 'week' ? 'weekly' : unit === 'month' ? 'monthly' : 'quarterly')
+                .map(g => ({ period: g.period, sales: g.sales, gross_profit: g.gross_profit, expenses: null, net_profit: null, cash: null, card: null, online: null, cheque: null, credit: null, complete_days: 0, partial_days: g.days, estimated_days: 0, total_days: g.days })));
+        }
         res.json(r.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -128,6 +133,11 @@ router.get('/api/audit/workbook', async (req, res) => {
         const summaryHeader = ['Period','Sales','Gross Profit','Expenses','Net Profit','Cash','Card','Online','Cheque','Credit','Days'];
         const summaryRows = summaryRes.rows.map(r => [r.period, Number(r.sales), Number(r.gross_profit), Number(r.expenses),
             Number(r.gross_profit)-Number(r.expenses), Number(r.cash), Number(r.card), Number(r.online), Number(r.cheque), Number(r.credit), Number(r.days)]);
+        if (!summaryRows.length) {
+            const u = granularityBounds(from, to, granularity);
+            billSheet.group(await billSheet.rows(pool, from, to), u === 'day' ? 'daily' : u === 'week' ? 'weekly' : u === 'month' ? 'monthly' : 'quarterly')
+                .forEach(g => summaryRows.push([g.period, g.sales, g.gross_profit === null ? '' : g.gross_profit, 'PENDING', 'PENDING', '', '', '', '', '', g.days]));
+        }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([summaryHeader, ...summaryRows]), 'SUMMARY');
 
         const flagsHeader = ['Date','Code','Detail'];
@@ -210,6 +220,15 @@ async function buildFullReport(from, to) {
     const summary = { sales, gross_profit: gp, expenses, net_profit: netProfit,
         gp_coverage: `${gpAvailableDays}/${days.rows.length} days have GP data`,
         cash, card, online, cheque, credit };
+
+    if (!days.rows.length) {
+        const bills = await billSheet.rows(pool, from, to);
+        if (bills.length) {
+            const t = billSheet.total(bills);
+            Object.assign(summary, { sales: t.sales, gross_profit: t.gross_profit, expenses: null, net_profit: null, cash: null, card: null, online: null, cheque: null, credit: null,
+                gp_coverage: `${t.days} days from POS bills (no day sheet typed)` });
+        }
+    }
 
     // ── COVER ──
     const sourcesUsed = [...new Set(days.rows.flatMap(d => [d.sales_source, d.expenses_source].filter(Boolean)))];
@@ -351,7 +370,7 @@ router.get('/api/audit/full-report/pdf', async (req, res) => {
         const doc = new PDFDocument({ margin: 45, size: 'A4' });
         doc.pipe(res);
 
-        const fmt = n => 'LKR ' + Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+        const fmt = n => (n === null ? 'PENDING' : 'LKR ' + Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }));
         const h1 = t => doc.moveDown(0.5).fontSize(16).font('Helvetica-Bold').text(t).moveDown(0.3);
         const h2 = t => doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text(t).moveDown(0.2);
         const body = t => doc.fontSize(10).font('Helvetica').fillColor('#222').text(t);
@@ -367,7 +386,7 @@ router.get('/api/audit/full-report/pdf', async (req, res) => {
         body(`Total Sale: ${fmt(report.summary.sales)}`);
         body(`Gross Profit: ${fmt(report.summary.gross_profit)}  (${report.summary.gp_coverage})`);
         body(`Expenses: ${fmt(report.summary.expenses)}`);
-        body(`Net Profit (Gross Profit − Expenses): ${report.summary.net_profit == null ? 'PENDING — GP not available for every day in range' : fmt(report.summary.net_profit)}`);
+        body(`Net Profit (Gross Profit − Expenses): ${report.summary.net_profit == null ? 'PENDING — gross profit or expenses not available' : fmt(report.summary.net_profit)}`);
         doc.moveDown(0.3);
         body(`Cash ${fmt(report.summary.cash)}   Card ${fmt(report.summary.card)}   Online ${fmt(report.summary.online)}   Cheque ${fmt(report.summary.cheque)}   Credit ${fmt(report.summary.credit)}`);
 
