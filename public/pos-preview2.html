@@ -66,7 +66,7 @@ label{font-size:11px;color:#62696e}.field{display:flex;flex-direction:column;gap
 .picker-top{display:flex;gap:7px;margin-bottom:6px}.picker-top input{flex:1;height:35px}
 .picker-head,.pick-row{display:grid;grid-template-columns:75px minmax(150px,1fr) 62px 65px 115px;gap:8px;align-items:center}
 .picker-head{font-size:10px;text-transform:uppercase;color:#737a7f;padding:5px 7px;border-bottom:1px solid var(--line)}
-.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-cost{text-align:right;color:#a9b0b5;font-size:11px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
+.picker-results{overflow:auto}.pick-row{padding:7px;border-bottom:1px solid #eceeef;cursor:pointer}.pick-row:hover,.pick-row.selected{background:var(--soft)}.pick-row .pick-code{font-weight:700}.pick-row .pick-name strong{display:block}.pick-row .pick-name small{display:block;color:#777;font-size:10px}.pick-cost{text-align:right;color:#747b80;font-size:11px}.pick-stock{text-align:center}.pick-price{text-align:right;font-weight:700;font-size:13px}
 .tool-menu{right:14px;top:75px;width:190px;display:grid;gap:3px}.tool-menu button{text-align:left;border:0;background:#fff;padding:8px}.tool-menu button:hover{background:var(--soft)}
 .modal-back{position:fixed;inset:0;background:#0005;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal{background:#fff;border:1px solid #aeb4b8;box-shadow:0 12px 35px #0003;width:min(600px,95vw);max-height:85vh;overflow:auto;padding:16px;border-radius:4px}
@@ -139,7 +139,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 @media(max-width:1000px){.right-work{grid-template-columns:1fr}}
 .item-foot .gen-row{margin-left:6px}.item-foot .gen-row button{min-height:36px;padding:0 28px;font-size:15px;flex:none}.item-foot .status-note{margin-left:8px}
 .payment-card{grid-template-columns:minmax(0,1fr)!important}
-.rno{flex:none;width:20px;text-align:right;font-weight:700;color:#70777c;font-size:12px}.item-row .line-total{font-weight:700}.rcost{flex:none;width:96px;text-align:right;color:#a3a9ad;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}#lineProfits{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:5px 10px;border-top:1px solid #eceeef;color:#a3a9ad;font-size:12px;font-variant-numeric:tabular-nums}#lineProfits[hidden]{display:none}#lineProfits .lp-list span{margin-right:12px}#lineProfits .neg{color:#c98a8a}#lineProfits .lp-total{flex:none;font-weight:700;color:#8b9196}#lineProfits{filter:blur(.8px);opacity:.75;user-select:none}.rcost{filter:blur(.8px);opacity:.75;user-select:none}.pick-row .pick-cost{filter:blur(.8px);opacity:.75;user-select:none}.field:has(>.profit-secret){display:none}</style>
+.rno{flex:none;width:20px;text-align:right;font-weight:700;color:#70777c;font-size:12px}.item-row .line-total{font-weight:700}.rcost{flex:none;width:96px;text-align:right;color:#747b80;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}#lineProfits{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:5px 10px;border-top:1px solid #eceeef;color:#747b80;font-size:12px;font-variant-numeric:tabular-nums}#lineProfits[hidden]{display:none}#lineProfits .lp-list span{margin-right:12px}#lineProfits .neg{color:#c98a8a}#lineProfits .lp-total{flex:none;font-weight:700;color:#8b9196}#lineProfits{filter:blur(.3px);opacity:.95;user-select:none}.rcost{filter:blur(.3px);opacity:.95;user-select:none}.pick-row .pick-cost{filter:blur(.3px);opacity:.95;user-select:none}.field:has(>.profit-secret){display:none}</style>
 <style id="pickerDock">
 #picker{position:static!important;left:auto!important;right:auto!important;top:auto!important;width:min(780px,100%);margin:6px auto 8px;max-height:260px;box-shadow:none;border:1px solid #cfd4d7;z-index:1}
 #picker .picker-results{max-height:150px}
@@ -266,7 +266,7 @@ html.in-frame #signOutBtn,html.in-frame .topbar,html.in-frame .appnav,html.in-fr
 <!-- 05 — Item picker overlay -->
 <div class="popover picker hidden" id="picker">
   <div class="picker-top"><input id="scanBox" placeholder="Type item code or name / scan barcode…" autocomplete="off"><button class="secondary" id="camScanBtn">Camera scan</button><button class="secondary" id="pickerClose">Close</button></div>
-  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span style="text-align:right">Cost</span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
+  <div class="picker-head"><span>Code</span><span>Item / stock detail</span><span></span><span>Stock</span><span style="text-align:right">Price (Rs)</span></div>
   <div class="picker-results" id="pickerResults"></div>
   <div class="muted picker-note" style="font-size:10px;padding:6px 2px">Lowest item code first · select a row to add it</div>
 </div>
