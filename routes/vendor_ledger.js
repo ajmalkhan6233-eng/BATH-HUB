@@ -118,7 +118,8 @@ module.exports = function createVendorLedgerRouter({ pool, requireAuth, branchOf
       const paid = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_payments WHERE bill_id=$1', [id])).rows[0].s);
       const notes = Number((await client.query('SELECT COALESCE(SUM(amount),0) AS s FROM vendor_credit_notes WHERE bill_id=$1', [id])).rows[0].s);
       const owed = Math.round((Number(bill.total) - paid - notes + Number.EPSILON) * 100) / 100;
-      if (amount > owed + 0.005) { await client.query('ROLLBACK'); return res.status(409).json({ error: owed > 0 ? `Only ${owed.toFixed(2)} is still owed on this bill.` : 'This bill is already fully paid.', code: 'over_owed', owed: Math.max(0, owed) }); }
+      // 28 Nov (AJ, 25 Nov rule): paying more than is owed is a WARNING. The screen asks once, then sends confirm_over and it is saved.
+      if (amount > owed + 0.005 && p.confirm_over !== true) { await client.query('ROLLBACK'); return res.status(409).json({ error: owed > 0 ? `Only ${owed.toFixed(2)} is still owed on this bill.` : 'This bill is already fully paid.', code: 'over_owed', owed: Math.max(0, owed) }); }
       if (p.confirm_duplicate !== true) {
         const same = (await client.query(`SELECT id FROM vendor_payments WHERE bill_id=$1 AND amount=$2 AND paid_at=$3 AND method=$4 AND created_at > NOW() - INTERVAL '2 minutes' LIMIT 1`, [id, amount, paidAt, method])).rows[0];
         if (same) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'The same payment was saved a moment ago. It was not saved twice.', code: 'duplicate_payment', payment_id: same.id }); }

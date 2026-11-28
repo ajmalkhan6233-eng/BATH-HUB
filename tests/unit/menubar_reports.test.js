@@ -22,7 +22,9 @@ test('every rep: entry exists as an option in the report page, and the page can 
   });
 });
 test('no screen key appears twice in the menu (headings excluded)', () => {
-  const keys = M.allKeys(); expect(new Set(keys).size).toBe(keys.length);
+  // the two cheque screens are listed under Vendors AND Banking & Money on purpose (27 Nov)
+  const keys = M.allKeys(); const twice = keys.filter((k, i) => keys.indexOf(k) !== i);
+  expect(twice.sort()).toEqual(['chequecal', 'chequereg']);
 });
 
 test('GRN is the first item of Inventory (was Stock) and no longer under Vendors', () => {

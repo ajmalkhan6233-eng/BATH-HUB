@@ -55,55 +55,37 @@ describe('stock warnings', () => {
   });
 });
 
-describe('the bill page is wired to it', () => {
-  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'pos_billing.html'), 'utf8');
-  test('loads the helper before the page script and builds each row with a suggestion list and a stock hint', () => {
-    expect(html.indexOf('<script src="/pos-picker.js"></script>')).toBeGreaterThan(-1);
-    expect(html.indexOf('/pos-picker.js')).toBeLessThan(html.indexOf('function addItemRow'));
-    expect(html).toMatch(/class="pick-list"/);
-    expect(html).toMatch(/class="stock-hint"/);
-    expect(html).toMatch(/attachPicker\(row\)/);
+// 28 Nov: public/pos_billing.html now runs the new POS screen (pos2-screen.js + pos2-api.js, same as pos-preview2.html).
+// These checks cover the same promises on the screen that is really used.
+const read = (f) => fs.readFileSync(path.join(__dirname, '..', '..', 'public', f), 'utf8');
+
+describe('the live bill page is wired to it', () => {
+  const screen = read('pos2-screen.js');
+  test('both POS pages load the same screen code', () => {
+    ['pos_billing.html', 'pos-preview2.html'].forEach((f) => { expect(read(f)).toContain('pos2-api.js'); expect(read(f)).toContain('pos2-screen.js'); });
   });
-  test('the bill still reads the same fields, so a free-typed item works exactly as before', () => {
-    expect(html).toMatch(/r\.querySelector\('\.i-name'\)\.value\.trim\(\)/);
-    expect(html).toMatch(/r\.querySelector\('\.i-qty'\)\.value/);
-    expect(html).toMatch(/r\.querySelector\('\.i-price'\)\.value/);
-    expect(html).toMatch(/item_name: r\.querySelector/);
-  });
-  test('names from the catalogue are placed as text, never as HTML', () => {
-    expect(html).toMatch(/row\.querySelector\('\.i-name'\)\.value = name/);
-    expect(html).toMatch(/b\.textContent = o\.title/);
-    expect(html).toMatch(/s\.textContent = o\.detail/);
-    expect(html).not.toMatch(/class="i-name" value="\$\{/);                  // the old unescaped template is gone
-  });
-  test('the page script parses', () => {
-    const vm = require('vm');
-    const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-    for (const code of scripts) expect(() => new vm.Script(code)).not.toThrow();
+  test('names from the catalogue are escaped in the item list', () => {
+    expect(screen).toMatch(/'<strong>' \+ esc\(x\.name\)|<strong>' \+ esc\(x\.name\)/);
+    expect(screen).not.toMatch(/' \+ x\.name \+ '<\/strong>/);
   });
 });
 
-describe('the bill page: discount cap, item codes, today list', () => {
-  const html = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'pos_billing.html'), 'utf8');
-  test('shows the cap and asks the owner to approve an over-cap discount, then resends with override', () => {
-    expect(html).toMatch(/fetch\('\/api\/pos-bills\/discount-cap'\)/);
+describe('the live bill page: discount cap, item codes, today list', () => {
+  const screen = read('pos2-screen.js'), api = read('pos2-api.js'), html = read('pos_billing.html');
+  test('shows the cap and asks for approval of an over-cap discount, then resends with override', () => {
+    expect(api).toContain("'/api/pos-bills/discount-cap'");
     expect(html).toMatch(/id="capHint"/);
-    expect(html).toMatch(/data\.code === 'discount_over_cap' && data\.can_override/);
-    expect(html).toMatch(/confirm\(/);
-    expect(html).toMatch(/post\(\{ override: true \}\)/);
+    expect(api).toMatch(/r\.d\.code === 'discount_over_cap' && r\.d\.can_override/);
+    expect(api).toMatch(/go\(\{ override: true/);
+    expect(screen).toContain("askReason('Discount approval'");
   });
-  test('a catalogue item sends its code with the bill, and editing the name drops it', () => {
-    expect(html).toMatch(/item_code: r\.dataset\.itemCode \|\| undefined/);
-    expect(html).toMatch(/row\.dataset\.itemCode = item\.item_code/);
-    expect(html).toMatch(/delete row\.dataset\.itemCode/);
+  test('a catalogue item sends its code with the bill', () => {
+    expect(api).toMatch(/item_code: r\.code \|\| undefined/);
   });
   test("today's bills are loaded on start and after each new bill; names are escaped", () => {
-    expect(html).toMatch(/fetch\('\/api\/pos-bills\/today'\)/);
-    expect(html).toMatch(/\nloadToday\(\);/);
-    expect(html).toMatch(/function resetForm\(\) \{\s*loadToday\(\);/);
-    expect(html).toMatch(/esc\(b\.customer_name \|\| 'Walk-in'\)/);
-  });
-  test('starting a new bill clears the discount warning', () => {
-    expect(html).toMatch(/discountPct'\)\.value = 0;[^\n]*\s*updateCapHint\(\);/);
+    expect(api).toContain("'/api/pos-bills/today'");
+    expect(screen).toMatch(/paymentUI\(\); render\(\); loadToday\(\);/);
+    expect(screen).toMatch(/clearForNext\(\); loadToday\(\);/);
+    expect(screen).toMatch(/esc\(b\.customer_name \|\| 'Walk-in'\)/);
   });
 });

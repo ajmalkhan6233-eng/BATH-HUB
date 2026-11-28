@@ -33,12 +33,13 @@ describe('snapshot build (fake database)', () => {
     if (/GROUP BY method/.test(sql)) return { rows: [{ method: 'cash', amount: '700' }, { method: 'card', amount: '300' }] };
     if (/FROM products WHERE active = true AND stock_level > 0/.test(sql)) return { rows: [{ item_code: 'A1', name: 'Tap', stock_level: '1', reorder_threshold: '5' }] };
     if (/COUNT\(\*\) AS items/.test(sql)) return { rows: [{ items: '10', out_of_stock: '2', low_stock: '1' }] };
+    if (/FROM vendor_bill_cheques/.test(sql)) return { rows: [{ payee: 'V2', cheque_no: 'C9', amount: '4000', due_date: '2026-11-20', cheque_date: '2026-11-18', status: 'ISSUED' }, { payee: 'V3', cheque_no: 'C1', amount: '2500', due_date: '2026-11-05', cheque_date: '2026-11-03', status: 'ISSUED' }] };
     if (/FROM vendor_bills/.test(sql)) return { rows: [{ vendor_name: 'V1', bill_no: 'B1', due_date: '2026-11-01', owed: '2500' }] };
     if (/FROM cheque_register/.test(sql)) return { rows: [{ payee: 'V2', cheque_no: 'C9', amount: '4000', due_date: '2026-11-20', status: 'pending' }] };
     if (/FROM pos_bill_items i/.test(sql) && /i\.bill_id, i\.item_name/.test(sql)) return { rows: [{ bill_id: 7, item_name: 'Tap', qty: '1', line_total: '1000' }] };
     if (/b\.bill_number, to_char/.test(sql)) return { rows: [{ id: 7, bill_number: 'B-7', t: '10:05', customer_name: null, total: '1000', payment_method: 'cash' }] };
     if (/GROUP BY 1 ORDER BY 1/.test(sql)) return { rows: [{ d: '2026-11-09', total: '800', n: '2' }, { d: '2026-11-10', total: '1000', n: '2' }] };
-    if (/SELECT item_code, name, stock_level, selling_price/.test(sql)) return { rows: [{ item_code: 'A1', name: 'Tap', stock_level: '1', selling_price: '1500' }] };
+    if (/SELECT id, item_code, name, stock_level, selling_price/.test(sql)) return { rows: [{ id: 3, item_code: 'A1', name: 'Tap', stock_level: '1', selling_price: '1500' }] };
     if (/stock_level <= 0 ORDER BY name/.test(sql)) return { rows: [{ item_code: 'Z9', name: 'Sink' }] };
     if (/FROM credit_customers/.test(sql)) return { rows: [{ name: 'Builder', owed: '7000', oldest: '2026-10-01' }] };
     return { rows: [{ name: 'Sink', qty: '3', revenue: '9000' }] };
@@ -48,17 +49,19 @@ describe('snapshot build (fake database)', () => {
     expect(s.sales).toEqual({ today: 1000, bills_today: 2, yesterday: 500, week: 3000, month: 9000 });
     expect(s.stock).toMatchObject({ out: 2, low: 1 });
     expect(s.due.overdue_count).toBe(1); expect(s.due.overdue_amount).toBe(2500);
-    expect(s.due.next[0].kind).toBe('bill'); expect(s.due.next[1].kind).toBe('cheque');
+    // 19 Nov rule: only a cheque whose date has passed is overdue; a bill without a confirmed pay day is not
+    expect(s.due.next.map((x) => x.kind)).toEqual(['bill', 'cheque', 'cheque']);
   });
   test('v2 tab data', async () => {
     const s = await snap.build(pool, new Date('2026-11-10T06:00:00Z'));
-    expect(s.v).toBe(2);
+    expect(s.v).toBe(3);
     expect(s.bills[0]).toMatchObject({ no: 'B-7', t: '10:05', total: 1000, lines: [{ n: 'Tap', q: 1, a: 1000 }] });
     expect(s.daily).toEqual([{ d: '2026-11-09', total: 800, n: 2 }, { d: '2026-11-10', total: 1000, n: 2 }]);
-    expect(s.items).toEqual([['A1', 'Tap', 1, 1500]]); expect(s.out_list).toEqual([{ code: 'Z9', name: 'Sink' }]);
+    expect(s.items).toEqual([['A1', 'Tap', 1, 1500, 3]]); expect(s.out_list).toEqual([{ code: 'Z9', name: 'Sink' }]);
     expect(s.credit).toEqual({ total: 7000, list: [{ who: 'Builder', owed: 7000, oldest: '2026-10-01' }] });
     expect(s.vendors[0]).toMatchObject({ who: 'V1', owed: 2500, oldest: '2026-11-01' });
     expect(s.cheques[0]).toMatchObject({ who: 'V2', ref: 'C9', amount: 4000, status: 'pending' });
+    expect(s.cheques).toHaveLength(2);
   });
   test('a failing query gives null for that part, not a crash', async () => {
     const s = await snap.build({ query: async () => { throw new Error('boom'); } }, new Date());

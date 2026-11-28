@@ -80,6 +80,7 @@ async function shopNumbers(pool, now = new Date()) {
         at: now.toISOString(), running_cost: running,
         today: await dayNumbers(pool, today, running), yesterday: await dayNumbers(pool, yesterday, running),
         cheques_overdue: cheques && cheques.filter((x) => x.due < today),
+        cheque_warning_2_days: cheques && cheques.filter((x) => x.due >= today && x.due <= addDays(today, 2)),
         cheques_next_7_days: cheques && cheques.filter((x) => x.due >= today),
         cheques_old_register_next_7_days: register, stock: low, reorder_by_vendor: reorder, unsold_stock: dead, open_advance_orders: advances,
     };

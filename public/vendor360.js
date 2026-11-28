@@ -192,13 +192,17 @@
         if (!v('bill_id')) { err.textContent = 'No open bill to pay.'; return; }
         if (!(Number(v('amount')) > 0)) { err.textContent = 'Enter the amount.'; return; }
         url = '/api/vendor-ledger/bills/' + v('bill_id') + '/payments'; body = { amount: Number(v('amount')), method: v('method'), paid_at: v('paid_at') };
+        if (form.dataset.over === url + '|' + body.amount) body.confirm_over = true;
       }
       var btn = form.querySelector('[type=submit]'); btn.disabled = true;
       function saveCheque() {   // one cheque, one row per bill it pays (same cheque number)
         if (!v('cheque_no')) { err.textContent = 'Enter the cheque number.'; return; }
         if (!v('cheque_date')) { err.textContent = 'Enter the cheque date.'; return; }
         var p = plan(); if (!p.rows.length) { err.textContent = 'No open bill to pay.'; return; }
-        if (p.extra > 0) { err.textContent = 'Amount is more than all open bills by Rs. ' + p.extra + '.'; return; }
+        if (p.extra > 0) {   // warn, do not block: the extra goes on the last bill of this cheque
+          if (!window.confirm('This cheque is Rs. ' + p.extra + ' more than all open bills.\n\nSave it anyway?')) return;
+          var last = p.rows[p.rows.length - 1]; last.amount = Math.round((last.amount + p.extra) * 100) / 100;
+        }
         btn.disabled = true; var done = 0;
         (function next() {
           if (done >= p.rows.length) { try { localStorage.removeItem(key); } catch (_) {} closeDrawer(); say('Cheque saved on ' + p.rows.length + ' bill(s).'); refresh(); return; }
@@ -210,9 +214,11 @@
         })();
       }
       if (kind === 'pay' && v('method') === 'cheque') { btn.disabled = false; return saveCheque(); }
-      var send = window.OfflineSave ? OfflineSave.post(url, body) : fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { return r.ok ? { ok: true, response: j } : { ok: false, error: j.error }; }); });
+      var send = window.OfflineSave ? OfflineSave.post(url, body) : fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { return r.ok ? { ok: true, response: j } : { ok: false, error: j.error, code: j.code }; }); });
       Promise.resolve(send).then(function (o) {
         btn.disabled = false;
+        // paying more than is owed: warn once, save if he says yes
+        if (!o.ok && o.code === 'over_owed' && !body.confirm_over && window.confirm((o.error || 'This is more than is owed.') + '\n\nSave it anyway?')) { form.dataset.over = url + '|' + body.amount; form.requestSubmit(); return; }
         if (!o.ok) { err.textContent = o.error || 'Not saved. Try again.'; return; }
         try { localStorage.removeItem(key); } catch (_) {}
         closeDrawer(); say(o.queued ? 'Saved on this phone. It will send when the signal is back.' : 'Saved.');

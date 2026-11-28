@@ -152,6 +152,22 @@
       box.appendChild(w);
     }
 
+    // 28 Nov: a cheque due today or in the next 2 days gets its own card, first in the list of what is coming
+    var d2 = new Date(Date.parse(today + 'T00:00:00Z') + 2 * 86400000).toISOString().slice(0, 10);
+    var soon = (s.cheques || []).filter(function (x) { return x.due && x.due >= today && x.due <= d2; });
+    if (soon.length) {
+      var sw = card('Cheques due in 2 days');
+      soon.forEach(function (x) { sw.appendChild(irow('alert', 'red', x.who || 'Cheque', window.RBHD.full(x.due, today), rs(x.amount), 'down', function () { MV = 'cheques'; go('money'); })); });
+      box.appendChild(sw);
+    }
+
+    if ((s.advances && s.advances.length) || (s.returns && s.returns.length)) {
+      var ar = card('Reserved and returns');
+      (s.advances || []).forEach(function (x) { ar.appendChild(row2((x.no || 'Advance') + (x.who ? ' · ' + x.who : ''), 'Advance paid ' + rs(x.paid) + ' of ' + rs(x.total) + ' · not a sale yet', rs(x.total - x.paid) + ' left')); });
+      (s.returns || []).forEach(function (x) { ar.appendChild(row2('Return ' + (x.no || '') + (x.who ? ' · ' + x.who : ''), x.d ? window.RBHD.full(x.d, today) : '', rs(x.amount))); });
+      box.appendChild(ar);
+    }
+
     var up = card('Coming up');   // AJ 22 Nov: what is about to fall due (cheques now; his lease and other dates when he gives them)
     (s.cheques || []).filter(function (x) { return x.due; }).sort(function (a, b) { return a.due < b.due ? -1 : 1; }).slice(0, 4).forEach(function (x) {
       up.appendChild(irow('cheque', 'pink', 'Cheque · ' + (x.who || ''), window.RBHD.full(x.due, today), rs(x.amount), x.due < today ? 'down' : '', function () { MV = 'cheques'; go('money'); }));

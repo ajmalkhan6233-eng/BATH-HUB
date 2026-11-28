@@ -16,9 +16,9 @@ test('Walk-in customer and the WhatsApp number box are unchanged', () => {
   expect(html).toMatch(/id="customerPhone" placeholder="077 123 4567 or \+61 424 795 184"/);
   expect(html).toMatch(/id="waCheck"/);
 });
-test('date: calendar picker + Today / Yesterday chips, module loaded; cart never spills over the payment panel', () => {
+test('date: calendar picker + arrow, module loaded; cart never spills over the payment panel', () => {
   expect(html).toMatch(/id="salePick" class="datepick" type="date"/);
-  expect(html).toMatch(/data-ago="0">Today</); expect(html).toMatch(/data-ago="1">Yesterday</);
+  expect(html).toMatch(/id="dateArrow"/);   // the chips gave way to the small arrow that opens the calendar
   expect(html).toContain('pos-date.js');
   expect(html).toMatch(/\.item-rows\{min-height:0!important\}/);
   expect(html).toMatch(/\.left-work\{min-height:0;overflow:hidden\}/);

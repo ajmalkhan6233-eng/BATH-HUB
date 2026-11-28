@@ -21,7 +21,7 @@
       try {
         const r = await send(item);
         if (r.ok) { authBlocked = false; return { ok: true, queued: false, response: r.json }; }
-        if (isFinal(r.status)) return { ok: false, queued: false, error: (r.json && r.json.error) || `Rejected (${r.status})`, status: r.status };
+        if (isFinal(r.status)) return { ok: false, queued: false, error: (r.json && r.json.error) || `Rejected (${r.status})`, status: r.status, code: r.json && r.json.code };
         if (isAuth(r.status)) authBlocked = true;          // logged out: keep the save on the device, never lose it
       } catch (_) { /* offline: fall through to the queue */ }
       await storage.put(item); await notify();

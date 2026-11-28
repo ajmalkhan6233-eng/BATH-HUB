@@ -272,6 +272,7 @@ table tr:last-child td{border-bottom:none}
       <label class="fl">Password</label>
       <input class="fi" id="l-pass" type="password" placeholder="Enter password" autocomplete="current-password">
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;cursor:pointer"><input type="checkbox" id="l-remember" checked> Keep me signed in on this computer</label>
     <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="login-err">Invalid username or password</div>
   </div>
@@ -1092,7 +1093,7 @@ async function doLogin() {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: user, password: pass })
+    body: JSON.stringify({ username: user, password: pass, remember: !!(document.getElementById('l-remember') || {}).checked })
   });
   const data = await r.json();
   btn.textContent = 'Sign In';

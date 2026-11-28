@@ -21,7 +21,7 @@ async function rows(pool, sql, params) { try { return (await pool.query(sql, par
 
 /** Plain object, only what the phone shows. Any part that fails to read comes back as null (the phone shows "no data"). */
 async function build(pool, now = new Date()) {
-  const [tot, pays, low, stock, bills, chqAll, top, billsToday, linesToday, daily, items, outList, credit, pBills, pItems, pSet] = await Promise.all([
+  const [tot, pays, low, stock, bills, chqAll, top, billsToday, linesToday, daily, items, outList, credit, pBills, pItems, pSet, advOpen, retRows] = await Promise.all([
     rows(pool, `SELECT
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE),0) AS today, COUNT(*) FILTER (WHERE d = CURRENT_DATE) AS bills_today,
         COALESCE(SUM(total) FILTER (WHERE d = CURRENT_DATE - 1),0) AS yesterday,
@@ -66,6 +66,9 @@ async function build(pool, now = new Date()) {
         WHERE ${MC.LIVE} AND b.created_at::date >= date_trunc('month', CURRENT_DATE)::date
         GROUP BY 1 ORDER BY SUM(i.line_total) - SUM(i.qty * COALESCE(NULLIF(i.unit_cost,0), p.avg_cost, 0)) DESC LIMIT 25`),
     rows(pool, `SELECT key, value FROM app_settings WHERE key IN ('running_cost_per_day','running_cost_from')`),
+    // ---- 28 Nov: open advance orders (goods reserved, not sales) and returns of the last 7 days ----
+    rows(pool, `SELECT order_no, customer_name, total, advance_amount, to_char(created_at,'YYYY-MM-DD') AS d FROM pos_advance_orders WHERE status = 'open' ORDER BY id DESC LIMIT 40`),
+    rows(pool, `SELECT b.bill_number, b.customer_name, -b.total AS amount, to_char(r.created_at,'YYYY-MM-DD') AS d FROM pos_sale_returns r JOIN pos_bills b ON b.id = r.return_bill_id ${NV} AND r.created_at::date >= CURRENT_DATE - 6 ORDER BY r.created_at DESC LIMIT 40`),
   ]);
 
   const byBill = new Map();
@@ -100,6 +103,8 @@ async function build(pool, now = new Date()) {
 
   return {
     v: 3,
+    advances: advOpen ? advOpen.map((r) => ({ no: r.order_no, who: r.customer_name || '', total: num(r.total), paid: num(r.advance_amount), d: String(r.d || '') })) : null,
+    returns: retRows ? retRows.map((r) => ({ no: r.bill_number, who: r.customer_name || '', amount: num(r.amount), d: String(r.d || '') })) : null,
     profit,
     commission,
     at: now.toISOString(),

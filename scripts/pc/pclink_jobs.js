@@ -79,6 +79,9 @@ const jobs = {
         log('reading shop numbers (read only)'); const { shopNumbers } = require('../../utils/shopNumbers');
         return JSON.stringify(await shopNumbers(require('../../utils/pool')));
     },
+    // A finished bill as the receipt picture, or a vendor statement PDF, into the private outbox. Nothing is sent to anyone.
+    receipt_png: async (a, log) => { log('drawing the receipt'); return require('../../utils/pclinkPapers').receiptPng(require('../../utils/pool'), a); },
+    vendor_statement: async (a, log) => { log('drawing the vendor statement'); return require('../../utils/pclinkPapers').vendorStatement(a); },
     query: async (a, log) => {
         const sql = checkSql(a && a.sql); log('read-only query: ' + sql.slice(0, 120));
         const pool = require('../../utils/pool'); const c = await pool.connect();
