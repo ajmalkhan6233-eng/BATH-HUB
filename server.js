@@ -3548,6 +3548,16 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 });
 /* ===== END M8 ===== */
 
+// is the shop phone linked? (public/wa-banner.js). Signed-in owner/admin only; says yes or no, nothing else.
+app.get('/api/whatsapp-link', async (req, res) => {
+    const u = req.session && req.session.user;
+    if (!u || (u.role !== 'admin' && u.role !== 'owner')) return res.status(403).json({ error: 'Owner only' });
+    try {
+        const url = new URL('/health', process.env.WHATSAPP_API_URL || 'http://localhost:3001/send');
+        const j = await (await fetch(url, { signal: AbortSignal.timeout(4000) })).json();
+        res.json({ ready: j.ready === true });
+    } catch (_) { res.json({ ready: false }); }
+});
 const safety = require('./utils/safety');
 safety.errorHandler.onError = (req, err) => { require('./routes/client_errors').save('server', `${req.method} ${String(req.originalUrl || '').split('?')[0]}: ${err && err.message}`).catch(() => {}); };
 app.use(safety.errorHandler);   // FIX 1: anything uncaught becomes a calm JSON answer

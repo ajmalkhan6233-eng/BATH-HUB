@@ -126,7 +126,7 @@
     var B = d.banks || { total: 0, list: [] };
     h += '<div class="dp-grid2"><div class="dp-card"><h3>Bank balances (as recorded)</h3>' + (B.list.length ? B.list.map(function (x) { return row(esc(x.account_label), lkr(x.current_balance)); }).join('') + row('<b>Total</b>', '<b>' + lkr(B.total) + '</b>') : '<div class="dp-note">No bank accounts recorded yet.</div>') + '</div>'
       + '<div class="dp-card"><h3>Money in and out, this month</h3>'
-      + row('Sales', lkr(S.month)) + row('Bought from vendors (GRN)', lkr((d.grn || {}).month)) + row('Expenses', lkr(E.month)) + row('Staff commission', lkr(d.commissions_month)) + row('Fixed monthly costs', lkr((d.overheads || {}).monthly))
+      + row('Sales', lkr(S.month)) + row('Bought from vendors (GRN)', lkr((d.grn || {}).month)) + row('Expenses', lkr(E.month)) + row('<a href="#/salescomm" onclick="if(window.rbhGo){rbhGo(\'salescomm\');return false}">Staff commission (see who and when)</a>', lkr(d.commissions_month)) + row('Fixed monthly costs', lkr((d.overheads || {}).monthly))
       + row('Stock-in less sales (rough)', lkr(n((d.grn || {}).month) - S.month)) + '</div></div>';
     /* 8 purchases (GRN) */
     var G = d.grn || {};
