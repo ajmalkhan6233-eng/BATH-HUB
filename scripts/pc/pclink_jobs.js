@@ -74,6 +74,11 @@ const jobs = {
     },
     // Saved-bill drafts (data/grn_bills.json): vendor | bill | code | name | qty | unit cost. Read only.
     read_drafts: async () => { const L = JSON.parse(fs.readFileSync(path.join(root, 'data', 'grn_bills.json'), 'utf8')); const out = []; L.forEach((b, i) => (b.lines || []).forEach(l => out.push([i, b.vendor || b.supplier || '?', (b.bill_no || b.number || b.date || ''), l.code, l.name, l.qty, l.unit].join(' | ')))); return out.length + ' lines\n' + out.join('\n'); },
+    // Today + yesterday sales and profit, cheques due, low stock, open advances. Read only, same rules as the screens (utils/shopNumbers.js).
+    shop_numbers: async (a, log) => {
+        log('reading shop numbers (read only)'); const { shopNumbers } = require('../../utils/shopNumbers');
+        return JSON.stringify(await shopNumbers(require('../../utils/pool')));
+    },
     query: async (a, log) => {
         const sql = checkSql(a && a.sql); log('read-only query: ' + sql.slice(0, 120));
         const pool = require('../../utils/pool'); const c = await pool.connect();
