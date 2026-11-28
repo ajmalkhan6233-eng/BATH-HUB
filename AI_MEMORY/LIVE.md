@@ -1,4 +1,4 @@
-AUTOSAVE 2026-11-28 13:12 SL | branch work @ b1ecc60 | last: 1.5.11: Sales holds commission and staff (attendance, pay, salary, log | uncommitted files: 0 | server health: ok
+AUTOSAVE 2026-11-28 13:27 SL | branch work @ 87569b1 | last: autosave: LIVE.md state line 2026-11-28 13:12 | uncommitted files: 0 | server health: ok
 14:15 | PC | Task K Metro GRN entered | DONE, checked in database; screen UNVERIFIED | other tasks on hold
 11:06 | PC | AJ_OVERPAY_WARN | DONE v1.1.4 (screen UNVERIFIED) | Record Payment: paying more than owed shows a warning and can be saved; rest is in NOT_DONE for after reset | AJ: Ctrl+F5 twice
 11:03 | PC | AJ_ONE_CLICK | DONE v1.1.3 (screen UNVERIFIED) | repeated clicks saved nothing (0 payments/cheques today); one click = one save on main app + POS, button greys out with a please-wait note | AJ: Ctrl+F5 twice
