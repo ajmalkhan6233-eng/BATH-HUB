@@ -22,7 +22,7 @@ function appAs(role) {
   app.use('/api', router);
   return app;
 }
-const bill = (app, over = {}) => request(app).post('/api/pos-bills').send({ items: [{ item_name: 'Marble Tile', qty: 2, unit_price: 5000 }], ...over });
+const bill = (app, over = {}) => request(app).post('/api/pos-bills').send({ items: [{ item_code: '1001', item_name: 'Marble Tile', qty: 2, unit_price: 5000 }], ...over });
 const stock = code => Number(db.many(`SELECT stock_level FROM products WHERE item_code = '${code}'`)[0].stock_level);
 const billCount = () => Number(db.many('SELECT COUNT(*) AS n FROM pos_bills')[0].n);
 

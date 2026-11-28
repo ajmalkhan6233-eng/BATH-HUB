@@ -11,3 +11,5 @@ process.env.DB_PORT = '1';
 process.env.DB_NAME = 'bathco_jest_never_used';
 delete process.env.DATABASE_URL;
 process.env.OWNER_READ_ONLY = 'false';   // the shop's .env turns this on; tests choose per test
+// 28 Nov: nothing in a test reads the shop's .env (its settings alone made 13 suites fail on the PC)
+jest.mock('dotenv', () => ({ config: () => ({}) }));

@@ -12,7 +12,7 @@ const root = path.join(__dirname, '..', '..');
 const read = (...p) => fs.readFileSync(path.join(root, ...p), 'utf8');
 
 test('pages can be framed by this same site only; ledger data still needs login', async () => {
-  for (const u of ['/daily-entry-v2.html', '/pos_billing.html', '/pos-ledger.html']) {
+  for (const u of ['/daily-entry-v2.html', '/pos-preview2.html', '/pos-ledger.html']) {
     const r = await request(app).get(u);
     expect(r.status).toBe(200);
     expect(r.headers['x-frame-options']).toBe('SAMEORIGIN');
