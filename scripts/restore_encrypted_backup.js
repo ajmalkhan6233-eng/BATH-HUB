@@ -7,6 +7,8 @@ require('dotenv').config();
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const zlib = require('zlib');
+const { pipeline } = require('stream/promises');
 const { execFileSync } = require('child_process');
 const { decryptFile } = require('../utils/backupCrypto');
 
@@ -22,6 +24,16 @@ function realRunner(env) {
     };
 }
 
+// If the file starts with the gzip mark, unzip it in place.
+async function gunzipIfNeeded(file) {
+    const fd = fs.openSync(file, 'r'), head = Buffer.alloc(2);
+    fs.readSync(fd, head, 0, 2, 0); fs.closeSync(fd);
+    if (head[0] !== 0x1f || head[1] !== 0x8b) return;
+    const plain = file + '.plain';
+    try { await pipeline(fs.createReadStream(file), zlib.createGunzip(), fs.createWriteStream(plain)); fs.renameSync(plain, file); }
+    finally { fs.rmSync(plain, { force: true }); }
+}
+
 async function restoreEncrypted({ file, passphrase, env = process.env, run, keep = false, log = console.log }) {
     run = run || realRunner(env);
     const name = 'restore_test_' + new Date().toISOString().replace(/\D/g, '').slice(0, 14);
@@ -29,6 +41,7 @@ async function restoreEncrypted({ file, passphrase, env = process.env, run, keep
     const tmp = path.join(os.tmpdir(), name + '.sql');
     try {
         await decryptFile(file, tmp, passphrase);
+        await gunzipIfNeeded(tmp);   // the hourly GitHub backup is db/latest.sql.gz.enc: zipped inside the encryption
         log(`Decrypted OK (${fs.statSync(tmp).size} bytes). Restoring into throwaway database ${name} ...`);
         run.sql('postgres', `CREATE DATABASE ${name}`);
         try {

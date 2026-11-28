@@ -38,14 +38,20 @@
   function isoToDMY(v) { if (!v) return ''; var p = String(v).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : ''; }
   function todayISO() { var d = new Date(Date.now() + 19800000); return d.toISOString().slice(0, 10); }
 
-  // payload for POST/PUT /api/pos-bills. rows: [{code,name,qty,price}], disc: total Rs off (line + extra)
-  function billPayload(o) {
-    // 27 Nov (AJ): a price typed on a line (r.typed) is saved as that line's price, so the bill shows it; it is no longer spread over all lines as one discount
+  // 27 Nov (AJ): a price typed on a line (r.typed) is saved as that line's price, so the bill shows it; it is no longer spread over all lines as one discount.
+  // One rule for Bill, Hold and Quotation. rows: [{code,name,qty,price}], disc: total Rs off (line + extra)
+  function keptLines(rows, disc) {
     var off = function (r) { return r.typed ? Math.max(0, parseFloat(r.disc) || 0) : 0; };
-    var lines = o.rows.map(function (r) { return { item_name: r.name, item_code: r.code || undefined, qty: Number(r.qty), unit_price: money2(Number(r.price) - off(r)) }; });
-    var billDisc = Math.max(0, money2(o.disc - o.rows.reduce(function (s, r) { return s + off(r) * Number(r.qty); }, 0)));
+    var lines = rows.map(function (r) { return { item_name: r.name, item_code: r.code || undefined, qty: Number(r.qty), unit_price: money2(Number(r.price) - off(r)) }; });
+    var billDisc = Math.max(0, money2(disc - rows.reduce(function (s, r) { return s + off(r) * Number(r.qty); }, 0)));
     var subtotal = money2(lines.reduce(function (s, l) { return s + money2(money2(l.qty) * money2(l.unit_price)); }, 0));
     var pct = subtotal > 0 ? Math.round(billDisc / subtotal * 1e8) / 1e6 : 0;
+    return { lines: lines, billDisc: billDisc, subtotal: subtotal, pct: pct };
+  }
+
+  // payload for POST/PUT /api/pos-bills
+  function billPayload(o) {
+    var k = keptLines(o.rows, o.disc), lines = k.lines, subtotal = k.subtotal, pct = k.pct;
     var p = { customer_name: o.name || null, customer_phone: o.phone || null, items: lines, discount_pct: pct };
     if (o.salesman) p.salesman = o.salesman;
     var mode = String(o.method || 'cash').toLowerCase();
@@ -80,7 +86,7 @@
   }
 
   root.Pos2Api = {
-    items: items, itemByCode: itemByCode, mapItem: mapItem, billPayload: billPayload, saveBill: saveBill,
+    items: items, itemByCode: itemByCode, mapItem: mapItem, billPayload: billPayload, keptLines: keptLines, saveBill: saveBill,
     profit: function (rows, disc) { return j('/api/sale-profit', { method: 'POST', body: { items: rows.filter(function (r) { return r.code; }).map(function (r) { return { item_code: r.code, qty: r.qty, unit_price: r.price }; }), discount: disc } }).then(function (r) { return r.ok && r.d ? r.d : null; }).catch(function () { return null; }); },
     cap: function () { return j('/api/pos-bills/discount-cap').then(function (r) { return r.ok && r.d ? r.d : null; }).catch(function () { return null; }); },
     me: function () { return j('/api/me').then(function (r) { return r.ok ? r.d : null; }).catch(function () { return null; }); },
@@ -99,7 +105,8 @@
         return hit || j('/api/customers', { method: 'POST', body: { name: o.name || null, phone: o.phone, whatsapp: o.phone } }).then(function (n) { return n.ok ? n.d : null; });
       }).then(function (cust) {
         if (!cust) return { ok: false, d: { error: 'Could not save the customer.' } };
-        return j('/api/quotations', { method: 'POST', body: { customer_id: cust.id, discount: o.disc, notes: 'From POS', items: o.rows.map(function (l) { return { item_code: l.code || null, description: l.name, qty: l.qty, unit_price: l.price }; }) } });
+        var k = keptLines(o.rows, o.disc);
+        return j('/api/quotations', { method: 'POST', body: { customer_id: cust.id, discount: k.billDisc, notes: 'From POS', items: k.lines.map(function (l) { return { item_code: l.item_code || null, description: l.item_name, qty: l.qty, unit_price: l.unit_price }; }) } });
       });
     },
     sendReceipt: function (billId, phone, resend) { return j('/api/invoice-receipts/send', { method: 'POST', body: { bill_id: billId, customer_phone: phone, resend: resend || undefined } }); },

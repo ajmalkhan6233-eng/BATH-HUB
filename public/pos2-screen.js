@@ -268,9 +268,9 @@
   function loadHeld() { return PosCart.loadHeld(); }
   function holdBill() {
     if (!rows.length) { showError('Add at least one item before holding.'); return; }
-    var t = totals(), pct = t.gross ? Math.round(t.disc / t.gross * 1e8) / 1e6 : 0;   // item discounts + extra become one bill discount %
+    var k = api.keptLines(rows, totals().disc), pct = k.pct;   // typed line prices stay on their lines; only the rest is a bill discount
     var r = PosCart.holdAdd(loadHeld(), PosCart.makeHeld({ customer_name: $('customerName').value, customer_phone: $('customerPhone').value, discount_pct: pct, payment_method: $('paymentMethod').value.toLowerCase(),
-      rows: rows.map(function (x) { return { item_code: x.code, name: x.name, qty: x.qty, unit_price: x.price }; }) }));
+      rows: k.lines.map(function (x) { return { item_code: x.item_code || '', name: x.item_name, qty: x.qty, unit_price: x.unit_price }; }) }));
     if (!r.ok) { showError(r.reason === 'full' ? 'Held bills are full (max ' + PosCart.MAX_HELD + '). Resume or delete one first.' : 'Nothing to hold: add an item first.'); return; }
     PosCart.saveHeld(undefined, r.list); clearForNext(); $('heldPanel').innerHTML = 'Held bills: <strong id="heldCount">' + loadHeld().length + '</strong> · Last held bill saved on this device.'; render();
   }

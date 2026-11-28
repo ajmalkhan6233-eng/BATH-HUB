@@ -52,6 +52,27 @@ async function shopNumbers(pool, now = new Date()) {
         const list = (await c.query(`SELECT name, stock_level FROM products WHERE ${w} ORDER BY (stock_level::float / reorder_threshold), name LIMIT 10`)).rows;
         return { low: n.low, out: n.out, first_10: list.map((r) => ({ name: r.name, left: Number(r.stock_level) })) };
     });
+    // The older cheque register still holds cheques that are not linked to a bill. Shown on its own: the two lists can overlap, never add them.
+    const register = await part(pool, async (c) => (await c.query(
+        `SELECT to_char(due_date,'YYYY-MM-DD') AS due, amount FROM cheque_register WHERE status IN ('pending','held') AND due_date BETWEEN $1::date AND $2::date ORDER BY due_date, id`, [today, addDays(today, 7)])).rows
+        .map((r) => ({ due: r.due, amount: Number(r.amount) })));
+    // Weekly reorder list: the Dashboard's low-stock items plus the ones at zero that have a reorder level, grouped by vendor.
+    const reorder = await part(pool, async (c) => {
+        const rows = (await c.query(`SELECT COALESCE(NULLIF(to_jsonb(products)->>'preferred_supplier',''), NULLIF(to_jsonb(products)->>'vendor_code',''), 'No vendor') AS vendor, name, stock_level, reorder_threshold FROM products
+            WHERE active = true AND reorder_threshold > 0 AND stock_level <= reorder_threshold ORDER BY 1, stock_level, name LIMIT 100`)).rows;
+        const by = {};
+        rows.forEach((r) => { (by[r.vendor] = by[r.vendor] || []).push({ name: r.name, left: Number(r.stock_level), level: Number(r.reorder_threshold) }); });
+        return by;
+    });
+    // Money tied up in stock with no sale in 60 days. shop_first_sale shows when the shop has less than 60 days of sales.
+    const dead = await part(pool, async (c) => {
+        const first = (await c.query(`SELECT to_char(MIN(b.created_at::date),'YYYY-MM-DD') AS d FROM pos_bills b WHERE ${MC.LIVE}`)).rows[0].d;
+        const r = (await c.query(`SELECT p.name, p.stock_level, p.stock_level * COALESCE(p.avg_cost,0) AS cost_value, COUNT(*) OVER () AS items, SUM(p.stock_level * COALESCE(p.avg_cost,0)) OVER () AS total
+            FROM products p WHERE p.active = true AND p.stock_level > 0 AND NOT EXISTS (SELECT 1 FROM pos_bill_items i JOIN pos_bills b ON b.id = i.bill_id
+              WHERE i.item_code = p.item_code AND b.created_at::date > $1::date AND ${MC.LIVE}) ORDER BY 3 DESC, p.name LIMIT 10`, [addDays(today, -60)])).rows;
+        return { days: 60, shop_first_sale: first, full_60_days_of_sales: !!first && first <= addDays(today, -60), items: r.length ? Number(r[0].items) : 0,
+            cost_value: r.length ? r2(r[0].total) : 0, biggest_10: r.map((x) => ({ name: x.name, left: Number(x.stock_level), cost_value: r2(x.cost_value) })) };
+    });
     const advances = await part(pool, async (c) => (await c.query(
         `SELECT order_no, total, advance_amount, to_char(created_at::date,'YYYY-MM-DD') AS opened FROM pos_advance_orders WHERE status = 'open' ORDER BY created_at, id LIMIT 50`)).rows
         .map((r) => ({ order_no: r.order_no, total: Number(r.total), advance: Number(r.advance_amount), opened: r.opened, older_than_14_days: r.opened < addDays(today, -14) })));
@@ -60,7 +81,7 @@ async function shopNumbers(pool, now = new Date()) {
         today: await dayNumbers(pool, today, running), yesterday: await dayNumbers(pool, yesterday, running),
         cheques_overdue: cheques && cheques.filter((x) => x.due < today),
         cheques_next_7_days: cheques && cheques.filter((x) => x.due >= today),
-        stock: low, open_advance_orders: advances,
+        cheques_old_register_next_7_days: register, stock: low, reorder_by_vendor: reorder, unsold_stock: dead, open_advance_orders: advances,
     };
 }
 module.exports = { shopNumbers, colomboDay, addDays };

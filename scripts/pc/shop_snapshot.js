@@ -119,10 +119,14 @@ const health = () => new Promise(res => { const r = http.get('http://127.0.0.1:'
       WHERE b.voided = false AND b.total - COALESCE(p.paid,0) - COALESCE(n.cn,0) > 0`);
   const vmap = {}; for (const r of vb || []) vmap[r.vendor_name || '?'] = (vmap[r.vendor_name || '?'] || 0) + Number(r.owed);
   const vtop = Object.entries(vmap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const ch = await safe(`SELECT due_date::text AS d, amount FROM cheque_register WHERE status IN ('pending','held') AND due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 14 ORDER BY due_date`);
+  // 28 Nov: two lists exist. Bill cheques = what the Cheque Calendar shows; the older register can hold cheques with no bill. Shown apart (they can overlap).
+  const chBill = await safe(`SELECT c.due_date::text AS d, c.amount FROM vendor_bill_cheques c JOIN vendor_bills b ON b.id = c.bill_id WHERE b.voided = false AND c.status = 'ISSUED' AND c.due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 14 ORDER BY c.due_date`);
+  const chReg = await safe(`SELECT due_date::text AS d, amount FROM cheque_register WHERE status IN ('pending','held') AND due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 14 ORDER BY due_date`);
+  const chLine = (ch) => (ch ? (ch.length ? ch.map(r => r.d + ' ' + rs(r.amount)).join(' | ') : 'none') : NF);
   L.push('', '## Money out');
   L.push('Vendors owed (open bills): ' + (vb ? rs(Object.values(vmap).reduce((a, b) => a + b, 0)) + ' | top 5: ' + vtop.map(([n, v]) => n + ' ' + rs(v)).join(' | ') : NF));
-  L.push('Cheques due in the next 14 days (date, amount): ' + (ch ? (ch.length ? ch.map(r => r.d + ' ' + rs(r.amount)).join(' | ') : 'none') : NF));
+  L.push('Cheques due in the next 14 days, on vendor bills (date, amount): ' + chLine(chBill));
+  L.push('Cheques due in the next 14 days, older cheque register (may overlap, do not add): ' + chLine(chReg));
   L.push('Cash in hand: NOT FOUND (the app keeps no running cash-in-hand figure; today\'s cash in is above)');
 
   // ---- e2. Advance orders and returns (27 Nov, AJ): the chat must see ADV-nnn. No customer names here (same rule as the rest of this file).
