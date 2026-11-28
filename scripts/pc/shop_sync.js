@@ -41,7 +41,12 @@ async function main() {
   }
   const bill = (await pool.query('SELECT bill_number, created_at::text AS at FROM pos_bills ORDER BY created_at DESC, id DESC LIMIT 1')).rows[0];
   const noItems = Number((await pool.query('SELECT COUNT(*) n FROM pos_bills b WHERE NOT EXISTS (SELECT 1 FROM pos_bill_items i WHERE i.bill_id=b.id)')).rows[0].n);
+  // 28 Nov: the last 100 screen and server errors, so chat can read them (no stack, numbers hidden)
+  let errors = [];
+  try { errors = (await pool.query("SELECT to_char(e.at AT TIME ZONE 'Asia/Colombo','YYYY-MM-DD HH24:MI') AS at, e.page, e.message, e.count FROM client_errors e ORDER BY e.at DESC LIMIT 100")).rows; } catch (_) { /* no table yet */ }
   await pool.end();
+  const hide = (s) => clean('message', s).replace(/\+?\d(?:[ -]?\d){8,}/g, '#').replace(/\|/g, '/');
+  fs.writeFileSync(path.join(OUT, 'ERRORS.md'), [`# Last ${errors.length} app errors (newest first)`, '', '| time | page | what | times |', '|---|---|---|---|', ...errors.map((e) => `| ${e.at} | ${hide(e.page)} | ${hide(e.message)} | ${e.count} |`)].join('\n') + '\n');
   const now = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Colombo', hour12: false });
   const head = manifest.split(/\r?\n/).filter((l) => !/^\|/.test(l)).join('\n').replace(/^Taken:.*$/m, `Taken: ${now} Sri Lanka, automatic, from the live PC database.`).trim();
   fs.writeFileSync(path.join(OUT, 'MANIFEST.md'), `${head}\n\n| table | rows | columns | left out |\n|---|---|---|---|\n${rows.join('\n')}\n`);

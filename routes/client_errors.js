@@ -14,21 +14,26 @@ let ready = null;
 const ensure = () => ready || (ready = pool.query(`CREATE TABLE IF NOT EXISTS client_errors (
   id SERIAL PRIMARY KEY, at TIMESTAMPTZ DEFAULT NOW(), page TEXT, message TEXT, stack TEXT, ua TEXT, count INT DEFAULT 1)`));
 
-const clean = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').replace(/\b\d{9,}\b/g, '#').slice(0, n);
+// no query strings, no phone or account numbers (also written with spaces or dashes)
+const clean = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').replace(/\?[^\s'"):]*=[^\s'"):]*/g, '').replace(/\+?\d(?:[ -]?\d){8,}/g, '#').slice(0, n);
+const VER = (() => { try { return require('fs').readFileSync(require('path').join(__dirname, '..', 'VERSION'), 'utf8').trim(); } catch (_) { return '?'; } })();
+
+async function save(pageRaw, messageRaw, stackRaw, uaRaw) {
+  const body = clean(messageRaw, 280);
+  if (!body) return;
+  const message = `${body} [v${VER}]`;
+  const page = clean(String(pageRaw || '').split('?')[0].split('#')[0], 150);
+  await ensure();
+  // same error on same page within a day = bump the counter instead of a new row
+  const up = await pool.query(`UPDATE client_errors SET count = count + 1, at = NOW() WHERE page = $1 AND message = $2 AND at > NOW() - INTERVAL '1 day' RETURNING id`, [page, message]);
+  if (!up.rowCount) await pool.query(`INSERT INTO client_errors (page, message, stack, ua) VALUES ($1,$2,$3,$4)`, [page, message, clean(stackRaw, 800), clean(uaRaw, 120)]);
+}
 const limiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false, message: { error: 'slow down' } });
 
 router.post('/client-error', limiter, express.json({ limit: '8kb' }), async (req, res) => {
   try {
     const b = req.body || {};
-    const message = clean(b.message, 300);
-    if (!message) return res.status(204).end();
-    const page = clean(String(b.page || '').split('?')[0].split('#')[0], 150);
-    const stack = clean(b.stack, 800);
-    const ua = clean(req.get('user-agent'), 120);
-    await ensure();
-    // same error on same page within a day = bump the counter instead of a new row
-    const up = await pool.query(`UPDATE client_errors SET count = count + 1, at = NOW() WHERE page = $1 AND message = $2 AND at > NOW() - INTERVAL '1 day' RETURNING id`, [page, message]);
-    if (!up.rowCount) await pool.query(`INSERT INTO client_errors (page, message, stack, ua) VALUES ($1,$2,$3,$4)`, [page, message, stack, ua]);
+    await save(b.page, b.message, b.stack, req.get('user-agent'));
     res.status(204).end();
   } catch (e) { res.status(204).end(); }   // never make an error report cause another error
 });
@@ -45,4 +50,6 @@ router.get('/client-errors', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Could not read the error log.' }); }
 });
 
+router.save = save;
+router.clean = clean;
 module.exports = router;

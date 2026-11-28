@@ -3548,7 +3548,9 @@ app.post('/api/dashboard-assistant/chat', async (req, res) => {
 });
 /* ===== END M8 ===== */
 
-app.use(require('./utils/safety').errorHandler);   // FIX 1: anything uncaught becomes a calm JSON answer
+const safety = require('./utils/safety');
+safety.errorHandler.onError = (req, err) => { require('./routes/client_errors').save('server', `${req.method} ${String(req.originalUrl || '').split('?')[0]}: ${err && err.message}`).catch(() => {}); };
+app.use(safety.errorHandler);   // FIX 1: anything uncaught becomes a calm JSON answer
 
 // ─── START ────────────────────────────────────────────────────────────────────
 if (require.main === module) {

@@ -9,7 +9,10 @@ function errorHandler(err, req, res, next) {   // 4 arguments = Express error ha
   if (res.headersSent) return next(err);
   const status = Number(err && (err.status || err.statusCode)) || 500;
   const code = status >= 400 && status < 600 ? status : 500;
-  if (code >= 500) console.error('[safety] error on', req.method, (req.originalUrl || '').split('?')[0], '-', err && err.message);
+  if (code >= 500) {
+    console.error('[safety] error on', req.method, (req.originalUrl || '').split('?')[0], '-', err && err.message);
+    if (errorHandler.onError) errorHandler.onError(req, err);
+  }
   const msg = code === 413 ? 'That is too large.' : code === 400 ? 'That request could not be read.' : code >= 500 ? 'Something went wrong. Please try again.' : 'Request not accepted.';
   if (String(req.originalUrl || '').startsWith('/api')) return res.status(code).json({ error: msg });
   return res.status(code).type('text').send(msg);
