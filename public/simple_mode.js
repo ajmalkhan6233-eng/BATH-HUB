@@ -78,9 +78,10 @@
     var ul = document.querySelector('.sidebar-nav');
     if (ul && !document.getElementById('sm-bar')) { var bar = document.createElement('div'); bar.id = 'sm-bar'; bar.className = 'sm-bar'; ul.parentNode.insertBefore(bar, ul); mkBtns(bar, null); }
   }
-  function addOwnerPages() {
+  var RETRY_MS = [800, 2500, 6000, 15000, 30000];   // 28 Nov: one failed /api/me hid Vendor 360 and the other owner screens until a refresh
+  function addOwnerPages(attempt) {
     if (typeof addFramePage !== 'function') return;
-    fetch('/api/me', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (me) {
+    fetch('/api/me', { credentials: 'include' }).then(function (r) { if (r.ok) return r.json(); if (r.status === 401 || r.status === 403) return null; throw new Error('me ' + r.status); }).then(function (me) {
       if (!me || (me.role !== 'admin' && me.role !== 'owner')) return;
       addFramePage({ key: 'saleshub', label: 'Sales tools', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-receipt"/></svg>', url: '/hub.html?set=sales', sub: 'Daily ledger, POS + ledger, customers, credit, quotations', after: 'pos' });
       addFramePage({ key: 'stockmgr', label: 'Stock & items', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-box"/></svg>', url: '/stock_manager.html', sub: 'Every item: double-click to edit name, category, price, picture', after: 'saleshub' });
@@ -95,7 +96,7 @@
       addFramePage({ key: 'reportshub', label: 'Download reports', icon: '<svg class="bh-icon" aria-hidden="true"><use href="#i-trend"/></svg>', url: '/reports_hub.html', sub: 'Vendors, GRN, daily, weekly, monthly profit', after: 'dashboard' });
       var ov = document.querySelector('.sidebar-nav [data-page="vendors"] .nav-label'); if (ov) ov.textContent = 'Pay vendors';
       organise();
-    }).catch(function () { /* menu stays as it is */ });
+    }).catch(function () { var n = attempt || 0; if (RETRY_MS[n]) setTimeout(function () { addOwnerPages(n + 1); }, RETRY_MS[n]); });
   }
   function start() {
     addButtons(); organise(); addOwnerPages();
