@@ -23,6 +23,11 @@ const { Pool } = require('pg');
 const router = express.Router();
 
 const pool = require('../utils/pool');
+const MC = require('../utils/moneyCore');
+const { todayLK } = require('../utils/lkTime');
+
+// No typed day sheet: the sales of the same days from the POS bills (utils/moneyCore.js).
+const billDays = (from, to) => MC.days(pool, from, to).catch(() => []);
 
 // ═══════════════════════ CASH-FLOW FORECAST ═══════════════════════
 // GET /cash-position-forecast?months=3&healthy_threshold=200000
@@ -48,7 +53,12 @@ router.get('/cash-position-forecast', async (req, res) => {
             FROM daily_summary
             WHERE report_date >= CURRENT_DATE - INTERVAL '30 days'
         `);
-        const avgDaily = Number(avgRes.rows[0].avg_daily) || 0;
+        const today = todayLK();
+        let avgDaily = Number(avgRes.rows[0].avg_daily) || 0;
+        if (!avgDaily) {
+            const recent = await billDays(new Date(Date.parse(today) - 30 * 86400000).toISOString().slice(0, 10), today);
+            if (recent.length) avgDaily = MC.dayTotal(recent).sales / recent.length;
+        }
 
         const forecast = [];
         for (let m = 0; m < months; m++) {
@@ -80,6 +90,9 @@ router.get('/cash-position-forecast', async (req, res) => {
             `, [monthStart]);
 
             const d = detail.rows[0];
+            const iso = (x) => (x instanceof Date ? `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}` : String(x).slice(0, 10));
+            let actual = Number(d.actual_sales) || 0;
+            if (!actual && iso(d.month_start) <= today) actual = MC.dayTotal(await billDays(iso(d.month_start), iso(d.month_end) < today ? iso(d.month_end) : today)).sales;
             const projectedSales = avgDaily * Number(d.days_in_month);
             const totalDue = Number(d.cheques_due) + Number(d.loans_due);
             const netPosition = projectedSales - totalDue;
@@ -89,7 +102,7 @@ router.get('/cash-position-forecast', async (req, res) => {
                 month_start: d.month_start,
                 month_end: d.month_end,
                 projected_sales: Math.round(projectedSales),
-                actual_sales_to_date: Number(d.actual_sales),
+                actual_sales_to_date: actual,
                 cheques_due: Number(d.cheques_due),
                 cheques_count: Number(d.cheques_count),
                 investor_loans_due: Number(d.loans_due),

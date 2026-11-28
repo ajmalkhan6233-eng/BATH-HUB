@@ -126,15 +126,16 @@ describe('supplier aging', () => {
   });
 
   test('the endpoint returns the same thing from the database', async () => {
+    const recent = new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10);   // age is counted from the real today
     db.none(`CREATE TABLE suppliers (id SERIAL PRIMARY KEY, name TEXT)`);
     db.none(`CREATE TABLE grn_records (id SERIAL PRIMARY KEY, supplier_id INT, total_amount NUMERIC, grn_date DATE)`);
     db.none(`CREATE TABLE supplier_payments (id SERIAL PRIMARY KEY, supplier_id INT, amount NUMERIC)`);
     db.none(`INSERT INTO suppliers (name) VALUES ('Lanka Tiles')`);
-    db.none(`INSERT INTO grn_records (supplier_id, total_amount, grn_date) VALUES (1, 100000, '2026-01-05'), (1, 40000, '2026-10-25')`);
+    db.none(`INSERT INTO grn_records (supplier_id, total_amount, grn_date) VALUES (1, 100000, '2026-01-05'), (1, 40000, '${recent}')`);
     db.none(`INSERT INTO supplier_payments (supplier_id, amount) VALUES (1, 100000)`);
     const res = await request(app).get('/api/supplier-aging');
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
-    expect(res.body[0]).toMatchObject({ supplier_name: 'Lanka Tiles', balance_due: 40000, oldest_grn: '2026-10-25', aging_bucket: '0-30' });
+    expect(res.body[0]).toMatchObject({ supplier_name: 'Lanka Tiles', balance_due: 40000, oldest_grn: recent, aging_bucket: '0-30' });
   });
 });

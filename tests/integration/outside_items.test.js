@@ -49,27 +49,27 @@ test('cashier: refused by default, allowed only after the owner switches it on i
   expect((await add({ name: 'Cashier Item', qty: 1, price: 10, profit: 1 })).status).toBe(403);
 });
 
-test('stock deduction ON: sell 2 outside items, repeat one: codes reused, stock 0 after the bill, profit right, real cost recalculates', async () => {
+test('stock deduction ON: sell 2 outside items, repeat one: each its own code, stock 0 after the bill, profit right, real cost recalculates', async () => {
   const a1 = (await add({ name: 'Brass Mixer', qty: 2, price: 1000, profit: 300 })).body;
   const b1 = (await add({ name: 'Wall Hook', qty: 1, price: 500, cost: 400 })).body;
   const a2 = (await add({ name: '  brass   mixer ', qty: 1, price: 1100, profit: 350 })).body;
-  expect(a1.item_code).toBe(a2.item_code); expect(b1.item_code).not.toBe(a1.item_code);
-  const A = a1.item_code, B = b1.item_code;
-  expect(await stock(A)).toBe(3); expect(await stock(B)).toBe(1); expect(await cost(A)).toBe(750);
+  expect(new Set([a1.item_code, a2.item_code, b1.item_code]).size).toBe(3);
+  const A = a1.item_code, A2 = a2.item_code, B = b1.item_code;
+  expect(await stock(A)).toBe(2); expect(await stock(A2)).toBe(1); expect(await stock(B)).toBe(1); expect(await cost(A)).toBe(700); expect(await cost(A2)).toBe(750);
   expect((await add({ name: 'Loss Item', qty: 1, price: 100, cost: 150 })).status).toBe(400);
-  const r = await bill([{ item_name: 'Brass Mixer', item_code: A, qty: 3, unit_price: 1100 }, { item_name: 'Wall Hook', item_code: B, qty: 1, unit_price: 500 }]);
+  const r = await bill([{ item_name: 'Brass Mixer', item_code: A, qty: 2, unit_price: 1000 }, { item_name: 'brass mixer', item_code: A2, qty: 1, unit_price: 1100 }, { item_name: 'Wall Hook', item_code: B, qty: 1, unit_price: 500 }]);
   expect(r.status).toBe(200);
-  expect(await stock(A)).toBe(0); expect(await stock(B)).toBe(0);
-  const lines = (await pool.query(`SELECT qty, unit_price, unit_cost FROM pos_bill_items WHERE item_code IN ($1,$2)`, [A, B])).rows;
-  expect(lines.reduce((s, l) => s + Number(l.qty) * (Number(l.unit_price) - Number(l.unit_cost)), 0)).toBe(3 * (1100 - 750) + (500 - 400));   // 1150
+  expect(await stock(A)).toBe(0); expect(await stock(A2)).toBe(0); expect(await stock(B)).toBe(0);
+  const lines = (await pool.query(`SELECT qty, unit_price, unit_cost FROM pos_bill_items WHERE item_code IN ($1,$2,$3)`, [A, A2, B])).rows;
+  expect(lines.reduce((s, l) => s + Number(l.qty) * (Number(l.unit_price) - Number(l.unit_cost)), 0)).toBe(2 * (1000 - 700) + (1100 - 750) + (500 - 400));   // 1050
   const bad = await request(app).post('/api/outside-items/' + a2.pending_id + '/real-cost').send({ cost: 800, reason: '' });
   expect(bad.status).toBe(400);
   const ok = (await request(app).post('/api/outside-items/' + a2.pending_id + '/real-cost').send({ cost: 800, reason: 'supplier bill 55' })).body;
-  expect(ok.lines_updated).toBe(1); expect(ok.profit_change).toBe(-150);
-  expect(await cost(A)).toBe(800);
+  expect(ok.lines_updated).toBe(1); expect(ok.profit_change).toBe(-50);
+  expect(await cost(A2)).toBe(800);
   expect((await request(app).post('/api/outside-items/' + a2.pending_id + '/real-cost').send({ cost: 900, reason: 'again' })).status).toBe(409);
   const led = (await pool.query(`SELECT SUM(qty_change)::float s FROM stock_movements WHERE item_code = $1`, [A])).rows[0].s;
-  expect(led).toBe(0);   // +3 in, -3 sold: the ledger nets to 0 too
+  expect(led).toBe(0);   // +2 in, -2 sold: the ledger nets to 0 too
 });
 
 test('cancelled bill: a VOID gives the stock back, the outside item is taken out again so stock stays 0', async () => {

@@ -23,7 +23,7 @@ beforeAll(async () => {
 });
 
 const send = (p) => request(app).post('/api/grn-manual').field('payload', JSON.stringify(p));
-const base = (o = {}) => ({ credit_days: 0, supplier_name: 'Metro', grn_date: '2026-10-16', lines: [{ name: 'Basin ' + Math.random().toString(36).slice(2, 7), qty: 20, unit_cost: 34000 }], ...o });
+const base = (o = {}) => ({ credit_days: 0, supplier_name: 'Metro', grn_date: '2026-10-16', lines: [{ name: 'Tap ' + Math.random().toString(36).slice(2, 7), qty: 20, unit_cost: 34000 }], ...o });
 
 test('new GRN with no cheque yet: payment pending, stock shown, vendor owed', async () => {
   const r = await send(base());
@@ -62,9 +62,10 @@ test('bad credit days is a 400 and nothing is saved', async () => {
   expect(db.many(`SELECT * FROM grn_records`).length).toBe(before);
 });
 
+const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 test('written cheques show in the credit view; after-months fall away; long-dated flagged', async () => {
   const bill = db.many(`SELECT * FROM vendor_bills WHERE vendor_name='Metro'`)[0];
-  await pool.query(`INSERT INTO vendor_bill_cheques (bill_id, cheque_no, amount, cheque_date, due_date, status) VALUES ($1,'A',170000,'2026-11-16','2026-11-16','ISSUED'),($1,'B',170000,'2027-02-18','2027-02-18','ISSUED')`, [bill.id]);
+  await pool.query(`INSERT INTO vendor_bill_cheques (bill_id, cheque_no, amount, cheque_date, due_date, status) VALUES ($1,'A',170000,$2,$2,'ISSUED'),($1,'B',170000,$3,$3,'ISSUED')`, [bill.id, inDays(20), inDays(120)]);   // counted from the real today
   const r = await request(app).get('/api/vendor-credit/vendor?name=metro');
   expect(r.status).toBe(200);
   const v = r.body.vendor;

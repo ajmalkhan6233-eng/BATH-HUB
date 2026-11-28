@@ -51,7 +51,7 @@ async function slToday(body) {
   if (ov && ov.setup_costs && ov.setup_costs.length) {
     body.innerHTML += '<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">One-time set-up costs (not in the daily cost or break-even)</div>' + ov.setup_costs.map(c =>
       `<div style="margin-top:8px"><div style="font-size:18px;font-weight:700">${slEsc(c.label)} (${slEsc(c.status)}): ${slRs(c.amount)}</div><div style="font-size:12px;color:var(--text2)">Paid on ${slEsc(c.paid_on)}</div>` +
-      slBar(c.payback.pct) + `<div style="font-size:12px;margin-top:4px">Paid back so far: ${slRs(c.payback.paid_back)} of ${slRs(c.amount)} (${c.payback.pct}%) &middot; <span style="color:var(--text2)">${slEsc(c.payback.note)}</span></div></div>`).join('') + '</div>';
+      slBar(c.payback.pct || 0) + `<div style="font-size:12px;margin-top:4px">Paid back so far: ${slRs(c.payback.paid_back)} of ${slRs(c.amount)}${c.payback.pct == null ? '' : ' (' + c.payback.pct + '%)'} &middot; <span style="color:var(--text2)">${slEsc(c.payback.note)}</span></div></div>`).join('') + '</div>';
   }
 }
 

@@ -87,7 +87,7 @@ function createRouter(pool, { today = todayLK } = {}) {
             const costs = M.dailyCosts(s);
 
             // margin: the last 30 days of real figures, else the setting
-            const hist = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_sale),0) AS sales FROM daily_summary WHERE report_date >= ($1::date - 30) AND report_date < $1::date AND gross_profit > 0`, [t], [{ gp: 0, sales: 0 }]))[0];
+            const hist = MC.dayTotal((await MC.days(pool, dayBefore(t, 30), dayBefore(t, 1))).filter(d => d.gp > 0));
             const histMargin = marginFromProfit(num(hist.gp), num(hist.sales));
             const margin = histMargin != null ? histMargin : s.margin_pct;
 
@@ -129,10 +129,19 @@ function createRouter(pool, { today = todayLK } = {}) {
     });
 
     // ── screen 2: month ─────────────────────────────────────────────────────
+    const dayBefore = (d, n) => new Date(Date.parse(String(d).slice(0, 10)) - n * 86400000).toISOString().slice(0, 10);
     async function monthFigures(ym, s) {
         const a = firstDay(ym), b = nextMonth(ym);
         const agg = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COALESCE(SUM(total_sale),0) AS sales, COUNT(*) AS days FROM daily_summary WHERE report_date >= $1::date AND report_date < $2::date`, [a, b], [{ gp: 0, exp: 0, sales: 0, days: 0 }]))[0];
         const ret = (await soft(`SELECT COALESCE(SUM(CASE WHEN total_sale < 0 THEN -total_sale ELSE total_sale END),0) AS r FROM daily_reports WHERE is_refund = true AND report_date >= $1::date AND report_date < $2::date`, [a, b], [{ r: 0 }]))[0];
+        // no typed day sheet: sales and gross profit come from the bills; expenses are not on a bill, so net stays unknown
+        if (!Number(agg.days)) {
+            const list = await MC.days(pool, a, dayBefore(b, 1));
+            if (list.length) {
+                const tot = MC.dayTotal(list);
+                return { gross_profit: tot.gp, returns: M.money2(num(ret.r)), expenses: null, fixed_costs_added: 0, fixed_costs: { rent_and_bills: 0, daily_pay: 0, total: 0 }, sales: tot.sales, days_with_data: list.length, net: null };
+            }
+        }
         const days = Number(agg.days);
         const fixedParts = s.add_fixed_to_net ? M.fixedCostsForMonth(days, s) : { rent_and_bills: 0, daily_pay: 0, total: 0 };
         const fixed = fixedParts.total;
@@ -160,17 +169,18 @@ function createRouter(pool, { today = todayLK } = {}) {
 
     async function monthView(ym, s) {
         const fig = await monthFigures(ym, s);
-        const split = M.monthSplit(fig.net, s);
+        const split = fig.net === null ? { save: null, pool: null, colleague: null, owner: null, keep: null } : M.monthSplit(fig.net, s);
         const adjLines = await outstandingAdjustments(s, ym);
         const adj = adjLines.reduce((a, l) => ({ colleague: a.colleague + l.colleague, owner: a.owner + l.owner }), { colleague: 0, owner: 0 });
         const colleaguePay = Math.max(0, split.colleague - adj.colleague), ownerPay = Math.max(0, split.owner - adj.owner);
         const closed = (await soft(`SELECT ym, net, savings, colleague, owner_comm, keep, closed_at FROM sal_month_close WHERE ym = $1`, [ym], []))[0] || null;
+        const pay = (x) => (fig.net === null ? null : M.money2(x));
         return {
             ym, ...fig, split, adjustments: adjLines,
-            colleague_commission: { calculated: split.colleague, adjustment: M.money2(adj.colleague), payable: M.money2(colleaguePay), carried_forward: M.money2(Math.max(0, adj.colleague - split.colleague)) },
-            owner_commission: { calculated: split.owner, adjustment: M.money2(adj.owner), payable: M.money2(ownerPay), carried_forward: M.money2(Math.max(0, adj.owner - split.owner)) },
+            colleague_commission: { calculated: split.colleague, adjustment: M.money2(adj.colleague), payable: pay(colleaguePay), carried_forward: M.money2(Math.max(0, adj.colleague - split.colleague)) },
+            owner_commission: { calculated: split.owner, adjustment: M.money2(adj.owner), payable: pay(ownerPay), carried_forward: M.money2(Math.max(0, adj.owner - split.owner)) },
             stays_with_owner: split.keep, closed: closed ? { closed_at: closed.closed_at, net: Number(closed.net) } : null,
-            note: fig.net <= 0 ? 'Net profit is zero or negative: no savings and no commission this month.' : null,
+            note: fig.net === null ? 'No expense figures for this month: net profit and commission are PENDING.' : fig.net <= 0 ? 'Net profit is zero or negative: no savings and no commission this month.' : null,
         };
     }
 
@@ -192,6 +202,7 @@ function createRouter(pool, { today = todayLK } = {}) {
             if (ym >= today().slice(0, 7)) return res.status(400).json({ error: 'A month can only be closed after it has ended.' });
             if ((await soft(`SELECT 1 FROM sal_month_close WHERE ym = $1`, [ym], [])).length) return res.status(409).json({ error: `${ym} is already closed. A closed month is never reopened; late returns become an adjustment next month.` });
             const s = await settings(), v = await monthView(ym, s);
+            if (v.net === null) return res.status(400).json({ error: 'This month has no expense figures yet, so it cannot be closed.' });
             // deduct the waiting adjustments from this month's commission, oldest first; anything larger than the commission stays outstanding
             const applied = {};
             let remC = v.split.colleague, remO = v.split.owner;
@@ -237,6 +248,11 @@ function createRouter(pool, { today = todayLK } = {}) {
                 const paidOn = c.paid_on instanceof Date ? c.paid_on.toISOString().slice(0, 10) : String(c.paid_on).slice(0, 10);
                 const agg = (await soft(`SELECT COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COUNT(*) AS days FROM daily_summary WHERE report_date >= $1::date AND gp_status <> 'NOT_AVAILABLE'`, [paidOn], [{ gp: 0, exp: 0, days: 0 }]))[0];
                 const days = Number(agg.days);
+                if (!days && (await MC.days(pool, paidOn, t)).length) {   // sales exist, expenses do not: do not show a made-up zero
+                    setup.push({ id: c.id, label: c.label, amount: Number(c.amount), paid_on: paidOn, status: c.status, note: c.note,
+                        payback: { profit_since: null, days_counted: 0, paid_back: null, pct: null, note: 'No expense figures yet, so payback cannot be worked out.' } });
+                    continue;
+                }
                 const fixedPerDay = s.add_fixed_to_net ? (s.rent_month + s.utilities_month) / (s.working_days > 0 ? s.working_days : 26) + s.owner_daily + s.colleague_daily : 0;
                 const profitSince = M.money2(num(agg.gp) - num(agg.exp) - fixedPerDay * days);
                 const amount = Number(c.amount), back = Math.max(0, Math.min(amount, profitSince));

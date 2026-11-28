@@ -18,6 +18,20 @@ const rsPlain = n => 'Rs ' + Number(n).toLocaleString('en-US', { minimumFraction
 const CASH_IN_EXPR = `CASE WHEN (cash_sale+card_sale+online_sale+credit_sale)>0 THEN (cash_sale+card_sale+online_sale+credit_sale) ELSE total_sale END`;
 const CASH_OUT_EXPR = `(total_expenses+payments+salary+cash_out-COALESCE(cash_received,0))`;
 
+// No typed day sheet in the period: sales and gross profit from the bills. Expenses and the payment split are not on a bill, so they are left out.
+async function billDays(pool, from, to) {
+    return (await require('../moneyCore').days(pool, from, to)).filter(d => d.source === 'bills');
+}
+const BILL_NOTE = 'No daily summary is typed for this period: figures come from POS bills. Expenses and the cash or card split are not shown because they are not on a bill.';
+function billReport(rows, keyCol) {
+    const total = { [keyCol.key]: 'Total', total_sale: round2(sum(rows, 'total_sale')), gross_profit: round2(sum(rows, 'gross_profit')) };
+    return {
+        summary: [{ label: 'Total sales', value: total.total_sale, type: 'money' }, { label: 'Gross profit', value: total.gross_profit, type: 'money' }],
+        columns: [keyCol, { key: 'total_sale', label: 'Total sale', type: 'money' }, { key: 'gross_profit', label: 'Gross profit', type: 'money' }],
+        rows, total, notes: [BILL_NOTE],
+    };
+}
+
 async function dailyRows(pool, from, to) {
     const r = await pool.query(
         `SELECT TO_CHAR(report_date,'YYYY-MM-DD') AS date, total_sale, cash_sale, card_sale, online_sale, credit_sale, total_expenses, payments, salary,
@@ -30,7 +44,12 @@ const REPORTS = {
     daily_summary: {
         label: 'Daily summary', description: 'Sales by day: cash, card, online, credit, and expenses.',
         async build(pool, { from, to }) {
-            const rows = (await dailyRows(pool, from, to)).map(r => ({
+            const sheet = await dailyRows(pool, from, to);
+            if (!sheet.length) {
+                const bills = await billDays(pool, from, to);
+                if (bills.length) return billReport(bills.map(d => ({ date: d.day, total_sale: d.sales, gross_profit: d.gp })), { key: 'date', label: 'Date', type: 'date' });
+            }
+            const rows = sheet.map(r => ({
                 date: r.date, total_sale: num(r.total_sale), cash_sale: num(r.cash_sale), card_sale: num(r.card_sale), online_sale: num(r.online_sale),
                 credit_sale: num(r.credit_sale), total_expenses: num(r.total_expenses),
             }));
@@ -59,6 +78,14 @@ const REPORTS = {
         label: 'Profit and loss', description: 'Sales, profit and expenses added up by month.',
         async build(pool, { from, to }) {
             const days = await dailyRows(pool, from, to);
+            if (!days.length) {
+                const m = new Map();
+                for (const d of await billDays(pool, from, to)) {
+                    const k = d.day.slice(0, 7), o = m.get(k) || { month: k, total_sale: 0, gross_profit: 0 };
+                    o.total_sale = round2(o.total_sale + d.sales); o.gross_profit = round2(o.gross_profit + num(d.gp)); m.set(k, o);
+                }
+                if (m.size) return billReport([...m.values()], { key: 'month', label: 'Month', type: 'text' });
+            }
             const byMonth = new Map();
             for (const d of days) {
                 const m = d.date.slice(0, 7);
