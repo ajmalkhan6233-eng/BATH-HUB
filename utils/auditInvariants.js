@@ -127,20 +127,29 @@ const CHECKS = [
   {
     id: 'grn_vs_bill', name: 'every GRN total equals its vendor bill', needs: needs('grn_records', 'vendor_bills'),
     run: async (pool) => {
+      // 28 Nov (AJ): items billed but still coming (vendor_pending_items PENDING) are part of the bill, not a mismatch
+      const coming = (await has(pool, 'vendor_pending_items'))
+        ? (await pool.query(`SELECT bill_no, SUM(amount) AS amount FROM vendor_pending_items WHERE status = 'PENDING' GROUP BY bill_no`)).rows : [];
+      const comingFor = (no) => Number((coming.find((c) => c.bill_no === no) || {}).amount || 0);
       const r = await pool.query(`
         SELECT g.grn_number, g.supplier_name, g.grn_total, b.total AS bill_total, b.id IS NULL AS no_bill
         FROM (SELECT grn_number, MAX(supplier_name) AS supplier_name, SUM(total_amount) AS grn_total FROM grn_records WHERE grn_number IS NOT NULL GROUP BY grn_number) g
         LEFT JOIN vendor_bills b ON b.bill_no = g.grn_number AND b.voided = FALSE
         WHERE b.id IS NULL OR ABS(b.total - g.grn_total) > ${TOL} ORDER BY g.grn_number DESC LIMIT 200`);
-      const diff = r.rows.filter((x) => !x.no_bill);
-      if (diff.length) return res('RED', `${diff.length} GRN(s) whose bill total is different`, diff);
-      return r.rows.length ? res('WARN', `${r.rows.length} GRN(s) with no vendor bill yet (photo or WhatsApp drafts?)`, r.rows) : res('OK', 'every GRN has a bill with the same total');
+      const explained = r.rows.filter((x) => !x.no_bill && Math.abs(Number(x.bill_total) - Number(x.grn_total) - comingFor(x.grn_number)) <= TOL);
+      const diff = r.rows.filter((x) => !x.no_bill && !explained.includes(x));
+      const note = explained.length ? `; Rs ${round2(explained.reduce((s, x) => s + comingFor(x.grn_number), 0)).toLocaleString('en-US')} items coming` : '';
+      if (diff.length) return res('RED', `${diff.length} GRN(s) whose bill total is different${note}`, diff);
+      const noBill = r.rows.filter((x) => x.no_bill);
+      return noBill.length ? res('WARN', `${noBill.length} GRN(s) with no vendor bill yet (photo or WhatsApp drafts?)${note}`, noBill) : res('OK', `every GRN has a bill with the same total${note}`);
     },
   },
   {
     id: 'stock_vs_ledger', name: 'stock = GRN in minus sales out (change since last run)', needs: needs('products', 'grn_records', 'pos_bills', 'pos_bill_items'),
     run: async (pool, opts = {}) => {
-      // gap = stock_level - (GRN qty - sold qty on bills that are not void). A gap that stays the same is opening stock
+      const returned = new Map((await has(pool, 'vendor_return_lines'))
+        ? (await pool.query(`SELECT item_code, SUM(qty) AS qty FROM vendor_return_lines GROUP BY item_code`)).rows.map((x) => [x.item_code, Number(x.qty)]) : []);
+      // gap = stock_level - (GRN qty - sold qty on bills that are not void - qty returned to vendors). A gap that stays the same is opening stock
       // (stock entered before the app tracked it). A gap that CHANGES means stock moved without a GRN or a bill.
       const r = await pool.query(`
         SELECT p.item_code, p.name, COALESCE(p.stock_level,0) AS stock,
@@ -151,7 +160,7 @@ const CHECKS = [
                    ${MC.LIVE_JOIN} AND i.item_code IS NOT NULL GROUP BY i.item_code) s ON s.item_code = p.item_code
         WHERE p.item_code IS NOT NULL AND p.active = true`);
       const gaps = {};
-      for (const x of r.rows) gaps[x.item_code] = round2(Number(x.stock) - (Number(x.grn_in) - Number(x.sold)));
+      for (const x of r.rows) gaps[x.item_code] = round2(Number(x.stock) - (Number(x.grn_in) - Number(x.sold) - (returned.get(x.item_code) || 0)));
       const prev = opts.previousGaps;
       const withOpening = Object.values(gaps).filter((g) => Math.abs(g) > TOL).length;
       if (!prev) return res('OK', `first run: baseline saved (${r.rows.length} items, ${withOpening} carry opening stock)`, [], { gaps });

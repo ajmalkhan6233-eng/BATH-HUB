@@ -7,6 +7,7 @@ const express = require('express');
 const pool = require('../utils/pool');
 const audit = require('../utils/moneyAudit');
 const A = require('../utils/vendorAdjust');
+const stockLedger = require('../utils/stock_ledger');
 const { todayLK } = require('../utils/lkTime');
 const router = express.Router();
 const bad = (m) => { const e = new Error(m); e.status = 400; return e; };
@@ -41,6 +42,7 @@ router.post('/vendor-returns', async (req, res) => {
         if (!p) throw bad(`Item ${code} not found`);
         const r = A.returnLine({ stock: p.stock_level, avgCost: p.avg_cost, qty: l.qty, rate: l.rate });
         await c.query('UPDATE products SET stock_level=$1, avg_cost=$2 WHERE item_code=$3', [r.newStock, r.newAvgCost, code]);
+        await stockLedger.recordSafe(c, { item_code: code, qty_change: -Number(l.qty), reason: 'vendor_return', ref_type: 'vendor_bill', ref_id: billId });   // 28 Nov: stock moved with no movement line (item 009)
         amount = A.r2(amount + r.credit);
         detail.push({ item_code: code, name: p.name, qty: Number(l.qty), credit: r.credit, stock_now: r.newStock, avg_cost_now: r.newAvgCost });
       }

@@ -37,6 +37,7 @@
         var diff = d.difference, label = diff === 0 ? 'Balanced' : diff < 0 ? 'We paid ' + rs(-diff) + ' extra' : rs(diff) + ' still to pay';
         strip = '<div class="strip ' + d.state + '" id="gi-strip"><div class="row"><span>Bill total ' + rs(d.bill_total) + '</span><span>Paid (cash + cheques) ' + rs(d.paid) + '</span><span>Difference ' + rs(diff) + '</span></div>' +
           '<div class="sm">Cash ' + rs(d.cash) + ' + cheques ' + rs(d.cheques_total) + (d.cheques.length ? ' (' + d.cheques.map(function (c) { return esc(c.cheque_no || 'cheque') + ' ' + rs(c.amount); }).join(', ') + ')' : '') + '</div>';
+        if (d.coming > 0) strip += '<div class="sm"><b>' + rs(d.coming) + ' items coming</b> (billed, not delivered yet)</div>';
         if (diff !== 0) {
           strip += '<div>' + label + (d.reason ? ' · Reason: <b>' + esc(d.reason.reason) + '</b>' + (d.reason.note ? ' (' + esc(d.reason.note) + ')' : '') : ' · <b>no reason yet</b>') + '</div><div class="picks" role="group" aria-label="Reason">' +
             d.reasons.map(function (r) { return '<button type="button" class="ghost" data-r="' + esc(r) + '" aria-pressed="' + ((pick || (d.reason && d.reason.reason)) === r) + '">' + esc(r) + '</button>'; }).join('') + '</div>' +

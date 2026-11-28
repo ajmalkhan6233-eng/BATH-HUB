@@ -61,6 +61,8 @@ async function loadInvoice(db, vendor, grn) {
     out.cash = r2(cash); out.cheques = ch.map((c) => ({ cheque_no: c.cheque_no, bank: c.bank, amount: Number(c.amount), cheque_date: c.cheque_date, status: c.status }));
     out.cheques_total = r2(ch.reduce((s, c) => s + Number(c.amount), 0)); out.paid = r2(out.cash + out.cheques_total);
     out.difference = r2(out.bill_total - out.paid);   // negative = we paid more than the bill
+    // billed but not delivered yet; table may not exist
+    out.coming = r2(Number((await db.query("SELECT COALESCE(SUM(amount),0) s FROM vendor_pending_items WHERE bill_no=$1 AND status='PENDING'", [bill.bill_no]).catch(() => ({ rows: [{ s: 0 }] }))).rows[0].s));
     out.reason = (await db.query('SELECT reason, note, difference, to_char(saved_at,\'YYYY-MM-DD HH24:MI\') AS saved_at FROM grn_diff_reason WHERE bill_id=$1', [bill.id])).rows[0] || null;
     out.audit = (await db.query(`SELECT field, old_value, new_value, changed_by, to_char(changed_at,'YYYY-MM-DD HH24:MI') AS at FROM grn_audit WHERE bill_id=$1 ORDER BY id DESC LIMIT 100`, [bill.id])).rows;
   }
