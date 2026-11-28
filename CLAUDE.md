@@ -82,3 +82,5 @@ Version 1.1.0 (tag v1.1.0-confirmed) is the confirmed set of BOTH the shop PC ap
 - No extra tweaks, restyling or "while I was there" changes. Fix only what he names.
 - After an approved change: bump VERSION, `node scripts/lock_version.js`, tell him the new number and what changed.
 - Automatic things already running (backups, autosave, Pocket data refresh) carry on.
+
+OCTOPUS 2 (28 Nov): how chat, PC, GitHub and the shop work together: `AI_BRIDGE/OCTOPUS.md` (bridge repo). Commands: `octopus build`, `octopus optimize`, `octopus check`.
