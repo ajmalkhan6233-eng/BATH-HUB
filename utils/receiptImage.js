@@ -38,7 +38,8 @@ function cleanBill(d) {
   const items = d.items.map((it, i) => {
     const qty = Number(it && it.qty), price = Number(it && it.price);
     if (!it || !String(it.name || '').trim() || !(qty > 0) || !(price >= 0)) throw Object.assign(new Error('item ' + (i + 1) + ': name, qty (more than 0) and price (0 or more) are required'), { status: 400 });
-    return { name: text(it.name, 120), code: it.code ? text(it.code, 30) : null, qty, price };
+    const list = Number(it.list);   // selling price of the day (utils/listPrice.js), if known
+    return { name: text(it.name, 120), code: it.code ? text(it.code, 30) : null, qty, price, ...(list > 0 ? { list } : {}) };
   });
 
   const discount = Number(d.discount || 0);
@@ -97,6 +98,9 @@ function idleSoon() {
   if (_idle.unref) _idle.unref();
 }
 async function render(bill, { outDir = DEFAULT_DIR, fileName, timeoutMs = 30000, template } = {}) {
+  if (process.env.NODE_ENV !== 'test') {
+    try { bill = await require('./listPrice').addListPrices(bill, require('./pool')); } catch (e) { console.warn('[receipt] selling price not shown:', e.message); }
+  }
   const data = cleanBill(bill);
   data.qr = await mapQrDataUrl();                                // QR of the Google Maps link (null if the library is missing: the link text still shows)
 

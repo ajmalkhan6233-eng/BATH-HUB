@@ -168,6 +168,11 @@ function renderReceipt(d) {
   const offered = d.total != null ? Math.max(0, gross - Number(d.total)) : Number(d.discount || 0);
   const keep = gross > 0 ? (gross - offered) / gross : 1;
   let used = 0; const nItems = (d.items || []).length;
+  // 28 Nov (AJ, replaces the 24 Nov rule): show the selling price, what was paid per line, the discount and the amount paid.
+  // Only when a selling price above the paid price is known; otherwise the receipt looks as before.
+  let atList = 0, paidSum = 0;
+  const showList = (d.items || []).some((it) => it.list > 0 && it.list * (it.qty || 0) > (it.qty || 0) * (it.price || 0) * keep + 0.5);
+  document.querySelectorAll('thead th')[2].textContent = showList ? 'Selling price' : 'Price';
   (d.items || []).forEach((it, ix) => {
     const list = (it.qty || 0) * (it.price || 0);
     const amt = ix === nItems - 1 ? Math.round(gross - offered - used) : Math.round(list * keep);
@@ -194,7 +199,9 @@ function renderReceipt(d) {
 
     const tdPrice = document.createElement('td');
     tdPrice.className = 'num listp';
-    tdPrice.textContent = n(amt / (it.qty || 1));   // 24 Nov (AJ): customer sees the price he pays per piece, never the marked price
+    const paidEach = amt / (it.qty || 1), each = showList ? Math.max(Number(it.list) || 0, paidEach) : paidEach;
+    atList += each * (it.qty || 0); paidSum += amt;
+    tdPrice.textContent = n(each);
     tr.appendChild(tdPrice);
 
     const tdAmt = document.createElement('td');
@@ -206,8 +213,14 @@ function renderReceipt(d) {
   });
 
   const finalTotal = d.total != null ? Number(d.total) : sub - offered;
-  $('sub').parentElement.style.display = 'none';   // 24 Nov (AJ): no Subtotal, no Discount, no "You saved": only the lines and the total, like the paper bill
-  $('discRow').style.display = 'none';
+  const saved = showList ? Math.round((atList - finalTotal) * 100) / 100 : 0;
+  $('sub').parentElement.style.display = saved > 0 ? 'flex' : 'none';
+  $('discRow').style.display = saved > 0 ? 'flex' : 'none';
+  if (saved > 0) {
+    $('sub').previousElementSibling.textContent = 'Total at selling price'; $('sub').textContent = 'Rs. ' + n(atList);
+    $('discRow').firstElementChild.textContent = 'Your discount'; $('disc').textContent = '- Rs. ' + n(saved);
+    document.querySelector('.tot-row.grand span').textContent = 'YOU PAID';
+  }
   $('total').textContent = 'Rs. ' + n(finalTotal);
   $('saveNote').textContent = '';
 
