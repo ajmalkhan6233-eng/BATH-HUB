@@ -74,7 +74,7 @@ async function showDashboard() {
     </div>
     <div class="card">
       <div class="sub">Average daily sales, last 30 days</div>
-      <div class="big">LKR ${Number(d.avg_daily_sales_30d).toLocaleString()}</div>
+      <div class="big">${d.avg_daily_sales_30d === null ? 'no data' : 'LKR ' + Number(d.avg_daily_sales_30d).toLocaleString()}</div>
     </div>`;
 }
 

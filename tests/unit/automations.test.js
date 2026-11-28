@@ -7,7 +7,8 @@ function fakePool(tables = {}) {
   return { query: async (sql, p = []) => {
     if (/CREATE TABLE IF NOT EXISTS automation_runs/.test(sql)) return { rows: [] };
     if (/INSERT INTO automation_runs/.test(sql)) { const k = p[0] + '|' + p[1]; if (runs.has(k)) return { rows: [] }; runs.add(k); return { rows: [{ job: p[0] }] }; }
-    if (/FROM daily_summary WHERE report_date >= \$1/.test(sql)) return { rows: [tables.totals || { sales: 0, gp: 0, exp: 0, n: 0 }] };
+    if (/FROM pos_bills/.test(sql)) return { rows: [] };   // 28 Nov: day figures = typed sheet, else POS bills (utils/moneyCore.days)
+    if (/FROM daily_summary WHERE report_date >= \$1/.test(sql)) { const t = tables.totals; return { rows: t ? [{ report_date: p[0], total_sale: t.sales, gross_profit: t.gp, total_expenses: t.exp }] : [] }; }
     if (/FROM products WHERE active/.test(sql)) return { rows: tables.low || [] };
     if (/FROM grn_records/.test(sql)) return { rows: tables.grn || [] };
     if (/FROM cheque_register/.test(sql)) return { rows: tables.chq || [] };

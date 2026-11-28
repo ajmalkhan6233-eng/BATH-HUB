@@ -9,6 +9,7 @@
  * Schema used (not verified against the live database): daily_summary(report_date,total_sale,gross_profit,total_expenses),
  * products(item_code,name,stock_level,reorder_threshold,active), cheque_register, grn_records.
  */
+const MC = require('./moneyCore');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -19,10 +20,8 @@ const iso = (d) => d.toISOString().slice(0, 10);
 const addDays = (isoDate, n) => { const d = new Date(isoDate + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
 
 async function dayTotals(pool, from, to) {
-  const r = await pool.query(`SELECT COALESCE(SUM(total_sale),0) AS sales, COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COUNT(*) AS n
-      FROM daily_summary WHERE report_date >= $1 AND report_date <= $2`, [from, to]);
-  const x = r.rows[0];
-  return { sales: Number(x.sales), gp: Number(x.gp), expenses: Number(x.exp), days: Number(x.n) };
+  const x = MC.dayTotal(await MC.days(pool, from, to));
+  return { sales: x.sales, gp: x.gp || 0, expenses: x.expenses, days: x.days };
 }
 async function lowStock(pool) {
   const r = await pool.query(`SELECT item_code, name, stock_level, reorder_threshold FROM products WHERE active = true AND stock_level <= reorder_threshold ORDER BY (stock_level - reorder_threshold), item_code`);
@@ -45,14 +44,15 @@ function taxDates(file, todayISO) {
 }
 
 // ---- text builders (pure, tested) ----
+// no expenses entered = no net figure (never "expenses Rs 0")
+const afterCosts = (t) => (t.expenses === null ? `gross profit ${rs(t.gp)}, expenses not entered` : `expenses ${rs(t.expenses)}, net profit ${rs(t.gp - t.expenses)}${t.gp - t.expenses < 0 ? ' (LOSS)' : ''}`);
 function morningBrief(d) {
   const L = [`MORNING UPDATE ${d.today}`];
   const sec = (title, lines) => { const x = lines.filter(Boolean); if (x.length) L.push('', title, ...x); };
   // (a) YESTERDAY
   const y = d.y || { days: 0 };
-  const net = y.gp - y.expenses;
   sec(`YESTERDAY (${d.yesterday})`, [
-    y.days ? `Sales ${rs(y.sales)}, expenses ${rs(y.expenses)}, net profit ${rs(net)}${net < 0 ? ' (LOSS)' : ''}.` : 'Daily summary was not entered.',
+    y.days ? `Sales ${rs(y.sales)}, ${afterCosts(y)}.` : 'No sales recorded.',
     d.chqDone && d.chqDone.cleared.n ? `Cheques cleared: ${d.chqDone.cleared.n} (${rs(d.chqDone.cleared.amount)}).` : '',
     d.chqDone && d.chqDone.bounced.n ? `Cheques BOUNCED: ${d.chqDone.bounced.n} (${rs(d.chqDone.bounced.amount)}). Please act.` : '',
     d.grn && d.grn.n ? `GRNs entered: ${d.grn.n} (${rs(d.grn.total)}).` : '',
@@ -73,7 +73,7 @@ function morningBrief(d) {
   // (c) THIS WEEK
   const w = d.week;
   sec('THIS WEEK', [
-    w && w.days ? `So far (Mon to yesterday): sales ${rs(w.sales)}, expenses ${rs(w.expenses)}, net profit ${rs(w.gp - w.expenses)} (${w.days} days).` : '',
+    w && w.days ? `So far (Mon to yesterday): sales ${rs(w.sales)}, ${afterCosts(w)} (${w.days} days).` : '',
     c.next7 ? `Cheques to pay in the next 7 days: ${rs(c.next7)}.` : '',
     d.changed && d.changed.length ? 'Changed in the last day: ' + d.changed.join(' | ') : '',
   ]);
@@ -105,7 +105,7 @@ async function gatherBrief({ pool, adapters, now, root, backupDir, taxFile, heal
   };
 }
 const reorderList = (low) => `REORDER LIST (${low.length} items)\n` + low.slice(0, 25).map((x) => `${x.code} ${x.name}: have ${x.stock}, order about ${x.order}`).join('\n') + (low.length > 25 ? `\n...and ${low.length - 25} more` : '');
-const weeklyProfit = (from, to, t) => `WEEKLY PROFIT ${from} to ${to}\nSales ${rs(t.sales)}, gross profit ${rs(t.gp)}, expenses ${rs(t.expenses)}, left after expenses ${rs(t.gp - t.expenses)} (${t.days} days entered).\n(Profit-split rules not applied here yet.)`;
+const weeklyProfit = (from, to, t) => `WEEKLY PROFIT ${from} to ${to}\nSales ${rs(t.sales)}, gross profit ${rs(t.gp)}, ${t.expenses === null ? 'expenses not entered' : `expenses ${rs(t.expenses)}, left after expenses ${rs(t.gp - t.expenses)}`} (${t.days} days).\n(Profit-split rules not applied here yet.)`;
 
 // ---- CSV pack ----
 const csvCell = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -113,11 +113,12 @@ const toCsv = (rows) => rows.length ? [Object.keys(rows[0]).join(','), ...rows.m
 async function accountantPack(pool, month /* 'YYYY-MM' */, outDir) {
   const from = `${month}-01`, to = addDays(iso(new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 1))), -1);
   const q = {
-    sales: [`SELECT report_date, total_sale, gross_profit, total_expenses FROM daily_summary WHERE report_date >= $1 AND report_date <= $2 ORDER BY report_date`, [from, to]],
     purchases: [`SELECT grn_date, supplier_name, item_description, quantity, unit_cost, total_amount FROM grn_records WHERE grn_date >= $1 AND grn_date <= $2 ORDER BY grn_date`, [from, to]],
     cheques: [`SELECT cheque_no, bank, payee, amount, due_date, status FROM cheque_register WHERE due_date >= $1 AND due_date <= $2 ORDER BY due_date`, [from, to]],
   };
   fs.mkdirSync(outDir, { recursive: true }); const files = [];
+  const sales = (await MC.days(pool, from, to)).map((d) => ({ report_date: d.day, total_sale: d.sales, gross_profit: d.gp === null ? '' : d.gp, total_expenses: d.expenses === null ? '' : d.expenses, source: d.source }));
+  const salesFile = path.join(outDir, `${month}_sales.csv`); fs.writeFileSync(salesFile, toCsv(sales)); files.push(salesFile);
   for (const [name, [sql, p]] of Object.entries(q)) { const f = path.join(outDir, `${month}_${name}.csv`); fs.writeFileSync(f, toCsv((await pool.query(sql, p)).rows)); files.push(f); }
   return files;
 }

@@ -9,6 +9,7 @@
 // tables (AGENT_GUIDE/09_golden_core.md).
 
 require('dotenv').config();
+const MC = require('../utils/moneyCore');
 const express = require('express');
 const { todayLK } = require('../utils/lkTime');
 const { Pool } = require('pg');
@@ -322,13 +323,13 @@ router.get('/viewer-dashboard', async (req, res) => {
         const today = todayLK();
         const [breakdown, avgRes] = await Promise.all([
             pool.query(`SELECT COALESCE(SUM(amount),0) AS total FROM daily_payment_breakdown WHERE report_date = $1`, [today]),
-            pool.query(`SELECT AVG(total_sale) AS avg_daily FROM daily_summary WHERE report_date >= CURRENT_DATE - INTERVAL '30 days'`),
+            MC.days(pool, new Date(Date.parse(today) - 30 * 86400000).toISOString().slice(0, 10), today),
         ]);
         res.json({
             viewing_as: check.rows[0].requester_name,
             date: today,
             sales_total_today: Number(breakdown.rows[0].total),
-            avg_daily_sales_30d: Math.round(Number(avgRes.rows[0].avg_daily) || 0),
+            avg_daily_sales_30d: avgRes.length ? Math.round(MC.dayTotal(avgRes).sales / avgRes.length) : null,
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

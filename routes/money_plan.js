@@ -1,6 +1,7 @@
 'use strict';
 // Money plan + morning brief (Builds 6 and 7). READ-ONLY on daily_summary and vendor tables.
 // Only writes: app_settings key 'money_plan' (owner settings) and uploads/briefs/<date>.txt. Login is enforced by the global /api gate.
+const MC = require('../utils/moneyCore');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -29,8 +30,8 @@ module.exports = function createMoneyPlanRouter({ pool, branchOf = () => 1 }) {
   }
 
   async function sums(from, to) {
-    const q = await pool.query(`SELECT COALESCE(SUM(total_sale),0) AS sales, COALESCE(SUM(gross_profit),0) AS gp, COALESCE(SUM(total_expenses),0) AS exp, COUNT(*) AS days FROM daily_summary WHERE report_date BETWEEN $1 AND $2`, [from, to]);
-    const x = q.rows[0]; return { sales: Number(x.sales), grossProfit: Number(x.gp), expenses: Number(x.exp), days: Number(x.days) };
+    const x = MC.dayTotal(await MC.days(pool, from, to));   // 28 Nov: POS bills fill the days with no typed sheet
+    return { sales: x.sales, grossProfit: x.gp || 0, expenses: x.expenses, days: x.days };
   }
 
   r.get('/money/settings', wrap(async (req, res) => res.json(await settings())));

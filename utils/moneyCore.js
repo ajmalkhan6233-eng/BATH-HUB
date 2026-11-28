@@ -58,4 +58,28 @@ async function commission(pool, from, to) {
   } catch (e) { if (e && (e.code === '42P01' || /does not exist/i.test(e.message || ''))) return { rows: [], total: 0 }; throw e; }
 }
 
-module.exports = { LIVE, LIVE_JOIN, COST, liveBills, sum, range, byDay, commission, round2 };
+// One row per day for the money screens: the typed day sheet (daily_summary) where there is one, else that day's POS bills.
+// What is not known stays null (expenses are not on a bill), never a made-up zero.
+const noTable = (e) => !!e && (e.code === '42P01' || /does not exist/i.test(e.message || ''));
+const orNull = (x) => (x === null || x === undefined || x === '' ? null : num(x));
+const isoDay = (d) => (d instanceof Date ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : String(d).slice(0, 10));
+async function days(pool, from, to) {
+  const m = new Map();
+  try { for (const d of await byDay(pool, from, to)) m.set(d.day, { day: d.day, sales: d.sales, cash: null, gp: d.gross, expenses: null, source: 'bills' }); } catch (e) { if (!noTable(e)) throw e; }
+  try {
+    const s = await pool.query('SELECT * FROM daily_summary WHERE report_date >= $1 AND report_date <= $2', [from, to]);
+    for (const x of s.rows) {
+      const day = isoDay(x.report_date);
+      const gp = x.gp_status === 'NOT_AVAILABLE' && !num(x.gross_profit) ? null : orNull(x.gross_profit);
+      m.set(day, { day, sales: num(x.total_sale), cash: orNull(x.cash_sale), gp, expenses: orNull(x.total_expenses), source: 'sheet' });
+    }
+  } catch (e) { if (!noTable(e)) throw e; }
+  return [...m.values()].sort((a, b) => a.day.localeCompare(b.day));
+}
+// gp / expenses are null when no day has them.
+function dayTotal(list) {
+  const add = (k) => (list.some((d) => d[k] !== null) ? round2(list.reduce((a, d) => a + num(d[k]), 0)) : null);
+  return { sales: round2(list.reduce((a, d) => a + d.sales, 0)), gp: add('gp'), expenses: add('expenses'), days: list.length };
+}
+
+module.exports = { LIVE, LIVE_JOIN, COST, liveBills, sum, range, byDay, days, dayTotal, commission, round2 };

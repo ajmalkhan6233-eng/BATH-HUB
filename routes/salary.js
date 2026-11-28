@@ -6,6 +6,7 @@
 // Own tables: sal_settings, sal_month_close, sal_cheque_cover. All numbers are editable in Settings (defaults in utils/salaryMath.js).
 
 require('dotenv').config();
+const MC = require('../utils/moneyCore');
 const express = require('express');
 const { Pool } = require('pg');
 const { todayLK } = require('../utils/lkTime');
@@ -82,7 +83,7 @@ function createRouter(pool, { today = todayLK } = {}) {
         try {
             await ready;
             const s = await settings(), t = today();
-            const ds = (await soft(`SELECT total_sale, cash_sale, gross_profit, total_expenses, gp_status FROM daily_summary WHERE report_date = $1`, [t], []))[0] || null;
+            const ds = (await MC.days(pool, t, t))[0] || null;   // typed sheet, else today's POS bills
             const costs = M.dailyCosts(s);
 
             // margin: the last 30 days of real figures, else the setting
@@ -90,9 +91,8 @@ function createRouter(pool, { today = todayLK } = {}) {
             const histMargin = marginFromProfit(num(hist.gp), num(hist.sales));
             const margin = histMargin != null ? histMargin : s.margin_pct;
 
-            const sales = ds ? num(ds.total_sale) : 0, cash = ds ? num(ds.cash_sale) : 0;
-            const gpKnown = ds && !(ds.gp_status === 'NOT_AVAILABLE' && !num(ds.gross_profit));
-            const gp = gpKnown ? num(ds.gross_profit) : null, expenses = ds ? num(ds.total_expenses) : null;
+            const sales = ds ? ds.sales : 0, cash = ds ? ds.cash : 0;   // cash is null when only bills are known
+            const gp = ds ? ds.gp : null, expenses = ds ? ds.expenses : null;
             const net = gp != null && expenses != null ? M.money2(gp - expenses) : null;      // PENDING when the cost inputs are missing: never a guess
 
             // cheques: where they are recorded (cheque_register; pending or held = not paid yet)
@@ -111,7 +111,7 @@ function createRouter(pool, { today = todayLK } = {}) {
                 cheque_set_aside: {
                     amount: reserve.reserve, lines: reserve.lines, cash_today: cash,
                     message: `Set aside Rs ${Math.round(reserve.reserve).toLocaleString('en-US')} today for cheques.`,
-                    warning: reserve.reserve > cash ? `The set-aside (Rs ${Math.round(reserve.reserve).toLocaleString('en-US')}) is more than today's sales cash (Rs ${Math.round(cash).toLocaleString('en-US')}).` : null,
+                    warning: cash !== null && reserve.reserve > cash ? `The set-aside (Rs ${Math.round(reserve.reserve).toLocaleString('en-US')}) is more than today's sales cash (Rs ${Math.round(cash).toLocaleString('en-US')}).` : null,
                 },
             });
         } catch (e) { res.status(500).json({ error: e.message }); }
@@ -222,9 +222,8 @@ function createRouter(pool, { today = todayLK } = {}) {
         try {
             await ready;
             const s = await settings(), t = today();
-            const ds = (await soft(`SELECT total_sale, gross_profit, total_expenses, gp_status FROM daily_summary WHERE report_date = $1`, [t], []))[0] || null;
-            const gpKnown = ds && !(ds.gp_status === 'NOT_AVAILABLE' && !num(ds.gross_profit));
-            const net = gpKnown && ds.total_expenses != null ? M.money2(num(ds.gross_profit) - num(ds.total_expenses)) : null;
+            const ds = (await MC.days(pool, t, t))[0] || null;
+            const net = ds && ds.gp !== null && ds.expenses !== null ? M.money2(ds.gp - ds.expenses) : null;
             const split = net != null ? M.monthSplit(net, s) : null;
             const cq = await soft(`SELECT c.id, c.amount, c.due_date, c.payee, (v.cheque_id IS NOT NULL) AS covered
                 FROM cheque_register c LEFT JOIN sal_cheque_cover v ON v.cheque_id = c.id
